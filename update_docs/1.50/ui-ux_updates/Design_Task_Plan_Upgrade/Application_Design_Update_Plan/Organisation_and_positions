@@ -1,0 +1,8 @@
+# Organisation and Positions
+
+- **Top Navigation (User):** Logo, search, notifications, profile avatar.
+- **Bottom Navigation (User):** Discover, Bookings, Messages, Profile; centre FAB for custom job.
+- **Provider Tabs:** Operate, Leads, Inventory, Inbox located top-level for quick persona shift.
+- **Dashboard Layout:** Hero summary top, analytics cards middle, action rail right, insights panel left.
+- **Scheduling Screen:** Calendar occupies top 60%, team roster list bottom 40% with sticky filters.
+- **Messaging:** Thread list left, conversation pane right (tablet) or stacked (mobile portrait).
