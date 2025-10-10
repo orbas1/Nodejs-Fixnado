@@ -1,7 +1,0 @@
-# Settings Screen Specification
-
-- **Header:** Avatar, name, role badge, quick link to preview public profile.
-- **Section Cards:** Profile, Payments, Notifications, Integrations, Security each with icon and description.
-- **Detail View:** Expands in modal sheet (mobile) or right panel (tablet) with form fields grouped logically.
-- **Support CTA:** Persistent footer link to help centre and live chat.
-- **Audit Banner:** Displays last update timestamp and compliance reminders.
