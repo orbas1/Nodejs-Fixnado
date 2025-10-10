@@ -21,6 +21,7 @@
 - Explore map screen uses edge-to-edge layout; overlays maintain 16px margin from screen edges.
 - Booking wizard uses card container with 24px padding and stepper indicator at top.
 - Form elements spaced 12px vertically; groupings separated by 24px.
+- Settings screens shift to two-column layout on tablets, preserving 24px gutters and aligning CTAs along right column.
 
 ## 4. Components
 - **Navigation Bar**
@@ -33,6 +34,9 @@
 - **Buttons**
   - Primary buttons 52px height, 8px radius, gradient fill matching hero.
   - Secondary outline buttons use 2px primary border; ghost buttons for tertiary actions.
+- **Forms**
+  - Input fields use rounded 12px corners, soft shadow `0 4px 12px rgba(0, 68, 170, 0.08)` on focus.
+  - Inline validation text adopts danger palette with icon alignment; success states display subtle checkmark badges.
 - **Stepper**
   - Booking steps displayed as numbered circles connected by progress line; active step filled with primary colour.
 - **Chips**
@@ -50,21 +54,25 @@
 - Map interactions include subtle zoom easing to avoid abrupt shifts.
 - Button presses trigger scale-down 96% micro-animation with haptic feedback.
 - Toast notifications appear at top with fade/slide animation.
+- Booking confirmation confetti animation limited to 900ms to reduce distraction while signalling success.
 
 ## 7. Accessibility
 - Text contrast meets WCAG AA (minimum 4.5:1); icons accompanied by labels.
 - Dynamic type supported; layout adjusts up to 140% font scaling.
 - Focus indicators added for keyboard interactions (Android accessibility, external keyboards).
 - VoiceOver labels clarify context (e.g., "Booking status: En Route").
+- Animated elements respect "Reduce Motion" setting by swapping to cross-fade transitions and static success indicators.
 
 ## 8. Content & Microcopy
 - Tone friendly and reassuring; emphasise transparency on pricing and provider vetting.
 - Key CTAs use action verbs ("Confirm Booking", "Track Order", "Chat with Provider").
 - Error messages specify resolution steps ("Update card details" rather than generic failure).
+- Loyalty module copy references tier names consistently across app, aligning with marketing campaigns.
 
 ## 9. Dark Mode
 - Background `#0F172A`, cards `#1E293B`, text `#E2E8F0`.
 - Primary colour shifts to `#3B82F6` for contrast; secondary toned to `#FB8C61`.
 - Shadows reduced; rely on border outlines `rgba(255,255,255,0.08)`.
+- Widgets incorporate subtle inner glow `inset 0 0 0 1px rgba(255,255,255,0.12)` to delineate surfaces without heavy shadows.
 
 These styling updates deliver a polished consumer experience while aligning with the broader Fixnado brand language introduced in Version 1.00.
