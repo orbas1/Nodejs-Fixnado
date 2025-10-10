@@ -7,6 +7,8 @@ import MarketplaceShowcase from '../components/MarketplaceShowcase.jsx';
 import ServiceZones from '../components/ServiceZones.jsx';
 import EscrowSection from '../components/EscrowSection.jsx';
 import EnterpriseHighlights from '../components/EnterpriseHighlights.jsx';
+import ExecutiveShowcase from '../components/ExecutiveShowcase.jsx';
+import OperationalBlueprint from '../components/OperationalBlueprint.jsx';
 
 const services = [
   {
@@ -40,9 +42,11 @@ const services = [
 
 export default function Home() {
   return (
-    <div className="space-y-16 pb-16">
+    <div className="space-y-20 pb-20">
       <Hero />
+      <ExecutiveShowcase />
       <EnterpriseHighlights />
+      <OperationalBlueprint />
       <section className="mx-auto max-w-6xl px-6">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>

@@ -21,7 +21,7 @@ export default function Header() {
           <img
             src={LOGO_URL}
             alt="Fixnado"
-            className="h-10 w-auto object-contain"
+            className="h-[3.75rem] w-auto object-contain md:h-16"
             loading="lazy"
           />
         </Link>

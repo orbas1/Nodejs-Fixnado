@@ -15,7 +15,7 @@ export default function Footer() {
           <img
             src={LOGO_URL}
             alt="Fixnado"
-            className="h-10 w-auto object-contain"
+            className="h-[3.75rem] w-auto object-contain"
             loading="lazy"
           />
           <p className="mt-4 text-sm text-slate-500">
