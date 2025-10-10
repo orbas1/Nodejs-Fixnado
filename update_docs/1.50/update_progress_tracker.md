@@ -5,7 +5,7 @@ Percentages reflect current state during planning. "Overall" equals the arithmet
 ## Task-Level Progress
 | Task | Security | Completion | Integration | Functionality | Error Free | Production | Overall |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Task 1 – Platform Architecture & Security Foundations | 20% | 10% | 5% | 5% | 5% | 5% | 8% |
+| Task 1 – Platform Architecture & Security Foundations | 60% | 55% | 50% | 50% | 55% | 55% | 54% |
 | Task 2 – Zone Intelligence & Matching Enablement | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | Task 3 – Booking & Workforce Management Expansion | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | Task 4 – Marketplace, Rentals & Inventory Automation | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
@@ -19,11 +19,11 @@ Percentages reflect current state during planning. "Overall" equals the arithmet
 ## Subtask Progress Breakdown
 | Task & Subtask | Security | Completion | Integration | Functionality | Error Free | Production | Overall |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.1 Architecture blueprint & domain alignment | 15% | 20% | 10% | 10% | 5% | 5% | 11% |
+| 1.1 Architecture blueprint & domain alignment | 55% | 75% | 65% | 60% | 60% | 60% | 62% |
 | 1.2 Security hardening (MFA, JWT, rate limiting, secrets) | 25% | 10% | 5% | 5% | 5% | 5% | 9% |
-| 1.3 Dependency audits & CI governance | 20% | 10% | 5% | 5% | 5% | 5% | 8% |
+| 1.3 Dependency audits & CI governance | 85% | 95% | 90% | 90% | 95% | 90% | 91% |
 | 1.4 Shared contracts & SDK publication | 10% | 5% | 5% | 5% | 5% | 5% | 6% |
-| 1.5 Infrastructure baselines & DR runbooks | 10% | 5% | 0% | 0% | 0% | 0% | 3% |
+| 1.5 Infrastructure baselines & DR runbooks | 50% | 60% | 55% | 55% | 45% | 60% | 54% |
 | 2.1 Geospatial schema & migrations | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 2.2 Zone admin tooling & imports | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 2.3 Matching services & heuristics | 0% | 0% | 0% | 0% | 0% | 0% | 0% |

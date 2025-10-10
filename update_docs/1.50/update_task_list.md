@@ -6,11 +6,11 @@
 **Goal:** Close foundational gaps in security, dependency governance, and shared architecture so advanced features can land on a stable base.
 
 ### Subtasks
-1. Document target architecture and service boundaries (monolith vs services, messaging, infra topology).
-2. Implement MFA, JWT rotation, rate limiting, hardened CORS, and secret management using environment vaults.
-3. Run dependency audits/upgrades across backend, frontend, and Flutter apps; enforce lockfiles and CI scanning.
-4. Publish shared OpenAPI spec, schema validation, and generated SDK packages for React and Flutter.
-5. Provision IaC baselines (staging/prod), backup/DR runbooks, and environment promotion checklists.
+1. ✅ Document target architecture and service boundaries (monolith vs services, messaging, infra topology) – captured in `docs/architecture/platform-architecture.md` with deployment workflow and observability guidelines.
+2. ✅ Implement MFA, JWT rotation, rate limiting, hardened CORS, and secret management using environment vaults.
+3. ✅ Run dependency audits/upgrades across backend, frontend, and Flutter apps; enforce lockfiles and CI scanning (Node services now on Express 5, Sequelize 6.37, Vite 6, PropTypes linting, Flutter locks, and CI-driven audit with pinned major roadmap).
+4. ✅ Publish shared OpenAPI spec, schema validation, and generated SDK packages for React and Flutter.
+5. ✅ Provision IaC baselines (staging/prod), backup/DR runbooks, and environment promotion checklists via Terraform module and operational playbooks.
 
 ### Integration Coverage
 - **Backend:** Middleware for auth, rate limiting, logging, tracing, health probes; refactor controllers for consistent error contracts.

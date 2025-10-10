@@ -18,6 +18,7 @@ export async function authenticate(req, res, next) {
     req.user = { id: user.id, type: user.type };
     next();
   } catch (error) {
+    console.warn('JWT validation failed', { message: error.message });
     return res.status(401).json({ message: 'Invalid token' });
   }
 }

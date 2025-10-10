@@ -8,6 +8,7 @@ The Version 1.50 design effort aligns the Fixnado ecosystem (provider app, user 
 - **Future-ready theming:** Scalable token architecture that powers dark mode, reduced-motion, and localisation requirements.
 
 ## 2. Experience Architecture
+The `docs/architecture/platform-architecture.md` blueprint now anchors navigation and information architecture decisions. It maps domain boundaries to persona journeys and codifies deployment workflows and telemetry expectations that design teams must reflect in prototypes and UI copy.
 ### 2.1 Navigation Framework
 - Consolidate mobile landing pages into role-specific dashboards informed by **Screens_list**, with quick actions for approvals, bidding, and scheduling.
 - Implement global navigation rails and mega-menus on web per **Home Page Organisations.md** and **Menus.md.md**, including breadcrumbs and contextual filters.
@@ -16,7 +17,7 @@ The Version 1.50 design effort aligns the Fixnado ecosystem (provider app, user 
 ### 2.2 Flow Optimisation
 - Booking and bidding wizards now follow a four-stage model (Context → Requirements → Confirmation → Follow-up) with inline validation and autosave, mapped to **Screens_Update_Logic_Flow.md**.
 - Dispute and compliance escalations adopt guided workflows with AI-generated recommendations and required documentation uploads, referencing **Function Design.md**.
-- Campaign wizard and marketplace discovery flows integrate persona-aware recommendations and compliance badges sourced from **Organisation_and_positions** and **Dashboard Organisation.md** documentation.
+- Campaign wizard and marketplace discovery flows integrate persona-aware recommendations and compliance badges sourced from **Organisation_and_positions** and **Dashboard Organisation.md** documentation while respecting the shared telemetry schema outlined in the architecture blueprint.
 
 ## 3. Visual & Interaction System
 ### 3.1 Foundations
@@ -57,6 +58,7 @@ The Version 1.50 design effort aligns the Fixnado ecosystem (provider app, user 
 - Package redlines, component specs, and token documentation for React, Blade, and Flutter teams.
 - Run paired review sessions with engineering to validate feasibility, especially for AI-driven recommendations and compliance indicators.
 - Establish ongoing feedback loops during sprint reviews to track adherence to design intent.
+- Maintain ESLint 9 / PropTypes guardrails and the dependency audit CI so design handoffs retain accessibility, localisation, and security requirements through build pipelines.
 
 ## 9. Success Metrics
 - Increase booking conversion by 18% and ad click-through by 12% via improved wayfinding and trust signals.

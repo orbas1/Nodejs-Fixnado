@@ -5,7 +5,7 @@ const sequelize = new Sequelize(config.database.name, config.database.user, conf
   host: config.database.host,
   port: config.database.port,
   dialect: 'mysql',
-  logging: config.env === 'development' ? console.log : false,
+  logging: config.env === 'development' ? console.info : false,
   define: {
     underscored: true,
     freezeTableName: true

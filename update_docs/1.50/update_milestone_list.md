@@ -15,6 +15,8 @@
 - Version 1.50 testing plan baseline (testing_plan.md) published with scope, schedule, and ownership mapping to Milestones 1–6.
 **Dependencies:** none (kick-off milestone).
 
+**Status Update (Week 1):** Architecture blueprint, Terraform baselines, and operations playbooks have been published; dependency audit automation is now live with Express 5/Vite 6 upgrades, Flutter lockfiles, and CI enforcement. Stakeholder walkthrough scheduled for next programme increment meeting.
+
 ## Milestone 2 – Zone Intelligence & Booking Orchestration *(Target completion: Week 6)*
 **Scope:** Task 2 and Task 3  
 **Objectives:**

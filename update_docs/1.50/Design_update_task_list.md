@@ -1,10 +1,10 @@
 # Design Update Task List – Version 1.50
 
 ## Task 1 – Consolidate Experience Architecture
-- [ ] Audit existing mobile and web flows against **Screens_Update_Logic_Flow.md** and **Logic_Flow_map.md** artefacts.
-- [ ] Produce updated information architecture diagrams for provider, user, and admin personas.
+- [x] Audit existing mobile and web flows against **Screens_Update_Logic_Flow.md** and **Logic_Flow_map.md** artefacts (synthesised into the platform architecture blueprint and ops cockpit overlays).
+- [x] Produce updated information architecture diagrams for provider, user, admin, and platform-ops personas (documented within the architecture blueprint and design change log).
 - [ ] Validate navigation touchpoints (dashboards, menus, breadcrumbs) with product stakeholders.
-- [ ] Document cross-platform alignment notes detailing feature parity and divergence rationale.
+- [x] Document cross-platform alignment notes detailing feature parity and divergence rationale (see "Cross-Channel Experience Alignment" section of the architecture blueprint).
 - [ ] Publish sitemap and journey maps to central design repository for cross-team access.
 
 ## Task 2 – Finalise Visual System & Tokens
@@ -23,6 +23,7 @@
 - [ ] Produce final UX research report and circulate decisions to stakeholders.
 
 ## Task 4 – Implementation Support & QA
+- [x] Harden design-support tooling with ESLint 9 flat configs, PropTypes coverage, and dependency audit CI to keep token, copy, and accessibility guardrails intact across repos.
 - [ ] Host design-engineering handoff sessions covering component specs, motion cues, and content guidelines.
 - [ ] Provide redlines and responsive behaviour annotations for complex screens and dashboards.
 - [ ] Support Storybook/Flutter widget implementation with asynchronous reviews and recorded Loom walkthroughs.

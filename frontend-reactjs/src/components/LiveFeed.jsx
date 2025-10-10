@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const feed = [
   {
     id: 1,
@@ -60,3 +62,7 @@ export default function LiveFeed({ condensed = false }) {
     </section>
   );
 }
+
+LiveFeed.propTypes = {
+  condensed: PropTypes.bool
+};

@@ -5,6 +5,7 @@
 - **Operational intelligence:** AI nudges, compliance guardrails, and performance analytics are surfaced contextually to reduce manual oversight and shorten resolution cycles.
 - **Trust-first commerce:** Every booking, rental, and campaign flow surfaces verification, policy, and consent checkpoints without sacrificing conversion speed.
 - **Future-proof theming:** Dark/light support, reduced-motion paths, and scalable token architecture ensure consistency across React, Blade, and native shells.
+- **Operational resilience:** Admin consoles integrate deployment status, alarm streams, and DR guidance tied to the infrastructure promotion checklist and backup runbook.
 
 ## Deliverables & Artefacts
 - **Multi-resolution wireframes:** Desktop/tablet/mobile breakpoints for Home, Marketplace Explorer, Campaign Manager, Compliance Centre, and Provider Console, annotated with responsive behaviour.
