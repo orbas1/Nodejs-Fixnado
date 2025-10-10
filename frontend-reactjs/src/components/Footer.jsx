@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { LOGO_URL } from '../constants/branding';
 
 const footerLinks = [
   { title: 'Company', items: ['About', 'Careers', 'Press', 'Contact'] },
@@ -12,7 +13,12 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-10 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Fixnado" className="h-10 w-10" />
+            <img
+              src={LOGO_URL}
+              alt="Fixnado"
+              className="h-10 w-10 object-contain"
+              loading="lazy"
+            />
             <span className="text-xl font-semibold">Fixnado</span>
           </div>
           <p className="mt-4 text-sm text-slate-200">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { LOGO_URL } from '../constants/branding';
 
 export default function Register() {
   return (
@@ -6,7 +7,7 @@ export default function Register() {
       <div className="grid gap-10 rounded-3xl border border-slate-200 bg-white/90 p-10 shadow-2xl shadow-accent/10 md:grid-cols-2">
         <div>
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Fixnado" className="h-12 w-12" />
+            <img src={LOGO_URL} alt="Fixnado" className="h-12 w-12 object-contain" loading="lazy" />
             <div>
               <h1 className="text-2xl font-semibold text-primary">Create your Fixnado account</h1>
               <p className="text-sm text-slate-500">Work smarter across home, business, and field teams.</p>

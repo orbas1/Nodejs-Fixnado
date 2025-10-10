@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { LOGO_URL } from '../constants/branding';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -17,7 +18,12 @@ export default function Header() {
     <header className="bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-glow">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.svg" alt="Fixnado" className="h-10 w-10" />
+          <img
+            src={LOGO_URL}
+            alt="Fixnado"
+            className="h-10 w-10 object-contain"
+            loading="lazy"
+          />
           <span className="text-xl font-semibold text-primary">Fixnado</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">

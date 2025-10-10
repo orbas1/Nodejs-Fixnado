@@ -28,3 +28,6 @@ The dev server runs on http://localhost:5173
 ## Styling
 
 Tailwind CSS is configured with a palette that matches the Fixnado logo. Inter font is loaded via Google Fonts in `src/styles.css`.
+
+The official Fixnado logo and favicon are served from hosted assets to avoid bundling binary files in the repository. You can update
+the URLs from `src/constants/branding.js` if new artwork is provided.

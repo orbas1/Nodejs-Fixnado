@@ -1,9 +1,11 @@
+import { LOGO_URL } from '../constants/branding';
+
 export default function CompanyRegister() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-5xl flex-col justify-center px-6 py-12">
       <div className="rounded-3xl border border-slate-200 bg-white/90 p-10 shadow-2xl shadow-accent/10">
         <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="Fixnado" className="h-12 w-12" />
+          <img src={LOGO_URL} alt="Fixnado" className="h-12 w-12 object-contain" loading="lazy" />
           <div>
             <h1 className="text-2xl font-semibold text-primary">Company & sole trader onboarding</h1>
             <p className="text-sm text-slate-500">Unlock team dashboards, service zones, and marketplace shops.</p>
