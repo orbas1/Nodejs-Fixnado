@@ -19,6 +19,11 @@
 - Body text `16px/24px`, small text `14px/22px`, micro text `12px/18px`.
 - Bold weight for metrics, medium for navigation, regular for body.
 
+## 4. Documentation Rollout
+- Published comprehensive design kit under `web_application_design_update/version_1.00_update` detailing responsive layouts, component specifications, colour usage, and navigation logic to ensure React implementation matches design intent.
+- Added explicit measurements for explorer, dashboard, marketplace, and compliance pages to support pixel-perfect delivery across breakpoints.
+- Provided asset sourcing plan for hero imagery, icons, and illustrations with optimisation guidelines for Next.js deployment.
+
 ## 4. Layout Patterns
 - Header height 72px with drop shadow `0 10px 30px rgba(15, 23, 42, 0.08)`.
 - Side navigation width 280px expanded, 88px collapsed; uses icon + label with tooltip.
