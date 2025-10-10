@@ -1,7 +1,13 @@
 # Version 1.50 – New Feature Brief
 
 ## Overview
-Version 1.50 focuses on transforming Fixnado into an AI-augmented service marketplace where homeowners, businesses, and enterprise clients can seamlessly discover, book, and manage professional services. The release expands geographic intelligence, multi-sided marketplace operations, and compliance tooling while unifying every participant experience across web, backend, and Flutter applications.
+Version 1.50 focuses on transforming Fixnado into an AI-augmented service marketplace where homeowners, tenants, SMEs, and enterprise facility teams can seamlessly discover, book, and manage professional services. The release expands geographic intelligence, multi-sided marketplace operations, and compliance tooling while unifying every participant experience across web, backend, and Flutter applications. The update also introduces monetisation and analytics layers so stakeholders can measure performance, optimise campaigns, and ensure every engagement meets UK and GDPR compliance standards.
+
+## Personas & Value Propositions
+- **Consumers & Tenants:** Effortlessly discover insured, compliant professionals within their service zones, compare bids, ask clarifying questions, and book onsite or remote services with transparent pricing and documentation.
+- **Servicemen & Independent Contractors:** Manage multi-zone availability, advertise packaged or custom offerings, coordinate teams, automate communications with AI, and maintain compliance records from a single panel.
+- **SME & Enterprise Providers:** Orchestrate fleets of servicemen, manage shared inventory and rentals, leverage Finova Ads to boost visibility, and control commissions, taxes, and currencies at scale.
+- **Marketplace Operations & Admins:** Configure zoning policies, manage disputes, enforce ID/DBS/insurance verifications, monitor analytics, and ensure multi-language localisation with granular access controls.
 
 ## Feature Pillars
 
@@ -55,7 +61,46 @@ Version 1.50 focuses on transforming Fixnado into an AI-augmented service market
 - Support multi-currency, multi-tax, and multi-language operations to cater to regional and international customers.
 - Enhance service listing management, bookings, and marketplace transactions with auditable payment and compliance records.
 
+## Experience Scenarios
+- **Explorer Discovery Flow:** Users land on the explorer page, filter by service category, and are presented with zone-matched providers and tool rentals, complemented by on-site banners and Finova Ads tailored to their region.
+- **Custom Job Collaboration:** A commercial client drafts a bespoke maintenance request with media attachments, receives AI-assisted bid summaries from multiple providers, conducts live Agora video walkthroughs, and selects the preferred team using bid comparison analytics.
+- **Provider Operations:** A serviceman configures multi-zone availability, reserves shared equipment via inventory dashboards, syncs bookings to the Flutter mobile app, and leverages AI chat templates to respond instantly to client messages.
+- **Admin Compliance Oversight:** Administrators monitor ID, DBS, and insurance expirations from a central compliance panel, trigger reminders, review dispute queues with linked chat history, and export GDPR-compliant audit trails.
+
+## Technical & Architectural Considerations
+- Establish geospatial database support (e.g., PostGIS) for polygon zones, heatmaps, and zone-based analytics.
+- Introduce microservice-friendly contracts for bookings, inventory, messaging, ads, and compliance, ensuring consistent APIs across web, backend Node.js services, and Flutter clients.
+- Implement secure storage for provider-supplied OpenAI/Claude API keys with usage monitoring, throttling, and fallbacks.
+- Standardise event streams (e.g., via Kafka or Redis Streams) for booking updates, inventory changes, dispute escalations, and ad campaign triggers to unlock near-real-time dashboards.
+- Expand infrastructure observability—structured logging, distributed tracing, and proactive alerting—covering Agora communications, payment flows, and marketplace transactions.
+
+## Data, Compliance & Security Requirements
+- Capture explicit consent for AI-assisted messaging, storing consent artefacts per user per locale.
+- Encrypt sensitive identity documents at rest and in transit, storing checksum metadata for tamper detection.
+- Retain immutable audit trails linking bookings, disputes, payments, chat logs, and compliance statuses in accordance with UK statutory requirements.
+- Introduce role-based data access policies so that each panel (Admin, Servicemen, SME Provider, Enterprise) can only view authorised customer and financial information.
+- Provide GDPR tooling: data subject access request handling, erasure workflows, consent revocation, and breach notification playbooks.
+
+## Success Metrics & KPIs
+- **Adoption:** % increase in active zonal services and custom job postings; number of providers completing compliance verification.
+- **Engagement:** Reduction in time-to-first-response via AI chat templates; average number of messages, video calls, and bids per custom job.
+- **Monetisation:** Growth in Fixnado/Finova Ads revenue, tool rental utilisation rates, and commission capture accuracy across currencies.
+- **Operational Excellence:** SLA adherence for bookings, dispute resolution time, and inventory turnover metrics segmented by provider type.
+
+## Risks & Mitigations
+- **Complexity of Multi-Panel UX:** Mitigate through shared component libraries, panel-specific UX guidelines, and early usability testing with each persona.
+- **AI Integration Compliance:** Provide clear documentation on acceptable use, monitor logs for misuse, and allow admins to revoke API key access instantly.
+- **Marketplace Fraud & Disputes:** Strengthen identity checks, introduce behavioural analytics to detect suspicious listings, and integrate mediation workflows.
+- **Performance Under Load:** Conduct load tests on zone search, ads delivery, and media-heavy profiles; utilise CDN caching for static assets and employ auto-scaling policies.
+- **Change Management:** Deliver comprehensive release notes, tutorials, and in-app tours to ease adoption by existing providers and enterprise clients.
+
+## Quality Assurance Strategy
+- Expand automated test suites to cover zone-matching algorithms, booking permutations, inventory transactions, and AI chat fallbacks.
+- Run accessibility reviews (WCAG 2.1) across new panels, profiles, and booking flows, including localisation checks for right-to-left languages.
+- Stage beta programmes with select providers and enterprise partners to validate Agora communications, ad campaign set-up, and dispute handling end-to-end.
+- Establish observability dashboards and alert thresholds before production rollout to capture regressions early.
+
 ## Expected Outcomes
-- Increase conversion by matching clients with compliant providers offering the right services in the right zones.
-- Improve operational efficiency through inventory visibility, commission automation, and integrated custom job workflows.
-- Strengthen trust and retention by combining AI-assisted communications, real-time collaboration, and comprehensive compliance controls.
+- Increase conversion by matching clients with compliant providers offering the right services in the right zones and languages.
+- Improve operational efficiency through inventory visibility, commission automation, AI-assisted collaboration, and integrated custom job workflows across all panels.
+- Strengthen trust and retention by combining rigorous compliance, real-time collaboration, transparent documentation, and data-driven insights for every stakeholder.
