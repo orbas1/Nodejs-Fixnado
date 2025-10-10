@@ -111,3 +111,35 @@
 - High contrast theme variant available via Settings.
 
 These wireframe updates provide the structural basis for the styling and logic flows documented in the companion files.
+
+## Detailed Screen Inventory & Specifications
+| Module | Screen | Primary Purpose | Key UI Elements | Notes |
+| --- | --- | --- | --- | --- |
+| Dashboard | Overview | Surface KPIs and quick actions | Hero metric card, quick action row, alerts feed | Supports contextual education tooltips during first-run. |
+| Dashboard | Zone Heatmap | Expand geo coverage insights | Map overlay, legend, CTA to manage zones | Includes offline fallback image with static insights. |
+| Jobs | Kanban | Track job lifecycle | Columns, draggable cards, status filters | Cards include microcopy placeholders for SLA warnings. |
+| Jobs | Calendar | Visualise schedule | Month/week/day views, job badges | Dragging job prompts reschedule confirmation dialogue. |
+| Jobs | Detail | Manage single job | Tabs (Overview, Team, Logistics, Communication) | Footer CTA adjusts per status (e.g., Submit Proof). |
+| Jobs | Bid Composer | Submit quotes | Stepper, pricing fields, preview card | Inline validation for price minimum/maximum thresholds. |
+| Marketplace | Inventory Ledger | Manage equipment | Data table, inline actions, status chips | Supports bulk select for maintenance updates. |
+| Marketplace | Listing Wizard | Publish listing | Multi-step form, media uploader, policy checklist | Integrates progress save/resume microcopy. |
+| Messages | Conversation List | Access chats | Segmented control, conversation cards | Empty state emphasises enabling notifications. |
+| Messages | Chat Detail | Communicate | Message stream, quick replies, attachments | Includes compliance disclaimer banner for recording. |
+| Compliance | Document Inventory | Track submissions | Tabbed lists, upload CTAs, expiry countdown | Each row includes CTA to view requirements. |
+| Settings | Support Hub | Access help | FAQ accordion, chat launcher, incident history | Contains status indicator showing platform health. |
+
+### Form & Interaction Guidance
+- All forms specify helper text slots for clarifying required documents, price formats, and equipment dimensions.
+- Buttons follow action hierarchy: primary for completion, secondary for navigation/back, tertiary for optional helper flows (e.g., "Preview Listing").
+- Toast notifications triggered for autosave, sync completion, and offline queue events; design ensures they do not obstruct FAB.
+
+### Copy & Localization Notes
+- Microcopy placeholders provided for compliance warnings, marketplace upsells, and dispute escalation prompts to maintain tone alignment.
+- Drawer menu supports right-to-left languages by mirroring icon alignment and slide direction.
+- Date/time formats adopt locale-specific patterns with fallback to ISO format in export dialogs.
+
+### Developer Handoff Checklist
+1. Confirm SafeArea usage on iOS/Android for all tabs, especially map overlays and bottom sheets.
+2. Implement skeleton loaders for kanban cards, inventory tables, and chat threads to improve perceived performance.
+3. Ensure high-frequency screens (Jobs, Dashboard) have analytics instrumentation for load time and primary CTA engagement.
+4. Annotate wireframes with component references (`ProviderCard`, `ComplianceChip`) to map to Flutter widget library.

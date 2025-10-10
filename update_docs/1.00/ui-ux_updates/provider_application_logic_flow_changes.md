@@ -93,3 +93,25 @@
   - Crash recovery relaunches to last visited tab with toast summarising restored state and outstanding sync actions.
 
 These flow updates ensure providers can manage bookings, marketplace operations, compliance, and monetisation with reduced friction and clear governance.
+
+## Automation, Integrations & Telemetry
+- **Automation Hooks**: Job stage transitions trigger automated checklists (e.g., equipment prep) and notifications to team members through webhook integrations.
+- **External Integrations**: Calendar sync supports Google and Outlook; inventory integrates with third-party rental providers via REST connectors with retry logic defined.
+- **Telemetry Plan**: Each critical action emits analytics events (`job_stage_changed`, `bid_submitted`, `campaign_launched`) with metadata to support funnel diagnostics.
+
+## Exception & Recovery Scenarios
+- **Payment Holds**: If payout blocked due to compliance, dashboard surfaces banner with direct link to document upload; logic prevents duplicate submissions.
+- **Document Rejections**: Rejection triggers forced path to re-upload wizard; new flow requires acknowledgement of reviewer notes before proceeding.
+- **Network Failures**: Offline queue monitors maximum retries (3) before prompting manual retry; persistent failures escalate to support ticket creation.
+- **Dispute Escalation**: When dispute escalated to arbitration, system locks editing and opens two-way chat with compliance agent; timeline shows arbitration deadlines.
+
+## Governance & Security Considerations
+- **Role Permissions**: Business owners can manage staff access; staff accounts limited to job execution modules; logic flow includes invitation acceptance and role assignment.
+- **Audit Trails**: Every update to bids, documents, campaigns logs actor, timestamp, before/after states for regulatory compliance.
+- **Data Privacy**: Sensitive data (IDs, bank details) masked in UI except when explicitly requested via secure reveal pattern requiring biometric/PIN confirmation.
+
+## Implementation Notes for Engineering
+1. **State Machines**: Encode job lifecycle as finite state machine to ensure transitions follow defined paths, preventing skipped states.
+2. **Sync Conflicts**: When simultaneous edits detected (e.g., two devices editing availability), prompt user to merge or override with diff view.
+3. **Push Notifications**: Align Flutter push channels with new categories (Jobs, Marketplace, Compliance) for granular user control.
+4. **Performance Targets**: Aim for <500ms response for kanban updates; apply caching and pagination to inventory endpoints to maintain responsiveness.

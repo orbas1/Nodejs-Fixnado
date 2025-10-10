@@ -83,3 +83,28 @@
 - Desktop web (PWA): Side rail expands to 88px icon rail with subtle gradient background while preserving typography scale.
 
 These styling changes reinforce the professional tone of the provider app while improving clarity, accessibility, and consistency with the broader Fixnado design system.
+
+## State-Specific Specifications
+| Component | Default | Hover/Focus | Disabled | Error |
+| --- | --- | --- | --- | --- |
+| Primary Button | `--color-primary-500` background, white text | Darken to `--color-primary-600`, focus ring 3px | `--color-neutral-300` background, 60% opacity text | N/A |
+| Secondary Button | Transparent with primary border | Fill with `--color-primary-050` | Border shifts to `--color-neutral-200` | Border `--color-danger-500`, text same |
+| Text Input | Neutral-200 border | Border `--color-primary-500`, shadow `0 0 0 2px rgba(28,98,240,0.15)` | Background `--color-neutral-100`, text 60% opacity | Border `--color-danger-500`, helper text red |
+| Card | White background, soft shadow | Elevate to `0 12px 24px rgba(15,23,42,0.12)` | Reduce opacity to 70% | Outline `--color-danger-200` for compliance alerts |
+| Status Chip | Background tinted by status, uppercase text | Increase contrast border, maintain icon | Reduce opacity to 50% | Force text to white, background `--color-danger-500` |
+
+## CSS & Theming Guidance
+- Flutter theme maps to CSS tokens via shared JSON to ensure parity with React web surfaces for cross-platform features.
+- Elevation levels align with Material guidelines but tuned for Fixnado brand; documented as `elevation-0` through `elevation-06` with consistent blur/radius values.
+- Motion durations centralised in constants to prevent drift; accessible transitions (reduced motion) toggled through `MediaQuery.of(context).disableAnimations`.
+
+## Content Styling Enhancements
+- Added structured typography scale for tooltips and helper text, ensuring they remain legible under dark mode by adjusting opacity to 0.72.
+- Notification banners adopt icon + title + description pattern with 16px spacing, ensuring readability and alignment with brand voice.
+- Checklists use bullet toggles with `check_circle` icon; completed items greyed with strikethrough to reinforce completion.
+
+## QA Checklist for Styling Implementation
+1. Validate colour contrast for primary actions against new background gradients (WCAG AA).
+2. Test button and chip states across all job statuses to confirm semantic token mapping.
+3. Review dark mode variants on physical devices for glare and readability.
+4. Ensure iconography exported at 2x/3x densities to avoid blurring on high DPI screens.

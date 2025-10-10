@@ -109,3 +109,26 @@
   - System status API feeds header banner and dedicated status page to inform users of incidents; updates poll every minute.
 
 These logic flow updates ensure the React web app delivers seamless, role-specific experiences backed by real-time data and governance controls.
+
+## Automation, Integrations & Observability
+- **Automation**: Booking confirmation triggers invoice generation, CRM updates, and loyalty accrual jobs; admin approvals send webhook notifications to compliance systems.
+- **External Services**: Geo-zonal explorer integrates with map provider for overlays; fallback static map image provided when API limits reached.
+- **Analytics**: Each funnel step emits analytics events captured via Segment -> warehouse pipeline; dashboards referenced in analytics update docs.
+- **Feature Flags**: New flows (e.g., AI assist, ads manager) gated via LaunchDarkly to allow gradual rollout and rollback.
+
+## Error Handling & Recovery Enhancements
+- **Graceful Degradation**: If websocket unavailable, system falls back to polling for job updates and chat messages with visual indicator.
+- **Form Autosave**: Booking and campaign forms autosave to prevent data loss on navigation or connectivity issues, with restore prompt on return.
+- **Rate Limiting Feedback**: When users hit API rate limits, UI surfaces countdown timer before next attempt.
+- **Global Maintenance Mode**: Admin can trigger read-only mode; UI displays banner and disables modifying actions while still allowing browsing.
+
+## Security & Compliance Notes
+- **PII Handling**: Sensitive fields masked by default; reveal requires re-auth with MFA for admins handling disputes or compliance.
+- **Audit Logging**: All admin and provider changes recorded with diff payloads stored for 2 years per compliance mandate.
+- **Data Residency**: Logic flows ensure uploads route to region-specific storage; cross-region requests blocked with descriptive messaging.
+
+## Implementation Checklist
+1. Implement optimistic updates with rollback for high-frequency actions (kanban moves, chat messages).
+2. Ensure GraphQL/REST clients handle token refresh uniformly across modules.
+3. Validate keyboard navigation order for booking funnel and admin tables to comply with accessibility specs.
+4. Coordinate with DevOps to set monitoring alerts on new websocket channels and automation jobs.

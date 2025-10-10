@@ -76,3 +76,27 @@
 - Widgets incorporate subtle inner glow `inset 0 0 0 1px rgba(255,255,255,0.12)` to delineate surfaces without heavy shadows.
 
 These styling updates deliver a polished consumer experience while aligning with the broader Fixnado brand language introduced in Version 1.00.
+
+## Component State Matrix
+| Component | Default | Focus | Disabled | Error |
+| --- | --- | --- | --- | --- |
+| Primary CTA | Gradient fill, white text, drop shadow | Outline `#80BFFF` 3px, gradient intensifies | Gradient removed, fill `#D1D5DB`, text 60% opacity | Background shifts to danger palette with white text |
+| FAB | Solid primary, elevation level 4 | Expands to show label, elevation level 6 | Hidden when context not applicable | N/A |
+| Input Field | Neutral border, filled background | Border `#0066F5`, glow `rgba(0,102,245,0.18)` | Background `#EEF2FF`, placeholder 60% opacity | Border `#E74C3C`, helper text red with icon |
+| Filter Chip | Outline neutral, text dark | Filled primary 10% tint, icon switches to filled | Outline dashed neutral, text 40% opacity | Outline danger, text dark |
+
+## CSS/Theming Alignment
+- Flutter theme exports tokens via design token pipeline; React web references same JSON ensuring parity for shared assets (e.g., loyalty badge, notification pill).
+- Motion settings centralised to avoid inconsistent animation durations; reduce motion preference toggles cross-fade transitions.
+- Gradients documented with fallback solid colours for devices without gradient support to maintain accessibility.
+
+## Accessibility & Content Updates
+- Added instructions for VoiceOver grouping of booking timeline steps to improve comprehension for screen reader users.
+- Ensured all icons accompanied by text labels, especially within navigation and quick action sheets.
+- Dark mode guidelines emphasise retaining promo banners with accessible contrast while avoiding colour overload.
+
+## QA Checklist
+1. Verify bottom sheet handle contrast in both light and dark themes.
+2. Test booking wizard with dynamic type at 130% to confirm layout resilience.
+3. Validate voice command triggers for search field and quick actions.
+4. Confirm microcopy sync with marketing-approved glossary for loyalty tiers and promotions.
