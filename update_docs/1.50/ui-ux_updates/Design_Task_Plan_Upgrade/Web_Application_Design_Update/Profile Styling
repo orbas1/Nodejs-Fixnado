@@ -1,0 +1,7 @@
+# Profile Styling Specification
+
+- **Colour Palette:** Midnight Blue backgrounds, Teal accents for CTAs, soft grey content cards.
+- **Typography:** IBM Plex Sans Bold for headings, Regular for body, Mono for rates.
+- **Cards:** 12px radius, 8dp elevation, border #E5E9F0.
+- **Buttons:** Primary Teal, Secondary ghost, tertiary text.
+- **Media Treatment:** Hero image height 320px, video overlay with play button, gallery grid 3-up.

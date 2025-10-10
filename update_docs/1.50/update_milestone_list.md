@@ -12,6 +12,7 @@
 - OpenAPI specs and shared env packages published with generated SDKs.
 - React/Flutter clients authenticate against staging APIs with protected routes and secure storage.
 - Architecture decision records signed off by engineering, security, and product leads.
+- Version 1.50 testing plan baseline (testing_plan.md) published with scope, schedule, and ownership mapping to Milestones 1–6.
 **Dependencies:** none (kick-off milestone).
 
 ## Milestone 2 – Zone Intelligence & Booking Orchestration *(Target completion: Week 6)*
@@ -81,6 +82,7 @@
 - CI pipelines green with unit, integration, E2E, and mobile test coverage meeting KPIs.
 - Observability dashboards (logs, metrics, tracing) live with alert thresholds approved.
 - Go-live checklist signed off, including DR drills, beta feedback resolution, and release notes.
+- Testing_plan.md fully executed with status dashboards showing ≥95% completion across planned suites and audits.
 - End-of-update report delivered with KPI tracking, risk assessment, and follow-up backlog.
 **Dependencies:** Milestones 1–5.
 
