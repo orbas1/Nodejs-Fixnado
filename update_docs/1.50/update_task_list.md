@@ -226,3 +226,25 @@
 - Tasks 1–8 (relies on backend stability, feature completion, and QA frameworks).
 
 ---
+
+## Task 10 – Design System Convergence & Handoff *(0% complete)*
+**Goal:** Execute the dedicated design workstream that unifies mobile and web experiences, delivering artefacts required for engineering and release enablement.
+
+### Subtasks
+1. Consolidate experience architecture by auditing existing flows, producing updated IA diagrams, and aligning persona journeys.
+2. Finalise visual system by harmonising colour/typography tokens, spacing, and component specs with exportable assets.
+3. Build interactive prototypes for core journeys (booking, campaign setup, compliance, rentals) and source dummy data/imagery libraries.
+4. Conduct usability and accessibility testing, capturing remediation actions and iterating prototypes accordingly.
+5. Facilitate engineering handoff with redlines, Storybook/Tailwind references, Flutter specs, and recorded walkthroughs.
+6. Run design QA across staging builds, log defects, and prepare release communications (tours, webinars, notes) with marketing.
+
+### Integration Coverage
+- **Backend:** Provide API mocks/dummy data for prototypes and ensure analytics/compliance data availability.
+- **Front-end:** Consume updated tokens, components, and motion guidance across React and Blade implementations.
+- **User phone app:** Apply refreshed tokens, imagery, and flows to Flutter widgets with accessibility validation.
+- **Provider phone app:** Mirror design updates for provider-specific dashboards, inventory management, and compliance flows.
+- **Design:** Maintain Figma libraries, token repositories, research reports, and QA checklists.
+- **Product/Marketing:** Coordinate release communications, webinars, and adoption campaigns using new assets.
+
+### Dependencies
+- Tasks 1–9 for functional readiness; runs in parallel with engineering milestones to ensure UI maturity.

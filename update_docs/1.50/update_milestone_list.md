@@ -86,3 +86,18 @@
 - End-of-update report delivered with KPI tracking, risk assessment, and follow-up backlog.
 **Dependencies:** Milestones 1–5.
 
+## Milestone 7 – Design System Convergence *(Target completion: Weeks 1–4 parallel)*
+**Scope:** Dedicated design workstream spanning the mobile and web Application Design Update Plans.
+**Objectives:**
+- Align experience architecture, navigation frameworks, and flow diagrams across personas (Week 1).
+- Finalise colour/typography tokens, component specs, and annotated hi-fi mocks (Week 2).
+- Validate prototypes through usability testing and accessibility audits, actioning findings (Week 3).
+- Support engineering implementation with design QA and release enablement assets (Week 4).
+**Entry Criteria:** Foundational artefacts from Application and Web Design Update Plans catalogued in the design repository.
+**Exit Criteria:**
+- Approved IA maps, sitemaps, and cross-platform flow diagrams published.
+- Exported design tokens and annotated mocks available for engineering consumption.
+- Usability and accessibility reports completed with remediation tracked to closure.
+- Design QA checklist signed off with release communications (tours, webinars, notes) prepared.
+**Dependencies:** Milestone 1 (security foundations); runs concurrently with Milestones 2–6 to ensure UI readiness.
+

@@ -22,6 +22,17 @@ Version 1.50 will transform Fixnado into an AI-augmented, hyper-local service ma
 
 Each task contains 4–6 subtasks with integration coverage for Backend, Front-end, User phone app, Provider phone app, Database, API, Logic, and Design.
 
+## Design Workstream Integration
+The **Design System Convergence & Handoff** track (see `Design_Change_log.md`, `Design Plan.md`, and supporting task lists) runs in parallel with engineering tasks to ensure UI/UX readiness.
+
+- **Scope Alignment:** Experience architecture, navigation frameworks, and flow diagrams consolidate artefacts from the Application and Web Design Update Plans to maintain persona-aligned journeys.
+- **Visual System Delivery:** Harmonised colour/typography tokens, component specs, and imagery libraries are exported for React, Blade, and Flutter teams, ensuring dark mode and reduced-motion support.
+- **Prototype Validation:** Interactive prototypes cover booking, campaign setup, compliance, and rental flows. Moderated usability sessions and WCAG 2.1 AA audits drive iteration before engineering handoff.
+- **Implementation Support:** Design QA, Storybook/Tailwind references, Flutter specs, and release communications (tours, webinars, notes) accompany engineering build-out.
+- **Success Metrics:** Target +18% booking conversion, +12% ads CTR, -25% compliance overdue rate, -30% dispute resolution time, ≥80% campaign wizard adoption, and ≥70% comparison tray usage.
+
+Milestone tracking for this workstream is captured in `Design_update_milestone_list.md`, with progress reflected in `Design_update_progress_tracker.md` and mirrored in the global tracker below.
+
 ---
 
 ### Task 1 – Platform Architecture & Security Foundations *(10% complete)*
