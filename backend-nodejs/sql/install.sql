@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS fixnado CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'fixnado_user'@'%' IDENTIFIED BY 'change_me';
+GRANT ALL PRIVILEGES ON fixnado.* TO 'fixnado_user'@'%';
+FLUSH PRIVILEGES;
