@@ -1,63 +1,81 @@
 # Version 1.00 – New Feature Brief
 
 ## Purpose
-Version 1.00 is focused on transforming Fixnado into a fully-fledged services and marketplace ecosystem covering on-demand bookings, managed inventory, advertising, and compliance-driven provider vetting. This brief captures the problem statements, the desired outcomes, and the rationale for each high-priority capability so that engineering, design, QA, and compliance teams can align on a single delivery narrative.
+Version 1.00 is our largest evolution of Fixnado to date. The release positions the platform as an orchestrated marketplace for jobs, rentals, and advertising across web and Flutter applications. This brief explains *what* we are building, *why* each capability matters, and *how* the combined programme unlocks value for users, providers, operations, and regulators. It serves as a single alignment document for product, engineering, compliance, design, QA, revenue, and customer success teams.
+
+## Problem Statements & Opportunities
+- **Fragmented Discovery & Matching**: Users cannot reliably discover servicemen by location or compliance status. We must deliver polygon-based zone intelligence, AI-assisted matching, and explorer search to ensure every booking is routed to the right, insured professional.
+- **Incomplete Job Lifecycle**: Bookings stop at simple assignments. Customers demand on-demand vs scheduled options, custom job bidding, negotiation, and dispute handling. Servicemen need multi-member coordination and rich communication channels (chat, video, phone).
+- **Marketplace & Inventory Gaps**: Providers cannot monetise tool rentals or manage stock. A combined sales & rental marketplace with inventory tracking and insured-seller controls will diversify revenue and deepen engagement.
+- **Compliance & Governance Pressure**: UK insurance, DBS, GDPR, and ID verification processes are manual. Admin teams require unified panels, audit trails, commission controls, and automated document expiry management to stay regulator-ready.
+- **Monetisation & Analytics Needs**: Fixnado and Finova Ads must support PPC, PPCnv, PPI, timed campaigns, targeting, and budgeting. We need analytics and dashboards covering services, bookings, disputes, ads, inventory, and compliance metrics for data-driven optimisation.
 
 ## Strategic Goals
-1. **Unify Service Supply & Demand** – Introduce sophisticated provider-to-client matching, zonal discovery, and booking flows that operate across web and Flutter apps for users, servicemen, SMEs, and enterprise customers.
-2. **Enable Monetisation & Growth** – Support multi-tier service offerings, marketplace commerce, Fixnado/Finova ad products, and commission management while keeping revenue operations auditable.
-3. **Guarantee Trust & Compliance** – Enforce UK-specific insurance, DBS, GDPR, and ID validation workflows with dispute resolution, document management, and secure communications.
-4. **Operational Excellence** – Deliver analytics, admin visibility, and structured inventory/rental oversight so operations teams can monitor performance and scale with confidence.
+1. **Unify Service Supply & Demand** – Introduce zonal discovery, explorer search, custom jobs, and multi-party bookings across all web and Flutter experiences (Servicemen, Users, Provider/SME, Enterprise).
+2. **Empower Providers & Teams** – Deliver multi-serviceman collaboration, rich business fronts, marketplace storefronts, AI-enabled chat, and tool rental workflows.
+3. **Guarantee Trust & Compliance** – Enforce UK-specific insurance/DBS/ID verification, dispute management, and GDPR-ready communications (chat, Agora calls, phone bridges).
+4. **Optimise Revenue Streams** – Launch Fixnado & Finova Ads, commission management, multi-tax/multi-currency billing, and rental/service package up-sells.
+5. **Operational Excellence** – Provide analytics, admin/squad panels, observability, and inventory oversight so that operations, finance, and compliance can scale confidently.
 
-## Feature Overview
-| Theme | Capabilities | Target Outcomes |
+## Feature Pillars & Highlights
+| Pillar | Capabilities | Target Outcomes |
 | --- | --- | --- |
-| **Geo-Zonal Intelligence** | Zone creation, polygon-based service areas, zonal service catalogues, multi-zone offerings, location-aware matching | Accurate provider suggestions, reduced travel time, intelligent surge planning |
-| **Service Acquisition** | On-demand & scheduled bookings, multi-serviceman assignments, custom job creation, bidding, queries, comments, acceptance/rejection flows | Increased job conversion, transparency for clients, equitable work distribution |
-| **Marketplace & Inventory** | Tool rentals and sales, inventory tracking, service package management, marketplace matching for insured sellers only | Diversified revenue, audited stock levels, reduced fraud |
-| **Provider & Client Experience** | Rich profile pages (avatars, banners, media, reviews, showcases, social links), business fronts, explorer page, chat (incl. AI responses via OpenAI/Claude APIs), video & phone calls via Agora | Enhanced engagement, trust, and multi-channel communication |
-| **Governance & Security** | Commission configuration, admin/servicemen/provider/enterprise panels, user management, dispute workflows, insurance & document verification, GDPR compliance | Controlled operations, regulatory adherence, documented audit trails |
-| **Global Reach & Finance** | Multi-tax, multi-currency, multi-language support, Fixnado & Finova ad stacks with targeting and budgeting tools | Localised experiences, scalable marketing, monetisation flexibility |
-| **Insights & Oversight** | Analytics dashboards, booking funnels, inventory metrics, ad performance reporting | Data-driven decision making, optimisation of service and ad spend |
+| **Geo-Zonal Intelligence** | Polygon zone creation, zone area management, zone-based discovery, multi-zone services & packages, zone analytics | Accurate provider matching, reduced travel time, smart surge planning |
+| **Service Acquisition & Lifecycle** | On-demand vs booked flows, custom job profiles (description, budget, attachments, zones), bidding/queries/comments, acceptance & rejection, dispute entry points, booking funnels | Transparent workflows, faster conversion, auditable history |
+| **Provider & Marketplace Experience** | Business fronts with banners/video/galleries, servicemen profiles with avatars & certifications, service packages/custom offers, marketplace rentals & sales, inventory check-in/out | Rich brand presence, diversified revenue, better provider retention |
+| **Communications & Collaboration** | Chat with provider-managed AI keys (OpenAI/Claude), Agora video & phone calling, notification routing, dispute messaging, comment threads | Faster resolution, compliant communications, better CSAT |
+| **Governance & Compliance** | Admin/Servicemen/Provider/SME/Enterprise panels, ID/insurance/DBS verification, commission engine, document repository, security hardening, GDPR tooling | Regulatory readiness, controlled access, reduced manual effort |
+| **Monetisation & Ads** | Fixnado Ads inventory, Finova Ads campaign manager (PPC, PPConversion, PPI, timed), targeting, budgets, reports | Trackable marketing ROI, new revenue channels |
+| **Internationalisation & Finance** | Multi-tax, multi-currency, multi-language, UK compliance baselines, marketplace matching for insured sellers, payment localisation | Global-ready operations with UK-first compliance |
+| **Analytics & Insight** | Booking funnels, zone heatmaps, inventory turnover, ad performance, dispute metrics, SLA dashboards | Data-driven decisions, proactive interventions |
 
-## Personas & Journeys Affected
-- **Consumers**: Discover services via explorer & zonal search, evaluate providers through rich profiles, create custom jobs, rent tools, and manage bookings.
-- **Servicemen**: Receive zonal job leads, manage availability, join teams for large jobs, respond via AI-assisted chat, and showcase portfolios.
-- **SME Providers & Enterprises**: Operate storefront-style business fronts, coordinate multiple servicemen, manage inventory, and launch Finova ad campaigns.
-- **Administrators**: Configure commissions, enforce compliance, monitor disputes, manage user roles, and access granular analytics.
+## Personas & Key Journeys
+- **Consumers**: Discover services & rentals via explorer, filter by zone or compliance badges, request custom jobs, join chat/video, manage bookings, view analytics-driven recommendations.
+- **Servicemen**: Receive zone-based job leads, join multi-person assignments, configure AI chat assistance, upload documents, manage availability, view commissions, and respond to disputes.
+- **Providers & SMEs**: Configure business fronts, manage servicemen teams, maintain inventory, launch service packages, handle bids, monitor ads, and enforce compliance across staff.
+- **Enterprises**: Coordinate multi-zone jobs, integrate into panels with custom analytics, manage SLA commitments, and use Finova Ads for co-marketing.
+- **Administrators & Compliance Officers**: Operate from an expanded admin panel covering user management, commission policies, verification workflows, dispute arbitration, analytics, and GDPR tooling.
 
 ## Success Metrics
-- ≥85% of bookings auto-matched to providers within correct zones.
-- <5% compliance document expiry at any given time through proactive alerts.
-- ≥30% adoption rate of marketplace rentals in pilot regions.
-- ≥50% of provider conversations utilising AI-assisted replies when API keys configured.
-- ≥95% uptime across communication touchpoints (chat, Agora calls).
+- ≥85% of bookings auto-matched within correct zones and compliance requirements.
+- ≥70% of custom jobs progressing from bid to acceptance with complete audit history.
+- <5% compliance document expiry at any time due to automated reminders and panel alerts.
+- ≥30% adoption of marketplace rentals or tool sales among pilot providers within 90 days.
+- ≥50% of provider chats leveraging AI-assisted replies when keys are configured.
+- ≥95% uptime across chat, Agora video/phone, and notification systems during hypercare.
+- Double-digit lift in ad revenue quarter-over-quarter post-launch (Fixnado + Finova combined).
 
-## Constraints & Dependencies
-- All data handling must remain GDPR compliant with clear consent and audit logging.
-- Agora integration requires native support in Flutter apps and web clients with fallback to phone call bridging.
-- AI chat responses must respect rate limits and key management policies per provider.
-- Multi-currency and tax logic must integrate with existing billing infrastructure and HMRC reporting expectations.
-- Marketplace operations must restrict listings to insured sellers by default, verified through the ID/document workflow.
+## Dependencies & Constraints
+- **Technical**: Requires geo-indexing (PostGIS or equivalent), secure vaulting for API keys, Agora SDK integration across web and Flutter, scalable chat infrastructure, and data warehouse updates for analytics.
+- **Regulatory**: Must maintain GDPR consent tracking, implement UK DBS & insurance validation, and enforce insured-only marketplace listings.
+- **Operational**: New support playbooks for disputes, rentals, ads, and compliance. Training required for multi-panel operations.
+- **Financial**: Multi-currency FX feeds, multi-tax computation, commission settlement processes aligned with HMRC expectations.
 
-## Risks & Mitigations
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Incorrect zonal boundaries leading to mismatched bookings | Customer dissatisfaction, increased cancellations | Provide geo-fencing QA tools, allow admins to simulate coverage before publishing |
-| AI-generated chat content violating policy | Legal & reputational | Implement prompt guidelines, moderation hooks, and opt-in consent for providers |
-| Inventory inaccuracies | Lost revenue, double-bookings | Implement periodic stock reconciliations, check-in/out confirmations, and device scanning (future enhancement) |
-| Non-compliance with UK regulations | Fines, operational shutdown | Embed compliance checkpoints during onboarding, automatic reminders before document expiry |
-| Complex booking flows overwhelming users | Abandonment | Design UX prototypes with user testing, progressive disclosure of advanced options |
+## Risk Analysis & Mitigations
+| Risk | Impact | Likelihood | Mitigation |
+| --- | --- | --- | --- |
+| Incorrect zone polygons leading to mismatched bookings | High cancellation rate | Medium | Provide zone simulation tools, QA geo-fencing, allow staged rollout per region |
+| AI-generated content violating policy or user expectations | Legal/reputational | Medium | Implement prompt guidelines, moderation hooks, opt-in consent, and provider-level throttling |
+| Inventory inaccuracies causing rental disputes | Financial loss | Medium | Enforce check-in/out confirmations, photo evidence, reconciliations, integration with barcode/QR scanning |
+| Document verification backlog | Compliance risk | Medium | Staff compliance queue, automate reminders, prioritise expiring docs in dashboards |
+| Complex booking flow overwhelming users | Conversion drop | Low/Medium | Prototype with UX testing, progressive disclosure, contextual help, mobile-first design |
+| Agora service outage | Communication blackout | Low | Provide PSTN fallback, notify users, maintain redundant provider |
 
 ## Deliverables
-- Updated schemas and APIs for zones, bookings, inventory, ads, and compliance artifacts.
-- Admin and provider panel modules with role-based access control for new capabilities.
-- Flutter app updates covering servicemen, user, provider, and enterprise variants.
-- Documentation updates (user guides, compliance SOPs) and training for operations/support teams.
+- Updated backend services & schemas for zones, bookings, inventory, documents, ads, analytics, and security auditing.
+- Frontend web modules for explorer, marketplace, panels, chat/calls, analytics, and banners.
+- Flutter app parity across Servicemen, User, Provider, and Enterprise applications, including voice/video and multilingual support.
+- Admin, Servicemen, Provider/SME, and Enterprise panel enhancements with role-based access control and analytics widgets.
+- Documentation (API specs, SOPs, compliance guides, support playbooks) and training curriculum for internal teams.
+- Observability artefacts (dashboards, alerts) and compliance evidence packs for UK regulators.
+
+## Out of Scope (for Version 1.00)
+- Automated hardware integration (IoT sensors for tools) – slated for later release.
+- Third-party marketplace aggregation beyond Fixnado-operated listings.
+- AI auto-pricing for bids (manual controls only in 1.00).
 
 ## Alignment & Next Steps
-- Validate scoping with product, legal, and marketing stakeholders.
-- Finalise resource allocation for backend, frontend, mobile, and QA squads.
-- Lock requirements in JIRA/Linear with traceability to this brief.
-- Transition to the detailed update plan in `features_update_plan.md` for execution sequencing.
-
+1. Review this brief with product, legal, compliance, marketing, and operations leadership.
+2. Approve resource plan and sequencing, then formalise epics/stories in the tracker with traceability to this document.
+3. Transition to the detailed execution blueprint in `features_update_plan.md` for planning, and maintain status in the update progress tracker.
+4. Begin cross-functional kick-off and discovery workshops per feature pillar.

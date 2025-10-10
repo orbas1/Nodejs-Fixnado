@@ -1,69 +1,190 @@
 # Version 1.00 – Features Update Plan
 
-## 1. Planning & Governance
-- **Stakeholder Alignment**: Conduct kick-off with product, engineering, compliance, marketing, and customer ops to review feature scope and success metrics.
-- **Roadmap Definition**: Break the program into themed epics (Geo-Zonal, Service Acquisition, Marketplace & Inventory, Compliance & Trust, Communications, Monetisation, Analytics).
-- **Resourcing**: Assign squad leads (Backend, Frontend Web, Flutter Apps, Infrastructure, QA, Data) with capacity plans and contingency buffers.
-- **Requirements Traceability**: Capture detailed user stories and acceptance criteria in the project tracker. Link every story to regulatory requirements (GDPR, UK compliance) where applicable.
-- **Risk Register**: Maintain a living register with severity, mitigation owners, and review cadence.
+> **Scope Reminder**: Version 1.00 combines geo-zonal intelligence, advanced booking flows, marketplace & inventory, monetisation, compliance, analytics, and multi-app delivery across web and four Flutter apps. This plan outlines end-to-end execution across discovery, design, implementation, testing, launch, and post-launch governance.
 
-## 2. Architecture & Technical Design
-- **System Blueprint**: Update architecture diagrams to include new microservices or modules for zones, bookings, inventory, ads, and compliance vaults.
-- **Data Modeling**: Finalise schema changes for zones (polygons), bookings (multi-serviceman assignments), marketplace products, inventory transactions, documents, and ad campaigns.
-- **Integration Contracts**: Define API contracts for Agora, AI chat integrations (OpenAI/Claude), payment gateways (multi-currency), and ad reporting interfaces.
-- **Security & Compliance Design**: Extend role-based access control (RBAC) for new panels, implement audit logging strategies, and define data retention policies.
-- **Performance & Scalability**: Forecast load for chat, video calls, and explorer search. Plan caching, indexing, and asynchronous processing as needed.
+## 1. Programme Mobilisation & Governance
+1. **Executive Kick-off (Week 0)**
+   - Confirm feature objectives, budget, and target launch window.
+   - Ratify KPIs (matching accuracy, adoption metrics, compliance SLAs, ad revenue targets).
+2. **Operating Model**
+   - Create cross-functional squads aligned to pillars: Geo-Zone, Booking Lifecycle, Marketplace & Inventory, Communications, Compliance & Governance, Monetisation & Ads, Analytics, Internationalisation.
+   - Assign squad leads, delivery managers, QA owners, and compliance champions.
+3. **Planning Artefacts**
+   - Build programme roadmap with phased milestones (Alpha, Beta, GA) and gate reviews.
+   - Establish RACI matrix covering product, engineering, design, QA, legal, ops, finance.
+   - Configure project tracker (JIRA/Linear) with epic/story hierarchy mapped to requirement IDs.
+4. **Risk & Dependency Management**
+   - Stand up risk register with weekly review cadence.
+   - Document external dependencies (Agora contracts, AI provider agreements, FX feeds, identity verification vendors) and assign owners.
+5. **Communication Plan**
+   - Publish weekly status digest, bi-weekly steering committee, and ad-hoc incident protocol.
 
-## 3. Backend Implementation
-- **Geo-Zone Service**: Build APIs for polygon zone CRUD, zone assignment to services, and zone-based provider matching logic.
-- **Booking Orchestrator**: Implement flows for on-demand vs scheduled bookings, multi-serviceman coordination, custom job lifecycle (creation → bidding → acceptance → completion) including comments and queries.
-- **Marketplace & Inventory**: Create services for tool rental/sales listings, availability tracking, inventory audits, and insured-seller validation.
-- **Compliance & Identity**: Develop document submission, verification workflows (insurance, DBS, ID), expiry notifications, and UK compliance reporting endpoints.
-- **Financial Layer**: Implement commission structures, multi-tax/multi-currency calculations, and revenue sharing reports.
-- **Communication Services**: Integrate AI chat providers with rate limiting, transcript logging, and fallback. Add Agora session orchestration for video/phone calls.
-- **Analytics Pipeline**: Extend event tracking, aggregate booking funnels, ad performance, inventory turnover metrics, and export capabilities for the admin panel.
+## 2. Discovery & Solution Design
+1. **User & Market Research Refresh**
+   - Conduct interviews with consumers, servicemen, SMEs, and enterprises to validate feature expectations.
+   - Review competitor landscape (UK service marketplaces) for compliance handling and monetisation tactics.
+2. **Process Mapping Workshops**
+   - Document end-to-end flows: zone creation, booking funnel (on-demand/booked), custom jobs & bidding, rentals & sales, dispute escalation, commission settlement, ads campaign management.
+   - Identify control points for GDPR consent, insurance/DBS verification, and marketplace eligibility.
+3. **Experience Design**
+   - Produce UX flows and high-fidelity designs for web and Flutter apps (all personas) covering explorer, profiles, panels, chat, video calling, inventory, and analytics dashboards.
+   - Define accessibility compliance requirements (WCAG 2.1 AA) and localisation rules.
+4. **Technical Architecture**
+   - Update architecture diagrams showing services (Zones Service, Booking Orchestrator, Marketplace Engine, Compliance Vault, Ads Manager, Analytics Pipeline).
+   - Design data schemas, message queues, caching strategy, and observability instrumentation.
+   - Define integration contracts for Agora, AI providers (OpenAI/Claude), payment gateways, FX/tax providers, document verification partners.
+5. **Security & Compliance Design Review**
+   - Align with InfoSec on RBAC changes, MFA, session management, audit logging.
+   - Produce Data Protection Impact Assessment (DPIA) updates for new data flows.
 
-## 4. Frontend Web (React) Delivery
-- **Explorer & Search**: Build global explorer page with filters (zones, categories, packages, rentals). Visualise zone coverage on maps.
-- **Marketplace UI**: Implement rental/sales catalogue, inventory status indicators, and insured seller badges.
-- **Booking Flows**: Deliver guided booking funnel for on-demand and scheduled services, including custom job creation, bid management, and acceptance screens.
-- **Profile & Business Fronts**: Craft dynamic layouts for servicemen profiles and provider business fronts (banner, video, galleries, reviews, social links).
-- **Panels & Dashboards**: Expand admin, servicemen, provider, and enterprise panels with relevant modules (compliance queue, commission settings, analytics, Finova ad manager).
-- **Chat & Calls**: Embed chat widgets with AI assist toggles and launch Agora sessions for video/voice calls.
-- **Security UX**: Implement MFA prompts, consent modals for GDPR, and secure document upload flows.
+## 3. Backend Engineering Plan
+1. **Foundational Setup**
+   - Create feature branches, update coding standards, configure database migrations, and set up PostGIS/geo-indexing.
+2. **Geo-Zonal Services**
+   - Implement APIs: `POST/PUT/DELETE /zones`, `POST /zones/{id}/services`, `GET /zones/analytics`.
+   - Add zone validation utilities (polygon snapping, overlap detection) and admin simulation endpoints.
+3. **Booking & Custom Job Engine**
+   - Extend booking schema for on-demand flag, scheduling, and multi-serviceman assignments.
+   - Build workflow engine for custom jobs: creation, bidding, comment threads, acceptance/rejection, dispute triggers.
+   - Integrate commission engine and tax/multi-currency calculations into booking lifecycle.
+4. **Marketplace & Inventory**
+   - Develop services for inventory ledger, rental agreements, marketplace listings (rent/sell), insured seller enforcement.
+   - Provide APIs for rentals linked to bookings and stand-alone rentals, deposit handling, and return inspections.
+5. **Communications Layer**
+   - Integrate chat service with AI plug-ins (per-provider API keys, moderation hooks, logging) and message persistence.
+   - Build Agora session management, PSTN fallback, and session tokens for web + mobile.
+6. **Compliance & Governance**
+   - Implement document submission pipeline with status transitions, automated expiry alerts, and reviewer queues.
+   - Extend RBAC, audit logging, anomaly detection, and GDPR tooling (consent capture, export/delete endpoints).
+7. **Ads & Monetisation**
+   - Create Fixnado/Finova campaign manager service: campaign CRUD, targeting rules, budgets/pacing, billing.
+   - Hook into analytics pipeline for attribution and billing reconciliation.
+8. **Analytics & Reporting**
+   - Expand event stream to capture bookings, bids, rentals, disputes, ad interactions.
+   - Implement aggregation jobs for dashboards (zone heatmaps, serviceman productivity, inventory turnover, ad ROI).
+9. **Testing & Code Quality**
+   - Enforce unit/integration tests per module, contract tests for external APIs, and linting/security scans.
 
-## 5. Flutter Apps Delivery
-- **App Alignment**: Ensure parity of new features across Servicemen, User, Provider, and Enterprise apps.
-- **Geo & Booking Features**: Integrate map-based zone discovery, booking creation, job bidding, and availability management.
-- **Marketplace & Inventory**: Enable tool rental requests, stock visibility, and in-app checkout/hand-off processes.
-- **Communication Features**: Add chat with AI assist, Agora video/voice modules, and notification routing.
-- **Panels & Dashboards**: Provide mobile-friendly panels with role-specific modules (job queue, compliance alerts, commission summaries).
-- **Internationalisation**: Implement multi-language strings, currency selectors, and regional tax display.
+## 4. Frontend Web (React) Execution
+1. **Infrastructure**
+   - Upgrade routing/state management as required, ensure map libraries and Agora SDK are configured, set up localisation framework.
+2. **Explorer & Zone Visualisation**
+   - Build global explorer with search filters (zones, categories, packages, rentals, compliance status) and map overlays for polygons.
+3. **Booking Experience**
+   - Deliver multi-step booking wizard with on-demand/scheduled toggle, serviceman selection, custom job creation, bid review, acceptance, and dispute initiation.
+4. **Marketplace & Inventory UI**
+   - Create listings pages for rentals/sales, provider storefront management tools, inventory dashboards, insured badges, rental lifecycle screens.
+5. **Profiles & Business Fronts**
+   - Implement dynamic profile layouts: banners, videos, galleries, reviews, social links, past projects, service packages.
+6. **Panels & Governance Interfaces**
+   - Expand admin, servicemen, provider/SME, and enterprise panels with modules: compliance queue, commission management, analytics, ad campaign manager, security controls.
+7. **Communications Components**
+   - Embed chat with AI toggle, show token usage warnings, integrate Agora video/phone launcher, notifications centre, dispute threads.
+8. **Internationalisation & Compliance UX**
+   - Provide multi-language toggle, currency display, tax breakdowns, consent modals, MFA prompts, secure document uploads.
+9. **Testing**
+   - Implement component tests, Cypress/Playwright E2E flows, accessibility audits, performance budget checks.
 
-## 6. Infrastructure & DevOps
-- **Environment Setup**: Provision staging environments mirroring production integrations (Agora, AI providers, payment processors).
-- **API Key Management**: Securely store provider-specific AI keys using vault services with rotation policies.
-- **CI/CD Pipeline**: Update pipelines to include new test suites (API, mobile, frontend) and compliance checks.
-- **Observability**: Enhance logging, distributed tracing, and alerting for new services (zones, marketplace, ads, communications).
-- **Data Protection**: Implement encryption at rest for document storage, data anonymisation for analytics, and GDPR-compliant data lifecycle management.
-- **Scalability Planning**: Configure auto-scaling policies for chat, calling, and explorer search workloads.
+## 5. Flutter Apps Delivery (Servicemen, User, Provider, Enterprise)
+1. **Framework Alignment**
+   - Upgrade Flutter dependencies, ensure Agora SDK integration, configure localisation (ARB files) and theming updates.
+2. **Geo & Explorer Modules**
+   - Implement zone-based discovery and explorer search with maps, filters, and zone-based recommendations.
+3. **Booking & Job Management**
+   - Provide booking wizard, job timeline, bid submission, comment threads, acceptance/rejection flows, availability scheduling, multi-serviceman coordination.
+4. **Marketplace & Inventory**
+   - Enable browsing and managing rentals/sales, inventory adjustments, rental check-in/out, deposit handling, tool availability alerts.
+5. **Profile & Business Fronts**
+   - Support media uploads (banners, avatars, videos), business front editing, showcase of past projects and reviews.
+6. **Communication & Collaboration**
+   - Integrate chat with AI assist toggle, Agora video/voice calling, phone call fallback, push notifications, dispute messaging.
+7. **Panels & Dashboards**
+   - Provide role-specific dashboards (compliance alerts, commission summaries, ad campaign stats, analytics widgets).
+8. **Security & Compliance UX**
+   - Add MFA flows, document upload & verification states, consent prompts, GDPR data request entry point.
+9. **Testing**
+   - Unit/widget tests, integration tests, device farm E2E (Android/iOS), performance profiling, localisation verification.
 
-## 7. Quality Assurance & Testing
-- **Test Strategy**: Define unit, integration, E2E, performance, and security test plans per feature group.
-- **Automation**: Expand automated regression suites for booking flows, marketplace transactions, compliance submissions, and ad campaign management.
-- **Load & Resilience**: Conduct load testing for real-time communications and explorer search; perform chaos drills on critical services.
-- **Compliance Validation**: Run GDPR and UK compliance audits, including data subject request rehearsal and HMRC reporting simulations.
-- **User Acceptance Testing**: Coordinate with pilot providers and internal teams to validate custom job workflows, AI chat behaviour, and zone accuracy.
+## 6. Data, Analytics & Reporting
+1. **Data Warehouse Enhancements**
+   - Extend schemas for zones, bookings, custom jobs, inventory, ads, disputes, compliance documents, communication metrics.
+2. **ETL/ELT Pipelines**
+   - Update ingestion jobs, ensure near-real-time feeds for dashboards, handle GDPR-compliant data retention.
+3. **Analytics Products**
+   - Build dashboards per persona (Admin, Provider, Serviceman, Enterprise) featuring KPIs, alerts, and drill-downs.
+4. **Alerting & Monitoring**
+   - Configure threshold-based alerts (low stock, expiring documents, high dispute rate, ad overspend, zone gaps).
+5. **Data Governance**
+   - Maintain metric catalogue, data dictionary, consent tracking, audit logs, anonymisation scripts.
 
-## 8. Documentation & Training
-- **Knowledge Base**: Update internal and external documentation covering new features, APIs, and SOPs.
-- **Training Sessions**: Run workshops for support, operations, and compliance teams on new panels and workflows.
-- **Release Notes**: Prepare customer-facing changelog and internal deployment checklist.
-- **Support Playbooks**: Draft troubleshooting guides for Agora calls, AI chat integration, marketplace disputes, and compliance escalations.
+## 7. Infrastructure, Security & DevOps
+1. **Environment Provisioning**
+   - Set up dev/stage/pre-prod environments with feature toggles, seeded data, and integration keys (Agora sandbox, AI test keys, payment sandbox, verification sandbox).
+2. **CI/CD Enhancements**
+   - Add pipelines for backend microservices, React app, Flutter apps, infrastructure-as-code updates, automated testing gates, security scans, and compliance checks.
+3. **Secrets & Key Management**
+   - Implement vault rotation for AI provider keys, Agora secrets, payment tokens, encryption keys.
+4. **Observability**
+   - Expand logging, metrics, tracing for new services; create Grafana/Datadog dashboards; configure on-call alerts.
+5. **Security Hardening**
+   - Apply MFA enforcement, session management, anomaly detection, penetration testing, vulnerability scanning.
+6. **Scalability Planning**
+   - Configure auto-scaling policies, caching layers, queue backpressure handling for chat/video/analytics workloads.
 
-## 9. Launch & Post-Launch
-- **Staged Rollout**: Deploy to beta cohorts, monitor KPIs, and expand gradually.
-- **Monitoring & Feedback**: Track analytics dashboards, collect NPS/CSAT, and open feedback loops via in-app prompts.
-- **Hypercare**: Establish a 2-week hypercare period with on-call rotations for critical squads.
-- **Iterative Improvements**: Log post-launch enhancement backlog, focusing on automation, predictive insights, and partner integrations.
+## 8. Quality Assurance Strategy
+1. **Test Planning**
+   - Create master test plan covering functional, integration, E2E, performance, security, accessibility, localisation, compliance validation.
+2. **Automation Coverage**
+   - Backend API tests (Postman/Newman), contract tests, queue/event validation.
+   - Frontend E2E (Cypress/Playwright), visual regression for UI components.
+   - Flutter integration tests executed on CI device farms.
+3. **Performance & Resilience Testing**
+   - Load test chat, Agora sessions, explorer search, ad campaign dashboards.
+   - Conduct chaos engineering drills on core services (booking, payments, chat).
+4. **Compliance Verification**
+   - Execute GDPR DPIA validation, UK compliance walkthrough, document verification audit, HMRC reporting simulation.
+5. **User Acceptance Testing (UAT)**
+   - Run scenario-based UAT with pilot providers, servicemen, enterprise partners; capture feedback loops.
+6. **Bug Triage & Release Gates**
+   - Daily defect triage meetings, severity prioritisation, exit criteria per milestone (Alpha, Beta, GA).
 
+## 9. Training, Documentation & Change Management
+1. **Documentation Pack**
+   - Update API references, architecture docs, SOPs for compliance/ops, user guides for panels and apps.
+2. **Training Sessions**
+   - Deliver workshops for support agents, compliance officers, provider onboarding specialists, ad ops teams, and internal QA.
+3. **Go-Live Playbooks**
+   - Prepare incident response guides, escalation matrix, communication templates for customers and partners.
+4. **Marketing & Communication**
+   - Coordinate launch messaging, release notes, knowledge base articles, in-app announcements, and Finova Ads promotional campaigns.
+
+## 10. Launch Readiness & Deployment
+1. **Beta Release**
+   - Deploy to closed beta (selected zones/providers). Monitor KPIs, gather telemetry, conduct feedback sessions.
+2. **Operational Readiness Review**
+   - Verify support coverage, on-call rotations, compliance staffing, ad operations readiness.
+3. **Go/No-Go Checklist**
+   - Confirm testing sign-off, security approvals, data migration success, training completion, documentation readiness.
+4. **Staged Rollout**
+   - Gradually enable zones/regions, monitor system health, adjust feature flags.
+5. **Hypercare**
+   - Two-week hypercare with daily standups, rapid bug fix pipeline, dedicated analytics tracking.
+
+## 11. Post-Launch Optimisation
+1. **Performance Monitoring**
+   - Track KPIs, error budgets, adoption metrics, SLA compliance, ad spend efficiency.
+2. **Feedback Backlog**
+   - Collect feedback from support tickets, NPS/CSAT, analytics insights, and create prioritised backlog for 1.01+.
+3. **Continuous Compliance**
+   - Schedule periodic audits, document retention reviews, penetration testing, GDPR data subject request drills.
+4. **Revenue & Growth Experiments**
+   - Iterate on Finova targeting strategies, run A/B tests on explorer layout, evaluate subscription or premium placement models.
+5. **Retrospective**
+   - Conduct cross-squad retrospective, document lessons learned, refine processes for future releases.
+
+## 12. Exit Criteria for Version 1.00
+- All critical/high defects closed; medium defects with mitigation plans.
+- KPIs trending towards targets during beta and hypercare.
+- Compliance sign-off (legal, GDPR, UK insurance/DBS).
+- Documentation, training, and support playbooks published.
+- Observability dashboards active, alerts tuned, on-call roster confirmed.
