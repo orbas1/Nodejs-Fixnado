@@ -17,6 +17,17 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **Content Strategy**
   - Harmonised terminology ("Serviceman" > "Provider"), and introduced microcopy guidelines for compliance prompts, AI-assist disclaimers, and booking statuses.
 
+## Phone Application Design System Expansion
+- **New Documentation Suite**
+  - Added `application_design_update/version_1.00_update` directory containing 20+ specification artefacts that prescribe screen layouts, widget behaviour, colour usage, data requirements, and navigation logic for the Flutter phone application.
+  - Each artefact maps to engineering deliverables (component library, theming, dummy data) ensuring 1:1 traceability from design intent to implementation.
+- **Screen Architecture Refresh**
+  - Defined 50-screen inventory with detailed dimensions, safe-area considerations, and orientation behaviour to support the geo-zonal exploration, booking, marketplace, messaging, and provider workflows.
+  - Documented logic flow maps to align navigation transitions with backend endpoint orchestration and deep link handling.
+- **Component Tokens & Assets**
+  - Introduced prescriptive button, card, and form specifications with colour tokens aligned to the shared design system, enabling consistent implementation across native modules.
+  - Curated asset sourcing plan (images, vectors, Lottie) referencing internal repositories and licensing metadata for onboarding, empty states, and map overlays.
+
 ## User Mobile App (Flutter)
 - **Navigation Restructure**: Replaced legacy bottom navigation with five-tab layout (Explore, Bookings, Marketplace, Messages, Profile). Each tab includes sub-pages detailed in `user_app_wireframe_changes.md`.
 - **Booking Wizard**: Implemented a guided 5-step booking flow with dynamic requirements, upsell prompts, and SLA visualisation.
