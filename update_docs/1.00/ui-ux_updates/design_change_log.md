@@ -56,10 +56,24 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - Shared card component variants for providers, listings, and zones.
 - Consistent empty state treatments with illustrative graphics and action prompts.
 
+## Detailed Change Matrix
+| Domain | Wireframe Impact | Logic/Flow Impact | Styling Impact | Notes |
+| --- | --- | --- | --- | --- |
+| User Mobile App | Explore, booking wizard, marketplace, communications, profile, loyalty overlays | Auto-match bidding logic, reschedule/dispute pathways, marketplace inventory sync, AI assist gating | Updated gradient hero, booking stepper, accessibility tokens, dark mode | Aligns with Flutter theming and new notification cadence |
+| Provider Mobile App | Dashboard, kanban, calendar, marketplace, support hub, compliance, onboarding | MFA onboarding, bid negotiation, job lifecycle automation, campaign publishing, earnings reconciliation | Expanded palette, kanban strip accents, FAB behaviours, offline states | Ensures clarity on compliance gating and payout prerequisites |
+| Web Application | Explorer, booking funnel, provider/admin consoles, analytics, communications | Role-based routing, scheduling checks, governance workflows, reporting exports | Tokenised CSS variables, responsive grid, data visualisation styling | Coordinates React implementation with shared design kit |
+| Shared Design System | Component documentation, asset inventory | Real-time sync for tokens, feature flags for experimental UI | Colour/typography alignment, motion patterns, accessibility heuristics | Maintains parity across channels and supports future component library roll-out |
+
 ## Next Steps
 - Validate updated wireframes with UX research participants.
 - Produce handoff-ready Figma components with auto-layout and tokens.
 - Align frontend developers on new token naming and CSS variable mapping.
 - Schedule accessibility audit after initial implementation of the new patterns.
+
+## Design QA & Handoff Considerations
+- **Specification Coverage**: Each artefact in `application_design_update` and `web_application_design_update` includes acceptance criteria, pixel spacing, and component references to avoid ambiguity during implementation.
+- **Prototype Review Rituals**: Weekly cross-functional walkthroughs will confirm interaction fidelity (motion, microcopy, responsive breakpoints) before engineering tickets are finalised.
+- **Asset Delivery**: Iconography and illustrations exported in SVG/JSON (for Lottie) with naming conventions aligned to design tokens, ensuring frontend asset pipelines remain deterministic.
+- **Compliance Checkpoints**: Accessibility, localisation, and legal copy updates are flagged with checklists embedded in the QA workflow to guarantee coverage ahead of submission to app stores.
 
 For detailed breakdowns, refer to the role- and channel-specific documents in this directory.

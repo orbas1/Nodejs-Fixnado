@@ -8,6 +8,9 @@
 - **Drawer & Secondary Navigation**
   - Swipe-in drawer offers shortcuts to Compliance Centre, Earnings, Ad Campaigns, Support, and Language/Currency toggles.
   - Drawer header displays provider avatar, business rating, and subscription tier badge.
+- **Notification Surface**
+  - Global notification bell in top bar opens slide-in feed with actionable alerts (new bids, expiring documents, payment holds).
+  - Badge counter mirrors unread messages from Messages tab to maintain parity across entry points.
 
 ## 2. Dashboard Tab Wireframes
 - **Dashboard Overview Screen**
@@ -19,6 +22,18 @@
   - Full-screen map overlay with polygon toggles, heatmap intensity legend, and call-to-action to expand coverage.
 - **Earnings Drilldown**
   - Tabbed modal splitting Service Revenue vs. Marketplace Rentals, each with filters by zone, service, or time range.
+
+## 2a. Onboarding & Authentication Screens
+- **Welcome & Role Selection**
+  - Carousel describing platform value props, CTA buttons for "Sign In" and "Create Provider Account".
+  - Support link surfaces privacy policy and terms for compliance.
+- **Registration Wizard**
+  - Step 1: Business info form with masked inputs for phone/tax ID, inline validation, and progress tracker.
+  - Step 2: Service configuration cards (select services offered, zones of interest) with contextual tooltips.
+  - Step 3: Compliance checklist preview guiding required documents before upload stage.
+- **Login & MFA**
+  - Email/password form with "Use SSO" option, password visibility toggle, forgot password link.
+  - MFA challenge screen accepts OTP, includes resend timer and fallback to recovery codes.
 
 ## 3. Jobs Tab Wireframes
 - **Kanban View**
@@ -59,6 +74,15 @@
 - **Video Call Overlay**
   - Picture-in-picture layout with controls for mute, switch camera, screen share (if compatible), take photo, mark issue resolved.
 
+## 5a. Compliance & Document Centre Screens
+- **Document Inventory**
+  - Tabbed layout for Identity, Insurance, Certifications, Contracts with status pills and expiry countdown.
+  - Upload CTA launches bottom sheet explaining accepted formats and size limits.
+- **Verification Detail**
+  - Timeline showing submission, review, approval, rejection events; includes reviewer notes and escalation CTA.
+- **Policy Acknowledgements**
+  - Checklist of safety policies with digital signature capture and time-stamp confirmation summary.
+
 ## 6. Settings & Support Tab Wireframes
 - **Settings Home**
   - Sections: Profile & Business Info, Payments & Tax, Notifications, Language & Region, Integrations (calendar sync, CRM).
@@ -68,6 +92,8 @@
   - Guidance panel with accepted document formats, SLA timers, and contact support link.
 - **Support Hub**
   - FAQ accordion, live chat launcher, schedule support call form, and incident history table.
+- **Status Page**
+  - Embedded service status banner summarising platform uptime, scheduled maintenance, and incident history links.
 
 ## 7. Responsive & Device Considerations
 - Designed primarily for phones (iOS/Android) with adaptive layout for tablets (two-column splits for Dashboard and Jobs).

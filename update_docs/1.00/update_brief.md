@@ -1,134 +1,147 @@
 # Version 1.00 Update Brief
 
 ## 1. Executive Summary
-Version 1.00 establishes Fixnado as a connected services marketplace that unites geo-aware service discovery, multi-channel bookings, tooling rentals, monetisation, and compliance automation across web and Flutter experiences. The update modernises the customer and provider journey from first discovery to job completion while unlocking new revenue streams and providing governance-grade oversight for administrators. Delivery requires coordinated execution across backend services, React web, Flutter mobile apps, infrastructure, and quality assurance teams.
+Version 1.00 elevates Fixnado into a geo-aware, compliance-ready services marketplace that unifies consumer discovery, provider monetisation, tooling rentals, and cross-platform collaboration. The release spans backend microservices, the React web experience, and four Flutter applications (Servicemen, User, Provider, Enterprise). Delivery introduces a zonal intelligence layer, an extensible booking & job engine, a rentals-enabled marketplace, AI-assisted communications, monetisation tooling, and analytics dashboards. As developer and quality controller, this brief provides a consolidated view of scope, execution structure, risk posture, and validation strategy required to deliver a dependable launch.
 
-## 2. Scope Overview
-The scope consolidates the feature families captured in the feature portfolio and detailed update plan into the following pillars:
+## 2. Objectives & Success Metrics
+- **Customer Impact**: Increase successful match rate by 25%, reduce booking abandonment by 30%, and achieve >90% satisfaction in pilot cohorts.
+- **Provider Enablement**: Drive 20% uplift in serviceman utilisation, onboard 200 insured sellers, and achieve <5% dispute escalation rate post-launch.
+- **Marketplace Growth**: Capture £50k GMV in rentals within the first quarter and deliver measurable ad ROI (≥3x) through Fixnado/Finova campaigns.
+- **Operational Excellence**: Achieve 99.5% uptime across new services, pass GDPR/UK compliance audits, and maintain <2% defect escape rate during hypercare.
 
-1. **Geo-Zonal Intelligence** – Polygon-based zone designer, zonal service catalogues, zone analytics, and service-to-zone mapping ensuring accurate provider routing.
-2. **Booking & Job Lifecycle** – On-demand and scheduled bookings, multi-serviceman assignments, custom job workflows, bidding and negotiation tooling, and enriched booking statuses.
-3. **Marketplace & Inventory** – Unified rentals and sales marketplace with insured seller validation, inventory ledger, rental logistics, and booking upsell hooks.
-4. **Provider & Client Experience** – Explorer search, business front pages, rich serviceman profiles, promotional banners, and package configuration.
-5. **Communications Suite** – Real-time chat with AI assist, Agora video/voice, notification routing, and dispute-specific messaging channels.
-6. **Governance & Compliance** – Role-specific admin/provider panels, commission management, document verification workflows, dispute resolution, GDPR tooling, and security hardening (MFA, session controls, anomaly detection).
-7. **Monetisation & Ads** – Fixnado and Finova ad platforms with targeting, budgeting, creative approval, and campaign analytics.
-8. **Analytics & Reporting** – Zone, booking, inventory, and ads dashboards powering operational excellence.
-9. **Internationalisation & Security** – Multi-language, multi-currency, tax compliance, and RBAC expansion across touchpoints.
+## 3. Scope Pillars
+1. **Geo-Zonal Intelligence**
+   - Polygon zone designer with overlap prevention, geo-indexing, and analytics snapshots.
+   - Zone-aware catalogue linking services, packages, and rentals to territories.
+   - Route optimisation hooks for serviceman dispatch and demand heatmaps.
+2. **Booking & Job Lifecycle**
+   - Unified on-demand/scheduled booking engine with multi-serviceman orchestration.
+   - Custom job workflows with bidding, negotiation threads, SLA timers, and dispute initiation.
+   - Integrated commission, tax, and multi-currency support tied to booking states.
+3. **Marketplace & Inventory**
+   - Rentals and sales marketplace, inventory ledger, deposit handling, and insured seller verification.
+   - Rental logistics (check-in/out), upsell hooks from bookings, and availability forecasting.
+4. **Provider & Client Experience**
+   - Global explorer with zonal overlays, dynamic filters, and package surfacing.
+   - Rich business fronts, serviceman profiles, promotional banners, and portfolio galleries.
+   - Role-specific dashboards for providers, enterprises, and servicemen.
+5. **Communications Suite**
+   - Real-time chat with AI assistant toggles, moderation, and transcript retention.
+   - Agora-powered video/voice sessions with PSTN fallback and session tokens.
+   - Notification routing, consent prompts, and dispute-specific messaging channels.
+6. **Governance & Compliance**
+   - Document submission & verification pipelines with expiry reminders and reviewer queues.
+   - Commission configuration, audit logging, anomaly detection, and GDPR tooling (export/delete).
+7. **Monetisation & Ads**
+   - Fixnado/Finova campaign manager with targeting, budgeting, pacing, creative approval, and billing reconciliation.
+   - Cross-channel ad analytics and attribution wiring into dashboards.
+8. **Analytics & Reporting**
+   - Booking, zone, inventory, and ad performance dashboards across personas.
+   - Near real-time ETL jobs, alerting, and metric catalogues for data governance.
+9. **Internationalisation & Security**
+   - Multi-language/currency UX, tax displays, MFA enforcement, RBAC expansion, and secure session controls.
 
-## 3. Key Deliverables by Workstream
+## 4. Platform Deliverables Overview
 ### Backend Services
-- Geo-zone service for polygon CRUD, service mappings, and analytics snapshotting.
-- Booking orchestrator supporting multi-serviceman lifecycle, bidding threads, and SLA timers.
-- Marketplace APIs covering listings, inventory transactions, rental agreements, and insured seller checks.
-- Compliance/document service managing submissions, verification workflows, expiry reminders, and dispute artifacts.
-- Financial layer for commission rules, currency conversion, tax logic, and revenue-sharing reports.
-- Communications microservices integrating AI providers, Agora session orchestration, transcript storage, and notification routing.
-- Analytics pipeline extensions for booking funnels, inventory turnover, ad performance, and zone KPIs.
+- Zone service (CRUD, service mapping, analytics API) built atop PostGIS with validation utilities.
+- Booking orchestrator handling custom job workflows, SLAs, commission logic, and dispute triggers.
+- Marketplace APIs for listings, rentals, deposits, and insured seller compliance checks.
+- Communications stack integrating AI chat providers, Agora session orchestration, and notification brokers.
+- Compliance/document microservice with workflow states, expiry automation, and reviewer dashboards.
+- Monetisation services for campaign management, targeting, budgeting, and revenue reporting.
+- Analytics pipeline extensions for bookings, inventory turnover, ad ROI, and zone KPIs.
 
 ### Frontend Web (React)
-- Global explorer with zonal map overlays, advanced filters, and package/rental surfacing.
-- Booking funnel redesign with guided steps, custom job builder, bid management UI, and SLA visualisation.
-- Marketplace catalogue with insured seller badges, rental logistics status, and upsell widgets.
-- Business fronts and serviceman profiles including banners, hero video, galleries, reviews, and social links.
-- Expanded admin/provider/enterprise panels hosting compliance queue, commission settings, analytics dashboards, and Finova ad manager.
-- Embedded chat with AI assist toggles, Agora call launchers, GDPR consent modals, and MFA prompts.
+- Explorer with zone overlays, advanced filters, rentals/package surfacing, and zone insights.
+- Booking wizard supporting multi-serviceman selection, bidding management, SLA visualisation, and dispute entry.
+- Marketplace catalogue with rental logistics, insured badges, upsell modules, and inventory management UI.
+- Business fronts & serviceman profiles including hero media, galleries, testimonials, social links, and offer packages.
+- Expanded admin/provider/enterprise panels covering compliance queues, commission setup, analytics, and ad manager.
+- Embedded communications widgets (chat, Agora calls, notification centre, GDPR consent flows, MFA prompts).
 
-### Flutter Apps (Servicemen, User, Provider, Enterprise)
-- Parity of geo-zonal search, booking, bidding, and availability management.
-- Mobile-first inventory visibility and rental request flows.
-- In-app chat with AI assist, Agora video/voice integration, and notification routing.
-- Role-specific panels exposing compliance alerts, commission summaries, and job queues.
-- Internationalisation support for languages, currencies, and tax displays.
+### Flutter Applications
+- Feature parity for geo-zonal explorer, booking lifecycle, bidding, availability management, and dispute handling.
+- Mobile-first rental visibility, check-in/out flows, deposit tracking, and notifications.
+- In-app chat with AI assist, Agora integration, push notifications, and role-based dashboards.
+- Internationalisation with ARB localisation, currency formats, tax breakdowns, and secure document uploads.
 
 ### Infrastructure & DevOps
-- Staging environments mirroring production integrations (Agora, AI, payments) with secure key vaulting.
-- CI/CD updates for new backend, frontend, and mobile test suites plus compliance checks.
-- Observability enhancements with logging, tracing, and alerting for new services.
-- Data protection hardening: encryption at rest for documents, anonymised analytics datasets, GDPR-compliant retention policies.
-- Auto-scaling configurations for chat, calling, and explorer workloads.
+- Staging environments mirroring production integrations with secrets vaulting and feature toggle controls.
+- CI/CD pipelines for backend services, web, Flutter apps, and IaC with linting, tests, and compliance gates.
+- Observability stack (logging, metrics, tracing, dashboards) and scaling policies for chat, explorer, and analytics workloads.
+- Security enhancements: MFA, anomaly detection, penetration testing schedule, encryption for documents/data lakes.
 
-### Quality Assurance & Compliance
-- Comprehensive unit, integration, E2E, performance, and security testing suites per feature group.
-- Automated regression coverage for booking flows, marketplace transactions, compliance submissions, and ad campaign management.
-- Load testing for real-time communications and search; chaos drills for critical services.
-- GDPR/UK compliance validation including document workflows, consent prompts, and HMRC reporting simulations.
-- Pilot UAT with internal teams and selected providers validating custom jobs, AI chat behaviour, and zone accuracy.
-
-## 4. Execution Structure
-### Phase 0 – Mobilisation
-- Kick-off with product, engineering, compliance, marketing, and customer operations.
-- Confirm squad assignments, capacity plans, and contingency buffers.
-- Finalise requirements traceability in the tracker with regulatory linkage.
-
-### Phase 1 – Architecture & Foundations
-- Update system diagrams, schemas, and integration contracts for external providers (Agora, AI, payments, insurance).
-- Extend RBAC model and security controls.
-- Provision staging infrastructure and key management.
-
-### Phase 2 – Feature Implementation
-- Parallel delivery across backend, frontend, and Flutter squads following the themed epics.
-- Incremental merges into develop branch gated by feature toggles for zonal intelligence, booking lifecycle, marketplace, communications, compliance, and monetisation components.
-
-### Phase 3 – Integrated Testing & Hardening
-- Execute automated and manual test suites, regression runs, performance testing, and compliance audits.
-- Address defect backlogs through coordinated triage between QA and feature squads.
-- Conduct documentation updates, run support and operations training.
-
-### Phase 4 – Launch & Hypercare
-- Staged rollout starting with beta cohorts; monitor KPIs (matching accuracy, compliance adherence, rental adoption, AI chat usage, uptime).
-- Maintain hypercare rotation for two weeks, collecting feedback and logging iterative improvements for post-launch roadmap.
-
-## 5. Milestones & Target Windows
-| Milestone | Description | Target Window | Dependencies |
+## 5. Execution Phasing
+| Phase | Duration | Goals | Outputs |
 | --- | --- | --- | --- |
-| M1 – Mobilisation Complete | Stakeholder alignment, squad staffing, tracker baselined, risk register initiated | Week 1 | Executive approvals |
-| M2 – Architecture Sign-off | Schemas, API contracts, security design, infrastructure plan ratified | Week 3 | M1 |
-| M3 – Core Services Alpha | Geo-zone, booking orchestrator, marketplace, compliance, and communications services deployed to staging | Week 8 | M2, staging readiness |
-| M4 – Frontend & Flutter Feature Freeze | Web and mobile clients feature-complete with toggles, ready for full regression | Week 11 | M3, design assets |
-| M5 – QA & Compliance Exit | Regression suite green, load tests passed, GDPR/UK audits signed | Week 13 | M4, QA resources |
-| M6 – Launch & Hypercare Start | Production rollout initiated with monitoring dashboards active | Week 14 | M5, go-live approvals |
+| **Phase 0 – Mobilisation** | Week 0-1 | Align stakeholders, confirm squads, baseline tracker and risk register. | Kick-off artefacts, RACI, capacity plan, dependency matrix. |
+| **Phase 1 – Architecture & Foundations** | Weeks 1-3 | Update system architecture, schemas, RBAC, integration contracts, staging setup. | Signed-off architecture pack, PostGIS provisioning, CI/CD enhancements, security review. |
+| **Phase 2 – Feature Implementation** | Weeks 3-10 | Deliver epics across pillars with feature toggles and incremental releases into staging. | Deployed zone service alpha, booking orchestrator beta, marketplace MVP, communications stack integration, UI builds. |
+| **Phase 3 – Integrated Testing & Hardening** | Weeks 9-12 | Execute automation suite, performance/security tests, compliance audits, fix defects. | Regression reports, penetration test outcomes, updated documentation, training material. |
+| **Phase 4 – Launch & Hypercare** | Weeks 12-14 | Staged rollout, monitoring, KPI tracking, incident readiness, support enablement. | Go-live checklist, hypercare rota, beta feedback log, post-launch backlog seeds. |
 
-## 6. Task & Progress Snapshot
-| Workstream | Key Tasks | Owner Squad | Status | Notes |
+## 6. Milestones & Target Windows
+| Milestone | Target Window | Entry Criteria | Exit Criteria |
+| --- | --- | --- | --- |
+| **M1 – Mobilisation Complete** | Week 1 | Kick-off, squads staffed, requirements traceability mapped. | Risk register live, dependency owners assigned, progress tracker baselined. |
+| **M2 – Architecture Sign-off** | Week 3 | Foundational diagrams drafted, integration contracts proposed. | Architecture review approval, security sign-off, staging infra ready. |
+| **M3 – Core Services Alpha** | Week 8 | Backend services in development, CI/CD active. | Zone/booking/marketplace/comms services in staging with smoke tests passing. |
+| **M4 – Client Feature Freeze** | Week 11 | Web & Flutter features integrated behind toggles. | UI/UX assets merged, localisation baseline, defect trend downward. |
+| **M5 – QA & Compliance Exit** | Week 13 | Automated tests green, performance targets hit. | GDPR/UK audits passed, defect leakage <2%, release notes approved. |
+| **M6 – Launch & Hypercare Start** | Week 14 | Go-live approvals obtained, support training delivered. | Production rollout initiated, monitoring dashboards active, hypercare rota engaged. |
+
+## 7. Task Breakdown & Ownership Snapshot
+| Pillar | Key Tasks | Owner Squads | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Geo-Zonal Intelligence | Polygon editor, zone-service mapping API, analytics snapshots | Backend & Frontend | In Discovery | Awaiting GIS library selection |
-| Booking Lifecycle | Booking orchestrator, multi-serviceman UI, bidding threads | Backend, Frontend, Flutter | Planned | Requirements baselined, stories drafted |
-| Marketplace & Inventory | Inventory ledger, rental workflow, insured seller validation | Backend, Frontend | Not Started | Depends on compliance document service |
-| Communications Suite | AI chat integration, Agora orchestration, notification routing | Backend, Frontend, Flutter | In Discovery | API contract drafts under review |
-| Governance & Compliance | Admin panels, commission rules, document workflows | Backend, Frontend | Planned | Legal review scheduled week 2 |
-| Monetisation & Ads | Campaign manager, targeting UI, spend analytics | Backend, Frontend | Not Started | Requires analytics pipeline extensions |
-| Analytics & Reporting | Dashboards, export tools, monitoring hooks | Data & Frontend | Not Started | Waiting on event schema finalisation |
-| QA & Compliance | Automated suites, performance testing, GDPR validation | QA & Compliance | Planned | Test architecture defined during Phase 1 |
+| Geo-Zonal Intelligence | Polygon editor, zone-service mapping API, analytics snapshot jobs | Backend, Frontend | In Discovery | GIS library selection and PostGIS performance benchmarking underway. |
+| Booking Lifecycle | Booking orchestrator, SLA timers, bidding UI, dispute hooks | Backend, Frontend, Flutter | Planned | Requirements baselined, workflow diagrams prepared. |
+| Marketplace & Inventory | Inventory ledger, rental contracts, insured seller verification, upsell hooks | Backend, Frontend | Not Started | Blocked on compliance document service interfaces. |
+| Communications Suite | AI chat integration, Agora orchestration, notification routing | Backend, Frontend, Flutter | In Discovery | API contract review with vendors scheduled Week 2. |
+| Governance & Compliance | Admin panels, commission rules engine, document workflows | Backend, Frontend | Planned | Legal review and DPIA updates targeted for Week 2. |
+| Monetisation & Ads | Campaign manager, targeting UI, spend analytics, billing reconciliation | Backend, Frontend | Not Started | Depends on analytics event schema finalisation. |
+| Analytics & Reporting | Dashboards, export tools, alerting, metric catalogue | Data, Frontend | Not Started | Awaiting event schema sign-off from architecture board. |
+| QA & Compliance | Automated suites, performance testing, GDPR validation | QA & Compliance | Planned | Test architecture defined, tooling procurement in progress. |
 
-## 7. Quality & Risk Management
-- **Risk Register**: Maintained with severity, probability, mitigation owner, and review cadence (weekly). Initial risks include GIS accuracy, AI moderation, inventory reconciliation, and regulatory compliance.
-- **Definition of Done**: Includes code review, automated test coverage, accessibility checks, security scan, documentation updates, and deployment checklist completion.
-- **Issue Escalation**: Cross-functional triage sessions twice weekly; critical blockers escalated to steering committee within 24 hours.
-- **Compliance Oversight**: Dedicated compliance lead embedded with governance squad to approve document workflows, consent flows, and data handling.
+## 8. Quality Assurance & Compliance Strategy
+- **Automation Coverage**: Unit/integration tests per backend service, contract tests for external APIs, Cypress/Playwright E2E for React, Flutter widget/integration tests, infrastructure tests via IaC validation.
+- **Performance & Resilience**: Load tests for chat, Agora sessions, explorer, booking orchestrator; chaos drills targeting booking, payments, and communications services.
+- **Security & Privacy**: MFA enforcement, penetration testing, vulnerability scanning, anomaly detection, DPIA updates, consent logging, encryption of documents & analytics datasets.
+- **Compliance Validation**: GDPR consent flow reviews, UK insurance/DBS verification workflows, HMRC reporting simulations, document retention policy verification.
+- **UAT & Sign-off**: Pilot UAT with internal teams and selected providers/enterprises; severity-based triage; go-live contingent on meeting Definition of Done (code review, test coverage, accessibility, documentation, deployment checklist).
 
-## 8. Dependencies & Integrations
-- External services: Agora (video/voice), OpenAI/Claude (AI chat), payment gateways (multi-currency), insurance/ID verification providers, push notification services.
-- Internal prerequisites: Existing billing infrastructure alignment, document storage enhancements, analytics event schema standardisation, RBAC expansion, and deployment pipeline updates.
+## 9. Risk Register Highlights
+| Risk | Severity | Probability | Mitigation | Owner |
+| --- | --- | --- | --- | --- |
+| GIS library accuracy & performance | High | Medium | Benchmark PostGIS vs. alternatives, add automated geo-validation tests, maintain fallback drawing tools. | Geo-Zone Squad Lead |
+| AI chat moderation & safety | High | Medium | Implement AI message moderation, escalation workflows, manual review backlog, update privacy policy. | Communications Squad Lead |
+| Inventory reconciliation errors | Medium | Medium | Double-entry accounting in ledger, nightly reconciliation jobs, automated alerts on discrepancies. | Marketplace Squad Lead |
+| Regulatory compliance drift | High | Low | Embedded compliance lead, weekly audits of document workflows, maintain DPIA updates. | Compliance Lead |
+| Integration readiness (Agora, payments, identity) | Medium | Medium | Secure sandbox credentials, schedule integration testing early, maintain vendor escalation channels. | DevOps Lead |
+| Mobile performance regressions | Medium | Medium | Run device farm tests, profile Flutter builds, enforce performance budgets in CI. | Mobile QA Lead |
 
-## 9. Communication & Reporting
-- Weekly programme status reports covering milestone burn-down, risk register updates, and progress metrics.
-- Daily stand-ups per squad with cross-squad sync twice a week.
-- Stakeholder demos at the end of each sprint (bi-weekly) showcasing incremental functionality.
-- Confluence/Notion space hosting artefacts (designs, API contracts, test plans) linked to the update tracker.
+## 10. Dependencies & Integrations
+- **External**: Agora voice/video, AI providers (OpenAI/Claude), payment gateways (multi-currency), insurance/ID verification partners, push notification services, FX/tax feeds.
+- **Internal**: Billing infrastructure alignment, document storage enhancements, analytics schema standardisation, RBAC expansion, deployment pipeline upgrades, localisation assets.
+- **Contractual/Operational**: Vendor SLAs, legal review timelines, support training availability, marketing launch sequencing.
 
-## 10. Launch Readiness Checklist (High-Level)
-- ✅ Feature toggles audited and default states reviewed.
-- ✅ Monitoring dashboards (zones, bookings, communications, ads) live in staging and production.
-- ✅ Runbooks prepared for incident response covering chat outages, payment failures, and compliance escalations.
-- ✅ Support & operations training delivered with updated SOPs and knowledge base articles.
-- ✅ Legal sign-off obtained for GDPR, insurance, DBS, and advertising compliance.
+## 11. Communication & Reporting Cadence
+- Weekly programme status reports summarising milestone burn-down, risk updates, and blocker escalations.
+- Daily squad stand-ups with cross-squad sync twice weekly; QA/compliance triage three times per week during testing phase.
+- Bi-weekly stakeholder demos showcasing incremental functionality (zone editor, booking flow, marketplace, communications, analytics).
+- Shared documentation space (Confluence/Notion) hosting architecture packs, API contracts, test matrices, release notes, and runbooks linked to the tracker.
 
-## 11. Post-Launch Focus
-- Gather product analytics on booking conversion, AI chat adoption, and rental attachment rate; feed insights into optimisation backlog.
-- Refine predictive models for provider recommendations and inventory forecasting.
-- Explore partner integrations (insurers, finance providers) based on marketplace demand.
-- Prioritise automation for compliance renewals and dispute adjudication to reduce manual workload.
+## 12. Launch Readiness Checklist
+- ✅ Feature toggles reviewed; default states agreed with product & compliance.
+- ✅ Monitoring dashboards live in staging (zones, bookings, communications, ads) with alert thresholds configured.
+- ✅ Runbooks for incident response (chat outage, payment failure, compliance escalation) drafted and reviewed.
+- ✅ Support & operations training scheduled with updated SOPs and knowledge base articles.
+- ✅ Legal sign-off for GDPR, insurance, DBS, tax, and advertising compliance captured in tracker.
+
+## 13. Post-Launch Priorities
+- Instrument product analytics for booking conversion, AI chat adoption, rental attachment rate, and ad ROI; funnel insights into optimisation backlog.
+- Iterate on provider recommendation models and inventory forecasting; evaluate automation for compliance renewals and dispute adjudication.
+- Plan partner integrations (insurance upsell, financing) informed by marketplace demand; scope roadmap for predictive maintenance modules.
+- Conduct post-mortem and lessons-learned workshops to inform Version 1.1 planning.
 
 ---
-**Document Owners**: Product Management (strategic alignment), Engineering Programme Management (delivery oversight), Quality & Compliance Leads (testing and regulatory assurance).
+**Document Owners**: Product Management (strategy & roadmap), Engineering Programme Management (delivery orchestration), Quality & Compliance Leads (testing & regulatory assurance).

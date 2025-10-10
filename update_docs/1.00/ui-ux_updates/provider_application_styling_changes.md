@@ -12,6 +12,9 @@
   - Distinct hues assigned per zone tier (Core, Expansion, Prospective) with 40% opacity fills and 2px outlines.
 - **Gradient Usage**
   - Dashboard hero uses `linear-gradient(135deg, #1C62F0 0%, #4C8DF8 100%)` to differentiate from data cards.
+- **Token Distribution**
+  - Tokens organised within `provider_theme.dart` by category (colour, spacing, typography, elevation) to enable programmatic linting and easier cross-platform sync.
+  - Semantic aliases (`--status-bidding`, `--status-expiring`) ensure stateful widgets read from context rather than hard-coded values.
 
 ## 2. Typography
 - **Font Families**
@@ -42,6 +45,9 @@
 - **Forms**
   - Inputs adopt floating labels with 1px neutral-300 border, focus state uses `--color-primary-500` 2px border.
   - Error states display red border and 12px helper text with icon.
+- **Headers & Toolbars**
+  - App bars use 12px radius bottom corners to soften transition into content, with drop shadow `0 6px 18px rgba(15, 23, 42, 0.06)`.
+  - Tab toolbars animate indicator with 300ms ease to reflect module context changes.
 - **Tables**
   - Alternating row background neutral-050, header row bold with uppercase labels.
 - **Charts**
@@ -56,11 +62,14 @@
 - Default animation curve `cubic-bezier(0.4, 0.0, 0.2, 1)` with 200–250ms durations.
 - Haptics triggered on job status changes (success, warning) using medium impact feedback.
 - Toast notifications slide in from bottom with 400ms fade, auto-dismiss after 5s.
+- Micro animations on Kanban card drag provide 12px elevation shift with subtle rotation to emphasise reordering action.
+- Marketplace listing transitions crossfade images and metrics to emphasise analytics updates without jarring refreshes.
 
 ## 7. Accessibility & Theming
 - Dark mode variant introduced: backgrounds `#0B1120`, text `#E5E7EB`, primary lighten to `#3B82F6` for contrast.
 - High contrast mode uses thicker borders (2px) and removes gradient backgrounds to support clarity.
 - Colour-blind safe palette adjustments ensure no critical information relies solely on colour; icons supplement status cues.
+- High contrast mode increases border thickness on cards to 2px and elevates text weight for improved legibility in bright environments.
 
 ## 8. Content Styling
 - Microcopy uses sentence case, avoids jargon; tooltips limited to 80 characters.
@@ -71,5 +80,6 @@
 - iOS: Utilises native bounce scrolling and respects safe area insets around FAB.
 - Android: Material ripple effects align with theme colours; status bar tinted primary for top-level screens.
 - Tablet: Multi-column layouts use 24px gutters; modal widths capped at 720px.
+- Desktop web (PWA): Side rail expands to 88px icon rail with subtle gradient background while preserving typography scale.
 
 These styling changes reinforce the professional tone of the provider app while improving clarity, accessibility, and consistency with the broader Fixnado design system.

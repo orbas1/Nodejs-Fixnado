@@ -7,6 +7,9 @@
   - New role-based onboarding wizard collects business profile, service areas, compliance documents, bank details, and marketplace preferences in a progressive disclosure format.
 - **Document Verification Hook**
   - After onboarding, documents enter verification queue. App displays pending status and prevents marketplace listing until approvals complete.
+- **Account State Management**
+  - Accounts flagged for audit enter read-only mode, displaying banner with reason and expected resolution time.
+  - Dormant accounts (no activity 60 days) trigger reactivation wizard confirming availability, compliance currency, and payment method validity.
 
 ## 2. Dashboard Lifecycle
 - **Contextual Data Fetch**
@@ -67,6 +70,9 @@
 - **Commission & Payouts**
   - Earnings screen pulls statements; user can drill into job to see commission breakdown.
   - Payout requests require verifying bank details and compliance status; errors provide inline guidance.
+- **Tax & Invoice Handling**
+  - Tax forms (W-9, VAT) tracked with expiry; missing forms block payouts beyond threshold with escalation workflow.
+  - Invoice downloads generated on demand with itemised service, commission, and tax lines.
 
 ## 8. Ads & Promotions Flow
 - **Campaign Creation**
@@ -74,10 +80,16 @@
   - Validation ensures payment method on file; otherwise directs to Payments settings.
 - **Performance Monitoring**
   - Analytics cards update daily; anomalies trigger alerts recommending optimisation actions.
+- **Credit & Subscription Ledger**
+  - Campaign spend draws from pre-paid credit balance; low balance alerts prompt top-up via payments API with secure confirmation.
+  - Subscription tier changes immediately recalibrate available campaign slots and impression caps, with pro-rated billing handled server-side.
 
 ## 9. Error & Offline Handling
 - Offline mode allows read-only access to cached jobs and inventory; actions queue for sync when connection restored.
 - System errors show contextual modals with support contact and log reference ID.
 - Form validation errors summarised at top with inline highlights for accessibility.
+- **Observability & Recovery**
+  - Critical user actions emit telemetry events (job status changes, bid submissions) with correlation IDs for support diagnostics.
+  - Crash recovery relaunches to last visited tab with toast summarising restored state and outstanding sync actions.
 
 These flow updates ensure providers can manage bookings, marketplace operations, compliance, and monetisation with reduced friction and clear governance.

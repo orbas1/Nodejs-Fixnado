@@ -7,6 +7,8 @@
   - Left side navigation for authenticated dashboards (Provider/Admin); collapsible to icon rail.
 - **Global Footer**
   - Contains support links, compliance policies, language selector, and marketing CTAs.
+- **Session Entry Points**
+  - Header includes "Log In" / "Create Account" CTAs for anonymous users; once authenticated, surfaces avatar dropdown with profile, billing, and logout links.
 
 ## 2. Public Explorer & Landing
 - **Hero Section**
@@ -20,6 +22,8 @@
   - Horizontal scrollers featuring seasonal services, packages, rental bundles.
 - **Testimonial & Trust Section**
   - Grid of customer stories, compliance badges, partner logos.
+- **Support CTA Band**
+  - Full-width strip promoting chat support, phone contact, and knowledge base for rapid assistance.
 
 ## 3. Booking Funnel (Web)
 - **Step 1: Requirements**
@@ -36,6 +40,15 @@
   - Consent checkboxes and terms links.
 - **Confirmation Page**
   - Summary card, timeline of next steps, share/export PDF, add to calendar, refer-a-friend module.
+  - Survey widget capturing booking experience feedback with 1–5 rating and optional text.
+
+## 3a. Authentication & Account Access
+- **Login Modal**
+  - Two-column layout with form on left (email/password, SSO buttons) and benefits panel on right; includes remember me checkbox.
+- **Registration Flow**
+  - Multi-step overlay capturing personal details, address, preferred communication channel, and optional business verification.
+- **Password Recovery**
+  - Email entry form leading to OTP verification, new password creation, and confirmation screen.
 
 ## 4. Provider Web Console
 - **Dashboard**
@@ -52,6 +65,8 @@
   - Kanban columns (To Submit, Under Review, Approved, Expiring). Document upload modal with drag-and-drop.
 - **Ads Manager**
   - Campaign list with performance metrics, create campaign wizard, budget allocation chart.
+- **Billing & Subscription**
+  - Page summarising current plan, usage caps, invoices, and upgrade/downgrade options with confirmation modals.
 
 ## 5. Admin & Governance Portal
 - **Global Overview**
@@ -65,6 +80,8 @@
   - Form-based interface to configure percentage tiers, regional overrides, effective dates.
 - **Analytics Exports**
   - Modal to configure CSV/BI exports, schedule, recipients.
+- **Audit Trail Viewer**
+  - Timeline view listing admin actions with filters for user, entity, and date; includes export to CSV.
 
 ## 6. User Account Area (Web)
 - **Bookings Dashboard**
@@ -76,6 +93,8 @@
   - Forms for personal info, payment methods, addresses, accessibility options.
 - **Support Centre**
   - Knowledge base list, ticket history, chat widget integration.
+- **Loyalty & Referrals**
+  - Dashboard highlighting reward tier, available coupons, referral link performance, and redemption history.
 
 ## 7. Communications Suite
 - **Unified Inbox**
@@ -86,6 +105,8 @@
   - Modal overlay with device checks, ability to invite participants, record session toggle.
 - **Notification Centre**
   - Dropdown panel grouped by priority with mark-as-read actions and quick navigation links.
+- **Message Templates Library**
+  - Sidebar for saved canned responses accessible to support teams with preview and edit capabilities.
 
 ## 8. Analytics Dashboards
 - **Zone Analytics**
@@ -96,6 +117,8 @@
   - Inventory turnover charts, revenue per listing, rental utilisation heatmap.
 - **Ads Analytics**
   - Campaign performance charts, audience breakdown, spend vs. target gauge.
+- **Financial Health**
+  - Revenue vs. payouts graphs, outstanding invoices list, and churn heatmaps segmented by zone.
 
 ## 9. System States
 - **Empty States**
@@ -104,5 +127,7 @@
   - Display reason, suggested actions, retry buttons; include support contact.
 - **Loading Skeletons**
   - Use skeleton loaders for tables, cards, charts to maintain perceived performance.
+- **Service Interruptions**
+  - Full-screen banner for major outages with live status feed and alternative contact options.
 
 These wireframe revisions establish a scalable, data-rich web experience tailored to both consumers and enterprise administrators.

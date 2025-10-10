@@ -17,6 +17,8 @@
   - Filters apply client-side first, then server call for refined dataset.
 - **Provider Selection**
   - Selecting provider opens overlay; "Book" initiates booking flow pre-filled with provider ID, "Chat" opens conversation.
+- **Notification Feed**
+  - Booking milestones, promotions, and compliance alerts aggregated into feed with deep links; ack state stored server-side to maintain cross-device consistency.
 
 ## 3. Booking Lifecycle
 - **Job Definition**
@@ -54,6 +56,8 @@
 - **Order Tracking**
   - Post-purchase timeline shows fulfilment stages (Processing, Packed, In Transit, Delivered, Return Due, Returned).
   - Overdue returns trigger notifications and penalty calculation.
+- **Rental Extensions**
+  - Users can request extension; system validates overlapping bookings and recalculates charges before confirming.
 
 ## 6. Communication & Support
 - **Chat Flow**
@@ -75,6 +79,9 @@
 - **Notifications & Accessibility**
   - Preferences stored server-side; toggling updates push/email subscription services.
   - Accessibility settings (font size, high contrast) persist across sessions.
+- **Loyalty & Rewards**
+  - Loyalty progress updates after completed bookings; rewards redemption triggers wallet credit or discount application logic.
+  - Referral tracking generates shareable link, monitoring conversion status for bonus unlocks.
 
 ## 8. Error & Offline Handling
 - **Offline Mode**
@@ -82,5 +89,8 @@
 - **Error Resolution**
   - Failed payments prompt retry or alternate method selection; logs error code for support.
   - API errors show contextual messages and offer to contact support.
+- **Observability & Support**
+  - Client logs sync to monitoring service when severe errors occur, attaching anonymised booking IDs to assist support agents.
+  - In-app status page surfaces incident notifications sourced from status API with auto-refresh every 60 seconds.
 
 The updated logic ensures a seamless, transparent booking experience while maintaining compliance and providing robust support pathways.

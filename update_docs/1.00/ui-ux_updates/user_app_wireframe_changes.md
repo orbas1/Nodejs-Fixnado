@@ -4,6 +4,7 @@
 - **Bottom Navigation Tabs**: Explore, Bookings, Marketplace, Messages, Profile.
 - **Global Search**: Persistent search bar at top of Explore tab with voice input and filter shortcut.
 - **Floating Quick Action**: Contextual FAB toggles between "Book Now" (Explore) and "Request Support" (Bookings & Messages).
+- **Notification Drawer**: Bell icon in top-right opens feed summarising booking milestones, rental reminders, and promotional offers with deep links.
 
 ## 2. Explore Tab Wireframes
 - **Geo-Zonal Map View**
@@ -33,6 +34,16 @@
 - **Post-Confirmation Screen**
   - Success banner, share booking link, add to calendar button, recommended add-ons.
 
+## 3a. Authentication & Onboarding Screens
+- **Welcome Carousel**
+  - Three-panel introduction to Fixnado benefits with CTA buttons for Login, Sign Up, and Explore as Guest.
+- **Registration Flow**
+  - Step 1: Email/phone capture with OTP verification and password creation.
+  - Step 2: Profile setup (name, address, accessibility preferences) with progress indicator.
+  - Step 3: Service interest selection for personalised Explore feed.
+- **Login & Recovery**
+  - Social sign-in buttons, email/password form with inline validation, forgot password flow delivering OTP for reset.
+
 ## 4. Booking Management Wireframes
 - **Bookings Tab**
   - Segmented controls for Upcoming, In Progress, Completed, Cancelled.
@@ -41,6 +52,7 @@
   - Timeline of events (Request sent, Bid accepted, Provider en route, Job completed).
   - Tabs: Overview, Checklist, Payments, Documents.
   - Dispute CTA anchored in footer for eligible statuses.
+  - Feedback module appears post-completion capturing ratings, review text, and tip amount.
 
 ## 5. Marketplace Tab Wireframes
 - **Catalogue Grid**
@@ -51,6 +63,7 @@
   - CTA to "Add to Booking" or "Rent Separately"; scheduling widget for rental duration.
 - **Cart & Checkout**
   - Slide-in cart summarising items, deposit requirements, delivery options, cross-sell suggestions.
+  - Payment screen includes saved methods, promo codes, wallet balance application, and T&C checkboxes.
 
 ## 6. Messages Tab Wireframes
 - **Conversation List**
@@ -60,6 +73,8 @@
   - Message composer with quick prompts (Share Location, Confirm Access Instructions, Request Update).
   - Attachments tray for documents/photos.
   - AI Assist preview replies with ability to edit before sending.
+- **Shared Media View**
+  - Sub-tab showing exchanged photos, documents, and location pins grouped by type for quick retrieval.
 
 ## 7. Profile & Settings Wireframes
 - **Profile Overview**
@@ -71,6 +86,8 @@
   - Help topics, ticket history, escalate to live agent form.
 - **Trust & Safety**
   - Verified identity badge, safety checklist, emergency contact setup.
+- **Loyalty & Rewards**
+  - Tier progress bar, benefits list, voucher redemption input, referral link sharing module.
 
 ## 8. Additional States
 - **Empty States**
@@ -79,5 +96,7 @@
   - Inline form errors with helper text, global error banner for API failures.
 - **Offline Mode**
   - Banner indicating limited functionality; cached bookings viewable, actions queued.
+- **Maintenance Mode**
+  - Full-screen modal shown during major outages with service status, estimated resolution, and contact options.
 
 These wireframe updates establish a comprehensive user journey from discovery to post-job support within the mobile app.

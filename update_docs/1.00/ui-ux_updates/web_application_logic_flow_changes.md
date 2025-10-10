@@ -7,6 +7,8 @@
 - **Role-Based Routing**
   - React router guards detect role (user, provider, admin, support) and load corresponding navigation shell.
   - Unauthorized access returns 403 page with link to switch account.
+- **Session Timeout Handling**
+  - Idle timer warns after 12 minutes of inactivity; extend session modal refreshes tokens without full logout.
 
 ## 2. Geo-Zonal Explorer
 - **Search Handling**
@@ -17,6 +19,8 @@
   - Sponsored providers pinned to top with disclosure tooltip.
 - **Provider Profile Launch**
   - Clicking provider opens modal with detail; booking CTA initiates booking wizard with pre-filled provider context.
+- **Notification Feed**
+  - Explorer surfaces notifications in header dropdown; acknowledges read state to reduce duplication across mobile apps.
 
 ## 3. Booking Funnel Logic
 - **Stepper Control**
@@ -30,6 +34,17 @@
   - Payment step integrates with payment gateway; tokenisation occurs before final confirmation.
 - **Confirmation**
   - Successful booking triggers email, push notifications, and updates analytics events.
+- **Post-Booking Feedback**
+  - After confirmation, optional survey records satisfaction rating and passes to analytics pipeline for NPS tracking.
+
+## 3a. Authentication & Account Flows
+- **Registration**
+  - Account creation orchestrates user profile, consent capture, and optional business verification for provider prospects.
+  - Email verification required before enabling bookings; unverified accounts limited to browsing.
+- **Password Recovery**
+  - Recovery requests generate time-limited tokens; flow requires OTP confirmation plus new password validation.
+- **Session Switching**
+  - Users with multiple roles (e.g., provider + admin) can switch context via avatar menu; router reloads appropriate shell with minimal flicker.
 
 ## 4. Provider Console Workflows
 - **Job Management**
@@ -44,6 +59,9 @@
   - Document upload uses chunked uploads; status updates shown in Kanban columns.
 - **Ads Manager**
   - Campaign wizard enforces objective selection, targeting parameters, budget allocation, and creative approval. Launch triggers review pipeline.
+- **Billing & Subscription**
+  - Subscription page retrieves plan data, usage metrics, invoices; updates propagate via billing API and event bus to lock/unlock premium features.
+  - Downgrades schedule at end of billing cycle; upgrades immediate with proration.
 
 ## 5. Admin & Governance Flows
 - **Compliance Queue**
@@ -54,6 +72,8 @@
 - **Analytics & Reporting**
   - Dashboards pull from analytics service; filters update charts and export options.
   - Scheduled exports allow cron-like configuration saved server-side.
+- **Audit Trail**
+  - Admin actions log with metadata (user, entity, timestamp, diff) accessible via audit viewer; API supports pagination and filtering.
 
 ## 6. User Account & Support
 - **Bookings Dashboard**
@@ -63,6 +83,9 @@
   - Order detail view shows fulfilment timeline; return scheduling integrates with courier booking if required.
 - **Support Tickets**
   - Submissions create ticket via `/api/support/tickets`; chat widget escalations link conversation history.
+- **Loyalty & Referral Management**
+  - Loyalty events update points ledger; redemption triggers wallet credit or coupon creation.
+  - Referral tracking monitors invite link conversions and awards bonuses after verification.
 
 ## 7. Communications Suite
 - **Unified Inbox**
@@ -72,6 +95,8 @@
   - Launch checks Agora token; session metadata stored post-call for compliance.
 - **Notifications**
   - Notification centre consumes aggregated feed; clicking item routes to relevant screen.
+- **Template Management**
+  - Support agents can create/update canned responses; changes versioned to allow rollback.
 
 ## 8. Error Handling & Resilience
 - **Global Error Boundary**
@@ -80,5 +105,7 @@
   - API calls have retry/backoff; UI surfaces inline error with retry button.
 - **Offline Support**
   - Limited caching for key pages (bookings, provider jobs) using service workers to maintain read access.
+- **Status Communication**
+  - System status API feeds header banner and dedicated status page to inform users of incidents; updates poll every minute.
 
 These logic flow updates ensure the React web app delivers seamless, role-specific experiences backed by real-time data and governance controls.
