@@ -31,6 +31,11 @@
 - Dispute resolution board integrates messaging logs and timeline actions; decisions update financial state.
 - Compliance module monitors document expirations, triggers reminders, and enforces gating on overdue providers.
 
+## Platform Operations & Release Management (New)
+- Promotion control centre surfaces Terraform plan summaries, Git release tags, and approver sign-offs before production deployments.
+- Incident workspace links to the backup/DR runbook, enabling failover execution with progress trackers and post-incident template export.
+- Alarm console consumes CloudWatch alerts (5xx, ECS CPU) with inline playbooks; acknowledges integrate with PagerDuty via API.
+
 ## Notifications & Integrations
 - Event bus publishes key actions to messaging, analytics, and CRM connectors.
 - Agora integration for embedded calls requires pre-call checks (permissions, connectivity) before launching modals.

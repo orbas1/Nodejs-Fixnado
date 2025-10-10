@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 export default function ServiceCard({ service }) {
   return (
     <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-lg transition-shadow">
@@ -18,3 +20,13 @@ export default function ServiceCard({ service }) {
     </div>
   );
 }
+
+ServiceCard.propTypes = {
+  service: PropTypes.shape({
+    icon: PropTypes.node.isRequired,
+    name: PropTypes.string.isRequired,
+    category: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    price: PropTypes.string.isRequired
+  }).isRequired
+};

@@ -8,7 +8,14 @@ import { sequelize } from './models/index.js';
 
 const app = express();
 
-app.use(helmet());
+app.disable('x-powered-by');
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 app.use(cors());
 app.use(express.json());
 app.use(morgan('tiny'));

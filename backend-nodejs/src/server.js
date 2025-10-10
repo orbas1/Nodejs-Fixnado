@@ -5,7 +5,7 @@ async function start() {
   try {
     await initDatabase();
     app.listen(config.port, () => {
-      console.log(`Fixnado API listening on port ${config.port}`);
+      console.info(`Fixnado API listening on port ${config.port}`);
     });
   } catch (error) {
     console.error('Failed to start server', error);
