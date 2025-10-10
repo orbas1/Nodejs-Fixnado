@@ -34,3 +34,20 @@
 ## Internationalisation
 - Support locale-specific date/time formats.
 - Mirror layout for RTL: field alignments flip, maintain padding.
+
+## Multi-step Wizards
+- Stepper displayed top with labels `Overview`, `Details`, `Schedule`, `Review`.
+- Persistent summary sidebar (desktop) width 320px showing selections, cost, compliance checklist.
+- On mobile, summary collapses into accordion below form with sticky footer showing total + CTA.
+
+## Keyboard Shortcuts
+- `Alt+S` triggers save draft (desktop). Provide tooltip near CTA.
+- `Shift+Enter` submits when allowed; ensure accessible fallback button available.
+
+## Error Recovery
+- Display inline errors plus summary at top linking to first invalid field using anchor IDs.
+- For server errors, show toast plus inline message with support link.
+
+## Security Considerations
+- Mask sensitive fields (API keys) with reveal toggle including `aria-pressed` state.
+- Auto-log out user after 15 minutes inactivity on sensitive forms (security); show warning modal 60 seconds prior.
