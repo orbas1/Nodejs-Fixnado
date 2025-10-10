@@ -1,0 +1,84 @@
+# Web Application Logic & Flow Changes
+
+## 1. Session Management & Access Control
+- **Authentication**
+  - Public pages accessible without login; sensitive flows require authentication via JWT stored in httpOnly cookies.
+  - MFA enforced for provider and admin roles; fallback recovery codes managed within profile settings.
+- **Role-Based Routing**
+  - React router guards detect role (user, provider, admin, support) and load corresponding navigation shell.
+  - Unauthorized access returns 403 page with link to switch account.
+
+## 2. Geo-Zonal Explorer
+- **Search Handling**
+  - Search queries call `/api/explorer/search`; results paginated and cached to enable map/list sync.
+  - Map interactions (pan/zoom) trigger bounding box updates; list re-fetches to stay aligned.
+- **Filter Application**
+  - Filters update query params; backend supports server-side filtering for performance.
+  - Sponsored providers pinned to top with disclosure tooltip.
+- **Provider Profile Launch**
+  - Clicking provider opens modal with detail; booking CTA initiates booking wizard with pre-filled provider context.
+
+## 3. Booking Funnel Logic
+- **Stepper Control**
+  - Each step validates data; incomplete fields block progression and highlight errors.
+  - Autosave persists draft booking in local storage and server for cross-device continuity.
+- **Provider Selection**
+  - When user requests bids, system posts job to providers; UI shows countdown and updates when bids arrive via websocket.
+  - Manual selection locks provider and bypasses bidding stage, verifying availability before scheduling step.
+- **Pricing Calculation**
+  - Real-time pricing updates compute service cost, add-ons, rentals, taxes, commissions, discounts.
+  - Payment step integrates with payment gateway; tokenisation occurs before final confirmation.
+- **Confirmation**
+  - Successful booking triggers email, push notifications, and updates analytics events.
+
+## 4. Provider Console Workflows
+- **Job Management**
+  - Data table fetches from `/api/provider/jobs`; websockets push status changes.
+  - Inline actions (accept, decline, update status) call respective APIs and optimistically update UI.
+- **Availability Editor**
+  - Zone polygons edited via map library; changes saved to `/api/provider/zones` with validation for overlaps.
+  - Calendar integrates with ICS export; updates propagate to mobile via shared backend.
+- **Marketplace Management**
+  - Inventory updates trigger server-side validation for stock conflicts; UI displays conflict resolution modal.
+- **Compliance Lifecycle**
+  - Document upload uses chunked uploads; status updates shown in Kanban columns.
+- **Ads Manager**
+  - Campaign wizard enforces objective selection, targeting parameters, budget allocation, and creative approval. Launch triggers review pipeline.
+
+## 5. Admin & Governance Flows
+- **Compliance Queue**
+  - Queue fetches paginated data; moderators can bulk approve/deny. Decisions log to audit trail API.
+  - Dispute resolution integrates with evidence viewer, enabling final decision and automated notifications.
+- **Commission Settings**
+  - Forms update rules with effective dates; UI warns if conflicts detected with existing rules.
+- **Analytics & Reporting**
+  - Dashboards pull from analytics service; filters update charts and export options.
+  - Scheduled exports allow cron-like configuration saved server-side.
+
+## 6. User Account & Support
+- **Bookings Dashboard**
+  - Data aggregated from bookings service; statuses drive available actions (reschedule, cancel, contact provider).
+  - Reschedule flow checks provider availability; alternate suggestions retrieved if unavailable.
+- **Marketplace Orders**
+  - Order detail view shows fulfilment timeline; return scheduling integrates with courier booking if required.
+- **Support Tickets**
+  - Submissions create ticket via `/api/support/tickets`; chat widget escalations link conversation history.
+
+## 7. Communications Suite
+- **Unified Inbox**
+  - Conversations loaded via `/api/messages`; websockets deliver new messages, read receipts, typing indicators.
+  - AI assist requests call AI service; results inserted as drafts requiring confirmation.
+- **Voice/Video Calls**
+  - Launch checks Agora token; session metadata stored post-call for compliance.
+- **Notifications**
+  - Notification centre consumes aggregated feed; clicking item routes to relevant screen.
+
+## 8. Error Handling & Resilience
+- **Global Error Boundary**
+  - Catches unexpected exceptions, logs to monitoring service, displays fallback UI with reload option.
+- **Network Failures**
+  - API calls have retry/backoff; UI surfaces inline error with retry button.
+- **Offline Support**
+  - Limited caching for key pages (bookings, provider jobs) using service workers to maintain read access.
+
+These logic flow updates ensure the React web app delivers seamless, role-specific experiences backed by real-time data and governance controls.
