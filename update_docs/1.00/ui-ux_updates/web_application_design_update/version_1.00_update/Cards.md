@@ -33,3 +33,24 @@
 ## Accessibility
 - Cards acting as buttons include `role="button"` and keydown handlers for Enter/Space.
 - Provide alt text for background imagery via overlay `aria-label` when card clickable.
+
+## Content Density Modes
+- **Comfortable**: default spacing 24px, line height 1.5.
+- **Compact**: reduce padding to 16px, font size remains; toggled by density setting in user preferences.
+- **Condensed**: 12px padding for data-dense views (admin). Ensure accessible focus outlines remain visible.
+
+## Loading & Empty States
+- Provide skeleton placeholders matching card structure (image block, text rows, CTA). Animation 1.2s shimmer.
+- Empty states include icon 48px, heading, supporting text, CTA button (ghost variant).
+
+## Badge Placement
+- Use top-right corner for status badges (size 32×32). Align 16px from edges.
+- For cards with multiple badges, stack vertically with 8px gap.
+
+## Motion
+- Hover translation `transform: translateY(-4px)` and shadow escalate by one level.
+- For clickable cards, include `:focus-visible` outline `3px #0EA5E9` with `outline-offset: 4px`.
+
+## Theming
+- Dark mode card background `#111C33`, text `#E2E8F0`, border `rgba(148,163,184,0.16)`.
+- Use gradient overlays for featured cards only; limit to 2 per page.
