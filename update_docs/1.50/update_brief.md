@@ -68,6 +68,7 @@ Current readiness metrics from the tracker highlight early momentum in foundatio
 
 ## Quality & Governance Commitments
 - Regression, integration, device-matrix, accessibility, performance, and security testing are embedded in Task 8 and within each feature task.
+- The Version 1.50 testing plan (testing_plan.md) defines coverage, environments, ownership, and milestone-aligned entry/exit criteria for all QA activities.
 - Observability requirements mandate logging, metrics, tracing, and alert thresholds before production promotion.
 - Release governance includes change logs, training materials, support playbooks, and an end-of-update report summarising KPIs, risks, and follow-up backlog.
 

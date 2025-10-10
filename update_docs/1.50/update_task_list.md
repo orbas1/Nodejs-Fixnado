@@ -186,6 +186,7 @@
 3. Define QA protocols: regression suites, beta programs, accessibility/performance audits.
 4. Produce release documentation, training materials, change logs, and support playbooks.
 5. Compile end-of-update report with KPI tracking, risk/issue logs, and follow-up backlog.
+6. Publish and maintain the Version 1.50 testing plan (testing_plan.md), aligning coverage matrices, environments, and schedules with milestone gates.
 
 ### Integration Coverage
 - **Backend:** CI pipelines, telemetry exporters, contract tests, security scans.

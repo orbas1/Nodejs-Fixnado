@@ -58,6 +58,7 @@ Percentages reflect current state during planning. "Overall" equals the arithmet
 | 8.3 QA protocols & beta programs | 5% | 5% | 5% | 0% | 5% | 5% | 4% |
 | 8.4 Release documentation & training | 5% | 5% | 5% | 0% | 5% | 5% | 4% |
 | 8.5 End-of-update report drafting | 5% | 5% | 5% | 0% | 5% | 5% | 4% |
+| 8.6 Testing plan publication & governance | 5% | 5% | 5% | 0% | 5% | 5% | 4% |
 | 9.1 Mobile feature parity completion | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 9.2 Performance optimisation & offline resilience | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 9.3 Mobile security hardening | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
