@@ -87,3 +87,30 @@
 - Content guidelines include glossary of standardised terms (Zones, Marketplace Rentals, Compliance Tasks) to avoid inconsistencies across modules.
 
 These styling adjustments deliver a cohesive, accessible web experience aligned with the expanded Fixnado design system.
+
+## CSS Architecture & Delivery
+- Adopted CSS Modules for new components with design token imports to prevent leakage; legacy SCSS files refactored gradually using mixins referencing token variables.
+- Introduced lint rules (stylelint) enforcing token usage and preventing hard-coded colours.
+- Storybook documentation updated with controls for light/dark theme toggling and responsive viewport testing.
+
+## Responsive Behaviour Notes
+- Tablet breakpoint collapses side navigation to icon rail while surfacing module switcher via top bar overflow menu.
+- Mobile view uses stacked layout with sticky action bars for booking funnel to keep CTAs in reach.
+- Charts reflow to stacked cards with summary metrics when viewport <960px to maintain readability.
+
+## Accessibility Validation Checklist
+1. Test keyboard navigation for modals, drawers, and dropdowns ensuring focus trap and escape key support.
+2. Run automated accessibility scans (axe) during CI and capture baseline thresholds for contrast and ARIA compliance.
+3. Validate screen reader labels for interactive map controls and dynamic filter chips.
+4. Confirm reduced motion setting swaps animations for fades and disables parallax effects in hero sections.
+
+## Asset Management & Performance
+- Implemented image optimisation pipeline using WebP with fallback; hero images sized per breakpoint to minimise load.
+- Iconography served via sprite sheets with tree-shaking to reduce bundle size.
+- CSS delivered via critical path extraction for above-the-fold content on landing and explorer pages.
+
+## QA Checklist
+- Verify theme toggle persists across sessions (localStorage) and updates meta tags for colour scheme.
+- Ensure chart legends remain legible in dark mode and keyboard accessible.
+- Confirm focus outlines meet contrast requirements on all button variants.
+- Run visual regression tests against baseline screenshots before merge to catch unintended styling changes.

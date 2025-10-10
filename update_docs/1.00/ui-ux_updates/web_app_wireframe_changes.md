@@ -131,3 +131,31 @@
   - Full-screen banner for major outages with live status feed and alternative contact options.
 
 These wireframe revisions establish a scalable, data-rich web experience tailored to both consumers and enterprise administrators.
+
+## Screen Matrix & Responsibilities
+| Area | Screen | Objective | Key Modules | Special Considerations |
+| --- | --- | --- | --- | --- |
+| Public | Landing Hero | Drive discovery | Hero, search bar, CTA buttons | Seasonal campaign banner slot, localisation support |
+| Public | Explorer | Map/list search | Map canvas, filter panel, provider cards | Debounce interactions for performance, sponsored badge disclosure |
+| Booking | Requirements | Capture details | Multi-column form, helper sidebar | Inline progress tracker, saved draft state |
+| Booking | Provider Selection | Compare bids | Table, compare drawer, map inset | Supports manual/auto selection toggle |
+| Booking | Checkout | Finalise booking | Calendar, payment form, summary | Legal consent block, invoice preview |
+| Provider Console | Dashboard | Operational overview | KPI tiles, activity feed, zone heatmap | Customisable widget layout (drag/drop) |
+| Provider Console | Jobs Table | Manage jobs | Data table, filters, quick actions | Bulk actions require confirmation drawer |
+| Provider Console | Marketplace Manager | Manage listings | Inventory table, listing cards, analytics | Inline status indicators for compliance |
+| Admin | Compliance Queue | Approve docs | Table, detail drawer, evidence gallery | Multi-select bulk decision bar |
+| Admin | Dispute Resolution | Resolve conflicts | Master/detail layout, action footer | Decision confirmation modals with audit logging |
+| User Account | Bookings Dashboard | Track engagements | Booking cards, timeline widget | Quick actions contextual to status |
+| Communications | Unified Inbox | Manage conversations | Conversation list, chat window, context rail | Role-based templates, AI assist panel |
+| Analytics | Zone Analytics | Monitor performance | Map overlays, charts, filters | Export triggers background job with toast feedback |
+
+### Content & Interaction Guidelines
+- Each screen annotated with copy tone (professional, supportive) and CTA labels to maintain consistency across modules.
+- Forms highlight required vs optional fields using iconography and tooltips to minimise completion errors.
+- Navigation breadcrumbs added for deep admin flows to improve orientation.
+
+### Handoff Requirements
+1. Provide responsive measurements for breakpoints (desktop, tablet, mobile) including collapsed navigation states.
+2. Document skeleton states for tables, cards, and charts to ensure consistent loading experiences.
+3. Supply component naming aligned with React component library (`<ZoneAnalyticsMap>`, `<BookingStepper>`).
+4. Include accessibility annotations (ARIA roles, keyboard navigation) within wireframe notes for developer reference.

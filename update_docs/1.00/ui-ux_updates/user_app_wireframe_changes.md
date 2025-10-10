@@ -100,3 +100,33 @@
   - Full-screen modal shown during major outages with service status, estimated resolution, and contact options.
 
 These wireframe updates establish a comprehensive user journey from discovery to post-job support within the mobile app.
+
+## Screen Inventory & Interaction Spec
+| Tab | Screen | Primary Goals | Core Components | Special States |
+| --- | --- | --- | --- | --- |
+| Explore | Map View | Discover providers by zone | Map canvas, provider list, filter drawer | Offline fallback map snapshot, permission request overlay |
+| Explore | Service Detail | Evaluate provider offering | Media gallery, package list, review tabs | Compliance badge callouts, limited-time promo banner |
+| Bookings | List | Monitor job pipeline | Status segments, booking cards, quick actions | Empty state guidance, overdue payment chip |
+| Bookings | Detail | Manage active booking | Timeline, checklist, payment summary | Dispute mode overlay, provider delay alert |
+| Marketplace | Catalogue | Browse rentals/purchases | Toggle tabs, product cards, filter chips | Out-of-stock ribbon, insurance upsell drawer |
+| Marketplace | Product Detail | Configure rental | Specs table, price calculator, delivery selector | Damage waiver modal, deposit warning |
+| Messages | Conversation List | Access communications | Category filter, conversation cards | Merge booking prompt when duplicates detected |
+| Messages | Chat Detail | Converse with provider/support | Message list, quick replies, attachments tray | AI assist suggestions, escalation banner |
+| Profile | Overview | Manage account | Avatar, loyalty widget, wallet, quick links | Identity verification prompt, incomplete profile meter |
+| Profile | Preferences | Configure settings | Toggle list, language picker, accessibility controls | High-contrast preview, push permission reminder |
+
+### Form & Validation Guidance
+- Booking wizard forms specify maximum character counts, placeholder copy, and example responses to reduce user friction.
+- Payment step outlines card masking behaviour and wallet utilisation order to maintain transparency.
+- Support forms include conditional fields (e.g., attach photo) based on issue type selection.
+
+### Content & Messaging Notes
+- Copy uses inclusive, plain language; service descriptions highlight credentials and guarantees.
+- Notification feed ensures each entry includes timestamp, action button, and summarised impact.
+- Error states instruct users on next best action (retry, contact support, change provider) rather than generic failure messages.
+
+### Developer Delivery Checklist
+1. Implement scroll retention for Explore map/list when user returns from provider detail.
+2. Ensure booking detail timeline supports infinite scroll for long-running jobs (e.g., maintenance contracts).
+3. Provide analytics instrumentation for FAB usage across tabs to evaluate effectiveness of quick actions.
+4. Annotate wireframes with component library references to align with Flutter theming and avoid duplication.

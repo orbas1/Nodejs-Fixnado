@@ -94,3 +94,20 @@
   - In-app status page surfaces incident notifications sourced from status API with auto-refresh every 60 seconds.
 
 The updated logic ensures a seamless, transparent booking experience while maintaining compliance and providing robust support pathways.
+
+## Analytics, Automation & Support Workflows
+- **Automation Events**: Booking milestones automatically schedule notifications, invoice generation, and loyalty point accrual; logic ensures cancellations reverse pending rewards.
+- **AI Assist Governance**: AI suggestions logged with user override decisions to refine training data while respecting privacy policies.
+- **Telemetry Coverage**: Flow documents specify events for search engagement, filter application, bid acceptance, and dispute initiation to support product analytics dashboards.
+
+## Exceptional Scenarios & Safeguards
+- **High-Risk Services**: Certain categories (e.g., electrical) require additional waiver flow; logic inserts consent step before final confirmation.
+- **Provider Unavailability**: When provider cancels, system proposes top alternative matches and offers compensation voucher automatically.
+- **Payment Failures**: Retries limited to three; after failure, wallet automatically refunds deposits and prompts user to update method.
+- **Service Interruptions**: Status page integration surfaces incidents; bookings in progress display fallback instructions (emergency contacts, offline checklist).
+
+## Implementation Reminders
+1. Persist draft bookings securely with encryption to protect sensitive notes and attachments.
+2. Ensure chat history sync prioritises latest 50 messages for faster load, with lazy fetch for older threads.
+3. Configure push notification categories for bookings, marketplace, support to align with new preference toggles.
+4. Validate localisation for currency, date/time, and measurement units across booking summaries and invoices.
