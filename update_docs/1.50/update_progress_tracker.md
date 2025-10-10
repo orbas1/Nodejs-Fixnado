@@ -14,6 +14,7 @@ Percentages reflect current state during planning. "Overall" equals the arithmet
 | Task 7 – Experience Parity Across Web & Mobile Clients | 5% | 5% | 5% | 5% | 0% | 0% | 3% |
 | Task 8 – Quality Assurance, Observability & Release Readiness | 5% | 5% | 5% | 0% | 5% | 5% | 4% |
 | Task 9 – Mobile Application Completion & Store Launch Readiness | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
+| Task 10 – Design System Convergence & Handoff | 10% | 20% | 15% | 18% | 8% | 5% | 13% |
 
 ## Subtask Progress Breakdown
 | Task & Subtask | Security | Completion | Integration | Functionality | Error Free | Production | Overall |
@@ -64,4 +65,10 @@ Percentages reflect current state during planning. "Overall" equals the arithmet
 | 9.3 Mobile security hardening | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 9.4 Device matrix QA & accessibility audits | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | 9.5 Store submission & rollout preparation | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
+| 10.1 Experience architecture consolidation | 10% | 20% | 15% | 15% | 10% | 5% | 13% |
+| 10.2 Visual system & token harmonisation | 12% | 18% | 15% | 20% | 8% | 5% | 13% |
+| 10.3 Prototype builds & dummy data sourcing | 8% | 15% | 10% | 15% | 5% | 5% | 10% |
+| 10.4 Usability & accessibility validation | 5% | 10% | 5% | 10% | 5% | 0% | 6% |
+| 10.5 Engineering handoff enablement | 8% | 15% | 12% | 15% | 5% | 5% | 10% |
+| 10.6 Design QA & release communications | 5% | 10% | 8% | 10% | 5% | 5% | 7% |
 
