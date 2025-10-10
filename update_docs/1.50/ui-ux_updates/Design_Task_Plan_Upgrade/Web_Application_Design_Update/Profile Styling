@@ -1,9 +1,0 @@
-# Profile Styling Specification
-
-- **Colour Palette:** Midnight Blue (`#0B1F33`) background gradients, Teal (`#1ABC9C`) CTAs, soft grey (`#F5F6FA`) content cards, accent highlight (`#FFB347`) for promotions.
-- **Typography:** IBM Plex Sans Bold for headings (32/40), Regular for body (18/28), Mono for rates and IDs (14/20).
-- **Cards:** 12px corner radius, elevation level-1, border `#E5E9F0`. Hover adds 6% accent tint.
-- **Buttons:** Primary teal with white text; secondary ghost with accent border; sticky mobile action bar uses full-width buttons.
-- **Media Treatment:** Hero image height 320px desktop/220px tablet; gallery grid 3-up with 16px gaps; video overlay button uses play icon with drop shadow.
-- **Badges:** Pill-style badges with accent background and white text for verification; neutral grey outlines for optional tags.
-- **Forms:** Contact form uses inline labels above fields, 16px spacing, success toast upon submission.
