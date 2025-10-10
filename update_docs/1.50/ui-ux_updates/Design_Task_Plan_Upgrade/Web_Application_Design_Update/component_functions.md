@@ -1,8 +1,30 @@
 # Component Functions
 
-- **Persona Switcher:** Changes navigation context, updates permissions, refreshes dashboards.
-- **Marketplace Cards:** Provide service info, compliance tags, quick actions (Book, Chat, Compare).
-- **Kanban Boards:** Track custom job statuses, support drag-and-drop updates with auto-save.
-- **Analytics Tiles:** Display KPIs with trends, drill-down on click to detailed reports.
-- **Ads Campaign Wizard:** Guides providers through goal selection, targeting, budgeting, and review.
-- **Consent Manager:** Lists active consents, provides revoke/export options.
+- **Persona Switcher**
+  - Adjusts navigation set, dashboard widgets, and permissions on selection.
+  - Records persona shifts in audit trail and refreshes AI recommendations.
+- **Marketplace Cards**
+  - Show provider status, compliance badges, pricing, and response time.
+  - Support quick actions (Book, Chat, Compare, Save) with contextual tooltips.
+  - On hover/focus reveal mini analytics (job count, review snippet).
+- **Comparison Tray**
+  - Persistent bottom dock aggregating selected services/packages.
+  - Normalises attributes for side-by-side metrics and highlights deltas.
+- **Kanban Board**
+  - Drag-and-drop custom job cards; triggers autosave and timeline entry.
+  - Column headers display SLA countdown and backlog count badges.
+- **AI Insight Drawer**
+  - Surfaces recommended actions, risk alerts, and performance anomalies.
+  - Includes "explain" link to view underlying data points for transparency.
+- **Analytics Tiles & Charts**
+  - Tap/click to expand into modal with chart, filters, and export controls.
+  - Provide loading skeletons, empty states, and error recovery prompts.
+- **Ads Campaign Wizard**
+  - Guides providers through objective selection, audience targeting, budgeting, creative upload, review, and launch.
+  - Validates regulatory and budget constraints; integrates preview and ROI projection panel.
+- **Consent Manager Table**
+  - Lists consents, expiry dates, and request status with action chips (Renew, Revoke, Export).
+  - Batch operations available with confirmation modals; filters by persona, zone, and data category.
+- **Notification Stack**
+  - Groups alerts by severity; sticky banners reserved for compliance blocks, toasts for success/updates, inbox for history.
+  - Supports pause/dismiss, link to support resources, and event instrumentation.
