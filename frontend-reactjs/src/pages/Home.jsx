@@ -6,31 +6,35 @@ import Explorer from '../components/Explorer.jsx';
 import MarketplaceShowcase from '../components/MarketplaceShowcase.jsx';
 import ServiceZones from '../components/ServiceZones.jsx';
 import EscrowSection from '../components/EscrowSection.jsx';
+import EnterpriseHighlights from '../components/EnterpriseHighlights.jsx';
 
 const services = [
   {
     id: 1,
-    name: 'Home repairs on call',
-    category: 'Certified tradespeople',
-    description: 'Licensed electricians, plumbers, and carpenters available within 60 minutes for emergency fixes.',
-    price: '$85/hr',
-    icon: '🏠'
+    name: 'Critical facility response teams',
+    category: 'Facilities & infrastructure',
+    description:
+      'Deploy multi-trade squads with compliance-ready checklists for hospitals, campuses, and mission-critical sites.',
+    price: 'Custom SLAs',
+    icon: '🏢'
   },
   {
     id: 2,
-    name: 'Event setup squads',
-    category: 'Event professionals',
-    description: 'From lighting to staging, coordinate pop-up events or conferences with curated crews.',
-    price: '$240+',
-    icon: '🎪'
+    name: 'Programmatic workforce pods',
+    category: 'Tech & digital',
+    description:
+      'Pair vetted developers, product managers, and UX specialists for sprint-based digital rollouts and innovation labs.',
+    price: '$120/hr',
+    icon: '💻'
   },
   {
     id: 3,
-    name: 'Fractional product teams',
-    category: 'Tech & digital',
-    description: 'Hire vetted developers, designers, and product managers for sprints or long-term retainers.',
-    price: '$120/hr',
-    icon: '💡'
+    name: 'Experiential event command',
+    category: 'Brand & events',
+    description:
+      'Coordinate nationwide launches with synchronized logistics, rental equipment, and brand-certified specialists.',
+    price: '$240+',
+    icon: '🎯'
   }
 ];
 
@@ -38,7 +42,17 @@ export default function Home() {
   return (
     <div className="space-y-16 pb-16">
       <Hero />
+      <EnterpriseHighlights />
       <section className="mx-auto max-w-6xl px-6">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold text-primary">Solutions curated for enterprise velocity.</h2>
+            <p className="mt-3 max-w-2xl text-sm text-slate-600">
+              Activate turnkey service packages or tailor programs that blend your internal teams with Fixnado-certified experts.
+            </p>
+          </div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Escrow backed • SLA aligned</p>
+        </div>
         <div className="grid gap-6 md:grid-cols-3">
           {services.map((service) => (
             <ServiceCard key={service.id} service={service} />

@@ -16,6 +16,6 @@ a {
 }
 
 .gradient-bg {
-  background: radial-gradient(circle at top left, rgba(0, 161, 224, 0.25), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(14, 28, 54, 0.2), transparent 55%);
+  background: radial-gradient(circle at top left, rgba(31, 78, 216, 0.22), transparent 60%),
+    radial-gradient(circle at bottom right, rgba(11, 29, 58, 0.18), transparent 55%);
 }

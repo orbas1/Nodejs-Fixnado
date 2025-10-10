@@ -21,10 +21,9 @@ export default function Header() {
           <img
             src={LOGO_URL}
             alt="Fixnado"
-            className="h-10 w-10 object-contain"
+            className="h-10 w-auto object-contain"
             loading="lazy"
           />
-          <span className="text-xl font-semibold text-primary">Fixnado</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           {navigation.map((item) => (

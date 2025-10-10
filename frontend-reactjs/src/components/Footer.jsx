@@ -9,29 +9,26 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-primary text-white">
+    <footer className="bg-white text-slate-700 border-t border-slate-200">
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-10 md:grid-cols-4">
         <div>
-          <div className="flex items-center gap-3">
-            <img
-              src={LOGO_URL}
-              alt="Fixnado"
-              className="h-10 w-10 object-contain"
-              loading="lazy"
-            />
-            <span className="text-xl font-semibold">Fixnado</span>
-          </div>
-          <p className="mt-4 text-sm text-slate-200">
-            Fixnado connects households, businesses, and skilled professionals to get custom jobs done fast.
+          <img
+            src={LOGO_URL}
+            alt="Fixnado"
+            className="h-10 w-auto object-contain"
+            loading="lazy"
+          />
+          <p className="mt-4 text-sm text-slate-500">
+            Fixnado connects households, enterprises, and skilled professionals to orchestrate custom jobs with precision.
           </p>
         </div>
         {footerLinks.map((column) => (
           <div key={column.title}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-accent">{column.title}</h3>
-            <ul className="mt-3 space-y-2 text-sm text-slate-200">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">{column.title}</h3>
+            <ul className="mt-3 space-y-2 text-sm text-slate-500">
               {column.items.map((item) => (
                 <li key={item}>
-                  <Link to="#" className="hover:text-white">
+                  <Link to="#" className="hover:text-accent">
                     {item}
                   </Link>
                 </li>
@@ -40,13 +37,13 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col md:flex-row items-center justify-between text-xs text-slate-300">
+      <div className="border-t border-slate-200 bg-slate-50/60">
+        <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-3">
           <span>© {new Date().getFullYear()} Fixnado. All rights reserved.</span>
           <div className="flex gap-4">
-            <Link to="#">Privacy</Link>
-            <Link to="#">Terms</Link>
-            <Link to="#">Cookies</Link>
+            <Link to="#" className="hover:text-accent">Privacy</Link>
+            <Link to="#" className="hover:text-accent">Terms</Link>
+            <Link to="#" className="hover:text-accent">Cookies</Link>
           </div>
         </div>
       </div>
