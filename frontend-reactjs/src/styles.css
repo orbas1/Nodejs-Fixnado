@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-secondary text-slate-900 antialiased;
+}
+
+a {
+  @apply text-accent hover:text-primary transition-colors;
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at top left, rgba(0, 161, 224, 0.25), transparent 60%),
+    radial-gradient(circle at bottom right, rgba(14, 28, 54, 0.2), transparent 55%);
+}
