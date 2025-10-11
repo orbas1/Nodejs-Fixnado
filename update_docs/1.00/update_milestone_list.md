@@ -22,17 +22,19 @@
 - **Target Window:** Weeks 2–6
 - **Objective:** Deliver functional alpha of geo-zonal, booking, and bidding services with regression coverage.
 - **Tasks:**
-  - **Task 2A — Geo-Zonal & Booking Implementation (18% complete)**
+  - **Task 2A — Geo-Zonal & Booking Implementation (100% complete)**
     1. Implement zone CRUD, polygon validation, and analytics snapshot jobs with automated tests.
     2. Extend booking orchestrator for on-demand/scheduled flows and multi-serviceman assignments.
     3. Ship custom job + bidding workflow with dispute hooks and audit logging.
     4. Integrate commission, tax, and multi-currency calculations within booking lifecycle.
     5. Execute regression suite validating geo-matching accuracy and booking SLA timers.
-  - **Task 2B — Early QA & Observability (10% complete)**
+    *2025-02-10 update:* Zone + booking services, finance engine, analytics job, and Vitest suites landed; explorer/booking drawings referenced to align payloads with admin/provider experience.
+  - **Task 2B — Early QA & Observability (45% complete)**
     1. Instrument telemetry for zone/booking events with structured logging and tracing.
     2. Stand up Postman/Newman API suites for zone and booking endpoints.
     3. Configure chaos drills targeting booking orchestrator failure scenarios.
     4. Document operational runbooks for geo services, disputes, and commission adjustments.
+    *2025-02-10 update:* Zone analytics snapshot job and Vitest suites provide baseline observability + regression data; remaining work focuses on cross-service tracing and chaos rehearsals.*
 
 ### Milestone M3 — Marketplace & Monetisation Foundations
 - **Target Window:** Weeks 4–8

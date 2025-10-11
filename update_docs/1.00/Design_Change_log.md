@@ -19,9 +19,11 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Content & Messaging | Refined copy tone hierarchy from `Screen_text.md`, `text.md.md`, and `Home page text.md`. Added templated microcopy for error states and guided onboarding flows aligned with compliance requirements. | Screen_text, text.md.md, Home page text | Drives consistent voice and regulatory clarity. |
 | Imagery & Illustration | Curated imagery specifications (`Screens_update_images_and_vectors.md`, `images_and _vectors.md`, `Home page images.md`) to support inclusive representation and performance budgets. Implemented vector-first approach with fallbacks for offline caching. | Image/vector documents | Improves accessibility and load performance across devices. |
 | Logic & Interaction | Harmonised logic flow artefacts (`Logic_Flow_update.md`, `Screens_Update_Logic_Flow.md`) to map cross-platform journeys, introducing guard-rails for security-critical paths and conditional theming triggers. | Logic Flow documents | Reduces behavioural inconsistencies and surfaces security checkpoints earlier in the experience. |
+| Geo-Zonal & Booking Workflows | Synced backend booking/zone delivery with explorer overlays, booking wizard states, and finance disclosures defined in `dashboard_drawings.md`, `admin_panel_drawings.md`, `menu_drawings.md`, and `app_screens_drawings.md`. | Drawings + Application/Web design update plans | Ensures service orchestration matches UX blueprints, preserving compliance messaging and analytics instrumentation. |
 | New / Adjusted Pages | Added dedicated theme configuration screen, "emo" theme preview, and modular home-page hero variants as described in `Home Page Organisations.md`, `Home page components.md`, and `Pages_list.md`. | Home page documentation, Pages_list | Enables marketing experimentation, personalisation, and theme testing. |
 | Compliance & QA Artefacts | Embedded accessibility and compliance checkpoints throughout design documentation, aligning with `Compliance Grade` tracking and `Test Grade` expectations. Added spec handoffs for QA in `Screens_Update_Plan.md`. | Screens_Update_Plan, Compliance criteria | Strengthens traceability and audit readiness. |
 | Core Page Blueprints | Rebuilt home, admin dashboard, provider profile, and services marketing layouts in React using shared blueprint primitives (`PageHeader`, `BlueprintSection`). Documented in `ui-ux_updates/core_page_blueprints.md`. | Home.jsx, AdminDashboard.jsx, Profile.jsx, Services.jsx | Aligns IA with compliance overlays, boosts conversion signals, and formalises instrumentation hooks. |
+| Marketplace Inventory & Monetisation | Codified provider inventory console, rental lifecycle detail screens, insured seller badge workflows, and campaign pacing dashboards across mobile and web specifications. | Screens_Update.md, Screens_Update_Logic_Flow.md, Settings.md, Dashboard Designs.md, Settings Dashboard.md | Ensures backend marketplace services plug into UI with actionable alerts, governed copy, and analytics instrumentation. |
 
 ## Detailed Log Entries
 ### 1. System-wide Foundations
@@ -95,6 +97,16 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Authored Vitest + Testing Library harness for `ThemeProvider` verifying DOM dataset updates, event broadcasting, telemetry beacons, and storage persistence so design instrumentation remains audit-ready.
 - Captured automation uplift across `test_plan.md`, trackers, and design docs to evidence Subtask 6.2 completion and surface telemetry regression assertions for QA and analytics squads.
 - Coordinated Flutter widget coverage for live feed banners, mapping design intent (priority indicators, empty/loading states) into deterministic tests referenced by design QA artefacts.
+
+### 15. Geo-Zonal & Booking Enablement (2025-02-10)
+- Backend zone + booking delivery references `website_drawings.md`, `dashboard_drawings.md`, `admin_panel_drawings.md`, and `app_screens_drawings.md` to ensure API payloads feed explorer overlays, admin dashboards, and provider booking states as designed.
+- Finance/tax disclosures in booking responses mirror copy/structure from `Application_Design_Update_Plan` and `Web_Application_Design_Update`, safeguarding compliance messaging.
+- Zone analytics snapshots supply KPIs (sample size, SLA breaches, acceptance averages) required by dashboard widgets, keeping design intent measurable.
+
+### 16. Marketplace, Inventory & Monetisation Backbone (2025-02-11)
+- Expanded `application_design_update` artefacts with provider inventory console specs, rental agreement timelines, and insured seller badge manager so new ledger/rental/compliance APIs expose UI-ready data contracts.
+- Updated mobile settings and logic flow docs to describe badge visibility toggles, renewal reminders, analytics hooks, and low-stock navigation patterns triggered by background jobs.
+- Refreshed web dashboard and settings specifications with inventory health tiles, rental SLA trackers, marketplace alert rails, and campaign pacing boards ensuring admin/provider consoles visualise marketplace insights with accessible patterns and inline budget controls.
 
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.

@@ -89,3 +89,11 @@
   2. ✅ Add optional aggregate statistics payload (freshness split, tenant/theme distribution, share min/avg/max) to support rehearsal analytics and alert calibration.
   3. ✅ Refresh runbook, QA scenarios, and trackers with diagnostics workflow guidance, filter documentation, and rehearsal expectations for the 12 Feb analytics drill.
 
+## Task 10 — Geo-Zonal & Booking Experience Support *(Status: ✅ Complete — 2025-02-10)*
+- **Delivery Owner:** UX Architect with Backend Lead + Product Manager.
+- **Evidence:** Backend Task 2 delivery (`backend-nodejs/src/services/zoneService.js`, `bookingService.js`, analytics job/tests) mapped to design drawings (`website_drawings.md`, `dashboard_drawings.md`, `admin_panel_drawings.md`, `app_screens_drawings.md`) via `Design_Plan.md` & `Design_Change_log.md` updates.
+- **Subtasks:**
+  1. ✅ Validate zone CRUD + analytics payloads against explorer overlay specs, ensuring demand-level labels, bounding boxes, and KPI rollups match drawings.
+  2. ✅ Confirm booking lifecycle metadata (status, SLA timers, assignments, finance breakdown) fulfils admin/provider dashboard states documented in design plans.
+  3. ✅ Document copy + compliance alignment so commission/tax disclosures and dispute messaging mirror approved templates in `Application_Design_Update_Plan` and `Web_Application_Design_Update`.
+

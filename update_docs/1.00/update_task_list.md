@@ -22,7 +22,7 @@ Establish the cross-squad delivery framework, baseline compliance, and open the 
 - **Logic:** Subtask 1.1 codifies ownership and dependencies for orchestration flows.
 - **Design:** Subtask 1.1 aligns design and product representation in governance cadences.
 
-### Task 2 — Deliver Geo-Zonal & Booking Core Services (18% complete)
+### Task 2 — Deliver Geo-Zonal & Booking Core Services (100% complete)
 Implement foundational microservices for zones, bookings, bidding, disputes, and commission logic with automated verification.
 
 #### Subtasks
@@ -31,6 +31,13 @@ Implement foundational microservices for zones, bookings, bidding, disputes, and
 2.3 Build custom job + bidding workflow (creation, revisions, comments) with dispute trigger hooks and audit logging.
 2.4 Integrate commission, tax, and multi-currency calculations with booking lifecycle and financial reconciliation.
 2.5 Create regression suite covering geo-matching accuracy, booking lifecycle permutations, and failure handling.
+
+**2025-02-10 execution summary:**
+- ✅ **2.1** `backend-nodejs/src/routes/zoneRoutes.js`, `controllers/zoneController.js`, `services/zoneService.js`, `models/serviceZone.js`, `models/zoneAnalyticsSnapshot.js`, and `jobs/zoneAnalyticsJob.js` deliver CRUD, GeoJSON validation, centroid/bounding box enrichment, and scheduled analytics snapshots aligned to explorer/admin drawings.
+- ✅ **2.2** `backend-nodejs/src/services/bookingService.js`, `controllers/bookingController.js`, `routes/bookingRoutes.js`, and new Sequelize models orchestrate on-demand/scheduled bookings, SLA timers, and multi-serviceman assignments with metadata captured for dashboards and provider apps.
+- ✅ **2.3** Booking bids/comments stored via `models/bookingBid.js` and `models/bookingBidComment.js`, with audit logging and dispute triggers surfaced through controller endpoints.
+- ✅ **2.4** Finance engine (`services/financeService.js`, `config/index.js`) manages commission/tax/multi-currency conversions plus metadata persisted on bookings for reconciliation.
+- ✅ **2.5** Vitest regression suites (`backend-nodejs/tests/zoneRoutes.test.js`, `tests/bookingRoutes.test.js`) verify polygon validity, analytics snapshots, monetary calculations, assignment acceptance, bid lifecycle, and dispute handling.
 
 #### Integration Coverage
 - **Backend:** Subtasks 2.1–2.4 deliver Node services and shared libraries.
