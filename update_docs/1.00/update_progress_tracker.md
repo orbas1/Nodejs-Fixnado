@@ -5,7 +5,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Task 1 — Mobilise Architecture, Compliance & Issue Intake | 100 | 100 | 100 | 100 | 100 | 100 | 100 | Compliance evidence pack finalised: refreshed DPIA, RBAC minutes, and security baseline document hashed-IP governance, Secrets Manager TTL enforcement, and JIT workflows mapped to design drawings. Task 1 exits Milestone M1 with regulator-ready artefacts and action tracker feeding future audits. |
 | Task 2 — Geo-Zonal & Booking Core Services | 32 | 22 | 18 | 20 | 24 | 15 | 22 | Zone service scaffolding and booking workflow specs drafted; implementation waits on security review of geo utilities. |
-| Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
+| Task 3 — Marketplace, Inventory & Monetisation Backbones | 52 | 36 | 32 | 34 | 38 | 32 | 36 | Inventory ledger API, reconciliation utilities, low-stock alerting, and health summaries landed (`inventoryService.js`, `inventoryController.js`, `inventoryRoutes.js`). Migration `20250216000000-create-inventory-ledger.js`, new models, and Vitest coverage (`tests/inventoryRoutes.test.js`) guard transaction history and alert lifecycle. Design artefacts (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Dashboard Designs.md`) now document ledger widgets, alert copy, and reconciliation flows so provider/admin consoles can implement without blockers. |
 | Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
 | Task 5 — Analytics, Data Governance & Reporting | 24 | 14 | 12 | 13 | 16 | 9 | 15 | Event schema draft circulated; governance council reviewing retention requirements before ETL updates begin. |
 | Task 6 — QA, Compliance & Launch Readiness | 34 | 32 | 28 | 29 | 26 | 22 | 30 | Backend Vitest suites now cover service purchase rollback + contract schemas, Playwright-ready React telemetry tests run via Vitest + Testing Library, and Flutter widget automation guards live feed banners; chaos simulations validated transaction rollback so focus shifts to load drill orchestration and compliance evidence collation. |
@@ -17,6 +17,7 @@
 - Deliver rental document purge automation design (DPIA action) and capture retention policy sign-off in security baseline appendix.
 - Update support knowledge base with telemetry opt-out instructions and link from Admin telemetry dashboard help panel.
 - Prepare joint legal/marketing DPIA walk-through (22 Oct) ensuring recordings consent copy updates reach React + Flutter teams.
+- Wire provider inventory console/admin dashboards to `/api/inventory` health and alert endpoints, surfacing reconciliation and acknowledgement affordances alongside design artefacts.
 
 ---
 Design metrics from prior addendum are retained below for continuity.

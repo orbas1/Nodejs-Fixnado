@@ -59,7 +59,7 @@ Implement foundational microservices for zones, bookings, bidding, disputes, and
 - **Logic:** Subtasks 2.2 & 2.3 orchestrate workflow engines and concurrency rules.
 - **Design:** Subtask 2.5 coordinates UX acceptance criteria for booking and bidding states.
 
-### Task 3 — Build Marketplace, Inventory & Monetisation Backbones (10% complete)
+### Task 3 — Build Marketplace, Inventory & Monetisation Backbones (36% complete)
 Create revenue-generating services, enforce insured seller policies, and prepare ad campaign infrastructure.
 
 #### Subtasks
@@ -68,6 +68,8 @@ Create revenue-generating services, enforce insured seller policies, and prepare
 3.3 Enforce insured seller eligibility, compliance document checks, and marketplace moderation workflows.
 3.4 Develop Fixnado + Finova campaign manager services (targeting, budgeting, pacing, billing reconciliation).
 3.5 Map monetisation telemetry to analytics warehouse and configure fraud monitoring signals.
+
+*2025-10-16 update:* Subtask **3.1** now exposes a production-grade provider inventory stack. New Sequelize models (`InventoryItem`, `InventoryLedgerEntry`, `InventoryAlert`) and migration `20250216000000-create-inventory-ledger.js` persist on-hand/reserved balances, ledger snapshots, and alert lifecycle metadata. The `/api/inventory` router delivers item CRUD, ledger queries, health summaries, reconciliation, and alert acknowledgement endpoints (`inventoryRoutes.js`, `inventoryController.js`, `inventoryService.js`). Configuration knobs (`config.inventory`, `INVENTORY_*` env vars) govern pagination and low-stock thresholds, while Vitest suites (`tests/inventoryRoutes.test.js`) and sqlite-safe mocks in `vitest.setup.js` guard critical flows (adjustments, health reporting, alert resolution). Documentation across change logs, design specs (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Dashboard Designs.md`), and trackers updated to evidence delivery and align provider/admin UI flows.
 
 #### Integration Coverage
 - **Backend:** Subtasks 3.1–3.4 extend services and background jobs.
