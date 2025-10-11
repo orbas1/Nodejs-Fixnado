@@ -9,3 +9,7 @@
 ## 2025-10-18 — Compliance & Marketplace Moderation Tables
 - Added `20250218000000-compliance-and-marketplace-moderation.js` creating `ComplianceDocument`, `InsuredSellerApplication`, `MarketplaceModerationAction`, and extending `Company`/`MarketplaceItem` with insured status columns, moderation metadata, compliance holds, and JSON snapshots.
 - Migration backfills enums for compliance/marketplace statuses, adds composite index on `(entity_type, entity_id)` for moderation queries, and drops enum types during rollback for Postgres parity while remaining sqlite-compatible.
+
+## 2025-10-19 — Campaign Manager Tables
+- Added `20250219000000-create-campaign-manager.js` establishing `ad_campaigns`, `campaign_flights`, `campaign_targeting_rules`, `campaign_invoices`, and `campaign_daily_metrics` with foreign keys, partial indexes for active flights, invoice due-date indexes, and JSONB targeting payload snapshots.
+- Migration seeds targeting type enum values (`GEO_RADIUS`, `CATEGORY`, `AUDIENCE_SEGMENT`, `SLOT_TYPE`), normalises currency defaults, and implements rollback to drop tables/enums + restore previous targeting enum values to keep migrations reversible across environments.

@@ -139,3 +139,13 @@
   4. ✅ Integrate knowledge-base entry points and contextual help (tooltips, quick links) guiding providers through document requirements, acceptable formats, and escalation channels.
   5. ✅ Update telemetry + analytics briefs with insured seller metrics (approval rate, renewal lead time, suspension counts) and ensure dashboards align with backend compliance snapshot schema.
 
+## Task 15 — Campaign Manager Targeting, Pacing & Billing UX *(Status: ✅ Complete — 2025-10-19)*
+- **Delivery Owner:** Marketplace PM with Design Systems Engineer, Finance Ops Lead, and Advertising Strategist partnership.
+- **Evidence:** `Screens_Update.md` (Campaign Manager section), `Screens_Update_Logic_Flow.md` (targeting/pacing/invoicing flows), `Web_Application_Design_Update/Dashboard Designs.md` (campaign analytics widgets), drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `website_drawings.md`, `App_screens_drawings.md`), and change log/plan/tracker updates dated 19 Oct.
+- **Subtasks:**
+  1. ✅ Blueprint campaign list, detail, and creation screens with pacing badges, spend progress, invoice chips, and responsive behaviour referenced in admin/provider drawings.
+  2. ✅ Document targeting composer interactions covering geography radius, audience segments, slot types, validation guardrails, helper copy, and saved presets aligned to backend caps.
+  3. ✅ Define pacing analytics widget (timeline, delivery ratio, forecast callouts) with export, segmentation controls, and telemetry instrumentation for overspend monitoring.
+  4. ✅ Specify invoice/billing drawer with status pills, due countdown, PDF export CTA, dispute escalation workflow, and finance notes referencing invoice endpoints.
+  5. ✅ Capture accessibility guidance (keyboard shortcuts, aria-live pacing alerts), QA selectors, and telemetry schema for campaign creation, targeting adjustments, pacing exports, and invoice settlement events.
+

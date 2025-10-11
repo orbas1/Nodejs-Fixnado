@@ -8,3 +8,7 @@
 ## 2025-10-13 — Postgres Defaults & Feature Toggle Secrets
 - Defaulted database configuration to PostgreSQL with pooled connection settings, SSL toggles, and explicit dialect mapping; also exposed `DB_SSL_REJECT_UNAUTHORIZED`, `DB_POOL_*`, and statement timeout knobs for production hardening.
 - Introduced `featureToggles` config block (`FEATURE_TOGGLE_SECRET_ARN`, `FEATURE_TOGGLE_CACHE_SECONDS`, `FEATURE_TOGGLE_OVERRIDES`, `FEATURE_TOGGLE_AUDIT_TABLE`) so the API can load toggle manifests from Secrets Manager with cache control and audit trail routing.
+
+## 2025-10-19 — Campaign Governance Configuration
+- Added `campaigns` config namespace with defaults for currency (`defaultCurrency`), invoice due horizon (`invoiceDueInDays`), maximum flights per campaign, overspend pause multiplier, and targeting rule caps to align API validation with finance/compliance policy.
+- Surfaced environment variable overrides (`CAMPAIGN_DEFAULT_CURRENCY`, `CAMPAIGN_MAX_FLIGHTS`, `CAMPAIGN_OVERSPEND_MULTIPLIER`, `CAMPAIGN_TARGETING_CAP`) and defensive parsing so deployments can tune pacing + targeting limits without code changes.

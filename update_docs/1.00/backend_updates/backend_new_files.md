@@ -54,3 +54,15 @@
 - `src/routes/marketplaceRoutes.js`
 - `tests/complianceMarketplace.test.js`
 - `src/database/migrations/20250218000000-compliance-and-marketplace-moderation.js`
+
+## 2025-10-19 — Added Files
+- `src/models/adCampaign.js`
+- `src/models/campaignFlight.js`
+- `src/models/campaignTargetingRule.js`
+- `src/models/campaignInvoice.js`
+- `src/models/campaignDailyMetric.js`
+- `src/services/campaignService.js`
+- `src/controllers/campaignController.js`
+- `src/routes/campaignRoutes.js`
+- `tests/campaignRoutes.test.js`
+- `src/database/migrations/20250219000000-create-campaign-manager.js`

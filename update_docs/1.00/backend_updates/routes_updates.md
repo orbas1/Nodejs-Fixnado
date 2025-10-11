@@ -10,3 +10,7 @@
 ## 2025-10-18 — Compliance & Marketplace Routes
 - Added `/api/compliance` router for document submission (`POST /documents`), review (`POST /documents/:id/review`), badge toggles (`POST /companies/:id/badge`), suspension/evaluation endpoints, and company compliance summaries, linking directly to insured seller governance dashboards.
 - Registered `/api/marketplace` router providing listing creation (`POST /items`), review submission, moderation decisions, moderation queue retrieval, and compliance-aware approved listing feed (`GET /items/approved`), with `routes/index.js` updated to mount both routers.
+
+## 2025-10-19 — Campaign Routes
+- Registered `campaignRoutes.js` mounting `/api/campaigns` endpoints for campaign CRUD, flight management, pacing ingestion, invoice issuance, and status toggles with validation middleware + rate limiting inherited from shared router utilities.
+- Updated `routes/index.js` to expose the campaign router alongside inventory, rentals, compliance, and marketplace modules so monetisation APIs remain discoverable and versioned.

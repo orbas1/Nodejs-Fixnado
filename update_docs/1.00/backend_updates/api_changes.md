@@ -9,3 +9,9 @@
 ## 2025-10-18 — Compliance & Marketplace APIs
 - Added `/api/compliance` endpoints for insured seller governance: document submission (`POST /documents`), review decisions (`POST /documents/:id/review`), badge visibility toggles, suspensions, company-level evaluations, and compliance summaries powering badge manager + moderation UI.
 - Extended `/api/marketplace` with compliance-aware listing creation (`POST /items`), review submission (`POST /items/:id/submit`), moderation decisions (`POST /items/:id/moderate`), moderation queue listing, and curated approved listing feed (`GET /items/approved`), while `GET /api/feed/marketplace` now surfaces compliance snapshots and respects hold/expiry filters.
+
+## 2025-10-19 — Campaign Manager APIs
+- Registered `/api/campaigns` router delivering campaign CRUD (`POST /`, `GET /:id`, `PATCH /:id`, `DELETE /:id`), status toggles, and summary listing filtered by advertiser, status, or flight window for admin/provider dashboards.
+- Added flight management endpoints (`POST /:id/flights`, `PATCH /:id/flights/:flightId`) enforcing max-flight limits, start/end validation, and spend caps aligned to configuration defaults.
+- Introduced pacing ingestion endpoint `POST /:id/daily-metrics` accepting daily spend/impression/click payloads, applying overspend governance, and emitting next-action flags consumed by UI pacing badges.
+- Delivered invoice generation endpoint `POST /:id/invoices` and settlement retrieval `GET /:id/invoices/:invoiceId` tying campaign spend to finance reconciliation flows with due-date calculations and PDF export hooks.

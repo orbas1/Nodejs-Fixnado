@@ -106,3 +106,35 @@
 
 ---
 *Updated 2025-10-17 to capture rental lifecycle UX tied to `/api/rentals` orchestration and inspection governance.*
+
+## Campaign Manager Console (2025-10-19)
+- **Campaign Overview Page:** Grid/list hybrid displaying campaign cards with advertiser logo, campaign name, spend vs budget bar, pacing badge (Ahead/On Track/Behind/Paused), active flights count, and outstanding invoice chip. Cards include quick actions `View details`, `Pause`, `Resume`, `Generate invoice`, each exposing `data-qa` selectors and keyboard shortcuts (`Shift+P` pause/resume).
+- **Filters & Segmentation:** Global filters for `Status`, `Advertiser`, `Objective`, `Flight window`, and `Overspend risk`. Filter pills persist between sessions and echo query parameters when deep linked. Search supports fuzzy match on campaign name, ID, advertiser, and flight label.
+- **Campaign Detail Header:** Displays campaign summary metrics (Budget total, Spend to date, Delivery %, Clicks, CTR, CPC) with trending indicators referencing `/api/campaigns/:id` payload. Include compliance badge (Eligible/Pending/Revoked) linking to insured seller application detail.
+- **Pacing Timeline Widget:** Line chart plotting planned vs actual spend with shading for forecasted burn. Annotations show overspend triggers, pause/resume timestamps, and scheduled invoice dates. Export actions `Download CSV` and `Send to Slack` emit telemetry `campaign.pacing.export`.
+- **Flight Manager Section:** Table listing flights with columns `Name`, `Status`, `Start`, `End`, `Daily Budget`, `Spend`, `Delivery %`. Row actions `Edit flight`, `Duplicate`, `Close` call respective endpoints. Hover tooltips summarise targeting overrides per flight.
+- **Targeting Composer Drawer:** Launches from detail page `Edit targeting` CTA. Drawer includes chips for `Geography`, `Categories`, `Audience segments`, `Slot types`. Each chip group supports add/search/remove with inline validation referencing backend caps. Error messaging surfaces when approaching `CAMPAIGN_TARGETING_CAP`, suggesting bulk upload or segment consolidation.
+- **Budget & Schedule Form:** Stepper capturing total budget, daily budget, start/end date, timezone, pacing mode (Even/Accelerated), overspend tolerance (read-only default). Inline calculators show expected daily burn and project end date. Validation ensures daily budget ≤ total budget / days.
+- **Invoice & Billing Drawer:** Accessible via `View invoices` CTA. Lists invoices with status pill, due countdown chip, amount, and action buttons `Download PDF`, `Record payment`, `Escalate`. Payment recording triggers modal capturing amount, reference, payment method, and notes. Escalation opens template with finance Slack channel pre-filled.
+- **Compliance & Eligibility Banner:** When insured seller status pending/expired, banner displays summary copy, outstanding requirements, and CTA to open compliance queue. Banner prevents activation until resolved and logs telemetry `campaign.blocked.compliance`.
+- **Daily Metric Ingestion Panel:** Provides log table (date, spend, impressions, clicks, conversions, ingestion status). Supports manual upload for corrections with CSV dropzone (schema instructions). Error rows show remediation guidance referencing API response.
+- **Notifications & Audit Trail:** Activity feed captures key events (creation, targeting edits, flight adjustments, overspend pauses, invoices issued, payments posted). Each entry lists actor, timestamp, summary, and link to relevant drawer. Feed supports export for compliance review.
+
+### Provider Mobile Parity
+- Mobile layout condenses campaign list into stacked cards with swipe actions (Pause/Resume/Invoices). Pacing badge surfaces as pill with accessible text. Tapping card opens detail view with collapsible sections for Flights, Targeting, Billing.
+- Mobile targeting composer reuses chip pattern with segmented control for category selection and bottom-sheet modals for radius input. Validation/instruction copy adapts to smaller screen with progressive disclosure.
+- Billing view in mobile emphasises due invoices first with CTA `Mark as paid` (subject to RBAC). Payment recording limited to authorised finance roles; otherwise show info banner linking to support.
+
+### Accessibility & QA Instrumentation
+- Keyboard navigation: `Tab` order cycles overview → filters → cards → analytics widgets → details; `Ctrl+Enter` submits targeting changes; `Shift+F` focuses filter panel.
+- Aria-live regions announce pacing status changes ("Campaign paused due to overspend"), invoice due warnings, and targeting validation errors.
+- QA selectors enumerated for key interactions: `data-qa="campaign-card"`, `data-qa="campaign-targeting-chip"`, `data-qa="campaign-invoice-row"`, `data-qa="campaign-overspend-banner"`.
+- Telemetry schema guidelines specify payload fields for events (`campaign.create.submit`, `campaign.targeting.add`, `campaign.flight.update`, `campaign.invoice.generate`, `campaign.pacing.export`, `campaign.status.pause_auto`).
+
+### Integrations & Dependencies
+- References to backend endpoints: `/api/campaigns`, `/api/campaigns/:id/flights`, `/api/campaigns/:id/daily-metrics`, `/api/campaigns/:id/invoices`, `/api/compliance` for eligibility checks.
+- Drawings alignment: `dashboard_drawings.md` (admin pacing widgets), `Admin_panel_drawings.md` (campaign detail layout), `website_drawings.md` (public ads management CTA placements), `App_screens_drawings.md` (provider mobile cards).
+- Finance runbook tie-ins: escalate overdue invoices after `invoiceDueInDays` threshold, display due countdown states (Due soon, Overdue) and highlight autopay status when Finova integration enabled.
+
+---
+*Updated 2025-10-19 to align campaign manager UI with `/api/campaigns` targeting, pacing, and billing services.*
