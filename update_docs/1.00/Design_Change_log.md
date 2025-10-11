@@ -30,6 +30,7 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | CI/CD & Rollback Enablement | Captured Build/Test/Scan workflow gates, release packaging artefacts, security audits, and rollback playbook alignment so design QA remains coupled to deployment governance. | build-test-and-scan workflow, release-artifacts workflow, scripts/security-audit.mjs, docs/operations/rollback-playbook.md | Embeds design validation into CI/CD, shortens rollback response time, and improves auditability. |
 | Campaign Manager Targeting, Pacing & Billing (2025-10-19) | Added campaign workspace, targeting composer, pacing analytics, and billing drawer specs aligned to `/api/campaigns` services with overspend/invoice governance. | Screens_Update.md, Screens_Update_Logic_Flow.md, Dashboard Designs.md, Admin_panel_drawings.md, dashboard_drawings.md, App_screens_drawings.md | Equips monetisation squads with production-ready UI flows for campaign management, finance reconciliation, and compliance messaging. |
 | Campaign Analytics Telemetry & Fraud Monitoring (2025-10-20) | Documented warehouse export outbox states, fraud signal alerts, and anomaly triage panels across admin/provider/mobile experiences, wiring copy to new analytics/fraud APIs. | Screens_Update.md, Screens_Update_Logic_Flow.md, Dashboard Designs.md, Admin_panel_drawings.md, dashboard_drawings.md, App_screens_drawings.md | Enables operations, finance, and fraud teams to monitor campaign health, resolve anomalies, and audit analytics exports with governed UI patterns. |
+| Explorer Search & Zone Intelligence (2025-10-21) | Updated explorer specs with MapLibre overlays, demand-aware filtering, SLA insight panel, and marketplace/service segmentation aligned to `/api/search` and `/api/zones` contracts. | Screens_Update.md, Screens_Update_Logic_Flow.md, website_drawings.md, dashboard_drawings.md, frontend-reactjs/src/pages/Search.jsx | Delivers production discovery UX, surfaces compliance telemetry, and prepares Flutter parity + booking wizard integration. |
 
 ## Detailed Log Entries
 ### 1. System-wide Foundations
@@ -176,6 +177,7 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Finalise Looker dashboard rollout using snapshot table, rehearse Slack alert channel, and deliver Chromatic/axe automation for Theme Studio + telemetry screens.
 - Evaluate additional "emo" theme presets and seasonal variants after initial release metrics.
 - Monitor performance impact of new imagery pipeline under constrained networks.
+- Schedule explorer booking wizard integration, chat entry points, and Flutter parity to leverage the new zoning foundation while preserving telemetry and QA coverage.
 
 ## Approval History
 | Date | Stakeholders | Status | Notes |
@@ -185,3 +187,9 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | 2025-01-24 | Marketing Lead, Content Strategist | Conditional | Additional "emo" presets requested for Q2 experiment. |
 | 2025-01-27 | QA Lead | In Progress | Pending validation of QA artefact alignment with automated tests. |
 
+
+### 25. Explorer Search & Zone Intelligence (2025-10-21)
+- **Map-first Layout:** Explorer layout adopts sticky 60/40 grid, MapLibre overlays, and legend treatments described in `website_drawings.md`/`dashboard_drawings.md`. Zones colour-code demand tiers and expose analytics summaries (open bookings, SLA breaches, match counts) referencing `/api/zones?includeAnalytics=true` payload fields.
+- **Filter Governance:** Documented keyword, type, zone, availability, category, and demand filters with URL parameter persistence, telemetry hooks, and compliance copy (retention, consent). Specs updated in `Screens_Update.md` and `Screens_Update_Logic_Flow.md` to keep React + Flutter parity aligned.
+- **Result Cards & Insight Panel:** Service and marketplace cards leverage shared UI tokens, provider attribution, and CTA routes mapped to Services marketing blueprint. Zone insight panel centralises SLA stats, demand signals, and coverage bounds while referencing DPIA copy requirements.
+- **Operations & QA Hooks:** Added geometry-normalisation notes, QA selectors, and Vitest coverage references to ensure MapLibre overlays and filtering remain deterministic across SQLite/PostGIS. Logged backlog items for booking wizard integration, communications stack entry points, and mobile parity in upcoming Task 4 subtasks, with design change log/table updates linking to the refreshed explorer artefacts.

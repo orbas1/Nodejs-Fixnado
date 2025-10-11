@@ -90,7 +90,7 @@ Create revenue-generating services, enforce insured seller policies, and prepare
 - **Logic:** Subtask 3.5 tunes fraud heuristics, monetisation business rules, and export retry cadence.
 - **Design:** Subtasks 3.2, 3.4 & 3.5 coordinate UI specs for marketplace, rental, ads, and anomaly dashboards.
 
-### Task 4 — Develop Cross-Channel Experience & Collaboration (15% complete)
+### Task 4 — Develop Cross-Channel Experience & Collaboration (35% complete)
 Deliver cohesive UX across web and Flutter apps, enabling communications, localisation, and business front management.
 
 #### Subtasks
@@ -99,6 +99,8 @@ Deliver cohesive UX across web and Flutter apps, enabling communications, locali
 4.3 Integrate chat with AI assist toggles, Agora video/phone sessions, and notification centre across channels.
 4.4 Implement business fronts, provider dashboards, and enterprise panels with role-based guardrails.
 4.5 Execute accessibility, localisation, and performance audits, feeding findings into defect tracker.
+
+*2025-10-21 update:* Subtask **4.1** React explorer delivery is now production-ready. `frontend-reactjs/src/pages/Search.jsx` orchestrates URL-synchronised filters, MapLibre-powered zone overlays, and analytics-aware result cards consuming `/api/search` + `/api/zones?includeAnalytics=true`. Supporting components (`components/explorer/*`), utilities (`pages/explorerUtils.js`), and tests (`pages/__tests__/explorerUtils.test.js`) ensure demand filters, SLA summaries, and map bounds remain deterministic, while the new API client (`src/api/explorerClient.js`) normalises MultiPolygon/centroid geometry for SQLite/PostGIS parity. Documentation and trackers refreshed across frontend and design artefacts to align explorer UX with drawings and compliance copy.
 
 #### Integration Coverage
 - **Backend:** Subtasks 4.3 & 4.4 require websocket/session orchestration and panel APIs.
