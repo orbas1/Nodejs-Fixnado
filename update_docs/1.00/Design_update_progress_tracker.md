@@ -9,7 +9,7 @@
 | Design Text Grade | 86 | Compliance copy matrix updated with diagnostics messaging (freshness thresholds, override guidance) ahead of legal review (7 Feb). |
 | Design Colour Grade | 90 | Stark audit scripts ready; no palette changes this sprint—focus shifts to Chromatic baselines for telemetry/state banners. |
 | Design Render Grade | 92 | Diagnostics documentation reuses governed theming; Chromatic capture queued once stats views captured in Storybook. |
-| Compliance Grade | 97 | Filter validation + stats payload document retention/freshness policy while mobilisation RACI ties accessibility, localisation, and audit checkpoints to accountable owners. |
+| Compliance Grade | 99 | DPIA, RBAC minutes, and security baseline refreshed; design artefacts now reference consent prompts, redacted views, telemetry disclosures, and action tracker deadlines so regulator evidence matches UI delivery. |
 | Security Grade | 95 | Build/Test/Scan workflow couples design regression suites with gitleaks + dependency audits; rollback manifest and playbook codify checksum verification for design-impacting releases. |
 | Design Functionality Grade | 96 | Theme toggles, telemetry console, alerting job, diagnostics-ready snapshot feed, and issue SLA dashboards cover ingestion, monitoring, governance, and defect triage loops. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation remains queued with infra. |
@@ -31,6 +31,7 @@
 8. **Mobilisation Governance:** RACI/roadmap/dependency matrix now codify design ownership for accessibility, localisation, and Chromatic/Stark checkpoints, ensuring blockers escalate through the same cadence as engineering risks.
 9. **Feature Toggle Governance:** Secrets Manager manifests + parity audit feed design QA so rollout pilots (communications, rentals, geo overlays) stay aligned with drawings and upcoming admin UI requirements.
 10. **CI/CD & Rollback Integration:** Build/Test/Scan workflow plus release packaging/manifest and rollback playbook keep design QA gates, Chromatic captures, and accessibility sign-offs tied to auditable builds with checksum verification.
+11. **Compliance Evidence Integration:** DPIA, RBAC minutes, and security baseline now cite design drawings, consent copy, and telemetry disclosures; design backlog tracks chat consent updates, telemetry opt-out help links, and JIT banner states.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
@@ -39,5 +40,5 @@
 
 ## Next Review Cycle
 - **Date:** Sprint 4 Desk Check (Week 5)
-- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, and walkthrough marketplace inventory/campaign modules with frontend leads.
+- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, walkthrough marketplace inventory/campaign modules with frontend leads, and confirm compliance follow-ups (chat consent copy, telemetry opt-out article) before communications beta.
 - **Stakeholders:** Product, Design, Engineering, QA, Accessibility SME, Legal, Marketing, Data Engineering.

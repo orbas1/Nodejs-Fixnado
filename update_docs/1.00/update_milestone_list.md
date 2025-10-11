@@ -6,7 +6,7 @@
 - **Target Window:** Weeks 0–2
 - **Objective:** Stand up delivery governance, compliance guardrails, and defect intake before engineering ramps.
 - **Tasks:**
-  - **Task 1A — Programme Mobilisation (12% complete)**
+  - **Task 1A — Programme Mobilisation (100% complete)**
     1. Draft master RACI, roadmap, and dependency matrix across squads.
     2. Configure shared infrastructure upgrades (PostGIS, secrets vault, feature toggles).
     3. Extend CI/CD with linting, security scans, contract test gates, and rollback playbooks.
@@ -16,11 +16,14 @@
     - *2025-10-12 update:* Mobilisation governance pack published (`task1_mobilisation_raci_roadmap.md`) linking RACI ownership, phased roadmap, and dependency/compliance matrix with design drawings and telemetry artefacts; dependency risk scoring and webhook automation now track toward Milestone M1 exit.
     - *2025-10-13 update:* Shared infrastructure upgrades provisioned PostGIS/PostgreSQL, Secrets Manager toggle manifests, admin APIs, and parity checks; Subtask 1.2 marked complete with Terraform/Sequelize updates and Vitest coverage.
     - *2025-10-14 update:* CI/CD Subtask 1.3 finished — Build/Test/Scan workflow enforces multi-surface lint/tests with security scanning, Release Packaging workflow generates rollback artefacts + manifest, and rollback playbook published for ops rehearsals.
+    - *2025-10-15 update:* Compliance evidence closed — refreshed DPIA, RBAC minutes, and security baseline stored under `docs/compliance/` with action trackers feeding `update_progress_tracker.md`. Secrets Manager TTL governance, hashed-IP telemetry controls, and JIT RBAC workflows now documented for regulator readiness, completing Task 1A and unlocking Milestone M1 exit.
   - **Task 1B — Core Service Blueprint Kick-off (8% complete)**
     1. Finalise geo-zonal architecture diagrams and ERDs for bookings, rentals, and campaigns.
     2. Define API contracts (OpenAPI/AsyncAPI) for zone, booking, inventory, and communication services.
     3. Build backlog grooming sessions to slice epics into sprintable stories with acceptance criteria.
     4. Align design system artefacts with engineering scopes for explorer, booking, and panels.
+
+  - *2025-10-15 milestone note:* M1 exit approved — compliance evidence pack filed, RACI/dependency matrices linked, and rollout governance artefacts archived in repository. Subsequent reviews focus on Task 1B deliverables for architecture packs.
 
 ### Milestone M2 — Core Services Alpha
 - **Target Window:** Weeks 2–6

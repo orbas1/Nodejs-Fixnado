@@ -132,6 +132,18 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) & [`ui-ux_updates/telemetry_alerting_enablement.md`](ui-ux_updates/telemetry_alerting_enablement.md) — Updated next steps and analytics notes to reflect snapshot API availability and rehearsal coverage.
 - [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged telemetry snapshot distribution enablement entry with references to new API and documentation.
 
+## Newly Updated Artefacts (2025-10-15)
+- [`docs/compliance/dpia.md`](../docs/compliance/dpia.md) — Refreshed processing inventory, risk matrix, and mitigation tracker for Version 1.00 scope (geo zones, bookings, rentals, communications, telemetry, monetisation).
+- [`docs/compliance/rbac_review_minutes.md`](../docs/compliance/rbac_review_minutes.md) — Captured RBAC catalogue decisions, Secrets Manager JIT workflow, feature toggle audit logging requirements, and outstanding action owners/dates.
+- [`docs/compliance/security_baseline.md`](../docs/compliance/security_baseline.md) — Documented IAM/secrets controls, retention schedules, monitoring thresholds, and compliance mapping aligned to new automation initiatives.
+- [`update_task_list.md`](update_task_list.md) — Task 1 updated to 100% with Subtask 1.5 compliance commentary referencing design drawings and new documentation.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Elevated Task 1 metrics to 100% and refreshed next review actions for salt rotation, JIT access runbook, and rental retention automation.
+- [`update_milestone_list.md`](update_milestone_list.md) — Marked Task 1A complete, recorded Milestone M1 exit note, and linked compliance artefacts.
+- [`change_log.md`](change_log.md) — Added 2025-10-15 entry summarising DPIA, RBAC minutes, and security baseline refresh.
+- [`Design_Plan.md`](Design_Plan.md), [`Design_Change_log.md`](Design_Change_log.md), [`Design_update_task_list.md`](Design_update_task_list.md), [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md), [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Logged design ops alignment with refreshed compliance pack, chat consent copy tasks, and telemetry opt-out messaging follow-up.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md) — Added compliance-driven mobile screen guidance (chat retention notice, provider address reveal, telemetry opt-out bottom sheet).
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md) — Documented telemetry help drawer, feature toggle audit trail, retention widgets, and RBAC banners for admin dashboards.
+
 ## Newly Updated Artefacts (2025-02-06)
 - [`change_log.md`](change_log.md) — Logged telemetry snapshot diagnostics enhancements covering new filters, stats payload, and rehearsal updates.
 - [`Design_Plan.md`](Design_Plan.md) — Added Task DT9 outcome capturing analytics diagnostics remit and rehearsal expectations.

@@ -101,3 +101,12 @@
   3. ✅ Seed backlog with cross-discipline blockers (escrow verification, auth security, onboarding transactions, React auth UX) including remediation plans and acceptance criteria tied to design specifications.
   4. ✅ Update design governance docs to incorporate SLA breach reviews and ensure automation runs in CI for consistent reporting.
 
+## Task 11 — Compliance Evidence Integration *(Status: ✅ Complete — 2025-10-15)*
+- **Delivery Owner:** Design Ops Lead with Compliance Analyst & Security Architect partnership.
+- **Evidence:** `docs/compliance/dpia.md`, `docs/compliance/rbac_review_minutes.md`, `docs/compliance/security_baseline.md`, updated design plan & change log sections aligning UI copy, redaction states, and telemetry disclosures with compliance artefacts.
+- **Subtasks:**
+  1. ✅ Map DPIA processing inventory to design artefacts, annotating consent prompts, retention messaging, and telemetry disclosures within `Application_Design_Update` and `Web_Application_Design_Update` documents.
+  2. ✅ Capture RBAC meeting outcomes requiring UI work (redacted provider address banner, dispute transcript export warnings, telemetry opt-out help panel) and log follow-up actions in design backlog with owners/due dates.
+  3. ✅ Refresh security baseline alignment so telemetry dashboard, Theme Studio, and admin panels surface anonymisation guidance and support article links consistent with compliance documentation.
+  4. ✅ Update trackers/milestones to escalate remaining actions (chat consent copy, Secrets Manager TTL alert badge, support knowledge base link) to design council agendas.
+
