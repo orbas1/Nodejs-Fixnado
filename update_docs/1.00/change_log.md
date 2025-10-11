@@ -85,3 +85,8 @@
 - Launched `Build, Test & Scan` GitHub Actions workflow running backend/frontend/Flutter lint + test suites, `gitleaks` secret scanning, and the new multi-surface dependency audit script (`scripts/security-audit.mjs`) to block merges that introduce high/critical vulnerabilities.
 - Added `Release Packaging` workflow packaging backend (`backend-nodejs-release.tar.gz`), frontend (`frontend-reactjs-dist.tar.gz`), and Flutter (`flutter-app-debug.apk`) artefacts with checksum-backed manifest produced by `scripts/create-rollback-manifest.mjs`, ensuring every deploy has an auditable rollback snapshot.
 - Documented operational rollback procedures in `docs/operations/rollback-playbook.md`, integrating workflow triggers, checksum validation, environment parity checks, and governance reporting so incidents follow a repeatable, audit-friendly process.
+
+## 2025-10-15 — Compliance Evidence Refresh & RBAC Hardening
+- Published refreshed DPIA (`docs/compliance/dpia.md`) capturing Version 1.00 processing inventory, hashed-IP telemetry anonymisation, Agora retention policies, and action tracker aligned to regulator expectations.
+- Logged RBAC review minutes (`docs/compliance/rbac_review_minutes.md`) confirming role catalogue changes, JIT Secrets Manager workflow, feature toggle audit logging requirements, and outstanding actions with owners/due dates.
+- Updated security baseline (`docs/compliance/security_baseline.md`) documenting Secrets Manager TTL enforcement, retention schedules, monitoring thresholds, and compliance mappings; tracker/milestone commentary raised Task 1 mobilisation to production-complete status.

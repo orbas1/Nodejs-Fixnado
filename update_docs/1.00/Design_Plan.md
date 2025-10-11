@@ -177,3 +177,9 @@
 - **Operational Playbook:** `docs/operations/rollback-playbook.md` documents how design, QA, and ops coordinate during rollbacks, including re-running Stark/Chromatic checks and notifying design council, embedding design governance into incident response.
 - **Next Actions:** Schedule quarterly rollback rehearsals including design validation, integrate Chromatic snapshot verification into release summary, and update design QA checklist to confirm manifest checksum capture post-deploy.
 
+## 28. Compliance Evidence Integration (Task 1.5 Outcome — 2025-10-15)
+- **DPIA Alignment:** `docs/compliance/dpia.md` now references design artefacts (`Screens_Update.md`, `Dashboard Designs.md`, `Menus.md`) to evidence consent prompts, redacted UI states, and telemetry opt-out messaging. Design Ops will update copy decks to match DPIA retention disclosures across admin and mobile flows.
+- **RBAC Copy & UI Hooks:** RBAC minutes capture new admin banner requirements, redaction states, and JIT access alerts. Design backlog includes chat transcript warning modals and provider address masking, tracked in `Design_update_task_list.md` Task 11.
+- **Security Baseline Signalling:** Security baseline highlights telemetry KPI modules and admin help links that design must maintain. Telemetry dashboard will surface hashed-IP disclosure with support article link; Theme Studio to expose anonymisation note.
+- **Follow-up Actions:** Deliver chat consent microcopy updates (Due 20 Oct), embed telemetry opt-out support article in Admin UI, and incorporate Secrets Manager TTL alert badges into rollout timeline screens before communications beta.
+

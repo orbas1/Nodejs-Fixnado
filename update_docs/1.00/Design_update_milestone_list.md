@@ -22,4 +22,5 @@
 - Mobilisation governance pack maps design accountability across all milestones, ensuring accessibility/localisation audits, Chromatic/Stark capture, and blueprint refreshes are reviewed during weekly control boards alongside engineering dependencies.
 - Feature toggle governance (Secrets Manager manifests + parity audit) underpins Milestones M4–M10 so rollout pilots stay aligned with drawings and forthcoming admin toggle UI.
 - CI/CD hardening adds Build/Test/Scan and Release Packaging workflows plus rollback playbook so milestone exits capture auditable artefacts, manifest checksums, and design QA evidence before promotion.
+- Compliance evidence pack (DPIA, RBAC minutes, security baseline) now cross-references design artefacts and backlog follow-ups, keeping Milestones M4–M10 legally aligned and signalling outstanding consent copy/telemetry help link updates.
 
