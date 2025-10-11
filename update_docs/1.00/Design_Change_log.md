@@ -24,6 +24,7 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Compliance & QA Artefacts | Embedded accessibility and compliance checkpoints throughout design documentation, aligning with `Compliance Grade` tracking and `Test Grade` expectations. Added spec handoffs for QA in `Screens_Update_Plan.md`. | Screens_Update_Plan, Compliance criteria | Strengthens traceability and audit readiness. |
 | Core Page Blueprints | Rebuilt home, admin dashboard, provider profile, and services marketing layouts in React using shared blueprint primitives (`PageHeader`, `BlueprintSection`). Documented in `ui-ux_updates/core_page_blueprints.md`. | Home.jsx, AdminDashboard.jsx, Profile.jsx, Services.jsx | Aligns IA with compliance overlays, boosts conversion signals, and formalises instrumentation hooks. |
 | Marketplace Inventory & Monetisation | Codified provider inventory console, rental lifecycle detail screens, insured seller badge workflows, and campaign pacing dashboards across mobile and web specifications. | Screens_Update.md, Screens_Update_Logic_Flow.md, Settings.md, Dashboard Designs.md, Settings Dashboard.md | Ensures backend marketplace services plug into UI with actionable alerts, governed copy, and analytics instrumentation. |
+| CI/CD & Rollback Enablement | Captured Build/Test/Scan workflow gates, release packaging artefacts, security audits, and rollback playbook alignment so design QA remains coupled to deployment governance. | build-test-and-scan workflow, release-artifacts workflow, scripts/security-audit.mjs, docs/operations/rollback-playbook.md | Embeds design validation into CI/CD, shortens rollback response time, and improves auditability. |
 
 ## Detailed Log Entries
 ### 1. System-wide Foundations
@@ -112,6 +113,11 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Documented Secrets Manager feature toggle manifests with owner/ticket metadata so design squads can map pilots to blueprint IDs and drawings (`dashboard_drawings.md`, `website_drawings.md`, `App_screens_drawings.md`).
 - Coordinated with engineering on `/api/admin/feature-toggles` endpoints powering forthcoming admin rollout UI; design QA will extend settings dashboards to visualise rollout and audit history.
 - Scheduled environment parity checks in the design QA cadence to guarantee staging demos mirror production toggle states before approvals.
+
+### 18. CI/CD & Rollback Enablement (2025-10-14)
+- Embedded Build/Test/Scan workflow into design governance so Theme Studio, Telemetry dashboard, and Flutter parity tests run on every PR alongside gitleaks and dependency audits executed via `scripts/security-audit.mjs`.
+- Release Packaging workflow now publishes backend/frontend/Flutter artefacts plus checksum manifest; design ops reference the manifest during Chromatic captures and accessibility sign-off to verify build integrity.
+- Authored `docs/operations/rollback-playbook.md` outlining rollback triggers, validation steps, and communication cadence so design council participation is codified in incident response.
 
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.

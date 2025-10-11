@@ -171,3 +171,9 @@
 - **Parity-driven QA:** Environment parity script feeds design QA scheduling so staging demos match production toggles before review sessions. Design Ops to subscribe to parity failures and update handoff artefacts when rollout states change.
 - **Next Actions:** Collaborate with engineering to visualise toggle states/audit history within admin UI, extend design QA checklists to include toggle verification, and capture parity status snapshots within design council weekly notes.
 
+## 27. CI/CD & Rollback Enablement (Task 1.3 Outcome — 2025-10-14)
+- **Design QA Gate in CI:** `Build, Test & Scan` workflow now blocks merges unless React, Flutter, and backend suites — including Theme Studio/Telemetry dashboard regression tests — pass alongside gitleaks and dependency audits triggered by `scripts/security-audit.mjs`.
+- **Artefact & Manifest Packaging:** `Release Packaging` workflow publishes production-ready artefacts plus `rollback-manifest.json`; design ops use the manifest to ensure Chromatic captures and accessibility sign-offs reference the correct build hash.
+- **Operational Playbook:** `docs/operations/rollback-playbook.md` documents how design, QA, and ops coordinate during rollbacks, including re-running Stark/Chromatic checks and notifying design council, embedding design governance into incident response.
+- **Next Actions:** Schedule quarterly rollback rehearsals including design validation, integrate Chromatic snapshot verification into release summary, and update design QA checklist to confirm manifest checksum capture post-deploy.
+
