@@ -59,7 +59,7 @@ Implement foundational microservices for zones, bookings, bidding, disputes, and
 - **Logic:** Subtasks 2.2 & 2.3 orchestrate workflow engines and concurrency rules.
 - **Design:** Subtask 2.5 coordinates UX acceptance criteria for booking and bidding states.
 
-### Task 3 — Build Marketplace, Inventory & Monetisation Backbones (36% complete)
+### Task 3 — Build Marketplace, Inventory & Monetisation Backbones (100% complete)
 Create revenue-generating services, enforce insured seller policies, and prepare ad campaign infrastructure.
 
 #### Subtasks
@@ -77,15 +77,18 @@ Create revenue-generating services, enforce insured seller policies, and prepare
 
 *2025-10-19 update:* Subtask **3.4** launches the Fixnado + Finova campaign manager with production-grade targeting, pacing, and billing workflows. New Sequelize models and migration (`AdCampaign`, `CampaignFlight`, `CampaignTargetingRule`, `CampaignInvoice`, `CampaignDailyMetric`, migration `20250219000000-create-campaign-manager.js`) persist budgets, targeting filters, pacing telemetry, and invoice linkage. `/api/campaigns` exposes campaign CRUD, flight allocation, daily metric ingestion, invoice generation, and status toggles via `campaignController.js`, `campaignService.js`, and `campaignRoutes.js`, while config adds governed overspend and targeting limits. Vitest suite `tests/campaignRoutes.test.js` verifies insured seller gating, multi-day pacing, overspend pause rules, invoice reconciliation, and summary endpoints. Programme artefacts (change logs, backend/database updates, trackers, `Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Dashboard Designs.md`) document campaign manager UI (targeting chips, pacing badges, billing drawer), analytics hooks, and billing governance so marketplace monetisation flows move into delivery without specification debt.
 
+*2025-10-20 update:* Subtask **3.5** now maps campaign telemetry into the analytics warehouse and automates fraud monitoring. `CampaignAnalyticsExport` and `CampaignFraudSignal` tables capture export payloads, retry metadata, and anomaly classifications; `campaignService.js` computes CTR/CVR/anomaly scores, upserts outbox payloads, and raises/resolves fraud signals (`overspend`, `underspend`, `suspicious_ctr`, `suspicious_cvr`, `delivery_gap`, `no_spend`). The new background exporter (`jobs/campaignAnalyticsJob.js`) posts JSON payloads to configurable warehouse endpoints with API key support and retry cadence governed via `config.campaigns`. API endpoints (`PUT /targeting`, `POST /metrics`, `GET /fraud-signals`, `POST /fraud-signals/:id/resolve`, `GET /summary`) expose analytics exports, targeting refresh, fraud remediation, and KPI summaries, while Vitest suite `tests/campaignRoutes.test.js` asserts outbox creation, anomaly detection/resolution, and summary aggregation. Documentation, design artefacts, and trackers capture fraud ops workflows, warehouse integration steps, and dashboard requirements powering monetisation telemetry across admin/provider/mobile experiences.
+*2025-10-20 follow-up:* Dedicated Vitest coverage (`tests/campaignAnalyticsJob.test.js`) now mocks warehouse responses to prove exporter retries/backoff and API key header wiring, and design artefacts (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Dashboard Designs.md`) embed analytics export tiles, anomaly rails, notification flows, and mobile parity specifications with telemetry + accessibility notes for fraud/finance operations.
+
 #### Integration Coverage
-- **Backend:** Subtasks 3.1–3.4 extend services and background jobs.
-- **Front-end:** Subtasks 3.2 & 3.4 expose payloads for storefront, ads, and provider dashboards.
-- **User phone app:** Subtask 3.2 ensures mobile rental flows; Subtask 3.5 feeds push notification triggers.
-- **Provider phone app:** Subtasks 3.1 & 3.2 deliver inventory and rental management APIs consumed by provider Flutter app.
-- **Database:** Subtasks 3.1 & 3.4 add ledger tables, indexes, and billing schemas.
-- **API:** Subtasks 3.1–3.4 publish REST endpoints with throttling rules.
-- **Logic:** Subtask 3.5 tunes fraud heuristics and monetisation business rules.
-- **Design:** Subtasks 3.2 & 3.4 coordinate UI specs for marketplace, rental, and ads modules.
+- **Backend:** Subtasks 3.1–3.5 extend services, background jobs, and fraud analytics pipelines.
+- **Front-end:** Subtasks 3.2, 3.4 & 3.5 expose payloads for storefront, ads, provider dashboards, and fraud/analytics widgets.
+- **User phone app:** Subtask 3.2 ensures mobile rental flows; Subtask 3.5 feeds push notification triggers and fraud alerts.
+- **Provider phone app:** Subtasks 3.1–3.5 deliver inventory, rental, campaign, and anomaly data consumed by provider Flutter app.
+- **Database:** Subtasks 3.1, 3.4 & 3.5 add ledger tables, billing schemas, analytics exports, and fraud signal catalogues.
+- **API:** Subtasks 3.1–3.5 publish REST endpoints with throttling rules plus analytics/fraud telemetry.
+- **Logic:** Subtask 3.5 tunes fraud heuristics, monetisation business rules, and export retry cadence.
+- **Design:** Subtasks 3.2, 3.4 & 3.5 coordinate UI specs for marketplace, rental, ads, and anomaly dashboards.
 
 ### Task 4 — Develop Cross-Channel Experience & Collaboration (15% complete)
 Deliver cohesive UX across web and Flutter apps, enabling communications, localisation, and business front management.

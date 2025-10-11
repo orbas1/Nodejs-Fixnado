@@ -13,3 +13,7 @@
 ## 2025-10-19 — Campaign Manager Tables
 - Added `20250219000000-create-campaign-manager.js` establishing `ad_campaigns`, `campaign_flights`, `campaign_targeting_rules`, `campaign_invoices`, and `campaign_daily_metrics` with foreign keys, partial indexes for active flights, invoice due-date indexes, and JSONB targeting payload snapshots.
 - Migration seeds targeting type enum values (`GEO_RADIUS`, `CATEGORY`, `AUDIENCE_SEGMENT`, `SLOT_TYPE`), normalises currency defaults, and implements rollback to drop tables/enums + restore previous targeting enum values to keep migrations reversible across environments.
+
+## 2025-10-20 — Analytics Outbox & Fraud Signal Extensions
+- Updated `20250219000000-create-campaign-manager.js` to append `campaign_analytics_exports` (warehouse outbox with payload JSON, status, retry metadata) and `campaign_fraud_signals` (anomaly catalogue with severity, resolution notes) plus related indexes for status lookups.
+- Added Postgres-specific enum teardown for the new tables during rollback and documented export/fraud schema relationships so downstream ingestion jobs and fraud ops dashboards can rely on governed data contracts.

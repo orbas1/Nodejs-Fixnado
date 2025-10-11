@@ -149,3 +149,13 @@
   4. ✅ Specify invoice/billing drawer with status pills, due countdown, PDF export CTA, dispute escalation workflow, and finance notes referencing invoice endpoints.
   5. ✅ Capture accessibility guidance (keyboard shortcuts, aria-live pacing alerts), QA selectors, and telemetry schema for campaign creation, targeting adjustments, pacing exports, and invoice settlement events.
 
+## Task 16 — Campaign Analytics Telemetry & Fraud Monitoring UX *(Status: ✅ Complete — 2025-10-20)*
+- **Delivery Owner:** Marketplace PM with Design Systems Engineer, Data Engineering Lead, and Fraud Operations Manager partnership.
+- **Evidence:** Updated `Screens_Update.md` (analytics outbox & anomaly rail), `Screens_Update_Logic_Flow.md` (notifications + escalation), `Web_Application_Design_Update/Dashboard Designs.md` (summary KPI refresh), drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`), and design change log entries dated 20 Oct.
+- **Subtasks:**
+  1. ✅ Document analytics export outbox tiles (Pending/Sent/Failed) with retry timers, API key warnings, and payload download flows mapped to `CampaignAnalyticsExport` schema.
+  2. ✅ Design fraud signal console covering overspend/underspend/suspicious CTR/suspicious CVR/delivery gap/no-spend badges, severity colour tokens, trend sparklines, and resolve/assign workflows aligning with `/api/campaigns/:id/fraud-signals`.
+  3. ✅ Refresh summary KPI cards to include ROI, conversion rate, spend delta, and open anomaly count with tooltip definitions and escalation prompts referencing finance/fraud runbooks.
+  4. ✅ Specify notification patterns (Slack/email templates, push badge states) for exporter failure and critical anomaly alerts, ensuring cross-channel parity across admin web and provider mobile.
+  5. ✅ Embed accessibility notes (live region announcements, keyboard shortcuts), QA selectors, and telemetry events (`campaign.analytics.export.retry`, `campaign.fraud.resolve`, `campaign.summary.view`) to support automation and analytics instrumentation.
+

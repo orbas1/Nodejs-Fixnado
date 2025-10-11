@@ -14,3 +14,7 @@
 ## 2025-10-19 — Campaign Manager Schema
 - Migration `20250219000000-create-campaign-manager.js` creates `ad_campaigns`, `campaign_flights`, `campaign_targeting_rules`, `campaign_invoices`, and `campaign_daily_metrics` tables with UUID primary keys, spend/impression indexes, enum governance, and cascading constraints tying campaigns to companies and finance ledgers.
 - Rollback path drops enum types and dependent indexes cleanly for Postgres while maintaining sqlite compatibility, and the migration seeds targeting type enums plus invoice status defaults to keep staging/prod aligned.
+
+## 2025-10-20 — Monetisation Analytics Outbox & Fraud Signals
+- Extended migration `20250219000000-create-campaign-manager.js` with governed `campaign_analytics_exports` and `campaign_fraud_signals` tables capturing warehouse outbox payloads, retry metadata, anomaly classifications, and resolution notes. Foreign keys cascade with campaign + flight deletions to avoid orphan telemetry.
+- Added indexes for export status and fraud signal lookup plus Postgres enum teardown in the down migration (`enum_CampaignFraudSignal_*`, `enum_CampaignAnalyticsExport_status`) so schema rollback clears type dependencies without manual intervention across environments.

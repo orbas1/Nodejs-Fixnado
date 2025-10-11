@@ -15,3 +15,4 @@
 - Added flight management endpoints (`POST /:id/flights`, `PATCH /:id/flights/:flightId`) enforcing max-flight limits, start/end validation, and spend caps aligned to configuration defaults.
 - Introduced pacing ingestion endpoint `POST /:id/daily-metrics` accepting daily spend/impression/click payloads, applying overspend governance, and emitting next-action flags consumed by UI pacing badges.
 - Delivered invoice generation endpoint `POST /:id/invoices` and settlement retrieval `GET /:id/invoices/:invoiceId` tying campaign spend to finance reconciliation flows with due-date calculations and PDF export hooks.
+- Added targeting and fraud management endpoints: `PUT /:id/targeting` replaces targeting rule sets atomically; `GET /:id/fraud-signals` lists unresolved/resolved anomalies; `POST /fraud-signals/:signalId/resolve` records remediation; and `GET /:id/summary` surfaces aggregate KPI data (impressions, spend, ROI, open anomalies) for dashboards and finance.

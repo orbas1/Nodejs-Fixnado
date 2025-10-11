@@ -23,6 +23,13 @@ import RentalCheckpoint from './rentalCheckpoint.js';
 import ComplianceDocument from './complianceDocument.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
+import AdCampaign from './adCampaign.js';
+import CampaignFlight from './campaignFlight.js';
+import CampaignTargetingRule from './campaignTargetingRule.js';
+import CampaignInvoice from './campaignInvoice.js';
+import CampaignDailyMetric from './campaignDailyMetric.js';
+import CampaignFraudSignal from './campaignFraudSignal.js';
+import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -71,6 +78,36 @@ MarketplaceModerationAction.belongsTo(MarketplaceItem, {
   constraints: false
 });
 MarketplaceModerationAction.belongsTo(User, { foreignKey: 'actorId', as: 'actor', constraints: false });
+
+AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
+Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
+
+AdCampaign.hasMany(CampaignFlight, { foreignKey: 'campaignId', as: 'flights' });
+CampaignFlight.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+AdCampaign.hasMany(CampaignTargetingRule, { foreignKey: 'campaignId', as: 'targetingRules' });
+CampaignTargetingRule.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+AdCampaign.hasMany(CampaignInvoice, { foreignKey: 'campaignId', as: 'invoices' });
+CampaignInvoice.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignInvoice.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
+
+AdCampaign.hasMany(CampaignDailyMetric, { foreignKey: 'campaignId', as: 'dailyMetrics' });
+CampaignDailyMetric.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignDailyMetric.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
+
+CampaignDailyMetric.hasOne(CampaignAnalyticsExport, {
+  foreignKey: 'campaignDailyMetricId',
+  as: 'analyticsExport'
+});
+CampaignAnalyticsExport.belongsTo(CampaignDailyMetric, {
+  foreignKey: 'campaignDailyMetricId',
+  as: 'dailyMetric'
+});
+
+AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSignals' });
+CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
 Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
 InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -148,5 +185,12 @@ export {
   RentalCheckpoint,
   ComplianceDocument,
   InsuredSellerApplication,
-  MarketplaceModerationAction
+  MarketplaceModerationAction,
+  AdCampaign,
+  CampaignFlight,
+  CampaignTargetingRule,
+  CampaignInvoice,
+  CampaignDailyMetric,
+  CampaignFraudSignal,
+  CampaignAnalyticsExport
 };

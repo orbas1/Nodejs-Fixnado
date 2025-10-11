@@ -21,3 +21,9 @@
 ## 2025-10-19 — Campaign Manager Tests
 - Added `tests/campaignRoutes.test.js` covering campaign creation, flight allocation, daily pacing ingestion, overspend pause enforcement, invoice generation, and summary retrieval while asserting targeting validation and insured seller gating.
 - Test harness seeds sqlite with campaign configuration defaults, mocks invoice clock to verify due date offsets, and validates overspend multiplier handling to guarantee parity with production Postgres execution.
+- Extended the suite to assert analytics export outbox creation, fraud signal emission/resolution, and KPI summary calculations so warehouse integration and anomaly monitoring stay regression-proof.
+
+## 2025-10-20 — Campaign Analytics Exporter Job Tests
+- Introduced `tests/campaignAnalyticsJob.test.js` with mocked warehouse endpoint + service layer to verify background exporter retries failed payloads, honours configured API key headers, and updates export records with `sent`/`failed` status and error messaging.
+- Exercised missing-endpoint and non-200 response paths to confirm logger error instrumentation, requeue invocation, and failure back-off compliance with `campaigns.failedRetryMinutes` settings.
+- Ensured tests guard header construction and interval scheduling so production job cadence (export interval seconds) remains under regression coverage when configuration values change.

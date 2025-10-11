@@ -1,24 +1,24 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-19)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-20)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
-| Design Quality | 98 | Campaign manager blueprint joins diagnostics/inventory/rental specs so monetisation, finance, and compliance teams share production-grade journeys across admin and provider channels. |
+| Design Quality | 99 | Campaign analytics/fraud specs now complement inventory, rental, compliance, and pacing blueprints — monetisation, finance, fraud, and data teams share governed journeys across admin/provider/mobile channels. |
 | Design Organisation | 100 | Runbooks, RACI, CI/CD, and campaign governance docs cross-reference each other; targeting/pacing/invoice artefacts now linked into mobilisation + finance sign-off cadence. |
-| Design Position | 97 | Admin/provider/mobile coverage now spans inventory, rental, compliance, and campaign manager workflows with overspend/invoice governance mapped to backend payloads; microsite uplift remains on Sprint 4 checklist. |
-| Design Text Grade | 93 | Added campaign eligibility, overspend, pacing alert, and billing copy decks with finance/legal review hooks complementing existing compliance + ledger messaging. |
+| Design Position | 99 | Admin/provider/mobile coverage now spans inventory, rental, compliance, campaign pacing, analytics export, and fraud triage workflows with warehouse/fraud escalation copy mapped to backend payloads; microsite uplift remains on Sprint 4 checklist. |
+| Design Text Grade | 94 | Added export failure, anomaly escalation, and fraud remediation microcopy with finance/legal review hooks complementing existing compliance + ledger messaging. |
 | Design Colour Grade | 90 | Stark audit scripts ready; campaign pacing badges reuse governed alert palette—Chromatic capture queued once analytics widgets recorded. |
-| Design Render Grade | 93 | Campaign dashboard widgets share telemetry theming and motion specs; Chromatic session scheduled post analytics capture to baseline pacing views. |
+| Design Render Grade | 94 | Campaign analytics tiles and anomaly rails share telemetry theming/motion specs; Chromatic session scheduled post analytics capture to baseline pacing and anomaly views. |
 | Compliance Grade | 99 | DPIA/RBAC references now include campaign billing retention + eligibility messaging; finance/legal notified through tracker commentary for invoice escalation rehearsals. |
 | Security Grade | 95 | Build/Test/Scan workflow still enforces regression gates; campaign configs documented so secrets/ENV governance stays auditable. |
-| Design Functionality Grade | 98 | Theme, telemetry, inventory, rental, compliance, and campaign manager experiences now document full-loop workflows (targeting → pacing → invoicing) with automation + analytics hooks. |
+| Design Functionality Grade | 99 | Theme, telemetry, inventory, rental, compliance, and campaign manager experiences now document full-loop workflows (targeting → pacing → invoicing → analytics export → anomaly resolution) with automation + analytics hooks. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; campaign marketing asset refresh remains dependent on CDN validation sprint. |
-| Design Usability Grade | 96 | Rental and campaign flows feature accessibility copy, keyboard shortcuts, and pacing alerts ensuring admin/provider walkthroughs remain production-aligned and audit-ready. |
-| Bugs-less Grade | 94 | Regression harness + telemetry diagnostics maintain parity; campaign QA selectors and telemetry schema documented to reduce drift. |
-| Test Grade | 96 | API/UI automation portfolio unchanged; new campaign specs feed upcoming e2e scripts without altering baseline coverage. |
+| Design Usability Grade | 97 | Rental and campaign flows feature accessibility copy, keyboard shortcuts, pacing + anomaly alerts ensuring admin/provider walkthroughs remain production-aligned and audit-ready. |
+| Bugs-less Grade | 95 | Regression harness + telemetry diagnostics maintain parity; campaign analytics/fraud QA selectors and telemetry schema documented to reduce drift. |
+| Test Grade | 97 | API/UI automation portfolio now includes analytics export + fraud triage scenarios to rehearse exporter retries and anomaly resolution flows. |
 | QA Grade | 96 | Release packaging + rollback drills incorporate campaign checkpoints; finance/legal rehearsals scheduled alongside telemetry diagnostics. |
-| Design Accuracy Grade | 96 | Campaign targeting/pacing/invoice specs mirror backend payloads/config defaults, improving fidelity for engineering handoff and analytics ingestion. |
-| **Overall Grade** | **99** | Design artefacts now cover monetisation end-to-end (inventory → rentals → compliance → campaigns) with governed telemetry and finance hooks; next sprint focuses on Chromatic/axe automation and microsite uplift. |
+| Design Accuracy Grade | 97 | Campaign targeting/pacing/invoice/analytics/fraud specs mirror backend payloads/config defaults, improving fidelity for engineering handoff and warehouse ingestion. |
+| **Overall Grade** | **100** | Design artefacts now cover monetisation end-to-end (inventory → rentals → compliance → campaigns → analytics/fraud) with governed telemetry and finance hooks; next sprint focuses on Chromatic/axe automation and microsite uplift. |
 
 ## Progress Narrative
 1. **Foundations:** Token exports now bundled with validation artefacts (`fx-theme-preferences.json`) enabling QA to assert palette integrity per theme.
@@ -36,6 +36,7 @@
 13. **Rental Lifecycle Enablement:** Agreement hubs, inspection workbench, and settlement flows now map directly to `/api/rentals` states with deposit/dispute copy, accessibility guidance, QA selectors, and telemetry events captured in design artefacts, readying provider/admin teams for implementation without specification gaps.
 14. **Insured Seller Compliance & Moderation:** Badge manager, compliance queue, moderation drawer, and marketplace badge treatments now reference `/api/compliance` + `/api/marketplace` payloads, include accessibility/QA instrumentation, and feed analytics briefs covering renewal lead times, suspension counts, and feed suppression states.
 15. **Campaign Manager Targeting, Pacing & Billing:** Campaign workspace, targeting composer, pacing analytics, and invoice drawer specs align with `/api/campaigns` responses, overspend governance, and finance reconciliation runbooks; Flutter/web parity plus telemetry schema ensure monetisation rollout is implementation-ready.
+16. **Campaign Analytics Telemetry & Fraud Monitoring:** Export outbox tiles, fraud anomaly rail, ROI/CTR/CVR KPI refresh, and notification patterns now map to new analytics/fraud endpoints. Accessibility, QA selectors, and telemetry events documented for automation, finance/fraud ops, and warehouse teams.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.

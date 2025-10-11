@@ -66,3 +66,8 @@
 - `src/routes/campaignRoutes.js`
 - `tests/campaignRoutes.test.js`
 - `src/database/migrations/20250219000000-create-campaign-manager.js`
+
+## 2025-10-20 — Added Files
+- `src/models/campaignFraudSignal.js`
+- `src/models/campaignAnalyticsExport.js`
+- `src/jobs/campaignAnalyticsJob.js`

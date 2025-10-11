@@ -89,6 +89,19 @@ const config = {
     cacheTtlSeconds: Math.max(intFromEnv('FEATURE_TOGGLE_CACHE_SECONDS', 60), 10),
     overrides: jsonFromEnv('FEATURE_TOGGLE_OVERRIDES', {}),
     auditTrail: process.env.FEATURE_TOGGLE_AUDIT_TABLE || 'feature_toggle_audits'
+  },
+  campaigns: {
+    overspendTolerance: Math.max(floatFromEnv('CAMPAIGN_OVERSPEND_TOLERANCE', 0.15), 0),
+    underspendTolerance: Math.max(floatFromEnv('CAMPAIGN_UNDERSPEND_TOLERANCE', 0.25), 0),
+    suspiciousCtrThreshold: Math.max(floatFromEnv('CAMPAIGN_SUSPICIOUS_CTR_THRESHOLD', 0.18), 0),
+    suspiciousCvrThreshold: Math.max(floatFromEnv('CAMPAIGN_SUSPICIOUS_CVR_THRESHOLD', 0.45), 0),
+    deliveryGapImpressionFloor: Math.max(intFromEnv('CAMPAIGN_DELIVERY_GAP_IMPRESSIONS', 100), 0),
+    noSpendGraceDays: Math.max(intFromEnv('CAMPAIGN_NO_SPEND_GRACE_DAYS', 2), 0),
+    exportBatchSize: Math.max(intFromEnv('CAMPAIGN_EXPORT_BATCH_SIZE', 200), 1),
+    exportIntervalSeconds: Math.max(intFromEnv('CAMPAIGN_EXPORT_INTERVAL_SECONDS', 60), 15),
+    analyticsEndpoint: process.env.CAMPAIGN_ANALYTICS_ENDPOINT || '',
+    analyticsApiKey: process.env.CAMPAIGN_ANALYTICS_API_KEY || '',
+    failedRetryMinutes: Math.max(intFromEnv('CAMPAIGN_EXPORT_RETRY_MINUTES', 10), 1)
   }
 };
 
