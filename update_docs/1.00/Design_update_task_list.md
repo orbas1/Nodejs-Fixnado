@@ -89,11 +89,12 @@
   2. ✅ Add optional aggregate statistics payload (freshness split, tenant/theme distribution, share min/avg/max) to support rehearsal analytics and alert calibration.
   3. ✅ Refresh runbook, QA scenarios, and trackers with diagnostics workflow guidance, filter documentation, and rehearsal expectations for the 12 Feb analytics drill.
 
-## Task 10 — Geo-Zonal & Booking Experience Support *(Status: ✅ Complete — 2025-02-10)*
-- **Delivery Owner:** UX Architect with Backend Lead + Product Manager.
-- **Evidence:** Backend Task 2 delivery (`backend-nodejs/src/services/zoneService.js`, `bookingService.js`, analytics job/tests) mapped to design drawings (`website_drawings.md`, `dashboard_drawings.md`, `admin_panel_drawings.md`, `app_screens_drawings.md`) via `Design_Plan.md` & `Design_Change_log.md` updates.
+## Task 10 — Issue Intake & Design QA Alignment *(Status: ✅ Complete — 2025-10-11)*
+- **Delivery Owner:** Design Ops Lead in partnership with Programme Management.
+- **Evidence:** `scripts/issue-intake.mjs`, structured payload in `pre-update_evaluations/issue_report.md`, regenerated tracker artefacts (`issue_list.md`, `fix_suggestions.md`), and design documentation updates (`Design_Plan.md`, `Design_Change_log.md`, trackers).
 - **Subtasks:**
-  1. ✅ Validate zone CRUD + analytics payloads against explorer overlay specs, ensuring demand-level labels, bounding boxes, and KPI rollups match drawings.
-  2. ✅ Confirm booking lifecycle metadata (status, SLA timers, assignments, finance breakdown) fulfils admin/provider dashboard states documented in design plans.
-  3. ✅ Document copy + compliance alignment so commission/tax disclosures and dispute messaging mirror approved templates in `Application_Design_Update_Plan` and `Web_Application_Design_Update`.
+  1. ✅ Define issue metadata schema linking severity SLAs, squad ownership, and design artefact references (wireframe IDs, copy specs).
+  2. ✅ Implement automation that validates payloads and republishes Markdown trackers with SLA countdowns for design council reviews.
+  3. ✅ Seed backlog with cross-discipline blockers (escrow verification, auth security, onboarding transactions, React auth UX) including remediation plans and acceptance criteria tied to design specifications.
+  4. ✅ Update design governance docs to incorporate SLA breach reviews and ensure automation runs in CI for consistent reporting.
 

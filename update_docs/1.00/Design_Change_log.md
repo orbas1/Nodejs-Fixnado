@@ -98,15 +98,10 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Captured automation uplift across `test_plan.md`, trackers, and design docs to evidence Subtask 6.2 completion and surface telemetry regression assertions for QA and analytics squads.
 - Coordinated Flutter widget coverage for live feed banners, mapping design intent (priority indicators, empty/loading states) into deterministic tests referenced by design QA artefacts.
 
-### 15. Geo-Zonal & Booking Enablement (2025-02-10)
-- Backend zone + booking delivery references `website_drawings.md`, `dashboard_drawings.md`, `admin_panel_drawings.md`, and `app_screens_drawings.md` to ensure API payloads feed explorer overlays, admin dashboards, and provider booking states as designed.
-- Finance/tax disclosures in booking responses mirror copy/structure from `Application_Design_Update_Plan` and `Web_Application_Design_Update`, safeguarding compliance messaging.
-- Zone analytics snapshots supply KPIs (sample size, SLA breaches, acceptance averages) required by dashboard widgets, keeping design intent measurable.
-
-### 16. Marketplace, Inventory & Monetisation Backbone (2025-02-11)
-- Expanded `application_design_update` artefacts with provider inventory console specs, rental agreement timelines, and insured seller badge manager so new ledger/rental/compliance APIs expose UI-ready data contracts.
-- Updated mobile settings and logic flow docs to describe badge visibility toggles, renewal reminders, analytics hooks, and low-stock navigation patterns triggered by background jobs.
-- Refreshed web dashboard and settings specifications with inventory health tiles, rental SLA trackers, marketplace alert rails, and campaign pacing boards ensuring admin/provider consoles visualise marketplace insights with accessible patterns and inline budget controls.
+### 15. Issue Intake & Design QA Alignment (2025-10-11)
+- Linked design QA governance to the new issue intake automation: `scripts/issue-intake.mjs` ingests structured defects and republishes SLA dashboards so design ops can track visual/accessibility regressions alongside backend blockers.
+- Seeded tracker with authentication UX blocker (React forms) and backend flows impacting design intent; remediation guidance now references `Application_Design_Update` auth specifications and blueprint IDs for cross-team traceability.
+- Updated design plans, progress trackers, and milestone notes to ensure issue SLA breaches trigger design council reviews and escalate through the same governance cadence as telemetry and theming workstreams.
 
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.

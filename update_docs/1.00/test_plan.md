@@ -34,6 +34,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 4. **Node/Vitest Coverage**: Extend backend suites with sqlite-backed transaction tests covering service creation/purchase, RBAC guardrails, chaos-induced escrow failures, geo-zone CRUD/analytics, booking lifecycle (assignments, bids, disputes), and contract schema validation via Zod; pipe coverage into CI alongside telemetry contracts and toggle governance specs.
 5. **Telemetry Validation**: Use staging topic `kafka.ui-preferences.v1`, `/api/telemetry/ui-preferences/summary` contract tests, Playwright coverage for `/admin/telemetry`, and Slack webhook mocks to confirm payload ingestion, dashboard rendering, CSV export accuracy, alert delivery, and snapshot persistence.
 6. **Maestro, Flutter Driver & Widget Tests**: Script booking wizard, kanban transitions, compliance flows, and live feed/banner states; new widget tests assert loading/empty/high-priority render paths and feed telemetry selectors for analytics rehearsal evidence.
+7. **Issue Intake Automation Validation**: Enforce CI step that executes `node scripts/issue-intake.mjs` and lints the generated Markdown so severity SLAs, due dates, and ownership metadata remain deterministic across branches.
 
 ## Schedule
 | Date | Activity | Owner(s) | Notes |

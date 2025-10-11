@@ -12,6 +12,7 @@
     3. Extend CI/CD with linting, security scans, contract test gates, and rollback playbooks.
     4. Automate issue intake pipeline linking issue docs to tracker with severity SLAs.
     5. Refresh DPIA, RBAC audit notes, and baseline security posture documentation.
+    - *2025-10-11 update:* Issue intake automation landed — `scripts/issue-intake.mjs` now enforces SLA policies, regenerates tracker artefacts, and seeds critical/high issues with remediation checklists, ready for webhook/Slack integration.
   - **Task 1B — Core Service Blueprint Kick-off (8% complete)**
     1. Finalise geo-zonal architecture diagrams and ERDs for bookings, rentals, and campaigns.
     2. Define API contracts (OpenAPI/AsyncAPI) for zone, booking, inventory, and communication services.

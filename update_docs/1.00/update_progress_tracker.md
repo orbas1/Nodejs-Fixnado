@@ -3,20 +3,19 @@
 ## Development & QA Progress Snapshot
 | Task | Security level (%) | Completion level (%) | Integration level (%) | Functionality level (%) | Error free level (%) | Production level (%) | Overall level (%) | Commentary |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 35 | 30 | 25 | 28 | 30 | 20 | 28 | Governance forums and CI/CD upgrades underway; defect intake automation pending completion of tracker webhook. |
-| Task 2 — Geo-Zonal & Booking Core Services | 70 | 90 | 86 | 88 | 80 | 82 | 86 | Zones + bookings deployed with PostGIS-ready geometry, finance engine, analytics snapshots, and Vitest suites covering polygons, SLA timers, bids, and disputes. |
+| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 48 | 55 | 46 | 45 | 42 | 38 | 45 | Issue intake automation live (`scripts/issue-intake.mjs`) with SLA-aware tracker feeding finance/security/design ops; next step is wiring webhook export into Programme tracker and linking Slack alerts. |
+| Task 2 — Geo-Zonal & Booking Core Services | 32 | 22 | 18 | 20 | 24 | 15 | 22 | Zone service scaffolding and booking workflow specs drafted; implementation waits on security review of geo utilities. |
 | Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
 | Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
 | Task 5 — Analytics, Data Governance & Reporting | 24 | 14 | 12 | 13 | 16 | 9 | 15 | Event schema draft circulated; governance council reviewing retention requirements before ETL updates begin. |
 | Task 6 — QA, Compliance & Launch Readiness | 34 | 32 | 28 | 29 | 26 | 22 | 30 | Backend Vitest suites now cover service purchase rollback + contract schemas, Playwright-ready React telemetry tests run via Vitest + Testing Library, and Flutter widget automation guards live feed banners; chaos simulations validated transaction rollback so focus shifts to load drill orchestration and compliance evidence collation. |
 
 ### Next Review Actions
-- Link React + Flutter inventory dashboards to the new ledger/rental endpoints, ensuring low-stock, reservation, and settlement states mirror `dashboard_drawings.md` and provider app wireframes.
-- Surface marketplace analytics snapshots (inventory runway, campaign pacing, fraud alerts) inside admin telemetry panels and BI pipelines before opening provider storefront beta.
-- Wire React provider/admin dashboards to new inventory health, rental SLA, and campaign pacing specs documented on 11 Feb so UI parity lands before marketplace beta.
-- Finalise insured seller badge copy, rental agreement templates, and compliance reminder cadences so legal/ops sign-off precedes storefront launch.
-- Extend chaos and performance drills to cover inventory reservations, rental pickup spikes, and campaign overspend anomalies alongside existing booking scenarios.
-- Document notification + escalation flows for inventory low stock, rental disputes, and campaign fraud alerts to feed Milestone M4 readiness packs.
+- Integrate issue intake script into CI so updates to `issue_report.md` automatically refresh downstream artefacts on pull requests.
+- Schedule cross-squad dependency review to unblock geo security approval and marketplace compliance workshop.
+- Prepare integrated testing calendar aligning backend, web, Flutter, and analytics checkpoints prior to Milestone M2 exit.
+- Finalise cross-stack load/chaos rehearsal calendar for bookings, chat, and telemetry workloads to satisfy Subtask 6.3 entry criteria.
+- Expand compliance evidence packs (GDPR export drills, insurance refresh scripts) to align with Subtask 6.4 documentation requirements.
 
 ---
 Design metrics from prior addendum are retained below for continuity.

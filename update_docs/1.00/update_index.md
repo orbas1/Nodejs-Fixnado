@@ -158,6 +158,17 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 ## Newly Updated Artefacts (2025-02-09)
 - [`change_log.md`](change_log.md) — Documented Subtask 6.2 automation rollout spanning backend Vitest coverage, React telemetry regression, and Flutter widget suites.
 - [`test_plan.md`](test_plan.md) — Added service marketplace escrow contract testing, React telemetry harness expectations, and refreshed automation strategy including chaos validation and Flutter widgets.
+
+## Newly Updated Artefacts (2025-10-11)
+- [`change_log.md`](change_log.md) — Logged Task 1.4 completion with SLA-driven issue intake automation, structured tracker payloads, and cross-discipline governance updates.
+- [`build_updates.md`](build_updates.md) — Documented introduction of `scripts/issue-intake.mjs`, run instructions, and seeded backlog artefacts.
+- [`update_task_list.md`](update_task_list.md) — Marked Subtask 1.4 complete with evidence referencing the automation script and seeded defects.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 1 maturity metrics reflecting live issue intake automation and outlined next actions for CI integration.
+- [`update_milestone_list.md`](update_milestone_list.md) — Added Task 1A commentary confirming SLA automation delivery and upcoming webhook integration.
+- [`test_plan.md`](test_plan.md) — Extended automation strategy with CI validation for the issue intake script.
+- [`pre-update_evaluations/issue_report.md`](pre-update_evaluations/issue_report.md), [`pre-update_evaluations/issue_list.md`](pre-update_evaluations/issue_list.md), [`pre-update_evaluations/fix_suggestions.md`](pre-update_evaluations/fix_suggestions.md) — Populated structured backlog entries, SLA countdowns, and remediation playbooks powering the new intake workflow.
+- [`../scripts/issue-intake.mjs`](../scripts/issue-intake.mjs) — Added executable automation that validates payloads and regenerates tracker artefacts.
+- [`Design_Change_log.md`](Design_Change_log.md), [`Design_Plan.md`](Design_Plan.md), [`Design_update_task_list.md`](Design_update_task_list.md), [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md), [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Captured design council alignment with issue SLA dashboards, new Task 10 ownership, and governance updates.
 - [`update_task_list.md`](update_task_list.md) — Recorded Subtask 6.2 completion highlighting cross-stack automation artefacts.
 - [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 6 metrics to reflect new API/UI/mobile test coverage and updated next review actions.
 - [`update_milestone_list.md`](update_milestone_list.md) — Logged Task 6A automation readiness note covering Vitest, React, and Flutter suites.

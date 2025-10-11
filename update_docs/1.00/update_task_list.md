@@ -12,6 +12,8 @@ Establish the cross-squad delivery framework, baseline compliance, and open the 
 1.4 Formalise issue intake workflow linking `issue_report.md`, `issue_list.md`, and `fix_suggestions.md` to tracker automation with severity SLAs.
 1.5 Refresh DPIA, RBAC review minutes, and security baselines to satisfy regulator expectations prior to development sprints.
 
+*2025-10-11 update:* Subtask **1.4** is now production-ready. `scripts/issue-intake.mjs` validates structured payloads in `issue_report.md`, regenerates `issue_list.md`/`fix_suggestions.md` with SLA countdowns, and publishes ownership metadata for finance, security, and design ops triage. Four critical/high issues sourced from pre-update evaluations seeded the tracker with remediation plans and acceptance criteria.
+
 #### Integration Coverage
 - **Backend:** Subtasks 1.2 & 1.3 provision services and pipelines.
 - **Front-end:** Subtask 1.3 enforces build/test gates for React deployments.
