@@ -13,6 +13,7 @@ import AdminLogin from './pages/AdminLogin.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import ThemeStudio from './pages/ThemeStudio.jsx';
 import TelemetryDashboard from './pages/TelemetryDashboard.jsx';
+import Communications from './pages/Communications.jsx';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/theme-studio" element={<ThemeStudio />} />
           <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
+          <Route path="/communications" element={<Communications />} />
         </Routes>
       </main>
       <Footer />

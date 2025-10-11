@@ -71,3 +71,14 @@
 - `src/models/campaignFraudSignal.js`
 - `src/models/campaignAnalyticsExport.js`
 - `src/jobs/campaignAnalyticsJob.js`
+
+## 2025-10-22 — Added Files
+- `src/models/conversation.js`
+- `src/models/conversationParticipant.js`
+- `src/models/conversationMessage.js`
+- `src/models/messageDelivery.js`
+- `src/services/communicationsService.js`
+- `src/controllers/communicationsController.js`
+- `src/routes/communicationsRoutes.js`
+- `tests/communicationsRoutes.test.js`
+- `src/database/migrations/20250221000000-create-communications.js`

@@ -14,3 +14,8 @@
 - Refactored the explorer page (`frontend-reactjs/src/pages/Search.jsx`) to deliver MapLibre-powered zone overlays, demand-aware filters, and analytics-driven result cards consuming `/api/search` and `/api/zones` contracts.
 - Introduced explorer component suite (`components/explorer/*`) providing filter shell, map legend, skeleton loading, and zone insight panel plus geometry-aware API client (`src/api/explorerClient.js`) and data utilities (`src/pages/explorerUtils.js`).
 - Added Vitest coverage for filtering/bounds logic (`src/pages/__tests__/explorerUtils.test.js`), imported MapLibre CSS, and expanded package dependencies (`maplibre-gl`, `@turf/bbox`, `@turf/helpers`) to support production-ready mapping without Mapbox tokens.
+
+## 2025-10-22 — Communications Workspace Delivery
+- Added `/communications` route and navigation entry (`frontend-reactjs/src/App.jsx`) exposing the new communications workspace for admin/provider roles.
+- Delivered production-grade communications page (`src/pages/Communications.jsx`) composed of conversation rail, message canvas, AI assist sidebar, quiet-hour banner, and Agora launcher components (`src/components/communications/*`) orchestrated via `communicationsClient.js` with retry/backoff and auth propagation.
+- Implemented deterministic tests for `MessageComposer` covering AI assist requests, token usage display, quiet-hour prompts, attachment validation, and keyboard shortcuts, ensuring regressions surface before release.

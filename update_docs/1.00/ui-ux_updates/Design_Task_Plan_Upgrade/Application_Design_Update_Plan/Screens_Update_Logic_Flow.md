@@ -203,3 +203,39 @@
 1. Provider mobile app subscribes to push topic `campaign-anomalies`. When backend sends export failure or critical fraud signal, push payload includes `campaignId`, `signalType`, and `ctaDeepLink`.
 2. Tapping notification opens mobile anomaly detail bottom sheet summarising status with actions `Acknowledge`, `Escalate`, `View on web`. `Acknowledge` logs telemetry `campaign.fraud.mobile_ack` and syncs with server via POST `/api/campaigns/fraud-signals/{id}/acknowledge`.
 3. If offline, app queues acknowledgement/resolution locally and retries when network restored. UI displays offline banner referencing support article for manual escalation.
+
+## 27. Messages Inbox Load (Mobile)
+1. App boots Riverpod provider `chatThreadProvider` which verifies scopes (`chat:read`, `chat:write`, `chat:notifications`) and feature flag `communications-suite`.
+2. Repository fetches `/api/chat/threads?include=lastMessage,unreadCount,slaDueAt` with pagination (pageSize 25) and caches response in `Hive` box `chat_threads` for offline use.
+3. UI renders segmented control (All, Assignments, Escalations) and conversation list cards showing avatar, name, last message snippet, unread badge, SLA countdown chip. Cards adhere to `App_screens_drawings.md` Section 6 for spacing and iconography.
+4. Quiet hour indicator from response header `X-Quiet-Hours` surfaces pill “Quiet hours active until 06:00” with tooltip and link to notification settings sheet.
+5. Telemetry `chat.thread.list_view` emits `{ unreadCount, escalationsCount, quietHoursActive, deviceLocale }`.
+
+## 28. Thread Detail & Message Handling
+1. Selecting card pushes `ConversationScreen`. Provider loads `/api/chat/threads/:id/messages?cursor=latest` (limit 40) and stores messages in local cache keyed by thread.
+2. Messages display in reversed `ListView` with day separators. AI-generated content shows badge “AI” referencing `Screens_Update.md` copy deck. Attachments open bottom sheet preview with download + share options.
+3. Pull-to-refresh triggers fetch with `since` query parameter. On scroll to top and `hasMore=true`, provider loads previous page using stored cursor.
+4. Inbound websocket events `message.created` append to list. Offline detection toggles offline banner and defers send operations to queue; queued messages show amber chip until acked.
+5. Telemetry `chat.message.view_thread` logs threadId, unseen messages, offline flag, aiAssistEnabled state.
+
+## 29. Composer & AI Assist (Mobile)
+1. Composer exposes text field, attachment picker (camera, library, files), quick reply chips, and AI toggle. Toggle state seeded from `/api/chat/preferences` and stored in Riverpod state.
+2. Enabling AI toggle without consent opens modal referencing retention + moderation copy (per DPIA). Confirming sends `POST /api/chat/threads/:id/ai-toggle`.
+3. Sending message packages body + attachments and posts to `/api/chat/messages`. Optimistic card appears with clock icon until ack. Failure 409 (moderation) shows error toast “Needs review — edit message”. Retry button resubmits payload.
+4. AI suggestions request `POST /api/chat/messages/assist` with conversation summary; responses display chip list above composer. Selecting chip fills composer and logs `chat.ai.suggestion.accept`.
+5. Offline mode caches drafts in Hive; when connectivity restored, queue flush runs sequentially with exponential backoff. Telemetry `chat.message.send_mobile` includes `offlineQueued`, `aiAssistEnabled`, attachments count.
+
+## 30. Notification Centre & Quiet Hours (Mobile)
+1. Notification icon opens drawer-style sheet listing alerts grouped by severity. Data sourced from `/api/chat/notifications?status=pending&channels=chat,ops`.
+2. Cards expose acknowledgement + escalate buttons. Acknowledgement posts to `/api/chat/notifications/:id/acknowledge`; success animates card removal and logs telemetry.
+3. Escalation triggers sheet with channel selection (Push, SMS, Email) referencing support roster. Submit posts to `/api/chat/notifications/:id/escalate` with notes.
+4. Quiet hours display grey banner; override button posts `/api/chat/notifications/override` enabling alert delivery for 60 minutes. Timer countdown surfaces near banner per drawings.
+5. Accessibility: VoiceOver announces severity, countdown, and actions. Telemetry `chat.notification.ack_mobile`, `chat.notification.escalate_mobile`, `chat.notification.override_mobile` capture adoption.
+
+## 31. Agora Call Initiation (Mobile)
+1. Call button launches modal running hardware checks via Flutter `permission_handler`. Missing permissions show prompt referencing support article.
+2. Repository posts `/api/chat/sessions` retrieving token/channel/expiry/PSTN fallback. Session config stored in provider state.
+3. Agora SDK initialised with event listeners for connection, remote join, token expiry. Token refresh uses `/api/chat/sessions/:id/refresh` when `onTokenPrivilegeWillExpire` fired.
+4. Connection failure surfaces options: retry, switch to voice-only, or dial PSTN number. PSTN selection opens bottom sheet showing number + PIN and logs telemetry `chat.session.pstn_mobile`.
+5. Session end cleans Riverpod state, logs `chat.session.end_mobile` with duration, participant count, quality rating, and resets UI to thread view.
+

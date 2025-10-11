@@ -17,3 +17,8 @@
 ## 2025-10-20 — Analytics Outbox & Fraud Signal Extensions
 - Updated `20250219000000-create-campaign-manager.js` to append `campaign_analytics_exports` (warehouse outbox with payload JSON, status, retry metadata) and `campaign_fraud_signals` (anomaly catalogue with severity, resolution notes) plus related indexes for status lookups.
 - Added Postgres-specific enum teardown for the new tables during rollback and documented export/fraud schema relationships so downstream ingestion jobs and fraud ops dashboards can rely on governed data contracts.
+
+## 2025-10-22 — Communications Tables
+- Added `20250221000000-create-communications.js` creating `conversations`, `conversation_participants`, `conversation_messages`, and `message_deliveries` tables with UUID keys, participant role enums, AI assist metadata JSONB, quiet-hour window columns, and delivery receipt auditing.
+- Migration seeds participant role enum values (admin, provider, customer, ai_assist) and sets default quiet-hour windows based on configuration while enforcing cascading deletes between conversation → participants/messages/deliveries.
+- Rollback drops tables/enums in dependency order and restores previous constraints to maintain sqlite/Postgres parity; migration notes instruct ops to re-run retention jobs after rollback to purge orphan transcripts.

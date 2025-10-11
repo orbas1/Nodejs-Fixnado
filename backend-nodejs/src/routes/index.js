@@ -12,6 +12,7 @@ import rentalRoutes from './rentalRoutes.js';
 import complianceRoutes from './complianceRoutes.js';
 import marketplaceRoutes from './marketplaceRoutes.js';
 import campaignRoutes from './campaignRoutes.js';
+import communicationsRoutes from './communicationsRoutes.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/rentals', rentalRoutes);
 router.use('/compliance', complianceRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/campaigns', campaignRoutes);
+router.use('/communications', communicationsRoutes);
 
 export default router;

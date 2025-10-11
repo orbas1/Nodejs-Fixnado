@@ -16,3 +16,8 @@
 ## 2025-10-20 — Campaign Telemetry & Fraud Configuration
 - Expanded `campaigns` config namespace to include overspend/underspend tolerances, suspicious CTR/CVR thresholds, delivery-gap impression floors, no-spend grace days, export batch size, and exporter cadence/retry values sourced from environment variables (`CAMPAIGN_OVERSPEND_TOLERANCE`, `CAMPAIGN_SUSPICIOUS_CTR_THRESHOLD`, `CAMPAIGN_EXPORT_INTERVAL_SECONDS`, etc.).
 - Added analytics export endpoint/API key settings (`CAMPAIGN_ANALYTICS_ENDPOINT`, `CAMPAIGN_ANALYTICS_API_KEY`) so the background job can deliver governed payloads to the data warehouse with optional authentication.
+
+## 2025-10-22 — Communications Configuration Namespace
+- Introduced `communications` config block capturing AI assist provider endpoint/key/model/temperature, quiet-hour defaults, Agora credentials, delivery retry caps, and transcript retention days to keep chat orchestration environment-aware.
+- Added helper parsing for JSON quiet-hour windows and fallback heuristics so deployments can tune suppression windows and AI thresholds without code changes.
+- Surfaced safe defaults and validation for Agora session TTL plus AI assist temperature bounds, protecting production from misconfiguration during rollout.

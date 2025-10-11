@@ -24,3 +24,8 @@
 ## 2025-10-20 — Campaign Analytics & Fraud Controller Enhancements
 - Extended `campaignController.js` with targeting rule upsert handler, fraud signal listing/resolution endpoints, and KPI summary responses exposing aggregate impressions/clicks/conversions/ROI for dashboards.
 - Metrics ingestion now returns persisted CTR/CVR/anomaly scores, while fraud resolution API accepts remediation notes and returns resolved timestamps to power finance/compliance workflows.
+
+## 2025-10-22 — Communications Controller
+- Introduced `communicationsController.js` exposing conversation CRUD, participant management, and message send endpoints with schema validation covering AI assist toggles, attachments, and quiet-hour acknowledgements.
+- Controller surfaces AI assist metadata (source, confidence, token usage) in responses, coordinates delivery acknowledgements, and maps Agora session generation errors to actionable 503 responses with retry hints for clients.
+- Added quiet-hour override endpoint returning audit payload (actor, reason, duration) to satisfy compliance requirements and feed notification centre dashboards.

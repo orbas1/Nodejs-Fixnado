@@ -13,3 +13,8 @@
 ## 2025-10-19 — Campaign Domain Models
 - Added `models/adCampaign.js`, `models/campaignFlight.js`, `models/campaignTargetingRule.js`, `models/campaignInvoice.js`, and `models/campaignDailyMetric.js` establishing associations between campaigns, companies, flights, invoices, and pacing metrics with scoped enums + computed fields for spend tracking.
 - Updated `models/index.js` to register campaign associations (Company → AdCampaign, AdCampaign → Flights/TargetingRules/DailyMetrics/Invoices) and cascade settings so deletions respect invoice locks while maintaining sqlite/Postgres parity.
+
+## 2025-10-22 — Communications Models
+- Added `models/conversation.js`, `models/conversationParticipant.js`, `models/conversationMessage.js`, and `models/messageDelivery.js` persisting conversation metadata, participant roles, AI assist provenance, delivery receipts, and quiet-hour acknowledgements.
+- Updated `models/index.js` associations to link conversations to companies/users, cascade participant/message cleanup, and expose scoped helpers for unread counts and delivery reconciliation consumed by services/controllers.
+- Embedded JSONB columns for AI suggestions + attachments with sqlite fallbacks and indexes on `(conversationId, sentAt)` and `(participantId, readAt)` to optimise thread loads and delivery lookups.
