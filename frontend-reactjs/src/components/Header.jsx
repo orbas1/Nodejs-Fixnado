@@ -5,10 +5,10 @@ import { LOGO_URL } from '../constants/branding';
 
 const navigation = [
   { name: 'Home', href: '/' },
-  { name: 'Live Feed', href: '/feed' },
-  { name: 'Services', href: '/services' },
-  { name: 'Marketplace', href: '/services#marketplace' },
-  { name: 'Explorer', href: '/search' }
+  { name: 'Solutions', href: '/services#solution-streams' },
+  { name: 'Industries', href: '/#home-marketing' },
+  { name: 'Platform', href: '/#home-operations' },
+  { name: 'Resources', href: '/services#activation-blueprint' }
 ];
 
 export default function Header() {

@@ -1,38 +1,37 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 2 Completion)
+## Snapshot (As of Sprint 3 Kick-off — Updated 2025-01-29)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
-| Design Quality | 68 | Foundation concepts strong; need further iteration on data visualisation clarity and cross-platform parity for complex forms. |
-| Design Organisation | 72 | Documentation hierarchy established; refine navigation between artefacts and improve tagging for faster retrieval. |
-| Design Position | 64 | Layout grids implemented for primary screens but marketing landing modules still rely on legacy positioning rules. |
-| Design Text Grade | 61 | Tone updated for key flows; long-form compliance copy requires review and localisation guidelines. |
-| Design Colour Grade | 66 | Token consolidation complete; emo theme contrast testing still outstanding for low-vision scenarios. |
-| Design Render Grade | 58 | High-fidelity mocks available for core screens; motion studies pending for dashboards and charts. |
-| Compliance Grade | 70 | Initial checklist aligned with regulatory requirements; legal review scheduling pending final copy updates. |
-| Security Grade | 63 | Security prompts defined but require integration sign-off with backend threat model owners. |
-| Design Functionality Grade | 65 | Interactive prototypes cover 70% of target flows; edge-case states missing for provider exception handling. |
-| Design Images Grade | 60 | Imagery curation guidelines drafted; asset optimisation pipeline needs verification for mobile bandwidth constraints. |
-| Design Usability Grade | 62 | Early usability test indicates improved navigation; onboarding success rate still below target due to unclear CTAs. |
-| Bugs-less Grade | 75 | Identified issues tracked in design QA log; two high-priority accessibility findings outstanding. |
-| Test Grade | 55 | Automated visual regression suite not yet wired to new component states; manual checklists drafted. |
-| QA Grade | 58 | QA alignment sessions scheduled but coverage matrix incomplete for marketing modules. |
-| Design Accuracy Grade | 67 | Annotation accuracy improved; Figma-to-code delta analysis pending for provider dashboard. |
-| **Overall Grade** | **64** | Solid foundation with clear next steps; critical path items centre on accessibility, motion specs, and validation tooling. |
+| Design Quality | 82 | Core web blueprints recomposed with shared primitives; remaining work focuses on complex data visualisations and motion specs. |
+| Design Organisation | 86 | Blueprint documentation and anchor strategy published; integrate Storybook references for component parity. |
+| Design Position | 78 | Home, admin, profile, and marketing layouts follow the 12-column grid; residual marketing microsites queued for Sprint 4. |
+| Design Text Grade | 70 | Compliance copy and localisation status surfaced in-page; legal review on Spanish variants scheduled. |
+| Design Colour Grade | 82 | New marketing rails respect tokenised palette; emo palette validation still targeted for Sprint 4. |
+| Design Render Grade | 68 | High-fidelity mocks plus production implementations exist; motion studies pending for analytics widgets. |
+| Compliance Grade | 80 | Compliance documents, escrow explainers, and automation backlogs embedded; legal sign-off on knowledge base references in progress. |
+| Security Grade | 72 | Navigation, dashboards, and profile overlays highlight security prompts; backend threat model alignment remains. |
+| Design Functionality Grade | 74 | Blueprint instrumentation covers nav, CTA, and service interactions; edge-case provider flows to be finalised. |
+| Design Images Grade | 68 | Marketing modules reference approved imagery sets; optimisation pipeline validation scheduled with performance team. |
+| Design Usability Grade | 72 | Persona-led navigation reduces bounce; follow-up usability study booked for Sprint 4 to validate marketing anchors. |
+| Bugs-less Grade | 82 | Accessibility audits on recomposed pages passed QA smoke; monitor regression suite as new components roll in. |
+| Test Grade | 70 | Blueprint instrumentation wired into analytics dashboards; expand visual regression coverage to new blueprint sections. |
+| QA Grade | 74 | Admin and provider blueprints documented for QA handoff; marketing module walkthrough video pending recording. |
+| Design Accuracy Grade | 78 | Blueprint documentation maps UI modules to specification IDs; provider dashboard delta review underway. |
+| **Overall Grade** | **78** | Core blueprints implemented in code with governance overlays; next focus shifts to motion specs and component catalogue expansion. |
 
 ## Progress Narrative
-1. **Foundations:** Token consolidation, typography, and spacing guidelines are implemented with cross-discipline approval. Accessibility validation continues, with focus on emo theme compliance.
-2. **Experience Blueprints:** Primary screens updated, but marketing landing pages and edge-case provider flows need further detailing and asset alignment.
-3. **Component Catalogue:** New component states documented; interactive prototypes require performance validations, especially for data-heavy widgets.
-4. **Validation:** Compliance and QA processes defined but require execution—legal copy review, motion QA, and automated visual regression remain open.
+1. **Foundations:** Token consolidation, typography, and spacing guidelines remain stable; emo theme validation still planned for Sprint 4.
+2. **Experience Blueprints:** Home, admin, provider, and services marketing experiences rebuilt with shared primitives and documented in `core_page_blueprints.md`. Residual microsites and analytics dashboards queued next.
+3. **Component Catalogue:** New blueprint components (`PageHeader`, `BlueprintSection`) ready for Storybook integration; data-heavy widget polishing continues.
+4. **Validation:** Compliance artefacts embedded within pages; outstanding work covers motion QA, Spanish copy approval, and expanded visual regression.
 
 ## Key Risks & Mitigations
-- **Accessibility Risk:** Emo theme variants might fail contrast ratios. → Schedule dedicated low-vision testing sessions and adjust accent tokens accordingly.
-- **QA Tooling Gap:** Automated regression tools lagging behind component updates. → Prioritise integration with design token outputs and update Storybook stories for snapshot testing.
-- **Cross-team Alignment:** Marketing modules at risk of diverging from core system. → Conduct joint workshop with marketing/brand to reconcile requirements and update shared backlog.
+- **Accessibility Risk:** Emo theme variants might fail contrast ratios. → Primary palette validated via `design_foundations_alignment.md`; dedicated low-vision testing booked alongside Sprint 4 theme validation.
+- **QA Tooling Gap:** Automated regression tools lag behind new blueprint components. → Blueprint sections earmarked for Storybook snapshot tests with analytics instrumentation.
+- **Cross-team Alignment:** Marketing modules risk diverging from core system. → Services hub now references Contentful/KB IDs; schedule marketing ops workshop to map additional locales.
 
 ## Next Review Cycle
 - **Date:** Sprint 3 Demo (Week 4)
-- **Focus:** Validate theme management workflows, confirm compliance copy approval, and review usability metrics for onboarding.
+- **Focus:** Demonstrate recomposed blueprints, confirm localisation rollout readiness, and agree on motion/Storybook backlog.
 - **Stakeholders:** Product, Design, Engineering, Marketing, Compliance, Security, QA.
-

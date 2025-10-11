@@ -1,68 +1,207 @@
+import PageHeader from '../components/blueprints/PageHeader.jsx';
+import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
+
 const badges = ['Top rated', 'Escrow trusted', 'Rapid responder'];
+
 const services = [
-  { id: 1, name: 'Smart home setup', price: '$120/hr', completed: 84 },
-  { id: 2, name: 'Electrical diagnostics', price: '$95/hr', completed: 156 }
+  { id: 1, name: 'Smart building commissioning', price: '$135/hr', completed: 112, sla: 'SLA 4h response' },
+  { id: 2, name: 'High-voltage diagnostics', price: '$165/hr', completed: 156, sla: 'SLA 2h response' },
+  { id: 3, name: 'Critical incident standby', price: '$420 retainer', completed: 28, sla: '24/7 on-call' }
+];
+
+const languages = [
+  { locale: 'English (US)', proficiency: 'Native', coverage: 'All copy + field documentation' },
+  { locale: 'Spanish (MX)', proficiency: 'Professional working', coverage: 'Safety briefings + SMS updates' }
+];
+
+const complianceDocs = [
+  { name: 'DBS Enhanced', status: 'Cleared', expiry: 'Aug 2025' },
+  { name: 'NIC EIC Certification', status: 'Valid', expiry: 'Feb 2026' },
+  { name: 'Public liability insurance (£5m)', status: 'Active', expiry: 'Oct 2025' }
+];
+
+const availability = [
+  { window: 'Mon – Fri', time: '07:00 – 19:00', notes: 'Emergency response available across all service zones.' },
+  { window: 'Sat', time: '08:00 – 14:00', notes: 'Premium callout +£45 applies; remote diagnostics offered.' }
+];
+
+const engagementWorkflow = [
+  {
+    stage: 'Discovery',
+    detail:
+      'Video walk-through or on-site survey scheduled within 24 hours. Intake form captures compliance data including permits and site access restrictions.'
+  },
+  {
+    stage: 'Execution',
+    detail:
+      'Milestones tracked in Fixnado portal with geo-tagged photos, meter readings, and client approvals. Escrow release tied to safety checklist completion.'
+  },
+  {
+    stage: 'Post-job',
+    detail:
+      'Documentation, preventive recommendations, and invoice exported to client systems. Follow-up audit scheduled automatically for regulated industries.'
+  }
+];
+
+const toolingAndShop = [
+  {
+    name: 'Marketplace storefront',
+    description:
+      'Rental thermal cameras, calibrated torque tools, and surge analyzers with insured delivery. Inventory synced nightly to avoid double bookings.'
+  },
+  {
+    name: 'Service zone coverage',
+    description:
+      'Downtown San Diego, La Jolla, Pacific Beach, and Chula Vista. Live dispatch integrates with Fixnado geo-tracking for ETA accuracy.'
+  },
+  {
+    name: 'Knowledge base references',
+    description:
+      'KB-FIELD-104 (Permit checklist), KB-SAFETY-021 (Lockout/tagout), KB-COMMS-014 (Client escalation script).'
+  }
 ];
 
 export default function Profile() {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12 space-y-10">
-      <section className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-glow">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="h-20 w-20 rounded-3xl bg-accent/20 flex items-center justify-center text-3xl">⚡️</div>
-            <div>
-              <h1 className="text-2xl font-semibold text-primary">Jordan Miles</h1>
-              <p className="text-sm text-slate-500">Master electrician · San Diego, CA</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                {badges.map((badge) => (
-                  <span key={badge} className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
-                    {badge}
+    <div className="min-h-screen bg-slate-50 pb-24">
+      <PageHeader
+        eyebrow="Provider profile"
+        title="Jordan Miles — Master electrician"
+        description="Enterprise-certified electrician delivering mission-critical infrastructure support across San Diego service zones."
+        breadcrumbs={[
+          { label: 'Providers', to: '/services' },
+          { label: 'Jordan Miles' }
+        ]}
+        actions={[
+          { label: 'Request quote', to: '/feed', variant: 'primary' },
+          { label: 'Share profile', to: '/profile/share' }
+        ]}
+        meta={[
+          { label: 'Overall rating', value: '4.95', caption: '321 verified reviews', emphasis: true },
+          { label: 'Avg. response', value: '11 minutes', caption: 'Based on last 90 days' },
+          { label: 'Escrow releases', value: '184', caption: '0 disputes escalated' }
+        ]}
+      />
+
+      <div className="mx-auto max-w-7xl px-6 pt-16 space-y-14">
+        <BlueprintSection
+          eyebrow="Service catalogue"
+          title="High-availability electrical services"
+          description="Packages leverage Fixnado’s escrow-backed workflows, ensuring compliance, traceability, and rapid deployment for enterprise sites."
+          aside={
+            <div className="space-y-5">
+              <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-primary">Language & localisation</h3>
+                <ul className="mt-4 space-y-3 text-sm text-slate-600">
+                  {languages.map((language) => (
+                    <li key={language.locale} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4">
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{language.locale}</span>
+                      <span className="mt-2 font-semibold text-primary">{language.proficiency}</span>
+                      <span className="text-xs text-slate-500">{language.coverage}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-primary">Compliance documents</h3>
+                <ul className="mt-4 space-y-3 text-xs text-slate-600">
+                  {complianceDocs.map((doc) => (
+                    <li key={doc.name} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+                      <span className="font-semibold text-primary">{doc.name}</span>
+                      <span className="text-right text-[0.65rem] uppercase tracking-[0.35em] text-slate-400">
+                        {doc.status}
+                        <br />
+                        Exp: {doc.expiry}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          }
+        >
+          <div className="flex flex-wrap gap-2 text-xs">
+            {badges.map((badge) => (
+              <span key={badge} className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
+                {badge}
+              </span>
+            ))}
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {services.map((service) => (
+              <article key={service.id} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                <header>
+                  <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
+                  <p className="mt-2 text-sm text-slate-600">Completed {service.completed} jobs</p>
+                </header>
+                <div className="mt-6 space-y-3 text-sm text-slate-600">
+                  <p className="flex items-center justify-between">
+                    <span>Pricing</span>
+                    <span className="font-semibold text-primary">{service.price}</span>
+                  </p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{service.sla}</p>
+                </div>
+                <button className="mt-6 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90">
+                  Request availability
+                </button>
+              </article>
+            ))}
+          </div>
+        </BlueprintSection>
+
+        <BlueprintSection
+          eyebrow="Operations"
+          title="Coverage, scheduling, and tooling visibility"
+          description="Clients can validate coverage, understand scheduling windows, and review the equipment catalogue before confirming a booking."
+          aside={
+            <div className="space-y-5">
+              <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-primary">Availability windows</h3>
+                <ul className="mt-4 space-y-3 text-sm text-slate-600">
+                  {availability.map((slot) => (
+                    <li key={slot.window} className="rounded-2xl border border-slate-100 bg-white p-4">
+                      <p className="font-semibold text-primary">{slot.window}</p>
+                      <p className="text-xs text-slate-500">{slot.time}</p>
+                      <p className="mt-2 text-xs text-slate-500">{slot.notes}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          }
+        >
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {toolingAndShop.map((item) => (
+              <article key={item.name} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-primary">{item.name}</h3>
+                <p className="mt-2 text-sm text-slate-600">{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </BlueprintSection>
+
+        <BlueprintSection
+          eyebrow="Engagement blueprint"
+          title="How Jordan delivers regulated projects"
+          description="Workflow transparency ensures procurement, compliance, and operations teams trust the engagement from kickoff to closeout."
+        >
+          <ol className="space-y-4 text-sm text-slate-600">
+            {engagementWorkflow.map((step) => (
+              <li key={step.stage} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{step.stage}</p>
+                    <p className="mt-3 text-sm text-slate-600">{step.detail}</p>
+                  </div>
+                  <span className="rounded-full bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                    Escrow aligned
                   </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-white px-6 py-4 text-center">
-            <p className="text-sm text-slate-500">Overall rating</p>
-            <p className="text-3xl font-bold text-primary">4.95</p>
-            <p className="text-xs text-slate-400">321 reviews</p>
-          </div>
-        </div>
-      </section>
-      <section className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-glow">
-        <h2 className="text-xl font-semibold text-primary">Offered services</h2>
-        <div className="mt-6 space-y-4">
-          {services.map((service) => (
-            <div key={service.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-5 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
-                <p className="text-sm text-slate-500">Completed {service.completed} jobs</p>
-              </div>
-              <button className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90">
-                Purchase for {service.price}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-glow">
-        <h2 className="text-xl font-semibold text-primary">Portfolio & shop</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-100 bg-white p-5">
-            <h3 className="text-lg font-semibold text-primary">Service zone coverage</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Downtown San Diego, La Jolla, Pacific Beach, Chula Vista. Live tracking enabled for urgent dispatch.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-white p-5">
-            <h3 className="text-lg font-semibold text-primary">Marketplace storefront</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Offering specialty breaker kits, IoT sensors, and rental thermal cameras with insured delivery.
-            </p>
-          </div>
-        </div>
-      </section>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </BlueprintSection>
+      </div>
     </div>
   );
 }
