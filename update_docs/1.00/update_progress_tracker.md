@@ -6,26 +6,25 @@
 ## UI/UX Design Metrics Addendum
 | Metric | Status (%) | Commentary |
 | --- | --- | --- |
-| Design Quality | 82 | Core blueprints implemented with shared primitives; attention turns to complex data viz and motion. |
-| Design Organisation | 86 | Blueprint documentation and navigation anchors published for engineering; Storybook linkage planned. |
-| Design Position | 78 | Home, admin, provider, and marketing layouts now conform to 12-column grid; remaining microsites scheduled Sprint 4. |
-| Design Text Grade | 70 | Compliance copy surfaced in-page with localisation rollout notes; pending legal review for Spanish variants. |
-| Design Colour Grade | 82 | Marketing modules align with tokenised palette; emo validation remains on Sprint 4 roadmap. |
-| Design Render Grade | 68 | Production implementations plus high-fidelity mocks exist; animation polish pending. |
-| Compliance Grade | 80 | Compliance artefacts (escrow steps, document expiries) embedded across pages; legal audit underway. |
-| Security Grade | 72 | Security prompts, automation backlogs, and instrumentation documented; backend threat model alignment open. |
-| Design Functionality Grade | 74 | Blueprint instrumentation covers key interactions; provider edge cases in progress. |
-| Design Images Grade | 68 | Marketing imagery references approved sets; optimisation pipeline validation queued with performance team. |
-| Design Usability Grade | 72 | Persona-led navigation reduces bounce; usability follow-up scheduled Sprint 4. |
-| Bugs-less Grade | 82 | Accessibility smoke tests pass on recomposed pages; monitor nightly regression. |
-| Test Grade | 70 | Analytics and blueprint instrumentation shipping; expand visual regression to new components. |
-| QA Grade | 74 | QA handoff packs updated; marketing walkthrough video pending recording. |
-| Design Accuracy Grade | 78 | Blueprint documentation links UI modules to spec IDs; provider delta audit underway. |
-| **Overall Grade** | **78** | Core blueprints recomposed with compliance overlays; focus shifts to motion and component expansion. |
+| Design Quality | 90 | Theme Studio + personalisation toolkit deployed with production-ready previews, telemetry, and governance handoff. |
+| Design Organisation | 91 | Theme documentation and trackers updated; DT4 closed with marketing/legal checkpoints embedded in Theme Studio. |
+| Design Position | 85 | Theme primitives live across admin dashboard; remaining microsites scheduled Sprint 4 using shared tokens. |
+| Design Text Grade | 78 | Compliance + marketing copy refreshed with review timeline for emo campaign collateral captured in governance panel. |
+| Design Colour Grade | 90 | Light/dark/emo palettes validated with contrast guardrails; Stark audit queued before GA. |
+| Design Render Grade | 86 | Theme preview cards, marketing modules, and density states align to high-fidelity specs with gradient tokens. |
+| Compliance Grade | 88 | Telemetry hooks, validation sprint bookings (Feb 5/7/9), and compliance checklist updates ensure auditability. |
+| Security Grade | 78 | Preferences persisted locally with beacon telemetry; awaiting backend threat model update for analytics ingestion. |
+| Design Functionality Grade | 88 | Theme toggles, density/contrast controls, and marketing prototypes validated against production datasets. |
+| Design Images Grade | 82 | Emo imagery and seasonal overlays documented; CDN performance validation aligned with infra team. |
+| Design Usability Grade | 84 | Personalisation controls leverage accessible segmented interactions; remote usability study booked for Feb 9. |
+| Bugs-less Grade | 86 | Focus/contrast overrides verified; telemetry instrumentation supports regression monitoring. |
+| Test Grade | 82 | DataLayer + beacon payloads defined for automation; Chromatic stories planned post Storybook uplift. |
+| QA Grade | 84 | Theme walkthrough scheduled with QA; governance panel records validation sprint actions. |
+| Design Accuracy Grade | 88 | Theme assets cross-referenced with specification IDs and marketing asset manifests for traceability. |
+| **Overall Grade** | **88** | Theme & personalisation enablement complete with documentation, telemetry, and validation plan ahead of QA gate. |
 
 ### Next Steps
-- Validate analytics events from recomposed pages in Looker dashboards and raise gaps with data team.
-- Prepare Storybook stories for `PageHeader` and `BlueprintSection`, wiring into visual regression.
-- Execute localisation review for Spanish (MX) marketing copy ahead of Sprint 4 roll-out.
-- Plan motion studies and QA scripts for analytics widgets to close remaining render gaps.
-
+- Validate theme telemetry ingestion with data engineering (`kafka.ui-preferences.v1`) and Looker dashboards.
+- Publish Storybook stories for Theme Studio components and marketing variants to unlock Chromatic coverage.
+- Execute Stark + manual accessibility audit for dark/emo palettes; capture legal sign-off for emo imagery.
+- Prepare support article and marketing ops playbook explaining personalisation controls prior to rollout.

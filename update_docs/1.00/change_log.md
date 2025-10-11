@@ -9,3 +9,13 @@
 - Implemented recomposed home, admin dashboard, provider profile, and services marketing layouts in the React codebase (`frontend-reactjs/src/pages`). Navigation updated to persona-led clusters with breadcrumb strategy and compliance overlays.
 - Introduced shared blueprint primitives (`components/blueprints/PageHeader.jsx`, `BlueprintSection.jsx`) to enforce grid, accessibility, and instrumentation patterns across pages.
 - Published `ui-ux_updates/core_page_blueprints.md` documenting IA decisions, compliance guardrails, localisation rollout status, and next actions for motion/Storybook coverage.
+
+## 2025-01-30 — Component & Widget Catalogue Expansion
+- Delivered production-grade UI primitives (buttons, cards, segmented control, status pills, skeletons, text inputs) and analytics widgets (trend, comparison, gauge, metric tiles) under `frontend-reactjs/src/components/ui` and `/widgets`, powered by new tokenised CSS and `framer-motion`/`recharts` integrations.
+- Upgraded `frontend-reactjs/src/pages/AdminDashboard.jsx` to exercise the catalogue with live datasets, telemetry IDs, compliance cards, and security widgets aligned to governance requirements.
+- Documented audit outcomes, regression checklist, and QA guidance in `ui-ux_updates/component_catalogue_expansion.md`, with tracker updates across `Design_update_progress_tracker.md` and `update_progress_tracker.md`.
+
+## 2025-01-31 — Theme & Personalisation Enablement
+- Shipped Theme Studio (`frontend-reactjs/src/pages/ThemeStudio.jsx`) with ThemeProvider context, persistent preferences, density/contrast controls, and marketing module previews wired to telemetry hooks.
+- Extended global tokens (`frontend-reactjs/src/styles.css`) with theme-specific gradients, accessibility overrides, and marketing surface variables; documented palettes and rollout plan in `ui-ux_updates/theme_personalisation_toolkit.md`.
+- Updated programme trackers to mark DT4/DM3 complete, including telemetry guidance, validation schedule, and marketing/legal alignment checkpoints.

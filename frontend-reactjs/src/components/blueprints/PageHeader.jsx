@@ -1,34 +1,15 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
-
-const actionStyles = {
-  primary:
-    'inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white',
-  secondary:
-    'inline-flex items-center justify-center rounded-full border border-primary/30 bg-white px-5 py-2 text-sm font-semibold text-primary transition hover:border-primary/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-};
+import { Button } from '../ui/index.js';
 
 function renderAction(action) {
-  const className = actionStyles[action.variant ?? 'secondary'];
-
-  if (action.to) {
-    return (
-      <Link key={action.label} to={action.to} className={className}>
-        {action.label}
-      </Link>
-    );
-  }
+  const { label, variant = 'secondary', ...buttonProps } = action;
 
   return (
-    <button
-      key={action.label}
-      type="button"
-      onClick={action.onClick}
-      className={className}
-    >
-      {action.label}
-    </button>
+    <Button key={label} variant={variant} size="sm" {...buttonProps}>
+      {label}
+    </Button>
   );
 }
 
@@ -115,7 +96,7 @@ PageHeader.propTypes = {
       label: PropTypes.string.isRequired,
       to: PropTypes.string,
       onClick: PropTypes.func,
-      variant: PropTypes.oneOf(['primary', 'secondary'])
+      variant: PropTypes.oneOf(['primary', 'secondary', 'tertiary', 'ghost', 'danger'])
     })
   ),
   meta: PropTypes.arrayOf(
