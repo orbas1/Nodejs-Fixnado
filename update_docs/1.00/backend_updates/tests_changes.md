@@ -13,3 +13,7 @@
 ## 2025-10-17 — Inventory & Rental Regression Suites
 - Extended `/api/inventory` Vitest coverage with reservation rollback, reconciliation, alert acknowledgement/escalation, and ledger export scenarios using sqlite transaction harnesses and deterministic mocks (`tests/inventoryRoutes.test.js`).
 - Added `tests/rentalRoutes.test.js` executing rental lifecycle permutations (approval, checkout, partial return, inspection variance, settlement, cancellation) plus alert propagation, deposit handling, and audit metadata assertions to lock production behaviour.
+
+## 2025-10-18 — Compliance & Marketplace Tests
+- Added `tests/complianceMarketplace.test.js` validating end-to-end insured seller governance: blocking unverified listings, approving multiple document types, moderation queue responses, feed suppression after document expiry, badge toggles, and suspension gating.
+- Test suite exercises new `/api/compliance` + `/api/marketplace` endpoints with sqlite-backed migrations, ensuring document expiry auto-marks records, compliance evaluation updates `Company` snapshots, and moderation actions persist audit metadata.

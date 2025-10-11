@@ -20,6 +20,9 @@ import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
 import RentalAgreement from './rentalAgreement.js';
 import RentalCheckpoint from './rentalCheckpoint.js';
+import ComplianceDocument from './complianceDocument.js';
+import InsuredSellerApplication from './insuredSellerApplication.js';
+import MarketplaceModerationAction from './marketplaceModerationAction.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -47,6 +50,27 @@ Dispute.belongsTo(Escrow, { foreignKey: 'escrowId' });
 
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
+
+Company.hasMany(ComplianceDocument, { foreignKey: 'companyId' });
+ComplianceDocument.belongsTo(Company, { foreignKey: 'companyId' });
+ComplianceDocument.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+ComplianceDocument.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+Company.hasOne(InsuredSellerApplication, { foreignKey: 'companyId' });
+InsuredSellerApplication.belongsTo(Company, { foreignKey: 'companyId' });
+InsuredSellerApplication.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+MarketplaceItem.hasMany(MarketplaceModerationAction, {
+  foreignKey: 'entity_id',
+  constraints: false,
+  scope: { entity_type: 'marketplace_item' },
+  as: 'moderationActions'
+});
+MarketplaceModerationAction.belongsTo(MarketplaceItem, {
+  foreignKey: 'entity_id',
+  constraints: false
+});
+MarketplaceModerationAction.belongsTo(User, { foreignKey: 'actorId', as: 'actor', constraints: false });
 
 Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
 InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -121,5 +145,8 @@ export {
   InventoryLedgerEntry,
   InventoryAlert,
   RentalAgreement,
-  RentalCheckpoint
+  RentalCheckpoint,
+  ComplianceDocument,
+  InsuredSellerApplication,
+  MarketplaceModerationAction
 };

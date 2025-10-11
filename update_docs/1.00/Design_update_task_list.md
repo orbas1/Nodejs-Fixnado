@@ -129,3 +129,13 @@
   4. ✅ Update alert rail behaviour, dashboard metrics, and telemetry events so rental overdue/dispute states integrate with inventory health widgets and analytics instrumentation.
   5. ✅ Embed QA selectors, accessibility annotations, and cross-channel parity notes to guide React + Flutter implementations and automated regression coverage.
 
+## Task 14 — Insured Seller Compliance & Marketplace Moderation *(Status: ✅ Complete — 2025-10-18)*
+- **Delivery Owner:** Marketplace PM with Design Ops Lead, Compliance Analyst, and Provider Success partnership.
+- **Evidence:** `ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md` (Section 7.2.1, compliance modules), `Web_Application_Design_Update/Dashboard Designs.md`, drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `website_drawings.md`), updated change log entries, and programme trackers.
+- **Subtasks:**
+  1. ✅ Design provider badge manager card surfacing insured status, renewal countdown, policy document access, and storefront badge toggle with compliance/legal copy and telemetry events.
+  2. ✅ Document admin/provider compliance queue views and review modal flows covering document status filters, SLA countdown chips, approval/reject messaging, audit metadata, and accessibility patterns.
+  3. ✅ Define marketplace moderation drawer, suspended listing messaging, and feed badge treatments so React/Flutter cards communicate compliance holds and reinstatements; capture analytics + QA selectors.
+  4. ✅ Integrate knowledge-base entry points and contextual help (tooltips, quick links) guiding providers through document requirements, acceptable formats, and escalation channels.
+  5. ✅ Update telemetry + analytics briefs with insured seller metrics (approval rate, renewal lead time, suspension counts) and ensure dashboards align with backend compliance snapshot schema.
+

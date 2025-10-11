@@ -9,6 +9,8 @@ import zoneRoutes from './zoneRoutes.js';
 import bookingRoutes from './bookingRoutes.js';
 import inventoryRoutes from './inventoryRoutes.js';
 import rentalRoutes from './rentalRoutes.js';
+import complianceRoutes from './complianceRoutes.js';
+import marketplaceRoutes from './marketplaceRoutes.js';
 
 const router = Router();
 
@@ -22,5 +24,7 @@ router.use('/zones', zoneRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/rentals', rentalRoutes);
+router.use('/compliance', complianceRoutes);
+router.use('/marketplace', marketplaceRoutes);
 
 export default router;

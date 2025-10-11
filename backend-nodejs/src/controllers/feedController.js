@@ -11,7 +11,10 @@ export async function getLiveFeed(req, res, next) {
 
 export async function getMarketplaceFeed(req, res, next) {
   try {
-    const items = await listMarketplaceFeed();
+    const { limit } = req.query;
+    const items = await listMarketplaceFeed({
+      limit: limit ? Number.parseInt(limit, 10) : undefined
+    });
     res.json(items);
   } catch (error) {
     next(error);

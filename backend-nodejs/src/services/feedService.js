@@ -1,4 +1,5 @@
-import { Post, MarketplaceItem, User } from '../models/index.js';
+import { Post, User } from '../models/index.js';
+import { listApprovedMarketplaceItems } from './marketplaceService.js';
 
 export async function listLiveFeed() {
   const posts = await Post.findAll({
@@ -9,10 +10,32 @@ export async function listLiveFeed() {
   return posts;
 }
 
-export async function listMarketplaceFeed() {
-  const items = await MarketplaceItem.findAll({
-    order: [['createdAt', 'DESC']],
-    limit: 25
-  });
-  return items;
+export async function listMarketplaceFeed({ limit = 25 } = {}) {
+  const items = await listApprovedMarketplaceItems({ limit });
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    pricePerDay: item.pricePerDay,
+    purchasePrice: item.purchasePrice,
+    availability: item.availability,
+    location: item.location,
+    insuredOnly: item.insuredOnly,
+    compliance: {
+      status: item.complianceSnapshot?.status || item.status,
+      expiresAt: item.complianceHoldUntil,
+      badgeVisible: item.Company?.insuredSellerBadgeVisible ?? false,
+      complianceScore: item.Company ? Number(item.Company.complianceScore || 0) : null
+    },
+    company: item.Company
+      ? {
+          id: item.Company.id,
+          legalStructure: item.Company.legalStructure,
+          insuredSellerStatus: item.Company.insuredSellerStatus,
+          insuredSellerBadgeVisible: item.Company.insuredSellerBadgeVisible
+        }
+      : null,
+    lastReviewedAt: item.lastReviewedAt,
+    createdAt: item.createdAt
+  }));
 }

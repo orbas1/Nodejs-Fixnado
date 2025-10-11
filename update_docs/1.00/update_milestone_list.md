@@ -47,12 +47,13 @@
 - **Target Window:** Weeks 4–8
 - **Objective:** Launch marketplace, rentals, and monetisation backbones with compliance enforcement.
 - **Tasks:**
-  - **Task 3A — Inventory & Rental Enablement (72% complete)**
+  - **Task 3A — Inventory & Rental Enablement (88% complete)**
     1. Develop inventory ledger with transaction history, alerts, and reconciliation tooling.
     2. Implement rental lifecycle (request→return) with document capture and inspection evidence.
     3. Enforce insured seller eligibility and compliance document checks at publish time.
     4. QA rental flows via integration suites across backend, React, and Flutter clients.
     *2025-10-17 update:* `/api/inventory` and `/api/rentals` now operate together to deliver reservation locking, approvals, checkout, partial returns, inspections, settlement, and cancellation. Migration `20250217000000-create-inventory-and-rentals.js` provisions inventory/rental tables with deposit, insurance, and inspection metadata while Vitest suites (`tests/rentalRoutes.test.js`, `tests/inventoryRoutes.test.js`) exercise governance, dispute, and alert flows. Design artefacts (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Dashboard Designs.md`) and trackers refreshed so provider/admin consoles can surface rental agreements, inspection queues, and reconciliation tasks without ambiguity. Remaining scope focuses on insured seller eligibility, marketplace moderation, and cross-channel QA for rental UX parity.
+    *2025-10-18 update:* Insured seller enforcement is now live: compliance submissions, approvals, badge toggles, and suspensions persist through new models/migration (`ComplianceDocument`, `InsuredSellerApplication`, `MarketplaceModerationAction`, migration `20250218000000-compliance-and-marketplace-moderation.js`) with `/api/compliance` + `/api/marketplace` services and moderation queue filtering listings to approved, in-date sellers. Feed integration blocks expired/suspended sellers, Vitest suite `tests/complianceMarketplace.test.js` validates review + moderation workflows, and design specs (`Screens_Update.md`, `Dashboard Designs.md`, drawings) document badge manager + moderation UI for provider/admin consoles. Remaining scope before Milestone exit is campaign manager and monetisation telemetry (Task 3B).
   - **Task 3B — Monetisation & Fraud Controls (9% complete)**
     1. Build Fixnado/Finova campaign manager services (targeting, budgeting, pacing, billing).
     2. Integrate monetisation telemetry into analytics warehouse with governance tagging.
