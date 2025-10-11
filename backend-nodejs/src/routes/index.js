@@ -11,6 +11,7 @@ import inventoryRoutes from './inventoryRoutes.js';
 import rentalRoutes from './rentalRoutes.js';
 import complianceRoutes from './complianceRoutes.js';
 import marketplaceRoutes from './marketplaceRoutes.js';
+import campaignRoutes from './campaignRoutes.js';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/inventory', inventoryRoutes);
 router.use('/rentals', rentalRoutes);
 router.use('/compliance', complianceRoutes);
 router.use('/marketplace', marketplaceRoutes);
+router.use('/campaigns', campaignRoutes);
 
 export default router;

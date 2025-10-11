@@ -14,3 +14,4 @@
 ## 2025-10-19 — Campaign Routes
 - Registered `campaignRoutes.js` mounting `/api/campaigns` endpoints for campaign CRUD, flight management, pacing ingestion, invoice issuance, and status toggles with validation middleware + rate limiting inherited from shared router utilities.
 - Updated `routes/index.js` to expose the campaign router alongside inventory, rentals, compliance, and marketplace modules so monetisation APIs remain discoverable and versioned.
+- Expanded router with targeting replacement (`PUT /:campaignId/targeting`), fraud monitoring (`GET /:campaignId/fraud-signals`, `POST /fraud-signals/:signalId/resolve`), analytics ingestion (`POST /:campaignId/metrics`), and KPI summary (`GET /:campaignId/summary`) routes feeding admin/provider dashboards and finance playbooks.

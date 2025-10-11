@@ -20,3 +20,7 @@
 ## 2025-10-19 — Campaign Manager Controller
 - Added `campaignController.js` orchestrating campaign CRUD, flight creation/update, pacing metric ingestion, overspend pause/resume, invoice generation, and status transitions with deterministic validation + config-driven defaults surfaced in responses for admin/provider UI.
 - Controller normalises targeting validation errors into 422 payloads, surfaces pacing/invoice summaries for dashboards, and coordinates transactional writes so company-level budget checks and insured seller gating remain consistent across requests.
+
+## 2025-10-20 — Campaign Analytics & Fraud Controller Enhancements
+- Extended `campaignController.js` with targeting rule upsert handler, fraud signal listing/resolution endpoints, and KPI summary responses exposing aggregate impressions/clicks/conversions/ROI for dashboards.
+- Metrics ingestion now returns persisted CTR/CVR/anomaly scores, while fraud resolution API accepts remediation notes and returns resolved timestamps to power finance/compliance workflows.

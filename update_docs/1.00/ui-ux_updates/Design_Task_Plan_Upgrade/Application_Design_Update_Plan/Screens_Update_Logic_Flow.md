@@ -168,3 +168,37 @@
 2. Swipe left reveals quick actions `Pause` and `Invoices`. Pause sends POST `/api/campaigns/:id/actions/pause` with reason `provider_manual`. Confirmation bottom sheet summarises impact.
 3. Selecting `Invoices` opens condensed list; tapping invoice uses deep link to billing drawer anchored to invoice ID. Payment recording optional if user has finance scope; otherwise show info message.
 4. Push notifications triggered when overspend pause or invoice overdue; tapping notification routes to campaign detail anchored to relevant section.
+
+## 24. Analytics Export Outbox Refresh
+1. Campaign detail screen initialises export tiles by calling `/api/campaigns/:id/analytics-exports/summary` returning counts for `pending`, `sentLast24h`, `failed`, plus `nextRetryAt` timestamp.
+2. UI renders tile countdown using `nextRetryAt` and schedules auto-refresh via `setInterval` (every 60s) to keep timers accurate; telemetry `campaign.analytics.export.summary_view` fired with counts.
+3. When user selects `View payloads`, modal loads `/api/campaigns/:id/analytics-exports?status=${filter}` with pagination cursor. Response returns `items`, `nextCursor`, `retryAfterSeconds` for failure states.
+4. Failed row actions:
+   - `Retry now` triggers POST `/api/campaigns/:id/analytics-exports/{exportId}/retry`.
+   - On success, UI updates row status to `pending`, resets countdown chip, and logs telemetry `campaign.analytics.export.retry` including `latencyMs` derived from request time.
+   - On error (e.g., endpoint missing), display inline alert referencing support article KB-341 and log telemetry `campaign.analytics.export.retry_failed`.
+5. `Download JSON` button calls `/api/campaigns/:id/analytics-exports/{exportId}/payload` streaming signed URL; UI triggers file download and records `campaign.analytics.export.download` event with payload hash.
+6. When summary indicates `failed > 0`, top-level notification badge displays count and `aria-live="polite"` message (“3 analytics exports require attention”). Dismissing badge requires either successful retry or manual acknowledgement modal.
+
+## 25. Export Failure Notification Flow
+1. Background job `campaignAnalyticsJob` posts export to warehouse; if response not ok, service updates record status `failed` with `lastError`.
+2. Webhook triggers server-side event -> Notification service creates entry with type `export_failure`, severity `critical`, associated campaign/flight IDs, error details, and recommended action.
+3. Admin UI polls `/api/notifications?channel=ads&severity=critical` every 45s (configurable). When new notification arrives:
+   - Notification drawer surfaces card with error summary, `Retry export` CTA, and `View logs` link pointing to observability dashboard.
+   - Slack template `ads-export-failure` posts to `#fin-ads-ops` containing export ID, campaign, error message, and quick link to console.
+   - Email template dispatched to analytics distribution list with same payload plus runbook link.
+4. User selects `Retry export` from notification → opens export modal pre-filtered to failed ID and auto-focuses `Retry now` button. On success, notification automatically resolves (PATCH `/api/notifications/{id}` status `resolved`).
+5. If retries exceed configured threshold (3 attempts in 30 minutes), escalation rule triggers secondary Slack ping to `#fraud-response` and updates notification severity to `critical` with red badge.
+
+## 26. Fraud Signal Lifecycle & Escalation
+1. Fraud evaluation triggered during metrics ingestion emits signal stored via `/api/campaigns/:id/fraud-signals` (status `open`).
+2. Campaign detail fetch includes `openFraudSignals` count; UI loads anomaly rail via GET `/api/campaigns/:id/fraud-signals?includeResolved=false` sorted by severity/time.
+3. Selecting card opens panel showing detection context (metric date, baseline comparison, raw metrics) and recommended actions (Pause, Adjust budget, Investigate creative). Panel includes `Assign owner` dropdown (Finance Ops, Fraud Ops, Marketing) and due date field.
+4. Assigning owner triggers PATCH `/api/campaigns/fraud-signals/{id}` with `{ assigneeId, dueDate }`; UI updates card label and logs telemetry `campaign.fraud.assign`.
+5. Resolving signal opens form requiring `resolutionNote`, optional attachment (CSV). POST `/api/campaigns/fraud-signals/{id}/resolve` marks signal resolved; UI removes from open list, adds entry to timeline, and updates summary badge.
+6. Escalation path: If signal severity `critical` remains open > SLA (config `CAMPAIGN_FRAUD_ESCALATION_MINUTES`), scheduler posts Slack alert + email to Fraud Ops. UI displays escalation banner with CTA `Join bridge` linking to conference info from runbook. Escalation banner includes `aria-live="assertive"` announcement and ensures keyboard focus moves to CTA for accessibility.
+
+## 27. Mobile Notification Sync
+1. Provider mobile app subscribes to push topic `campaign-anomalies`. When backend sends export failure or critical fraud signal, push payload includes `campaignId`, `signalType`, and `ctaDeepLink`.
+2. Tapping notification opens mobile anomaly detail bottom sheet summarising status with actions `Acknowledge`, `Escalate`, `View on web`. `Acknowledge` logs telemetry `campaign.fraud.mobile_ack` and syncs with server via POST `/api/campaigns/fraud-signals/{id}/acknowledge`.
+3. If offline, app queues acknowledgement/resolution locally and retries when network restored. UI displays offline banner referencing support article for manual escalation.

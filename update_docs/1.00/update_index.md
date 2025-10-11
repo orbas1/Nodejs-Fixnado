@@ -198,6 +198,15 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — Extended snapshots endpoint with theme/staleness filters, aggregate stats, and filter validation.
 - [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Added diagnostics section covering includeStats usage, freshness overrides, and governance tips.
 - [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Introduced diagnostics QA scenario asserting stats payload integrity and filter echoing.
+
+## Newly Updated Artefacts (2025-10-20)
+- [`backend-nodejs/tests/campaignAnalyticsJob.test.js`](../backend-nodejs/tests/campaignAnalyticsJob.test.js) — New Vitest suite mocking warehouse responses to validate exporter retries, API key headers, and interval scheduling for the campaign analytics job.
+- [`update_docs/1.00/backend_updates/tests_changes.md`](backend_updates/tests_changes.md) — Logged analytics exporter job coverage, failure path assertions, and configuration guardrail testing.
+- [`update_docs/1.00/ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md) — Added analytics export tiles, fraud anomaly rail, notification drawer, and mobile parity specifications aligned to warehouse + fraud workflows.
+- [`update_docs/1.00/ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md) — Documented export outbox refresh, failure notification, fraud escalation, and mobile sync logic flows.
+- [`update_docs/1.00/ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md) — Expanded dashboard specs with export status tiles, queue modal, anomaly rail, KPI updates, and ops readiness checklist.
+- [`update_docs/1.00/update_task_list.md`](update_task_list.md) — Recorded follow-up entry noting analytics exporter job regression tests and design artefact expansions for fraud/finance ops.
+- [`update_docs/1.00/update_progress_tracker.md`](update_progress_tracker.md) — Updated Task 3 commentary to capture analytics exporter job coverage, design updates, and ops-facing documentation.
 - [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) — Captured new data quality instrumentation, rehearsal flow, and next-step actions for analytics governance.
 - [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Added telemetry diagnostics entry to design change log with guidance for analytics + ops teams.
 
