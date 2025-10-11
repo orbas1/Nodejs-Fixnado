@@ -143,3 +143,8 @@
 - **Runbook & QA Updates:** Refreshed `docs/telemetry/ui-preference-dashboard.md` with ingestion guidance, added QA scenarios for pagination/cursor chaining, and documented rehearsal checkpoints for analytics/ops teams ahead of the 12 Feb review.
 - **Governance & Tracking:** Updated change logs, trackers, and milestone records to reflect analytics distribution readiness and re-focused follow-up work on tenant segmentation and Chromatic/axe automation coverage.
 
+## 22. Telemetry Snapshot Diagnostics & Data Quality (Task DT9 Outcome)
+- **Enhanced Filtering:** Extended the snapshots endpoint to support leading theme and staleness bounds plus explicit validation, enabling analytics engineers to target stale windows and tenant-specific slices without bespoke SQL.
+- **Aggregate Statistics:** Added optional `includeStats` payload surfacing capture range, freshness distribution, tenant/theme coverage, and share aggregates so Looker ingestion monitors can flag anomalies during rehearsal.
+- **Operational Guidance:** Updated telemetry runbook and QA scenarios with diagnostics flows, threshold override usage, and rehearsal checkpoints, ensuring ops/design/data can evidence freshness compliance during the 12 Feb drill.
+

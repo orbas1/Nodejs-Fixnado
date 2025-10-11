@@ -140,6 +140,35 @@ function parseOptionalDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function parseOptionalInteger(value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function parseOptionalBoolean(value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  const normalized = String(value).toLowerCase();
+  if (['1', 'true', 'yes'].includes(normalized)) {
+    return true;
+  }
+  if (['0', 'false', 'no'].includes(normalized)) {
+    return false;
+  }
+
+  return null;
+}
+
 export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -153,7 +182,12 @@ export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
       capturedAfter,
       capturedBefore,
       limit,
-      cursor: rawCursor
+      cursor: rawCursor,
+      leadingTheme,
+      staleMinutesGte,
+      staleMinutesLte,
+      includeStats,
+      freshnessWindowMinutes
     } = req.query;
 
     let cursor;
@@ -175,16 +209,60 @@ export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
       }
     }
 
+    const includeStatsProvided = includeStats !== undefined;
+    const parsedIncludeStats = includeStatsProvided ? parseOptionalBoolean(includeStats) : false;
+    const parsedFreshnessWindow = parseOptionalInteger(freshnessWindowMinutes);
+
+    if (includeStatsProvided && parsedIncludeStats === null) {
+      return res.status(422).json({
+        errors: [
+          {
+            type: 'field',
+            value: includeStats,
+            msg: 'includeStats must be a boolean value',
+            path: 'includeStats',
+            location: 'query'
+          }
+        ]
+      });
+    }
+
+    const sanitizedLeadingTheme =
+      typeof leadingTheme === 'string' && leadingTheme.trim().length > 0 ? leadingTheme.trim() : undefined;
+
     const options = {
       rangeKey,
       tenantId,
       capturedAfter: parseOptionalDate(capturedAfter),
       capturedBefore: parseOptionalDate(capturedBefore),
       cursor,
-      limit: limit ? Number(limit) : undefined
+      limit: limit ? Number(limit) : undefined,
+      leadingTheme: sanitizedLeadingTheme,
+      staleMinutesGte: parseOptionalInteger(staleMinutesGte),
+      staleMinutesLte: parseOptionalInteger(staleMinutesLte),
+      includeStats: Boolean(parsedIncludeStats),
+      freshnessWindowMinutes: parsedFreshnessWindow
     };
 
-    const { items, nextCursor, limit: appliedLimit } = await listUiPreferenceTelemetrySnapshots(options);
+    if (
+      options.staleMinutesGte !== null &&
+      options.staleMinutesLte !== null &&
+      options.staleMinutesGte > options.staleMinutesLte
+    ) {
+      return res.status(422).json({
+        errors: [
+          {
+            type: 'field',
+            value: staleMinutesGte,
+            msg: 'staleMinutesGte cannot be greater than staleMinutesLte',
+            path: 'staleMinutesGte',
+            location: 'query'
+          }
+        ]
+      });
+    }
+
+    const { items, nextCursor, limit: appliedLimit, stats } = await listUiPreferenceTelemetrySnapshots(options);
 
     res.json({
       snapshots: items,
@@ -192,7 +270,19 @@ export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
         limit: appliedLimit,
         nextCursor: nextCursor ? encodeCursor(nextCursor) : null,
         hasMore: Boolean(nextCursor)
-      }
+      },
+      appliedFilters: {
+        rangeKey: rangeKey || null,
+        tenantId: tenantId || null,
+        capturedAfter: capturedAfter || null,
+        capturedBefore: capturedBefore || null,
+        leadingTheme: sanitizedLeadingTheme || null,
+        staleMinutesGte: options.staleMinutesGte,
+        staleMinutesLte: options.staleMinutesLte,
+        includeStats: options.includeStats,
+        freshnessWindowMinutes: options.freshnessWindowMinutes
+      },
+      stats: stats || undefined
     });
   } catch (error) {
     next(error);

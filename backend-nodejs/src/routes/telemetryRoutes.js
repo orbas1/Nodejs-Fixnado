@@ -45,7 +45,12 @@ router.get(
     query('capturedAfter').optional().isISO8601(),
     query('capturedBefore').optional().isISO8601(),
     query('limit').optional().isInt({ min: 1, max: 1000 }),
-    query('cursor').optional().isString().isLength({ min: 8, max: 256 })
+    query('cursor').optional().isString().isLength({ min: 8, max: 256 }),
+    query('leadingTheme').optional().isString().isLength({ min: 2, max: 32 }),
+    query('staleMinutesGte').optional().isInt({ min: 0, max: 10080 }),
+    query('staleMinutesLte').optional().isInt({ min: 0, max: 10080 }),
+    query('includeStats').optional().isBoolean().toBoolean(),
+    query('freshnessWindowMinutes').optional().isInt({ min: 1, max: 10080 })
   ],
   getUiPreferenceTelemetrySnapshots
 );

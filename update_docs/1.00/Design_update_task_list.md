@@ -80,3 +80,11 @@
   4. ✅ Update design/change logs, plans, and progress trackers to reflect analytics distribution readiness and focus next steps on tenant segmentation + Chromatic baseline automation.
   5. ✅ Align ops/analytics rehearsal notes with Slack alert flow to ensure telemetry alerts and Looker feeds are rehearsed in tandem.
 
+## Task 9 — Telemetry Snapshot Diagnostics & Data Quality *(Status: ✅ Complete — 2025-02-06)*
+- **Delivery Owner:** Design Systems Engineer partnered with Data Engineering and Analytics Operations.
+- **Evidence:** Diagnostics-enhanced API (`backend-nodejs/src/controllers/telemetryController.js`, `services/telemetryService.js`, `routes/telemetryRoutes.js`), telemetry runbook diagnostics section (`docs/telemetry/ui-preference-dashboard.md`), QA scenario coverage (`docs/design/handoff/ui-qa-scenarios.csv`), and updated trackers/change logs dated 6 Feb.
+- **Subtasks:**
+  1. ✅ Extend snapshots endpoint with leading theme and stale-minute filters plus validation so BI tooling can slice governed data without ad-hoc SQL.
+  2. ✅ Add optional aggregate statistics payload (freshness split, tenant/theme distribution, share min/avg/max) to support rehearsal analytics and alert calibration.
+  3. ✅ Refresh runbook, QA scenarios, and trackers with diagnostics workflow guidance, filter documentation, and rehearsal expectations for the 12 Feb analytics drill.
+

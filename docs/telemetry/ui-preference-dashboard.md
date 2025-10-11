@@ -43,10 +43,24 @@ The UI preference telemetry service captures every theme, density, contrast, and
   - `capturedAfter` / `capturedBefore`: ISO8601 timestamps to constrain the capture window.
   - `limit`: page size (default 200, max 1000).
   - `cursor`: base64url encoded token returned in `pagination.nextCursor` to fetch the next page without duplication.
+  - `leadingTheme`: optional dominant theme filter (`standard`, `dark`, `emo`, or `unspecified`).
+  - `staleMinutesGte` / `staleMinutesLte`: numeric bounds to focus on stale or healthy windows (minutes).
+  - `includeStats`: boolean flag (`true|false`) instructing the API to return aggregate metrics for the current filter set.
+  - `freshnessWindowMinutes`: optional override for the freshness threshold used in aggregate statistics (default 120 minutes).
 - **Response:**
   - `snapshots`: ordered array (oldest → newest) containing metadata (`capturedAt`, `rangeStart`, `rangeEnd`, `events`, `emoShare`, `leadingTheme`, `staleMinutes`, `payload`).
   - `pagination`: `limit`, `hasMore`, and `nextCursor` (supply on subsequent requests).
+  - `appliedFilters`: echo of resolved filters (useful for logging and data pipeline telemetry).
+  - `stats` *(when `includeStats=true`)*: totals, capture range, freshness split, and tenant/theme distribution to drive ingestion monitoring.
 - **Usage Tips:** Start ingestion with `capturedAfter` equal to the last successfully processed `capturedAt` to support idempotent pipelines. Store the cursor between runs to handle duplicates gracefully.
+
+#### Data Quality Diagnostics
+- Enable `includeStats=true` on periodic governance checks to retrieve:
+  - `stats.freshness`: counts of snapshots above/below the configured freshness window.
+  - `stats.tenants` / `stats.rangeKeys` / `stats.leadingThemes`: distribution arrays keyed by tenant, range key, and dominant theme for coverage validation.
+  - `stats.emoShare` and `stats.staleMinutes`: min/avg/max aggregates to identify drift without reading the entire table.
+- Adjust `freshnessWindowMinutes` when rehearsing alternate SLAs (e.g. 60-minute war room, 180-minute weekend mode) to mirror upcoming alert policies.
+- Combine `staleMinutesGte`/`staleMinutesLte` filters with cursor pagination to export only snapshots breaching thresholds for ad-hoc investigations.
 
 ## Dashboard Guidance
 - **Looker Explore:** Create a derived table that consumes `/api/telemetry/ui-preferences/snapshots` every 15 minutes. Persist `capturedAt`, `rangeKey`, `events`, `emoShare`, and the raw JSON payload to enable historical comparisons and avoid hammering live APIs.

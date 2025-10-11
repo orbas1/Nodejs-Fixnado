@@ -45,3 +45,8 @@
 - Shipped `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination, range filters, and governed payload formatting so analytics tooling can ingest telemetry summaries without direct database access.
 - Refreshed telemetry runbook (`docs/telemetry/ui-preference-dashboard.md`) and QA scenarios (`docs/design/handoff/ui-qa-scenarios.csv`) with ingestion guidance, cursor rehearsal, and scheduling notes ahead of the 12 Feb analytics review.
 - Updated programme trackers, design plan, and change logs to mark analytics distribution readiness and shift focus toward Chromatic/axe automation plus tenant segmentation follow-up.
+
+## 2025-02-06 — Telemetry Snapshot Data Quality Diagnostics
+- Enhanced `/api/telemetry/ui-preferences/snapshots` with governed filtering (`leadingTheme`, stale minute bounds) and optional aggregate statistics so data engineering can interrogate coverage and freshness without ad-hoc SQL.
+- Added stats payload (`tenants`, `rangeKeys`, `leadingThemes`, `freshness`, and share aggregates) alongside applied filter echoing to improve Looker pipeline observability and audit logging.
+- Updated telemetry runbook and QA scenarios to document the diagnostics workflow, ensuring analytics and ops rehearsals validate stats responses and threshold overrides prior to the 12 Feb rehearsal.

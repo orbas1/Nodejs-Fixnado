@@ -121,3 +121,16 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added QA scenario covering snapshot pagination and cursor chaining.
 - [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) & [`ui-ux_updates/telemetry_alerting_enablement.md`](ui-ux_updates/telemetry_alerting_enablement.md) — Updated next steps and analytics notes to reflect snapshot API availability and rehearsal coverage.
 - [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged telemetry snapshot distribution enablement entry with references to new API and documentation.
+
+## Newly Updated Artefacts (2025-02-06)
+- [`change_log.md`](change_log.md) — Logged telemetry snapshot diagnostics enhancements covering new filters, stats payload, and rehearsal updates.
+- [`Design_Plan.md`](Design_Plan.md) — Added Task DT9 outcome capturing analytics diagnostics remit and rehearsal expectations.
+- [`Design_Change_log.md`](Design_Change_log.md) — Documented telemetry diagnostics uplift with references to API filters, stats output, and ops workflow updates.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Created Task DT9 for telemetry data quality diagnostics and marked it complete with evidence.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) & [`update_progress_tracker.md`](update_progress_tracker.md) — Elevated analytics governance metrics reflecting new stats instrumentation and rehearsal coverage.
+- [`update_task_list.md`](update_task_list.md) — Recorded DT9 completion referencing backend API diagnostics update and documentation refresh.
+- [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — Extended snapshots endpoint with theme/staleness filters, aggregate stats, and filter validation.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Added diagnostics section covering includeStats usage, freshness overrides, and governance tips.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Introduced diagnostics QA scenario asserting stats payload integrity and filter echoing.
+- [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) — Captured new data quality instrumentation, rehearsal flow, and next-step actions for analytics governance.
+- [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Added telemetry diagnostics entry to design change log with guidance for analytics + ops teams.
