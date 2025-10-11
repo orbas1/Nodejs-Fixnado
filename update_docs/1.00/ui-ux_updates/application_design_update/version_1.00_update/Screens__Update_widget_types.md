@@ -53,3 +53,26 @@
 - Minimum touch target 48×48dp across all interactive widgets.
 - VoiceOver hints provided for icon-only buttons; e.g., location pill labelled "Change service location".
 - All animated widgets respect `MediaQuery.of(context).disableAnimations` flag.
+
+## Data Visualisation Widgets
+- **Progress Donut**: 88dp diameter, stroke 10dp, uses gradient `#1BBF92 → #0EA5E9`. Center numeric label `IBM Plex Mono 20/24`, caption `Inter 12/16` below. Supports partial arcs with animation 400ms easeOut.
+- **Sparkline**: 112×32dp overlay in metric cards. Stroke 2dp, uses accent colour by context (`#0066F5` bookings, `#1BBF92` earnings). Shaded area 20% opacity.
+- **Bar Indicator**: Horizontal bar 320×12dp for compliance progress. Active segment uses gradient; inactive grey `#E5E7EB`.
+
+## Banners & Informational Widgets
+- **Hero Banner**: 360×200dp, background image with dark overlay `rgba(12,18,32,0.64)`, title `Manrope 22/30` white, CTA pill 140×40dp bottom-right.
+- **Inline Info Banner**: 328×80dp, left icon 32dp, body text `Inter 14/20`, optional action button 96×36dp ghost style. Colours align with semantic tokens (warning, danger, info `#2563EB`).
+- **Coach Mark Tooltip**: 240×120dp card with arrow 16×24dp, drop shadow level 2. Contains title `Manrope 16/24`, body `Inter 14/20`, actions row (Primary + Ghost).
+
+## Navigation Enhancements
+- **Top Tab Bar**: Scrollable variant height 48dp, indicator pill radius 16dp thickness 3dp. Active text `Manrope 14/20` medium, inactive `rgba(17,24,39,0.56)`.
+- **Stepper**: Vertical stepper for compliance tasks — nodes 24dp circles connected by 4dp line. Active node gradient fill, completed node `#1BBF92`, upcoming node `#CBD5F5`.
+
+## Media Controls
+- **Audio Player Mini**: 328×88dp card with thumbnail 56dp, title `Manrope 16/24`, progress bar 240×4dp. Play button 48dp circular gradient.
+- **Video Preview Tile**: 328×196dp 16:9 ratio, overlay play icon 48dp. On tap opens full-screen player with controls aligned per platform guidelines.
+
+## Forms Enhancements
+- **Inline Tag Input**: Wrap container 328×auto with chips height 32dp, add icon 24dp leading. Each tag chip radius 16dp, background `#EEF3FF`.
+- **OTP Input**: 6 cells 48×56dp, border radius 12dp, focus border `#1C62F0` 2dp. Auto-advances on input.
+- **Address Autocomplete List**: Modal sheet 360×320dp with list tiles 64dp height, location icon 24dp, highlighted substring bold.

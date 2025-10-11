@@ -50,3 +50,14 @@
 48. Document Upload Flow
 49. Earnings Detail
 50. Marketplace Analytics (provider)
+51. Account Recovery Modal
+52. Payment Method Sheet
+53. Offline State Overlay
+54. Tutorial Coach Marks
+55. Error Dialog (global)
+
+## Screen Groupings
+- **Core Funnel**: 1–24
+- **Account & Settings**: 25–38, 51
+- **System & Overlays**: 39–55
+- **Provider-Specific**: 43–50

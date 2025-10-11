@@ -37,6 +37,21 @@
 - Background image with overlay gradient. Title `Manrope 18/26` white, price `Inter 16/24` white.
 - CTA pill 120×36dp bottom-right.
 
+### Compliance Task Card
+- Width 328dp, height 144dp.
+- Layout: icon circle 40dp left, content column with title `Manrope 16/24`, due date `Inter 14/20`, description `Inter 13/18`.
+- Progress bar 320×6dp bottom, status pill top-right.
+- Upload button ghost style 120×40dp aligned right within content row.
+
+### Chat Attachment Card
+- 240×120dp inline bubble for documents. Contains file icon 32dp, filename `Inter 14/20`, size `Inter 12/16`.
+- Background `#EEF3FF`, radius 18dp. Tapping opens preview.
+
+### Error Recovery Card
+- 328×140dp with illustration 80×80dp left, text right.
+- Used on failure screens to provide troubleshooting steps (ordered list `Inter 14/20`).
+- Primary button 144×48dp bottom-right.
+
 ## States
 - Hover (dev preview) lighten background 4%.
 - Pressed reduces elevation by 4dp and scales 0.98.
@@ -50,3 +65,5 @@
 - Use `FixnadoCardTheme` to apply consistent shadows, radius, padding.
 - For hero images, use `ClipRRect` radius 16dp.
 - Provide `isLoading` state showing skeleton placeholders (image block, text bars) with shimmer defined earlier.
+- Ensure cards expose `analyticsId` property for instrumentation. Default pattern: `{screen}_{cardType}_{index}`.
+- Use `AnimatedSwitcher` for state transitions (e.g., compliance card from pending → submitted) to provide smooth updates.

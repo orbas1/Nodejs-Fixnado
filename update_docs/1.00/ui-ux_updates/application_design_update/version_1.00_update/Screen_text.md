@@ -33,6 +33,37 @@
 | `phone_compliance_progress_title` | "Stay compliant" | |
 | `phone_compliance_pending_badge` | "Pending" | |
 | `phone_offline_banner` | "Offline mode. Some actions are unavailable." | |
+| `phone_profile_loyalty_title` | "Loyalty tier" | Metric card label |
+| `phone_profile_complete_prompt` | "Finish your business profile to unlock analytics." | Banner text |
+| `phone_payment_add_method` | "Add payment method" | Button label |
+| `phone_payment_default_badge` | "Default" | Badge text |
+| `phone_settings_language` | "Language" | Settings tile label |
+| `phone_settings_theme_auto` | "Match system" | Option label |
+| `phone_settings_mfa_title` | "Two-factor authentication" | Toggle label |
+| `phone_settings_mfa_description` | "Add a second step to secure your account." | Subtitle |
+| `phone_compliance_upload_cta` | "Upload document" | Button |
+| `phone_compliance_due_by` | "Due {date}" | Placeholder uses locale formatting |
+| `phone_compliance_verified_badge` | "Verified" | |
+| `phone_marketplace_empty_title` | "No offers yet" | Empty state |
+| `phone_marketplace_empty_body` | "Check back soon or adjust your filters." | |
+| `phone_messages_quick_reply_label` | "Suggested replies" | Section title |
+| `phone_notifications_clear_all` | "Clear all" | Button |
+| `phone_notifications_empty` | "You're all caught up" | Empty state |
+| `phone_provider_dashboard_start_job` | "Start job" | Quick action |
+| `phone_provider_dashboard_log_availability` | "Log availability" | Quick action |
+| `phone_provider_dashboard_launch_campaign` | "Launch campaign" | Quick action |
+| `phone_provider_dashboard_section_jobs` | "Job pipeline" | Section heading |
+| `phone_provider_dashboard_section_metrics` | "Performance insights" | Section heading |
+| `phone_provider_dashboard_compliance_card_title` | "Compliance tracker" | Card heading |
+| `phone_provider_dashboard_compliance_body` | "{pendingCount} items need attention" | Body |
+| `phone_error_dialog_title` | "Something went wrong" | Dialog title |
+| `phone_error_dialog_body` | "We couldn't complete that action. Try again or contact support." | Dialog body |
+| `phone_error_contact_support` | "Contact support" | Ghost button |
+| `phone_success_toast_booking` | "Booking confirmed" | Toast |
+| `phone_success_toast_saved` | "Saved for later" | Toast |
+| `phone_offline_retry` | "Retry" | Button |
+| `phone_tutorial_next` | "Next" | Coach mark button |
+| `phone_tutorial_skip` | "Skip tour" | Coach mark button |
 
 ## Microcopy Rules
 - **Buttons**: 1-2 words, start with verb. Avoid punctuation.

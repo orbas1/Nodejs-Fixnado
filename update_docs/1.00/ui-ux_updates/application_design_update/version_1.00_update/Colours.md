@@ -55,7 +55,11 @@
 - Define tokens in Flutter using `ColorScheme` extension `FixnadoColors`. Provide JSON export for dev pipeline: `design-tokens/mobile/v1.00/colors.json`.
 - Enforce use through lint rule: no raw hex outside theme files.
 - Provide utilities for gradient backgrounds ensuring border radius coverage.
+- Document palette in Figma token plugin; maintain `color-usage` variants per component state (default/hover/pressed/disabled/focus) to allow automation.
+- Provide CSS variable mapping for web parity: e.g., `--fixnado-color-primary-500` to align cross-platform design system.
 
 ## Accessibility
 - Validate contrast ratios using `accessibility_inspector`. Primary on white = 7.02:1, body text on neutral-050 = 9.65:1.
 - Provide alternative patterns (dashed outlines) for colour-blind critical states (restricted zones) in map legend.
+- Use colour blind safe palette testing (Sim Daltonism) verifying red/green differentiation for compliance statuses; adjust saturation as needed.
+- Document allowed gradients for overlays to avoid flicker when animating (limit to 2 colour stops per gradient for performance).

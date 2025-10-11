@@ -29,3 +29,32 @@ Provide QA and development teams with consistent seed data enabling offline prot
 ## Refresh Cadence
 - Update dummy data monthly or when backend schema changes.
 - Maintain script `scripts/mock-data/generate_phone_v1.py` to rehydrate.
+- Include unit tests ensuring fixture schema matches API contracts using JSON Schema validation (`schemas/mobile/v1`).
+- Store checksum file `checksums.txt` with SHA256 per asset to detect drift in CI.
+
+## Sample Records
+- **Provider JSON Example**
+```json
+{
+  "id": "prov_1001",
+  "name": "Fixnado Cooling Pros",
+  "zones": ["zone_core_01", "zone_expansion_02"],
+  "services": ["svc_hvac_install", "svc_maintenance"],
+  "rating": 4.87,
+  "reviewsCount": 328,
+  "badges": ["verified", "top_rated"],
+  "pricingTier": "enterprise",
+  "responseTime": "00:15:00",
+  "availability": {
+    "mon": ["08:00-18:00"],
+    "tue": ["08:00-18:00"],
+    "sat": ["09:00-14:00"]
+  }
+}
+```
+- **Compliance Document Example**: includes `statusHistory` array with timestamps to simulate timeline UI.
+- **Messaging Conversation Example**: include attachments `[{"type": "image", "url": "https://cdn.fixnado.com/mock/attachments/inspection.jpg"}]`.
+
+## QA Usage
+- Link dummy data to automated golden tests generating screen states for baseline comparisons.
+- Provide `fixtures_state_map.md` mapping fixture combos to target screens (e.g., `booking_pending.json` → Booking Detail). Ensure testers know which dataset to load.

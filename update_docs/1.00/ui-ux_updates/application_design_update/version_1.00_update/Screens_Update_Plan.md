@@ -54,3 +54,35 @@ Delivery is broken into five sprints (1 week each) with cross-functional checkpo
 - 95% of components reused across screens (tracked by `FixnadoComponentUsage` analytics event).
 - <5 visual QA issues per sprint post-handoff.
 - NPS improvement target +6 for onboarding and booking flows after release.
+
+## Capacity & Ownership Matrix
+| Workstream | Design Owner | Engineering Lead | QA Lead | Notes |
+| --- | --- | --- | --- | --- |
+| Authentication & Onboarding | Lead UX (Amelia P.) | Mobile Squad A | QA Mobile 1 | Includes localisation + accessibility audit |
+| Explore & Map | Principal Product Designer (Leo K.) | Mobile Squad B | QA Geo | Requires GIS coordination for tiles |
+| Booking & Payments | Design Ops (Ravi S.) | Mobile Squad C | QA Payments | Stripe integration + compliance sign-off |
+| Marketplace & Promotions | Growth Designer (Nia L.) | Mobile Squad D | QA Marketplace | Asset localisation & copy approvals |
+| Messaging & Support | Communication Designer (Evan T.) | Mobile Squad A | QA Comms | Integrate AI-assist toggles |
+| Profile, Settings, Compliance | Systems Designer (Mara G.) | Mobile Squad B | QA Compliance | Document vault security review |
+
+## Handoff Rituals
+- **Sprint Kickoff Workshops**: 60-minute session each Monday reviewing annotated wireframes, interaction prototypes, and outstanding decisions. Output logged in Confluence `Fixnado > Mobile v1.00`.
+- **Mid-sprint Reviews**: Async Loom walkthrough (<10 min) per cluster summarising deviations, asset updates, and blockers.
+- **Design QA Checklist**: Shared Notion template ensures verification of spacing, tokens, content, motion, accessibility, analytics instrumentation before marking "Ready for Dev".
+- **Asset Drop**: Assets zipped per cluster (`/handoff/mobile/v1.00/{cluster}/assets.zip`) with manifest file referencing `Screens_update_images_and_vectors.md` rows.
+
+## Dependencies & Tooling
+- Figma libraries `Fixnado System / Mobile v1.00` locked week prior to implementation to avoid drift; updates go through change control board.
+- Zeplin export maintained for stakeholders requiring measurement overlays; ensure tokens match Figma naming.
+- Use Storybook for Flutter (`dashbook`) to validate component variations before integrating into screens.
+- Token pipeline uses Style Dictionary; publish to `design-tokens/mobile/v1.00/*.json` nightly.
+
+## Rollout & Feature Flagging Strategy
+- Implement major clusters behind remote config flags: `feature.explore_v1`, `feature.booking_wizard_v1`, `feature.marketplace_v1`.
+- Launch plan: Canary (5% users) week 1 post-dev, Beta (20%) week 2, GA week 4 after stability metrics met.
+- Telemetry thresholds: crash-free sessions ≥99.3%, booking success rate +8% vs baseline, map screen average load time <2.8s.
+
+## Post-Launch Monitoring
+- Create Datadog dashboards tracking UI-specific metrics (frame render time, widget rebuild counts) leveraging Flutter integration.
+- Run Hotjar-style session replay (via UXCam) for pilot cohort to validate interaction assumptions (map toggles, booking stepper drop-offs).
+- Schedule design debt review after GA to capture backlog of enhancements identified during implementation.

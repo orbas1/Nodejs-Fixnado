@@ -40,3 +40,17 @@
 - Sensitive inputs (password, payment) mask characters; provide toggle.
 - Use `TextContentType.oneTimeCode` for OTP field (6 boxes 48×56dp each).
 - Avoid storing sensitive data in logs.
+- Provide inline encryption indicator (lock icon 16dp) for payment forms; tooltip explains data protection.
+- Auto-save progress for multi-step forms (booking, registration) every 5s using local storage; show "Draft saved" toast.
+- For document uploads, display compliance notice text `Inter 12/16` referencing privacy policy link.
+
+## Error Copy Library
+- Email invalid: "Enter a valid email address like name@example.com".
+- Password mismatch: "Passwords don't match. Re-enter to confirm.".
+- File too large: "Upload files up to 10 MB. Compress and try again.".
+- Required field empty: "This field can't be blank.".
+
+## Focus & Keyboard Management
+- Automatically scroll field into view when focused using `Scrollable.ensureVisible`.
+- For long forms, provide `FormProgressIndicator` at top showing sections completed.
+- Date/time pickers close keyboard before opening modal to avoid layout jump.

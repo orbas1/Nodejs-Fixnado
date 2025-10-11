@@ -53,6 +53,23 @@
 - Text `#F9FAFB` for headings, `#CBD5F5` for body.
 - Use same accent tokens for warnings but adjust opacity to 40% for backgrounds.
 
+## Colour Pairings & Usage Notes
+- **Primary Button**: Gradient overlay plus highlight stroke `rgba(255,255,255,0.16)` top to accentuate depth.
+- **Map Controls**: Use neutral-000 background with shadow level 3, icons tinted `#1F2937` for contrast on gradient map.
+- **Compliance Alerts**: Combine gradient backgrounds with icon circle `#FFFFFF` 40dp to maintain readability.
+- **Analytics Charts**: Assign palette — Bookings `#1C62F0`, Earnings `#1BBF92`, Cancellations `#E74C3C`, Response Time `#F59E0B`.
+- **Profile Tier Badges**: Basic `#CBD5F5`, Pro gradient `#60A5FA → #2563EB`, Enterprise gradient `#8B5CF6 → #1C62F0` with inner glow `rgba(255,255,255,0.24)`.
+
+## Transparency Guidelines
+- Overlay surfaces use increments of 8% opacity to ensure consistent stacking: 8%, 16%, 24%, 32%, 40%.
+- For map polygons ensure combined fill + heatmap does not exceed 45% opacity to keep base tiles legible.
+- Modal scrims `rgba(15,23,42,0.48)` to maintain readability while emphasising focus.
+
+## Testing Requirements
+- Run automated contrast checks via Stark plugin across light/dark variants (document results in QA sheet).
+- Validate colour rendering on reference devices (Pixel 5, iPhone 12, Galaxy A52) to account for OLED vs LCD differences.
+- Provide design tokens in `.ase` (Adobe Swatch Exchange) for marketing alignment.
+
 ## Accessibility Compliance
 - All primary text on gradients uses overlay layer `rgba(0,0,0,0.24)` to maintain contrast.
 - Buttons ensure contrast >7:1 on primary background.
