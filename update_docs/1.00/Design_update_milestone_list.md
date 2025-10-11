@@ -19,4 +19,6 @@
 - Each milestone triggers documentation updates in the shared repository and a recorded walkthrough for downstream teams.
 - Regression automation (React telemetry harness + Flutter live feed widgets) now feeds Milestones M4–M8 evidence requirements so design sign-off remains verifiable in CI.
 - Issue intake automation feeds SLA dashboards so design council can triage cross-disciplinary defects during milestone reviews without relying on ad-hoc spreadsheets.
+- Mobilisation governance pack maps design accountability across all milestones, ensuring accessibility/localisation audits, Chromatic/Stark capture, and blueprint refreshes are reviewed during weekly control boards alongside engineering dependencies.
+- Feature toggle governance (Secrets Manager manifests + parity audit) underpins Milestones M4–M10 so rollout pilots stay aligned with drawings and forthcoming admin toggle UI.
 

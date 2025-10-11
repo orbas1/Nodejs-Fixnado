@@ -1,0 +1,47 @@
+{
+  "geo-zones": {
+    "state": "enabled",
+    "rollout": 1,
+    "owner": "geo-zone-squad",
+    "description": "Expose polygon overlays, zone analytics, and provider coverage insights across staging maps.",
+    "ticket": "FIX-2011",
+    "lastModifiedAt": "2025-02-10T08:00:00Z",
+    "lastModifiedBy": "env-bootstrap"
+  },
+  "booking-orchestrator": {
+    "state": "enabled",
+    "rollout": 1,
+    "owner": "bookings-core",
+    "description": "Enable multi-serviceman assignments, SLA timers, and dispute hooks for integration testing.",
+    "ticket": "FIX-2042",
+    "lastModifiedAt": "2025-02-10T09:15:00Z",
+    "lastModifiedBy": "env-bootstrap"
+  },
+  "rental-marketplace": {
+    "state": "pilot",
+    "rollout": 0.4,
+    "owner": "marketplace",
+    "description": "Gate staged rental listings, deposit handling, and inventory ledger reconciliation flows.",
+    "ticket": "FIX-2080",
+    "lastModifiedAt": "2025-02-11T07:45:00Z",
+    "lastModifiedBy": "marketplace-lead"
+  },
+  "communications-suite": {
+    "state": "pilot",
+    "rollout": 0.65,
+    "owner": "communications",
+    "description": "Allow AI assisted chat and Agora video inside controlled pilot cohorts for QA rehearsals.",
+    "ticket": "FIX-2059",
+    "lastModifiedAt": "2025-02-11T06:20:00Z",
+    "lastModifiedBy": "comm-ops"
+  },
+  "analytics-dashboards": {
+    "state": "enabled",
+    "rollout": 1,
+    "owner": "data-ops",
+    "description": "Serve telemetry console, diagnostics, and persona dashboards with governed export flows.",
+    "ticket": "FIX-2098",
+    "lastModifiedAt": "2025-02-10T10:30:00Z",
+    "lastModifiedBy": "data-ops"
+  }
+}

@@ -19,3 +19,10 @@
 - `src/models/zoneAnalyticsSnapshot.js`
 - `tests/zoneRoutes.test.js`
 - `tests/bookingRoutes.test.js`
+
+## 2025-10-13 — Added Files
+- `src/services/featureToggleService.js`
+- `src/controllers/featureToggleController.js`
+- `src/database/migrations/20250215000000-feature-toggle-audit.js`
+- `scripts/bootstrap-postgis.mjs`
+- `tests/featureToggleService.test.js`

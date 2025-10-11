@@ -70,3 +70,13 @@
 - Formalised Task 1.4 issue intake workflow by introducing `scripts/issue-intake.mjs`, which validates structured payloads inside `issue_report.md` and regenerates `issue_list.md` and `fix_suggestions.md` with severity-driven SLA deadlines and ownership metadata.
 - Seeded the tracker with four production-blocking defects sourced from pre-update backend and frontend evaluations, capturing reproduction steps, remediation plans, and acceptance criteria for escrow funding, authentication hardening, transactional onboarding, and React auth wiring gaps.
 - Updated programme artefacts (progress tracker, task list, design plan/change log, QA test plan) to embed the triage cadence so squads, design ops, and compliance share a single escalation workflow with auditable due dates.
+
+## 2025-10-12 — Mobilisation Governance Pack & Dependency Controls
+- Completed Task 1.1 by publishing `task1_mobilisation_raci_roadmap.md`, establishing a master RACI covering every Version 1.00 pillar, a mobilisation-to-hypercare roadmap, and a dependency/compliance matrix referencing drawings and telemetry artefacts.
+- Updated `update_task_list.md`, `update_progress_tracker.md`, and `update_milestone_list.md` to reflect improved mobilisation maturity, adding dependency risk scoring actions ahead of Milestone M1 exit.
+- Refreshed design governance artefacts so Design Ops, analytics, and QA leads can trace accountability from drawings (`dashboard_drawings.md`, `app_screens_drawings.md`) to automated issue intake outputs and mobilisation cadences.
+
+## 2025-10-13 — Shared Infrastructure Uplift & Feature Toggle Governance
+- Replatformed the shared database tier to Amazon RDS PostgreSQL with PostGIS extensions, IAM auth, and SSL enforcement. Terraform now provisions the parameter group, subnet group, and secrets; application bootstrap and `scripts/bootstrap-postgis.mjs` verify PostGIS/UUID extensions during deploys.
+- Seeded environment-specific feature toggle manifests in Secrets Manager with audit-ready metadata (`infrastructure/terraform/runtime-config/feature_toggles/*.json`) and exposed secured admin APIs (`/api/admin/feature-toggles`) to view and update rollout states with validation, caching, and audit logging.
+- Published an environment parity audit (`scripts/environment-parity.mjs`) comparing tfvars keys and feature toggle drift across staging/production so CI can fail fast on configuration mismatches.

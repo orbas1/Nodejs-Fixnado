@@ -6,8 +6,8 @@ This module provisions the core AWS infrastructure required to host the Fixnado 
 - Regional VPC with segregated public, private, and database subnets across three availability zones.
 - Application Load Balancer secured by ACM TLS certificates with WAF-ready security groups.
 - ECS Fargate cluster and service running the Node.js backend with CloudWatch logging and target tracking autoscaling.
-- Amazon RDS MySQL instance with multi-AZ, KMS encryption, log exports, and automated backups.
-- Secrets Manager secrets for runtime configuration and database credentials encrypted with customer-managed KMS keys.
+- Amazon RDS PostgreSQL (PostGIS-enabled) instance with multi-AZ, KMS encryption, log exports, automated backups, and IAM auth.
+- Secrets Manager secrets for runtime configuration, feature toggle manifests, and database credentials encrypted with customer-managed KMS keys.
 - CloudWatch alarms (ALB 5xx, ECS CPU) notifying the operations team via SNS email subscription.
 - S3 bucket for ALB access logs with Glacier archival and KMS encryption.
 
@@ -23,6 +23,14 @@ terraform apply -var-file=environments/staging.tfvars
 ```
 Repeat with `production.tfvars` once staging is healthy. Backend configuration should point at an encrypted S3 bucket and DynamoDB lock table created via the platform governance account.
 
+To confirm both environments remain aligned, execute the environment parity audit from the repository root:
+
+```
+node scripts/environment-parity.mjs
+```
+
+The script validates that staging and production tfvars expose the same keys, compares feature toggle manifests, and alerts when rollout differences exceed 50 percentage points.
+
 ## Security & Compliance
 - Every resource inherits baseline GDPR tags and environment metadata for CMDB integration.
 - Secrets are rotated through AWS Secrets Manager and consumed by ECS tasks using the execution IAM role policy.
@@ -31,7 +39,7 @@ Repeat with `production.tfvars` once staging is healthy. Backend configuration s
 
 ## Disaster Recovery
 - Multi-AZ deployments keep compute and database workloads resilient to single AZ failure.
-- Daily automated backups with 7-day retention in staging and 30-day retention in production ensure point-in-time recovery.
+- Daily automated backups with 7-day retention in staging and 14-day retention in production ensure point-in-time recovery.
 - ALB access logs archived to Glacier enable forensic analysis compliant with security policies.
 
 ## Future Enhancements

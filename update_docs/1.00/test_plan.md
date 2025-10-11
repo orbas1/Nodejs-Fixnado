@@ -35,6 +35,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 5. **Telemetry Validation**: Use staging topic `kafka.ui-preferences.v1`, `/api/telemetry/ui-preferences/summary` contract tests, Playwright coverage for `/admin/telemetry`, and Slack webhook mocks to confirm payload ingestion, dashboard rendering, CSV export accuracy, alert delivery, and snapshot persistence.
 6. **Maestro, Flutter Driver & Widget Tests**: Script booking wizard, kanban transitions, compliance flows, and live feed/banner states; new widget tests assert loading/empty/high-priority render paths and feed telemetry selectors for analytics rehearsal evidence.
 7. **Issue Intake Automation Validation**: Enforce CI step that executes `node scripts/issue-intake.mjs` and lints the generated Markdown so severity SLAs, due dates, and ownership metadata remain deterministic across branches.
+8. **Environment Parity Audit**: Execute `node scripts/environment-parity.mjs` during staging → production promotion to block mismatched tfvars or feature toggle manifests; failures trigger design + engineering review before rollout.
 
 ## Schedule
 | Date | Activity | Owner(s) | Notes |
