@@ -1,5 +1,24 @@
 # Update Progress Tracker — Version 1.00
 
+## Development & QA Progress Snapshot
+| Task | Security level (%) | Completion level (%) | Integration level (%) | Functionality level (%) | Error free level (%) | Production level (%) | Overall level (%) | Commentary |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 35 | 30 | 25 | 28 | 30 | 20 | 28 | Governance forums and CI/CD upgrades underway; defect intake automation pending completion of tracker webhook. |
+| Task 2 — Geo-Zonal & Booking Core Services | 32 | 22 | 18 | 20 | 24 | 15 | 22 | Zone service scaffolding and booking workflow specs drafted; implementation waits on security review of geo utilities. |
+| Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
+| Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
+| Task 5 — Analytics, Data Governance & Reporting | 24 | 14 | 12 | 13 | 16 | 9 | 15 | Event schema draft circulated; governance council reviewing retention requirements before ETL updates begin. |
+| Task 6 — QA, Compliance & Launch Readiness | 22 | 12 | 10 | 11 | 14 | 8 | 13 | Test strategy outline in progress; automation resourcing and compliance audit scheduling pending sign-off. |
+
+### Next Review Actions
+- Finalise issue backlog ingestion so `issue_report.md`, `issue_list.md`, and `fix_suggestions.md` transition from placeholders to live artefacts.
+- Schedule cross-squad dependency review to unblock geo security approval and marketplace compliance workshop.
+- Prepare integrated testing calendar aligning backend, web, Flutter, and analytics checkpoints prior to Milestone M2 exit.
+
+---
+Design metrics from prior addendum are retained below for continuity.
+
+
 ## Portfolio Overview
 - Non-design progress metrics continue to be tracked in their respective artefacts (backend, infrastructure, QA, etc.).
 
