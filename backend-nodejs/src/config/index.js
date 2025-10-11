@@ -90,6 +90,23 @@ const config = {
     overrides: jsonFromEnv('FEATURE_TOGGLE_OVERRIDES', {}),
     auditTrail: process.env.FEATURE_TOGGLE_AUDIT_TABLE || 'feature_toggle_audits'
   },
+  communications: {
+    aiAssistEndpoint: process.env.COMMS_AI_ENDPOINT || '',
+    aiAssistApiKey: process.env.COMMS_AI_KEY || '',
+    aiAssistModel: process.env.COMMS_AI_MODEL || 'gpt-4o-mini',
+    suggestionTemperature: Math.min(Math.max(floatFromEnv('COMMS_AI_TEMPERATURE', 0.35), 0), 1),
+    defaultQuietHours: jsonFromEnv('COMMS_DEFAULT_QUIET_HOURS', {
+      start: '22:00',
+      end: '07:00',
+      timezone: 'Europe/London'
+    }),
+    retentionDays: Math.max(intFromEnv('COMMS_MESSAGE_RETENTION_DAYS', 90), 14),
+    agora: {
+      appId: process.env.AGORA_APP_ID || '',
+      appCertificate: process.env.AGORA_APP_CERTIFICATE || '',
+      defaultExpireSeconds: Math.max(intFromEnv('AGORA_SESSION_TTL_SECONDS', 3600), 300)
+    }
+  },
   campaigns: {
     overspendTolerance: Math.max(floatFromEnv('CAMPAIGN_OVERSPEND_TOLERANCE', 0.15), 0),
     underspendTolerance: Math.max(floatFromEnv('CAMPAIGN_UNDERSPEND_TOLERANCE', 0.25), 0),

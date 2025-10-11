@@ -30,6 +30,10 @@ import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
+import Conversation from './conversation.js';
+import ConversationParticipant from './conversationParticipant.js';
+import ConversationMessage from './conversationMessage.js';
+import MessageDelivery from './messageDelivery.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -108,6 +112,27 @@ CampaignAnalyticsExport.belongsTo(CampaignDailyMetric, {
 AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSignals' });
 CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
+
+Conversation.hasMany(ConversationParticipant, { foreignKey: 'conversationId', as: 'participants' });
+ConversationParticipant.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
+
+Conversation.hasMany(ConversationMessage, { foreignKey: 'conversationId', as: 'messages' });
+ConversationMessage.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
+
+ConversationParticipant.hasMany(ConversationMessage, {
+  foreignKey: 'senderParticipantId',
+  as: 'outboundMessages'
+});
+ConversationMessage.belongsTo(ConversationParticipant, {
+  foreignKey: 'senderParticipantId',
+  as: 'sender'
+});
+
+ConversationMessage.hasMany(MessageDelivery, { foreignKey: 'conversationMessageId', as: 'deliveries' });
+MessageDelivery.belongsTo(ConversationMessage, { foreignKey: 'conversationMessageId', as: 'message' });
+
+ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
+MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
 
 Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
 InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -192,5 +217,9 @@ export {
   CampaignInvoice,
   CampaignDailyMetric,
   CampaignFraudSignal,
-  CampaignAnalyticsExport
+  CampaignAnalyticsExport,
+  Conversation,
+  ConversationParticipant,
+  ConversationMessage,
+  MessageDelivery
 };

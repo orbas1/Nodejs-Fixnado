@@ -27,3 +27,8 @@
 - Introduced `tests/campaignAnalyticsJob.test.js` with mocked warehouse endpoint + service layer to verify background exporter retries failed payloads, honours configured API key headers, and updates export records with `sent`/`failed` status and error messaging.
 - Exercised missing-endpoint and non-200 response paths to confirm logger error instrumentation, requeue invocation, and failure back-off compliance with `campaigns.failedRetryMinutes` settings.
 - Ensured tests guard header construction and interval scheduling so production job cadence (export interval seconds) remains under regression coverage when configuration values change.
+
+## 2025-10-22 — Communications Regression Suite
+- Added `tests/communicationsRoutes.test.js` covering conversation creation, participant enrolment, AI-assisted message sends, quiet-hour suppression, override acknowledgements, delivery reconciliation, and Agora session token generation with deterministic sqlite fixtures.
+- Mocked AI assist HTTP client to simulate success, timeout, and failure responses while asserting heuristic fallback copy, provenance metadata, and audit logging.
+- Verified quiet-hour enforcement returns 409 warnings, override endpoint captures actor/reason/duration, and Agora credentials missing/expired paths surface actionable 503 errors with telemetry breadcrumbs.

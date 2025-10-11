@@ -16,3 +16,8 @@
 - Introduced pacing ingestion endpoint `POST /:id/daily-metrics` accepting daily spend/impression/click payloads, applying overspend governance, and emitting next-action flags consumed by UI pacing badges.
 - Delivered invoice generation endpoint `POST /:id/invoices` and settlement retrieval `GET /:id/invoices/:invoiceId` tying campaign spend to finance reconciliation flows with due-date calculations and PDF export hooks.
 - Added targeting and fraud management endpoints: `PUT /:id/targeting` replaces targeting rule sets atomically; `GET /:id/fraud-signals` lists unresolved/resolved anomalies; `POST /fraud-signals/:signalId/resolve` records remediation; and `GET /:id/summary` surfaces aggregate KPI data (impressions, spend, ROI, open anomalies) for dashboards and finance.
+
+## 2025-10-22 — Communications APIs
+- Introduced `/api/communications` endpoints for listing conversations with pagination/search filters, creating new threads with participant role assignments, and fetching conversation detail with AI assist metadata and delivery audit trail.
+- Added message send endpoint supporting AI-assist suggestions (`POST /:conversationId/messages`), delivery acknowledgement endpoint (`POST /:conversationId/messages/:messageId/deliveries`), and quiet-hour override acknowledgement (`POST /:conversationId/quiet-hours/override`) to honour compliance guardrails.
+- Exposed Agora session token generation (`POST /:conversationId/video-session`) returning channel, token, and expiry metadata plus AI assist configuration endpoint for clients to fetch provider status/limits, ensuring React/Flutter workspaces remain synchronised.

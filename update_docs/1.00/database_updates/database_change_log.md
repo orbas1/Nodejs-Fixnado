@@ -18,3 +18,8 @@
 ## 2025-10-20 — Monetisation Analytics Outbox & Fraud Signals
 - Extended migration `20250219000000-create-campaign-manager.js` with governed `campaign_analytics_exports` and `campaign_fraud_signals` tables capturing warehouse outbox payloads, retry metadata, anomaly classifications, and resolution notes. Foreign keys cascade with campaign + flight deletions to avoid orphan telemetry.
 - Added indexes for export status and fraud signal lookup plus Postgres enum teardown in the down migration (`enum_CampaignFraudSignal_*`, `enum_CampaignAnalyticsExport_status`) so schema rollback clears type dependencies without manual intervention across environments.
+
+## 2025-10-22 — Communications Schema
+- Migration `20250221000000-create-communications.js` creates `conversations`, `conversation_participants`, `conversation_messages`, and `message_deliveries` tables with UUID primary keys, role enums, AI assist metadata JSON, quiet-hour window columns, and delivery receipt tracking.
+- Added indexes on `(conversationId, sentAt)` and `(participantId, readAt)` plus foreign keys to `Company`/`User` tables to support fast thread retrieval, unread counts, and audit queries for compliance.
+- Down migration drops enums and dependent tables in dependency order to keep sqlite/Postgres parity; retention window column defaults align with communications config for consistent clean-up jobs.

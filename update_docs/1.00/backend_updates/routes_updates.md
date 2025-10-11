@@ -15,3 +15,8 @@
 - Registered `campaignRoutes.js` mounting `/api/campaigns` endpoints for campaign CRUD, flight management, pacing ingestion, invoice issuance, and status toggles with validation middleware + rate limiting inherited from shared router utilities.
 - Updated `routes/index.js` to expose the campaign router alongside inventory, rentals, compliance, and marketplace modules so monetisation APIs remain discoverable and versioned.
 - Expanded router with targeting replacement (`PUT /:campaignId/targeting`), fraud monitoring (`GET /:campaignId/fraud-signals`, `POST /fraud-signals/:signalId/resolve`), analytics ingestion (`POST /:campaignId/metrics`), and KPI summary (`GET /:campaignId/summary`) routes feeding admin/provider dashboards and finance playbooks.
+
+## 2025-10-22 — Communications Routes
+- Registered `communicationsRoutes.js` to expose `/api/communications` endpoints for conversation listing, creation, participant enrolment, AI-assisted message sends, delivery acknowledgements, quiet-hour overrides, and Agora session token minting.
+- Updated `routes/index.js` to mount the communications router and ensure request logging/audit middleware capture chat traffic alongside existing marketplace/monetisation services.
+- Added validation middleware enforcing attachment limits, AI toggle presence, and quiet-hour acknowledgement metadata so downstream controllers receive production-safe payloads.

@@ -24,3 +24,8 @@
 - Extended `campaignService.js` with analytics export outbox management (`CampaignAnalyticsExport` upserts, pending fetch, failed requeue), CTR/CVR/anomaly scoring, spend target derivation, and fraud signal lifecycle (`CampaignFraudSignal` create/update/resolve).
 - Metrics ingestion normalises amounts, persists spend targets/CTR/CVR/anomaly scores, emits fraud signals for overspend/underspend/CTR/CVR/delivery gap/no spend scenarios, and produces summary aggregates for dashboards and finance operations.
 - Added helper exports (`fetchPendingAnalyticsExports`, `markAnalyticsExportAttempt`, `requeueFailedAnalyticsExports`, `getCampaignSummary`) powering the new background job and API endpoints for analytics warehousing and fraud remediation flows.
+
+## 2025-10-22 — Communications Service
+- Added `services/communicationsService.js` encapsulating conversation lifecycle (create/update, participant enrolment, message threading) with transactional guards ensuring participants and deliveries stay consistent across sqlite/Postgres.
+- Service manages AI assist suggestions by delegating to configured provider or deterministic heuristics, merges results into message drafts, and records provenance metadata alongside quiet-hour suppression windows.
+- Introduced helpers to mint Agora session tokens, record delivery acknowledgements, enforce quiet-hour checks with overrides/escalations, and stream audit events used by notification centre dashboards and Flutter clients.
