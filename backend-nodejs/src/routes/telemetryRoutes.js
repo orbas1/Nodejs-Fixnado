@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { getUiPreferenceTelemetrySummary, recordUiPreferenceTelemetry } from '../controllers/telemetryController.js';
+import {
+  getUiPreferenceTelemetrySummary,
+  recordUiPreferenceTelemetry,
+  getUiPreferenceTelemetrySnapshots
+} from '../controllers/telemetryController.js';
 
 const router = Router();
 
@@ -31,6 +35,24 @@ router.get(
     query('tenantId').optional().isString().isLength({ max: 64 })
   ],
   getUiPreferenceTelemetrySummary
+);
+
+router.get(
+  '/ui-preferences/snapshots',
+  [
+    query('rangeKey').optional().isString().isLength({ min: 1, max: 8 }),
+    query('tenantId').optional().isString().isLength({ max: 64 }),
+    query('capturedAfter').optional().isISO8601(),
+    query('capturedBefore').optional().isISO8601(),
+    query('limit').optional().isInt({ min: 1, max: 1000 }),
+    query('cursor').optional().isString().isLength({ min: 8, max: 256 }),
+    query('leadingTheme').optional().isString().isLength({ min: 2, max: 32 }),
+    query('staleMinutesGte').optional().isInt({ min: 0, max: 10080 }),
+    query('staleMinutesLte').optional().isInt({ min: 0, max: 10080 }),
+    query('includeStats').optional().isBoolean().toBoolean(),
+    query('freshnessWindowMinutes').optional().isInt({ min: 1, max: 10080 })
+  ],
+  getUiPreferenceTelemetrySnapshots
 );
 
 export default router;

@@ -6,7 +6,7 @@ The UI preference telemetry service captures every theme, density, contrast, and
 ## Data Flow
 1. **Client Instrumentation** – `ThemeProvider` emits the `theme_change` dataLayer event, dispatches the `fixnado:theme-change` DOM event, and sends a beacon to `/api/telemetry/ui-preferences` with contextual metadata (tenant, role, locale, correlationId, userAgent).
 2. **API Ingestion** – The Node.js backend validates payloads, hashes source IPs for privacy, and stores records in the `ui_preference_telemetry` table with UUID identifiers and ISO8601 timestamps.
-3. **Analytics Access** – Aggregated metrics are exposed at `/api/telemetry/ui-preferences/summary`, allowing dashboards (Looker, Metabase) to query adoption by theme, density, contrast, or marketing variant across configurable time ranges.
+3. **Analytics Access** – Aggregated metrics are exposed at `/api/telemetry/ui-preferences/summary`, allowing dashboards (Looker, Metabase) to query adoption by theme, density, contrast, or marketing variant across configurable time ranges. Persisted snapshots are available through `/api/telemetry/ui-preferences/snapshots` so BI tooling can ingest governed records without hitting live aggregation endpoints.
 
 ## API Contracts
 ### `POST /api/telemetry/ui-preferences`
@@ -33,10 +33,37 @@ The UI preference telemetry service captures every theme, density, contrast, and
   - `totals.events`: total ingested events
   - `breakdown`: counts by theme, density, contrast, marketingVariant
   - `timeseries`: daily totals with per-theme breakdown
-  - `latestEventAt`: ISO timestamp for freshness monitoring
+- `latestEventAt`: ISO timestamp for freshness monitoring
+
+### `GET /api/telemetry/ui-preferences/snapshots`
+- **Purpose:** Provide paginated access to persisted telemetry summaries for BI ingestion.
+- **Query Params:**
+  - `rangeKey`: optional range filter (e.g. `1d`, `7d`, `30d`, `6h`), defaults to all.
+  - `tenantId`: optional tenant filter for future multi-tenant segmentation.
+  - `capturedAfter` / `capturedBefore`: ISO8601 timestamps to constrain the capture window.
+  - `limit`: page size (default 200, max 1000).
+  - `cursor`: base64url encoded token returned in `pagination.nextCursor` to fetch the next page without duplication.
+  - `leadingTheme`: optional dominant theme filter (`standard`, `dark`, `emo`, or `unspecified`).
+  - `staleMinutesGte` / `staleMinutesLte`: numeric bounds to focus on stale or healthy windows (minutes).
+  - `includeStats`: boolean flag (`true|false`) instructing the API to return aggregate metrics for the current filter set.
+  - `freshnessWindowMinutes`: optional override for the freshness threshold used in aggregate statistics (default 120 minutes).
+- **Response:**
+  - `snapshots`: ordered array (oldest → newest) containing metadata (`capturedAt`, `rangeStart`, `rangeEnd`, `events`, `emoShare`, `leadingTheme`, `staleMinutes`, `payload`).
+  - `pagination`: `limit`, `hasMore`, and `nextCursor` (supply on subsequent requests).
+  - `appliedFilters`: echo of resolved filters (useful for logging and data pipeline telemetry).
+  - `stats` *(when `includeStats=true`)*: totals, capture range, freshness split, and tenant/theme distribution to drive ingestion monitoring.
+- **Usage Tips:** Start ingestion with `capturedAfter` equal to the last successfully processed `capturedAt` to support idempotent pipelines. Store the cursor between runs to handle duplicates gracefully.
+
+#### Data Quality Diagnostics
+- Enable `includeStats=true` on periodic governance checks to retrieve:
+  - `stats.freshness`: counts of snapshots above/below the configured freshness window.
+  - `stats.tenants` / `stats.rangeKeys` / `stats.leadingThemes`: distribution arrays keyed by tenant, range key, and dominant theme for coverage validation.
+  - `stats.emoShare` and `stats.staleMinutes`: min/avg/max aggregates to identify drift without reading the entire table.
+- Adjust `freshnessWindowMinutes` when rehearsing alternate SLAs (e.g. 60-minute war room, 180-minute weekend mode) to mirror upcoming alert policies.
+- Combine `staleMinutesGte`/`staleMinutesLte` filters with cursor pagination to export only snapshots breaching thresholds for ad-hoc investigations.
 
 ## Dashboard Guidance
-- **Looker Explore:** Create a derived table that calls the summary endpoint hourly and stores the JSON payload for historical comparison.
+- **Looker Explore:** Create a derived table that consumes `/api/telemetry/ui-preferences/snapshots` every 15 minutes. Persist `capturedAt`, `rangeKey`, `events`, `emoShare`, and the raw JSON payload to enable historical comparisons and avoid hammering live APIs.
 - **Alerts:** Trigger alerts when adoption of `emo` theme drops below 10% of events for enterprise tenants or when no events arrive for >2 hours.
 - **Data Governance:** IP addresses are hashed server-side; correlation IDs allow joining with session logs without storing PII.
 
@@ -60,9 +87,8 @@ The UI preference telemetry service captures every theme, density, contrast, and
 - **Slack Delivery:** Configure `TELEMETRY_SLACK_WEBHOOK_URL` with the incoming webhook for #design-telemetry. Messages include Block Kit copy, thresholds, last-event timestamps, and runbook references. Resolution messages fire once metrics recover.
 - **Error Handling:** Failures to fetch or post log to the server console; alerts retry on the next interval without duplicating messages unless the state changes or the repeat window elapses.
 
-## Snapshot Storage & Looker Integration
 - **Model:** `UiPreferenceTelemetrySnapshot` captures rolling-window metrics (range, events, emo share, leading theme, staleness minutes) plus the raw JSON payload. Table creation handled through model sync on job start.
-- **Usage:** Looker can ingest snapshots on a schedule, enabling historical trend comparisons without querying live APIs. The runbook recommends hourly ingestion aligned with alert cadence.
+- **Usage:** Looker can ingest snapshots via the `/api/telemetry/ui-preferences/snapshots` endpoint on a schedule, enabling historical trend comparisons without querying live APIs. The runbook recommends ingestion every 15 minutes in staging and production to align with alert cadence.
 - **Retention & Governance:** Data engineering owns retention policies; snapshots exclude PII (IP hashes remain hashed). Column metadata is documented for metric catalogue updates.
 
 ## Operational Runbook

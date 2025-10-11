@@ -15,6 +15,7 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Data Visualisation | Defined dashboard module styling (`Dashboard Designs.md`, `Dashboard Organisation.md`) with refreshed chart colours, tooltip treatments, and anomaly surfacing patterns. Added animated loading skeletons to reduce perceived latency. | Dashboard Designs, Dashboard Organisation | Improves interpretability of analytics and resilience to slow data responses. |
 | Telemetry Dashboard | Operationalised UI preference telemetry console with KPI cards, trend widgets, and adoption breakdown modules referencing `telemetry_dashboard_enablement.md` and admin dashboard enhancements. | Telemetry dashboard docs, AdminDashboard.jsx, TelemetryDashboard.jsx | Provides governed analytics visibility and readiness for Looker dashboards. |
 | Telemetry Alerting & Snapshots | Added background alerting pipeline, Slack messaging, and Looker snapshot persistence to govern telemetry health and downstream analytics feeds. | telemetry_alerting_enablement.md, backend telemetry job/model, telemetry runbook | Ensures operational teams receive timely alerts and BI tooling consumes governed datasets. |
+| Telemetry Diagnostics & Governance | Extended snapshots endpoint with theme/staleness filters, aggregate stats, and diagnostics workflow documentation to support analytics rehearsals. | telemetry_dashboard_enablement.md, docs/telemetry/ui-preference-dashboard.md, backend telemetry services | Enables data engineering and ops teams to validate freshness SLAs and coverage without direct database access. |
 | Content & Messaging | Refined copy tone hierarchy from `Screen_text.md`, `text.md.md`, and `Home page text.md`. Added templated microcopy for error states and guided onboarding flows aligned with compliance requirements. | Screen_text, text.md.md, Home page text | Drives consistent voice and regulatory clarity. |
 | Imagery & Illustration | Curated imagery specifications (`Screens_update_images_and_vectors.md`, `images_and _vectors.md`, `Home page images.md`) to support inclusive representation and performance budgets. Implemented vector-first approach with fallbacks for offline caching. | Image/vector documents | Improves accessibility and load performance across devices. |
 | Logic & Interaction | Harmonised logic flow artefacts (`Logic_Flow_update.md`, `Screens_Update_Logic_Flow.md`) to map cross-platform journeys, introducing guard-rails for security-critical paths and conditional theming triggers. | Logic Flow documents | Reduces behavioural inconsistencies and surfaces security checkpoints earlier in the experience. |
@@ -79,6 +80,16 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Deployed background alerting job with configurable thresholds, Slack webhook integration, and repeat suppression to enforce telemetry freshness SLAs and emo adoption monitoring.
 - Introduced `UiPreferenceTelemetrySnapshot` persistence so Looker dashboards can query governed, timestamped summaries without hitting live APIs; payload JSON preserves breakdown fidelity.
 - Updated runbook (`docs/telemetry/ui-preference-dashboard.md`), QA scenarios, and trackers to cover alert rehearsal steps, environment variables, and escalation policy for ops/design/data teams.
+
+### 12. Telemetry Snapshot Distribution Enablement (2025-02-05)
+- Delivered `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination so Looker and downstream BI tooling can ingest governed telemetry summaries without direct database connectivity.
+- Refreshed telemetry runbook and QA assets (including `docs/design/handoff/ui-qa-scenarios.csv`) with ingestion guidance, cursor handling, and rehearsal steps for analytics/ops teams ahead of the 12 Feb readiness review.
+- Updated programme trackers, design plan, and change logs to mark analytics distribution readiness and focus subsequent work on tenant segmentation and Chromatic baseline automation.
+
+### 13. Telemetry Snapshot Diagnostics & Data Quality (2025-02-06)
+- Augmented snapshots endpoint with `leadingTheme`, `staleMinutesGte`, `staleMinutesLte`, and boolean stats toggle so analytics can isolate stale windows, confirm tenant coverage, and script governance queries without SQL migrations.
+- Added aggregate statistics (`stats.freshness`, tenant/range/theme breakdowns, share min/avg/max) with freshness threshold overrides to support rehearsal SLAs and Looker ingestion observability.
+- Updated telemetry runbook and QA scenarios to capture diagnostics workflow, ensuring ops/design/data rehearse stats validation before the analytics readiness drill.
 
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
