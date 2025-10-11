@@ -26,6 +26,24 @@ function floatFromEnv(key, defaultValue) {
   return defaultValue;
 }
 
+function jsonFromEnv(key, defaultValue) {
+  const raw = process.env[key];
+  if (typeof raw !== 'string' || raw.trim() === '') {
+    return defaultValue;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
+  } catch (error) {
+    console.warn(`Failed to parse JSON for ${key}:`, error.message);
+  }
+
+  return defaultValue;
+}
+
 const config = {
   env,
   port: intFromEnv('PORT', 4000),
@@ -48,6 +66,20 @@ const config = {
     pollIntervalMinutes: Math.max(intFromEnv('TELEMETRY_ALERT_INTERVAL_MINUTES', 15), 5),
     repeatAlertMinutes: Math.max(intFromEnv('TELEMETRY_ALERT_REPEAT_MINUTES', 60), 15),
     minimumEventsForShare: Math.max(intFromEnv('TELEMETRY_MIN_EVENTS_FOR_SHARE', 50), 1)
+  },
+  finance: {
+    defaultCurrency: (process.env.FINANCE_DEFAULT_CURRENCY || 'GBP').toUpperCase(),
+    commissionRates: jsonFromEnv('FINANCE_COMMISSION_RATES', { default: 0.12 }),
+    taxRates: jsonFromEnv('FINANCE_TAX_RATES', { GBP: 0.2 }),
+    exchangeRates: jsonFromEnv('FINANCE_EXCHANGE_RATES', { GBP: 1, EUR: 1.17, USD: 1.27 }),
+    slaTargetsMinutes: jsonFromEnv('FINANCE_SLA_TARGET_MINUTES', {
+      on_demand: 90,
+      scheduled: 240
+    })
+  },
+  zoneAnalytics: {
+    snapshotIntervalMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_INTERVAL_MINUTES', 30), 5),
+    staleBookingThresholdMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_STALE_MINUTES', 120), 15)
   }
 };
 

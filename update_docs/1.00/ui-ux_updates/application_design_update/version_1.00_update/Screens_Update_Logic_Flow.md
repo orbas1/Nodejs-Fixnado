@@ -24,6 +24,8 @@ This document maps user intents to the screen stack transitions. It complements 
 ## 4. Marketplace
 - `MarketplaceHome` uses `DefaultTabController`. Each tab lazy loads content via Riverpod `FutureProvider`. Pull-to-refresh resets provider.
 - Campaign cards navigate to `CampaignDetail`. CTA `Activate Promotion` opens `PromotionWizard` (three-step overlay). If user lacks subscription, show paywall sheet referencing `Settings` for upgrade.
+- `Inventory` tab surfaces ledger summary cards; tapping `Log Adjustment` pushes `InventoryAdjustmentSheet`. Successful post writes analytics event `inventory_adjustment_logged` with payload (itemId, delta, reason).
+- Rental requests triggered from `Rentals` tab route to `RentalAgreementDetail` with timeline data seeded from backend; completion triggers optional `Capture inspection` modal before returning to detail view.
 
 ## 5. Messaging
 - `MessagesList` listens to websocket status; offline fallback shows banner.
@@ -39,10 +41,13 @@ This document maps user intents to the screen stack transitions. It complements 
 - Provider roles flagged via `profile.role`. `ProviderDashboard` accessible from main nav; uses `BottomNavigationBar` entry.
 - Quick actions use context-specific routing: e.g., `Start Job` -> `ActiveJobDetail`; `Log Availability` -> `CalendarAvailability`.
 - `ComplianceCenter` organizes tasks by due date. Upload success updates progress and triggers `ProviderDashboard` refresh when returning.
+- Insured seller banner appears when `profile.insurance.status` in {`expiringSoon`, `pendingReview`, `expired`}. Selecting banner pushes `InsuranceDetail` modal with `Request renewal review` CTA calling `/marketplace/policies/:id/request-renewal`.
+- Low-stock alert toast from analytics job surfaces `View inventory` action; selecting routes to `InventoryConsole` with filter `lowStockOnly=true`.
 
 ## 8. Notifications
 - Accessed via bell icon; uses `Navigator.of(context).push` with fade transition 200ms.
 - Swiping item triggers `Dismissible` callbacks updating backend. Tapping opens context-specific screen (booking detail, compliance item) via dynamic link mapping.
+- Marketplace alert type `campaign` directs to `CampaignDetail`; `inventory` opens `InventoryConsole`; `fraud` opens `DisputeCentre` with pre-selected case.
 
 ## 9. Offline/Error Handling
 - On network loss, `ConnectivityProvider` toggles offline banner; certain actions disabled (buttons greyed). Retry button re-attempts fetch using exponential backoff.
@@ -64,6 +69,7 @@ This document maps user intents to the screen stack transitions. It complements 
 - Critical funnels include step events: `booking_step_viewed`, `booking_step_completed`, `campaign_step_completed`, `compliance_task_uploaded`.
 - Map interactions log `map_pan`, `map_zoom`, `filter_applied` with bounding box + filter payload.
 - Messaging logs `message_sent`, `message_read`, `conversation_pinned`.
+- Inventory flows emit `inventory_adjustment_logged`, `rental_checkpoint_completed`, `insurance_badge_toggle`, and `campaign_alert_acknowledged` events to satisfy analytics job requirements.
 
 ## Accessibility Flow Considerations
 - Focus order resets when bottom sheet opens, ensuring first focus on header title. `Semantics` tree updated to hide background content for modal states.

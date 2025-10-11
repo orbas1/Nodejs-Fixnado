@@ -5,6 +5,8 @@ import feedRoutes from './feedRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import telemetryRoutes from './telemetryRoutes.js';
+import zoneRoutes from './zoneRoutes.js';
+import bookingRoutes from './bookingRoutes.js';
 
 const router = Router();
 
@@ -14,5 +16,7 @@ router.use('/feed', feedRoutes);
 router.use('/search', searchRoutes);
 router.use('/admin', adminRoutes);
 router.use('/telemetry', telemetryRoutes);
+router.use('/zones', zoneRoutes);
+router.use('/bookings', bookingRoutes);
 
 export default router;

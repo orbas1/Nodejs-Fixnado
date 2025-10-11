@@ -153,3 +153,8 @@
 - **Flutter Widget Coverage:** Authored widget tests for the live feed banner verifying loading/empty/high-priority states and retry affordances so mobile design intent remains auditable despite feature flag variants.
 - **Tracker Integration:** Refreshed test plan, update tracker, and design change log to document Subtask 6.2 automation maturity and surface evidence paths for QA sign-off.
 
+## 24. Geo-Zonal & Booking Experience Alignment (2025-02-10)
+- **Explorer Overlays:** Zone CRUD + analytics implementation mirrors `website_drawings.md` overlays, ensuring polygon validation feedback, demand-level badges, and analytics callouts render per blueprint.
+- **Booking Wizard States:** Backend orchestrator exposes status metadata, SLA targets, and assignment audit logs required by `dashboard_drawings.md`, `menu_drawings.md`, and `app_screens_drawings.md` for admin/provider experiences.
+- **Finance & Compliance Copy:** Commission/tax outputs surfaced to UI follow the content hierarchy defined in `Application_Design_Update_Plan` and `Web_Application_Design_Update`, keeping compliance copy inline with legal-approved templates.
+

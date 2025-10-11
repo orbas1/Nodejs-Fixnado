@@ -1,0 +1,3 @@
+## 2025-02-10 — Finance & Zone Analytics Env Vars
+- Added finance configuration knobs: `FINANCE_DEFAULT_CURRENCY`, `FINANCE_COMMISSION_RATES`, `FINANCE_TAX_RATES`, `FINANCE_EXCHANGE_RATES`, `FINANCE_SLA_TARGET_MINUTES`.
+- Added zone analytics scheduling knobs: `ZONE_ANALYTICS_INTERVAL_MINUTES`, `ZONE_ANALYTICS_STALE_MINUTES`.

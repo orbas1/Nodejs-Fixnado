@@ -67,6 +67,28 @@ All layouts described below reference a base viewport of **360 × 780 dp** (Andr
 - Header: hero image 360×200dp with overlay text.
 - Body: statistics row (3 metrics), description paragraph, "Included Providers" horizontal list (avatar 64dp). CTA button sticky bottom.
 
+### 4.3 Provider Inventory Console
+- **Header Strip**: 360×120dp gradient bar `linear-gradient(138°, #1445E0 → #36A2FF)` with stock health summary ("72 tools available"), low-stock badge (pill 28×16dp `#F97316` background, text `Inter 12/16` white) and overflow menu for exporting CSV.
+- **Ledger Tabs**: Segmented control 328×44dp with `Inventory`, `Reservations`, `Adjustments` states. Active tab uses 2dp underline `#1445E0` spanning 88dp; inactive tabs 40% opacity label.
+- **Inventory Table Cards**: Scrollable list of cards 328×188dp, each containing:
+  - Item banner 328×64dp with thumbnail 56×56dp, title `Manrope 16/24`, SKU `IBM Plex Mono 13/18`.
+  - Stock meter horizontal progress 280×8dp using gradient `#1BBF92 → #36A2FF` with threshold markers at 20% and 5% (colours `#F97316`, `#DC2626`).
+  - Metrics row (3 columns) for `On-hand`, `Reserved`, `In repair`; values `Manrope 18/24` bold, captions `Inter 12/16` muted.
+  - Action bar sticky bottom inside card (height 44dp) with `Log Adjustment` ghost button 144×36dp and `View Ledger` tertiary button 160×36dp.
+- **Empty State**: When ledger empty, display illustration 220×180dp, message "No inventory yet" and CTA 200×48dp linking to add item flow.
+
+### 4.4 Rental Agreement Detail
+- **Timeline Header**: Horizontal stepper height 88dp with five nodes (`Request`, `Inspection`, `Pickup`, `In Use`, `Return`). Completed nodes filled `#1BBF92`, current node accent `#1445E0`, future nodes outline `rgba(20,69,224,0.24)`.
+- **Summary Card**: 328×220dp card showing renter info, asset photo 88×88dp, rental dates chip (icon calendar 20dp). Settlement amount displayed using `Manrope 20/28` with currency prefix `IBM Plex Mono` style.
+- **Checkpoint List**: Accordion with sections (Pre-pickup photos, Inspection notes, Return checklist). Each row height 72dp includes status pill, `View evidence` button 120×36dp, timestamp `Inter 12/16` grey.
+- **Dispute CTA Bar**: Sticky bottom sheet 360×96dp with primary button `Open dispute` 200×52dp (destructive variant) and ghost button `Message renter` 140×44dp. Displays SLA countdown (capsule 96×28dp `#F97316`).
+
+### 4.5 Marketplace Alert Drawer
+- Swipe up drawer anchored to home screen; peek height 96dp, full height 480dp.
+- Alert rows 328×92dp using severity stripe 6dp along left edge (success `#1BBF92`, warning `#F97316`, critical `#DC2626`).
+- Each row includes message `Inter 14/20`, timestamp, CTA chip ("Review policy" 120×32dp). Fraud alerts show `Investigation ETA` badge `IBM Plex Mono 12/16`.
+- Drawer supports batch actions (Select all → `Mark as read`, `Escalate`). Batch toolbar appears when ≥1 selected; height 56dp, background `rgba(20,69,224,0.08)`.
+
 ## 5. Messaging & Support Cluster
 
 ### 5.1 Conversation List
@@ -115,6 +137,12 @@ All layouts described below reference a base viewport of **360 × 780 dp** (Andr
 - Top filter segmented control 3 states (All, Pending, Submitted). Sticky at top after 48dp scroll.
 - Upload action button ghost style per card; tapping opens modal described in 7.3.
 
+### 7.2.1 Insured Seller Badge Manager
+- Module resides above compliance list when provider enrolled. Card 328×120dp with badge illustration 72×72dp, coverage copy, and renewal countdown chip (96×28dp `#F97316`).
+- Includes toggle `Show badge on storefront` (switch 56×32dp). Toggling open triggers inline confirmation toast and API call to `/marketplace/badge-visibility`.
+- `Policy Docs` button 148×36dp opens document viewer modal pre-filtered to insurance uploads.
+- SLA reminder banner appears at 14 days before expiry: background `rgba(249,115,22,0.12)`, icon 24dp, CTA `Request renewal review` 160×40dp (primary style).
+
 ### 7.3 Document Upload Modal
 - Modal bottom sheet full height minus 48dp top margin, radius 32dp.
 - Drop zone 328×200dp dashed border `#1C62F0` 2dp, background `rgba(28,98,240,0.05)` with icon 48dp.
@@ -125,6 +153,11 @@ All layouts described below reference a base viewport of **360 × 780 dp** (Andr
 - Month view grid 7×6 cells each 44×48dp, radius 12dp. Active days tinted `rgba(28,98,240,0.12)`.
 - Header contains month label `Manrope 20/28`, arrow buttons icon 24dp.
 - Bottom sheet detail for selected day 360×200dp listing slots as pill chips 88×36dp (toggleable).
+
+### 7.5 Rental Preparation Checklist
+- Inline card inserted between Availability Calendar and Document Upload when provider has active rentals. Card height 200dp with step list (`Prepare asset`, `Capture pre-pickup photos`, `Review renter deposit`).
+- Each step row 72dp with checkbox, due-by timestamp, and action links (`Open inspection form`, `View renter profile`). Completed steps show icon `CheckCircle` tinted `#1BBF92`.
+- `Start pickup workflow` primary button 320×52dp disabled until mandatory steps complete; tooltip clarifies missing items.
 
 ## 8. System Overlays & Special States
 
