@@ -128,3 +128,8 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | 2025-01-24 | Marketing Lead, Content Strategist | Conditional | Additional "emo" presets requested for Q2 experiment. |
 | 2025-01-27 | QA Lead | In Progress | Pending validation of QA artefact alignment with automated tests. |
 
+
+### 27. CI Quality Gates Alignment (2025-10-14)
+- Documented CI Quality Gates workflow and rollback playbook so design QA, Design Ops, and compliance can trace telemetry/issue-intake governance to automated checks; added references to Slack alert follow-up and coverage uplift roadmap.
+- Ensured ThemeProvider/telemetry coverage thresholds surface in design QA cadences, linking Vitest artefacts to `ui-ux_updates` documentation and mobilisation RACI deliverables.
+- Coordinated with DevOps to include design-specific alert recipients when governance job fails so blueprint walkthroughs and telemetry dashboards remain audit-ready.

@@ -13,3 +13,8 @@
 - Refactored Sequelize configuration to default to PostgreSQL with pooled connections, SSL toggles, and dialect-specific options; startup now verifies PostGIS/topology/UUID extensions and surfaces precise diagnostics (`src/config/database.js`, `src/app.js`).
 - Created Secrets Manager–backed feature toggle service with admin endpoints, validation rules, caching, and audit logging to the new `feature_toggle_audits` table (`src/services/featureToggleService.js`, `src/controllers/featureToggleController.js`, `src/routes/adminRoutes.js`, `src/database/migrations/20250215000000-feature-toggle-audit.js`).
 - Added bootstrap tooling for PostGIS enablement and updated Vitest suites to cover toggle reads/writes so infrastructure drift and rollout regressions are caught in CI (`scripts/bootstrap-postgis.mjs`, `tests/featureToggleService.test.js`).
+
+## 2025-10-14 — CI Coverage Thresholds & Governance Hooks
+- Updated `vitest.config.js` to scope coverage to booking, toggle, finance, and zone services plus routes/middleware with minimum thresholds (lines/statements 75%, functions 80%, branches 48%) enforced in both local and CI runs.
+- Bumped `package.json` test script to `vitest run --coverage` and added `@vitest/coverage-v8@^2.1.4` so backend developers receive identical gating locally and in CI.
+- CI Quality Gates upload LCOV artefacts from backend runs, feeding QA/compliance evidence and rollback workflows documented in `docs/ops/ci-rollback-playbook.md`.

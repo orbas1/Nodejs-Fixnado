@@ -89,6 +89,7 @@
 
 ## 12. Governance & Next Steps
 - Weekly design council sync to track progress against milestones and address cross-team dependencies.
+- Subscribe Design Ops and accessibility SMEs to CI Quality Gates governance alerts so telemetry/issue-intake regressions trigger design council reviews.
 - Monthly audit of design documentation to ensure alignment with engineering implementation.
 - Prepare backlog of future enhancements (additional emo variants, seasonal landing modules, personalization experiments) for subsequent releases.
 

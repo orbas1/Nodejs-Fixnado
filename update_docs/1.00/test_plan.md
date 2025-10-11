@@ -36,6 +36,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 6. **Maestro, Flutter Driver & Widget Tests**: Script booking wizard, kanban transitions, compliance flows, and live feed/banner states; new widget tests assert loading/empty/high-priority render paths and feed telemetry selectors for analytics rehearsal evidence.
 7. **Issue Intake Automation Validation**: Enforce CI step that executes `node scripts/issue-intake.mjs` and lints the generated Markdown so severity SLAs, due dates, and ownership metadata remain deterministic across branches.
 8. **Environment Parity Audit**: Execute `node scripts/environment-parity.mjs` during staging → production promotion to block mismatched tfvars or feature toggle manifests; failures trigger design + engineering review before rollout.
+9. **CI Quality Gates Workflow**: GitHub Actions job `ci-quality-gates.yml` enforces linting, coverage thresholds (backend 75/75/80/48, frontend 80/80/85/50), Flutter analyze/test coverage, `npm audit`/Trivy scans, environment parity validation, and issue-intake regeneration with diff checks before merge approvals.
 
 ## Schedule
 | Date | Activity | Owner(s) | Notes |

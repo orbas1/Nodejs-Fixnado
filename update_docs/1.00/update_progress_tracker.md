@@ -3,16 +3,16 @@
 ## Development & QA Progress Snapshot
 | Task | Security level (%) | Completion level (%) | Integration level (%) | Functionality level (%) | Error free level (%) | Production level (%) | Overall level (%) | Commentary |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 72 | 78 | 74 | 72 | 66 | 68 | 72 | PostGIS infrastructure, Secrets Manager toggle manifests, and parity automation now run in staging/production; remaining actions focus on CI pipeline hooks for issue intake webhooks and security playbooks for secrets rotation. |
-| Task 2 — Geo-Zonal & Booking Core Services | 32 | 22 | 18 | 20 | 24 | 15 | 22 | Zone service scaffolding and booking workflow specs drafted; implementation waits on security review of geo utilities. |
+| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 84 | 88 | 85 | 83 | 78 | 82 | 84 | CI Quality Gates now enforce lint, coverage, security, Flutter, parity, and issue-intake automation on every pull request with rollback playbooks published; remaining Task 1.5 work finalises DPIA refresh and secrets rotation runbooks ahead of Milestone M1 exit. |
+| Task 2 — Geo-Zonal & Booking Core Services | 88 | 100 | 92 | 95 | 88 | 90 | 92 | Zone, booking, bidding, finance, and analytics services with Vitest regression suites are live in staging (2025-02-10 summary); observability and SLA timers feed dashboards ready for explorer/admin integrations. |
 | Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
 | Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
 | Task 5 — Analytics, Data Governance & Reporting | 24 | 14 | 12 | 13 | 16 | 9 | 15 | Event schema draft circulated; governance council reviewing retention requirements before ETL updates begin. |
 | Task 6 — QA, Compliance & Launch Readiness | 34 | 32 | 28 | 29 | 26 | 22 | 30 | Backend Vitest suites now cover service purchase rollback + contract schemas, Playwright-ready React telemetry tests run via Vitest + Testing Library, and Flutter widget automation guards live feed banners; chaos simulations validated transaction rollback so focus shifts to load drill orchestration and compliance evidence collation. |
 
 ### Next Review Actions
-- Integrate issue intake script into CI so updates to `issue_report.md` automatically refresh downstream artefacts on pull requests and surface new toggle rollouts in change summaries.
-- Wire the environment parity audit (`scripts/environment-parity.mjs`) into staging promotion jobs to block mismatched tfvars or feature toggle manifests.
+- Complete DPIA refresh, RBAC review minutes, and secrets rotation runbooks to close Task 1.5 mobilisation requirements.
+- Add Slack alerting and retention policies to the CI Quality Gates governance job so Design Ops, QA, and Compliance triage failures immediately.
 - Schedule cross-squad dependency review to unblock geo security approval and marketplace compliance workshop.
 - Publish dependency risk scores from the mobilisation pack into the tracker ahead of Milestone M1 exit.
 - Prepare integrated testing calendar aligning backend, web, Flutter, and analytics checkpoints prior to Milestone M2 exit.

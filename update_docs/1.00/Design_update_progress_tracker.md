@@ -30,6 +30,7 @@
 7. **Issue Intake Integration:** `scripts/issue-intake.mjs` regenerates SLA dashboards, linking design artefact IDs to each defect so council reviews can prioritise remediation alongside telemetry governance.
 8. **Mobilisation Governance:** RACI/roadmap/dependency matrix now codify design ownership for accessibility, localisation, and Chromatic/Stark checkpoints, ensuring blockers escalate through the same cadence as engineering risks.
 9. **Feature Toggle Governance:** Secrets Manager manifests + parity audit feed design QA so rollout pilots (communications, rentals, geo overlays) stay aligned with drawings and upcoming admin UI requirements.
+10. **CI Quality Gates Integration:** Design Ops receives LCOV artefacts and governance job signals from the new workflow, ensuring telemetry instrumentation, issue intake automation, and rollback steps are reviewed during design council checkpoints.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.

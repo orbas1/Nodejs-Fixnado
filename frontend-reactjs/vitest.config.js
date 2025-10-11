@@ -10,7 +10,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      reportsDirectory: './coverage'
+      reportsDirectory: './coverage',
+      include: [
+        'src/providers/**/*.{js,jsx,ts,tsx}',
+        'src/utils/telemetry.js',
+        'src/theme/**/*.js'
+      ],
+      thresholds: {
+        lines: 80,
+        statements: 80,
+        functions: 85,
+        branches: 50
+      }
     }
   }
 });

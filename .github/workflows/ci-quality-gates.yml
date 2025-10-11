@@ -1,0 +1,185 @@
+name: CI Quality Gates
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ci-quality-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend-nodejs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend-nodejs
+
+      - name: Lint backend
+        run: npm run lint
+        working-directory: backend-nodejs
+
+      - name: Run backend tests with coverage thresholds
+        run: npm test
+        working-directory: backend-nodejs
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-lcov
+          path: backend-nodejs/coverage
+
+  frontend:
+    name: React Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend-reactjs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend-reactjs
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: frontend-reactjs
+
+      - name: Run React unit tests with telemetry coverage gates
+        run: npm test
+        working-directory: frontend-reactjs
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-lcov
+          path: frontend-reactjs/coverage
+
+  flutter:
+    name: Flutter Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Cache Flutter packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            flutter-phoneapp/.dart_tool
+          key: flutter-${{ runner.os }}-${{ hashFiles('flutter-phoneapp/pubspec.lock') }}
+          restore-keys: |
+            flutter-${{ runner.os }}-
+
+      - name: Resolve packages
+        run: flutter pub get
+        working-directory: flutter-phoneapp
+
+      - name: Analyze Flutter code
+        run: flutter analyze
+        working-directory: flutter-phoneapp
+
+      - name: Run Flutter widget tests with coverage
+        run: flutter test --coverage
+        working-directory: flutter-phoneapp
+
+      - name: Upload Flutter coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-coverage-lcov
+          path: flutter-phoneapp/coverage/lcov.info
+
+  governance:
+    name: Governance Automation
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+      - flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install repo tooling
+        run: npm ci
+        working-directory: backend-nodejs
+
+      - name: Validate environment parity manifests
+        run: node scripts/environment-parity.mjs
+
+      - name: Validate issue intake regeneration
+        run: |
+          node scripts/issue-intake.mjs
+          git diff --stat
+          git diff --exit-code
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend-nodejs
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend-reactjs
+
+      - name: npm audit (backend)
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: backend-nodejs
+
+      - name: npm audit (frontend)
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: frontend-reactjs
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

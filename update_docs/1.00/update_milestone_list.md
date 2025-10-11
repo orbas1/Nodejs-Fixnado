@@ -15,6 +15,7 @@
     - *2025-10-11 update:* Issue intake automation landed — `scripts/issue-intake.mjs` now enforces SLA policies, regenerates tracker artefacts, and seeds critical/high issues with remediation checklists, ready for webhook/Slack integration.
     - *2025-10-12 update:* Mobilisation governance pack published (`task1_mobilisation_raci_roadmap.md`) linking RACI ownership, phased roadmap, and dependency/compliance matrix with design drawings and telemetry artefacts; dependency risk scoring and webhook automation now track toward Milestone M1 exit.
     - *2025-10-13 update:* Shared infrastructure upgrades provisioned PostGIS/PostgreSQL, Secrets Manager toggle manifests, admin APIs, and parity checks; Subtask 1.2 marked complete with Terraform/Sequelize updates and Vitest coverage.
+    - *2025-10-14 update:* CI Quality Gates workflow enforces lint/test/coverage/security/parity gates with issue-intake regeneration and rollback playbook documentation, lifting Task 1 maturity ahead of DPIA/secret rotation deliverables.
   - **Task 1B — Core Service Blueprint Kick-off (8% complete)**
     1. Finalise geo-zonal architecture diagrams and ERDs for bookings, rentals, and campaigns.
     2. Define API contracts (OpenAPI/AsyncAPI) for zone, booking, inventory, and communication services.

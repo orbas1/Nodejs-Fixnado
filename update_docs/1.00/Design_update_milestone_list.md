@@ -21,4 +21,5 @@
 - Issue intake automation feeds SLA dashboards so design council can triage cross-disciplinary defects during milestone reviews without relying on ad-hoc spreadsheets.
 - Mobilisation governance pack maps design accountability across all milestones, ensuring accessibility/localisation audits, Chromatic/Stark capture, and blueprint refreshes are reviewed during weekly control boards alongside engineering dependencies.
 - Feature toggle governance (Secrets Manager manifests + parity audit) underpins Milestones M4–M10 so rollout pilots stay aligned with drawings and forthcoming admin toggle UI.
+- CI Quality Gates workflow publishes coverage/security/parity evidence for Milestones M1–M4, enabling design council reviews to confirm telemetry instrumentation and issue intake automation remain compliant before approving blueprint refreshes.
 

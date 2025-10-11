@@ -80,3 +80,9 @@
 - Replatformed the shared database tier to Amazon RDS PostgreSQL with PostGIS extensions, IAM auth, and SSL enforcement. Terraform now provisions the parameter group, subnet group, and secrets; application bootstrap and `scripts/bootstrap-postgis.mjs` verify PostGIS/UUID extensions during deploys.
 - Seeded environment-specific feature toggle manifests in Secrets Manager with audit-ready metadata (`infrastructure/terraform/runtime-config/feature_toggles/*.json`) and exposed secured admin APIs (`/api/admin/feature-toggles`) to view and update rollout states with validation, caching, and audit logging.
 - Published an environment parity audit (`scripts/environment-parity.mjs`) comparing tfvars keys and feature toggle drift across staging/production so CI can fail fast on configuration mismatches.
+
+## 2025-10-14 — CI/CD Quality Gates & Rollback Governance
+- Launched repository-wide CI Quality Gates workflow (`.github/workflows/ci-quality-gates.yml`) enforcing lint, coverage, Flutter parity, security audits, environment parity, and issue-intake regeneration before merges.
+- Tightened Vitest coverage scopes/thresholds for backend (`bookingService`, `featureToggleService`, `financeService`, `zoneService`, routes, middleware) and frontend (ThemeProvider, telemetry utils, theme tokens) with `@vitest/coverage-v8@^2.1.4`, surfacing LCOV artefacts for QA and compliance reviews.
+- Authored `docs/ops/ci-rollback-playbook.md` to orchestrate ArgoCD, Vercel, AppCenter, and toggle rollbacks with evidence capture, aligning with mobilisation RACI and Task 1.5 compliance deliverables.
+- Updated trackers/task lists to mark Subtask 1.3 complete, uplift Task 1 metrics, and document follow-up actions (DPIA refresh, Slack alerting, coverage raises).

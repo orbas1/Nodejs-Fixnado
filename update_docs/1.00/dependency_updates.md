@@ -5,3 +5,6 @@
 
 ## 2025-10-13 — Secrets Manager Feature Toggle Integration
 - Added `@aws-sdk/client-secrets-manager` so the API can read and persist environment feature toggle manifests with caching and IAM auth.
+
+## 2025-10-14 — CI Coverage Instrumentation
+- Added `@vitest/coverage-v8@^2.1.4` to backend and frontend devDependencies so coverage thresholds enforced locally align with CI Quality Gates.
