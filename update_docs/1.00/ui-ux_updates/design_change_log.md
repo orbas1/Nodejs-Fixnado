@@ -52,6 +52,8 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **Communication Hub**: Unified messaging drawer, video/voice launchers, AI transcript panel.
 - **Ads & Analytics**: Finova ad manager screens with campaign builder, budgeting, and performance charts.
 - **2025-01-29 — Core Page Blueprints**: React implementation aligns home, admin, provider, and services pages with recomposed grids, breadcrumbs, compliance overlays, and instrumentation. See `core_page_blueprints.md` and `frontend-reactjs/src/pages/*` for artefacts.
+- **2025-01-30 — Component Catalogue Expansion**: Introduced production-ready UI primitives (`Button`, `Card`, `StatusPill`, `TextInput`, `SegmentedControl`, `Skeleton`) and analytics widgets (`AnalyticsWidget`, `TrendChart`, `ComparisonBarChart`, `GaugeWidget`, `MetricTile`) implemented in React. Detailed audit captured in `component_catalogue_expansion.md`.
+- **2025-01-31 — Theme & Personalisation Toolkit**: Theme Studio, theme context persistence, marketing module prototypes, and telemetry hooks delivered; rollout documented in `theme_personalisation_toolkit.md`.
 
 ## Cross-Channel Alignment
 - Synced status badges, alert colours, and iconography for bookings, disputes, and compliance.
@@ -71,6 +73,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - Produce handoff-ready Figma components with auto-layout and tokens.
 - Align frontend developers on new token naming and CSS variable mapping.
 - Schedule accessibility audit after initial implementation of the new patterns.
+- Publish Theme Studio walkthrough and telemetry guidance for marketing/legal stakeholders.
 
 ## Design QA & Handoff Considerations
 - **Specification Coverage**: Each artefact in `application_design_update` and `web_application_design_update` includes acceptance criteria, pixel spacing, and component references to avoid ambiguity during implementation.
@@ -100,6 +103,7 @@ For detailed breakdowns, refer to the role- and channel-specific documents in th
 3. **Localization Readiness**: Wireframes identify variable-length copy scenarios; engineering must ensure dynamic layout handling for additional locales.
 4. **Analytics Instrumentation**: Logic flow docs now specify telemetry events to be captured at each step, enabling product to track adoption and drop-off.
 5. **Documentation Governance**: Establish version control for `application_design_update` artefacts with owners per module to keep specs synchronised with future iterations.
+6. **Theme Validation**: Run Stark-based contrast audit for dark/emo palettes and capture legal approval for emo imagery before enabling GA rollout.
 
 ### QA & Validation Roadmap
 - Conduct A/B test on new booking wizard before GA rollout.

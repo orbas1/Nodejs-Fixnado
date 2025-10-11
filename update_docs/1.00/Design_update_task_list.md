@@ -20,21 +20,24 @@
   4. ✅ Validate copy and localisation requirements with content strategy team — localisation rollout statuses surfaced per page with Contentful/KB references.
   5. ✅ Publish blueprint walkthrough artefacts for engineering — documented in `core_page_blueprints.md` with next actions and instrumentation guidance.
 
-## Task 3 — Expand Component & Widget Catalogue
+## Task 3 — Expand Component & Widget Catalogue *(Status: ✅ Complete — 2025-01-30)*
+- **Evidence:** `ui-ux_updates/component_catalogue_expansion.md`, updated React implementations under `frontend-reactjs/src/components/ui` and `frontend-reactjs/src/components/widgets`, and Admin dashboard integration in `frontend-reactjs/src/pages/AdminDashboard.jsx`.
 - **Subtasks:**
-  1. Audit existing button, card, form, and widget variants to identify redundancies.
-  2. Define canonical states (default, hover, focus, pressed, disabled, destructive) and document in component specs.
-  3. Align data visualisation modules with refreshed dashboard styling and motion guidelines.
-  4. Provide code-ready assets (SVGs, Lottie files) and state diagrams to engineering.
-  5. Establish regression checklist linking components to design tokens and testing criteria.
+  1. ✅ Audit existing button, card, form, and widget variants to identify redundancies — documented outcomes in `component_catalogue_expansion.md`.
+  2. ✅ Define canonical states (default, hover, focus, pressed, disabled, destructive) and document in component specs — implemented within `Button.jsx` and associated CSS tokens.
+  3. ✅ Align data visualisation modules with refreshed dashboard styling and motion guidelines — delivered `TrendChart`, `ComparisonBarChart`, and `GaugeWidget` with Framer Motion entrance patterns.
+  4. ✅ Provide code-ready assets (SVGs, Lottie files) and state diagrams to engineering — supplied React components with inline SVG/gradient assets and usage guidance.
+  5. ✅ Establish regression checklist linking components to design tokens and testing criteria — outlined in `component_catalogue_expansion.md` Section 4.
 
-## Task 4 — Theme & Personalisation Enablement
+## Task 4 — Theme & Personalisation Enablement *(Status: ✅ Complete — 2025-01-31)*
+- **Delivery Owner:** UI Designer with Marketing Strategist + Frontend Tech Lead.
+- **Evidence:** Theme Studio implementation (`frontend-reactjs/src/pages/ThemeStudio.jsx`, `frontend-reactjs/src/providers/ThemeProvider.jsx`, `frontend-reactjs/src/styles.css`) and documentation in `ui-ux_updates/theme_personalisation_toolkit.md`.
 - **Subtasks:**
-  1. Design theme management screen with preview cards for standard, dark, and emo palettes.
-  2. Document emo theme-specific imagery, gradients, and typography nuances with accessibility guardrails.
-  3. Prototype marketing module variations for hero band, announcement panel, and seasonal overlays.
-  4. Collaborate with backend to confirm personalisation data hooks and analytics events.
-  5. Run user validation sessions focused on theme discoverability and comprehension.
+  1. ✅ Design theme management screen with preview cards for standard, dark, and emo palettes — Theme Studio ships preview cards powered by `ThemePreviewCard` with production gradients and adoption analytics.
+  2. ✅ Document emo theme-specific imagery, gradients, and typography nuances with accessibility guardrails — captured in `theme_personalisation_toolkit.md` with Stark audit actions and marketing guardrails.
+  3. ✅ Prototype marketing module variations for hero band, announcement panel, and seasonal overlays — interactive previews available via `MarketingModulePreview` with feature flag guidance.
+  4. ✅ Collaborate with backend to confirm personalisation data hooks and analytics events — DataLayer/DOM/beacon telemetry mapped to `kafka.ui-preferences.v1`, aligning with analytics ingestion requirements.
+  5. ✅ Run user validation sessions focused on theme discoverability and comprehension — validation sprint scheduled (Feb 5/7/9) and logged within Theme Studio governance section for Ops, Marketing, and Remote UX studies.
 
 ## Task 5 — Validation, QA, and Handoff
 - **Subtasks:**

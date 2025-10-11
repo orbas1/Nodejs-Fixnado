@@ -11,6 +11,7 @@ import Search from './pages/Search.jsx';
 import Services from './pages/Services.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import ThemeStudio from './pages/ThemeStudio.jsx';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/theme-studio" element={<ThemeStudio />} />
         </Routes>
       </main>
       <Footer />

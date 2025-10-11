@@ -105,3 +105,15 @@
 - **Services & Marketing Hub:** Reauthored `Services.jsx` to showcase solution streams, marketing modules, and activation blueprint. Localisation and compliance guardrails are embedded to streamline marketing operations.
 - **Shared Primitives:** Introduced `components/blueprints/PageHeader.jsx` and `components/blueprints/BlueprintSection.jsx` to enforce the recomposed 12-column grid, anchor IDs, and accessibility patterns across pages.
 
+## 15. Component & Widget Catalogue Expansion (Task DT3 Outcome)
+- **UI Primitives:** Delivered production-ready button, card, status pill, skeleton, segmented control, and text input components in `frontend-reactjs/src/components/ui`, each mapped to the token architecture defined in `design_foundations_alignment.md`.
+- **Analytics Widgets:** Authored reusable `AnalyticsWidget`, `TrendChart`, `ComparisonBarChart`, `GaugeWidget`, and `MetricTile` modules in `frontend-reactjs/src/components/widgets` with accessibility-aware tooltips, target overlays, and motion profiles aligned to `component_types.md`.
+- **Admin Dashboard Integration:** Upgraded `AdminDashboard.jsx` to exercise the new catalogue with real datasets (escrow trends, dispute mix, SLA gauge, compliance queue), ensuring production parity and telemetry coverage via `data-action` attributes.
+- **Documentation:** Published `component_catalogue_expansion.md` capturing audit findings, regression checklist, and QA guidance for Storybook, Chromatic, accessibility, and performance validation.
+
+## 16. Theme & Personalisation Enablement (Task DT4 Outcome)
+- **Theme Studio Delivery:** Added `/admin/theme-studio` page implementing ThemeProvider context, persistent preferences, density/contrast toggles, and marketing module previews using production datasets.
+- **Token Expansion:** Extended `styles.css` with theme-specific gradients, marketing surface variables, density overrides, and high-contrast focus tokens aligned to accessibility governance.
+- **Documentation & Governance:** Authored `ui-ux_updates/theme_personalisation_toolkit.md` outlining palettes, imagery guardrails, telemetry schema, and rollout plan with marketing/legal checkpoints.
+- **Telemetry & Rollout:** Instrumented DataLayer, DOM events, and beacon payloads feeding `kafka.ui-preferences.v1`; scheduled pilot/validation sessions (dark mode compliance, emo campaign review, personalisation usability study).
+
