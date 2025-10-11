@@ -10,7 +10,7 @@
 | **DT2 — Recompose Core Page Blueprints** | Update home, dashboard, provider, and marketing layouts with new grids, IA, and compliance cues. | UX Architect, Product Manager | Weeks 3-4 *(✅ Completed 2025-01-29 — see `ui-ux_updates/core_page_blueprints.md`)* |
 | **DT3 — Expand Component & Widget Catalogue** | Rationalise component variants, document states, and align with motion guidelines. | UI Designer, Design Systems Engineer | Weeks 3-4 *(✅ Completed 2025-01-30 — see `ui-ux_updates/component_catalogue_expansion.md` and `frontend-reactjs/src/components`)* |
 | **DT4 — Theme & Personalisation Enablement** | Deliver theme management tooling, emo preview flows, and marketing module variations. | UI Designer, Marketing Strategist | Week 5 *(✅ Completed 2025-01-31 — see `ui-ux_updates/theme_personalisation_toolkit.md` and `/frontend-reactjs/src/pages/ThemeStudio.jsx`)* |
-| **DT5 — Validation, QA, and Handoff** | Execute accessibility/compliance reviews, prepare handoff packages, and support engineering integration. | QA Lead, Design Operations | Week 6 |
+| **DT5 — Validation, QA, and Handoff** | Execute accessibility/compliance reviews, prepare handoff packages, and support engineering integration. | QA Lead, Design Operations | Week 6 *(✅ Completed 2025-02-01 — see `ui-ux_updates/design_validation_and_handoff.md`, Theme Studio accessibility instrumentation, and `docs/design/handoff` assets)* |
 
 ### Detailed Subtasks Reference
 - Refer to `Design_update_task_list.md` for full subtask breakdown (4–8 subtasks per task) and acceptance criteria.

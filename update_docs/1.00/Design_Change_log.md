@@ -11,6 +11,7 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Navigation & Menus | Reworked navigation menus (`Menus.md`, `Settings.md`, `Settings Dashboard.md`) with prioritised information scent, action grouping, and persistent state indicators. Added quick-actions toolbar for high-frequency provider tasks. | Menus (app & web), Settings (app & web) | Enhances task completion speed, clarifies IA for multi-role users. |
 | Component Catalogue | Rationalised button, card, form, and widget variants (`Buttons.md`, `Cards.md`, `Forms.md`, `Screens__Update_widget_types.md`). Deprecated redundant widget styles, introduced status-aware card frames, mapped widget behaviours to states, and delivered production React implementations captured in `frontend-reactjs/src/components/ui` and `frontend-reactjs/src/components/widgets`. | Cards, Buttons, Forms, Widget Types, component_catalogue_expansion.md | Reduces engineering complexity, improves accessible affordances, and accelerates engineering handoff. |
 | Theme & Personalisation Toolkit | Introduced Theme Studio, ThemeProvider context, and multi-theme token exports aligning light, dark, and emo palettes with marketing modules. Embedded density/contrast personalisation and telemetry instrumentation. | theme_personalisation_toolkit.md, frontend-reactjs/src/pages/ThemeStudio.jsx, frontend-reactjs/src/styles.css | Enables governed theme switching, accessibility overrides, and marketing experimentation with analytics traceability. |
+| Validation & Handoff Playbook | Authored cross-screen validation checklists, QA cadence, and handoff inventory. Added aria-live announcer and QA selectors to Theme Studio with supporting assets for automation teams. | design_validation_and_handoff.md, frontend-reactjs/src/pages/ThemeStudio.jsx, docs/design/handoff/* | Ensures accessibility/compliance sign-off, de-risks QA automation, and accelerates engineering onboarding ahead of launch. |
 | Data Visualisation | Defined dashboard module styling (`Dashboard Designs.md`, `Dashboard Organisation.md`) with refreshed chart colours, tooltip treatments, and anomaly surfacing patterns. Added animated loading skeletons to reduce perceived latency. | Dashboard Designs, Dashboard Organisation | Improves interpretability of analytics and resilience to slow data responses. |
 | Content & Messaging | Refined copy tone hierarchy from `Screen_text.md`, `text.md.md`, and `Home page text.md`. Added templated microcopy for error states and guided onboarding flows aligned with compliance requirements. | Screen_text, text.md.md, Home page text | Drives consistent voice and regulatory clarity. |
 | Imagery & Illustration | Curated imagery specifications (`Screens_update_images_and_vectors.md`, `images_and _vectors.md`, `Home page images.md`) to support inclusive representation and performance budgets. Implemented vector-first approach with fallbacks for offline caching. | Image/vector documents | Improves accessibility and load performance across devices. |
@@ -57,9 +58,20 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Documented palette tokens, imagery guidelines, telemetry, and rollout plan in `ui-ux_updates/theme_personalisation_toolkit.md`.
 - Instrumented DOM/DataLayer/beacon telemetry to feed `kafka.ui-preferences.v1` and updated trackers marking DT4 complete.
 
+### 8. Validation, QA, and Handoff (2025-02-01)
+- Produced `design_validation_and_handoff.md` consolidating accessibility/compliance/security checklists across web and mobile blueprints with QA ownership.
+- Added `PreferenceChangeAnnouncer` aria-live utility and deterministic `data-qa` selectors to Theme Studio, supporting assistive tech and automation reliability.
+- Exported validation assets (`fx-theme-preferences.json`, `ui-qa-scenarios.csv`) to handoff bundle, ensuring telemetry schemas and QA scripts remain version-controlled.
+
+### 9. Telemetry Ingestion & Analytics (2025-02-02)
+- Partnered with data engineering to deploy the UI preference telemetry ingestion stack, adding persistent storage (`ui_preference_telemetry`), hashed IP governance, and correlation identifiers for downstream reconciliation.
+- Enhanced Theme Studio instrumentation via `utils/telemetry.js` to enrich beacons with tenant, role, locale, and correlation metadata alongside fetch fallbacks for environments without `sendBeacon` support.
+- Authored analytics runbook `docs/telemetry/ui-preference-dashboard.md` and expanded QA scenarios to include ingestion verification, unblocking Looker dashboard build-out and monitoring SLAs.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles and personalised home variants.
+- Schedule Looker dashboard review with analytics once `/api/telemetry/ui-preferences/summary` reaches parity across tenants.
 - Evaluate additional "emo" theme presets and seasonal variants after initial release metrics.
 - Monitor performance impact of new imagery pipeline under constrained networks.
 

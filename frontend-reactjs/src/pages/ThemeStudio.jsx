@@ -4,6 +4,7 @@ import PageHeader from '../components/blueprints/PageHeader.jsx';
 import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
 import ThemePreviewCard from '../components/theme/ThemePreviewCard.jsx';
 import MarketingModulePreview from '../components/theme/MarketingModulePreview.jsx';
+import PreferenceChangeAnnouncer from '../components/accessibility/PreferenceChangeAnnouncer.jsx';
 import { Button, Card, SegmentedControl } from '../components/ui/index.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { PERSONALISATION_OPTIONS } from '../theme/config.js';
@@ -33,7 +34,8 @@ export default function ThemeStudio() {
   const headerMeta = useMemo(() => preferenceMeta({ preferences }), [preferences]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 pb-24" data-qa-page="theme-studio">
+      <PreferenceChangeAnnouncer />
       <PageHeader
         eyebrow="Theme & personalisation"
         title="Theme studio"
@@ -79,13 +81,14 @@ export default function ThemeStudio() {
             </Button>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3" data-qa="theme-presets-grid">
             {themes.map((preset) => (
               <ThemePreviewCard
                 key={preset.id}
                 preset={preset}
                 active={preferences.theme === preset.id}
                 onSelect={setTheme}
+                qa={`theme-preset-card.${preset.id}`}
               />
             ))}
           </div>
@@ -109,6 +112,7 @@ export default function ThemeStudio() {
                   value={preferences.density}
                   options={personalisationOptions.density.map((option) => ({ label: option.label, value: option.value }))}
                   onChange={setDensity}
+                  qa={{ group: 'density-control', option: 'density-option' }}
                 />
                 <p className="mt-2 text-xs text-slate-500">
                   {PERSONALISATION_OPTIONS.density.find((option) => option.value === preferences.density)?.description}
@@ -122,6 +126,7 @@ export default function ThemeStudio() {
                   value={preferences.contrast}
                   options={personalisationOptions.contrast.map((option) => ({ label: option.label, value: option.value }))}
                   onChange={setContrast}
+                  qa={{ group: 'contrast-control', option: 'contrast-option' }}
                 />
                 <p className="mt-2 text-xs text-slate-500">
                   {PERSONALISATION_OPTIONS.contrast.find((option) => option.value === preferences.contrast)?.description}
@@ -137,7 +142,7 @@ export default function ThemeStudio() {
                     <code className="text-xs">contrast</code>, <code className="text-xs">marketingVariant</code>.
                   </li>
                   <li>
-                    Beacon dispatched to <code className="text-xs">/telemetry/ui-preferences</code> for behavioural analytics.
+                    Beacon dispatched to <code className="text-xs">/api/telemetry/ui-preferences</code> for behavioural analytics.
                   </li>
                   <li>Custom DOM event <code className="text-xs">fixnado:theme-change</code> enables integration testing.</li>
                 </ul>
@@ -183,10 +188,14 @@ export default function ThemeStudio() {
               options={personalisationOptions.marketingVariant.map((option) => ({ label: option.label, value: option.value }))}
               onChange={setMarketingVariant}
               size="sm"
+              qa={{ group: 'marketing-variant-control', option: 'marketing-option' }}
             />
           </div>
 
-          <MarketingModulePreview variant={preferences.marketingVariant} />
+          <MarketingModulePreview
+            variant={preferences.marketingVariant}
+            qa={`marketing-preview.${preferences.marketingVariant}`}
+          />
         </section>
 
         <BlueprintSection

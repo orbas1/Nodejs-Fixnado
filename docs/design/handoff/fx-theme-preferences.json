@@ -1,0 +1,87 @@
+{
+  "version": "1.00",
+  "generatedAt": "2025-02-01T09:00:00Z",
+  "themes": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "palette": {
+        "surface": "#ffffff",
+        "surfaceMuted": "#f4f7fa",
+        "textPrimary": "#0b1d3a",
+        "accent": "#1445e0",
+        "border": "#d5ddf6"
+      },
+      "hero": {
+        "gradient": "linear-gradient(135deg, #1445e0 0%, #3c8ce7 100%)",
+        "shadow": "0 40px 60px -40px rgba(20, 69, 224, 0.45)"
+      },
+      "guardrails": [
+        "Maintain 4.5:1 contrast ratio for text",
+        "Use ghost buttons for secondary CTAs"
+      ]
+    },
+    {
+      "id": "dark",
+      "name": "Dark",
+      "palette": {
+        "surface": "#0f172a",
+        "surfaceMuted": "#111b2b",
+        "textPrimary": "#f8fafc",
+        "accent": "#5b7cfa",
+        "border": "rgba(148, 163, 184, 0.32)"
+      },
+      "hero": {
+        "gradient": "linear-gradient(135deg, #1f2a44 0%, #274472 100%)",
+        "shadow": "0 40px 60px -40px rgba(91, 124, 250, 0.4)"
+      },
+      "guardrails": [
+        "Preserve motion duration <=220ms",
+        "Restrict accent highlights to KPI tiles"
+      ]
+    },
+    {
+      "id": "emo",
+      "name": "Emo Spotlight",
+      "palette": {
+        "surface": "#0f0a1d",
+        "surfaceMuted": "#140f2d",
+        "textPrimary": "#f5f3ff",
+        "accent": "#8b5cf6",
+        "border": "rgba(139, 92, 246, 0.42)"
+      },
+      "hero": {
+        "gradient": "linear-gradient(135deg, #8b5cf6 0%, #ec4899 45%, #f97316 100%)",
+        "shadow": "0 45px 80px -40px rgba(236, 72, 153, 0.55)"
+      },
+      "guardrails": [
+        "Run Stark contrast validation before launch",
+        "Confine neon overlays to marketing hero"
+      ]
+    }
+  ],
+  "qa": {
+    "dataLayerEvent": "theme_change",
+    "beaconEndpoint": "/api/telemetry/ui-preferences",
+    "domEvent": "fixnado:theme-change",
+    "payloadSchema": {
+      "type": "ui_theme_preference",
+      "required": [
+        "theme",
+        "density",
+        "contrast",
+        "marketingVariant",
+        "tenantId",
+        "role",
+        "timestamp",
+        "dataVersion"
+      ],
+      "optional": [
+        "userId",
+        "locale",
+        "userAgent",
+        "correlationId"
+      ]
+    }
+  }
+}

@@ -41,7 +41,7 @@
   - Local storage key: `fixnado.theme-preferences.v1`.
   - Custom DOM event: `fixnado:theme-change` (payload: `theme`, `density`, `contrast`, `marketingVariant`, `timestamp`).
   - DataLayer push: `{ event: 'theme_change', ...payload }`.
-  - `navigator.sendBeacon('/telemetry/ui-preferences', payload)` for behaviour analytics; fallback instrumentation sits with data team.
+  - `navigator.sendBeacon('/api/telemetry/ui-preferences', payload)` for behaviour analytics; fallback instrumentation sits with data team.
 - **Analytics Schema:** Extended `ui_preferences` table with columns `theme`, `density`, `contrast`, `marketing_variant`, `role`, `tenant_id`, `timestamp`.
 - **QA Hooks:** Storybook scenarios to cover theme toggling + marketing preview; Chromatic snapshot suite to be added in Sprint 4.
 

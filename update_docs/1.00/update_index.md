@@ -45,3 +45,37 @@
 - [`frontend-reactjs/src/styles.css`](../frontend-reactjs/src/styles.css) — Extended token set for light/dark/emo themes, density, contrast, and marketing surfaces.
 - [`frontend-reactjs/src/providers/ThemeProvider.jsx`](../frontend-reactjs/src/providers/ThemeProvider.jsx) & [`frontend-reactjs/src/pages/ThemeStudio.jsx`](../frontend-reactjs/src/pages/ThemeStudio.jsx) — Implemented Theme Studio, persistent preferences, marketing previews, and telemetry instrumentation.
 Refer to the directory-specific documents within `ui-ux_updates/application_design_update/version_1.00_update` and `ui-ux_updates/web_application_design_update/version_1.00_update` for page-level specifications informed by this consolidation.
+
+## Newly Updated Artefacts (2025-02-01)
+- [`change_log.md`](change_log.md) — Logged validation, QA, and handoff completion referencing new playbook, accessibility instrumentation, and handoff assets.
+- [`Design_Plan.md`](Design_Plan.md) — Added Task DT5 outcome covering validation playbook, automation instrumentation, and governance cadence.
+- [`Design_Change_log.md`](Design_Change_log.md) — Recorded validation & handoff entry detailing checklist coverage, announcer, and QA assets.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Marked DT5 complete with evidence across docs, code, and exported assets.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Marked DM4 complete with validation artefacts and follow-up automation backlog.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Updated metrics to reflect validation readiness, automation hooks, and governance cadence.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Refreshed UI/UX metrics after validation handoff delivery and outlined next steps.
+- [`update_task_list.md`](update_task_list.md) — Logged DT5 completion referencing playbook and repository exports.
+- [`update_milestone_list.md`](update_milestone_list.md) — Recorded DM4 completion with aria-live, telemetry schema, and QA cadence notes.
+- [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Added 2025-02-01 playbook entry and QA cadence update.
+- [`ui-ux_updates/design_validation_and_handoff.md`](ui-ux_updates/design_validation_and_handoff.md) — New playbook consolidating validation checklists, QA cadence, handoff inventory, and lessons learned.
+- [`frontend-reactjs/src/pages/ThemeStudio.jsx`](../frontend-reactjs/src/pages/ThemeStudio.jsx) — Enhanced with aria-live announcer and QA selectors for deterministic automation coverage.
+- [`frontend-reactjs/src/components/theme/ThemePreviewCard.jsx`](../frontend-reactjs/src/components/theme/ThemePreviewCard.jsx) & [`frontend-reactjs/src/components/theme/MarketingModulePreview.jsx`](../frontend-reactjs/src/components/theme/MarketingModulePreview.jsx) — Added QA attributes supporting regression harnesses.
+- [`frontend-reactjs/src/components/ui/SegmentedControl.jsx`](../frontend-reactjs/src/components/ui/SegmentedControl.jsx) — Extended API to expose QA metadata without compromising accessibility semantics.
+- [`frontend-reactjs/src/components/accessibility/PreferenceChangeAnnouncer.jsx`](../frontend-reactjs/src/components/accessibility/PreferenceChangeAnnouncer.jsx) — New aria-live utility broadcasting preference changes for assistive technology.
+- [`docs/design/handoff/fx-theme-preferences.json`](../docs/design/handoff/fx-theme-preferences.json) & [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Version-controlled handoff exports for QA/engineering teams.
+
+## Newly Updated Artefacts (2025-02-02)
+- [`change_log.md`](change_log.md) — Logged telemetry ingestion and analytics enablement updates with references to backend services, enriched instrumentation, and dashboard documentation.
+- [`Design_Plan.md`](Design_Plan.md) — Added Telemetry Ingestion Enablement continuation detailing API delivery, instrumentation upgrade, and operational playbook.
+- [`Design_Change_log.md`](Design_Change_log.md) — Recorded telemetry ingestion and analytics section with follow-up governance notes.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Refreshed progress notes to capture ingestion API launch and analytics readiness.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Elevated metrics reflecting telemetry persistence, security hardening, and analytics enablement.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised programme metrics to reflect telemetry ingestion closure and dashboard focus.
+- [`docs/design/handoff/fx-theme-preferences.json`](../docs/design/handoff/fx-theme-preferences.json) — Documented payload schema including tenant/role, locale, correlationId, and dataVersion requirements.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added telemetry ingestion handshake scenario covering API + summary verification.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — New runbook describing ingestion API contracts, dashboard guidance, and operational monitoring actions.
+- [`frontend-reactjs/src/providers/ThemeProvider.jsx`](../frontend-reactjs/src/providers/ThemeProvider.jsx) — Enriched telemetry payloads with tenant/role metadata, added fetch fallback, and centralised payload builder.
+- [`frontend-reactjs/src/utils/telemetry.js`](../frontend-reactjs/src/utils/telemetry.js) — New utility resolving session context, building beacon payloads, and generating correlation IDs.
+- [`backend-nodejs/src/models/uiPreferenceTelemetry.js`](../backend-nodejs/src/models/uiPreferenceTelemetry.js) — Introduced Sequelize model for persisted telemetry with hashed IP governance.
+- [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — New ingestion + analytics endpoints powering Looker dashboard integration.
+- [`backend-nodejs/src/routes/index.js`](../backend-nodejs/src/routes/index.js) & [`backend-nodejs/src/models/index.js`](../backend-nodejs/src/models/index.js) — Wired telemetry routes and model exports into the API surface.

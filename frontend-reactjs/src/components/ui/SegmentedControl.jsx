@@ -8,7 +8,8 @@ export default function SegmentedControl({
   options,
   onChange,
   size,
-  className
+  className,
+  qa
 }) {
   const handleKeyDown = (event, index) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
@@ -30,6 +31,7 @@ export default function SegmentedControl({
       role="radiogroup"
       aria-label={name}
       data-size={size}
+      {...(qa?.group ? { 'data-qa': qa.group } : {})}
     >
       {options.map((option, index) => (
         <button
@@ -44,6 +46,9 @@ export default function SegmentedControl({
           tabIndex={value === option.value ? 0 : -1}
           onClick={() => onChange(option.value)}
           onKeyDown={(event) => handleKeyDown(event, index)}
+          {...(qa?.option
+            ? { 'data-qa': `${qa.option}.${option.value}` }
+            : {})}
         >
           {option.label}
         </button>
@@ -63,10 +68,15 @@ SegmentedControl.propTypes = {
   ).isRequired,
   onChange: PropTypes.func.isRequired,
   size: PropTypes.oneOf(['sm', 'md']),
-  className: PropTypes.string
+  className: PropTypes.string,
+  qa: PropTypes.shape({
+    group: PropTypes.string,
+    option: PropTypes.string
+  })
 };
 
 SegmentedControl.defaultProps = {
   size: 'md',
-  className: undefined
+  className: undefined,
+  qa: undefined
 };
