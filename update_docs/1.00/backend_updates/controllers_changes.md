@@ -16,3 +16,7 @@
 ## 2025-10-18 — Compliance & Marketplace Controllers
 - Added `complianceController.js` handling document submission, review decisions, insured badge toggles, suspensions, and evaluation endpoints; controllers return structured 409 responses for ineligible sellers and bubble audit metadata for moderation logs.
 - Introduced `marketplaceController.js` for listing creation, review submission, moderation approvals/rejections/suspensions, moderation queue retrieval, and approved listings feed, wiring request query parsing (limits/offsets) into new service layer filters.
+
+## 2025-10-19 — Campaign Manager Controller
+- Added `campaignController.js` orchestrating campaign CRUD, flight creation/update, pacing metric ingestion, overspend pause/resume, invoice generation, and status transitions with deterministic validation + config-driven defaults surfaced in responses for admin/provider UI.
+- Controller normalises targeting validation errors into 422 payloads, surfaces pacing/invoice summaries for dashboards, and coordinates transactional writes so company-level budget checks and insured seller gating remain consistent across requests.

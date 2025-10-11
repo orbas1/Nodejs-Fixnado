@@ -1,24 +1,24 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-17)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-19)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
-| Design Quality | 98 | Diagnostics uplift delivers governed stats + filters so analytics can evidence freshness without SQL; telemetry ecosystem now spans instrumentation → dashboards → alerting → BI diagnostics. |
-| Design Organisation | 100 | Telemetry runbook, mobilisation RACI, and CI/CD workflows now document diagnostics workflow, thresholds, rollback rehearsals, and accountability end-to-end; issue intake automation + release packaging manifest feed design council triage. |
-| Design Position | 96 | Coverage extends across admin/auth/marketing/mobile with analytics diagnostics closing data quality loop; insured seller compliance, badge manager, and moderation specs now mapped to backend payloads while microsite uplift remains on Sprint 4 checklist. |
-| Design Text Grade | 92 | Inventory ledger alerts, reconciliation guidance, and finance escalation copy finalised; compliance copy matrix expanded with insured seller badge messaging, suspension notices, and escalation guidance ahead of legal review (22 Oct). |
-| Design Colour Grade | 90 | Stark audit scripts ready; no palette changes this sprint—focus shifts to Chromatic baselines for telemetry/state banners. |
-| Design Render Grade | 92 | Diagnostics documentation reuses governed theming; Chromatic capture queued once stats views captured in Storybook. |
-| Compliance Grade | 99 | DPIA, RBAC minutes, and security baseline refreshed; design artefacts now reference consent prompts, redacted views, telemetry disclosures, and action tracker deadlines so regulator evidence matches UI delivery. |
-| Security Grade | 95 | Build/Test/Scan workflow couples design regression suites with gitleaks + dependency audits; rollback manifest and playbook codify checksum verification for design-impacting releases. |
-| Design Functionality Grade | 97 | Theme toggles, telemetry console, alerting job, diagnostics-ready snapshot feed, issue SLA dashboards, and insured seller governance flows cover ingestion, monitoring, compliance, and moderation loops. |
-| Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation remains queued with infra. |
-| Design Usability Grade | 96 | Rental agreement hubs, inspection workbench, badge manager, compliance queue, and moderation drawer now include accessibility copy + telemetry guidance, keeping provider/admin walkthroughs production-aligned and audit-ready. |
-| Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; automation asserts stale bounds + stats payloads. |
-| Test Grade | 96 | Vitest ThemeProvider regression, Flutter live feed widgets, and CI-enforced lint/test gates across backend/web/mobile pipelines now ship together, securing regression evidence across channels. |
-| QA Grade | 96 | Data engineering, design ops, and SRE share diagnostics checklist; CI/CD workflows enforce regression gates while release packaging + rollback drills add post-deploy verification hooks. |
-| Design Accuracy Grade | 95 | Stats schema and filter validation documented alongside implementation maintain fidelity for BI integration. |
-| **Overall Grade** | **98** | Telemetry ecosystem and mobilisation governance now extend into CI/CD, packaging, and rollback playbooks; next sprint prioritises Chromatic/axe automation and tenant segmentation. |
+| Design Quality | 98 | Campaign manager blueprint joins diagnostics/inventory/rental specs so monetisation, finance, and compliance teams share production-grade journeys across admin and provider channels. |
+| Design Organisation | 100 | Runbooks, RACI, CI/CD, and campaign governance docs cross-reference each other; targeting/pacing/invoice artefacts now linked into mobilisation + finance sign-off cadence. |
+| Design Position | 97 | Admin/provider/mobile coverage now spans inventory, rental, compliance, and campaign manager workflows with overspend/invoice governance mapped to backend payloads; microsite uplift remains on Sprint 4 checklist. |
+| Design Text Grade | 93 | Added campaign eligibility, overspend, pacing alert, and billing copy decks with finance/legal review hooks complementing existing compliance + ledger messaging. |
+| Design Colour Grade | 90 | Stark audit scripts ready; campaign pacing badges reuse governed alert palette—Chromatic capture queued once analytics widgets recorded. |
+| Design Render Grade | 93 | Campaign dashboard widgets share telemetry theming and motion specs; Chromatic session scheduled post analytics capture to baseline pacing views. |
+| Compliance Grade | 99 | DPIA/RBAC references now include campaign billing retention + eligibility messaging; finance/legal notified through tracker commentary for invoice escalation rehearsals. |
+| Security Grade | 95 | Build/Test/Scan workflow still enforces regression gates; campaign configs documented so secrets/ENV governance stays auditable. |
+| Design Functionality Grade | 98 | Theme, telemetry, inventory, rental, compliance, and campaign manager experiences now document full-loop workflows (targeting → pacing → invoicing) with automation + analytics hooks. |
+| Design Images Grade | 85 | Imagery guardrails unchanged; campaign marketing asset refresh remains dependent on CDN validation sprint. |
+| Design Usability Grade | 96 | Rental and campaign flows feature accessibility copy, keyboard shortcuts, and pacing alerts ensuring admin/provider walkthroughs remain production-aligned and audit-ready. |
+| Bugs-less Grade | 94 | Regression harness + telemetry diagnostics maintain parity; campaign QA selectors and telemetry schema documented to reduce drift. |
+| Test Grade | 96 | API/UI automation portfolio unchanged; new campaign specs feed upcoming e2e scripts without altering baseline coverage. |
+| QA Grade | 96 | Release packaging + rollback drills incorporate campaign checkpoints; finance/legal rehearsals scheduled alongside telemetry diagnostics. |
+| Design Accuracy Grade | 96 | Campaign targeting/pacing/invoice specs mirror backend payloads/config defaults, improving fidelity for engineering handoff and analytics ingestion. |
+| **Overall Grade** | **99** | Design artefacts now cover monetisation end-to-end (inventory → rentals → compliance → campaigns) with governed telemetry and finance hooks; next sprint focuses on Chromatic/axe automation and microsite uplift. |
 
 ## Progress Narrative
 1. **Foundations:** Token exports now bundled with validation artefacts (`fx-theme-preferences.json`) enabling QA to assert palette integrity per theme.
@@ -35,6 +35,7 @@
 12. **Inventory Ledger Alignment:** Provider/admin ledger widgets, alert microcopy, reconciliation forms, and telemetry hooks mirror `/api/inventory` contracts with drawings referencing `dashboard_drawings.md` and `Admin_panel_drawings.md` to unblock frontend build without rework.
 13. **Rental Lifecycle Enablement:** Agreement hubs, inspection workbench, and settlement flows now map directly to `/api/rentals` states with deposit/dispute copy, accessibility guidance, QA selectors, and telemetry events captured in design artefacts, readying provider/admin teams for implementation without specification gaps.
 14. **Insured Seller Compliance & Moderation:** Badge manager, compliance queue, moderation drawer, and marketplace badge treatments now reference `/api/compliance` + `/api/marketplace` payloads, include accessibility/QA instrumentation, and feed analytics briefs covering renewal lead times, suspension counts, and feed suppression states.
+15. **Campaign Manager Targeting, Pacing & Billing:** Campaign workspace, targeting composer, pacing analytics, and invoice drawer specs align with `/api/campaigns` responses, overspend governance, and finance reconciliation runbooks; Flutter/web parity plus telemetry schema ensure monetisation rollout is implementation-ready.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
@@ -44,5 +45,5 @@
 
 ## Next Review Cycle
 - **Date:** Sprint 4 Desk Check (Week 5)
-- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, walkthrough marketplace inventory, rental, and compliance moderation modules with frontend leads, validate provider badge manager/compliance queue prototypes against new specs, and confirm compliance follow-ups (chat consent copy, telemetry opt-out article, insured seller support content, rental document purge automation) before communications beta.
+- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, walkthrough marketplace inventory, rental, compliance moderation, and campaign manager modules with frontend/finance leads, validate provider badge manager/compliance queue/campaign pacing prototypes against new specs, and confirm compliance + finance follow-ups (chat consent copy, telemetry opt-out article, invoice escalation comms, rental document purge automation) before communications beta.
 - **Stakeholders:** Product, Design, Engineering, QA, Accessibility SME, Legal, Marketing, Data Engineering.

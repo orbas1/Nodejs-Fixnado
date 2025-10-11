@@ -128,3 +128,43 @@
 - Acknowledgement path posts to `/api/rentals/{id}/alerts/{alertId}/acknowledge`, echoing metadata to inventory alert timeline.
 - Snooze/escalation actions propagate to both rental + inventory audit logs ensuring consistent MTTA reporting.
 - Health widget recalculates available inventory factoring rental holds and overdue returns using combined `/api/inventory/health` payload.
+
+## 18. Campaign Creation Flow
+1. User selects `Create campaign` → modal/route initialises with advertiser pre-selected (based on account context) and compliance eligibility check via `/api/compliance/companies/:companyId/summary`.
+2. Step 1 (Basics): Capture campaign name, objective, start/end dates. Validation ensures end ≥ start and start ≥ today. POST draft to `/api/campaigns` with status `draft`; response returns `campaignId` for subsequent steps.
+3. Step 2 (Budget): Collect total + daily budget. UI calculates minimum flight duration and highlights overspend multiplier (read-only). PATCH `/api/campaigns/:id` to persist budgets. If validation fails (daily > total/days), show inline error and block progression.
+4. Step 3 (Targeting): User adds targeting chips; each addition triggers POST `/api/campaigns/:id/targeting` with payload `{ type, value, params }`. Service responds with canonicalised rule + ruleId. UI updates chip list and telemetry `campaign.targeting.add`.
+5. Step 4 (Flights): User defines first flight schedule. POST `/api/campaigns/:id/flights` with `{ name, startDate, endDate, dailyBudget, totalBudget, status }`. Response includes flightId; UI renders timeline preview.
+6. Step 5 (Review): Summarise configuration, display eligibility/compliance banners if outstanding requirements. Finalise by PATCH `/api/campaigns/:id` status `active` (if startDate ≤ today) or `scheduled`. Emit telemetry `campaign.create.submit` and show success toast referencing pacing analytics availability.
+
+## 19. Targeting Management Flow
+1. From campaign detail, user clicks `Edit targeting` → drawer fetches existing rules via `GET /api/campaigns/:id/targeting`.
+2. Adding rule: user selects rule type (Geo radius, Category, Audience, Slot). Form collects values with auto-complete referencing taxonomy endpoints (e.g., `/api/catalog/categories`). On submit, POST to `/api/campaigns/:id/targeting`.
+3. Backend enforces `CAMPAIGN_TARGETING_CAP`; if exceeded, returns 422 with `limitExceeded` flag and remaining slots. UI displays inline error and suggests consolidating segments.
+4. Removing rule: user clicks chip remove; DELETE `/api/campaigns/:id/targeting/:ruleId`. Success updates chip list and logs telemetry `campaign.targeting.remove`.
+5. Reordering (priority weight): drag handles adjust order; PATCH `/api/campaigns/:id/targeting/reorder` with new sequence array. Response returns normalised order to render.
+
+## 20. Daily Metric Ingestion & Overspend Handling
+1. Scheduled job or manual API call posts to `/api/campaigns/:id/daily-metrics` with array of `{ date, spend, impressions, clicks, conversions }`.
+2. Backend calculates cumulative spend vs allocated (campaign + flight). If spend exceeds `overspendMultiplier * dailyBudget`, service auto-pauses campaign and returns `overspendTriggered=true` plus recommended resume time.
+3. UI receives ingestion response via webhook/polling endpoint `/api/campaigns/:id/pacing`. When overspend triggered, detail view displays critical banner and disables resume button until finance review, referencing config `campaigns.overspendMultiplier`.
+4. Telemetry event `campaign.status.pause_auto` fired with payload `{ campaignId, flightId, spendDelta, triggeredAt }`. Slack/notification job invoked for finance escalation.
+5. Once user reviews, pressing `Resume` triggers POST `/api/campaigns/:id/actions/resume` with acknowledgement note. Response clears banner and logs `campaign.status.resume_manual`.
+
+## 21. Invoice Generation & Settlement Flow
+1. Finance user selects `Generate invoice` on campaign detail. POST `/api/campaigns/:id/invoices` with `{ billingPeriodStart, billingPeriodEnd }`.
+2. Backend calculates amount from daily metrics, returns invoice with due date = `generatedAt + invoiceDueInDays`. UI appends invoice row, surfaces due countdown chip, and logs telemetry `campaign.invoice.generate`.
+3. When payment received, finance selects `Record payment`. PATCH `/api/campaigns/:id/invoices/:invoiceId` with `{ paymentDate, amount, reference, method }`. Response updates status to `paid` and appends audit event.
+4. Overdue scenario: scheduler marks invoice overdue; UI displays red badge and prompts escalation. Escalation action triggers POST `/api/campaigns/:id/invoices/:invoiceId/escalate` notifying finance Slack + email with payload containing invoice metadata.
+5. Invoice dispute: button opens modal capturing dispute reason, attachments. POST `/api/campaigns/:id/invoices/:invoiceId/dispute`. Status set to `in_dispute`; UI shows amber badge and logs event.
+
+## 22. Campaign Archive & Deletion Flow
+1. User selects `Archive campaign`; modal summarises outstanding invoices and flights. If open invoices exist, disable action with explanation.
+2. When eligible, POST `/api/campaigns/:id/actions/archive` setting status `archived`, closing active flights. UI removes campaign from default list, accessible via status filter.
+3. Deletion allowed only for drafts with no spend. DELETE `/api/campaigns/:id` prompts confirmation referencing compliance retention note (metrics stored 7 years). Success triggers toast and telemetry `campaign.delete`.
+
+## 23. Provider Mobile Quick Actions
+1. Provider opens mobile Campaign screen; app fetches `/api/campaigns?view=provider&status=active`.
+2. Swipe left reveals quick actions `Pause` and `Invoices`. Pause sends POST `/api/campaigns/:id/actions/pause` with reason `provider_manual`. Confirmation bottom sheet summarises impact.
+3. Selecting `Invoices` opens condensed list; tapping invoice uses deep link to billing drawer anchored to invoice ID. Payment recording optional if user has finance scope; otherwise show info message.
+4. Push notifications triggered when overspend pause or invoice overdue; tapping notification routes to campaign detail anchored to relevant section.

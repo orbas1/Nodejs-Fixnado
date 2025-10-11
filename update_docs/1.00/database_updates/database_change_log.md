@@ -10,3 +10,7 @@
 ## 2025-10-18 — Compliance & Marketplace Moderation Schema
 - Migration `20250218000000-compliance-and-marketplace-moderation.js` introduces `ComplianceDocument`, `InsuredSellerApplication`, and `MarketplaceModerationAction` tables plus new columns on `Company` and `MarketplaceItem` to persist document submissions, review status, badge visibility, compliance hold windows, and moderation audit trails.
 - Added enums and JSON columns compatible with Postgres + sqlite for document status tracking, required document snapshots, and moderation metadata; seed indexes support fast moderation queue lookups and company compliance summary queries.
+
+## 2025-10-19 — Campaign Manager Schema
+- Migration `20250219000000-create-campaign-manager.js` creates `ad_campaigns`, `campaign_flights`, `campaign_targeting_rules`, `campaign_invoices`, and `campaign_daily_metrics` tables with UUID primary keys, spend/impression indexes, enum governance, and cascading constraints tying campaigns to companies and finance ledgers.
+- Rollback path drops enum types and dependent indexes cleanly for Postgres while maintaining sqlite compatibility, and the migration seeds targeting type enums plus invoice status defaults to keep staging/prod aligned.

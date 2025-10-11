@@ -17,3 +17,7 @@
 ## 2025-10-18 — Compliance & Marketplace Tests
 - Added `tests/complianceMarketplace.test.js` validating end-to-end insured seller governance: blocking unverified listings, approving multiple document types, moderation queue responses, feed suppression after document expiry, badge toggles, and suspension gating.
 - Test suite exercises new `/api/compliance` + `/api/marketplace` endpoints with sqlite-backed migrations, ensuring document expiry auto-marks records, compliance evaluation updates `Company` snapshots, and moderation actions persist audit metadata.
+
+## 2025-10-19 — Campaign Manager Tests
+- Added `tests/campaignRoutes.test.js` covering campaign creation, flight allocation, daily pacing ingestion, overspend pause enforcement, invoice generation, and summary retrieval while asserting targeting validation and insured seller gating.
+- Test harness seeds sqlite with campaign configuration defaults, mocks invoice clock to verify due date offsets, and validates overspend multiplier handling to guarantee parity with production Postgres execution.

@@ -20,3 +20,13 @@
 - **Dispute Resolution Panel:** Table listing active disputes with severity, ageing, reason codes, assigned owner, and next action. Provide CTA `View case` to open detail drawer with attachments, ledger context, and messaging logs.
 - **Compliance Snapshot:** Card summarising expiring insurance certificates, missing documents, and DPIA purge schedule reminders with CTA linking to compliance settings. Includes legal copy referencing retention rules.
 - **Telemetry Hooks:** Widgets emit events `rental.dashboard.widget_view`, `rental.inspection.queue_action`, and `rental.dispute.action` containing `{ rentalId, action, severity }` for analytics and MTTA tracking.
+
+## Campaign Manager Dashboard Widgets (Added 2025-10-19)
+- **Campaign Performance Summary:** KPI tiles for Spend to date, Delivery %, CTR, CPA with comparison chips vs previous period. Tiles include info tooltips referencing data source (daily metrics) and emit telemetry `campaign.dashboard.kpi_view`.
+- **Pacing Timeline Canvas:** Multi-series line chart showing planned vs actual spend with overspend threshold shading. Includes toggle for cumulative vs daily view, zoom controls (7/14/30 days), and annotation markers for pauses/invoice events. Export options: CSV, PNG, Slack share.
+- **Flight Status Grid:** Table with flights grouped by campaign showing status, start/end, daily budget, spend, delivery, pacing badge. Supports column sorting, inline pause/resume buttons, and bulk actions with confirmation modals.
+- **Targeting Coverage Heatmap:** Matrix of targeting types vs campaign count showing utilisation and spend share. Clicking cell opens filtered list of campaigns using that targeting. Provides insights for marketing strategy.
+- **Invoice Aging Waterfall:** Chart summarising invoices by status (Draft, Issued, Due Soon, Overdue, Paid). Includes due countdown chips and CTA `View aging report` linking to billing drawer filtered for overdue invoices.
+- **Overspend Alerts Panel:** List of campaigns in overspend or at-risk state with badges indicating severity, spend delta, days paused, and recommended action. Buttons `Resume`, `Escalate`, `Adjust budget` call respective endpoints or open modals with finance copy.
+- **Compliance Reminder Card:** Displays campaigns blocked by insured seller status or pending compliance documents. Offers CTA to open compliance queue and replicates microcopy emphasising regulatory obligations.
+- **Telemetry Hooks:** Widgets emit events `campaign.dashboard.widget_view`, `campaign.dashboard.flight_action`, `campaign.dashboard.overspend_escalate`, and `campaign.dashboard.invoice_export` with payloads for analytics/fraud monitoring.

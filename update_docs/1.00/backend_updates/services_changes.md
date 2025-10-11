@@ -14,3 +14,8 @@
 - Added `services/complianceService.js` to manage document submissions, validation, status transitions (submitted/approved/rejected/expired/suspended), insured seller application evaluation, badge visibility toggles, and suspension logging, updating `Company` compliance snapshots atomically.
 - Created `services/marketplaceService.js` to enforce insured seller eligibility during listing creation, orchestrate moderation decisions (approve/reject/suspend), expose moderation queue data, and provide feed-ready listing projections with compliance hold filters.
 - Updated `services/feedService.js` to use compliance-aware marketplace retrieval, projecting curated payloads (compliance summary, company metadata, review timestamps) and limit handling for frontend consumption.
+
+## 2025-10-19 — Campaign Service
+- Introduced `services/campaignService.js` encapsulating campaign creation/update workflows, insured seller eligibility enforcement, targeting validation, and lifecycle status transitions with transactional writes to campaigns, flights, targeting rules, invoices, and pacing metrics.
+- Service ingests daily pacing payloads, enforces overspend thresholds with automatic pause + resume, calculates burn forecasts, and generates invoices with configurable due dates and currency defaults surfaced to finance dashboards.
+- Added helper utilities for summarising campaign health (delivery ratio, overspend streaks, outstanding invoices) consumed by controllers/tests to keep API responses production-ready.
