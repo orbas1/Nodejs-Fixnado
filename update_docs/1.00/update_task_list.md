@@ -122,6 +122,9 @@ Converge on testing, documentation, training, and go-live governance to exit wit
 - **Logic:** Subtask 6.3 stresses orchestration flows and failover logic.
 - **Design:** Subtask 6.1 ensures accessibility, localisation, and content audits tie into QA exit criteria.
 
+*2025-02-08 update:* Subtask **6.1** master test plan now covers feature toggle governance (admin panel + backend service), adds Vitest/Supertest coverage targets, and codifies Flutter widget automation for flag banners to unblock CI reporting.
+*2025-02-09 update:* Subtask **6.2** automation suites now execute production Vitest API/contract coverage for service purchase + escrow flows, React ThemeProvider telemetry regression tests, and Flutter widget validation for live feed banners with chaos rollback assertions feeding CI pipelines.
+
 ---
 These tasks supersede previous high-level placeholders while preserving the Design Task Addendum below for historical traceability.
 

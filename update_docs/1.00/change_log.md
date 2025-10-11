@@ -50,3 +50,18 @@
 - Enhanced `/api/telemetry/ui-preferences/snapshots` with governed filtering (`leadingTheme`, stale minute bounds) and optional aggregate statistics so data engineering can interrogate coverage and freshness without ad-hoc SQL.
 - Added stats payload (`tenants`, `rangeKeys`, `leadingThemes`, `freshness`, and share aggregates) alongside applied filter echoing to improve Looker pipeline observability and audit logging.
 - Updated telemetry runbook and QA scenarios to document the diagnostics workflow, ensuring analytics and ops rehearsals validate stats responses and threshold overrides prior to the 12 Feb rehearsal.
+
+## 2025-02-07 — Architecture Mobilisation & Release Governance
+- Provisioned PostGIS infrastructure and feature toggle governance: Terraform now manages a PostGIS instance, Secrets Manager entries, and rollout overrides; the API verifies PostGIS readiness at startup and seeds toggle metadata with RBAC-aware update endpoints.
+- Extended CI/CD coverage and rollback tooling: Added backend, frontend, Flutter, and issue-intake GitHub Actions workflows enforcing lint/tests/security scans with artefact upload, and published automated rollback checklists plus PostGIS health script.
+- Delivered release governance UX + compliance artefacts: Admin dashboard exposes feature rollout panel, Flutter app surfaces beta flag banner, issue intake automation populates SLA-aligned tracker JSON, and compliance docs (DPIA, RBAC minutes, security baseline) refreshed for regulator readiness.
+
+## 2025-02-08 — QA Governance Expansion
+- Updated `test_plan.md` to capture admin feature toggle panel verification, RBAC + webhook coverage, and cross-platform automation strategy (Vitest, Playwright, Flutter widget tests) so CI suites evidence rollout governance end-to-end.
+- Refreshed `update_task_list.md` and `update_progress_tracker.md` to reflect Subtask 6.1 maturity, raising QA readiness metrics and capturing next actions for backend toggle integration tests.
+- Captured the documentation refresh in the Version 1.00 change log and index for traceability.
+
+## 2025-02-09 — Automation Suite Expansion
+- Delivered transactional Vitest coverage for service purchase + escrow rollback flows with contract validation to guard API schema drift; suites live under `backend-nodejs/tests` with sqlite-backed isolation and chaos assertions.
+- Shipped React ThemeProvider regression harness (`frontend-reactjs/src/providers/__tests__/ThemeProvider.test.jsx`) validating telemetry beacons, DOM dataset updates, and dataLayer instrumentation while persisting preferences; configured Vitest/Testing Library + jsdom in CI.
+- Added Flutter widget automation for the live feed banner (`flutter-phoneapp/test/widgets/live_feed_list_test.dart`) alongside production widget upgrades (empty/loading states, priority badges), closing Subtask 6.2 traceability and updating trackers, test plan, and progress metrics.

@@ -1,6 +1,6 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-02-06)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-02-09)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
 | Design Quality | 98 | Diagnostics uplift delivers governed stats + filters so analytics can evidence freshness without SQL; telemetry ecosystem now spans instrumentation → dashboards → alerting → BI diagnostics. |
@@ -15,7 +15,7 @@
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation remains queued with infra. |
 | Design Usability Grade | 90 | Ops rehearsal scripts now include diagnostics walkthrough improving comprehension of freshness governance tooling. |
 | Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; automation asserts stale bounds + stats payloads. |
-| Test Grade | 93 | QA scenarios cover diagnostics stats, filter combinations, ingestion, dashboard, and alerting with rehearsal sign-off captured in tracker. |
+| Test Grade | 95 | Vitest ThemeProvider regression and Flutter live feed widget suites now run alongside telemetry diagnostics coverage, securing regression evidence across web + mobile artefacts. |
 | QA Grade | 95 | Data engineering, design ops, and SRE share diagnostics checklist—analytics rehearsal locked for 12 Feb with data quality assertions. |
 | Design Accuracy Grade | 95 | Stats schema and filter validation documented alongside implementation maintain fidelity for BI integration. |
 | **Overall Grade** | **97** | Telemetry ecosystem production-ready across ingestion, dashboard, alerting, and diagnostics; next sprint prioritises Chromatic/axe automation and tenant segmentation. |
@@ -26,6 +26,7 @@
 3. **Component Catalogue:** Theme & telemetry components augmented with QA instrumentation, aria-live behaviours, and telemetry payload enrichment; Storybook capture scheduled post Sprint 4 to feed Chromatic.
 4. **Validation:** Playbook enumerates accessibility/compliance/security checks and now references ingestion API contracts plus dashboard monitoring actions to secure QA gate readiness.
 5. **Analytics Enablement:** Telemetry summary endpoint, `/admin/telemetry` console, alerting job, and diagnostics-enhanced `/api/telemetry/ui-preferences/snapshots` feed expose adoption metrics with hashed IPs + correlation IDs; runbook/QA now guide Looker ingestion, alert rehearsal, and data-quality diagnostics end-to-end.
+6. **Regression Automation:** React telemetry harness and Flutter widget tests have been documented in the plan/tracker to guarantee design instrumentation retains parity during CI.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.

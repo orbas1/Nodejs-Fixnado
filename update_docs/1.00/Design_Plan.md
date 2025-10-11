@@ -148,3 +148,8 @@
 - **Aggregate Statistics:** Added optional `includeStats` payload surfacing capture range, freshness distribution, tenant/theme coverage, and share aggregates so Looker ingestion monitors can flag anomalies during rehearsal.
 - **Operational Guidance:** Updated telemetry runbook and QA scenarios with diagnostics flows, threshold override usage, and rehearsal checkpoints, ensuring ops/design/data can evidence freshness compliance during the 12 Feb drill.
 
+## 23. Regression Automation Hardening (2025-02-09)
+- **React Telemetry Harness:** Introduced Vitest + Testing Library regression covering `ThemeProvider` DOM dataset updates, custom event broadcasting, dataLayer writes, and fetch fallback telemetry to lock design instrumentation.
+- **Flutter Widget Coverage:** Authored widget tests for the live feed banner verifying loading/empty/high-priority states and retry affordances so mobile design intent remains auditable despite feature flag variants.
+- **Tracker Integration:** Refreshed test plan, update tracker, and design change log to document Subtask 6.2 automation maturity and surface evidence paths for QA sign-off.
+

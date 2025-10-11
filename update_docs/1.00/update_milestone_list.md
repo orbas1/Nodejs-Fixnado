@@ -89,6 +89,9 @@
     2. Expand automation suites (API, UI, Flutter, chaos) aligned to Definition of Done gates.
     3. Run performance, load, and resilience drills across booking, chat, payments, analytics, and ads workloads.
     4. Track defect burndown and ensure severity-one issues resolved before freeze.
+
+    *2025-02-08 update:* Master test plan expanded with feature toggle governance coverage, RBAC audit checkpoints, and Vitest/Playwright/Flutter automation commitments to feed CI readiness metrics ahead of performance drill scheduling.
+    *2025-02-09 update:* Backend Vitest suites validate escrow rollback and contract schema parity, React telemetry automation executes in CI, and Flutter widget coverage confirms live feed banners; chaos injection verifies graceful degradation, elevating Task 6A automation readiness to focus on load/performance drill design.
   - **Task 6B — Launch Operations & Hypercare (6% complete)**
     1. Publish release notes, training curriculum, support playbooks, and hypercare rota.
     2. Conduct go-live rehearsals with rollback drills and communication templates.
