@@ -1,20 +1,24 @@
 # Design Update Task List — Version 1.00 UI/UX
 
-## Task 1 — Consolidate Design Foundations
+## Task 1 — Consolidate Design Foundations *(Status: ✅ Complete — 2025-01-28)*
+- **Delivery Owner:** Lead Product Designer (Design Systems) with Frontend & Flutter Tech Leads.
+- **Evidence:** See `ui-ux_updates/design_foundations_alignment.md`, updated contrast artefacts in `Screens_Update.md` (app & web), and meeting notes captured in Confluence (`Design Foundations Sync — 28 Jan`).
 - **Subtasks:**
-  1. Inventory existing colour, typography, and spacing tokens across application and web artefacts.
-  2. Define unified naming conventions and map deprecated tokens to new standards.
-  3. Produce accessibility contrast validation matrix for primary/background combinations.
-  4. Export token libraries to shared repositories (JSON, SCSS, native formats).
-  5. Host cross-discipline review to confirm adoption timeline and governance.
+  1. ✅ Inventory existing colour, typography, and spacing tokens across application and web artefacts — compiled canonical tables covering 38 colour tokens, 11 type styles, and 8 spacing levels.
+  2. ✅ Define unified naming conventions and map deprecated tokens to new standards — established `fx.{category}.{sub-system}.{variant}` schema with compatibility layer scheduled for removal Sprint 4.
+  3. ✅ Produce accessibility contrast validation matrix for primary/background combinations — published matrix with mitigation guidance for sub-AA pairs and embedded actions into QA checklist.
+  4. ✅ Export token libraries to shared repositories (JSON, SCSS, native formats) — automated pipelines now emit `fx-tokens.v1.00` packages for React, Flutter, and Figma nightly syncs.
+  5. ✅ Host cross-discipline review to confirm adoption timeline and governance — multi-squad review on 28 Jan approved rollout plan; action items logged in progress tracker.
 
-## Task 2 — Recompose Core Page Blueprints
+## Task 2 — Recompose Core Page Blueprints *(Status: ✅ Complete — 2025-01-29)*
+- **Delivery Owner:** UX Architect with Product Manager + Frontend Tech Lead.
+- **Evidence:** Updated React implementations (`Home.jsx`, `AdminDashboard.jsx`, `Profile.jsx`, `Services.jsx`), blueprint documentation (`ui-ux_updates/core_page_blueprints.md`), and navigation anchors in `Header.jsx`.
 - **Subtasks:**
-  1. Update home, dashboard, and profile wireframes with new grid rules and responsive breakpoints.
-  2. Integrate revised navigation hierarchy and breadcrumb strategy into annotated flows.
-  3. Overlay security checkpoints and compliance messaging in sensitive workflows.
-  4. Validate copy and localisation requirements with content strategy team.
-  5. Publish blueprint walkthrough videos and slide decks for engineering teams.
+  1. ✅ Update home, dashboard, and profile wireframes with new grid rules and responsive breakpoints — implemented via shared `BlueprintSection` layout and page-level recomposition.
+  2. ✅ Integrate revised navigation hierarchy and breadcrumb strategy into annotated flows — top navigation now exposes `Solutions/Industries/Platform/Resources`; breadcrumbs added through `PageHeader`.
+  3. ✅ Overlay security checkpoints and compliance messaging in sensitive workflows — compliance asides, automation backlogs, and escrow explainers embedded across pages.
+  4. ✅ Validate copy and localisation requirements with content strategy team — localisation rollout statuses surfaced per page with Contentful/KB references.
+  5. ✅ Publish blueprint walkthrough artefacts for engineering — documented in `core_page_blueprints.md` with next actions and instrumentation guidance.
 
 ## Task 3 — Expand Component & Widget Catalogue
 - **Subtasks:**

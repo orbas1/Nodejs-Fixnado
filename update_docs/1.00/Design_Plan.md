@@ -92,3 +92,16 @@
 - Monthly audit of design documentation to ensure alignment with engineering implementation.
 - Prepare backlog of future enhancements (additional emo variants, seasonal landing modules, personalization experiments) for subsequent releases.
 
+## 13. Foundations Consolidation (Task DT1 Outcome)
+- **Canonical Token Set**: Adopted the multi-platform taxonomy documented in `ui-ux_updates/design_foundations_alignment.md`, superseding historic Flutter (`fixnado.*`) and web (`--fixnado-color-*`) namespaces.
+- **Accessibility Baseline**: Recorded verified contrast ratios and mitigation guidance inside the alignment doc; QA will reference this matrix during Pa11y and manual audits.
+- **Export Automation**: Confirmed JSON, SCSS, and Flutter exports are generated from a single source of truth (`packages/design-tokens/dist/fx-tokens.v1.00.json`) with linting rules (`no-legacy-token`) to block regressions.
+- **Adoption Governance**: Scheduled Sprint 3 migration checkpoints with Tech Leads and QA sign-off; compatibility exports decommissioned after Sprint 4 following review signoff logged in `Design_update_progress_tracker.md`.
+
+## 14. Core Page Blueprint Recomposition (Task DT2 Progress)
+- **Home & Discovery:** Implemented persona-led navigation clusters and modular blueprint sections in `frontend-reactjs/src/pages/Home.jsx`. Compliance overlays, localisation rollout status, and analytics instrumentation are surfaced directly in the layout, ensuring governance alignment.
+- **Admin Dashboard:** Rebuilt `AdminDashboard.jsx` with breadcrumbed `PageHeader`, expanded operational metrics, compliance queue snapshots, and automation backlog visibility. Supports audit readiness via downloadable packs.
+- **Provider Profile:** Updated `Profile.jsx` with structured meta, localisation coverage, compliance document expiries, and workflow blueprint to guide enterprise procurement teams.
+- **Services & Marketing Hub:** Reauthored `Services.jsx` to showcase solution streams, marketing modules, and activation blueprint. Localisation and compliance guardrails are embedded to streamline marketing operations.
+- **Shared Primitives:** Introduced `components/blueprints/PageHeader.jsx` and `components/blueprints/BlueprintSection.jsx` to enforce the recomposed 12-column grid, anchor IDs, and accessibility patterns across pages.
+

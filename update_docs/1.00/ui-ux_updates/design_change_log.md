@@ -10,6 +10,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
   - Updated typography hierarchy: headings use `Manrope` (700/600 weights) for improved legibility, body text remains `Inter` (400/500), monospace tokens for IDs and code.
   - Standardised button taxonomy (Primary, Secondary, Tertiary, Destructive, Ghost) with shared elevation and focus states.
   - Created shared iconography pack (Map, Polygon, Bidding, Inventory, Compliance, AI Assist, Video Call, Ads) to reduce duplicate asset creation.
+  - 2025-01-28 update: Canonicalised token namespace to `fx.{category}.{sub-system}.{variant}` and automated exports to JSON, SCSS, and Flutter packages; lint rules prevent use of deprecated identifiers.
 - **Accessibility Enhancements**
   - Minimum contrast ratio raised to 4.5:1 for text, 3:1 for non-text UI controls.
   - All interactive elements receive 44px minimum hit targets on touch devices.
@@ -50,6 +51,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **Provider & Admin Consoles**: Side-nav pattern with context-aware toolbars, multi-panel analytics dashboards, and compliance queue interactions.
 - **Communication Hub**: Unified messaging drawer, video/voice launchers, AI transcript panel.
 - **Ads & Analytics**: Finova ad manager screens with campaign builder, budgeting, and performance charts.
+- **2025-01-29 — Core Page Blueprints**: React implementation aligns home, admin, provider, and services pages with recomposed grids, breadcrumbs, compliance overlays, and instrumentation. See `core_page_blueprints.md` and `frontend-reactjs/src/pages/*` for artefacts.
 
 ## Cross-Channel Alignment
 - Synced status badges, alert colours, and iconography for bookings, disputes, and compliance.

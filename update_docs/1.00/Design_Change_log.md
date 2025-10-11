@@ -16,10 +16,13 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Logic & Interaction | Harmonised logic flow artefacts (`Logic_Flow_update.md`, `Screens_Update_Logic_Flow.md`) to map cross-platform journeys, introducing guard-rails for security-critical paths and conditional theming triggers. | Logic Flow documents | Reduces behavioural inconsistencies and surfaces security checkpoints earlier in the experience. |
 | New / Adjusted Pages | Added dedicated theme configuration screen, "emo" theme preview, and modular home-page hero variants as described in `Home Page Organisations.md`, `Home page components.md`, and `Pages_list.md`. | Home page documentation, Pages_list | Enables marketing experimentation, personalisation, and theme testing. |
 | Compliance & QA Artefacts | Embedded accessibility and compliance checkpoints throughout design documentation, aligning with `Compliance Grade` tracking and `Test Grade` expectations. Added spec handoffs for QA in `Screens_Update_Plan.md`. | Screens_Update_Plan, Compliance criteria | Strengthens traceability and audit readiness. |
+| Core Page Blueprints | Rebuilt home, admin dashboard, provider profile, and services marketing layouts in React using shared blueprint primitives (`PageHeader`, `BlueprintSection`). Documented in `ui-ux_updates/core_page_blueprints.md`. | Home.jsx, AdminDashboard.jsx, Profile.jsx, Services.jsx | Aligns IA with compliance overlays, boosts conversion signals, and formalises instrumentation hooks. |
 
 ## Detailed Log Entries
 ### 1. System-wide Foundations
 - **Tokens Normalisation:** Consolidated colour, spacing, typography, and elevation definitions into a master token table for cross-platform consumption.
+- **Canonical Naming:** 2025-01-28 update established the `fx.{category}.{sub-system}.{variant}` taxonomy documented in `ui-ux_updates/design_foundations_alignment.md`, with automated exports to JSON, SCSS, and Flutter packages replacing historic aliases.
+- **Accessibility Matrix:** Added validated contrast ratios with prescribed mitigations for sub-AA pairings; QA and engineering runbooks updated accordingly.
 - **Theme Variants:** Introduced light, dark, and emo-inspired palettes with parameterised mood toggles and guardrails for contrast ratios.
 - **Asset Pipeline:** Updated dummy data, assets, and resource references to ensure multi-environment parity and offline compatibility.
 
