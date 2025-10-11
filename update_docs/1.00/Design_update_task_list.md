@@ -70,3 +70,13 @@
   4. ✅ Update runbooks, QA scenarios, and configuration documentation with alert verification steps, environment variables, and rollback guidance.
   5. ✅ Refresh trackers/milestones to reflect alerting completion and redirect focus toward Chromatic baselines and tenant segmentation follow-up.
 
+## Task 8 — Looker Snapshot Distribution & Alert Rehearsal *(Status: ✅ Complete — 2025-02-05)*
+- **Delivery Owner:** Design Systems Engineer with Data Engineering + Design Ops partnership.
+- **Evidence:** `backend-nodejs/src/routes/telemetryRoutes.js`, `controllers/telemetryController.js`, `services/telemetryService.js`, telemetry runbook updates (`docs/telemetry/ui-preference-dashboard.md`), QA scenario additions (`docs/design/handoff/ui-qa-scenarios.csv`), and tracker/change log updates dated 5 Feb.
+- **Subtasks:**
+  1. ✅ Ship `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination, range filters, and governed payload formatting for Looker ingestion.
+  2. ✅ Document ingestion workflow, cursor handling, and scheduling guidance in the telemetry runbook so analytics teams can hydrate dashboards without database access.
+  3. ✅ Extend QA scenarios with snapshot pagination coverage and rehearsal checkpoints to validate alert flow coordination before the 12 Feb analytics review.
+  4. ✅ Update design/change logs, plans, and progress trackers to reflect analytics distribution readiness and focus next steps on tenant segmentation + Chromatic baseline automation.
+  5. ✅ Align ops/analytics rehearsal notes with Slack alert flow to ensure telemetry alerts and Looker feeds are rehearsed in tandem.
+

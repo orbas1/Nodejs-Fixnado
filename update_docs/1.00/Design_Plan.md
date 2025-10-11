@@ -138,3 +138,8 @@
 - **Analytics Snapshots:** Persist rolling summary data via `UiPreferenceTelemetrySnapshot` model so Looker can ingest governed metrics (events, shares, staleness) without hitting production APIs; payload JSON provides full fidelity for downstream modelling.
 - **Operational Governance:** Documented environment variables, alert rehearsal steps, QA scenarios, and escalation policy within `ui-ux_updates/telemetry_alerting_enablement.md` and the telemetry runbook to ensure design/ops/data share a single response playbook.
 
+## 21. Telemetry Snapshot Distribution & Looker Enablement (Task DT8 Outcome)
+- **Snapshot API Delivery:** Introduced `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination and range filters, allowing Looker and downstream BI tooling to ingest governed telemetry summaries without direct database connectivity.
+- **Runbook & QA Updates:** Refreshed `docs/telemetry/ui-preference-dashboard.md` with ingestion guidance, added QA scenarios for pagination/cursor chaining, and documented rehearsal checkpoints for analytics/ops teams ahead of the 12 Feb review.
+- **Governance & Tracking:** Updated change logs, trackers, and milestone records to reflect analytics distribution readiness and re-focused follow-up work on tenant segmentation and Chromatic/axe automation coverage.
+

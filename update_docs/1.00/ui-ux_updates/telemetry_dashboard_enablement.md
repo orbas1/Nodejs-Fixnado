@@ -29,6 +29,6 @@ The telemetry dashboard operationalises the UI preference ingestion work deliver
 - CSV export button includes keyboard focus styles and ARIA labelling inherited from the button component.
 
 ## Next Steps
-1. Connect Looker dashboards to the `ui_preference_telemetry_snapshot` table and rehearse Slack alert flow with analytics/ops ahead of the 12 Feb review.
+1. ✅ Connect Looker dashboards to the `ui_preference_telemetry_snapshot` table and rehearse Slack alert flow with analytics/ops ahead of the 12 Feb review — `/api/telemetry/ui-preferences/snapshots` now exposes governed pagination for ingestion, and rehearsal checklist updated in QA scenarios.
 2. Extend the dashboard with tenant filtering once multi-tenant analytics launches (Version 1.01).
 3. Capture Chromatic baselines for the telemetry screen alongside Theme Studio (including alert banners) to enable automated visual regression.

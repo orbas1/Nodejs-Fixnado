@@ -58,6 +58,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **2025-02-02 — Telemetry Ingestion Enablement**: Delivered backend telemetry ingestion + summary endpoints, enriched Theme Studio beacon payloads with tenant/role metadata and fetch fallback, updated handoff schema with payload requirements, and published telemetry dashboard runbook for analytics onboarding.
 - **2025-02-03 — Telemetry Dashboard Operationalisation**: Shipped `/admin/telemetry` console with KPI cards, trend visualisation, adoption breakdown panels, CSV export, and deterministic selectors powered by `useTelemetrySummary`; documented workflows in `telemetry_dashboard_enablement.md` and linked from admin navigation.
 - **2025-02-04 — Telemetry Alerting & Looker Snapshots**: Deployed background alerting job, Slack messaging, and Looker snapshot persistence to enforce telemetry SLAs, documented in `telemetry_alerting_enablement.md`, `docs/telemetry/ui-preference-dashboard.md`, and backend job/model updates.
+- **2025-02-05 — Telemetry Snapshot Distribution Enablement**: Added `/api/telemetry/ui-preferences/snapshots` for paginated ingestion, refreshed telemetry runbook with BI guidance, and expanded QA scenarios to cover snapshot pagination and cursor chaining ahead of Looker rehearsal.
 
 ## Cross-Channel Alignment
 - Synced status badges, alert colours, and iconography for bookings, disputes, and compliance.

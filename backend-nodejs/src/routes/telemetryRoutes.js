@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { getUiPreferenceTelemetrySummary, recordUiPreferenceTelemetry } from '../controllers/telemetryController.js';
+import {
+  getUiPreferenceTelemetrySummary,
+  recordUiPreferenceTelemetry,
+  getUiPreferenceTelemetrySnapshots
+} from '../controllers/telemetryController.js';
 
 const router = Router();
 
@@ -31,6 +35,19 @@ router.get(
     query('tenantId').optional().isString().isLength({ max: 64 })
   ],
   getUiPreferenceTelemetrySummary
+);
+
+router.get(
+  '/ui-preferences/snapshots',
+  [
+    query('rangeKey').optional().isString().isLength({ min: 1, max: 8 }),
+    query('tenantId').optional().isString().isLength({ max: 64 }),
+    query('capturedAfter').optional().isISO8601(),
+    query('capturedBefore').optional().isISO8601(),
+    query('limit').optional().isInt({ min: 1, max: 1000 }),
+    query('cursor').optional().isString().isLength({ min: 8, max: 256 })
+  ],
+  getUiPreferenceTelemetrySnapshots
 );
 
 export default router;

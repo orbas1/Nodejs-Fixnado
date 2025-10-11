@@ -107,3 +107,17 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Added DM6 milestone marking telemetry alerting completion.
 - [`Design_Plan.md`](Design_Plan.md) & [`Design_Change_log.md`](Design_Change_log.md) — Documented alerting outcome, snapshot persistence, and updated follow-ups.
 - [`update_docs/1.00/ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged DT7 alerting delivery and adjusted next steps for marketing/legal enablement.
+
+## Newly Updated Artefacts (2025-02-05)
+- [`change_log.md`](change_log.md) — Recorded telemetry snapshot distribution, runbook refresh, and tracker updates enabling Looker ingestion readiness.
+- [`Design_Plan.md`](Design_Plan.md) — Added Task DT8 outcome covering snapshot API delivery, runbook/QA updates, and governance alignment.
+- [`Design_Change_log.md`](Design_Change_log.md) — Documented telemetry snapshot distribution enablement with references to API, runbook, and rehearsal updates.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Introduced Task DT8 detailing snapshot API rollout, documentation, QA coverage, and rehearsal alignment.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Added Milestone M7 noting analytics distribution readiness via governed API and rehearsal plan.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) & [`update_progress_tracker.md`](update_progress_tracker.md) — Raised metrics and commentary to reflect snapshot API launch and rehearsal scheduling.
+- [`update_task_list.md`](update_task_list.md) — Logged DT8 completion with references to backend API, runbook, and QA assets.
+- [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — Implemented `/api/telemetry/ui-preferences/snapshots` with cursor pagination, validation, and formatted payloads for BI ingestion.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Expanded runbook with snapshot API contract, ingestion guidance, and scheduling recommendations.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added QA scenario covering snapshot pagination and cursor chaining.
+- [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) & [`ui-ux_updates/telemetry_alerting_enablement.md`](ui-ux_updates/telemetry_alerting_enablement.md) — Updated next steps and analytics notes to reflect snapshot API availability and rehearsal coverage.
+- [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged telemetry snapshot distribution enablement entry with references to new API and documentation.

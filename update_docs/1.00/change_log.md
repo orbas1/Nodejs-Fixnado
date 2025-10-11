@@ -40,3 +40,8 @@
 - Persisted Looker-friendly snapshots via `UiPreferenceTelemetrySnapshot` model, exposing rolling-window totals, theme share, and payload JSON for downstream BI ingestion.
 - Added configuration knobs (`TELEMETRY_*` environment variables) and server bootstrap wiring to run the job on startup, ensuring alerting is environment-aware and repeat-suppressed.
 - Expanded runbooks, QA scenarios, and trackers (`docs/telemetry/ui-preference-dashboard.md`, `ui-ux_updates/telemetry_alerting_enablement.md`, `Design_update_task_list.md`, `update_progress_tracker.md`) to capture alert governance, validation steps, and new milestone completion.
+
+## 2025-02-05 — Telemetry Snapshot Distribution & Looker Enablement
+- Shipped `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination, range filters, and governed payload formatting so analytics tooling can ingest telemetry summaries without direct database access.
+- Refreshed telemetry runbook (`docs/telemetry/ui-preference-dashboard.md`) and QA scenarios (`docs/design/handoff/ui-qa-scenarios.csv`) with ingestion guidance, cursor rehearsal, and scheduling notes ahead of the 12 Feb analytics review.
+- Updated programme trackers, design plan, and change logs to mark analytics distribution readiness and shift focus toward Chromatic/axe automation plus tenant segmentation follow-up.

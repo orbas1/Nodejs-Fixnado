@@ -1,5 +1,5 @@
 import { Op, fn, col, literal } from 'sequelize';
-import { UiPreferenceTelemetry } from '../models/index.js';
+import { UiPreferenceTelemetry, UiPreferenceTelemetrySnapshot } from '../models/index.js';
 
 export async function ingestUiPreferenceEvent(event) {
   return UiPreferenceTelemetry.create(event);
@@ -105,4 +105,112 @@ export async function summariseUiPreferenceEvents({ startDate, endDate, tenantId
     latestEventAt: latestEvent ? new Date(latestEvent).toISOString() : null,
     timeseries
   };
+}
+
+function buildSnapshotWhereClause({ rangeKey, tenantId, capturedAfter, capturedBefore, cursor }) {
+  const conditions = [];
+
+  if (rangeKey) {
+    conditions.push({ rangeKey });
+  }
+
+  if (tenantId) {
+    conditions.push({ tenantId });
+  }
+
+  if (capturedAfter || capturedBefore) {
+    const capturedRange = {};
+    if (capturedAfter) {
+      capturedRange[Op.gt] = capturedAfter;
+    }
+    if (capturedBefore) {
+      capturedRange[Op.lt] = capturedBefore;
+    }
+
+    conditions.push({ capturedAt: capturedRange });
+  }
+
+  if (cursor) {
+    const { capturedAt, id } = cursor;
+    conditions.push({
+      [Op.or]: [
+        { capturedAt: { [Op.gt]: capturedAt } },
+        {
+          capturedAt,
+          id: { [Op.gt]: id }
+        }
+      ]
+    });
+  }
+
+  if (conditions.length === 0) {
+    return {};
+  }
+
+  if (conditions.length === 1) {
+    return conditions[0];
+  }
+
+  return { [Op.and]: conditions };
+}
+
+function normaliseDecimal(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const asNumber = Number(value);
+  return Number.isNaN(asNumber) ? null : asNumber;
+}
+
+function formatSnapshot(modelInstance) {
+  const row = modelInstance.get({ plain: true });
+  return {
+    id: row.id,
+    capturedAt: row.capturedAt.toISOString(),
+    rangeKey: row.rangeKey,
+    rangeStart: row.rangeStart.toISOString(),
+    rangeEnd: row.rangeEnd.toISOString(),
+    tenantId: row.tenantId,
+    events: row.events,
+    emoShare: normaliseDecimal(row.emoShare),
+    leadingTheme: row.leadingTheme,
+    leadingThemeShare: normaliseDecimal(row.leadingThemeShare),
+    staleMinutes: row.staleMinutes,
+    payload: row.payload
+  };
+}
+
+export async function listUiPreferenceTelemetrySnapshots({
+  rangeKey,
+  tenantId,
+  capturedAfter,
+  capturedBefore,
+  cursor,
+  limit = 200
+}) {
+  const resolvedLimit = Math.min(Math.max(Number(limit) || 0, 1), 1000);
+  const where = buildSnapshotWhereClause({ rangeKey, tenantId, capturedAfter, capturedBefore, cursor });
+
+  const rows = await UiPreferenceTelemetrySnapshot.findAll({
+    where,
+    order: [
+      ['capturedAt', 'ASC'],
+      ['id', 'ASC']
+    ],
+    limit: resolvedLimit + 1
+  });
+
+  const items = rows.slice(0, resolvedLimit).map(formatSnapshot);
+
+  let nextCursor = null;
+  if (rows.length > resolvedLimit) {
+    const next = rows[resolvedLimit];
+    nextCursor = {
+      capturedAt: next.capturedAt,
+      id: next.id
+    };
+  }
+
+  return { items, nextCursor, limit: resolvedLimit };
 }

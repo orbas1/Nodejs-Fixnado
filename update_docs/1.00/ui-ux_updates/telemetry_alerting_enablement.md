@@ -16,6 +16,7 @@ Version 1.00 extends the telemetry programme beyond the admin console by introdu
 ## Analytics Snapshots
 - **Schema:** `UiPreferenceTelemetrySnapshot` stores captured_at, range window, tenantId, total events, emo share, leading theme metadata, staleness minutes, and a JSON payload replicating the API response.
 - **Usage:** Looker can ingest snapshots on a timed basis, unlocking historical comparisons and avoiding real-time API dependencies. Data teams can materialise additional views per tenant once multi-tenant support lands.
+- **API Access:** `/api/telemetry/ui-preferences/snapshots` exposes paginated rows (oldest → newest) with cursor-based pagination so BI tooling can hydrate Looker explores without touching internal tables.
 - **Retention:** Snapshots are persisted continuously, enabling data engineering to define retention/archival policies without modifying the job. Future work may prune data older than 90 days.
 
 ## Operational Runbook

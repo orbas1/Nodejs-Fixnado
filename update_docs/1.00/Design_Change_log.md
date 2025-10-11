@@ -80,6 +80,11 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Introduced `UiPreferenceTelemetrySnapshot` persistence so Looker dashboards can query governed, timestamped summaries without hitting live APIs; payload JSON preserves breakdown fidelity.
 - Updated runbook (`docs/telemetry/ui-preference-dashboard.md`), QA scenarios, and trackers to cover alert rehearsal steps, environment variables, and escalation policy for ops/design/data teams.
 
+### 12. Telemetry Snapshot Distribution Enablement (2025-02-05)
+- Delivered `/api/telemetry/ui-preferences/snapshots` with cursor-based pagination so Looker and downstream BI tooling can ingest governed telemetry summaries without direct database connectivity.
+- Refreshed telemetry runbook and QA assets (including `docs/design/handoff/ui-qa-scenarios.csv`) with ingestion guidance, cursor handling, and rehearsal steps for analytics/ops teams ahead of the 12 Feb readiness review.
+- Updated programme trackers, design plan, and change logs to mark analytics distribution readiness and focus subsequent work on tenant segmentation and Chromatic baseline automation.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.

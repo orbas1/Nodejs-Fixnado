@@ -1,6 +1,10 @@
 import crypto from 'node:crypto';
 import { validationResult } from 'express-validator';
-import { ingestUiPreferenceEvent, summariseUiPreferenceEvents } from '../services/telemetryService.js';
+import {
+  ingestUiPreferenceEvent,
+  summariseUiPreferenceEvents,
+  listUiPreferenceTelemetrySnapshots
+} from '../services/telemetryService.js';
 
 const RANGE_TO_DAYS = {
   '1d': 1,
@@ -93,6 +97,103 @@ export async function getUiPreferenceTelemetrySummary(req, res, next) {
     });
 
     res.json({ range: key, ...summary });
+  } catch (error) {
+    next(error);
+  }
+}
+
+function encodeCursor(cursor) {
+  const payload = JSON.stringify({
+    capturedAt: cursor.capturedAt.toISOString(),
+    id: cursor.id
+  });
+
+  return Buffer.from(payload, 'utf8').toString('base64url');
+}
+
+function decodeCursor(rawCursor) {
+  const buffer = Buffer.from(rawCursor, 'base64url');
+  const payload = JSON.parse(buffer.toString('utf8'));
+
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Cursor payload malformed');
+  }
+
+  if (!payload.capturedAt || !payload.id) {
+    throw new Error('Cursor requires capturedAt and id');
+  }
+
+  const capturedAt = new Date(payload.capturedAt);
+  if (Number.isNaN(capturedAt.getTime())) {
+    throw new Error('Cursor capturedAt invalid');
+  }
+
+  return { capturedAt, id: payload.id };
+}
+
+function parseOptionalDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const {
+      rangeKey,
+      tenantId,
+      capturedAfter,
+      capturedBefore,
+      limit,
+      cursor: rawCursor
+    } = req.query;
+
+    let cursor;
+    if (rawCursor) {
+      try {
+        cursor = decodeCursor(rawCursor);
+      } catch (error) {
+        return res.status(422).json({
+          errors: [
+            {
+              type: 'field',
+              value: rawCursor,
+              msg: error.message,
+              path: 'cursor',
+              location: 'query'
+            }
+          ]
+        });
+      }
+    }
+
+    const options = {
+      rangeKey,
+      tenantId,
+      capturedAfter: parseOptionalDate(capturedAfter),
+      capturedBefore: parseOptionalDate(capturedBefore),
+      cursor,
+      limit: limit ? Number(limit) : undefined
+    };
+
+    const { items, nextCursor, limit: appliedLimit } = await listUiPreferenceTelemetrySnapshots(options);
+
+    res.json({
+      snapshots: items,
+      pagination: {
+        limit: appliedLimit,
+        nextCursor: nextCursor ? encodeCursor(nextCursor) : null,
+        hasMore: Boolean(nextCursor)
+      }
+    });
   } catch (error) {
     next(error);
   }
