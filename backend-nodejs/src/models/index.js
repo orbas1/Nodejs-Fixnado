@@ -8,6 +8,7 @@ import ServiceZone from './serviceZone.js';
 import Order from './order.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
+import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -49,5 +50,6 @@ export {
   ServiceZone,
   Order,
   Escrow,
-  Dispute
+  Dispute,
+  UiPreferenceTelemetry
 };

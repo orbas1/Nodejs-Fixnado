@@ -142,7 +142,7 @@ export default function ThemeStudio() {
                     <code className="text-xs">contrast</code>, <code className="text-xs">marketingVariant</code>.
                   </li>
                   <li>
-                    Beacon dispatched to <code className="text-xs">/telemetry/ui-preferences</code> for behavioural analytics.
+                    Beacon dispatched to <code className="text-xs">/api/telemetry/ui-preferences</code> for behavioural analytics.
                   </li>
                   <li>Custom DOM event <code className="text-xs">fixnado:theme-change</code> enables integration testing.</li>
                 </ul>

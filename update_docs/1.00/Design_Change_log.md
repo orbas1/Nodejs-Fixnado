@@ -63,9 +63,15 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Added `PreferenceChangeAnnouncer` aria-live utility and deterministic `data-qa` selectors to Theme Studio, supporting assistive tech and automation reliability.
 - Exported validation assets (`fx-theme-preferences.json`, `ui-qa-scenarios.csv`) to handoff bundle, ensuring telemetry schemas and QA scripts remain version-controlled.
 
+### 9. Telemetry Ingestion & Analytics (2025-02-02)
+- Partnered with data engineering to deploy the UI preference telemetry ingestion stack, adding persistent storage (`ui_preference_telemetry`), hashed IP governance, and correlation identifiers for downstream reconciliation.
+- Enhanced Theme Studio instrumentation via `utils/telemetry.js` to enrich beacons with tenant, role, locale, and correlation metadata alongside fetch fallbacks for environments without `sendBeacon` support.
+- Authored analytics runbook `docs/telemetry/ui-preference-dashboard.md` and expanded QA scenarios to include ingestion verification, unblocking Looker dashboard build-out and monitoring SLAs.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles and personalised home variants.
+- Schedule Looker dashboard review with analytics once `/api/telemetry/ui-preferences/summary` reaches parity across tenants.
 - Evaluate additional "emo" theme presets and seasonal variants after initial release metrics.
 - Monitor performance impact of new imagery pipeline under constrained networks.
 

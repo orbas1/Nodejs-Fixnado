@@ -6,7 +6,7 @@ Task DT5 formalises validation, QA, and handoff for the multi-platform design sy
 ## 1. Screen-Level Validation Checklists
 | Screen | Accessibility Checklist | Compliance Checklist | Security & Telemetry Checklist | QA Hooks |
 | --- | --- | --- | --- | --- |
-| **Theme Studio** (`frontend-reactjs/src/pages/ThemeStudio.jsx`) | Verify `PreferenceChangeAnnouncer` aria-live messaging after toggling theme/density/contrast; confirm SegmentedControl keyboard navigation follows 4-direction spec in `Screen_buttons.md`; validate focus outline contrast ≥ 3:1 across tokens. | Cross-check copy for marketing/legal disclaimers against `Home page text.md`; ensure emo imagery usage matches governance in `Screens_update_images_and_vectors.md`. | Confirm `fixnado:theme-change` CustomEvent includes tenant + role metadata; assert beacon to `/telemetry/ui-preferences` fires with HTTP 2xx. | `data-qa` selectors: `theme-presets-grid`, `density-control`, `contrast-control`, `marketing-preview.*`. Automated with Playwright regression + Chromatic visual snapshots. |
+| **Theme Studio** (`frontend-reactjs/src/pages/ThemeStudio.jsx`) | Verify `PreferenceChangeAnnouncer` aria-live messaging after toggling theme/density/contrast; confirm SegmentedControl keyboard navigation follows 4-direction spec in `Screen_buttons.md`; validate focus outline contrast ≥ 3:1 across tokens. | Cross-check copy for marketing/legal disclaimers against `Home page text.md`; ensure emo imagery usage matches governance in `Screens_update_images_and_vectors.md`. | Confirm `fixnado:theme-change` CustomEvent includes tenant + role metadata; assert beacon to `/api/telemetry/ui-preferences` fires with HTTP 2xx and `/api/telemetry/ui-preferences/summary?range=1d` aggregates counts per theme/density. | `data-qa` selectors: `theme-presets-grid`, `density-control`, `contrast-control`, `marketing-preview.*`. Automated with Playwright regression + Chromatic visual snapshots. |
 | **Admin Dashboard** (`frontend-reactjs/src/pages/AdminDashboard.jsx`) | Validate widget tab order vs. `Dashboard Organisation.md`; ensure `AnalyticsWidget` tooltips meet 12px minimum text size. | Ensure compliance banners surface renewal dates per `Screens_Update_Plan.md` and `Settings Dashboard.md`. | Check `data-action` analytics attributes stream to Segment; verify compliance export button protected by role guard. | Use `data-qa=admin-compliance-panel` and `data-qa=automation-backlog-list` instrumentation for QA scenarios. |
 | **Home** (`frontend-reactjs/src/pages/Home.jsx`) | Confirm hero `aria-describedby` references compliance tagline; ensure responsive breakpoints align with `Home Page Organisations.md`. | Validate marketing consent copy vs. `Home page text.md`; ensure hero CTA routes to consent-aware flow. | Confirm lighthouse telemetry event `home_hero_cta` attaches locale metadata; ensure Contentful IDs match `Dummy_Data_Requirements.md`. | Snapshot `data-qa=home-hero-card` across light/dark/emo themes. |
 | **Profile** (`frontend-reactjs/src/pages/Profile.jsx`) | Ensure document expiry badges expose `aria-label` with expiry date; confirm `SegmentedControl` usage in settings obeys focus spec. | Cross-check compliance text modules with `Profile Styling.md` and `Screens_Update.md`. | Verify secure document download link uses signed URL placeholder defined in backend contract. | QA uses `data-qa=profile-compliance-section` to drive regression. |
@@ -20,7 +20,7 @@ Task DT5 formalises validation, QA, and handoff for the multi-platform design sy
 ## 2. Accessibility & Compliance Audit Matrix
 - **Accessibility toolkit**: Stark audit scheduled 5 Feb (dark + emo), VoiceOver/TalkBack scripts drafted using `Screens_Update_Logic_Flow_map.md`. Each script references `Screen_update_Screen_colours.md` for contrast thresholds.
 - **Compliance**: Legal review of emo imagery tracked in `Design_update_milestone_list.md`; GDPR copy cross-checked with `Compliance Grade` narrative. Document expiry flows validated against `Settings_Screen.md` and `Logic_Flow_update.md`.
-- **Security**: Telemetry payload schema stored in `docs/design/handoff/fx-theme-preferences.json`. Threat modelling session logged with backend for beacon ingestion and DOM event sanitisation.
+- **Security**: Telemetry payload schema stored in `docs/design/handoff/fx-theme-preferences.json`. Threat modelling session logged with backend for beacon ingestion, DOM event sanitisation, and hashed IP governance on the ingestion service.
 
 ## 3. QA Review Cadence & Ownership
 | Date | Session | Participants | Focus |
@@ -43,6 +43,7 @@ Task DT5 formalises validation, QA, and handoff for the multi-platform design sy
 | --- | --- | --- |
 | 30 Jan | Coordinated Admin dashboard widget focus order fix with frontend squad. | Delivered updated keyboard sequencing spec; QA confirmed via Cypress script `admin-accessibility.cy.js`. |
 | 31 Jan | Telemetry schema pairing with backend analytics. | Finalised `theme_change` payload (theme, density, contrast, marketingVariant, tenantId, role) and published in Confluence + JSON asset. |
+| 2 Feb | Delivered telemetry ingestion API + analytics summary endpoint with data engineering. | `/api/telemetry/ui-preferences` and `/summary` deployed; hashed IP + correlation ID governance documented; QA automation updated to call summary endpoint. |
 | 1 Feb | Added `PreferenceChangeAnnouncer` aria-live helper and QA data attributes to Theme Studio. | Screen-reader validation script updated; QA automation now hooks into `data-qa` selectors without brittle CSS. |
 | 1 Feb | Resolved copy ambiguity for emo marketing variant with Marketing & Legal. | Updated `theme_personalisation_toolkit.md` copy tables; flagged follow-up for seasonal variant approvals. |
 
@@ -54,5 +55,5 @@ Task DT5 formalises validation, QA, and handoff for the multi-platform design sy
 
 ## 7. Tracker Updates & Next Actions
 - Mark DT5 and DM4 complete in `Design_update_task_list.md` and `Design_update_milestone_list.md`.
-- Update progress trackers with improved Design Quality (92) and QA Grade (90) due to validated automation coverage.
-- Next focus: publish Storybook/Chromatic coverage and monitor telemetry ingestion dashboards prior to release readiness review.
+- Update progress trackers with improved Design Quality (94) and QA Grade (91) following telemetry ingestion deployment.
+- Next focus: publish Storybook/Chromatic coverage and operationalise telemetry dashboards prior to release readiness review.

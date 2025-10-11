@@ -12,7 +12,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 | Area | Test Type | Owner | Tooling | Acceptance Criteria |
 | --- | --- | --- | --- | --- |
 | Theme Studio | Accessibility regression | Accessibility SME | Playwright + axe-core (Sprint 5), manual VoiceOver/TalkBack | `PreferenceChangeAnnouncer` announces theme/density/contrast changes; focus outlines meet contrast thresholds documented in `Screen_update_Screen_colours.md`. |
-| Theme Studio | Functional telemetry | Frontend QA + Data Engineering | Cypress (event capture), Kafka consumer harness | `fixnado:theme-change` event and beacon payload include theme/density/contrast/marketingVariant/tenantId/role. |
+| Theme Studio | Functional telemetry | Frontend QA + Data Engineering | Cypress (event capture), Kafka consumer harness, API contract tests | `fixnado:theme-change` event and beacon payload include theme/density/contrast/marketingVariant/tenantId/role/locale; `/api/telemetry/ui-preferences/summary` returns aggregated counts with latestEventAt freshness < 10m. |
 | Theme Studio | Visual regression | Frontend QA | Chromatic (post Storybook uplift) | Snapshot deltas below 0.2% threshold across light/dark/emo variants. |
 | Admin Dashboard | Accessibility + navigation | Frontend QA | Cypress + axe-core | Widget tab order matches `Dashboard Organisation.md`; compliance export button accessible and gated. |
 | Home & Services | Content compliance | Marketing Ops + Legal | Manual review | Copy matches `Home page text.md`, disclaimers present, consent CTA routes to flagged flows. |
@@ -24,7 +24,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 ## Automation Strategy
 1. **Playwright + axe-core**: Integrate `ui-qa-scenarios.csv` to drive deterministic flows for Theme Studio and Admin dashboard once Sprint 5 begins.
 2. **Chromatic Baselines**: Generate Storybook stories for Theme Studio cards, marketing modules, and blueprint headers; integrate Chromatic thresholds into CI.
-3. **Kafka Validation**: Use staging topic `kafka.ui-preferences.v1` to confirm beacon payload ingestion with schema registry before enabling GA.
+3. **Telemetry Validation**: Use staging topic `kafka.ui-preferences.v1` plus `/api/telemetry/ui-preferences/summary` contract tests to confirm payload ingestion, aggregation accuracy, and hashed IP governance before enabling GA.
 4. **Maestro & Flutter Driver**: Script booking wizard, kanban transitions, and compliance flows; capture video evidence for audits.
 
 ## Schedule
@@ -34,7 +34,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 | 5 Feb | Accessibility audits (Stark + manual) | Accessibility SME, Compliance Officer | Validate dark/emo palettes; log defects in tracker. |
 | 7 Feb | Legal & marketing approvals | Legal Counsel, Marketing Strategist | Approve emo imagery, consent copy, marketing variants. |
 | 9 Feb | Remote usability sessions | UX Research | Validate personalisation discoverability and clarity of new copy. |
-| 12 Feb | Engineering handoff readout | Frontend Tech Lead, Flutter Lead, QA Lead | Finalise automation backlog and open issues prior to release branch freeze. |
+| 12 Feb | Engineering handoff readout | Frontend Tech Lead, Flutter Lead, QA Lead, Data Engineering | Finalise automation backlog, validate telemetry dashboards, and close open issues prior to release branch freeze. |
 
 ## Reporting & Escalation
 - Daily Slack digest summarising defect count, accessibility findings, telemetry anomalies.
@@ -45,5 +45,5 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 - Accessibility: No critical WCAG 2.2 issues; contrast audit signed off with fallback tokens ready.
 - Compliance: Legal sign-off on emo imagery and consent copy documented in playbook; GDPR telemetry validated.
 - QA: Automation suite coverage ≥80% for Theme Studio interactions; Maestro scripts executed without blocker defects.
-- Telemetry: `theme_change` and `auth_step` events visible in Looker dashboard with correct segmentation.
+- Telemetry: `theme_change` and `auth_step` events visible in Looker dashboard with correct segmentation; `/api/telemetry/ui-preferences/summary` freshness under 10 minutes for pilot tenants.
 - Documentation: Playbook, test plan, and trackers updated with evidence links and outstanding backlog items.

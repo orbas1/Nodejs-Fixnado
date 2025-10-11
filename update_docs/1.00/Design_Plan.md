@@ -123,3 +123,8 @@
 - **Handoff Package:** Repository hosts version-controlled assets (`docs/design/handoff/fx-theme-preferences.json`, `ui-qa-scenarios.csv`) plus Figma/InVision references, giving engineering a single source for tokens, copy, and QA flows.
 - **Governance Cadence:** QA/legal/marketing checkpoints scheduled (3–12 Feb) with action owners, ensuring audits, legal approvals, and usability studies occur before release gate; backlog seeds capture axe-core automation and telemetry dashboard follow-up.
 
+## 18. Telemetry Ingestion Enablement (Post-DT5 Continuation)
+- **API Delivery:** Built `/api/telemetry/ui-preferences` ingestion and `/summary` analytics endpoints with schema validation, hashed IP governance, and aggregation service to unblock telemetry dashboards.
+- **Instrumentation Upgrade:** `utils/telemetry.js` enriches front-end beacons with tenant, role, locale, correlation, and user agent metadata while adding fetch fallbacks for environments lacking `sendBeacon` support.
+- **Operational Playbook:** Authored `docs/telemetry/ui-preference-dashboard.md` covering API contracts, dashboard guidance, alerting strategy, and runbook actions for telemetry freshness monitoring.
+

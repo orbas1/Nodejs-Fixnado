@@ -6,6 +6,7 @@ import {
   STORAGE_KEY,
   THEME_PRESETS
 } from '../theme/config.js';
+import { buildPreferenceTelemetryPayload } from '../utils/telemetry.js';
 
 const ThemeContext = createContext(null);
 
@@ -46,28 +47,57 @@ function writeStoredPreferences(preferences) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
 }
 
+function sendBeaconWithFallback(payload) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const body = JSON.stringify(payload);
+  const blob = new Blob([body], { type: 'application/json' });
+
+  let dispatched = false;
+
+  const endpoint = '/api/telemetry/ui-preferences';
+
+  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+    dispatched = navigator.sendBeacon(endpoint, blob);
+  }
+
+  if (!dispatched && typeof fetch === 'function') {
+    void fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+      credentials: 'include'
+    }).catch((error) => {
+      console.warn('Telemetry fetch fallback failed', error);
+    });
+  }
+}
+
 function broadcastPreferenceChange(preferences) {
   if (typeof window === 'undefined') {
     return;
   }
 
+  const payload = buildPreferenceTelemetryPayload(preferences);
   const detail = {
     ...preferences,
-    timestamp: new Date().toISOString()
+    tenantId: payload.tenantId,
+    role: payload.role,
+    marketingVariant: preferences.marketingVariant,
+    timestamp: payload.timestamp,
+    correlationId: payload.correlationId
   };
 
   window.dispatchEvent(new CustomEvent('fixnado:theme-change', { detail }));
 
   if (Array.isArray(window.dataLayer)) {
-    window.dataLayer.push({ event: 'theme_change', ...detail });
+    window.dataLayer.push({ event: 'theme_change', ...payload });
   }
 
-  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-    const payload = new Blob([JSON.stringify({ type: 'ui_theme_preference', ...detail })], {
-      type: 'application/json'
-    });
-    navigator.sendBeacon('/telemetry/ui-preferences', payload);
-  }
+  sendBeaconWithFallback(payload);
 }
 
 function applyDocumentAttributes(preferences) {

@@ -4,3 +4,4 @@
 "Marketing variant swap","Theme Studio","Marketing hero variant default","Select Seasonal marketing variant","Seasonal preview rendered with neon overlays","data-qa=marketing-preview.seasonal"
 "Dashboard compliance copy","Admin Dashboard","Seeded compliance queue dataset","Navigate to Admin dashboard > open Compliance module","Copy matches compliance tone guide, focus order matches doc","data-qa=admin-compliance-panel"
 "Provider document upload","Provider mobile wireframe","Access to provider build","Trigger document upload > observe tooltip","Tooltip copy matches compliance checklist","Event: provider_doc_upload_start"
+"Telemetry ingestion handshake","Theme Studio / Data Engineering","Telemetry API deployed, Looker dashboard stub","Toggle each theme > query /api/telemetry/ui-preferences/summary?range=1d","HTTP 202 for beacon calls, summary aggregates counts per theme","API: /api/telemetry/ui-preferences, Summary: /api/telemetry/ui-preferences/summary"

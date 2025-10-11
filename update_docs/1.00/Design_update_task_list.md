@@ -48,4 +48,5 @@
   3. ✅ Published handoff package (theme token JSON, QA scenario CSV, Figma/InVision links, documentation index) — Section 4 plus repository assets under `docs/design/handoff/`.
   4. ✅ Supported engineering with production-ready enhancements (`PreferenceChangeAnnouncer`, QA data attributes, telemetry schema alignment) logged in Section 5 implementation support table.
   5. ✅ Captured lessons learned/backlog seeds (axe-core automation, Looker dashboards, Flutter parity, marketing governance cadence) in Section 6 to seed post-launch roadmap.
+  6. ✅ *(2025-02-02 follow-up)* Delivered telemetry ingestion API + analytics summary endpoints, updated handoff schema (`payloadSchema`) and QA scenarios, and published telemetry dashboard runbook for data engineering enablement.
 

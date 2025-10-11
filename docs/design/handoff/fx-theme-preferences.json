@@ -62,7 +62,26 @@
   ],
   "qa": {
     "dataLayerEvent": "theme_change",
-    "beaconEndpoint": "/telemetry/ui-preferences",
-    "domEvent": "fixnado:theme-change"
+    "beaconEndpoint": "/api/telemetry/ui-preferences",
+    "domEvent": "fixnado:theme-change",
+    "payloadSchema": {
+      "type": "ui_theme_preference",
+      "required": [
+        "theme",
+        "density",
+        "contrast",
+        "marketingVariant",
+        "tenantId",
+        "role",
+        "timestamp",
+        "dataVersion"
+      ],
+      "optional": [
+        "userId",
+        "locale",
+        "userAgent",
+        "correlationId"
+      ]
+    }
   }
 }
