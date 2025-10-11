@@ -159,3 +159,13 @@
   4. ✅ Specify notification patterns (Slack/email templates, push badge states) for exporter failure and critical anomaly alerts, ensuring cross-channel parity across admin web and provider mobile.
   5. ✅ Embed accessibility notes (live region announcements, keyboard shortcuts), QA selectors, and telemetry events (`campaign.analytics.export.retry`, `campaign.fraud.resolve`, `campaign.summary.view`) to support automation and analytics instrumentation.
 
+## Task 17 — Explorer Search & Zone Intelligence UX *(Status: 🚧 In Progress — 2025-10-21)*
+- **Delivery Owner:** Geo-Zone Product Designer with Frontend Tech Lead & Data Engineering partner.
+- **Evidence:** React explorer implementation (`frontend-reactjs/src/pages/Search.jsx`, `components/explorer/*`), geometry-aware API client (`src/api/explorerClient.js`), data utilities/tests (`src/pages/explorerUtils.js`, `pages/__tests__/explorerUtils.test.js`), updated drawings/specs (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `website_drawings.md`, `dashboard_drawings.md`), and refreshed design change log entry (`ui-ux_updates/design_change_log.md`).
+- **Subtasks:**
+  1. ✅ Document MapLibre overlays, legend treatments, and zone insight panel states mapped to `/api/zones?includeAnalytics=true` payloads — explorer drawings updated with demand tiers, SLA metrics, and accessibility copy.
+  2. ✅ Capture result card patterns for services & marketplace inventory with provider attribution, compliance disclosures, and CTA routing that mirrors Services blueprint guidance.
+  3. ✅ Specify filter orchestration (keyword, type, zone, availability, category, demand), URL sync rules, telemetry events, and QA selectors so automation validates demand toggles, map clicks, and SLA announcements.
+  4. 🚧 Outline booking wizard, chat entry points, and Flutter parity requirements leveraging the new explorer foundation — backlog entries recorded in change log/progress tracker; wireframes pending Flutter sync with follow-up work item logged against Task 4.2.
+  5. 🚧 Produce accessibility validation checklist (MapLibre keyboard handling, aria-live for zone announcements, high-contrast legends) and schedule Stark/axe audits post booking wizard integration — draft checklist linked in backlog, awaiting audit scheduling once booking wizard specs land.
+
