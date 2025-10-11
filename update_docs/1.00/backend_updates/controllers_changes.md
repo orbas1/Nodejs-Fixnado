@@ -12,3 +12,7 @@
 ## 2025-10-17 — Inventory & Rental Controllers
 - Added `inventoryController.js` exposing CRUD, ledger, health, reconciliation, and alert acknowledgement endpoints with pagination, validation, and structured error handling aligned to provider/admin console expectations.
 - Added `rentalController.js` orchestrating rental request intake, approvals, contract signing, checkout/return status transitions, inspection checkpoint updates, settlement, cancellation, and escalation responses with audit metadata for compliance workflows.
+
+## 2025-10-18 — Compliance & Marketplace Controllers
+- Added `complianceController.js` handling document submission, review decisions, insured badge toggles, suspensions, and evaluation endpoints; controllers return structured 409 responses for ineligible sellers and bubble audit metadata for moderation logs.
+- Introduced `marketplaceController.js` for listing creation, review submission, moderation approvals/rejections/suspensions, moderation queue retrieval, and approved listings feed, wiring request query parsing (limits/offsets) into new service layer filters.

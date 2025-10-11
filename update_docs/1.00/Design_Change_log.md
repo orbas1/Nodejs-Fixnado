@@ -144,6 +144,14 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - **Alert Integration:** Rental overdue or disputed states raise alerts within existing inventory rail using severity-coded copy. Snooze/acknowledge flows feed both rental + inventory audit trails, ensuring MTTA reporting remains unified.
 - **Cross-channel & QA:** Provider mobile and admin web flows share component specs for agreement details, inspection queue filters, and settlement forms. QA selectors, aria-live notes, and telemetry payload requirements embedded to support automation and analytics instrumentation.
 
+### 22. Insured Seller Compliance & Moderation Experience (2025-10-18)
+- **Badge Manager Card:** Documented provider dashboard card (refer `Screens_Update.md` Section 7.2.1, `dashboard_drawings.md`) showing insured seller countdown, renewal reminders, policy document shortcuts, and toggle to control storefront badge visibility. Copy references SLA windows, legal disclaimers, and compliance support CTAs.
+- **Compliance Queue Panels:** Added admin/provider compliance queue layouts listing document status (submitted, under review, approved, rejected, expired) with filters, review action buttons, and audit metadata chips; aligns to `/api/compliance` payloads and includes error/empty states for document expiry and suspension messaging.
+- **Marketplace Moderation Drawer:** Specified moderation workflow for listings (approve, reject, suspend) with compliance snapshot sidebar (expiry date, score, outstanding docs), decision rationale fields, and downstream alerts to legal/marketing teams. Drawer references new moderation queue API contract and integrates quick links to provider badge manager.
+- **Feed Compliance Indicators:** Updated marketplace cards (web + mobile) to surface insured badge, compliance hold tooltips, and "Temporarily hidden" state for expired/suspended sellers. Microcopy, iconography, and analytics events (`marketplace.listing.appeared`, `marketplace.listing.onHold`) captured for instrumentation.
+- **Knowledge Base & Support Touchpoints:** Added inline help links and overlays guiding providers through document upload requirements, acceptable file formats, review timelines, and escalation channels; cross-linked to upcoming support articles per update plan.
+- **QA & Accessibility:** Documented aria-live announcements for moderation outcomes, focus management for review modal actions, QA selectors for toggles/buttons, and telemetry fields capturing reviewer IDs and decisions so automation and analytics mirror new backend contracts.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.

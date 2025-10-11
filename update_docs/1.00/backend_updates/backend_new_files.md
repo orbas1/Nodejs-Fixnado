@@ -41,3 +41,16 @@
 - `src/routes/rentalRoutes.js`
 - `tests/rentalRoutes.test.js`
 - `src/database/migrations/20250217000000-create-inventory-and-rentals.js`
+
+## 2025-10-18 — Added Files
+- `src/models/complianceDocument.js`
+- `src/models/insuredSellerApplication.js`
+- `src/models/marketplaceModerationAction.js`
+- `src/services/complianceService.js`
+- `src/services/marketplaceService.js`
+- `src/controllers/complianceController.js`
+- `src/controllers/marketplaceController.js`
+- `src/routes/complianceRoutes.js`
+- `src/routes/marketplaceRoutes.js`
+- `tests/complianceMarketplace.test.js`
+- `src/database/migrations/20250218000000-compliance-and-marketplace-moderation.js`
