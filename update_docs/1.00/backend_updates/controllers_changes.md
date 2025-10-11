@@ -8,3 +8,7 @@
 
 ## 2025-10-13 — Feature Toggle Administration
 - Introduced `featureToggleController.js` with read (`getToggles`, `getToggle`) and update (`updateToggle`) handlers guarded by express-validator; PATCH requests enforce allowed states, rollout bounds, and respond with enriched metadata for admin UI consumption.
+
+## 2025-10-17 — Inventory & Rental Controllers
+- Added `inventoryController.js` exposing CRUD, ledger, health, reconciliation, and alert acknowledgement endpoints with pagination, validation, and structured error handling aligned to provider/admin console expectations.
+- Added `rentalController.js` orchestrating rental request intake, approvals, contract signing, checkout/return status transitions, inspection checkpoint updates, settlement, cancellation, and escalation responses with audit metadata for compliance workflows.

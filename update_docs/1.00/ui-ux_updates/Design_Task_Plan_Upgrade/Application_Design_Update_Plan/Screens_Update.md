@@ -63,3 +63,46 @@
 
 ---
 *Updated 2025-10-16 to align provider/admin inventory experiences with Task 3.1 ledger services.*
+
+## Rental Agreement Hub (2025-10-17)
+- **Board Layout:** Kanban board with columns `Requested`, `Approved`, `Checked-out`, `In Inspection`, `Settled`, `Cancelled`. Cards display renter name/company, inventory items with thumbnails, pickup/return schedule, deposit balance (badge uses warning styling when hold active), insurance badge (Approved/Pending/Expired), and outstanding checkpoint count.
+- **Quick Actions:** Contextual buttons surface per column — `Approve`, `Decline`, `Request docs` in Requested; `Start checkout` in Approved; `Record checkpoint`, `Flag dispute`, `Extend rental` in Checked-out; `Complete inspection`, `Escalate to finance` in Inspection. Buttons emit telemetry events `rental.board.action` with payload `{ action, rentalId, column }`.
+- **Filters & Search:** Global filters for `Location`, `Category`, `Status`, `Deposit risk`, `Insurance status`. Search supports SKU, renter, agreement ID. Filter pills persist across sessions via local storage.
+- **Empty States:** Provide illustration + CTA: “No pending rental requests — publish marketplace listings or enable auto-approval in settings.” Buttons link to marketplace configuration and settings.
+
+## Rental Detail Drawer
+- **Header:** Shows rental ID, status pill, deposit summary (hold amount vs available), scheduled pickup/return, and associated inventory items with on-hand/reserved balances for quick context.
+- **Tabs:** `Overview`, `Timeline`, `Documents`, `Ledger`, `Alerts`.
+  - **Overview:** Contract metadata, renter contacts, insurance policy, pricing (rental rate, deposit, additional fees), outstanding tasks.
+  - **Timeline:** Chronological checkpoints (request, approvals, signatures, checkout, checkpoints, disputes, settlement). Each entry includes user, timestamp, and notes. Overdue checkpoints flagged with warning icons and CTA `Follow up`.
+  - **Documents:** Upload list (signed contract, insurance cert, inspection photos). Supports inline preview, metadata (expiry date, classification). Add button opens modal with drag-drop + category selection.
+  - **Ledger:** Integrates with inventory ledger; shows reservation holds, checkout deductions, damage fees, refunds. Supports CSV export referencing `rentalLedgerExport` route.
+  - **Alerts:** Aggregated alerts (overdue return, missing inspection, unresolved damage). Buttons `Acknowledge`, `Snooze`, `Escalate` map to `/api/rentals/{id}/alerts` endpoints.
+- **Footer:** Buttons `Start checkout`, `Record checkpoint`, `Settle rental`, `Cancel rental`. Buttons disabled based on status + RBAC. Provide tooltip if disabled (“Only Finance Ops may settle rentals”).
+
+## Checkout & Return Workflows
+- **Checkout Modal:** Steps `Verify identity`, `Document condition`, `Confirm pickup`. Capture renter signature (canvas with undo), ID reference number, photos (min 2). On submit call `/api/rentals/{id}/checkout` with payload containing captured data. Provide success toast referencing deposit hold.
+- **Return Modal:** Detects partial vs full return. Users select returned items/quantities, attach photos, and specify condition rating. If variance detected, require note and choose resolution (Charge deposit, Bill difference, Schedule repair). On submit, call `/api/rentals/{id}/return` and trigger ledger update.
+- **Accessibility:** Stepper announces progress via `aria-live`. Photo upload supports keyboard-only navigation and includes descriptive instructions.
+
+## Inspection Workbench
+- **Interface:** Split panel with checklist on left, evidence gallery on right. Checklist items include condition checks, accessory inventory, documentation review. Each item toggles between `Pass`, `Issue`, `Not applicable`. `Issue` requires note and optional cost estimate.
+- **Damage Classification:** Dropdown for severity (Cosmetic, Functional, Safety-critical) and responsibility (Customer, Provider, Unknown). If Safety-critical, show banner with “Escalate to compliance” CTA.
+- **Evidence Tools:** Support photo annotations, file upload (PDF receipts), and audio notes. Provide `Request additional evidence` button that sends templated email/notification to renter.
+- **Completion:** `Complete inspection` button summarises variances, recommended actions (Charge deposit, Schedule repair, Approve refund). Confirmation modal shows ledger impact preview and allows finance reviewer assignment.
+- **Telemetry:** Emit `rental.checkpoint.submit` with payload `{ rentalId, checkpointType, outcome, issueCount, varianceAmount }` after successful submission.
+
+## Settlement & Dispute Handling
+- **Settlement Modal:** Pre-populates deposit amounts, damage charges, rental fees, late fees, and adjustments. Supports partial deposit refund slider with notes. Requires confirmation of refund destination (card, bank transfer) and optional due date for outstanding charges.
+- **Dispute Escalation:** When disputes flagged, open panel capturing reason codes (Damage contested, Return window disputed, Deposit request), attachments, and notify finance/compliance recipients. Provide `Schedule review` option with calendar integration.
+- **Document Retention:** Info banner reminds users that rental agreements retained for 7 years (per DPIA). Provide link to purge automation request for completed rentals.
+- **Alerts:** Completed settlement triggers success toast and resolves outstanding alerts. If partial refund, create follow-up task with due date and owner.
+
+## Cross-channel Notes
+- Ensure provider mobile UI mirrors board columns using horizontal scroll and gesture support; include offline caching for inspection checklists.
+- Admin web surfaces aggregated metrics (Active rentals, Pending inspections, Deposits held) via dashboard cards referencing `Dashboard Designs.md`.
+- QA selectors documented for board columns (`data-qa="rental-column-requested"` etc.) and actions to support automated regression.
+- Copy references compliance requirements (“Deposits held for 14 days post-inspection”) and links to support articles for renters/providers.
+
+---
+*Updated 2025-10-17 to capture rental lifecycle UX tied to `/api/rentals` orchestration and inspection governance.*

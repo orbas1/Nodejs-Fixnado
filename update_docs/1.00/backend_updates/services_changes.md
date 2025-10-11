@@ -5,3 +5,7 @@
 
 ## 2025-10-13 — Feature Toggle Service & Audit Trail
 - Added `services/featureToggleService.js` to load toggle manifests from Secrets Manager, cache results, validate updates, and write audit records to `feature_toggle_audits`. Exposes helper utilities for cache resets, client overrides (tests), and cache version introspection.
+
+## 2025-10-17 — Inventory & Rental Services
+- Introduced `services/inventoryService.js` encapsulating stock CRUD, ledger entry persistence, reconciliation workflows, alert lifecycle management, and transactional quantity adjustments (reservations, checkout, returns, write-offs, restock) with automated low-stock alert updates.
+- Added `services/rentalService.js` implementing rental agreement lifecycle (request → approval → checkout → return/inspection → settlement/cancellation), deposit handling, partial return reconciliation, damage assessments, dispute escalation, and alert propagation tied to inventory availability.

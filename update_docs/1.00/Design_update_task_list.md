@@ -119,3 +119,13 @@
   3. ✅ Map reconciliation sheet workflow capturing count method, variance justification, attachments, and audit trail updates so finance/compliance reviews align with backend reconciliation endpoint.
   4. ✅ Update logic flows, drawings references, and telemetry events so analytics dashboards can surface adoption, variance, and MTTA metrics without additional design revisions.
 
+## Task 13 — Rental Lifecycle UX & Inspection Workbench *(Status: ✅ Complete — 2025-10-17)*
+- **Delivery Owner:** Marketplace PM with Design Systems Engineer, Compliance Analyst, and Provider Ops leads.
+- **Evidence:** `ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Web_Application_Design_Update/Dashboard Designs.md`, updated drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`), and programme trackers/change logs.
+- **Subtasks:**
+  1. ✅ Blueprint rental agreement hub with columnar lifecycle (Requested→Approved→Checked-out→Inspection→Settled/Cancelled) including deposit, schedule, and checkpoint metadata mapped to `/api/rentals` payloads.
+  2. ✅ Define checkout/return forms (full + partial) with signature capture, condition logging, deposit adjustments, and telemetry requirements ensuring ledger + alert updates trigger reliably.
+  3. ✅ Document inspection workbench interactions (checklist, damage classification, attachments, dispute escalation) and settlement modal copy referencing DPIA retention + finance escalation guidance.
+  4. ✅ Update alert rail behaviour, dashboard metrics, and telemetry events so rental overdue/dispute states integrate with inventory health widgets and analytics instrumentation.
+  5. ✅ Embed QA selectors, accessibility annotations, and cross-channel parity notes to guide React + Flutter implementations and automated regression coverage.
+

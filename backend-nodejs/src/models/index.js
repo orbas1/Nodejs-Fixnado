@@ -15,6 +15,11 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import InventoryItem from './inventoryItem.js';
+import InventoryLedgerEntry from './inventoryLedgerEntry.js';
+import InventoryAlert from './inventoryAlert.js';
+import RentalAgreement from './rentalAgreement.js';
+import RentalCheckpoint from './rentalCheckpoint.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -42,6 +47,33 @@ Dispute.belongsTo(Escrow, { foreignKey: 'escrowId' });
 
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
+
+Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
+InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
+
+InventoryItem.hasMany(InventoryLedgerEntry, { foreignKey: 'itemId' });
+InventoryLedgerEntry.belongsTo(InventoryItem, { foreignKey: 'itemId' });
+
+InventoryItem.hasMany(InventoryAlert, { foreignKey: 'itemId' });
+InventoryAlert.belongsTo(InventoryItem, { foreignKey: 'itemId' });
+
+InventoryItem.hasMany(RentalAgreement, { foreignKey: 'itemId' });
+RentalAgreement.belongsTo(InventoryItem, { foreignKey: 'itemId' });
+
+MarketplaceItem.hasMany(RentalAgreement, { foreignKey: 'marketplaceItemId' });
+RentalAgreement.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId' });
+
+Company.hasMany(RentalAgreement, { foreignKey: 'companyId' });
+RentalAgreement.belongsTo(Company, { foreignKey: 'companyId' });
+
+User.hasMany(RentalAgreement, { foreignKey: 'renterId', as: 'Rentals' });
+RentalAgreement.belongsTo(User, { as: 'renter', foreignKey: 'renterId' });
+
+Booking.hasMany(RentalAgreement, { foreignKey: 'bookingId' });
+RentalAgreement.belongsTo(Booking, { foreignKey: 'bookingId' });
+
+RentalAgreement.hasMany(RentalCheckpoint, { foreignKey: 'rentalAgreementId' });
+RentalCheckpoint.belongsTo(RentalAgreement, { foreignKey: 'rentalAgreementId' });
 
 Company.hasMany(ServiceZone, { foreignKey: 'companyId' });
 ServiceZone.belongsTo(Company, { foreignKey: 'companyId' });
@@ -84,5 +116,10 @@ export {
   Booking,
   BookingAssignment,
   BookingBid,
-  BookingBidComment
+  BookingBidComment,
+  InventoryItem,
+  InventoryLedgerEntry,
+  InventoryAlert,
+  RentalAgreement,
+  RentalCheckpoint
 };
