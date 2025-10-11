@@ -29,15 +29,15 @@ Design metrics from prior addendum are retained below for continuity.
 | --- | --- | --- |
 | Design Quality | 98 | Diagnostics uplift extends the governed telemetry loop — instrumentation, dashboards, alerting, and BI diagnostics now operate on curated assets with stats coverage. |
 | Design Organisation | 98 | Telemetry runbook, QA scenarios, and trackers document diagnostics workflow, thresholds, and rehearsal cadence so ops/design/data operate from a shared governance script. |
-| Design Position | 93 | Admin, auth, marketing, telemetry, and mobile blueprints live; analytics diagnostics close data-quality gaps with microsite uplift scheduled for Sprint 4. |
-| Design Text Grade | 86 | Compliance copy matrix incorporates diagnostics messaging (freshness thresholds, override guidance); legal/comms review still targeted for 7 Feb. |
+| Design Position | 95 | Marketplace inventory, rental, and campaign specs now mirror backend payloads with provider/admin dashboards updated; microsite uplift remains on Sprint 4 checklist. |
+| Design Text Grade | 90 | Added insured seller badge copy, rental escalation messaging, and fraud alert microcopy to design artefacts; legal/comms follow-up shifted to include marketplace tone review. |
 | Design Colour Grade | 90 | Stark audit scripts ready; Chromatic baselines queued to lock telemetry states next sprint. |
 | Design Render Grade | 92 | Telemetry UI + diagnostics docs reuse governed theming; Chromatic capture planned once stats views recorded. |
 | Compliance Grade | 96 | Filter validation, stats payload, and rehearsal checklist document retention/freshness policy ahead of 12 Feb review. |
 | Security Grade | 92 | Additional filter validation and stats echoing protect against malformed queries while preserving audit trails. |
 | Design Functionality Grade | 96 | Theme toggles, telemetry console, alerting job, and diagnostics-ready snapshot feed deliver the analytics pipeline with auto-refresh, pagination, and governance workflows. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation backlog remains in Sprint 4 queue. |
-| Design Usability Grade | 90 | Ops rehearsal scripts now include diagnostics walkthroughs so teams can evidence freshness governance during drills; usability audits scheduled post-rehearsal. |
+| Design Usability Grade | 92 | Inventory console flows, rental timelines, and badge toggles documented with error/edge cases enabling UX walkthroughs aligned to provider/admin dashboards. |
 | Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; QA asserts stale bounds and stats payload structure. |
 | Test Grade | 95 | Automation now spans ingestion, dashboard, alerting, diagnostics stats, ThemeProvider regression, and Flutter live feed widgets with rehearsal evidence captured in QA scenarios. |
 | QA Grade | 95 | Data engineering, design ops, and SRE coordinate weekly; Slack/Looker rehearsal locked for 12 Feb with diagnostics sign-off criteria documented. |

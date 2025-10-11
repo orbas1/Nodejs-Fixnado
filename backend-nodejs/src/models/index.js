@@ -10,6 +10,11 @@ import Escrow from './escrow.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
+import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
+import Booking from './booking.js';
+import BookingAssignment from './bookingAssignment.js';
+import BookingBid from './bookingBid.js';
+import BookingBidComment from './bookingBidComment.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -41,6 +46,27 @@ MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(ServiceZone, { foreignKey: 'companyId' });
 ServiceZone.belongsTo(Company, { foreignKey: 'companyId' });
 
+ServiceZone.hasMany(ZoneAnalyticsSnapshot, { foreignKey: 'zoneId' });
+ZoneAnalyticsSnapshot.belongsTo(ServiceZone, { foreignKey: 'zoneId' });
+
+ServiceZone.hasMany(Booking, { foreignKey: 'zoneId' });
+Booking.belongsTo(ServiceZone, { foreignKey: 'zoneId' });
+
+Company.hasMany(Booking, { foreignKey: 'companyId' });
+Booking.belongsTo(Company, { foreignKey: 'companyId' });
+
+User.hasMany(Booking, { foreignKey: 'customerId' });
+Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
+
+Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
+BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
+
+Booking.hasMany(BookingBid, { foreignKey: 'bookingId' });
+BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
+
+BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
+BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
+
 export {
   sequelize,
   User,
@@ -53,5 +79,10 @@ export {
   Escrow,
   Dispute,
   UiPreferenceTelemetry,
-  UiPreferenceTelemetrySnapshot
+  UiPreferenceTelemetrySnapshot,
+  ZoneAnalyticsSnapshot,
+  Booking,
+  BookingAssignment,
+  BookingBid,
+  BookingBidComment
 };

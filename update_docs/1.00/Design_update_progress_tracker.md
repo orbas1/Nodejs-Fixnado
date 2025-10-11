@@ -13,7 +13,7 @@
 | Security Grade | 92 | Additional validation prevents malformed filters while stats echo applied parameters for audit trails. |
 | Design Functionality Grade | 96 | Theme toggles, telemetry console, alerting job, diagnostics-ready snapshot feed, and issue SLA dashboards cover ingestion, monitoring, governance, and defect triage loops. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation remains queued with infra. |
-| Design Usability Grade | 90 | Ops rehearsal scripts now include diagnostics walkthrough improving comprehension of freshness governance tooling. |
+| Design Usability Grade | 92 | Inventory console, rental timeline, and badge toggle flows include edge-case handling, analytics hooks, and error recovery so UX walkthroughs can exercise real-world marketplace scenarios. |
 | Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; automation asserts stale bounds + stats payloads. |
 | Test Grade | 95 | Vitest ThemeProvider regression and Flutter live feed widget suites now run alongside telemetry diagnostics coverage, securing regression evidence across web + mobile artefacts. |
 | QA Grade | 95 | Data engineering, design ops, and SRE share diagnostics checklist—analytics rehearsal locked for 12 Feb with data quality assertions. |
@@ -32,9 +32,9 @@
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
 - **Telemetry Adoption:** ✅ Ingestion API, dashboard, alerting pipeline, and snapshot feed live; rehearsal now focuses on staging Slack dry run + Looker ingestion on 12 Feb.
-- **Marketing Alignment:** Emo campaign imagery requires legal approval → Legal/marketing review on 7 Feb with compliance checklist embedded in playbook to monitor sign-off.
+- **Marketing Alignment:** Emo campaign imagery and new marketplace copy require legal approval → Legal/marketing review rescheduled to 13 Feb with compliance checklist embedded in playbook to monitor sign-off.
 
 ## Next Review Cycle
 - **Date:** Sprint 4 Desk Check (Week 5)
-- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, and plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes.
+- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, and walkthrough marketplace inventory/campaign modules with frontend leads.
 - **Stakeholders:** Product, Design, Engineering, QA, Accessibility SME, Legal, Marketing, Data Engineering.
