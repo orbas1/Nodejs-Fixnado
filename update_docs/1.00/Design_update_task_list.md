@@ -179,3 +179,13 @@
   4. 🚧 Outline booking wizard, chat entry points, and Flutter parity requirements leveraging the new explorer foundation — backlog entries recorded in change log/progress tracker; wireframes pending Flutter sync with follow-up work item logged against Task 4.2.
   5. 🚧 Produce accessibility validation checklist (MapLibre keyboard handling, aria-live for zone announcements, high-contrast legends) and schedule Stark/axe audits post booking wizard integration — draft checklist linked in backlog, awaiting audit scheduling once booking wizard specs land.
 
+## Task 18 — Communications Suite & Notification Centre *(Status: ✅ Complete — 2025-10-22)*
+- **Delivery Owner:** Communications UX Lead with Frontend Tech Lead, Mobile UX Lead, and Support Operations partner.
+- **Evidence:** Messages workspace implementation (`frontend-reactjs/src/pages/Messages.jsx`, `components/chat/*`), Flutter controller/tests (`flutter-phoneapp/lib/features/chat/**`, `test/features/chat/chat_controller_test.dart`), backend chat/notification specs, updated design artefacts (`Design_Plan.md`, `Design_Change_log.md`, `Design_update_progress_tracker.md`), and drawings (`menu_drawings.md`, `dashboard_drawings.md`, `App_screens_drawings.md`).
+- **Subtasks:**
+  1. ✅ Blueprint React `/messages` layout covering 320px thread list, conversation canvas, context rail, and persistent notification drawer referencing drawings and `component_functions.md` so enterprise/admin panels inherit consistent scaffolding.
+  2. ✅ Document composer behaviour with AI assist toggle, prompt history, usage meter, error/quiet-hour states, and moderation fallback copy in `Screens_Update.md` and `text.md.md`, aligning with Secrets Manager governance and compliance requirements.
+  3. ✅ Map notification centre flows (polling cadence, quiet-hour batching, acknowledgement, escalation) in `Screens_Update_Logic_Flow.md` and `Function Design.md`, linking severity badges to `/api/chat/notifications` contract and operations runbook expectations.
+  4. ✅ Capture Agora session launch UX, hardware permissions, lobby timers, and PSTN fallback interactions across web (`Function Design.md`) and Flutter (`Screens_Update_Logic_Flow.md`, controller tests) ensuring cross-channel parity and resilience.
+  5. ✅ Catalogue telemetry, accessibility, and QA selectors (`chat.thread.view`, `chat.message.send`, aria-live announcements, focus traps, `data-qa` hooks) within design artefacts and progress tracker so automation, analytics, and support tooling validate communications behaviour end-to-end.
+
