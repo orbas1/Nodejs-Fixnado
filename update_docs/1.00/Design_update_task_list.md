@@ -110,3 +110,12 @@
   3. ✅ Refresh security baseline alignment so telemetry dashboard, Theme Studio, and admin panels surface anonymisation guidance and support article links consistent with compliance documentation.
   4. ✅ Update trackers/milestones to escalate remaining actions (chat consent copy, Secrets Manager TTL alert badge, support knowledge base link) to design council agendas.
 
+## Task 12 — Inventory Ledger & Alert Experience *(Status: ✅ Complete — 2025-10-16)*
+- **Delivery Owner:** Marketplace PM with Design Systems Engineer & Finance Ops partnership.
+- **Evidence:** `ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Web_Application_Design_Update/Dashboard Designs.md`, `Design_Plan.md`, `Design_Change_log.md`, drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`).
+- **Subtasks:**
+  1. ✅ Document provider/admin ledger widgets covering on-hand/reserved/damaged balances, reconciliation status badges, and quick action affordances informed by `/api/inventory/health` payloads.
+  2. ✅ Define alert messaging, acknowledgement, snooze, and escalation flows aligned to `InventoryAlert` severity levels with RBAC ownership guidance and analytics instrumentation requirements.
+  3. ✅ Map reconciliation sheet workflow capturing count method, variance justification, attachments, and audit trail updates so finance/compliance reviews align with backend reconciliation endpoint.
+  4. ✅ Update logic flows, drawings references, and telemetry events so analytics dashboards can surface adoption, variance, and MTTA metrics without additional design revisions.
+
