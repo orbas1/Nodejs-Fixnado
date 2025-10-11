@@ -1,6 +1,6 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-21)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-21 — Flutter Parity QA Refresh)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
 | Design Quality | 99 | Campaign analytics/fraud specs now complement inventory, rental, compliance, and pacing blueprints — monetisation, finance, fraud, and data teams share governed journeys across admin/provider/mobile channels. |
@@ -11,11 +11,11 @@
 | Design Render Grade | 94 | Campaign analytics tiles and anomaly rails share telemetry theming/motion specs; Chromatic session scheduled post analytics capture to baseline pacing and anomaly views. |
 | Compliance Grade | 99 | DPIA/RBAC references now include campaign billing retention + eligibility messaging; finance/legal notified through tracker commentary for invoice escalation rehearsals. |
 | Security Grade | 95 | Build/Test/Scan workflow still enforces regression gates; campaign configs documented so secrets/ENV governance stays auditable. |
-| Design Functionality Grade | 99 | Theme, telemetry, inventory, rental, compliance, campaign manager, and explorer experiences now document full-loop workflows (targeting → pacing → invoicing → analytics export → anomaly resolution, zone discovery → booking hand-off) with automation + analytics hooks. |
+| Design Functionality Grade | 99 | Theme, telemetry, inventory, rental, compliance, campaign manager, and explorer experiences now document full-loop workflows (targeting → pacing → invoicing → analytics export → anomaly resolution, zone discovery → booking hand-off) with automation + analytics hooks. Flutter booking/rental controller suites reference these specs so parity QA is traceable to drawings. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; campaign marketing asset refresh remains dependent on CDN validation sprint. |
 | Design Usability Grade | 97 | Rental and campaign flows feature accessibility copy, keyboard shortcuts, pacing + anomaly alerts ensuring admin/provider walkthroughs remain production-aligned and audit-ready. |
 | Bugs-less Grade | 95 | Regression harness + telemetry diagnostics maintain parity; campaign analytics/fraud QA selectors and telemetry schema documented to reduce drift. |
-| Test Grade | 97 | API/UI automation portfolio now includes analytics export + fraud triage scenarios to rehearse exporter retries and anomaly resolution flows. |
+| Test Grade | 97 | API/UI automation portfolio now includes analytics export + fraud triage scenarios plus Flutter booking/rental controller suites validating offline caching, scheduling, and inspection flows mapped to design artefacts. |
 | QA Grade | 96 | Release packaging + rollback drills incorporate campaign checkpoints; finance/legal rehearsals scheduled alongside telemetry diagnostics. |
 | Design Accuracy Grade | 97 | Campaign targeting/pacing/invoice/analytics/fraud specs mirror backend payloads/config defaults, improving fidelity for engineering handoff and warehouse ingestion. |
 | **Overall Grade** | **100** | Design artefacts now cover monetisation end-to-end (inventory → rentals → compliance → campaigns → analytics/fraud) with governed telemetry and finance hooks; next sprint focuses on Chromatic/axe automation and microsite uplift. |
@@ -38,6 +38,7 @@
 15. **Campaign Manager Targeting, Pacing & Billing:** Campaign workspace, targeting composer, pacing analytics, and invoice drawer specs align with `/api/campaigns` responses, overspend governance, and finance reconciliation runbooks; Flutter/web parity plus telemetry schema ensure monetisation rollout is implementation-ready.
 16. **Campaign Analytics Telemetry & Fraud Monitoring:** Export outbox tiles, fraud anomaly rail, ROI/CTR/CVR KPI refresh, and notification patterns now map to new analytics/fraud endpoints. Accessibility, QA selectors, and telemetry events documented for automation, finance/fraud ops, and warehouse teams.
 17. **Explorer Search & Zone Intelligence:** React explorer now aligns to drawings with MapLibre overlays, demand-aware filters, SLA insight panel, and marketplace/service segmentation. API client + utilities normalise geometry for SQLite/PostGIS parity, while documentation captures telemetry, QA selectors, backlog items for booking wizard/chat/Flutter parity, and the design change log entry referencing updated drawings.
+18. **Flutter Parity QA Hardening:** Controller suites for bookings/rentals validate cached refresh, offline banners, and lifecycle actions against `App_screens_drawings.md` + `Screens_Update_Logic_Flow.md`; `_DateField` guidance updated to mirror inspection scheduling copy so rental creation sheet remains accessible and compliant.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.

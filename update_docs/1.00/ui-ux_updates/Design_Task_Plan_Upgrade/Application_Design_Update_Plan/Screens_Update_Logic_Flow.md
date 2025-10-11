@@ -128,6 +128,7 @@
 - Acknowledgement path posts to `/api/rentals/{id}/alerts/{alertId}/acknowledge`, echoing metadata to inventory alert timeline.
 - Snooze/escalation actions propagate to both rental + inventory audit logs ensuring consistent MTTA reporting.
 - Health widget recalculates available inventory factoring rental holds and overdue returns using combined `/api/inventory/health` payload.
+- **2025-10-21 Flutter QA Update:** Controller suites mirror cached refresh, offline banner, approval, scheduling, checkout, return, and inspection flows so Flutter parity stays aligned with this logic; `_DateField` defaults (09:00 local, optional time skip, UTC persistence) are documented to keep inspection SLAs/timelines consistent across provider/admin dashboards.
 
 ## 18. Campaign Creation Flow
 1. User selects `Create campaign` → modal/route initialises with advertiser pre-selected (based on account context) and compliance eligibility check via `/api/compliance/companies/:companyId/summary`.

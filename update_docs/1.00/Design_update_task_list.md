@@ -159,6 +159,16 @@
   4. ✅ Specify notification patterns (Slack/email templates, push badge states) for exporter failure and critical anomaly alerts, ensuring cross-channel parity across admin web and provider mobile.
   5. ✅ Embed accessibility notes (live region announcements, keyboard shortcuts), QA selectors, and telemetry events (`campaign.analytics.export.retry`, `campaign.fraud.resolve`, `campaign.summary.view`) to support automation and analytics instrumentation.
 
+## Task 17 — Flutter Parity QA Hardening *(Status: 🚧 In Progress — 2025-10-21)*
+- **Delivery Owner:** Mobile UX Lead with Flutter Tech Lead & QA Architect partnership.
+- **Evidence:** `flutter-phoneapp/test/features/bookings/booking_controller_test.dart`, `flutter-phoneapp/test/features/rentals/rental_controller_test.dart`, `user_phone_app_updates/user_app_change_log.md`, design change log entry #26, and updated progress/milestone trackers referencing `App_screens_drawings.md`, `dashboard_drawings.md`, `Screens_Update.md`, and `Screens_Update_Logic_Flow.md`.
+- **Subtasks:**
+  1. ✅ Backfill controller coverage for bookings/rentals ensuring cached refresh vs live fetch parity, offline banner messaging, and lifecycle actions align with drawings.
+  2. ✅ Document rental creation time selection + UTC persistence within design artefacts to close pre-update evaluation gaps.
+  3. 🚧 Extend parity tests to enterprise/provider dashboard widgets once chat + business fronts land (blocked by Subtask 4.4 backlog).
+  4. 🚧 Capture device farm/performance benchmarks for offline-first caching before Milestone M4 exit.
+  5. 🚧 Update Flutter design QA checklist with chat/notification entry points once Task 4.3 comms stack integrations are prototyped.
+
 ## Task 17 — Explorer Search & Zone Intelligence UX *(Status: 🚧 In Progress — 2025-10-21)*
 - **Delivery Owner:** Geo-Zone Product Designer with Frontend Tech Lead & Data Engineering partner.
 - **Evidence:** React explorer implementation (`frontend-reactjs/src/pages/Search.jsx`, `components/explorer/*`), geometry-aware API client (`src/api/explorerClient.js`), data utilities/tests (`src/pages/explorerUtils.js`, `pages/__tests__/explorerUtils.test.js`), updated drawings/specs (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `website_drawings.md`, `dashboard_drawings.md`), and refreshed design change log entry (`ui-ux_updates/design_change_log.md`).

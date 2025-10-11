@@ -103,6 +103,7 @@
 - Admin web surfaces aggregated metrics (Active rentals, Pending inspections, Deposits held) via dashboard cards referencing `Dashboard Designs.md`.
 - QA selectors documented for board columns (`data-qa="rental-column-requested"` etc.) and actions to support automated regression.
 - Copy references compliance requirements (“Deposits held for 14 days post-inspection”) and links to support articles for renters/providers.
+- **Controller QA Alignment (2025-10-21):** Flutter booking/rental controller tests exercise cached refresh, offline banner messaging, creation, scheduling, return, and inspection flows, mirroring this spec plus `Screens_Update_Logic_Flow.md` so automation evidence ties to design intent before Milestone M4. `_DateField` defaults to 09:00 local with optional time skip; storing UTC respects inspection scheduling copy and ensures provider/admin dashboards render consistent timelines.
 
 ---
 *Updated 2025-10-17 to capture rental lifecycle UX tied to `/api/rentals` orchestration and inspection governance.*

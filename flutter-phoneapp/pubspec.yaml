@@ -10,10 +10,16 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.5.0
   google_fonts: ^6.3.2
+  flutter_riverpod: ^2.5.1
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  logging: ^1.2.0
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mocktail: ^1.0.3
 
 flutter:
   uses-material-design: true

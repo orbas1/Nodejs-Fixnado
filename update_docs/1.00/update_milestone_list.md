@@ -65,12 +65,13 @@
 - **Target Window:** Weeks 6–10
 - **Objective:** Deliver cross-channel UX, communications, and panel experiences ready for integrated testing.
 - **Tasks:**
-  - **Task 4A — Web & Flutter Experience Delivery (32% complete)**
+  - **Task 4A — Web & Flutter Experience Delivery (48% complete)**
     1. Build React explorer, booking wizard, and marketplace modules consuming new APIs.
     2. Achieve Flutter parity across user, servicemen, provider, and enterprise apps for explorer, booking, and rentals.
     3. Implement business fronts, provider dashboards, and enterprise panels with RBAC guards.
     4. Conduct accessibility, localisation, and performance audits feeding issue tracker entries.
     *2025-10-21 update:* React explorer now ships with production MapLibre overlays, demand-aware filters, and zone analytics surfacing SLA breaches and inventory matches. Supporting API client/utilities normalise geometry for SQLite/PostGIS parity, while vitest coverage protects filtering logic. Next iteration focuses on booking wizard integration, Flutter parity, and comms modules.
+    *2025-10-21 follow-up:* Flutter booking and rental controllers gained parity-focused Riverpod tests validating cached refresh, offline banners, creation, scheduling, and inspection flows against `App_screens_drawings.md`, `dashboard_drawings.md`, and `Screens_Update_Logic_Flow.md`. Rental creation time selection now mirrors inspection scheduling copy, and trackers/changelogs evidence Task 4.2 maturity while chat + enterprise dashboard work remains in flight for Milestone M4.
   - **Task 4B — Communications Stack Integration (12% complete)**
     1. Integrate chat with AI assist toggles, moderation hooks, and consent prompts.
     2. Orchestrate Agora video/phone sessions with PSTN fallback and recording retention.
