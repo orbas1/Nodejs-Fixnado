@@ -54,6 +54,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **2025-01-29 — Core Page Blueprints**: React implementation aligns home, admin, provider, and services pages with recomposed grids, breadcrumbs, compliance overlays, and instrumentation. See `core_page_blueprints.md` and `frontend-reactjs/src/pages/*` for artefacts.
 - **2025-01-30 — Component Catalogue Expansion**: Introduced production-ready UI primitives (`Button`, `Card`, `StatusPill`, `TextInput`, `SegmentedControl`, `Skeleton`) and analytics widgets (`AnalyticsWidget`, `TrendChart`, `ComparisonBarChart`, `GaugeWidget`, `MetricTile`) implemented in React. Detailed audit captured in `component_catalogue_expansion.md`.
 - **2025-01-31 — Theme & Personalisation Toolkit**: Theme Studio, theme context persistence, marketing module prototypes, and telemetry hooks delivered; rollout documented in `theme_personalisation_toolkit.md`.
+- **2025-02-01 — Validation & Handoff Playbook**: Consolidated accessibility/compliance/security checklists, QA cadence, and handoff assets in `design_validation_and_handoff.md`; augmented Theme Studio with aria-live announcer and deterministic QA selectors to support automation and assistive tech.
 
 ## Cross-Channel Alignment
 - Synced status badges, alert colours, and iconography for bookings, disputes, and compliance.
@@ -110,3 +111,4 @@ For detailed breakdowns, refer to the role- and channel-specific documents in th
 - Run remote usability studies with providers focusing on kanban efficiency and compliance submission clarity.
 - Validate dark mode contrast for all high-traffic screens using automated tooling (e.g., Stark) and manual review.
 - Schedule design debt review each release to track outstanding gaps or deviations found during implementation.
+- **2025-02-01 Update:** QA cadence locked across 3–12 Feb sessions; Playwright/Maestro scenario export committed (`docs/design/handoff/ui-qa-scenarios.csv`) and Theme Studio instrumentation upgraded to support aria-live + data-qa selectors.

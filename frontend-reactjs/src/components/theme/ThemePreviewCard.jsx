@@ -2,9 +2,13 @@ import PropTypes from 'prop-types';
 import { CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import { Button, Card, StatusPill } from '../ui/index.js';
 
-export default function ThemePreviewCard({ preset, active, onSelect }) {
+export default function ThemePreviewCard({ preset, active, onSelect, qa }) {
   return (
-    <Card padding="lg" className="flex flex-col gap-6 border-slate-100 bg-white/90 shadow-lg shadow-primary/5">
+    <Card
+      padding="lg"
+      className="flex flex-col gap-6 border-slate-100 bg-white/90 shadow-lg shadow-primary/5"
+      data-qa={qa}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-primary">{preset.name}</h3>
@@ -110,9 +114,11 @@ ThemePreviewCard.propTypes = {
     ).isRequired
   }).isRequired,
   active: PropTypes.bool,
-  onSelect: PropTypes.func.isRequired
+  onSelect: PropTypes.func.isRequired,
+  qa: PropTypes.string
 };
 
 ThemePreviewCard.defaultProps = {
-  active: false
+  active: false,
+  qa: undefined
 };

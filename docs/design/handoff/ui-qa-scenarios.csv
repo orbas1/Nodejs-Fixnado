@@ -1,0 +1,6 @@
+"Scenario","Screen","Preconditions","Steps","Expected Outcome","Data Hooks"
+"Toggle emo theme","Theme Studio","User signed in as admin","Select Emo preset > confirm telemetry payload","Emo palette applied, announcer reads change","dataLayer.event=theme_change; DOM event fixnado:theme-change"
+"High contrast validation","Theme Studio","Theme Studio loaded, Theme preset active","Switch contrast to High","Amber halo visible, aria-live announces activation","data-qa=contrast-option.high"
+"Marketing variant swap","Theme Studio","Marketing hero variant default","Select Seasonal marketing variant","Seasonal preview rendered with neon overlays","data-qa=marketing-preview.seasonal"
+"Dashboard compliance copy","Admin Dashboard","Seeded compliance queue dataset","Navigate to Admin dashboard > open Compliance module","Copy matches compliance tone guide, focus order matches doc","data-qa=admin-compliance-panel"
+"Provider document upload","Provider mobile wireframe","Access to provider build","Trigger document upload > observe tooltip","Tooltip copy matches compliance checklist","Event: provider_doc_upload_start"

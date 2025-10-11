@@ -1,37 +1,37 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 3 Midpoint — Updated 2025-01-31)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-02-01)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
-| Design Quality | 90 | Theme Studio and personalisation toolkit released with production previews, telemetry, and governance notes; Storybook capture scheduled next sprint. |
-| Design Organisation | 91 | Documentation (`theme_personalisation_toolkit.md`) and trackers updated to close DT4; marketing/legal checkpoints embedded in Theme Studio governance module. |
-| Design Position | 85 | Theme primitives now live across admin dashboard entry points; remaining microsites will inherit tokens during Sprint 4 rollout. |
-| Design Text Grade | 78 | Compliance and campaign copy refreshed within Theme Studio with legal review dates logged for emo campaign collateral. |
-| Design Colour Grade | 90 | Light, dark, and emo palettes validated with focus on contrast guardrails; Stark audit queued before GA sign-off. |
-| Design Render Grade | 86 | Theme previews, marketing modules, and density states match high-fidelity specs with production gradients and elevation. |
-| Compliance Grade | 88 | Telemetry hooks plus validation sprint (Feb 5/7/9) ensure auditability; compliance checklist updated with theme toggles. |
-| Security Grade | 78 | Preferences persisted locally with beacon telemetry; awaiting backend threat model update confirming analytics ingestion handling. |
-| Design Functionality Grade | 88 | Theme toggles, density/contrast controls, and marketing prototypes validated using real datasets and telemetry instrumentation. |
-| Design Images Grade | 82 | Emo imagery and seasonal overlay guidance captured for marketing ops; CDN performance validation aligned with infra team. |
-| Design Usability Grade | 84 | Personalisation controls leverage segmented interactions with remote usability test booked for Feb 9 to confirm discoverability. |
-| Bugs-less Grade | 86 | Focus states and density overrides validated; telemetry events support ongoing regression monitoring. |
-| Test Grade | 82 | Beacon/DataLayer payloads defined for automated validation; Chromatic stories to follow once Storybook coverage lands. |
-| QA Grade | 84 | Theme walkthrough recorded for QA handoff; validation sprint actions tracked in Theme Studio governance panel. |
-| Design Accuracy Grade | 88 | Theme assets cross-referenced with specification IDs and marketing asset manifests for traceability. |
-| **Overall Grade** | **88** | Theme & personalisation enablement complete with documentation, telemetry, and validation plan driving toward QA gate. |
+| Design Quality | 92 | Validation playbook added `PreferenceChangeAnnouncer`, QA selectors, and screen-level acceptance criteria ensuring parity across code and specs. |
+| Design Organisation | 93 | Handoff artefacts centralised in `design_validation_and_handoff.md` with supporting exports under `docs/design/handoff`; tracker alignment complete. |
+| Design Position | 88 | Validation coverage extends to admin, auth, and marketing surfaces; remaining microsites scheduled for Sprint 4 adoption using shared checklist templates. |
+| Design Text Grade | 82 | Compliance tone-of-voice matrix updated for emo marketing variant; legal review timetable locked (Feb 7). |
+| Design Colour Grade | 90 | Stark audit scripts prepared; contrast guardrails reinforced via QA scenarios referencing token JSON. |
+| Design Render Grade | 88 | Chromatic baseline backlog ready post Storybook uplift; marketing previews carry QA selectors for regression capture. |
+| Compliance Grade | 92 | Playbook embeds legal checkpoints, GDPR copy validation, and document expiry governance across channels. |
+| Security Grade | 82 | Telemetry schema documented with threat-model notes; ingestion verification scheduled alongside data engineering review. |
+| Design Functionality Grade | 90 | Theme toggles now emit accessibility announcements and deterministic telemetry enabling automated verification. |
+| Design Images Grade | 85 | Imagery guardrails extended to emo marketing variant; CDN validation tasks queued with infra team. |
+| Design Usability Grade | 87 | Usability study scripts incorporate new announcer behaviour and personalisation discoverability checkpoints. |
+| Bugs-less Grade | 89 | QA selectors reduce flaky automation; aria-live instrumentation mitigates regression gaps for assistive tech. |
+| Test Grade | 86 | Playwright + Maestro scenarios defined in `ui-qa-scenarios.csv`; axe-core integration prioritised for Sprint 5. |
+| QA Grade | 90 | Validation cadence locked across desk checks, audits, usability, and engineering readout with named owners. |
+| Design Accuracy Grade | 90 | Cross-referenced checklist items to blueprint IDs and telemetry schema ensuring spec-to-implementation traceability. |
+| **Overall Grade** | **91** | Validation, QA, and handoff artefacts delivered; focus shifts to automated visual regression and telemetry monitoring before release gate. |
 
 ## Progress Narrative
-1. **Foundations:** Token system extended with theme gradients, density, and contrast overrides; compatibility exports remain stable across React and Flutter pipelines.
-2. **Experience Blueprints:** Admin dashboard now surfaces Theme Studio entry point; residual microsites will adopt the shared tokens during Sprint 4 build-out.
-3. **Component Catalogue:** New theme-specific components (`ThemePreviewCard`, `MarketingModulePreview`) reuse catalogue primitives; Storybook/Chromatic backlog captures their scenarios for automation.
-4. **Validation:** Telemetry, DOM events, and beacon payloads instrumented; validation sprint (Feb 5–9) covers dark/emo accessibility, marketing approvals, and personalisation discoverability.
+1. **Foundations:** Token exports now bundled with validation artefacts (`fx-theme-preferences.json`) enabling QA to assert palette integrity per theme.
+2. **Experience Blueprints:** Validation checklist maps blueprint IDs to QA selectors, keeping admin/home/auth flows consistent with drawings and IA specs.
+3. **Component Catalogue:** Theme components augmented with QA instrumentation and aria-live behaviours; Storybook capture scheduled post Sprint 4 to feed Chromatic.
+4. **Validation:** Playbook enumerates accessibility/compliance/security checks, with telemetry schema + automation schedule locking QA gate readiness.
 
 ## Key Risks & Mitigations
-- **Accessibility Risk:** Stark + manual audits must confirm emo/dark contrast before GA → Validation sprint scheduled with fallback gradients documented in the toolkit.
-- **Telemetry Adoption:** Personalisation events need ingestion verification → Data engineering aligned on `kafka.ui-preferences.v1` schema; ingestion tests planned alongside analytics team.
-- **Marketing Alignment:** Emo campaign imagery requires legal approval → Governance checklist in Theme Studio tracks marketing/legal owners and due dates.
+- **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
+- **Telemetry Adoption:** Personalisation events need ingestion verification → Data engineering review (12 Feb) to validate beacon payload ingestion and Looker dashboard wiring.
+- **Marketing Alignment:** Emo campaign imagery requires legal approval → Legal/marketing review on 7 Feb with compliance checklist embedded in playbook to monitor sign-off.
 
 ## Next Review Cycle
-- **Date:** Sprint 3 Demo (Week 4)
-- **Focus:** Review theme adoption telemetry, finalise accessibility audit plan, and lock Storybook/Chromatic delivery timeline for theme + marketing modules.
-- **Stakeholders:** Product, Design, Engineering, Marketing, Compliance, Security, QA.
+- **Date:** Sprint 4 Desk Check (Week 5)
+- **Focus:** Validate execution of accessibility/legal sessions, monitor telemetry ingestion status, and plan axe-core/Chromatic automation rollout.
+- **Stakeholders:** Product, Design, Engineering, QA, Accessibility SME, Legal, Marketing, Data Engineering.

@@ -18,7 +18,7 @@ const variantCopy = {
   }
 };
 
-export default function MarketingModulePreview({ variant }) {
+export default function MarketingModulePreview({ variant, qa }) {
   const copy = variantCopy[variant];
 
   if (variant === 'hero') {
@@ -26,6 +26,7 @@ export default function MarketingModulePreview({ variant }) {
       <div
         className="flex flex-col gap-6 rounded-[2.25rem] p-8 text-[var(--fx-hero-foreground)] shadow-xl"
         style={{ background: 'var(--fx-hero-gradient)', boxShadow: 'var(--fx-hero-shadow)' }}
+        data-qa={qa}
       >
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
@@ -61,6 +62,7 @@ export default function MarketingModulePreview({ variant }) {
           borderColor: 'var(--fx-announcement-border)',
           color: 'var(--fx-announcement-foreground)'
         }}
+        data-qa={qa}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -94,6 +96,7 @@ export default function MarketingModulePreview({ variant }) {
   return (
     <div
       className="relative overflow-hidden rounded-[2rem] border border-[var(--fx-seasonal-highlight)] bg-[var(--fx-seasonal-overlay)] p-8 text-[var(--fx-seasonal-text)] shadow-xl"
+      data-qa={qa}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_55%)]" aria-hidden="true" />
       <div className="relative flex flex-col gap-4">
@@ -122,5 +125,10 @@ export default function MarketingModulePreview({ variant }) {
 }
 
 MarketingModulePreview.propTypes = {
-  variant: PropTypes.oneOf(['hero', 'announcement', 'seasonal']).isRequired
+  variant: PropTypes.oneOf(['hero', 'announcement', 'seasonal']).isRequired,
+  qa: PropTypes.string
+};
+
+MarketingModulePreview.defaultProps = {
+  qa: undefined
 };
