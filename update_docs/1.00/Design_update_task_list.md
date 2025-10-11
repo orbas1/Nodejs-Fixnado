@@ -89,3 +89,12 @@
   2. ✅ Add optional aggregate statistics payload (freshness split, tenant/theme distribution, share min/avg/max) to support rehearsal analytics and alert calibration.
   3. ✅ Refresh runbook, QA scenarios, and trackers with diagnostics workflow guidance, filter documentation, and rehearsal expectations for the 12 Feb analytics drill.
 
+## Task 10 — Issue Intake & Design QA Alignment *(Status: ✅ Complete — 2025-10-11)*
+- **Delivery Owner:** Design Ops Lead in partnership with Programme Management.
+- **Evidence:** `scripts/issue-intake.mjs`, structured payload in `pre-update_evaluations/issue_report.md`, regenerated tracker artefacts (`issue_list.md`, `fix_suggestions.md`), and design documentation updates (`Design_Plan.md`, `Design_Change_log.md`, trackers).
+- **Subtasks:**
+  1. ✅ Define issue metadata schema linking severity SLAs, squad ownership, and design artefact references (wireframe IDs, copy specs).
+  2. ✅ Implement automation that validates payloads and republishes Markdown trackers with SLA countdowns for design council reviews.
+  3. ✅ Seed backlog with cross-discipline blockers (escrow verification, auth security, onboarding transactions, React auth UX) including remediation plans and acceptance criteria tied to design specifications.
+  4. ✅ Update design governance docs to incorporate SLA breach reviews and ensure automation runs in CI for consistent reporting.
+

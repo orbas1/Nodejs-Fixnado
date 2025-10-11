@@ -3,7 +3,7 @@
 ## Development & QA Progress Snapshot
 | Task | Security level (%) | Completion level (%) | Integration level (%) | Functionality level (%) | Error free level (%) | Production level (%) | Overall level (%) | Commentary |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 35 | 30 | 25 | 28 | 30 | 20 | 28 | Governance forums and CI/CD upgrades underway; defect intake automation pending completion of tracker webhook. |
+| Task 1 — Mobilise Architecture, Compliance & Issue Intake | 48 | 55 | 46 | 45 | 42 | 38 | 45 | Issue intake automation live (`scripts/issue-intake.mjs`) with SLA-aware tracker feeding finance/security/design ops; next step is wiring webhook export into Programme tracker and linking Slack alerts. |
 | Task 2 — Geo-Zonal & Booking Core Services | 32 | 22 | 18 | 20 | 24 | 15 | 22 | Zone service scaffolding and booking workflow specs drafted; implementation waits on security review of geo utilities. |
 | Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
 | Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
@@ -11,7 +11,7 @@
 | Task 6 — QA, Compliance & Launch Readiness | 34 | 32 | 28 | 29 | 26 | 22 | 30 | Backend Vitest suites now cover service purchase rollback + contract schemas, Playwright-ready React telemetry tests run via Vitest + Testing Library, and Flutter widget automation guards live feed banners; chaos simulations validated transaction rollback so focus shifts to load drill orchestration and compliance evidence collation. |
 
 ### Next Review Actions
-- Finalise issue backlog ingestion so `issue_report.md`, `issue_list.md`, and `fix_suggestions.md` transition from placeholders to live artefacts.
+- Integrate issue intake script into CI so updates to `issue_report.md` automatically refresh downstream artefacts on pull requests.
 - Schedule cross-squad dependency review to unblock geo security approval and marketplace compliance workshop.
 - Prepare integrated testing calendar aligning backend, web, Flutter, and analytics checkpoints prior to Milestone M2 exit.
 - Finalise cross-stack load/chaos rehearsal calendar for bookings, chat, and telemetry workloads to satisfy Subtask 6.3 entry criteria.

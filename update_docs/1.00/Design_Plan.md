@@ -153,3 +153,9 @@
 - **Flutter Widget Coverage:** Authored widget tests for the live feed banner verifying loading/empty/high-priority states and retry affordances so mobile design intent remains auditable despite feature flag variants.
 - **Tracker Integration:** Refreshed test plan, update tracker, and design change log to document Subtask 6.2 automation maturity and surface evidence paths for QA sign-off.
 
+## 24. Issue Intake & Design QA Alignment (Task 1.4 Outcome — 2025-10-11)
+- **Automation Handshake:** `scripts/issue-intake.mjs` now enforces severity SLAs, ownership metadata, and acceptance criteria sourced from design artefacts; running the script regenerates tracker tables consumed by design ops reviews.
+- **Design Traceability:** Issue payload references `Application_Design_Update` and `Web Application Design Update` specifications (e.g., auth flows, escrow governance) so squads can map remediation directly to blueprint IDs and copy guidelines.
+- **Governance Integration:** Design council agenda updated to include SLA breach review; issue intake automation feeds dashboards that combine design, QA, and compliance status for readiness checkpoints.
+- **Next Steps:** Wire automation into CI/Slack to broadcast design-impacting defects, extend payload schema with design QA fields (e.g., Figma frame IDs), and capture sign-off timestamps when design validation closes an issue.
+

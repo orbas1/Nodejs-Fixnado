@@ -65,3 +65,8 @@
 - Delivered transactional Vitest coverage for service purchase + escrow rollback flows with contract validation to guard API schema drift; suites live under `backend-nodejs/tests` with sqlite-backed isolation and chaos assertions.
 - Shipped React ThemeProvider regression harness (`frontend-reactjs/src/providers/__tests__/ThemeProvider.test.jsx`) validating telemetry beacons, DOM dataset updates, and dataLayer instrumentation while persisting preferences; configured Vitest/Testing Library + jsdom in CI.
 - Added Flutter widget automation for the live feed banner (`flutter-phoneapp/test/widgets/live_feed_list_test.dart`) alongside production widget upgrades (empty/loading states, priority badges), closing Subtask 6.2 traceability and updating trackers, test plan, and progress metrics.
+
+## 2025-10-11 — Issue Intake Automation & SLA Tracker
+- Formalised Task 1.4 issue intake workflow by introducing `scripts/issue-intake.mjs`, which validates structured payloads inside `issue_report.md` and regenerates `issue_list.md` and `fix_suggestions.md` with severity-driven SLA deadlines and ownership metadata.
+- Seeded the tracker with four production-blocking defects sourced from pre-update backend and frontend evaluations, capturing reproduction steps, remediation plans, and acceptance criteria for escrow funding, authentication hardening, transactional onboarding, and React auth wiring gaps.
+- Updated programme artefacts (progress tracker, task list, design plan/change log, QA test plan) to embed the triage cadence so squads, design ops, and compliance share a single escalation workflow with auditable due dates.

@@ -16,4 +16,5 @@
 - Cross-functional design council meets twice weekly to unblock dependencies and maintain stakeholder alignment.
 - Each milestone triggers documentation updates in the shared repository and a recorded walkthrough for downstream teams.
 - Regression automation (React telemetry harness + Flutter live feed widgets) now feeds Milestones M4–M8 evidence requirements so design sign-off remains verifiable in CI.
+- Issue intake automation feeds SLA dashboards so design council can triage cross-disciplinary defects during milestone reviews without relying on ad-hoc spreadsheets.
 

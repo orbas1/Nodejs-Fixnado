@@ -96,6 +96,11 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Captured automation uplift across `test_plan.md`, trackers, and design docs to evidence Subtask 6.2 completion and surface telemetry regression assertions for QA and analytics squads.
 - Coordinated Flutter widget coverage for live feed banners, mapping design intent (priority indicators, empty/loading states) into deterministic tests referenced by design QA artefacts.
 
+### 15. Issue Intake & Design QA Alignment (2025-10-11)
+- Linked design QA governance to the new issue intake automation: `scripts/issue-intake.mjs` ingests structured defects and republishes SLA dashboards so design ops can track visual/accessibility regressions alongside backend blockers.
+- Seeded tracker with authentication UX blocker (React forms) and backend flows impacting design intent; remediation guidance now references `Application_Design_Update` auth specifications and blueprint IDs for cross-team traceability.
+- Updated design plans, progress trackers, and milestone notes to ensure issue SLA breaches trigger design council reviews and escalate through the same governance cadence as telemetry and theming workstreams.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.
