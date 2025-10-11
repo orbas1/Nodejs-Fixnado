@@ -2,7 +2,7 @@
 
 ## Development & QA Task Portfolio
 
-### Task 1 — Mobilise Architecture, Compliance & Issue Intake (12% complete)
+### Task 1 — Mobilise Architecture, Compliance & Issue Intake (58% complete)
 Establish the cross-squad delivery framework, baseline compliance, and open the unified defect pipeline before feature build accelerates.
 
 #### Subtasks
@@ -13,6 +13,10 @@ Establish the cross-squad delivery framework, baseline compliance, and open the 
 1.5 Refresh DPIA, RBAC review minutes, and security baselines to satisfy regulator expectations prior to development sprints.
 
 *2025-10-11 update:* Subtask **1.4** is now production-ready. `scripts/issue-intake.mjs` validates structured payloads in `issue_report.md`, regenerates `issue_list.md`/`fix_suggestions.md` with SLA countdowns, and publishes ownership metadata for finance, security, and design ops triage. Four critical/high issues sourced from pre-update evaluations seeded the tracker with remediation plans and acceptance criteria.
+
+*2025-10-12 update:* Subtask **1.1** completed with `task1_mobilisation_raci_roadmap.md` capturing the cross-squad RACI, phased roadmap, and dependency/compliance matrix. Governance cadences now reference design drawings, telemetry artefacts, and the automated issue intake workflow to keep mobilisation evidence auditable.
+
+*2025-10-13 update:* Subtask **1.2** delivered PostGIS-backed infrastructure, Secrets Manager feature toggle manifests, admin APIs, and an environment parity audit so staging and production remain configuration-aligned before CI/CD promotions.
 
 #### Integration Coverage
 - **Backend:** Subtasks 1.2 & 1.3 provision services and pipelines.

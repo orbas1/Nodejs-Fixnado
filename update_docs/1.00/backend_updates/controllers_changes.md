@@ -5,3 +5,6 @@
 ## 2025-02-10 — Zone & Booking Controllers
 - Added `zoneController.js` to translate service validation errors into HTTP responses, expose CRUD/list/snapshot endpoints, and support analytics toggles.
 - Added `bookingController.js` encapsulating booking lifecycle endpoints (create, status updates, assignments, bids, comments, disputes) while preserving audit metadata.
+
+## 2025-10-13 — Feature Toggle Administration
+- Introduced `featureToggleController.js` with read (`getToggles`, `getToggle`) and update (`updateToggle`) handlers guarded by express-validator; PATCH requests enforce allowed states, rollout bounds, and respond with enriched metadata for admin UI consumption.

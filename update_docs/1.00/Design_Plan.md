@@ -159,3 +159,15 @@
 - **Governance Integration:** Design council agenda updated to include SLA breach review; issue intake automation feeds dashboards that combine design, QA, and compliance status for readiness checkpoints.
 - **Next Steps:** Wire automation into CI/Slack to broadcast design-impacting defects, extend payload schema with design QA fields (e.g., Figma frame IDs), and capture sign-off timestamps when design validation closes an issue.
 
+## 25. Mobilisation Governance Alignment (Task 1.1 Outcome — 2025-10-12)
+- **Design Accountability in RACI:** `task1_mobilisation_raci_roadmap.md` assigns Design Ops Lead as accountable for design system governance and UX handoff while consulting on geo-zonal, booking, marketplace, and communications pillars. Blueprint IDs from `Application_Design_Update_Plan` and `Web_Application_Design_Update` are referenced so design sign-off is auditable per squad.
+- **Roadmap Integration:** The mobilisation roadmap codifies when design artefacts (drawings, telemetry dashboards, blueprint walkthroughs) must be updated across Weeks 0–14, aligning with the existing DM1–DM10 cadence. Weekly control board checkpoints now reference design deliverables explicitly, ensuring design participation in compliance reviews and hypercare planning.
+- **Dependency Controls:** Dependency matrix entries highlight accessibility audits, localisation QA, and Stark/Chromatic capture as compliance gates for design-led workstreams. Risks and mitigations feed into the programme tracker so Design Ops can escalate blocked audits alongside engineering dependencies.
+- **Next Actions:** Feed dependency risk scoring into design council agendas, publish Confluence summary linking mobilisation RACI to Figma frames, and ensure CI documentation checks validate references to the governance pack when design artefacts change.
+
+## 26. Feature Toggle Governance Alignment (Task 1.2 Outcome — 2025-10-13)
+- **Design-aware rollout controls:** Secrets Manager manifests now store owner, ticket, and description metadata for each feature flag, enabling Design Ops to trace pilots (e.g., communications suite, rental marketplace) back to wireframes (`dashboard_drawings.md`, `menu_drawings.md`, `App_screens_drawings.md`).
+- **Admin tooling coordination:** Backend `/api/admin/feature-toggles` endpoints will power the forthcoming rollout panel in admin dashboards; design team to integrate parity checks and audit history UI per `Web_Application_Design_Update/Settings Dashboard.md` guidance.
+- **Parity-driven QA:** Environment parity script feeds design QA scheduling so staging demos match production toggles before review sessions. Design Ops to subscribe to parity failures and update handoff artefacts when rollout states change.
+- **Next Actions:** Collaborate with engineering to visualise toggle states/audit history within admin UI, extend design QA checklists to include toggle verification, and capture parity status snapshots within design council weekly notes.
+

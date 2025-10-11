@@ -103,6 +103,16 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Seeded tracker with authentication UX blocker (React forms) and backend flows impacting design intent; remediation guidance now references `Application_Design_Update` auth specifications and blueprint IDs for cross-team traceability.
 - Updated design plans, progress trackers, and milestone notes to ensure issue SLA breaches trigger design council reviews and escalate through the same governance cadence as telemetry and theming workstreams.
 
+### 16. Mobilisation Governance Integration (2025-10-12)
+- Published `task1_mobilisation_raci_roadmap.md`, formalising design accountability within the programme RACI and mapping blueprint ownership to geo-zonal, booking, marketplace, communications, and analytics squads.
+- Embedded mobilisation roadmap checkpoints that call for design artefact refreshes (drawings, telemetry dashboards, blueprint walkthroughs) across Weeks 0–14, ensuring design deliverables feature in weekly control board reviews.
+- Captured dependency/compliance gates (accessibility audits, localisation QA, Stark/Chromatic capture) in the shared matrix so design risks surface alongside engineering dependencies within the tracker commentary.
+
+### 17. Feature Toggle Governance (2025-10-13)
+- Documented Secrets Manager feature toggle manifests with owner/ticket metadata so design squads can map pilots to blueprint IDs and drawings (`dashboard_drawings.md`, `website_drawings.md`, `App_screens_drawings.md`).
+- Coordinated with engineering on `/api/admin/feature-toggles` endpoints powering forthcoming admin rollout UI; design QA will extend settings dashboards to visualise rollout and audit history.
+- Scheduled environment parity checks in the design QA cadence to guarantee staging demos mirror production toggle states before approvals.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.

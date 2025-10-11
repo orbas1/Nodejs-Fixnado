@@ -49,10 +49,13 @@ const config = {
   port: intFromEnv('PORT', 4000),
   database: {
     host: process.env.DB_HOST || 'localhost',
-    port: intFromEnv('DB_PORT', 3306),
+    port: intFromEnv('DB_PORT', 5432),
     name: process.env.DB_NAME || 'fixnado',
     user: process.env.DB_USER || 'fixnado_user',
-    password: process.env.DB_PASSWORD || 'change_me'
+    password: process.env.DB_PASSWORD || 'change_me',
+    ssl: process.env.DB_SSL === 'true',
+    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+    dialect: (process.env.DB_DIALECT || 'postgres').toLowerCase()
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'change_this_secret',
@@ -80,6 +83,12 @@ const config = {
   zoneAnalytics: {
     snapshotIntervalMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_INTERVAL_MINUTES', 30), 5),
     staleBookingThresholdMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_STALE_MINUTES', 120), 15)
+  },
+  featureToggles: {
+    secretArn: process.env.FEATURE_TOGGLE_SECRET_ARN || '',
+    cacheTtlSeconds: Math.max(intFromEnv('FEATURE_TOGGLE_CACHE_SECONDS', 60), 10),
+    overrides: jsonFromEnv('FEATURE_TOGGLE_OVERRIDES', {}),
+    auditTrail: process.env.FEATURE_TOGGLE_AUDIT_TABLE || 'feature_toggle_audits'
   }
 };
 

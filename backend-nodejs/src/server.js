@@ -4,7 +4,7 @@ import { startBackgroundJobs } from './jobs/index.js';
 
 async function start() {
   try {
-    await initDatabase();
+    await initDatabase(console);
     startBackgroundJobs(console);
     app.listen(config.port, () => {
       console.info(`Fixnado API listening on port ${config.port}`);

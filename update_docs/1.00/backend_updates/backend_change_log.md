@@ -8,3 +8,8 @@
 - Shipped zone microservice with GeoJSON validation, centroid/bounding box enrichment, analytics snapshots, and REST endpoints ready for explorer overlays (`services/zoneService.js`, `routes/zoneRoutes.js`, `controllers/zoneController.js`, `jobs/zoneAnalyticsJob.js`).
 - Implemented booking orchestration covering assignments, bids, disputes, and finance calculations through new services/models/controllers/routes and environment-driven SLA/commission/tax configuration.
 - Added Vitest regression suites for zones and bookings ensuring geometry validation, SLA timers, currency calculations, assignment/bid flows, and dispute handling remain production-safe.
+
+## 2025-10-13 — Shared Infrastructure & Feature Toggle Governance
+- Refactored Sequelize configuration to default to PostgreSQL with pooled connections, SSL toggles, and dialect-specific options; startup now verifies PostGIS/topology/UUID extensions and surfaces precise diagnostics (`src/config/database.js`, `src/app.js`).
+- Created Secrets Manager–backed feature toggle service with admin endpoints, validation rules, caching, and audit logging to the new `feature_toggle_audits` table (`src/services/featureToggleService.js`, `src/controllers/featureToggleController.js`, `src/routes/adminRoutes.js`, `src/database/migrations/20250215000000-feature-toggle-audit.js`).
+- Added bootstrap tooling for PostGIS enablement and updated Vitest suites to cover toggle reads/writes so infrastructure drift and rollout regressions are caught in CI (`scripts/bootstrap-postgis.mjs`, `tests/featureToggleService.test.js`).
