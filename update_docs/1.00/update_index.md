@@ -134,3 +134,38 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Introduced diagnostics QA scenario asserting stats payload integrity and filter echoing.
 - [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) — Captured new data quality instrumentation, rehearsal flow, and next-step actions for analytics governance.
 - [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Added telemetry diagnostics entry to design change log with guidance for analytics + ops teams.
+
+## Newly Updated Artefacts (2025-02-07)
+- [`change_log.md`](change_log.md) — Recorded mobilisation milestone covering PostGIS provisioning, CI/CD guardrails, and release governance UX/compliance updates.
+- [`update_task_list.md`](update_task_list.md) — Marked Task 1 subtasks complete with references to RACI, infrastructure, CI, and issue intake automation deliverables.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 1 metrics to production-ready, noting CI/CD enforcement, PostGIS verification, and issue pipeline automation.
+- [`update_milestone_list.md`](update_milestone_list.md) — Closed Task 1A under Milestone M1 with commentary on governance baseline and environment parity.
+- [`build_updates.md`](build_updates.md) — Documented GitHub Actions additions, rollback checklist artefact, and PostGIS health script.
+- [`dependency_updates.md`](dependency_updates.md) — Logged new dependencies (`pg`, `vitest`, `@testing-library/react`, `@vitest/coverage-v8`) and security posture review.
+- [`backend_updates`](backend_updates) — Updated API, controller, service, model, middleware, config, environment, and new file logs detailing feature toggle endpoints, PostGIS client, RBAC service, scripts, and config overrides.
+- [`frontend_updates`](frontend_updates) — Captured admin dashboard release panel, hooks/API modules, and vitest integration with coverage artefact.
+- [`user_phone_app_updates`](user_phone_app_updates) — Noted FeatureFlagScope addition, banner widget, and unit tests enabling mobile rollout awareness.
+- [`docs/compliance`](../docs/compliance) — Added refreshed DPIA, RBAC review minutes, and security baseline summarising mobilisation controls.
+- [`infrastructure/terraform`](../infrastructure/terraform) — Updated Terraform for PostGIS resources, Secrets Manager entries, outputs, README, and environment variables.
+- [`scripts`](../scripts) — Added issue intake automation, PostGIS health check, and enhanced secrets governance references.
+
+## Newly Updated Artefacts (2025-02-08)
+- [`test_plan.md`](test_plan.md) — Added feature toggle governance coverage, RBAC/webhook acceptance criteria, and automation strategy updates spanning Playwright, Vitest, and Flutter widget tests.
+- [`update_task_list.md`](update_task_list.md) — Logged Subtask 6.1 progress referencing the expanded QA plan and automation commitments.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Elevated Task 6 readiness metrics and next review actions to track toggle integration testing.
+- [`change_log.md`](change_log.md) — Captured QA governance expansion entry summarising documentation and tracker updates.
+
+## Newly Updated Artefacts (2025-02-09)
+- [`change_log.md`](change_log.md) — Documented Subtask 6.2 automation rollout spanning backend Vitest coverage, React telemetry regression, and Flutter widget suites.
+- [`test_plan.md`](test_plan.md) — Added service marketplace escrow contract testing, React telemetry harness expectations, and refreshed automation strategy including chaos validation and Flutter widgets.
+- [`update_task_list.md`](update_task_list.md) — Recorded Subtask 6.2 completion highlighting cross-stack automation artefacts.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 6 metrics to reflect new API/UI/mobile test coverage and updated next review actions.
+- [`update_milestone_list.md`](update_milestone_list.md) — Logged Task 6A automation readiness note covering Vitest, React, and Flutter suites.
+- [`update_tests/backend_test_results.md`](update_tests/backend_test_results.md), [`front_end_test_results.md`](update_tests/front_end_test_results.md), [`user_app_test_results.md`](update_tests/user_app_test_results.md) — Captured latest Vitest executions and Flutter widget test status with environment callouts.
+- [`Design_Plan.md`](Design_Plan.md), [`Design_Change_log.md`](Design_Change_log.md), [`Design_update_task_list.md`](Design_update_task_list.md), [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md), [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Refreshed design QA narrative with regression automation coverage and tracker updates.
+- [`backend_updates/backend_change_log.md`](backend_updates/backend_change_log.md), [`backend_updates/controllers_changes.md`](backend_updates/controllers_changes.md), [`backend_updates/config_changes.md`](backend_updates/config_changes.md), [`backend_updates/tests_changes.md`](backend_updates/tests_changes.md) — Logged transactional Vitest suites, chaos assertions, and sqlite-aware configuration for Subtask 6.2.
+- [`frontend_updates`](frontend_updates) — Added Vitest/Testing Library configuration, ThemeProvider regression harness, and updated dependency notes supporting telemetry QA automation.
+- [`user_phone_app_updates/app_widget_updates.md`](user_phone_app_updates/app_widget_updates.md) & [`user_phone_app_updates/user_app_change_log.md`](user_phone_app_updates/user_app_change_log.md) — Documented live feed widget enhancements and widget test coverage.
+- [`backend-nodejs/src/config/database.js`](../backend-nodejs/src/config/database.js), [`backend-nodejs/src/controllers/serviceController.js`](../backend-nodejs/src/controllers/serviceController.js), [`backend-nodejs/tests/serviceRoutes.test.js`](../backend-nodejs/tests/serviceRoutes.test.js), [`backend-nodejs/tests/services.contract.test.js`](../backend-nodejs/tests/services.contract.test.js), [`backend-nodejs/vitest.config.js`](../backend-nodejs/vitest.config.js), [`backend-nodejs/vitest.setup.js`](../backend-nodejs/vitest.setup.js), [`backend-nodejs/package.json`](../backend-nodejs/package.json), [`backend-nodejs/package-lock.json`](../backend-nodejs/package-lock.json) — Introduced sqlite-aware config, transactional purchase logic, contract/chaos tests, and CI-ready Vitest setup.
+- [`frontend-reactjs/vitest.config.js`](../frontend-reactjs/vitest.config.js), [`frontend-reactjs/vitest.setup.js`](../frontend-reactjs/vitest.setup.js), [`frontend-reactjs/src/providers/__tests__/ThemeProvider.test.jsx`](../frontend-reactjs/src/providers/__tests__/ThemeProvider.test.jsx), [`frontend-reactjs/package.json`](../frontend-reactjs/package.json), [`frontend-reactjs/package-lock.json`](../frontend-reactjs/package-lock.json) — Configured jsdom-based Vitest environment, telemetry regression tests, and dependency updates.
+- [`flutter-phoneapp/lib/widgets/live_feed_list.dart`](../flutter-phoneapp/lib/widgets/live_feed_list.dart), [`flutter-phoneapp/test/widgets/live_feed_list_test.dart`](../flutter-phoneapp/test/widgets/live_feed_list_test.dart), [`flutter-phoneapp/pubspec.yaml`](../flutter-phoneapp/pubspec.yaml) — Upgraded live feed widget with loading/empty/priority states and added widget automation with documented dev dependencies.

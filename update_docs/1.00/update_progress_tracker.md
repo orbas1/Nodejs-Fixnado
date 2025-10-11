@@ -8,12 +8,14 @@
 | Task 3 — Marketplace, Inventory & Monetisation Backbones | 28 | 18 | 15 | 17 | 20 | 12 | 18 | Inventory ledger design ready; compliance policies for insured sellers scheduled for Week 3 workshop. |
 | Task 4 — Cross-Channel Experience & Collaboration | 26 | 16 | 14 | 15 | 18 | 10 | 17 | React explorer wireframes approved; Flutter parity backlog prioritised with comms integration dependencies flagged. |
 | Task 5 — Analytics, Data Governance & Reporting | 24 | 14 | 12 | 13 | 16 | 9 | 15 | Event schema draft circulated; governance council reviewing retention requirements before ETL updates begin. |
-| Task 6 — QA, Compliance & Launch Readiness | 22 | 12 | 10 | 11 | 14 | 8 | 13 | Test strategy outline in progress; automation resourcing and compliance audit scheduling pending sign-off. |
+| Task 6 — QA, Compliance & Launch Readiness | 34 | 32 | 28 | 29 | 26 | 22 | 30 | Backend Vitest suites now cover service purchase rollback + contract schemas, Playwright-ready React telemetry tests run via Vitest + Testing Library, and Flutter widget automation guards live feed banners; chaos simulations validated transaction rollback so focus shifts to load drill orchestration and compliance evidence collation. |
 
 ### Next Review Actions
 - Finalise issue backlog ingestion so `issue_report.md`, `issue_list.md`, and `fix_suggestions.md` transition from placeholders to live artefacts.
 - Schedule cross-squad dependency review to unblock geo security approval and marketplace compliance workshop.
 - Prepare integrated testing calendar aligning backend, web, Flutter, and analytics checkpoints prior to Milestone M2 exit.
+- Finalise cross-stack load/chaos rehearsal calendar for bookings, chat, and telemetry workloads to satisfy Subtask 6.3 entry criteria.
+- Expand compliance evidence packs (GDPR export drills, insurance refresh scripts) to align with Subtask 6.4 documentation requirements.
 
 ---
 Design metrics from prior addendum are retained below for continuity.
@@ -37,7 +39,7 @@ Design metrics from prior addendum are retained below for continuity.
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation backlog remains in Sprint 4 queue. |
 | Design Usability Grade | 90 | Ops rehearsal scripts now include diagnostics walkthroughs so teams can evidence freshness governance during drills; usability audits scheduled post-rehearsal. |
 | Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; QA asserts stale bounds and stats payload structure. |
-| Test Grade | 93 | Automation now spans ingestion, dashboard, alerting, and diagnostics stats with staging rehearsal captured in QA scenarios. |
+| Test Grade | 95 | Automation now spans ingestion, dashboard, alerting, diagnostics stats, ThemeProvider regression, and Flutter live feed widgets with rehearsal evidence captured in QA scenarios. |
 | QA Grade | 95 | Data engineering, design ops, and SRE coordinate weekly; Slack/Looker rehearsal locked for 12 Feb with diagnostics sign-off criteria documented. |
 | Design Accuracy Grade | 95 | Stats schema + API contract updates documented; runbooks link to implementation to preserve fidelity and auditability. |
 | **Overall Grade** | **97** | Telemetry ecosystem production-ready across ingestion, dashboard, alerting, and diagnostics; next sprint targets Chromatic/axe automation and microsite uplift. |

@@ -91,6 +91,11 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Added aggregate statistics (`stats.freshness`, tenant/range/theme breakdowns, share min/avg/max) with freshness threshold overrides to support rehearsal SLAs and Looker ingestion observability.
 - Updated telemetry runbook and QA scenarios to capture diagnostics workflow, ensuring ops/design/data rehearse stats validation before the analytics readiness drill.
 
+### 14. Theme & Telemetry Regression Automation (2025-02-09)
+- Authored Vitest + Testing Library harness for `ThemeProvider` verifying DOM dataset updates, event broadcasting, telemetry beacons, and storage persistence so design instrumentation remains audit-ready.
+- Captured automation uplift across `test_plan.md`, trackers, and design docs to evidence Subtask 6.2 completion and surface telemetry regression assertions for QA and analytics squads.
+- Coordinated Flutter widget coverage for live feed banners, mapping design intent (priority indicators, empty/loading states) into deterministic tests referenced by design QA artefacts.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
 - Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.

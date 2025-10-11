@@ -1,5 +1,5 @@
 import { validationResult } from 'express-validator';
-import { Service, Order, Escrow } from '../models/index.js';
+import { Service, Order, Escrow, sequelize } from '../models/index.js';
 
 export async function listServices(req, res, next) {
   try {
@@ -33,34 +33,47 @@ export async function createService(req, res, next) {
 }
 
 export async function purchaseService(req, res, next) {
+  const transaction = await sequelize.transaction();
+
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      await transaction.rollback();
       return res.status(422).json({ errors: errors.array() });
     }
 
-    const service = await Service.findByPk(req.params.serviceId);
+    const service = await Service.findByPk(req.params.serviceId, { transaction });
     if (!service) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    const order = await Order.create({
-      buyerId: req.user.id,
-      serviceId: service.id,
-      totalAmount: req.body.totalAmount || service.price,
-      currency: req.body.currency || service.currency,
-      status: 'funded',
-      scheduledFor: req.body.scheduledFor
-    });
+    const order = await Order.create(
+      {
+        buyerId: req.user.id,
+        serviceId: service.id,
+        totalAmount: req.body.totalAmount || service.price,
+        currency: req.body.currency || service.currency,
+        status: 'funded',
+        scheduledFor: req.body.scheduledFor
+      },
+      { transaction }
+    );
 
-    const escrow = await Escrow.create({
-      orderId: order.id,
-      status: 'funded',
-      fundedAt: new Date()
-    });
+    const escrow = await Escrow.create(
+      {
+        orderId: order.id,
+        status: 'funded',
+        fundedAt: new Date()
+      },
+      { transaction }
+    );
+
+    await transaction.commit();
 
     res.status(201).json({ order, escrow });
   } catch (error) {
+    await transaction.rollback();
     next(error);
   }
 }

@@ -17,6 +17,8 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 | Telemetry Alerting & Snapshots | Operational monitoring | Data Engineering + SRE | Jest/Node harness, Slack webhook mock, SQL assertions | Alert job triggers Slack message when freshness ≥120m or emo share <10% (≥50 events), suppresses duplicates, and persists `ui_preference_telemetry_snapshot` rows with governed payload JSON. |
 | Theme Studio | Visual regression | Frontend QA | Chromatic (post Storybook uplift) | Snapshot deltas below 0.2% threshold across light/dark/emo variants. |
 | Admin Dashboard | Accessibility + navigation | Frontend QA | Cypress + axe-core | Widget tab order matches `Dashboard Organisation.md`; compliance export button accessible and gated. |
+| Admin Feature Toggle Panel | Functional + RBAC governance | Frontend QA + Backend QA | Playwright (admin UI) + Vitest + Supertest + Postgres test container | Feature lifecycle actions (create, stage, graduate, retire) persist to PostGIS-backed store, enforce rollout windows, emit audit events, and honour RBAC — viewers blocked from mutations, auditors receive read-only export. Toggle propagation webhooks acknowledged within 5s and retries logged. |
+| Service Marketplace & Escrow | API + chaos regression | Backend QA | Vitest + Supertest + sqlite transaction harness + Zod contracts | Purchase flow persists order + escrow atomically, rejects unauthorised buyers, validates currency overrides, and rolls back cleanly when escrow persistence fails; response schema validated against consumer contract to prevent payload drift. |
 | Home & Services | Content compliance | Marketing Ops + Legal | Manual review | Copy matches `Home page text.md`, disclaimers present, consent CTA routes to flagged flows. |
 | Auth Flows | Security telemetry | Security Analyst | Jest + mocked analytics pipeline | `auth_step` telemetry hashed email and includes locale/timezone metadata; no plaintext PII. |
 | Provider Mobile | Usability & compliance | UX Research + Mobile QA | Maestro scripts + moderated study | 90% task success for kanban transitions; compliance gating mirrors `provider_app_wireframe_changes.md`. |
@@ -24,10 +26,12 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 | Marketing Imagery | Compliance | Legal + Marketing | Manual review vs. `Screens_update_images_and_vectors.md` | Emo imagery approved and recorded; seasonal overlays follow guardrails. |
 
 ## Automation Strategy
-1. **Playwright + axe-core**: Integrate `ui-qa-scenarios.csv` to drive deterministic flows for Theme Studio and Admin dashboard once Sprint 5 begins.
-2. **Chromatic Baselines**: Generate Storybook stories for Theme Studio cards, marketing modules, and blueprint headers; integrate Chromatic thresholds into CI.
-3. **Telemetry Validation**: Use staging topic `kafka.ui-preferences.v1`, `/api/telemetry/ui-preferences/summary` contract tests, Playwright coverage for `/admin/telemetry`, and Slack webhook mocks to confirm payload ingestion, dashboard rendering, CSV export accuracy, alert delivery, and snapshot persistence.
-4. **Maestro & Flutter Driver**: Script booking wizard, kanban transitions, and compliance flows; capture video evidence for audits.
+1. **Playwright + axe-core**: Integrate `ui-qa-scenarios.csv` to drive deterministic flows for Theme Studio, Admin dashboard, and feature toggle governance panel once Sprint 5 begins.
+2. **Vitest + Testing Library (React)**: Execute ThemeProvider regression harness to assert DOM dataset updates, event broadcasting, telemetry beacons (dataLayer + fetch fallback), and localStorage persistence so telemetry governance cannot silently regress.
+3. **Chromatic Baselines**: Generate Storybook stories for Theme Studio cards, marketing modules, blueprint headers, and toggle rollout cards; integrate Chromatic thresholds into CI.
+4. **Node/Vitest Coverage**: Extend backend suites with sqlite-backed transaction tests covering service creation/purchase, RBAC guardrails, chaos-induced escrow failures, and contract schema validation via Zod; pipe coverage into CI alongside telemetry contracts and toggle governance specs.
+5. **Telemetry Validation**: Use staging topic `kafka.ui-preferences.v1`, `/api/telemetry/ui-preferences/summary` contract tests, Playwright coverage for `/admin/telemetry`, and Slack webhook mocks to confirm payload ingestion, dashboard rendering, CSV export accuracy, alert delivery, and snapshot persistence.
+6. **Maestro, Flutter Driver & Widget Tests**: Script booking wizard, kanban transitions, compliance flows, and live feed/banner states; new widget tests assert loading/empty/high-priority render paths and feed telemetry selectors for analytics rehearsal evidence.
 
 ## Schedule
 | Date | Activity | Owner(s) | Notes |

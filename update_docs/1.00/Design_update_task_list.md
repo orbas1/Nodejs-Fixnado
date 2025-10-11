@@ -49,6 +49,7 @@
   4. ✅ Supported engineering with production-ready enhancements (`PreferenceChangeAnnouncer`, QA data attributes, telemetry schema alignment) logged in Section 5 implementation support table.
   5. ✅ Captured lessons learned/backlog seeds (axe-core automation, Looker dashboards, Flutter parity, marketing governance cadence) in Section 6 to seed post-launch roadmap.
   6. ✅ *(2025-02-02 follow-up)* Delivered telemetry ingestion API + analytics summary endpoints, updated handoff schema (`payloadSchema`) and QA scenarios, and published telemetry dashboard runbook for data engineering enablement.
+  7. ✅ *(2025-02-09 follow-up)* Added Vitest regression harness for ThemeProvider telemetry (event beacon, DOM dataset, persistence), wired CI-ready testing config, and documented coverage uplift across test plan + trackers.
 
 ## Task 6 — Telemetry Dashboard Operationalisation *(Status: ✅ Complete — 2025-02-03)*
 - **Delivery Owner:** Design Systems Engineer with Data Engineering & Frontend Tech Lead.
