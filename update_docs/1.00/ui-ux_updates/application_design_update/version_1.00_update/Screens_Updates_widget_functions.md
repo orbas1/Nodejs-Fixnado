@@ -47,3 +47,19 @@
 - Every widget exposes `Semantics` labels referencing copy deck.
 - Support Right-to-Left: widgets mirror layout; icons maintain orientation except directional (arrow) icons swapped.
 - Dynamic type up to 1.3x: components enlarge while maintaining 8dp spacing increments.
+
+## Analytics & Instrumentation
+- Buttons emit `ui_button_*` events with `screen`, `cta_id`, and `experiment_variant` parameters. Ghost buttons also log `secondary_action_used` for funnel diagnostics.
+- Cards log `card_tapped` with `card_type`, `context`, `position_index` to analyse discoverability.
+- Map overlays emit `layer_toggled` (payload: `layer_id`, `is_visible`), `chip_filter` (payload: `filter_id`, `state`).
+- SnackBars include `toast_shown` event with `severity` and `duration_ms` for support case correlation.
+
+## Error Handling Patterns
+- Provider cards show inline banner if API returns error status; CTA buttons disabled and tooltip explains reason.
+- Form widgets surface global error summary at top when submission fails; "Scroll to error" button focuses first invalid field.
+- Upload widget handles `413 Payload Too Large` by swapping drop zone instructions with limit copy and highlight border red.
+
+## Offline Behaviour
+- Buttons check connectivity provider; if offline and action not allowed, show toast "Offline mode" with `Retry` option when connection restored.
+- Lists display cached data with timestamp chip `Inter 12/16` grey; manual refresh attempts queue until connection regained.
+- Chat input stores unsent messages in local queue; badge indicates "Queued" status.

@@ -78,6 +78,80 @@ All layouts described below reference a base viewport of **360 × 780 dp** (Andr
 - App bar 88dp with provider avatar, status indicator 12dp.
 - Message bubble widths: max 78% width. User bubble colour `#0066F5`, text `#FFFFFF`; provider bubble `#F1F5FF`, text `#1F2937`.
 - Input bar height 72dp: text field 248×48dp, attachment button 48×48dp, send button 48×48dp gradient `#1C62F0 → #4C8DF8`.
+
+## 6. Profile, Settings & Account Cluster
+
+### 6.1 Profile Overview
+- **Header**: 360×200dp hero with blurred polygon background overlay 20% opacity. Avatar 96dp circular, tier badge 32dp top-right.
+- **Stats Row**: Three metric chips (Bookings, Loyalty Tier, Compliance) each 104×88dp, spacing 12dp. Uses `FixnadoMetricCard` tokens.
+- **Action List**: Tiles 72dp height with icon container 40×40dp, trailing chevron. Sections separated by 24dp with uppercase labels.
+- **Motion**: Avatar subtle parallax (-12dp offset) on scroll using `SliverAppBar` flexible space.
+
+### 6.2 Profile Detail & Edit
+- Form contained within 360×560dp scroll area. Fields follow `Forms.md` spec with 16dp spacing.
+- Section "Business Details" uses card 328×200dp with double-column layout when width >400dp.
+- Save CTA pinned bottom (320×56dp). Cancel ghost button stacked below (full width) with 12dp gap.
+- Validation icons 16dp appear inside field trailing area when error.
+
+### 6.3 Payment Methods
+- Card list in 328dp width column. Each card tile 88dp height, uses brand logo 48×32dp left, masked card number `Inter 16/24`.
+- Add new card button ghost style 320×48dp with dashed border `#9CA3AF` 1dp, corner radius 16dp.
+- Default indicator is pill 28×16dp `#1BBF92` text white.
+
+### 6.4 Settings Screen
+- Detailed spec in `Settings_Screen.md`. Layout uses `CustomScrollView` with pinned section headers height 40dp.
+- Danger zone card 328×140dp with red border 2dp, background `rgba(231,76,60,0.08)`, contains warning icon 32dp.
+
+## 7. Provider & Compliance Cluster
+
+### 7.1 Provider Dashboard
+- **Hero Summary**: 360×220dp card with gradient `linear-gradient(142°, #1C62F0 → #3B8DFF)` overlay grid 10% opacity. Contains KPI stack: active jobs, earnings (IBM Plex Mono 24/28), compliance score gauge (88dp donut).
+- **Quick Actions**: Horizontal scroll of pill buttons 120×44dp (Start Job, Log Availability, Launch Campaign) with icons 20dp.
+- **Job Kanban Preview**: Horizontal cards 280×160dp, each representing column with top badge and job chips.
+- **Insights Row**: Two cards 160×160dp summarising bidding health & response time.
+
+### 7.2 Compliance Center
+- List of requirement cards 328×144dp. Each includes icon 32dp, title, due date, status pill (success/warning/danger), progress bar 320×6dp at bottom.
+- Top filter segmented control 3 states (All, Pending, Submitted). Sticky at top after 48dp scroll.
+- Upload action button ghost style per card; tapping opens modal described in 7.3.
+
+### 7.3 Document Upload Modal
+- Modal bottom sheet full height minus 48dp top margin, radius 32dp.
+- Drop zone 328×200dp dashed border `#1C62F0` 2dp, background `rgba(28,98,240,0.05)` with icon 48dp.
+- Steps list enumerated 1–3 with `Manrope 16/24` headings, checkboxes for completion.
+- Footer CTA primary 320×56dp "Submit for review"; secondary text button "Save draft".
+
+### 7.4 Availability Calendar
+- Month view grid 7×6 cells each 44×48dp, radius 12dp. Active days tinted `rgba(28,98,240,0.12)`.
+- Header contains month label `Manrope 20/28`, arrow buttons icon 24dp.
+- Bottom sheet detail for selected day 360×200dp listing slots as pill chips 88×36dp (toggleable).
+
+## 8. System Overlays & Special States
+
+### 8.1 Offline Mode Banner
+- Height 48dp across top of app, background `#B91C1C`, text `Inter 14/20` white. Includes retry button ghost style 96×36dp.
+- Icon 20dp left with warning glyph.
+- Banner slides in from top 200ms, remains sticky until connection restored.
+
+### 8.2 Error Dialog
+- Modal 320×260dp radius 28dp. Icon 56dp top center, gradient background circle `#E74C3C → #F59E0B`.
+- Title `Manrope 20/28` centre, body `Inter 15/22` left aligned.
+- Buttons arranged horizontally: Primary 144×52dp "Retry", Ghost 144×52dp "Contact support".
+
+### 8.3 Success Toast
+- Floating at bottom above nav, width 320dp, height 60dp, radius 16dp. Background `rgba(27,191,146,0.95)`, icon 24dp left, text `Inter 14/20` white.
+- Appears with fade + slide 24dp upward, auto-dismiss 2.5s.
+
+### 8.4 Tutorial Coach Marks
+- Sequence of overlays highlighting map filters, booking CTA, compliance tasks. Mask uses blur `BackdropFilter` radius 16.
+- Tooltip cards 240×120dp, arrow 16×24dp pointing to target. Buttons "Next" (primary) and "Skip" (ghost) inline.
+
+## 9. Responsiveness & Breakpoints
+
+- **Compact (<360dp)**: Reduce margins to 12dp, convert horizontal metric cards to vertical stack. Map height reduces to 300dp.
+- **Medium (361–414dp)**: Default specs. Buttons remain 320dp but use `LayoutBuilder` to max width.
+- **Large (>480dp)**: Introduce dual-pane layout for Explore (map left 60%, list right 40%), Profile (list left, detail right). Increase card padding to 24dp.
+- **Orientation Change**: When landscape, bottom nav converts to rail 72dp width with labels hidden; FAB shifts to right side offset 16dp.
 - Typing indicator uses 3-dot animation, dot size 8dp, spacing 4dp.
 
 ### 5.3 Support Centre

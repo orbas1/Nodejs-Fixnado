@@ -19,6 +19,9 @@
 - Language change triggers app restart prompt with `Dialog`.
 - Theme toggle immediate effect; persisted in shared preferences + backend flag.
 - Delete account requires 2-step confirmation (password + typed confirmation).
+- Provide undo Snackbar for non-critical preference changes (e.g., promotions opt-out) lasting 6s.
+- Show success toast for saved updates (`"Settings updated"`).
+- For unsupported actions offline, grey out tile and show tooltip `"Connect to the internet to change this."`.
 
 ## Layout
 - Use grouped list: header label (uppercase) + `FixnadoListTile`. Danger zone card with red border, destructive button.
@@ -27,9 +30,13 @@
 ## Accessibility
 - Provide descriptive hints: e.g., "Enable to receive booking updates via push notifications".
 - Danger actions emphasise with voiceover `isDestructiveAction`.
+- Focus order ensures sticky header accessible before list items when using keyboard navigation.
 
 ## Analytics
 - Log events: `settings_toggle_changed`, `language_changed`, `theme_toggled`, `account_deleted`.
+- Include `previous_value` and `new_value` in analytics payload for toggles.
+- Track `settings_screen_time_ms` using `RouteAware` to gauge engagement.
 
 ## Error Handling
 - If API fails, revert toggle state and show SnackBar "Could not update. Try again.".
+- For repeated failures (>3 within minute), show inline banner `Inter 13/18` with contact support link.

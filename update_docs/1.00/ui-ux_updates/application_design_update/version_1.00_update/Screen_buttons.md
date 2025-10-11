@@ -33,6 +33,28 @@
 - Provide `isExpanded` parameter for full-width vs. inline (min width 140dp).
 - Use `Theme.of(context).extension<FixnadoButtonTheme>()` for tokens enabling theming updates.
 
+## Layout & Spacing Rules
+- Button text centered with letter spacing 0.2%; text baseline vertically aligned to maintain consistent feel across heights.
+- Icon + label variant: maintain 16dp padding left/right; icon sits within 20dp square, separated by 12dp gap.
+- Stacked button groups maintain 12dp vertical spacing; horizontal pairs use 12dp gutter.
+- Danger zone buttons use 24dp top margin relative to preceding content for emphasis.
+
+## Dark Mode Adjustments
+- Primary gradient shifts to `#2563EB → #3B82F6`, text remains white.
+- Ghost button border uses `rgba(59,130,246,0.48)`; text `#93C5FD`.
+- Destructive button retains `#F87171` base; pressed `#DC2626`.
+- Focus outline transitions to `rgba(147,197,253,0.64)` for readability on dark surfaces.
+
+## Haptics & Sound
+- Default tap: `HapticFeedback.mediumImpact` + optional subtle click sound (configurable) using `SystemSoundType.click`.
+- Destructive actions escalate to `HapticFeedback.heavyImpact` to reinforce caution.
+- Long press on FAB triggers `HapticFeedback.selectionClick` while radial menu expands.
+
+## QA Checklist
+- Verify hit target coverage using Flutter Inspector (should show 48×48dp area).
+- Confirm disabled state contrast ratio ≥3:1 with underlying background.
+- Ensure semantics label includes action + context (e.g., "Book now with provider Fixnado Cooling").
+
 ## Accessibility
 - Minimum hit target 48dp.
 - Provide `semanticLabel` property for icon-only variants.

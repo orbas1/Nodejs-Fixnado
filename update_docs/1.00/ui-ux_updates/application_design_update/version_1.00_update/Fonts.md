@@ -30,7 +30,11 @@
 - Register fonts in Flutter `pubspec.yaml` referencing `assets/fonts/{Manrope,Inter,IBMPlexMono}`.
 - Use `ThemeData.textTheme` overrides with extension `FixnadoTextTheme` for tokens above.
 - For numeric text ensure `TextStyle.fontFeatures` includes `tabular-nums` for aligned digits.
+- Apply letter spacing adjustments: display styles `0%`, titles `0.15%`, body `0%`, caption `0.4%` to optimise legibility.
+- Provide `TextTheme` getters for condensed variants used in navigation labels (`Manrope 12/16` uppercase, letter spacing 0.8%).
 
 ## Localization Considerations
 - Provide Noto Sans fallback for languages not covered by primary fonts.
 - For RTL languages, maintain same type scale; ensure digits follow locale numbering (use `NumberFormat`).
+- Chinese/Japanese/Korean fallback: use `Noto Sans CJK` with adjusted font metrics (line height +2dp) to prevent clipping.
+- Arabic script: use `Cairo` font with weight mapping (Manrope 600 → Cairo 600) to maintain hierarchy.

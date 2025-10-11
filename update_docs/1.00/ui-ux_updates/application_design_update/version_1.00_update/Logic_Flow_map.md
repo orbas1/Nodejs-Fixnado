@@ -36,6 +36,10 @@ BookingCoordinator
   -> onPaymentFailure(error)
       -> showError(error)
       -> allowRetry()
+  -> onChangePaymentMethod()
+      -> presentPaymentSheet()
+  -> onTimeout()
+      -> refreshPaymentIntent()
 
 MarketplaceCoordinator
   -> loadCampaigns(zoneId)
@@ -57,6 +61,10 @@ MessagingCoordinator
   -> onAttachmentUpload(file)
       -> uploadFile()
       -> appendMessage()
+  -> onAckTimeout()
+      -> flagMessageFailed()
+  -> onReconnect()
+      -> resendQueuedMessages()
 
 ProfileCoordinator
   -> loadProfile()
@@ -65,6 +73,9 @@ ProfileCoordinator
   -> onDocumentUpload(file)
       -> uploadDocument()
       -> refreshCompliance()
+  -> onRoleSwitch(role)
+      -> clearCaches()
+      -> reloadRoleData(role)
 
 NotificationsCoordinator
   -> subscribeSSE(role)
@@ -72,11 +83,15 @@ NotificationsCoordinator
       -> routeDeepLink(notification.target)
   -> onClearAll()
       -> callClearAPI()
+  -> onMuteChannel(channelId)
+      -> updateNotificationPrefs(channelId,false)
 
 ErrorManager
   -> interceptNetworkErrors()
   -> showOfflineBanner()
   -> queueRetry(task)
+  -> reportCriticalError()
+      -> sendToSentry()
 ```
 
 ### Integration Notes

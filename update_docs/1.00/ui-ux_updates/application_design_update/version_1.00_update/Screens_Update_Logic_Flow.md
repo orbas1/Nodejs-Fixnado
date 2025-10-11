@@ -51,3 +51,21 @@ This document maps user intents to the screen stack transitions. It complements 
 ## Navigation Shells
 - Primary navigation via `FixnadoBottomNav` (5 tabs). Each tab maintains own `Navigator` stack using `IndexedStack` for state retention.
 - Deep links (notifications, universal links) use route parser: `/booking/:id` -> Bookings tab with detail; `/promotion/:id` -> Marketplace tab with campaign overlay.
+- Feature flags gate alternative paths (e.g., `feature.marketplace_v1=false` falls back to legacy list screen). Ensure analytics differentiate with `ui_variant` property.
+
+## Error & Recovery Paths
+- **Authentication failure**: After three failed attempts, show `AccountRecovery` modal prompting password reset, route to `PasswordReset` webview. Captures analytics `auth_lockout`.
+- **Booking payment declined**: Remains on Step 3, displays inline error, opens "Try another method" sheet listing stored cards and `Add new card`. Logs `booking_payment_declined` event with `provider_id` and `reason_code`.
+- **Map data timeout**: Display skeleton state (grey blocks) with `Retry` ghost button. After third retry failure, prompt to switch to list-only view.
+- **Chat send failure**: Message bubble flagged red with retry icon; tapping attempts resend via queued provider.
+
+## Analytics & Telemetry Hooks
+- Each navigation action emits `screen_view` with `screen_name`, `prev_screen`, `role`, `experiment_variant`.
+- Critical funnels include step events: `booking_step_viewed`, `booking_step_completed`, `campaign_step_completed`, `compliance_task_uploaded`.
+- Map interactions log `map_pan`, `map_zoom`, `filter_applied` with bounding box + filter payload.
+- Messaging logs `message_sent`, `message_read`, `conversation_pinned`.
+
+## Accessibility Flow Considerations
+- Focus order resets when bottom sheet opens, ensuring first focus on header title. `Semantics` tree updated to hide background content for modal states.
+- VoiceOver gestures map to primary actions; e.g., Explore bottom sheet includes "Swipe up for full provider list" hint triggered on first open per session.
+- Large text mode triggers fallback path where segmented controls convert to dropdown menus; path documented for QA.

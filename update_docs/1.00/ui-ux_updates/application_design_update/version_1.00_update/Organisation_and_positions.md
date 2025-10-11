@@ -43,3 +43,12 @@
 ## Accessibility & Focus Order
 - Focus traversal flows top-to-bottom, left-to-right. For bottom sheet, `FocusTraversalGroup` ensures contained focus.
 - Ensure dynamic additions (SnackBar, toast) announced but do not trap focus.
+- Provide logical focus order for dual-pane layouts (landscape) using `FocusTraversalPolicy` to move left pane top→bottom then right pane.
+
+## Screen-Specific Layout Notes
+- **Booking Detail**: Summary header 360×160dp with sticky action bar 320×56dp at bottom. Section toggles 24dp high chips anchored top of each section.
+- **Notifications Center**: Use `SliverAppBar` pinned height 120dp containing segmented filter (All, Unread, Alerts) 320×40dp. List items 88dp with timestamp right-aligned.
+- **Marketplace Grid**: Two-column layout with 12dp gutter; cards 160dp width, 16dp padding. CTA pill anchored bottom-right overlay 12dp margin.
+- **Saved Providers List**: Use `SliverList` with card 328×140dp, trailing icon button to unsave positioned at 16dp from top right inside card.
+- **Document Vault**: Masonry layout enabling 2 columns with 16dp gutter; ensures consistent baseline by aligning file title baseline across columns.
+- **Support Centre**: Accordion sections (FAQs) with header 64dp, content area 328×auto with 20dp padding; icons 24dp left.

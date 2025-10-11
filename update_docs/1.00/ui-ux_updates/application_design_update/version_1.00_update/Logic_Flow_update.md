@@ -60,3 +60,24 @@
 - API responses cached via HTTP caching headers. Preload next-step data (e.g., Step 2 address list) while user on Step 1.
 - Keep provider list to max 20 items per page to maintain scroll performance.
 - Use lazy loading for chat history with `ListView.builder` reversed, fetch earlier messages when scrolled to top.
+
+## Telemetry & Experimentation
+- Integrate with Experimentation service (`/experiments/config`) to toggle UI variants. Provide fallback path if config fails (assume control).
+- Capture `experiment_id`, `variant` on analytics events to support A/B testing of booking CTA copy and marketplace banner placements.
+- Use `FeatureProbe` gating for limited release modules (e.g., AI-assist chat suggestions).
+
+## Edge Case Handling
+- When user toggles provider/user role (dual-role accounts), reset caches and re-fetch context-specific data before navigating to ProviderDashboard.
+- Payment intents expire after 15 minutes; schedule timer to refresh intent if user idle on Step 3 beyond 10 minutes.
+- Offline bookings store payload locally with `uuid` and sync once connection restored; status shows `queued` until confirmation arrives.
+- Document uploads support pause/resume; chunked uploads 5 MB segments with progress persisted via local storage.
+
+## Security & Compliance Enhancements
+- Logging: mask PII before sending analytics or crash reports. Use `SensitiveDataRedactor` in interceptors.
+- Access control: guard provider-only routes with `ProviderGuard` verifying `profile.role` and `complianceStatus != suspended`.
+- GDPR: Provide `Delete account` flow that triggers `data_export` before removal, ensure confirmation UI references legal copy.
+
+## Testing Strategy
+- Implement unit tests for `StateNotifier` flows (auth, booking) verifying state transitions align with logic map.
+- Integration tests using `flutter_driver` to validate cross-screen navigation, especially multi-step flows and deep links.
+- Contract tests with backend mocks verifying error responses display correct messaging and fallbacks.

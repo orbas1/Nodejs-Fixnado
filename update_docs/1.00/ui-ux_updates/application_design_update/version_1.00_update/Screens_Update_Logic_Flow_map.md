@@ -42,6 +42,10 @@ The following textual map describes the directed graph of screen transitions. No
   ├─(Pay success)→ [BookingSuccess]
   ├─(Pay failure)→ [BookingStep3Error]
   └─(Back)→ [BookingStep2]
+[BookingStep3Error]
+  ├─(Change method)→ [PaymentMethodSheet]
+  ├─(Retry)→ [BookingStep3]
+  └─(Cancel)→ [BookingStep1]
 [BookingSuccess]
   ├─(View booking)→ [BookingDetail]
   └─(Back to Explore)→ [ExploreHome]
@@ -96,6 +100,15 @@ The following textual map describes the directed graph of screen transitions. No
   ├─(Select compliance alert)→ [ComplianceCenter]
   ├─(Select marketplace alert)→ [CampaignDetail]
   └─(Clear all)→ [ConfirmClearDialog]
+
+[AccountRecovery]
+  ├─(Reset via email)→ [PasswordResetWebview]
+  ├─(Contact support)→ [SupportCentre]
+  └─(Back)→ [Login]
+
+[OfflineBanner]
+  ├─(Retry tapped & success)→ [PreviousScreen]
+  └─(Retry tapped & fail)→ [OfflineBanner] (show toast "Still offline")
 ```
 
 ### Notes

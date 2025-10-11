@@ -44,6 +44,35 @@
 - Document thumbnails generated via PDF preview; placeholder `doc_placeholder.svg` 160×200dp.
 - Compliance illustration `compliance_shield.svg` used in hero card.
 
+## Provider Dashboard & Analytics
+| Component | Asset | Source | Specs |
+| --- | --- | --- | --- |
+| Earnings sparkline | `earnings_sparkline.json` | design-system/lottie analytics pack | 120×48dp, loops once |
+| Compliance donut | `compliance_donut.svg` | design-system repo | 88dp diameter, gradient stroke |
+| Kanban icons | `icon_job_new.svg`, `icon_job_onroute.svg`, `icon_job_done.svg` | design-system repo | 28dp, filled |
+
+## Messaging & Support
+- Quick reply chips icons `icon_reply_time.svg`, `icon_quote.svg` stored under `assets/icons/chat/` (24dp).
+- Support centre hero illustration `support_agent.svg` 320×200dp from internal helpdesk kit.
+- Attachment preview placeholders `attachment_pdf.svg`, `attachment_image.svg`, `attachment_audio.svg` 64dp.
+
+## Settings & Security
+- MFA success animation `mfa_enabled.json` (Lottie) 200×200dp loops twice.
+- Login history icons `icon_device_mobile.svg`, `icon_device_web.svg`, `icon_device_tablet.svg` 24dp referencing analytics repo.
+- Danger zone warning icon `icon_warning_triangle.svg` 32dp with `#E74C3C` fill.
+
+## Error, Offline & Coach Marks
+| Screen | Asset | Notes |
+| --- | --- | --- |
+| Offline banner | `icon_offline_cloud.svg` | 24dp, line icon white |
+| Global error dialog | `error_orb.json` | Lottie 120×120dp, glows red/orange |
+| Tutorial overlays | `coach_arrow.svg`, `coach_highlight.png` | Arrow 16×24dp, highlight PNG 400×400px with transparent center |
+
+## Asset Governance
+- Maintain asset manifest `assets/mobile/v1.00/manifest_phone.csv` containing columns: `asset_name`, `type`, `path`, `license`, `last_updated`.
+- All raster assets exported at 1x/2x/3x. Example path: `assets/images/marketplace/1.0x/promo_home_repair.jpg`.
+- Implement lint to ensure assets referenced in code exist; use `flutter_gen` for typed accessors.
+
 ## Export & Implementation Notes
 - All SVG assets optimised with SVGO (remove metadata, precision 3).
 - Provide Flutter `pubspec.yaml` entries referencing asset directories.
