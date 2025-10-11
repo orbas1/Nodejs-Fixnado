@@ -118,6 +118,16 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`update_task_list.md`](update_task_list.md) — Logged DT8 completion with references to backend API, runbook, and QA assets.
 - [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — Implemented `/api/telemetry/ui-preferences/snapshots` with cursor pagination, validation, and formatted payloads for BI ingestion.
 - [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Expanded runbook with snapshot API contract, ingestion guidance, and scheduling recommendations.
+
+## Newly Updated Artefacts (2025-10-14)
+- [`change_log.md`](change_log.md) — Logged CI/CD guardrails, release packaging, and rollback playbook delivery for Task 1.3.
+- [`build_updates.md`](build_updates.md) — Added entry covering Build/Test/Scan workflow, Release Packaging workflow, and rollback documentation.
+- [`update_task_list.md`](update_task_list.md) — Marked Subtask 1.3 complete with references to the new workflows and security automation.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 1 metrics and updated review actions to reflect release packaging rehearsals and secrets rotation follow-up.
+- [`update_milestone_list.md`](update_milestone_list.md) — Recorded Task 1A update noting CI/CD completion and rollback readiness.
+- [`docs/operations/rollback-playbook.md`](../docs/operations/rollback-playbook.md) — New operational playbook detailing how to trigger workflows, validate artefacts, and execute audited rollbacks.
+- [`scripts/security-audit.mjs`](../scripts/security-audit.mjs) & [`scripts/create-rollback-manifest.mjs`](../scripts/create-rollback-manifest.mjs) — Added automation for dependency/security scanning and checksum manifest generation.
+- [`.github/workflows/build-test-and-scan.yml`](../.github/workflows/build-test-and-scan.yml) & [`.github/workflows/release-artifacts.yml`](../.github/workflows/release-artifacts.yml) — Established lint/test/security gates and release packaging pipeline with artefact upload.
 - [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added QA scenario covering snapshot pagination and cursor chaining.
 - [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) & [`ui-ux_updates/telemetry_alerting_enablement.md`](ui-ux_updates/telemetry_alerting_enablement.md) — Updated next steps and analytics notes to reflect snapshot API availability and rehearsal coverage.
 - [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged telemetry snapshot distribution enablement entry with references to new API and documentation.

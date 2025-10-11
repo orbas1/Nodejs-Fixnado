@@ -80,3 +80,8 @@
 - Replatformed the shared database tier to Amazon RDS PostgreSQL with PostGIS extensions, IAM auth, and SSL enforcement. Terraform now provisions the parameter group, subnet group, and secrets; application bootstrap and `scripts/bootstrap-postgis.mjs` verify PostGIS/UUID extensions during deploys.
 - Seeded environment-specific feature toggle manifests in Secrets Manager with audit-ready metadata (`infrastructure/terraform/runtime-config/feature_toggles/*.json`) and exposed secured admin APIs (`/api/admin/feature-toggles`) to view and update rollout states with validation, caching, and audit logging.
 - Published an environment parity audit (`scripts/environment-parity.mjs`) comparing tfvars keys and feature toggle drift across staging/production so CI can fail fast on configuration mismatches.
+
+## 2025-10-14 — CI/CD Guardrails & Rollback Playbook Delivery
+- Launched `Build, Test & Scan` GitHub Actions workflow running backend/frontend/Flutter lint + test suites, `gitleaks` secret scanning, and the new multi-surface dependency audit script (`scripts/security-audit.mjs`) to block merges that introduce high/critical vulnerabilities.
+- Added `Release Packaging` workflow packaging backend (`backend-nodejs-release.tar.gz`), frontend (`frontend-reactjs-dist.tar.gz`), and Flutter (`flutter-app-debug.apk`) artefacts with checksum-backed manifest produced by `scripts/create-rollback-manifest.mjs`, ensuring every deploy has an auditable rollback snapshot.
+- Documented operational rollback procedures in `docs/operations/rollback-playbook.md`, integrating workflow triggers, checksum validation, environment parity checks, and governance reporting so incidents follow a repeatable, audit-friendly process.

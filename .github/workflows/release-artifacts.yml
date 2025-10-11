@@ -1,0 +1,128 @@
+name: Release Packaging
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      incident_reference:
+        description: 'Incident or release reference (optional)'
+        required: false
+
+jobs:
+  package:
+    name: Build release artefacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend-nodejs/package-lock.json
+            frontend-reactjs/package-lock.json
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Prepare build directory
+        run: mkdir -p build
+
+      - name: Install backend dependencies
+        working-directory: backend-nodejs
+        run: npm ci --omit=dev
+
+      - name: Backend test suite
+        working-directory: backend-nodejs
+        run: npm test
+
+      - name: Package backend artefact
+        working-directory: backend-nodejs
+        run: |
+          tar -czf ../build/backend-nodejs-release.tar.gz \
+            package.json \
+            package-lock.json \
+            README.md \
+            src \
+            sql \
+            scripts \
+            node_modules
+
+      - name: Install frontend dependencies
+        working-directory: frontend-reactjs
+        run: npm ci
+
+      - name: Frontend lint
+        working-directory: frontend-reactjs
+        run: npm run lint
+
+      - name: Frontend test suite
+        working-directory: frontend-reactjs
+        run: npm test
+
+      - name: Build frontend bundle
+        working-directory: frontend-reactjs
+        run: npm run build
+
+      - name: Package frontend artefact
+        working-directory: frontend-reactjs
+        run: |
+          tar -czf ../build/frontend-reactjs-dist.tar.gz dist
+
+      - name: Resolve Flutter packages
+        working-directory: flutter-phoneapp
+        run: flutter pub get
+
+      - name: Flutter analyse
+        working-directory: flutter-phoneapp
+        run: flutter analyze
+
+      - name: Flutter tests
+        working-directory: flutter-phoneapp
+        run: flutter test
+
+      - name: Build Flutter APK
+        working-directory: flutter-phoneapp
+        run: flutter build apk --debug
+
+      - name: Collect Flutter artefact
+        run: |
+          cp flutter-phoneapp/build/app/outputs/flutter-apk/app-debug.apk build/flutter-app-debug.apk
+
+      - name: Generate rollback manifest
+        run: |
+          node scripts/create-rollback-manifest.mjs \
+            build/rollback-manifest.json \
+            build/backend-nodejs-release.tar.gz \
+            build/frontend-reactjs-dist.tar.gz \
+            build/flutter-app-debug.apk
+
+      - name: Publish job summary
+        run: |
+          {
+            echo '### Release artefacts';
+            echo '- Backend package: backend-nodejs-release.tar.gz';
+            echo '- Frontend bundle: frontend-reactjs-dist.tar.gz';
+            echo '- Flutter APK: flutter-app-debug.apk';
+            echo '- Manifest: rollback-manifest.json';
+            if [ -n "${{ github.event.inputs.incident_reference }}" ]; then
+              echo "- Incident reference: ${{ github.event.inputs.incident_reference }}";
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload rollback kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-kit
+          retention-days: 30
+          path: |
+            build/backend-nodejs-release.tar.gz
+            build/frontend-reactjs-dist.tar.gz
+            build/flutter-app-debug.apk
+            build/rollback-manifest.json
