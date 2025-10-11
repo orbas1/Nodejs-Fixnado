@@ -13,6 +13,8 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 | Theme & Personalisation Toolkit | Introduced Theme Studio, ThemeProvider context, and multi-theme token exports aligning light, dark, and emo palettes with marketing modules. Embedded density/contrast personalisation and telemetry instrumentation. | theme_personalisation_toolkit.md, frontend-reactjs/src/pages/ThemeStudio.jsx, frontend-reactjs/src/styles.css | Enables governed theme switching, accessibility overrides, and marketing experimentation with analytics traceability. |
 | Validation & Handoff Playbook | Authored cross-screen validation checklists, QA cadence, and handoff inventory. Added aria-live announcer and QA selectors to Theme Studio with supporting assets for automation teams. | design_validation_and_handoff.md, frontend-reactjs/src/pages/ThemeStudio.jsx, docs/design/handoff/* | Ensures accessibility/compliance sign-off, de-risks QA automation, and accelerates engineering onboarding ahead of launch. |
 | Data Visualisation | Defined dashboard module styling (`Dashboard Designs.md`, `Dashboard Organisation.md`) with refreshed chart colours, tooltip treatments, and anomaly surfacing patterns. Added animated loading skeletons to reduce perceived latency. | Dashboard Designs, Dashboard Organisation | Improves interpretability of analytics and resilience to slow data responses. |
+| Telemetry Dashboard | Operationalised UI preference telemetry console with KPI cards, trend widgets, and adoption breakdown modules referencing `telemetry_dashboard_enablement.md` and admin dashboard enhancements. | Telemetry dashboard docs, AdminDashboard.jsx, TelemetryDashboard.jsx | Provides governed analytics visibility and readiness for Looker dashboards. |
+| Telemetry Alerting & Snapshots | Added background alerting pipeline, Slack messaging, and Looker snapshot persistence to govern telemetry health and downstream analytics feeds. | telemetry_alerting_enablement.md, backend telemetry job/model, telemetry runbook | Ensures operational teams receive timely alerts and BI tooling consumes governed datasets. |
 | Content & Messaging | Refined copy tone hierarchy from `Screen_text.md`, `text.md.md`, and `Home page text.md`. Added templated microcopy for error states and guided onboarding flows aligned with compliance requirements. | Screen_text, text.md.md, Home page text | Drives consistent voice and regulatory clarity. |
 | Imagery & Illustration | Curated imagery specifications (`Screens_update_images_and_vectors.md`, `images_and _vectors.md`, `Home page images.md`) to support inclusive representation and performance budgets. Implemented vector-first approach with fallbacks for offline caching. | Image/vector documents | Improves accessibility and load performance across devices. |
 | Logic & Interaction | Harmonised logic flow artefacts (`Logic_Flow_update.md`, `Screens_Update_Logic_Flow.md`) to map cross-platform journeys, introducing guard-rails for security-critical paths and conditional theming triggers. | Logic Flow documents | Reduces behavioural inconsistencies and surfaces security checkpoints earlier in the experience. |
@@ -68,10 +70,20 @@ The Version 1.00 UI/UX refresh synthesises insights from the **Application Desig
 - Enhanced Theme Studio instrumentation via `utils/telemetry.js` to enrich beacons with tenant, role, locale, and correlation metadata alongside fetch fallbacks for environments without `sendBeacon` support.
 - Authored analytics runbook `docs/telemetry/ui-preference-dashboard.md` and expanded QA scenarios to include ingestion verification, unblocking Looker dashboard build-out and monitoring SLAs.
 
+### 10. Telemetry Dashboard Operationalisation (2025-02-03)
+- Delivered `/admin/telemetry` console with KPI cards, trend visualisation, and adoption breakdowns mapped to dashboard drawings and token palette guidance.
+- Implemented `useTelemetrySummary` hook handling fetch orchestration, auto-refresh/visibility pausing, and CSV export enabling analytics backfill validation.
+- Documented workflows, QA selectors, and developer sample dataset support via `ui-ux_updates/telemetry_dashboard_enablement.md`, updated runbook guidance, and extended QA scenarios.
+
+### 11. Telemetry Alerting & Looker Snapshots (2025-02-04)
+- Deployed background alerting job with configurable thresholds, Slack webhook integration, and repeat suppression to enforce telemetry freshness SLAs and emo adoption monitoring.
+- Introduced `UiPreferenceTelemetrySnapshot` persistence so Looker dashboards can query governed, timestamped summaries without hitting live APIs; payload JSON preserves breakdown fidelity.
+- Updated runbook (`docs/telemetry/ui-preference-dashboard.md`), QA scenarios, and trackers to cover alert rehearsal steps, environment variables, and escalation policy for ops/design/data teams.
+
 ## Open Questions & Follow-ups
 - Validate colour token accessibility in upcoming usability study across low-vision participants.
-- Confirm analytics tracking coverage for new theme toggles and personalised home variants.
-- Schedule Looker dashboard review with analytics once `/api/telemetry/ui-preferences/summary` reaches parity across tenants.
+- Confirm analytics tracking coverage for new theme toggles, personalised home variants, and telemetry dashboard interactions.
+- Finalise Looker dashboard rollout using snapshot table, rehearse Slack alert channel, and deliver Chromatic/axe automation for Theme Studio + telemetry screens.
 - Evaluate additional "emo" theme presets and seasonal variants after initial release metrics.
 - Monitor performance impact of new imagery pipeline under constrained networks.
 

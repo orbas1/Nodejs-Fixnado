@@ -56,6 +56,8 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - **2025-01-31 — Theme & Personalisation Toolkit**: Theme Studio, theme context persistence, marketing module prototypes, and telemetry hooks delivered; rollout documented in `theme_personalisation_toolkit.md`.
 - **2025-02-01 — Validation & Handoff Playbook**: Consolidated accessibility/compliance/security checklists, QA cadence, and handoff assets in `design_validation_and_handoff.md`; augmented Theme Studio with aria-live announcer and deterministic QA selectors to support automation and assistive tech.
 - **2025-02-02 — Telemetry Ingestion Enablement**: Delivered backend telemetry ingestion + summary endpoints, enriched Theme Studio beacon payloads with tenant/role metadata and fetch fallback, updated handoff schema with payload requirements, and published telemetry dashboard runbook for analytics onboarding.
+- **2025-02-03 — Telemetry Dashboard Operationalisation**: Shipped `/admin/telemetry` console with KPI cards, trend visualisation, adoption breakdown panels, CSV export, and deterministic selectors powered by `useTelemetrySummary`; documented workflows in `telemetry_dashboard_enablement.md` and linked from admin navigation.
+- **2025-02-04 — Telemetry Alerting & Looker Snapshots**: Deployed background alerting job, Slack messaging, and Looker snapshot persistence to enforce telemetry SLAs, documented in `telemetry_alerting_enablement.md`, `docs/telemetry/ui-preference-dashboard.md`, and backend job/model updates.
 
 ## Cross-Channel Alignment
 - Synced status badges, alert colours, and iconography for bookings, disputes, and compliance.
@@ -75,7 +77,7 @@ Version 1.00 introduces a unified design system that aligns the web and mobile e
 - Produce handoff-ready Figma components with auto-layout and tokens.
 - Align frontend developers on new token naming and CSS variable mapping.
 - Schedule accessibility audit after initial implementation of the new patterns.
-- Publish Theme Studio walkthrough and telemetry guidance for marketing/legal stakeholders.
+- Publish Theme Studio walkthrough, telemetry alerting rehearsal checklist, and Looker integration notes for marketing/legal stakeholders.
 
 ## Design QA & Handoff Considerations
 - **Specification Coverage**: Each artefact in `application_design_update` and `web_application_design_update` includes acceptance criteria, pixel spacing, and component references to avoid ambiguity during implementation.
@@ -114,3 +116,4 @@ For detailed breakdowns, refer to the role- and channel-specific documents in th
 - Schedule design debt review each release to track outstanding gaps or deviations found during implementation.
 - **2025-02-01 Update:** QA cadence locked across 3–12 Feb sessions; Playwright/Maestro scenario export committed (`docs/design/handoff/ui-qa-scenarios.csv`) and Theme Studio instrumentation upgraded to support aria-live + data-qa selectors.
 - **2025-02-02 Update:** Telemetry ingestion API shipping with hashed IP governance and correlation IDs; QA scenario extended to assert `/api/telemetry/ui-preferences/summary` analytics output, and Looker dashboard runbook shared with data engineering.
+- **2025-02-03 Update:** Telemetry dashboard UI deployed with CSV export and staleness indicators; QA scenarios updated for `/admin/telemetry`, and sample dataset tooling documented for non-production validation.

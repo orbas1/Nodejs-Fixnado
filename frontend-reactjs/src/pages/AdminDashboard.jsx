@@ -330,6 +330,13 @@ export default function AdminDashboard() {
             variant: 'secondary',
             analyticsId: 'open_theme_studio',
             icon: SwatchIcon
+          },
+          {
+            label: 'Telemetry dashboard',
+            to: '/admin/telemetry',
+            variant: 'secondary',
+            analyticsId: 'open_telemetry_dashboard',
+            icon: AdjustmentsHorizontalIcon
           }
         ]}
         meta={[

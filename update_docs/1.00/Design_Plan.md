@@ -128,3 +128,13 @@
 - **Instrumentation Upgrade:** `utils/telemetry.js` enriches front-end beacons with tenant, role, locale, correlation, and user agent metadata while adding fetch fallbacks for environments lacking `sendBeacon` support.
 - **Operational Playbook:** Authored `docs/telemetry/ui-preference-dashboard.md` covering API contracts, dashboard guidance, alerting strategy, and runbook actions for telemetry freshness monitoring.
 
+## 19. Telemetry Dashboard Operationalisation (Task DT6 Outcome)
+- **Admin Console Delivery:** Implemented `/admin/telemetry` console leveraging `useTelemetrySummary` hook, analytics widgets, and telemetry-specific components to surface adoption metrics, freshness status, and operational insights.
+- **Navigation & Documentation:** Added telemetry shortcut to the admin dashboard header and published `ui-ux_updates/telemetry_dashboard_enablement.md` detailing UI behaviour, accessibility, and QA instrumentation.
+- **Automation & Exports:** Provided CSV export, deterministic `data-qa` selectors, and development sample dataset workflow enabling QA automation, Looker validation, and design reviews without live data.
+
+## 20. Telemetry Alerting & Looker Snapshots (Task DT7 Outcome)
+- **Alerting Pipeline:** Added background job (`backend-nodejs/src/jobs/telemetryAlertJob.js`) to poll telemetry summaries, evaluate freshness/emo adoption thresholds, and dispatch Slack notifications with repeat suppression and runbook links.
+- **Analytics Snapshots:** Persist rolling summary data via `UiPreferenceTelemetrySnapshot` model so Looker can ingest governed metrics (events, shares, staleness) without hitting production APIs; payload JSON provides full fidelity for downstream modelling.
+- **Operational Governance:** Documented environment variables, alert rehearsal steps, QA scenarios, and escalation policy within `ui-ux_updates/telemetry_alerting_enablement.md` and the telemetry runbook to ensure design/ops/data share a single response playbook.
+

@@ -9,6 +9,7 @@ import Order from './order.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
+import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -51,5 +52,6 @@ export {
   Order,
   Escrow,
   Dispute,
-  UiPreferenceTelemetry
+  UiPreferenceTelemetry,
+  UiPreferenceTelemetrySnapshot
 };

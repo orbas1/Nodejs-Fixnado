@@ -29,3 +29,14 @@
 - Implemented production-ready telemetry ingestion API (`backend-nodejs/src/routes/telemetryRoutes.js`, `controllers/telemetryController.js`, `services/telemetryService.js`) persisting Theme Studio preference changes with hashed IPs, correlation IDs, and governance metadata.
 - Extended ThemeProvider instrumentation (`frontend-reactjs/src/providers/ThemeProvider.jsx`, `utils/telemetry.js`) to enrich beacons with tenant, role, locale, and user agent context plus fetch fallbacks, ensuring zero-loss delivery during beacon failures.
 - Published telemetry dashboard runbook (`docs/telemetry/ui-preference-dashboard.md`) and updated handoff assets to document the schema and QA scenarios, unblocking data engineering for Looker dashboard build.
+
+## 2025-02-03 — Telemetry Dashboard Operationalisation
+- Delivered admin telemetry console (`frontend-reactjs/src/pages/TelemetryDashboard.jsx`, `components/telemetry/*`, `hooks/useTelemetrySummary.js`) featuring range controls, KPI cards, trend visualisation with CSV export, and adoption breakdown panels aligned to dashboard drawings.
+- Surfaced telemetry entry point from the admin dashboard header and documentation updates (`docs/telemetry/ui-preference-dashboard.md`, `ui-ux_updates/telemetry_dashboard_enablement.md`) detailing operations workflows, QA selectors, and sample dataset usage.
+- Updated programme trackers and QA assets (`docs/design/handoff/ui-qa-scenarios.csv`, `update_progress_tracker.md`, `Design_update_progress_tracker.md`) to reflect telemetry freshness SLAs, automation coverage, and next-step focus on Chromatic baselines.
+
+## 2025-02-04 — Telemetry Alerting & Analytics Guardrails
+- Activated production telemetry alerting job (`backend-nodejs/src/jobs/telemetryAlertJob.js`) that polls telemetry aggregates, snapshots metrics, and posts Slack notifications when freshness or emo adoption thresholds breach.
+- Persisted Looker-friendly snapshots via `UiPreferenceTelemetrySnapshot` model, exposing rolling-window totals, theme share, and payload JSON for downstream BI ingestion.
+- Added configuration knobs (`TELEMETRY_*` environment variables) and server bootstrap wiring to run the job on startup, ensuring alerting is environment-aware and repeat-suppressed.
+- Expanded runbooks, QA scenarios, and trackers (`docs/telemetry/ui-preference-dashboard.md`, `ui-ux_updates/telemetry_alerting_enablement.md`, `Design_update_task_list.md`, `update_progress_tracker.md`) to capture alert governance, validation steps, and new milestone completion.

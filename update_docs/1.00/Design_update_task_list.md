@@ -50,3 +50,23 @@
   5. ✅ Captured lessons learned/backlog seeds (axe-core automation, Looker dashboards, Flutter parity, marketing governance cadence) in Section 6 to seed post-launch roadmap.
   6. ✅ *(2025-02-02 follow-up)* Delivered telemetry ingestion API + analytics summary endpoints, updated handoff schema (`payloadSchema`) and QA scenarios, and published telemetry dashboard runbook for data engineering enablement.
 
+## Task 6 — Telemetry Dashboard Operationalisation *(Status: ✅ Complete — 2025-02-03)*
+- **Delivery Owner:** Design Systems Engineer with Data Engineering & Frontend Tech Lead.
+- **Evidence:** `frontend-reactjs/src/pages/TelemetryDashboard.jsx`, `components/telemetry`, `hooks/useTelemetrySummary.js`, admin navigation update in `AdminDashboard.jsx`, and documentation in `ui-ux_updates/telemetry_dashboard_enablement.md` plus refreshed runbook/QA artefacts.
+- **Subtasks:**
+  1. ✅ Design and implement telemetry dashboard UI mirroring dashboard drawings with KPI cards, trend widget, and adoption breakdown modules.
+  2. ✅ Build data orchestration hook with auto-refresh, visibility pause, and error handling to consume `/api/telemetry/ui-preferences/summary`.
+  3. ✅ Integrate export tooling (CSV), staleness alerts, and admin navigation entry point to embed telemetry into existing operations workflows.
+  4. ✅ Document workflow, QA selectors, and accessibility guardrails (`telemetry_dashboard_enablement.md`, runbook, QA scenarios) ensuring operations, QA, and analytics teams can validate the feature.
+  5. ✅ Capture future actions (Chromatic baseline, tenant filtering, Looker alert alignment) in trackers and design follow-up notes.
+
+## Task 7 — Telemetry Alerting & Looker Snapshots *(Status: ✅ Complete — 2025-02-04)*
+- **Delivery Owner:** Design Systems Engineer with Data Engineering & DevOps partnership.
+- **Evidence:** `backend-nodejs/src/jobs/telemetryAlertJob.js`, `backend-nodejs/src/models/uiPreferenceTelemetrySnapshot.js`, `ui-ux_updates/telemetry_alerting_enablement.md`, runbook expansion in `docs/telemetry/ui-preference-dashboard.md`, and tracker/test updates.
+- **Subtasks:**
+  1. ✅ Define alert thresholds, repeat suppression rules, and messaging aligned to telemetry governance (staleness ≥120 minutes, emo share <10%).
+  2. ✅ Implement background job orchestrating telemetry summary polling, Slack webhook delivery, and Looker-ready snapshot persistence with configuration guardrails.
+  3. ✅ Extend database layer with `UiPreferenceTelemetrySnapshot` model capturing counts, shares, staleness, and JSON payload for analytics ingestion.
+  4. ✅ Update runbooks, QA scenarios, and configuration documentation with alert verification steps, environment variables, and rollback guidance.
+  5. ✅ Refresh trackers/milestones to reflect alerting completion and redirect focus toward Chromatic baselines and tenant segmentation follow-up.
+
