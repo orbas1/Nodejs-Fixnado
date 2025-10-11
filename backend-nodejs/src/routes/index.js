@@ -7,6 +7,8 @@ import adminRoutes from './adminRoutes.js';
 import telemetryRoutes from './telemetryRoutes.js';
 import zoneRoutes from './zoneRoutes.js';
 import bookingRoutes from './bookingRoutes.js';
+import inventoryRoutes from './inventoryRoutes.js';
+import rentalRoutes from './rentalRoutes.js';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/admin', adminRoutes);
 router.use('/telemetry', telemetryRoutes);
 router.use('/zones', zoneRoutes);
 router.use('/bookings', bookingRoutes);
+router.use('/inventory', inventoryRoutes);
+router.use('/rentals', rentalRoutes);
 
 export default router;

@@ -1,6 +1,6 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-16)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-17)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
 | Design Quality | 98 | Diagnostics uplift delivers governed stats + filters so analytics can evidence freshness without SQL; telemetry ecosystem now spans instrumentation → dashboards → alerting → BI diagnostics. |
@@ -13,7 +13,7 @@
 | Security Grade | 95 | Build/Test/Scan workflow couples design regression suites with gitleaks + dependency audits; rollback manifest and playbook codify checksum verification for design-impacting releases. |
 | Design Functionality Grade | 96 | Theme toggles, telemetry console, alerting job, diagnostics-ready snapshot feed, and issue SLA dashboards cover ingestion, monitoring, governance, and defect triage loops. |
 | Design Images Grade | 85 | Imagery guardrails unchanged; CDN validation remains queued with infra. |
-| Design Usability Grade | 94 | Inventory console, rental timeline, and badge toggle flows include edge-case handling, analytics hooks, alert acknowledgement, and reconciliation workflows so UX walkthroughs reflect production marketplace scenarios. |
+| Design Usability Grade | 95 | Rental agreement hubs, inspection workbench, and ledger integrations now include partial return, dispute escalation, and settlement flows with accessibility copy + telemetry guidance, keeping provider/admin walkthroughs production-aligned. |
 | Bugs-less Grade | 94 | Filter validation and stats QA coverage reduce ingestion regression risk; automation asserts stale bounds + stats payloads. |
 | Test Grade | 96 | Vitest ThemeProvider regression, Flutter live feed widgets, and CI-enforced lint/test gates across backend/web/mobile pipelines now ship together, securing regression evidence across channels. |
 | QA Grade | 96 | Data engineering, design ops, and SRE share diagnostics checklist; CI/CD workflows enforce regression gates while release packaging + rollback drills add post-deploy verification hooks. |
@@ -33,14 +33,15 @@
 10. **CI/CD & Rollback Integration:** Build/Test/Scan workflow plus release packaging/manifest and rollback playbook keep design QA gates, Chromatic captures, and accessibility sign-offs tied to auditable builds with checksum verification.
 11. **Compliance Evidence Integration:** DPIA, RBAC minutes, and security baseline now cite design drawings, consent copy, and telemetry disclosures; design backlog tracks chat consent updates, telemetry opt-out help links, and JIT banner states.
 12. **Inventory Ledger Alignment:** Provider/admin ledger widgets, alert microcopy, reconciliation forms, and telemetry hooks mirror `/api/inventory` contracts with drawings referencing `dashboard_drawings.md` and `Admin_panel_drawings.md` to unblock frontend build without rework.
+13. **Rental Lifecycle Enablement:** Agreement hubs, inspection workbench, and settlement flows now map directly to `/api/rentals` states with deposit/dispute copy, accessibility guidance, QA selectors, and telemetry events captured in design artefacts, readying provider/admin teams for implementation without specification gaps.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
 - **Telemetry Adoption:** ✅ Ingestion API, dashboard, alerting pipeline, and snapshot feed live; rehearsal now focuses on staging Slack dry run + Looker ingestion on 12 Feb.
-- **Inventory Adoption:** Align provider/admin build with new ledger specs and monitor MTTA targets; schedule usability validation of reconciliation sheet prior to provider beta.
+- **Inventory & Rental Adoption:** Align provider/admin build with new ledger + rental specs, monitor MTTA + inspection SLA targets, and schedule usability validation of reconciliation sheet and inspection workbench prior to provider beta.
 - **Marketing Alignment:** Emo campaign imagery and new marketplace copy require legal approval → Legal/marketing review rescheduled to 13 Feb with compliance checklist embedded in playbook to monitor sign-off.
 
 ## Next Review Cycle
 - **Date:** Sprint 4 Desk Check (Week 5)
-- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, walkthrough marketplace inventory/campaign modules with frontend leads, validate provider inventory ledger UI prototypes against new specs, and confirm compliance follow-ups (chat consent copy, telemetry opt-out article) before communications beta.
+- **Focus:** Validate accessibility/legal sessions, rehearse Slack + Looker ingestion with diagnostics stats on 12 Feb, plan axe-core/Chromatic automation rollout alongside tenant segmentation spikes, walkthrough marketplace inventory & rental modules with frontend leads, validate provider inventory ledger + rental agreement UI prototypes against new specs, and confirm compliance follow-ups (chat consent copy, telemetry opt-out article, rental document purge automation) before communications beta.
 - **Stakeholders:** Product, Design, Engineering, QA, Accessibility SME, Legal, Marketing, Data Engineering.

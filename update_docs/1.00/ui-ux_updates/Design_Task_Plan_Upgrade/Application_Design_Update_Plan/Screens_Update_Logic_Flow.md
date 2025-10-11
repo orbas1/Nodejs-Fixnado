@@ -82,3 +82,49 @@
 - Wireframes `dashboard_drawings.md` and `Admin_panel_drawings.md` annotate component states for each step.
 - Logic map cross-references `Screens_Update.md` sections for copywriting and interaction specifics.
 - Provider mobile flows align with `App_screens_drawings.md` for parity; interactions re-used via Flutter component library documented separately.
+
+## 11. Rental Agreement Board Lifecycle
+1. Board initialises by fetching `/api/rentals?status=all&include=alerts,checkpoints` and `/api/inventory/health?includeHolds=true`.
+2. Columns derive from status; cards show deposit + insurance badges. Telemetry `rental.board.view` emitted with counts per column.
+3. Drag-and-drop disabled to enforce explicit actions; column transitions require button interactions so audit trail captured.
+4. Filter interactions update query parameters; results paginated with infinite scroll, each fetch logs `rental.board.filter` event.
+
+## 12. Rental Approval Flow
+1. User selects rental in Requested column → detail drawer opens.
+2. `Approve` button triggers modal capturing approval notes, insurance verification, optional documents request.
+3. POST `/api/rentals/{id}/approve` with approval metadata. On success, board updates card column to Approved, triggers inventory reservation update via `/api/inventory/{itemId}/adjust` (reservation).
+4. Telemetry `rental.approval.complete` recorded; success toast summarises reservation lock.
+
+## 13. Checkout Flow
+1. From Approved column, `Start checkout` opens multi-step modal.
+2. Identity verified via photo capture / ID entry; condition documented with photos & checklist.
+3. POST `/api/rentals/{id}/checkout` including captured data, deposit confirmation, signature payload.
+4. Inventory service reduces on-hand/reserved counts accordingly; UI refreshes health widget and rental card status to Checked-out.
+5. Telemetry `rental.checkout.complete` logs items, duration, deposit hold reference.
+
+## 14. Return & Partial Return Flow
+1. `Record return` button initiates return wizard that pre-populates expected quantities.
+2. User selects items returned, attaches photos, classifies condition. If partial, wizard prompts for follow-up schedule.
+3. POST `/api/rentals/{id}/return` with arrays of line items, condition ratings, variance notes.
+4. Inventory service releases reservations / adjusts ledger; alerts generated when outstanding holds remain > buffer.
+5. Telemetry `rental.return.submit` includes counts of returned vs outstanding units.
+
+## 15. Inspection & Damage Assessment
+1. Inspection workbench loads `/api/rentals/{id}/checkpoints?type=inspection` to pre-fill checklist.
+2. Each checklist item update posts to `/api/rentals/{id}/checkpoints` with immediate persistence; UI marks item complete.
+3. On completion, summary modal calculates variance, recommends actions (Charge deposit, Approve refund) based on backend heuristics.
+4. POST `/api/rentals/{id}/inspect` finalises inspection, attaches evidence, triggers ledger adjustments and potential alert escalation.
+5. Telemetry `rental.checkpoint.submit` and `rental.inspection.complete` fire with severity/outcome fields.
+
+## 16. Settlement & Escalation
+1. `Settle rental` opens modal summarising financials (rental fees, damage, refunds).
+2. User confirms refund split and outstanding balance. POST `/api/rentals/{id}/settle` to release deposit/record charges.
+3. If unresolved issues, `Escalate dispute` triggers `/api/rentals/{id}/dispute` with reason codes and attachments.
+4. Alerts updated: settlement resolves inventory holds; dispute creates critical alert & Slack webhook via backend.
+5. Telemetry `rental.settlement.submit` and `rental.dispute.raise` recorded for analytics dashboards.
+
+## 17. Alert & Inventory Integration
+- Rental overdue/inspection alerts share rail with inventory alerts; API `/api/rentals/{id}/alerts` drives UI state.
+- Acknowledgement path posts to `/api/rentals/{id}/alerts/{alertId}/acknowledge`, echoing metadata to inventory alert timeline.
+- Snooze/escalation actions propagate to both rental + inventory audit logs ensuring consistent MTTA reporting.
+- Health widget recalculates available inventory factoring rental holds and overdue returns using combined `/api/inventory/health` payload.

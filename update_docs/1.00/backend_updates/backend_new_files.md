@@ -26,3 +26,18 @@
 - `src/database/migrations/20250215000000-feature-toggle-audit.js`
 - `scripts/bootstrap-postgis.mjs`
 - `tests/featureToggleService.test.js`
+
+## 2025-10-17 — Added Files
+- `src/models/inventoryItem.js`
+- `src/models/inventoryLedgerEntry.js`
+- `src/models/inventoryAlert.js`
+- `src/models/rentalAgreement.js`
+- `src/models/rentalCheckpoint.js`
+- `src/controllers/inventoryController.js`
+- `src/controllers/rentalController.js`
+- `src/services/inventoryService.js`
+- `src/services/rentalService.js`
+- `src/routes/inventoryRoutes.js`
+- `src/routes/rentalRoutes.js`
+- `tests/rentalRoutes.test.js`
+- `src/database/migrations/20250217000000-create-inventory-and-rentals.js`

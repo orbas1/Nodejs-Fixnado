@@ -9,3 +9,7 @@
 
 ## 2025-10-13 — Feature Toggle Governance Tests
 - Introduced `tests/featureToggleService.test.js` exercising Secrets Manager interactions (mocked client), override fallbacks, cache lifecycle, and audit logging to ensure feature rollout changes remain verifiable in CI.
+
+## 2025-10-17 — Inventory & Rental Regression Suites
+- Extended `/api/inventory` Vitest coverage with reservation rollback, reconciliation, alert acknowledgement/escalation, and ledger export scenarios using sqlite transaction harnesses and deterministic mocks (`tests/inventoryRoutes.test.js`).
+- Added `tests/rentalRoutes.test.js` executing rental lifecycle permutations (approval, checkout, partial return, inspection variance, settlement, cancellation) plus alert propagation, deposit handling, and audit metadata assertions to lock production behaviour.
