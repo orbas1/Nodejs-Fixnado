@@ -79,3 +79,31 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`backend-nodejs/src/models/uiPreferenceTelemetry.js`](../backend-nodejs/src/models/uiPreferenceTelemetry.js) — Introduced Sequelize model for persisted telemetry with hashed IP governance.
 - [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — New ingestion + analytics endpoints powering Looker dashboard integration.
 - [`backend-nodejs/src/routes/index.js`](../backend-nodejs/src/routes/index.js) & [`backend-nodejs/src/models/index.js`](../backend-nodejs/src/models/index.js) — Wired telemetry routes and model exports into the API surface.
+
+## Newly Updated Artefacts (2025-02-03)
+- [`change_log.md`](change_log.md) — Logged telemetry dashboard operationalisation with references to React implementation, documentation, and tracker updates.
+- [`Design_Plan.md`](Design_Plan.md) — Added Task DT6 outcome summarising telemetry console delivery, documentation, and export tooling.
+- [`Design_Change_log.md`](Design_Change_log.md) — Documented telemetry dashboard entry in change index and detailed log, updated follow-up actions.
+- [`Design_update_task_list.md`](Design_update_task_list.md) & [`update_task_list.md`](update_task_list.md) — Added DT6 task with evidence and completion notes.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) & [`update_progress_tracker.md`](update_progress_tracker.md) — Raised metrics and commentary reflecting telemetry dashboard readiness and Chromatic next steps.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Introduced DM5 milestone marking telemetry dashboard operational.
+- [`ui-ux_updates/telemetry_dashboard_enablement.md`](ui-ux_updates/telemetry_dashboard_enablement.md) — New dossier covering objectives, UX decisions, instrumentation, and future enhancements for the telemetry console.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Extended with front-end operations guidance, QA hooks, and alerting strategy.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added telemetry dashboard regression scenario and selectors.
+- [`frontend-reactjs/src/pages/TelemetryDashboard.jsx`](../frontend-reactjs/src/pages/TelemetryDashboard.jsx), [`frontend-reactjs/src/components/telemetry`](../frontend-reactjs/src/components/telemetry), [`frontend-reactjs/src/hooks/useTelemetrySummary.js`](../frontend-reactjs/src/hooks/useTelemetrySummary.js) — Implemented telemetry console UI, breakdown components, and data orchestration hook.
+- [`frontend-reactjs/src/pages/AdminDashboard.jsx`](../frontend-reactjs/src/pages/AdminDashboard.jsx) & [`frontend-reactjs/src/App.jsx`](../frontend-reactjs/src/App.jsx) — Added telemetry navigation entry point and route wiring.
+
+## Newly Updated Artefacts (2025-02-04)
+- [`backend-nodejs/src/config/index.js`](../backend-nodejs/src/config/index.js) — Introduced telemetry alert configuration helpers and environment-driven thresholds.
+- [`backend-nodejs/src/jobs/telemetryAlertJob.js`](../backend-nodejs/src/jobs/telemetryAlertJob.js) & [`backend-nodejs/src/jobs/index.js`](../backend-nodejs/src/jobs/index.js) — New background job orchestrating telemetry polling, Slack alerts, and snapshot persistence.
+- [`backend-nodejs/src/models/uiPreferenceTelemetrySnapshot.js`](../backend-nodejs/src/models/uiPreferenceTelemetrySnapshot.js) & [`backend-nodejs/src/models/index.js`](../backend-nodejs/src/models/index.js) — Added snapshot model exported for analytics ingestion.
+- [`backend-nodejs/src/server.js`](../backend-nodejs/src/server.js) — Bootstraps telemetry alerting job on server startup.
+- [`update_docs/1.00/ui-ux_updates/telemetry_alerting_enablement.md`](ui-ux_updates/telemetry_alerting_enablement.md) — New dossier covering alerting objectives, Slack orchestration, snapshot schema, and QA guidance.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Expanded with alerting runbook steps, configuration matrix, and snapshot usage guidance.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added alert rehearsal scenario referencing Slack webhook mocks and snapshot verification.
+- [`update_docs/1.00/change_log.md`](change_log.md) — Logged DT7 alerting/snapshot delivery with references to backend job and documentation updates.
+- [`update_docs/1.00/update_task_list.md`](update_task_list.md) & [`Design_update_task_list.md`](Design_update_task_list.md) — Recorded DT7 task completion with evidence and subtasks.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) & [`update_progress_tracker.md`](update_progress_tracker.md) — Elevated metrics and commentary reflecting alerting readiness and Looker snapshot focus.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Added DM6 milestone marking telemetry alerting completion.
+- [`Design_Plan.md`](Design_Plan.md) & [`Design_Change_log.md`](Design_Change_log.md) — Documented alerting outcome, snapshot persistence, and updated follow-ups.
+- [`update_docs/1.00/ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Logged DT7 alerting delivery and adjusted next steps for marketing/legal enablement.

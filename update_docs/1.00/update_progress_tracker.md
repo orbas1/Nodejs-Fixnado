@@ -6,25 +6,25 @@
 ## UI/UX Design Metrics Addendum
 | Metric | Status (%) | Commentary |
 | --- | --- | --- |
-| Design Quality | 94 | Telemetry ingestion API + enriched beacons close the loop between design specs, instrumentation, and analytics dashboards. |
-| Design Organisation | 94 | Validation artefacts, telemetry schema, and dashboard runbook live together (`design_validation_and_handoff.md`, `fx-theme-preferences.json`, `docs/telemetry/ui-preference-dashboard.md`). |
-| Design Position | 88 | Coverage now spans admin, auth, marketing, and mobile blueprints; residual microsites scheduled Sprint 4 using shared checklist template. |
-| Design Text Grade | 82 | Compliance copy matrix refreshed for emo marketing variant; legal review cadence (Feb 7) recorded. |
+| Design Quality | 96 | Telemetry dashboard + alerting job complete the governed analytics loop; KPI widgets and Slack notifications align to design drawings and operational scripts. |
+| Design Organisation | 96 | Alerting dossier, snapshot schema, and QA scenarios sit alongside validation artefacts, giving operations, design, and analytics a single reference stack with escalation steps. |
+| Design Position | 90 | Coverage now spans admin, auth, marketing, telemetry, and mobile blueprints; residual microsites scheduled Sprint 4 using shared checklist template. |
+| Design Text Grade | 84 | Compliance copy matrix refreshed for emo marketing variant; alert copy approved by legal/comms with 7 Feb review locked. |
 | Design Colour Grade | 90 | Stark audit scripts prepped with fallback gradients captured in token export. |
-| Design Render Grade | 88 | Marketing previews instrumented for Chromatic capture once Storybook uplift lands. |
-| Compliance Grade | 93 | Governance cadence now includes telemetry privacy controls (hashed IP, schema versioning) approved with data engineering. |
-| Security Grade | 88 | Ingestion endpoint validates payloads, hashes source IPs, and records correlation IDs; security briefing queued for Week 5. |
-| Design Functionality Grade | 92 | Theme toggles broadcast enriched telemetry (tenant/role/locale) with fetch fallbacks ensuring event durability. |
+| Design Render Grade | 90 | Telemetry console reuses analytics widgets with production theming; Chromatic capture queued for Theme Studio + telemetry module set. |
+| Compliance Grade | 94 | Governance cadence now includes telemetry privacy controls, alert escalation policy, and snapshot retention guidance agreed with data engineering. |
+| Security Grade | 90 | Ingestion endpoint and alerting job validate payloads, hash source IPs, suppress repeat notifications, and surface failures for Week 5 security review. |
+| Design Functionality Grade | 94 | Theme toggles, telemetry console, and alerting pipeline broadcast enriched payloads with auto-refresh, snapshots, and Slack escalation resilience. |
 | Design Images Grade | 85 | Emo imagery guardrails + CDN validation backlog logged alongside marketing/legal owners. |
-| Design Usability Grade | 87 | Remote usability study scripts incorporate new announcer guidance and personalisation discoverability checks. |
-| Bugs-less Grade | 90 | QA selectors plus telemetry persistence reduce blind spots in automation diagnostics and regression triage. |
-| Test Grade | 88 | QA scenario export (`ui-qa-scenarios.csv`) now covers ingestion and analytics summary endpoints, expanding automated coverage. |
-| QA Grade | 91 | Data engineering joined cadence; telemetry dashboards added to release-readiness gating. |
-| Design Accuracy Grade | 92 | Telemetry schema + dashboard runbook ensure implementation fidelity to governance requirements. |
-| **Overall Grade** | **93** | Validation suite plus telemetry ingestion/dashboards ready; attention shifts to Chromatic/axe automation and microsite uplift. |
+| Design Usability Grade | 89 | Telemetry dashboard follows accessibility patterns (segmented control, status messaging) and now surfaces alert context for admin comprehension. |
+| Bugs-less Grade | 92 | Deterministic telemetry selectors, auto-refresh hook, and alert repeat suppression minimise regression blind spots in analytics monitoring. |
+| Test Grade | 91 | QA scenarios include ingestion handshake, telemetry dashboard validation, and alerting harness checks across Playwright/Cypress suites. |
+| QA Grade | 93 | Data engineering + design ops review telemetry UI weekly; dashboard and alert SLAs tracked in readiness gates. |
+| Design Accuracy Grade | 93 | Telemetry schema, alert thresholds, and snapshot payload documented in runbooks ensuring implementation fidelity to governance requirements. |
+| **Overall Grade** | **95** | Validation suite, telemetry ingestion/console, and alerting pipeline ready; focus shifts to Chromatic/axe automation and microsite uplift. |
 
 ### Next Steps
-- Operationalise telemetry dashboards with analytics (Looker refresh schedule, alerting) ahead of pilot release (Week 5).
-- Complete Storybook capture + Chromatic baselines for Theme Studio and marketing modules post Sprint 4.
+- Enable Looker ingestion using the telemetry snapshot table and rehearse Slack alert escalation with analytics/ops (target 12 Feb review).
+- Complete Storybook capture + Chromatic baselines for Theme Studio and telemetry dashboard modules post Sprint 4.
 - Run Stark/VoiceOver audits (5 Feb) and legal/marketing sign-off (7 Feb) prior to gating release.
-- Draft support/marketing ops playbook referencing validation checklist outcomes before launch communications.
+- Draft support/marketing ops playbook referencing validation checklist outcomes before launch communications and analytics monitoring procedures.
