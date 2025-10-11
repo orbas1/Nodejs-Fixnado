@@ -92,6 +92,8 @@
 ## Task 10 — Issue Intake & Design QA Alignment *(Status: ✅ Complete — 2025-10-11)*
 - **Delivery Owner:** Design Ops Lead in partnership with Programme Management.
 - **Evidence:** `scripts/issue-intake.mjs`, structured payload in `pre-update_evaluations/issue_report.md`, regenerated tracker artefacts (`issue_list.md`, `fix_suggestions.md`), and design documentation updates (`Design_Plan.md`, `Design_Change_log.md`, trackers).
+- **Governance Extension (2025-10-12):** Mobilisation governance pack (`task1_mobilisation_raci_roadmap.md`) embeds design accountability within the programme RACI and dependency matrix, ensuring accessibility/localisation audits and blueprint refresh checkpoints are reviewed alongside engineering dependencies during control board sessions.
+- **Governance Extension (2025-10-13):** Feature toggle manifests and parity automation feed design QA so rollout pilots (communications, rentals, geo overlays) remain in sync with drawings; design to surface toggle state summaries during council reviews.
 - **Subtasks:**
   1. ✅ Define issue metadata schema linking severity SLAs, squad ownership, and design artefact references (wireframe IDs, copy specs).
   2. ✅ Implement automation that validates payloads and republishes Markdown trackers with SLA countdowns for design council reviews.

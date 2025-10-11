@@ -1,0 +1,47 @@
+{
+  "geo-zones": {
+    "state": "enabled",
+    "rollout": 1,
+    "owner": "geo-zone-squad",
+    "description": "Serve polygon overlays, compliance gates, and analytics to all production personas.",
+    "ticket": "FIX-2011",
+    "lastModifiedAt": "2025-02-12T09:00:00Z",
+    "lastModifiedBy": "release-manager"
+  },
+  "booking-orchestrator": {
+    "state": "pilot",
+    "rollout": 0.5,
+    "owner": "bookings-core",
+    "description": "Gradually roll out orchestrator enhancements to partner cohorts with SLA monitoring.",
+    "ticket": "FIX-2042",
+    "lastModifiedAt": "2025-02-12T09:10:00Z",
+    "lastModifiedBy": "release-manager"
+  },
+  "rental-marketplace": {
+    "state": "disabled",
+    "rollout": 0,
+    "owner": "marketplace",
+    "description": "Hold rental listings until compliance evidence and insured seller review complete.",
+    "ticket": "FIX-2080",
+    "lastModifiedAt": "2025-02-12T09:15:00Z",
+    "lastModifiedBy": "compliance-office"
+  },
+  "communications-suite": {
+    "state": "pilot",
+    "rollout": 0.2,
+    "owner": "communications",
+    "description": "Limit AI assisted chat and Agora sessions to support-managed tenants pending trust scoring.",
+    "ticket": "FIX-2059",
+    "lastModifiedAt": "2025-02-12T09:20:00Z",
+    "lastModifiedBy": "comm-ops"
+  },
+  "analytics-dashboards": {
+    "state": "enabled",
+    "rollout": 1,
+    "owner": "data-ops",
+    "description": "Expose telemetry dashboard, export tooling, and diagnostics for exec and ops teams.",
+    "ticket": "FIX-2098",
+    "lastModifiedAt": "2025-02-12T09:25:00Z",
+    "lastModifiedBy": "data-ops"
+  }
+}

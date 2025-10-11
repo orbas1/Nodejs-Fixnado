@@ -17,3 +17,7 @@ output "db_endpoint" {
 output "secrets_manager_app_config_arn" {
   value = aws_secretsmanager_secret.app_config.arn
 }
+
+output "secrets_manager_feature_toggles_arn" {
+  value = aws_secretsmanager_secret.feature_toggles.arn
+}

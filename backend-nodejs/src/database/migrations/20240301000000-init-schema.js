@@ -2,7 +2,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   await queryInterface.createTable('User', {
     id: {
       type: Sequelize.UUID,
-      defaultValue: Sequelize.literal('(UUID())'),
+      defaultValue: Sequelize.UUIDV4,
       primaryKey: true
     },
     first_name: { type: Sequelize.STRING, allowNull: false },
@@ -19,7 +19,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Company', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     user_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -37,7 +37,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Service', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     company_id: {
       type: Sequelize.UUID,
       references: { model: 'Company', key: 'id' },
@@ -58,7 +58,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Post', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     user_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -75,7 +75,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('MarketplaceItem', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     company_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -93,7 +93,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('ServiceZone', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     company_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -108,7 +108,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Order', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     buyer_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -133,7 +133,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Escrow', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     order_id: {
       type: Sequelize.UUID,
       allowNull: false,
@@ -148,7 +148,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 
   await queryInterface.createTable('Dispute', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('(UUID())'), primaryKey: true },
+    id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     escrow_id: {
       type: Sequelize.UUID,
       allowNull: false,
