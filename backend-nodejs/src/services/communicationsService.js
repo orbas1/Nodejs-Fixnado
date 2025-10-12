@@ -9,7 +9,7 @@ import {
   MessageDelivery,
   sequelize
 } from '../models/index.js';
-import { recordAnalyticsEvent } from './analyticsEventService.js';
+import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 
 function communicationsError(message, statusCode = 400) {
   const error = new Error(message);
@@ -293,11 +293,13 @@ async function createDeliveries({
   participants,
   sender,
   conversation,
-  transaction
+  transaction,
+  postCommitPromises = null
 }) {
   const now = new Date();
   const records = [];
   const tenantId = conversation.metadata?.tenantId || null;
+  const suppressedEvents = [];
 
   for (const participant of participants) {
     if (sender && participant.id === sender.id) {
@@ -354,22 +356,54 @@ async function createDeliveries({
 
   for (const delivery of deliveries) {
     if (delivery.status === 'suppressed') {
-      await recordAnalyticsEvent(
-        {
-          name: 'communications.delivery.suppressed',
-          entityId: delivery.id,
-          tenantId,
-          occurredAt: now,
-          metadata: {
-            conversationId: conversation.id,
-            messageId: message.id,
-            participantId: delivery.participantId,
-            reason: delivery.suppressedReason,
-            deliveryMetadata: delivery.metadata
-          }
-        },
-        { transaction }
-      );
+      suppressedEvents.push({
+        name: 'communications.delivery.suppressed',
+        entityId: delivery.id,
+        tenantId,
+        occurredAt: now,
+        metadata: {
+          conversationId: conversation.id,
+          messageId: message.id,
+          deliveryId: delivery.id,
+          participantId: delivery.participantId,
+          reason: delivery.suppressedReason,
+          deliveryMetadata: delivery.metadata
+        }
+      });
+    }
+  }
+
+  if (suppressedEvents.length > 0) {
+    const runRecording = async () => {
+      try {
+        await recordAnalyticsEvents(suppressedEvents);
+      } catch (error) {
+        console.error('communications.delivery.suppressed.analytics_failed', {
+          error: error instanceof Error ? error.message : error
+        });
+      }
+    };
+
+    if (transaction?.afterCommit) {
+      if (postCommitPromises) {
+        const deferred = new Promise((resolve) => {
+          transaction.afterCommit(() => {
+            runRecording().finally(resolve);
+          });
+        });
+        postCommitPromises.push(deferred);
+      } else {
+        transaction.afterCommit(() => {
+          runRecording();
+        });
+      }
+    } else {
+      const promise = runRecording();
+      if (postCommitPromises) {
+        postCommitPromises.push(promise);
+      } else {
+        await promise;
+      }
     }
   }
 
@@ -385,7 +419,8 @@ async function createMessageRecord({
   attachments = [],
   metadata = {},
   requestAiAssist = false,
-  transaction
+  transaction,
+  postCommitPromises = null
 }) {
   if (!body || typeof body !== 'string' || !body.trim()) {
     throw communicationsError('Message body is required');
@@ -403,15 +438,14 @@ async function createMessageRecord({
     },
     { transaction }
   );
-
   const deliveries = await createDeliveries({
     message,
     participants,
     sender,
     conversation,
-    transaction
+    transaction,
+    postCommitPromises
   });
-
   message.deliveries = deliveries;
 
   await recordAnalyticsEvent(
@@ -431,7 +465,6 @@ async function createMessageRecord({
     },
     { transaction }
   );
-
   if (sender) {
     await sender.update({ lastReadAt: new Date() }, { transaction });
   }
@@ -471,7 +504,8 @@ async function createMessageRecord({
         participants,
         sender: assistant,
         conversation,
-        transaction
+        transaction,
+        postCommitPromises
       });
 
       aiMessage.deliveries = aiDeliveries;
@@ -507,6 +541,7 @@ export async function createConversation({
   metadata = {},
   aiAssist
 }) {
+  const postCommitPromises = [];
   if (!subject || typeof subject !== 'string' || subject.trim().length < 3) {
     throw communicationsError('Conversation subject must be at least three characters long');
   }
@@ -519,7 +554,7 @@ export async function createConversation({
     throw communicationsError('At least two participants are required to start a conversation');
   }
 
-  return sequelize.transaction(async (transaction) => {
+  const conversationPayload = await sequelize.transaction(async (transaction) => {
     const communicationsConfig = config.communications;
     const defaultQuietHours = communicationsConfig.defaultQuietHours || {};
     const quietStart = normaliseQuietHour(quietHours?.start || defaultQuietHours.start);
@@ -606,12 +641,19 @@ export async function createConversation({
           systemSeed: true
         },
         requestAiAssist: aiAssist.initialMessage.requestAiAssist || false,
-        transaction
+        transaction,
+        postCommitPromises
       });
     }
 
     return serialiseConversation(conversation, participantRecords, initialMessages);
   });
+
+  if (postCommitPromises.length > 0) {
+    await Promise.all(postCommitPromises);
+  }
+
+  return conversationPayload;
 }
 
 export async function listConversations({ participantId, limit = 20 }) {
@@ -683,11 +725,12 @@ export async function sendMessage(conversationId, {
   metadata,
   requestAiAssist = false
 }) {
+  const postCommitPromises = [];
   if (!senderParticipantId) {
     throw communicationsError('senderParticipantId is required');
   }
 
-  return sequelize.transaction(async (transaction) => {
+  const result = await sequelize.transaction(async (transaction) => {
     const conversation = await fetchConversationWithParticipants(conversationId, { transaction });
     const sender = conversation.participants.find((participant) => participant.id === senderParticipantId);
 
@@ -708,14 +751,20 @@ export async function sendMessage(conversationId, {
       attachments,
       metadata,
       requestAiAssist: requestAiAssist && sender.aiAssistEnabled,
-      transaction
+      transaction,
+      postCommitPromises
     });
-
     conversation.updatedAt = new Date();
     await conversation.save({ transaction });
 
     return messages.map(serialiseMessage);
   });
+
+  if (postCommitPromises.length > 0) {
+    await Promise.all(postCommitPromises);
+  }
+
+  return result;
 }
 
 export async function updateParticipantPreferences(conversationId, participantId, updates) {

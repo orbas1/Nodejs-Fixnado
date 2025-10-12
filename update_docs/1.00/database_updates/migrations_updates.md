@@ -27,3 +27,8 @@
 - Added `20250223000000-create-analytics-events.js` establishing `analytics_events` with UUID primary key, enumerated domain/entity metadata, actor/tenant fields, correlation IDs, and JSONB `metadata` column with default `{}` to maintain Postgres/sqlite parity.
 - Migration creates composite index `analytics_events_tenant_domain_idx` and GIN index `analytics_events_metadata_gin` (Postgres only) to support tenant/domain filtering and metadata containment queries used by warehouse ETL.
 - Down migration drops indexes then table; notes instruct DBAs to snapshot warehouse consumers before rollback and to re-run retention pruning jobs to avoid duplicated telemetry when replaying events.
+
+## 2025-10-26 — Analytics Event Ingestion Metadata
+- Added `20250224000000-augment-analytics-events.js` adding ingestion lifecycle columns (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) plus supporting indexes for retry scheduling and retention pruning.
+- Migration backfills existing rows with zero attempts, null ingestion timestamps, and immediate retry windows to keep backlog events eligible for the new ingestion job without manual SQL.
+- Down migration removes the columns/indexes while preserving the base event payload schema, ensuring compatibility with earlier emitter releases if rollback occurs.

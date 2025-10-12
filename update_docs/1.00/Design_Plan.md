@@ -159,6 +159,11 @@
 - **Governance Integration:** Design council agenda updated to include SLA breach review; issue intake automation feeds dashboards that combine design, QA, and compliance status for readiness checkpoints.
 - **Next Steps:** Wire automation into CI/Slack to broadcast design-impacting defects, extend payload schema with design QA fields (e.g., Figma frame IDs), and capture sign-off timestamps when design validation closes an issue.
 
+## 25. Analytics Pipeline & Quiet-Hour Telemetry (2025-10-26)
+- **Warehouse Monitoring Dashboards:** Added ingestion cadence widgets to analytics dashboards referencing `dashboard_drawings.md` Sections 9.3–9.5 with swim lanes for queued/delivering/ingested/purged events, success ratios, retry countdowns, and retention expiry highlights sourced from new ingestion metadata.
+- **Suppressed Delivery Insights:** Updated communications workspace blueprints (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `App_screens_drawings.md`) with suppression breakdown tiles, escalation thresholds, and acknowledgement workflow copy reflecting new `deliveryId` analytics metadata.
+- **Operational Playbook Hooks:** Extended Design governance checklist to include ingestion rehearsal (warehouse endpoint validation, purge cadence review) and quiet-hour alert escalation, aligning with support runbooks documented alongside `Design_update_task_list.md` milestones.
+
 ## 25. Rental Lifecycle Experience Enablement (Task 3.2 Outcome — 2025-10-17)
 - **Contract Hubs:** Provider/admin consoles now include rental agreement hubs surfaced in `Screens_Update.md` and `Dashboard Designs.md`, aligning status columns (Requested, Approved, Checked-out, In Inspection, Settled, Cancelled) with `/api/rentals` payloads. Each card surfaces deposit, pickup/return schedule, outstanding checkpoints, and compliance warnings tied to insured seller status.
 - **Inspection Workflows:** `Screens_Update_Logic_Flow.md` documents inspection checklists, damage evidence capture, partial return handling, and dispute escalation with telemetry events (`rental.checkpoint.submit`, `rental.inspection.dispute`). Flows require photo attachments, variance classification, and automated ledger reconciliation triggered when inspection closes.

@@ -28,3 +28,8 @@
 - Migration `20250223000000-create-analytics-events.js` introduces `analytics_events` with UUID primary key, event name, domain, schema version, entity identifiers, tenant ID, actor metadata, source/channel fields, occurred timestamp, and JSONB metadata column.
 - Added compound index on (`tenantId`, `domain`, `occurredAt DESC`) plus GIN index on `metadata` for Postgres to accelerate warehouse ingestion filters; sqlite fallback uses partial indexes for test determinism.
 - Down migration drops indexes before table removal to maintain Postgres/sqlite parity; retention guidance references 400-day default with retention overrides tracked in analytics governance runbook.
+
+## 2025-10-26 — Analytics Ingestion & Retention Metadata
+- Migration `20250224000000-augment-analytics-events.js` augments `analytics_events` with ingestion governance columns (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) and supporting indexes on `nextIngestAttemptAt` and `retentionExpiresAt` to accelerate retry scheduling and purge queries.
+- Backfills existing rows with default attempt counts and schedules immediate ingestion for legacy events, ensuring the new background job can resume without manual intervention.
+- Down migration removes added columns/indexes while preserving base analytics event data so prior pipelines remain functional if rollback is required.

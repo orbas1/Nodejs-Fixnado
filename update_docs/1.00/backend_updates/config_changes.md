@@ -21,3 +21,8 @@
 - Introduced `communications` config block capturing AI assist provider endpoint/key/model/temperature, quiet-hour defaults, Agora credentials, delivery retry caps, and transcript retention days to keep chat orchestration environment-aware.
 - Added helper parsing for JSON quiet-hour windows and fallback heuristics so deployments can tune suppression windows and AI thresholds without code changes.
 - Surfaced safe defaults and validation for Agora session TTL plus AI assist temperature bounds, protecting production from misconfiguration during rollout.
+
+## 2025-10-26 — Analytics Pipeline Configuration
+- Added `analyticsPipeline` namespace with endpoint/API key, batch sizing, poll interval, retry schedule, retention horizon, purge batch size, lookback window, and request timeout knobs sourced from `ANALYTICS_*` environment variables to drive the new ingestion job.
+- Extended JSON/int parsing helpers to normalise retry schedules and guard against invalid numeric overrides so ingestion cadence remains predictable across environments.
+- Documented expectation that staging/production supply warehouse endpoints + API keys while lower environments rely on default noop behaviour, keeping CI hermetic yet configuration-complete.

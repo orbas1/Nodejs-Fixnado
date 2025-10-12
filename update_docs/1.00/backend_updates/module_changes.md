@@ -18,3 +18,8 @@
 - Added `models/conversation.js`, `models/conversationParticipant.js`, `models/conversationMessage.js`, and `models/messageDelivery.js` persisting conversation metadata, participant roles, AI assist provenance, delivery receipts, and quiet-hour acknowledgements.
 - Updated `models/index.js` associations to link conversations to companies/users, cascade participant/message cleanup, and expose scoped helpers for unread counts and delivery reconciliation consumed by services/controllers.
 - Embedded JSONB columns for AI suggestions + attachments with sqlite fallbacks and indexes on `(conversationId, sentAt)` and `(participantId, readAt)` to optimise thread loads and delivery lookups.
+
+## 2025-10-26 — Analytics Event Model Augmentation
+- Extended `models/analyticsEvent.js` with ingestion governance attributes (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) and supporting indexes on `(ingestedAt, nextIngestAttemptAt)` to drive warehouse retry/backfill workflows.
+- Model getters/setters now normalise ingestion attempt defaults and expose computed retention expiry to background jobs enforcing GDPR-compliant purges.
+- Updated `models/index.js` registration to surface new scopes for pending ingestion and retention cleanup consumed by the analytics ingestion job.

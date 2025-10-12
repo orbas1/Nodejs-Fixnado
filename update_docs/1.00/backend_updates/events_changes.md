@@ -4,3 +4,8 @@
 - Metadata validation rejects missing/undefined keys, sanitises undefined values, and normalises timestamps; actor context supports string shorthand or structured `{ type, id, label }` input with fallbacks for system emitters.
 - Zone, booking, rental, campaign, and communications services now call `recordAnalyticsEvent(s)` during lifecycle transitions, passing correlation IDs, channel/source hints, and domain-specific metadata (e.g., booking SLA expiry, rental inspection charges, campaign metric tallies, communications quiet-hour reasons) aligned with dashboards and warehouse models.
 - Event catalogue exposed via `analyticsEventCatalog` + `getAnalyticsEventDefinition` so downstream tooling (ETL/backfills, QA harnesses) can programmatically inspect required metadata when introducing new emitters.
+
+## 2025-10-26 — Ingestion Lifecycle & Suppression Telemetry
+- Analytics events now persist ingestion governance metadata (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) to support retry cadence, retention policies, and warehouse reconciliation.
+- Background ingestion job batches pending events by `nextIngestAttemptAt`, POSTs to configurable warehouse endpoints, records success/failure state via `markEventIngestionSuccess/Failure`, accelerates backfill windows, and purges expired rows to honour GDPR retention.
+- Quiet-hour suppression analytics capture `deliveryId` alongside reason metadata and are buffered until the surrounding transaction commits; post-commit promises ensure API responses only return once suppression telemetry has been enqueued for ingestion.

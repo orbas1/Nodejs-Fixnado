@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { AnalyticsEvent } from '../models/index.js';
 
 const EVENT_DEFINITIONS = Object.freeze({
@@ -195,12 +196,16 @@ export async function recordAnalyticsEvent(event, options = {}) {
     channel: event.channel || null,
     correlationId: event.correlationId || null,
     occurredAt,
-    metadata
+    metadata,
+    ingestedAt: null,
+    ingestionAttempts: 0,
+    lastIngestionError: null,
+    nextIngestAttemptAt: event.nextIngestAttemptAt ? normaliseDate(event.nextIngestAttemptAt) : new Date(),
+    retentionExpiresAt: null
   };
 
   const createOptions = options.transaction ? { transaction: options.transaction } : undefined;
-  const saved = await AnalyticsEvent.create(record, createOptions);
-  return saved;
+  return AnalyticsEvent.create(record, createOptions);
 }
 
 export async function recordAnalyticsEvents(events, options = {}) {
@@ -221,3 +226,112 @@ export function getAnalyticsEventDefinition(name) {
 }
 
 export const analyticsEventCatalog = EVENT_DEFINITIONS;
+
+export async function fetchPendingAnalyticsEvents({ limit = 200, now = new Date() } = {}) {
+  return AnalyticsEvent.findAll({
+    where: {
+      ingestedAt: null,
+      [Op.or]: [
+        { nextIngestAttemptAt: null },
+        { nextIngestAttemptAt: { [Op.lte]: now } }
+      ]
+    },
+    order: [
+      ['nextIngestAttemptAt', 'ASC'],
+      ['occurredAt', 'ASC']
+    ],
+    limit
+  });
+}
+
+function computeRetentionExpiry(occurredAt, retentionDays) {
+  if (!retentionDays || !Number.isFinite(retentionDays)) {
+    return null;
+  }
+
+  const base = occurredAt instanceof Date ? occurredAt : new Date(occurredAt);
+  if (Number.isNaN(base.getTime())) {
+    return null;
+  }
+
+  const expiry = new Date(base.getTime());
+  expiry.setDate(expiry.getDate() + retentionDays);
+  return expiry;
+}
+
+export async function markEventIngestionSuccess(event, { retentionDays, transaction } = {}) {
+  const attempts = (event.ingestionAttempts ?? 0) + 1;
+  const update = {
+    ingestionAttempts: attempts,
+    ingestedAt: new Date(),
+    lastIngestionError: null,
+    nextIngestAttemptAt: null,
+    retentionExpiresAt: computeRetentionExpiry(event.occurredAt, retentionDays)
+  };
+
+  await event.update(update, transaction ? { transaction } : undefined);
+  Object.assign(event, update);
+  return event;
+}
+
+export async function markEventIngestionFailure(event, { error, retryAt, transaction } = {}) {
+  const attempts = (event.ingestionAttempts ?? 0) + 1;
+  const message = error instanceof Error ? error.message : String(error);
+  const update = {
+    ingestionAttempts: attempts,
+    lastIngestionError: message,
+    nextIngestAttemptAt: retryAt || null
+  };
+
+  await event.update(update, transaction ? { transaction } : undefined);
+  Object.assign(event, update);
+  return event;
+}
+
+export async function purgeExpiredAnalyticsEvents({ now = new Date(), batchSize = 200 } = {}) {
+  const expired = await AnalyticsEvent.findAll({
+    where: {
+      retentionExpiresAt: { [Op.lte]: now }
+    },
+    attributes: ['id'],
+    limit: batchSize
+  });
+
+  if (!expired.length) {
+    return 0;
+  }
+
+  const ids = expired.map((entry) => entry.id);
+  await AnalyticsEvent.destroy({ where: { id: ids } });
+  return ids.length;
+}
+
+export async function ensureBackfillCoverage({ lookbackHours, now = new Date() } = {}) {
+  if (!lookbackHours || lookbackHours <= 0) {
+    return 0;
+  }
+
+  const threshold = new Date(now.getTime() - lookbackHours * 60 * 60 * 1000);
+  const candidates = await AnalyticsEvent.findAll({
+    where: {
+      ingestedAt: null,
+      occurredAt: { [Op.gte]: threshold },
+      nextIngestAttemptAt: { [Op.gt]: now }
+    },
+    attributes: ['id'],
+    limit: 500
+  });
+
+  if (!candidates.length) {
+    return 0;
+  }
+
+  const ids = candidates.map((entry) => entry.id);
+  await AnalyticsEvent.update(
+    { nextIngestAttemptAt: now },
+    {
+      where: { id: ids }
+    }
+  );
+  return ids.length;
+}
