@@ -124,9 +124,21 @@ Extend data pipelines, dashboards, and governance to evidence performance, compl
 #### Subtasks
 5.1 Finalise unified event schema covering zones, bookings, rentals, disputes, ads, and communications.
 5.2 Update ETL/ELT pipelines to ingest new datasets with GDPR-compliant retention and anonymisation.
+    • 5.2a Deliver ingestion connectors for analytics events and backfill backlog older than 14 days.
+    • 5.2b Harden anonymisation rules, document retention tiers, and wire purge automation to staging.
+    • 5.2c Roll the pipeline out to production with monitoring hooks and rollback toggles.
 5.3 Build persona dashboards (admin, provider, servicemen, enterprise) with KPI drill-downs and export tooling.
+    • 5.3a Ship admin/provider Looker explores with sample tiles and selector QA notes.
+    • 5.3b Wire React dashboard widgets to the explores behind feature toggles.
+    • 5.3c Capture Flutter parity stories and cross-channel export validation.
 5.4 Configure alerting for data freshness, SLA breaches, dispute spikes, ad overspend, and compliance expiries.
+    • 5.4a Stand up warehouse freshness monitors and add to OpsGenie on-call rotation.
+    • 5.4b Implement SLA/dispute/ad anomaly rules feeding the communications service.
+    • 5.4c Validate push/in-app notification parity across React and Flutter clients.
 5.5 Publish metric catalogue, data dictionary, and access control policies aligned to governance standards.
+    • 5.5a Draft catalogue skeleton with ownership, source tables, and retention SLA columns.
+    • 5.5b Run governance review, address comments, and secure sign-off from compliance/legal.
+    • 5.5c Automate publishing into the documentation portal with nightly refresh jobs.
 
 #### Integration Coverage
 - **Backend:** Subtasks 5.1 & 5.2 adjust event emitters and ingestion services.
@@ -141,15 +153,35 @@ Extend data pipelines, dashboards, and governance to evidence performance, compl
 *2025-10-24 update:* Subtask **5.1** is production-ready. `backend-nodejs/src/models/analyticsEvent.js`, migration `20250223000000-create-analytics-events.js`, and `services/analyticsEventService.js` define a catalogued schema with tenant inference, actor context, and metadata validation. Zone, booking, rental, campaign, and communications services now emit governed events for creation/status/assignment/dispute/inspection/fraud/message suppression flows, with Vitest suites asserting persisted records. Documentation, database change logs, design artefacts (`Design_Change_log.md`, `Screens_Update.md`, `dashboard_drawings.md`, `App_screens_drawings.md`, `website_drawings.md`) and trackers capture telemetry governance so ETL/Looker pipelines can rely on a unified event backbone.
 *2025-10-26 update:* Subtask **5.2** now operates end-to-end ingestion. Migration `20250224000000-augment-analytics-events.js` augments `analytics_events` with ingestion/retention metadata, `analyticsEventService` exposes fetch/mark/purge/backfill helpers, and new background job `backend-nodejs/src/jobs/analyticsIngestionJob.js` batches events to configurable warehouse endpoints with retry cadence, timeout handling, and retention enforcement configured via `config.analyticsPipeline`. Communications suppression telemetry now defers until transactions commit and includes delivery identifiers so dashboards chart quiet-hour outcomes accurately. Vitest suite `tests/analyticsIngestionJob.test.js` validates success, retry, purge, and backfill flows while refreshed `tests/communicationsRoutes.test.js` confirms suppression analytics integrity. Documentation/design trackers (`update_progress_tracker.md`, `Design_Plan.md`, `Design_Change_log.md`, drawings) capture ingestion swim lanes, retention dashboards, and support escalation guidance, progressing Subtask 5.2 toward completion.
 
+#### Task 5 Iteration Plan
+- **Iteration A (In progress)** — Complete 5.2a and 5.2b with staging validation before expanding scope. Target exit: *2025-10-30*.
+- **Iteration B** — Deliver 5.3a, 5.3b, and 5.5a to unlock analytics UI workstreams. Target exit: *2025-11-05*.
+- **Iteration C** — Close monitoring loops (5.4a–5.4c) and finalise documentation automation (5.5b–5.5c). Target exit: *2025-11-12*.
+
 ### Task 6 — Quality Assurance, Compliance & Launch Readiness (5% complete)
 Converge on testing, documentation, training, and go-live governance to exit with production confidence.
 
 #### Subtasks
 6.1 Author master test plan covering functional, integration, performance, security, localisation, and accessibility scopes.
+    • 6.1a Collect existing artefacts (backend/frontend/mobile test strategies) and align taxonomy.
+    • 6.1b Facilitate review workshop with QA, compliance, and design to lock acceptance criteria.
+    • 6.1c Publish versioned plan with traceability matrix mapped to update trackers.
 6.2 Expand automation suites (API, UI, Flutter, contract, chaos) tied to Definition of Done for each feature stream.
+    • 6.2a Stabilise backend contract tests and document fixture coverage gaps.
+    • 6.2b Land React + Flutter smoke suites in CI with retry + flake monitoring dashboards.
+    • 6.2c Prototype chaos tests for booking/communications flows with rollback scripts.
 6.3 Run performance, load, and resilience drills across booking, chat, payments, analytics, and ads workloads.
+    • 6.3a Baseline load profiles, target concurrency, and data capture instrumentation.
+    • 6.3b Execute booking/chat drills with scenario ownership and results sign-off.
+    • 6.3c Extend to payments/analytics/ads once tooling gaps from 6.3a are resolved.
 6.4 Conduct GDPR, insurance/DBS, HMRC, and advertising compliance audits with documented evidence packs.
+    • 6.4a Prep evidence templates, assign auditors, and schedule regulator checkpoints.
+    • 6.4b Run dry-run audits for GDPR + insurance to uncover data/documentation gaps.
+    • 6.4c Compile final packs and capture sign-off records in compliance knowledge base.
 6.5 Finalise release notes, training curriculum, support playbooks, and hypercare rota with sign-off checkpoints.
+    • 6.5a Draft release comms outline and map dependencies to analytics/dashboard deliveries.
+    • 6.5b Produce support training assets (videos, runbooks) and gather stakeholder feedback.
+    • 6.5c Publish hypercare rota, escalation matrix, and acceptance sign-offs.
 
 #### Integration Coverage
 - **Backend:** Subtasks 6.2 & 6.3 execute API/performance tests and resilience drills.
@@ -163,6 +195,11 @@ Converge on testing, documentation, training, and go-live governance to exit wit
 
 *2025-02-08 update:* Subtask **6.1** master test plan now covers feature toggle governance (admin panel + backend service), adds Vitest/Supertest coverage targets, and codifies Flutter widget automation for flag banners to unblock CI reporting.
 *2025-02-09 update:* Subtask **6.2** automation suites now execute production Vitest API/contract coverage for service purchase + escrow flows, React ThemeProvider telemetry regression tests, and Flutter widget validation for live feed banners with chaos rollback assertions feeding CI pipelines.
+
+#### Task 6 Iteration Plan
+- **Iteration A (In progress)** — Close 6.1a–6.1c and 6.2a with shared taxonomy and fixture coverage notes. Target exit: *2025-10-31*.
+- **Iteration B** — Land CI smoke stability (6.2b), baseline load drills (6.3a–6.3b), and dry-run compliance audits (6.4a–6.4b). Target exit: *2025-11-07*.
+- **Iteration C** — Deliver chaos/performance extensions (6.2c, 6.3c), final compliance packs (6.4c), and release/hypercare materials (6.5a–6.5c). Target exit: *2025-11-14*.
 
 ---
 These tasks supersede previous high-level placeholders while preserving the Design Task Addendum below for historical traceability.
