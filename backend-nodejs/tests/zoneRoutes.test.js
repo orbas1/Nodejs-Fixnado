@@ -2,7 +2,7 @@ import request from 'supertest';
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
-const { sequelize, Company, User, ServiceZone, ZoneAnalyticsSnapshot } = await import('../src/models/index.js');
+const { sequelize, Company, User, ServiceZone, ZoneAnalyticsSnapshot, AnalyticsEvent } = await import('../src/models/index.js');
 
 async function bootstrapCompany() {
   const owner = await User.create({
@@ -94,6 +94,12 @@ describe('Zone routes', () => {
       west: expect.any(Number),
       east: expect.any(Number)
     });
+
+    const events = await AnalyticsEvent.findAll();
+    expect(events).toHaveLength(1);
+    expect(events[0].eventName).toBe('zone.created');
+    expect(events[0].metadata.zoneId).toEqual(response.body.id);
+    expect(Number(events[0].metadata.areaSqMeters)).toBeGreaterThan(0);
   });
 
   it('exposes analytics snapshots via the API', async () => {

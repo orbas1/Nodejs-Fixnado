@@ -2,7 +2,7 @@ import request from 'supertest';
 import { beforeAll, afterAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
-const { sequelize, User, Company } = await import('../src/models/index.js');
+const { sequelize, User, Company, AnalyticsEvent } = await import('../src/models/index.js');
 
 describe('communications API', () => {
   beforeAll(async () => {
@@ -137,6 +137,12 @@ describe('communications API', () => {
 
     expect(listResponse.body).toHaveLength(1);
     expect(listResponse.body[0].metadata.bookingId).toBe('booking-123');
+
+    const events = await AnalyticsEvent.findAll({ where: { domain: 'communications' }, order: [['occurred_at', 'ASC']] });
+    const messageEvents = events.filter((event) => event.eventName === 'communications.message.sent');
+    expect(messageEvents).toHaveLength(2);
+    const suppressedEvents = events.filter((event) => event.eventName === 'communications.delivery.suppressed');
+    expect(suppressedEvents.some((event) => event.metadata.reason === 'quiet_hours')).toBe(true);
   });
 
   it('updates participant preferences and issues Agora session tokens', async () => {

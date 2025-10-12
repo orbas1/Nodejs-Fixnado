@@ -32,3 +32,8 @@
 - Added `tests/communicationsRoutes.test.js` covering conversation creation, participant enrolment, AI-assisted message sends, quiet-hour suppression, override acknowledgements, delivery reconciliation, and Agora session token generation with deterministic sqlite fixtures.
 - Mocked AI assist HTTP client to simulate success, timeout, and failure responses while asserting heuristic fallback copy, provenance metadata, and audit logging.
 - Verified quiet-hour enforcement returns 409 warnings, override endpoint captures actor/reason/duration, and Agora credentials missing/expired paths surface actionable 503 errors with telemetry breadcrumbs.
+
+## 2025-10-24 — Analytics Event Assertions
+- Extended zone, booking, rental, campaign, and communications route tests to assert analytics event persistence alongside functional outcomes. Suites now verify event count, domain/entity metadata, tenant inference, and key payload fields (e.g., SLA expiry, assignment IDs, inspection totals, fraud signal severity, quiet-hour reason).
+- Added helper expectations ensuring timestamp normalisation and actor attribution behave consistently across sqlite/Postgres by stubbing `Date` values and comparing persisted metadata snapshots.
+- Regression harness now fails fast when new emitters are introduced without catalogue definitions, preventing undocumented events from reaching warehouse ingestion.

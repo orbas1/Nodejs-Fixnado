@@ -22,3 +22,8 @@
 - Added `20250221000000-create-communications.js` creating `conversations`, `conversation_participants`, `conversation_messages`, and `message_deliveries` tables with UUID keys, participant role enums, AI assist metadata JSONB, quiet-hour window columns, and delivery receipt auditing.
 - Migration seeds participant role enum values (admin, provider, customer, ai_assist) and sets default quiet-hour windows based on configuration while enforcing cascading deletes between conversation → participants/messages/deliveries.
 - Rollback drops tables/enums in dependency order and restores previous constraints to maintain sqlite/Postgres parity; migration notes instruct ops to re-run retention jobs after rollback to purge orphan transcripts.
+
+## 2025-10-24 — Analytics Events Table
+- Added `20250223000000-create-analytics-events.js` establishing `analytics_events` with UUID primary key, enumerated domain/entity metadata, actor/tenant fields, correlation IDs, and JSONB `metadata` column with default `{}` to maintain Postgres/sqlite parity.
+- Migration creates composite index `analytics_events_tenant_domain_idx` and GIN index `analytics_events_metadata_gin` (Postgres only) to support tenant/domain filtering and metadata containment queries used by warehouse ETL.
+- Down migration drops indexes then table; notes instruct DBAs to snapshot warehouse consumers before rollback and to re-run retention pruning jobs to avoid duplicated telemetry when replaying events.

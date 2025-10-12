@@ -9,6 +9,7 @@ import {
   MessageDelivery,
   sequelize
 } from '../models/index.js';
+import { recordAnalyticsEvent } from './analyticsEventService.js';
 
 function communicationsError(message, statusCode = 400) {
   const error = new Error(message);
@@ -296,6 +297,7 @@ async function createDeliveries({
 }) {
   const now = new Date();
   const records = [];
+  const tenantId = conversation.metadata?.tenantId || null;
 
   for (const participant of participants) {
     if (sender && participant.id === sender.id) {
@@ -349,6 +351,28 @@ async function createDeliveries({
   }
 
   const deliveries = await MessageDelivery.bulkCreate(records, { transaction, returning: true });
+
+  for (const delivery of deliveries) {
+    if (delivery.status === 'suppressed') {
+      await recordAnalyticsEvent(
+        {
+          name: 'communications.delivery.suppressed',
+          entityId: delivery.id,
+          tenantId,
+          occurredAt: now,
+          metadata: {
+            conversationId: conversation.id,
+            messageId: message.id,
+            participantId: delivery.participantId,
+            reason: delivery.suppressedReason,
+            deliveryMetadata: delivery.metadata
+          }
+        },
+        { transaction }
+      );
+    }
+  }
+
   return deliveries;
 }
 
@@ -367,6 +391,7 @@ async function createMessageRecord({
     throw communicationsError('Message body is required');
   }
 
+  const tenantId = conversation.metadata?.tenantId || null;
   const message = await ConversationMessage.create(
     {
       conversationId: conversation.id,
@@ -388,6 +413,24 @@ async function createMessageRecord({
   });
 
   message.deliveries = deliveries;
+
+  await recordAnalyticsEvent(
+    {
+      name: 'communications.message.sent',
+      entityId: message.id,
+      tenantId,
+      occurredAt: message.createdAt || new Date(),
+      metadata: {
+        conversationId: conversation.id,
+        messageId: message.id,
+        participantId: sender?.id ?? null,
+        messageType,
+        aiAssistUsed: false,
+        attachments: attachments.length
+      }
+    },
+    { transaction }
+  );
 
   if (sender) {
     await sender.update({ lastReadAt: new Date() }, { transaction });
@@ -432,6 +475,23 @@ async function createMessageRecord({
       });
 
       aiMessage.deliveries = aiDeliveries;
+      await recordAnalyticsEvent(
+        {
+          name: 'communications.message.sent',
+          entityId: aiMessage.id,
+          tenantId,
+          occurredAt: aiMessage.createdAt || new Date(),
+          metadata: {
+            conversationId: conversation.id,
+            messageId: aiMessage.id,
+            participantId: assistant?.id ?? null,
+            messageType: 'assistant',
+            aiAssistUsed: true,
+            attachments: 0
+          }
+        },
+        { transaction }
+      );
       messages.push(aiMessage);
     }
   }
