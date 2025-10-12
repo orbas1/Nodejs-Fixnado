@@ -10,3 +10,9 @@
 - `ProviderDashboard.jsx` now consumes the rebuilt `panelClient.js`, leveraging abortable fetches, TTL-governed cache layers, and schema normalisers so SLA/utilisation metrics, revenue summaries, upcoming bookings, and compliance watchlists remain available during API outages.
 - Added refresh controls, fallback banners, and cached snapshot messaging to inform operations when live metrics cannot be retrieved while preserving the most recent data set for decision-making.
 - Expanded QA selectors (`data-qa="provider-dashboard-metric-*"`, `provider-dashboard-alert-*`, `provider-dashboard-compliance-*`) and aria-live usage to support accessibility/localisation sweeps scheduled under Task 4.5.
+
+## 2025-10-27 — Localised KPI & Accessibility Enhancements
+- Adopted translation namespaces for KPI tiles, compliance alerts, and concierge messaging so `ProviderDashboard.jsx` renders Spanish copy with Intl number/date formatting while preserving cached snapshot metadata.
+- Added aria-live refresh toasts (`data-qa="locale-toast"`) and pseudo-locale stress instructions to ensure cached metrics announce when live data is unavailable, aligning with `dashboard_drawings.md` accessibility notes.
+- Integrated skip-navigation anchor targeting the dashboard content region and ensured focus restoration after locale toggles, matching `website_drawings.md` and `menu_drawings.md` flows.
+- Recorded QA selectors for language picker, skip link, and translated alerts plus analytics instrumentation (`ui.locale.change`, `panel.metrics.loaded`) inside update trackers to evidence Task 4.5 completion.

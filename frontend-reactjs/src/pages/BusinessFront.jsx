@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import {
-  getBusinessFront,
-  formatters,
-  PanelApiError
-} from '../api/panelClient.js';
+import { getBusinessFront, PanelApiError } from '../api/panelClient.js';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 import {
@@ -14,19 +10,19 @@ import {
   PhoneArrowDownLeftIcon,
   PlayIcon
 } from '@heroicons/react/24/outline';
-
-const percentFormatter = new Intl.NumberFormat('en-GB', {
-  style: 'percent',
-  maximumFractionDigits: 1
-});
+import { useLocale } from '../hooks/useLocale.js';
 
 function StatCard({ stat }) {
+  const { format, t } = useLocale();
   const value = useMemo(() => {
-    if (stat.format === 'percent') return percentFormatter.format(stat.value ?? 0);
-    if (stat.format === 'minutes') return `${Math.round(stat.value ?? 0)} mins`;
-    if (stat.format === 'currency') return formatters.currency(stat.value ?? 0);
-    return formatters.number(stat.value ?? 0);
-  }, [stat]);
+    if (stat.format === 'percent') return format.percentage(stat.value ?? 0);
+    if (stat.format === 'minutes')
+      return t('businessFront.statMinutes', {
+        value: format.number(Math.round(stat.value ?? 0))
+      });
+    if (stat.format === 'currency') return format.currency(stat.value ?? 0);
+    return format.number(stat.value ?? 0);
+  }, [format, stat, t]);
 
   return (
     <li className="rounded-3xl border border-slate-200 bg-white/85 p-6 shadow-sm" data-qa={`business-front-stat-${stat.id}`}>
@@ -38,13 +34,15 @@ function StatCard({ stat }) {
 }
 
 function PackageCard({ pkg }) {
+  const { t, format } = useLocale();
+
   return (
     <article
       className="flex h-full flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm"
       data-qa={`business-front-package-${pkg.id}`}
     >
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Service package</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('businessFront.servicePackageLabel')}</p>
         <h3 className="mt-2 text-lg font-semibold text-primary">{pkg.name}</h3>
         <p className="mt-2 text-sm text-slate-600">{pkg.description}</p>
       </div>
@@ -58,7 +56,10 @@ function PackageCard({ pkg }) {
       </ul>
       {pkg.price != null ? (
         <p className="mt-6 text-sm font-semibold text-primary/90">
-          Starting from {formatters.currency(pkg.price)} {pkg.currency || 'GBP'} / month
+          {t('businessFront.packagesStarting', {
+            price: format.currency(pkg.price),
+            currency: pkg.currency || 'GBP'
+          })}
         </p>
       ) : null}
     </article>
@@ -82,6 +83,7 @@ function TestimonialCard({ testimonial }) {
 
 export default function BusinessFront() {
   const { slug } = useParams();
+  const { t, format } = useLocale();
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
 
   const loadFront = useCallback(async ({ forceRefresh = false, signal } = {}) => {
@@ -111,7 +113,11 @@ export default function BusinessFront() {
   const gallery = state.data?.gallery ?? [];
   const support = state.data?.support ?? {};
   const stats = state.data?.stats ?? [];
-  const conciergeHeading = hero?.name ? `Talk to the ${hero.name} concierge team` : 'Talk to the Fixnado concierge team';
+  const conciergeHeading = hero?.name
+    ? t('businessFront.supportHeadline', { name: hero.name })
+    : t('businessFront.supportFallbackHeadline');
+  const heroName = hero?.name ?? t('businessFront.heroFeatured');
+  const heroStrapline = hero?.strapline ?? t('businessFront.heroStraplineFallback');
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">
@@ -125,12 +131,12 @@ export default function BusinessFront() {
         ) : null}
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.35em] text-primary/80">Featured provider</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-primary/80">{t('businessFront.heroFeatured')}</p>
             <h1 className="text-4xl font-semibold text-primary" data-qa="business-front-name">
-              {hero?.name ?? 'Featured provider'}
+              {heroName}
             </h1>
             <p className="text-lg text-slate-600" data-qa="business-front-strapline">
-              {hero?.strapline ?? 'Escrow-backed field services delivered by certified teams across the UK.'}
+              {heroStrapline}
             </p>
             {hero?.locations?.length ? (
               <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.3em] text-primary/60">
@@ -146,17 +152,17 @@ export default function BusinessFront() {
                 to="/register"
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
-                Book a programme
+                {t('businessFront.bookProgramme')}
               </Link>
               <Link
                 to="/communications"
                 className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-white/80 px-6 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/50"
               >
-                Chat with operations
+                {t('businessFront.chatOperations')}
               </Link>
             </div>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:w-1/2" aria-label="Operational metrics">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:w-1/2" aria-label={t('businessFront.metricsAria')}>
             {state.loading
               ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-32 rounded-3xl" />)
               : stats.map((stat) => <StatCard key={stat.id} stat={stat} />)}
@@ -167,10 +173,10 @@ export default function BusinessFront() {
       <main className="mx-auto max-w-6xl px-6 py-12 space-y-12">
         {!state.loading && state.error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-5" role="alert">
-            <p className="text-sm font-semibold text-rose-600">We were unable to refresh this business front.</p>
+            <p className="text-sm font-semibold text-rose-600">{t('businessFront.errorSummary')}</p>
             <p className="mt-1 text-xs text-rose-500">
               {state.error.message}
-              {state.meta?.fallback ? ' — you are seeing cached content captured earlier.' : ''}
+              {state.meta?.fallback ? ` — ${t('businessFront.errorFallbackHint')}` : ''}
             </p>
           </div>
         ) : null}
@@ -179,24 +185,22 @@ export default function BusinessFront() {
           <header className="flex items-center justify-between">
             <div>
               <h2 id="business-front-packages" className="text-lg font-semibold text-primary">
-                Curated service packages
+                {t('businessFront.packagesHeadline')}
               </h2>
-              <p className="text-sm text-slate-600">
-                Every programme includes escrow-backed milestones, SLA monitoring, and compliance concierge support.
-              </p>
+              <p className="text-sm text-slate-600">{t('businessFront.packagesDescription')}</p>
             </div>
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
               onClick={() => loadFront({ forceRefresh: true })}
             >
-              <ArrowPathIcon className="h-4 w-4" aria-hidden="true" /> Refresh data
+              <ArrowPathIcon className="h-4 w-4" aria-hidden="true" /> {t('businessFront.refresh')}
             </button>
           </header>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {packages.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                Packages will appear once the provider publishes their catalogue.
+                {t('businessFront.packagesEmpty')}
               </p>
             ) : (
               packages.map((pkg) => <PackageCard key={pkg.id} pkg={pkg} />)
@@ -207,13 +211,13 @@ export default function BusinessFront() {
         <section aria-labelledby="business-front-testimonials" className="space-y-4">
           <header>
             <h2 id="business-front-testimonials" className="text-lg font-semibold text-primary">
-              Partner testimonials
+              {t('businessFront.testimonialsHeadline')}
             </h2>
           </header>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {testimonials.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                Testimonials are being curated for this provider.
+                {t('businessFront.testimonialsEmpty')}
               </p>
             ) : (
               testimonials.map((testimonial) => <TestimonialCard key={testimonial.id} testimonial={testimonial} />)
@@ -226,7 +230,7 @@ export default function BusinessFront() {
             <header className="flex items-center gap-3">
               <CheckBadgeIcon className="h-5 w-5 text-primary" aria-hidden="true" />
               <h2 id="business-front-certifications" className="text-lg font-semibold text-primary">
-                Certifications & compliance
+                {t('businessFront.certificationsHeadlineFull')}
               </h2>
             </header>
             <ul className="grid gap-3 md:grid-cols-2">
@@ -239,7 +243,9 @@ export default function BusinessFront() {
                   <span className="text-sm font-semibold text-primary">{cert.name}</span>
                   {cert.issuer ? <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{cert.issuer}</span> : null}
                   {cert.expiresOn ? (
-                    <span className="text-xs text-slate-500">Expires {new Date(cert.expiresOn).toLocaleDateString('en-GB')}</span>
+                    <span className="text-xs text-slate-500">
+                      {t('businessFront.certificationExpires', { date: format.date(cert.expiresOn) })}
+                    </span>
                   ) : null}
                 </li>
               ))}
@@ -252,7 +258,7 @@ export default function BusinessFront() {
             <header className="flex items-center gap-3">
               <PlayIcon className="h-5 w-5 text-primary" aria-hidden="true" />
               <h2 id="business-front-gallery" className="text-lg font-semibold text-primary">
-                Project highlights
+                {t('businessFront.galleryHeadline')}
               </h2>
             </header>
             <div className="grid gap-6 md:grid-cols-2">
@@ -280,10 +286,7 @@ export default function BusinessFront() {
             <h2 id="business-front-support" className="text-lg font-semibold text-primary">
               {conciergeHeading}
             </h2>
-            <p className="text-sm text-slate-600">
-              Enterprise operations have direct access to Fixnado concierge, escalation managers, and compliance support to
-              orchestrate every booking.
-            </p>
+            <p className="text-sm text-slate-600">{t('businessFront.supportDescription')}</p>
           </div>
           <div className="flex flex-col gap-3 rounded-3xl border border-primary/15 bg-primary/5 p-6">
             {support.email ? (
@@ -308,12 +311,12 @@ export default function BusinessFront() {
             ) : null}
             {support.concierge ? (
               <p className="text-xs text-slate-600" data-qa="business-front-support-concierge">
-                Concierge lead: {support.concierge}
+                {t('businessFront.supportConcierge', { name: support.concierge })}
               </p>
             ) : null}
             {!support.email && !support.phone ? (
               <p className="text-xs text-slate-600" data-qa="business-front-support-fallback">
-                Our concierge team will introduce themselves once your onboarding request is submitted.
+                {t('businessFront.supportFallback')}
               </p>
             ) : null}
           </div>
@@ -323,7 +326,7 @@ export default function BusinessFront() {
       {state.loading && !state.data ? (
         <div className="fixed inset-0 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
           <Spinner />
-          <span className="sr-only">Loading business front</span>
+          <span className="sr-only">{t('businessFront.loadingOverlay')}</span>
         </div>
       ) : null}
     </div>

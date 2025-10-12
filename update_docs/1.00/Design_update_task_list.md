@@ -209,3 +209,12 @@
   4. ✅ Align support copy, retention disclosures, and Looker modelling plan with the new `analytics_events` schema, capturing rehearsal cadence and backfill steps in telemetry runbook + progress trackers.
   5. ✅ *(2025-10-26 addendum)* Layered warehouse ingestion dashboards, retry/purge swim lanes, and quiet-hour suppression insight widgets into `dashboard_drawings.md`, `Screens_Update.md`, and `Design_Plan.md`, ensuring design artefacts reflect ingestion governance and support escalation workflows enabled by the new analytics pipeline.
 
+## Task 21 — Accessibility & Localisation Hardening *(Status: ✅ Complete — 2025-10-27)*
+- **Delivery Owner:** Experience Platform UX Lead with Accessibility SME, Localisation Producer, and Frontend Tech Lead partnership.
+- **Evidence:** `Design_Plan.md` Section 35, `Design_Change_log.md` Entry 25, drawings (`website_drawings.md`, `menu_drawings.md`, `dashboard_drawings.md`, `App_screens_drawings.md`), localisation copy decks referenced in `Screens_Update.md` & `Screens_Update_Logic_Flow.md`, and refreshed trackers/milestones capturing QA/performance guardrails.
+- **Subtasks:**
+  1. ✅ Document `LocaleProvider` contract (available locales, persistence precedence, analytics hooks, graceful fallback) and propagate into design artefacts so React/Flutter implementations align on behaviour.
+  2. ✅ Annotate header/footer navigation, dashboards mega-menu, and business front hero sections with skip-link focus order, language selector placement, bilingual copy, and compliance messaging referencing drawings and update plans.
+  3. ✅ Capture dashboard/business front widget translations (KPI tiles, alerts, concierge modules) with Intl formatting guidance and aria-live refresh banners to safeguard WCAG 2.2 AA during Suspense/loading states.
+  4. ✅ Update QA selectors, pseudo-locale stress scripts, translation cache invalidation checklist, and performance guardrails within `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`, and `Design_update_task_list.md` to keep localisation accessibility sign-off auditable before Milestone M4 closure.
+

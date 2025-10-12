@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  getProviderDashboard,
-  formatters,
-  PanelApiError
-} from '../api/panelClient.js';
+import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
@@ -15,22 +11,9 @@ import {
   LifebuoyIcon,
   UsersIcon
 } from '@heroicons/react/24/outline';
+import { useLocale } from '../hooks/useLocale.js';
 
-const availabilityFormatter = new Intl.NumberFormat('en-GB', {
-  style: 'percent',
-  maximumFractionDigits: 0
-});
-
-const ratingFormatter = new Intl.NumberFormat('en-GB', {
-  maximumFractionDigits: 1
-});
-
-const dateFormatter = new Intl.DateTimeFormat('en-GB', {
-  dateStyle: 'medium',
-  timeStyle: 'short'
-});
-
-function MetricCard({ icon: Icon, label, value, caption, tone, 'data-qa': dataQa }) {
+function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
     <article
       className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm"
@@ -52,7 +35,7 @@ function MetricCard({ icon: Icon, label, value, caption, tone, 'data-qa': dataQa
       ) : null}
       {tone ? (
         <div className="mt-4">
-          <StatusPill tone={tone}>{tone === 'danger' ? 'Action required' : 'On track'}</StatusPill>
+          <StatusPill tone={tone}>{toneLabel}</StatusPill>
         </div>
       ) : null}
     </article>
@@ -60,9 +43,13 @@ function MetricCard({ icon: Icon, label, value, caption, tone, 'data-qa': dataQa
 }
 
 function AlertBanner({ alert }) {
+  const { t } = useLocale();
+
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5"
+      role="alert"
+      aria-live="assertive"
       data-qa={`provider-dashboard-alert-${alert.id}`}
     >
       <div className="flex items-start gap-3">
@@ -74,7 +61,7 @@ function AlertBanner({ alert }) {
           to={alert.actionHref}
           className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700"
         >
-          {alert.actionLabel || 'Review now'}
+          {alert.actionLabel || t('providerDashboard.alertAction')}
         </Link>
       ) : null}
     </div>
@@ -82,6 +69,12 @@ function AlertBanner({ alert }) {
 }
 
 function ServicemanRow({ member }) {
+  const { t, format } = useLocale();
+  const availability = typeof member.availability === 'number' ? member.availability : 0;
+  const availabilityTone = availability > 0.75 ? 'success' : availability < 0.5 ? 'warning' : 'neutral';
+  const availabilityLabel = format.percentage(availability, { maximumFractionDigits: 0 });
+  const satisfactionLabel = format.percentage(member.rating ?? 0, { maximumFractionDigits: 0 });
+
   return (
     <li
       className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4 transition hover:border-primary/40"
@@ -92,19 +85,23 @@ function ServicemanRow({ member }) {
           <p className="text-sm font-semibold text-primary">{member.name}</p>
           <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{member.role}</p>
         </div>
-        <StatusPill tone={member.availability > 0.75 ? 'success' : member.availability < 0.5 ? 'warning' : 'neutral'}>
-          {availabilityFormatter.format(member.availability)} available
+        <StatusPill tone={availabilityTone}>
+          {t('providerDashboard.servicemanAvailability', { value: availabilityLabel })}
         </StatusPill>
       </div>
       <p className="text-xs text-slate-500">
-        Satisfaction score:{' '}
-        <span className="font-semibold text-primary">{ratingFormatter.format((member.rating ?? 0) * 100)}%</span>
+        {t('providerDashboard.servicemanSatisfaction', {
+          value: satisfactionLabel
+        })}
       </p>
     </li>
   );
 }
 
 function BookingRow({ booking }) {
+  const { t, format } = useLocale();
+  const etaLabel = booking.eta ? format.dateTime(booking.eta) : t('providerDashboard.bookingsEtaUnknown');
+
   return (
     <li
       className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4"
@@ -116,13 +113,13 @@ function BookingRow({ booking }) {
           <p className="text-xs text-slate-500">{booking.service}</p>
         </div>
         {booking.value != null ? (
-          <p className="text-sm font-semibold text-primary">{formatters.currency(booking.value)}</p>
+          <p className="text-sm font-semibold text-primary">{format.currency(booking.value)}</p>
         ) : null}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1">
           <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {booking.eta ? dateFormatter.format(new Date(booking.eta)) : 'TBC'}
+          {etaLabel}
         </span>
         <span className="inline-flex items-center gap-1">
           <ChartBarIcon className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -134,6 +131,7 @@ function BookingRow({ booking }) {
 }
 
 export default function ProviderDashboard() {
+  const { t, format } = useLocale();
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
 
   const loadDashboard = useCallback(async ({ forceRefresh = false, signal } = {}) => {
@@ -176,16 +174,24 @@ export default function ProviderDashboard() {
       <div className="border-b border-slate-200 bg-white/90">
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Provider dashboard</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{t('providerDashboard.title')}</p>
             <h1 className="text-3xl font-semibold text-primary" data-qa="provider-dashboard-name">
-              {provider?.tradingName || provider?.name || 'Provider'}
+              {provider?.tradingName || provider?.name || t('providerDashboard.defaultName')}
             </h1>
             <p className="text-sm text-slate-600" data-qa="provider-dashboard-region">
-              Operating region: {provider?.region}
+              {t('common.operatingRegion', { region: provider?.region ?? t('common.notAvailable') })}
             </p>
             <div className="flex flex-wrap gap-3">
-              <StatusPill tone={heroStatusTone}>{`SLA ${formatters.percentage(metrics?.slaHitRate ?? 0)}`}</StatusPill>
-              <StatusPill tone="info">{`Utilisation ${formatters.percentage(metrics?.utilisation ?? 0)}`}</StatusPill>
+              <StatusPill tone={heroStatusTone}>
+                {t('common.slaStatus', {
+                  value: format.percentage(metrics?.slaHitRate ?? 0)
+                })}
+              </StatusPill>
+              <StatusPill tone="info">
+                {t('common.utilisationStatus', {
+                  value: format.percentage(metrics?.utilisation ?? 0)
+                })}
+              </StatusPill>
             </div>
           </div>
           <div className="flex flex-col items-start gap-3 lg:items-end">
@@ -193,11 +199,15 @@ export default function ProviderDashboard() {
               to={`/providers/${provider?.slug ?? 'featured'}`}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
             >
-              View business front
+              {t('providerDashboard.businessFrontCta')}
             </Link>
             <div className="flex gap-3 text-xs text-slate-500">
-              {provider?.supportEmail ? <span>{provider.supportEmail}</span> : null}
-              {provider?.supportPhone ? <span>{provider.supportPhone}</span> : null}
+              {provider?.supportEmail ? (
+                <span>{t('providerDashboard.supportEmail', { email: provider.supportEmail })}</span>
+              ) : null}
+              {provider?.supportPhone ? (
+                <span>{t('providerDashboard.supportPhone', { phone: provider.supportPhone })}</span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -205,7 +215,7 @@ export default function ProviderDashboard() {
 
       <div className="mx-auto max-w-6xl px-6 py-10 space-y-10">
         {state.loading ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label="Loading metrics">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label={t('common.loading')}>
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton key={index} className="h-36 rounded-3xl" />
             ))}
@@ -214,11 +224,11 @@ export default function ProviderDashboard() {
 
         {!state.loading && state.error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-5" role="alert">
-            <p className="text-sm font-semibold text-rose-600">We could not refresh live metrics.</p>
+            <p className="text-sm font-semibold text-rose-600">{t('providerDashboard.errorSummary')}</p>
             <p className="mt-1 text-xs text-rose-500">
               {state.error.message}
               {state.meta?.fallback
-                ? ' — showing the most recently cached snapshot. Check your network connection and retry.'
+                ? ` — ${t('providerDashboard.errorFallbackHint')}`
                 : ''}
             </p>
           </div>
@@ -227,44 +237,50 @@ export default function ProviderDashboard() {
         <section aria-labelledby="provider-dashboard-kpis" className="space-y-6">
           <header className="flex items-center justify-between">
             <h2 id="provider-dashboard-kpis" className="text-lg font-semibold text-primary">
-              Operational KPIs
+              {t('providerDashboard.metricsHeadline')}
             </h2>
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
               onClick={() => loadDashboard({ forceRefresh: true })}
             >
-              <ClockIcon className="h-4 w-4" aria-hidden="true" /> Refresh metrics
+              <ClockIcon className="h-4 w-4" aria-hidden="true" /> {t('providerDashboard.refresh')}
             </button>
           </header>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" data-qa="provider-dashboard-kpi-grid">
             <MetricCard
               icon={ClockIcon}
-              label="Avg. response"
-              value={`${Math.round(metrics?.avgResponseMinutes ?? 0)} mins`}
-              caption="Based on dispatch telemetry across the last 7 days"
+              label={t('providerDashboard.metricFirstResponse')}
+              value={t('providerDashboard.metricResponseValue', {
+                value: format.number(metrics?.avgResponseMinutes ?? 0, { maximumFractionDigits: 0 })
+              })}
+              caption={t('providerDashboard.metricCaptionResponse')}
               data-qa="provider-dashboard-metric-response"
             />
             <MetricCard
               icon={ChartBarIcon}
-              label="Active bookings"
-              value={formatters.number(metrics?.activeBookings ?? 0)}
-              caption="Live engagements across enterprise + marketplace"
+              label={t('providerDashboard.metricActiveBookings')}
+              value={format.number(metrics?.activeBookings ?? 0)}
+              caption={t('providerDashboard.metricCaptionBookings')}
               data-qa="provider-dashboard-metric-bookings"
             />
             <MetricCard
               icon={UsersIcon}
-              label="Utilisation"
-              value={formatters.percentage(metrics?.utilisation ?? 0)}
-              caption="Capacity utilisation averaged across teams"
+              label={t('providerDashboard.metricUtilisation')}
+              value={format.percentage(metrics?.utilisation ?? 0)}
+              caption={t('providerDashboard.metricCaptionUtilisation')}
+              tone={heroStatusTone}
+              toneLabel={t(heroStatusTone === 'danger' || heroStatusTone === 'warning' ? 'common.actionRequired' : 'common.onTrack')}
               data-qa="provider-dashboard-metric-utilisation"
             />
             <MetricCard
               icon={LifebuoyIcon}
-              label="Satisfaction"
-              value={`${ratingFormatter.format((metrics?.satisfaction ?? 0) * 100)} / 100`}
-              caption="CSAT from post-job surveys and comms feedback"
+              label={t('providerDashboard.metricAverageRating')}
+              value={t('providerDashboard.metricSatisfactionValue', {
+                value: format.number(Math.round((metrics?.satisfaction ?? 0) * 100))
+              })}
+              caption={t('providerDashboard.metricCaptionRating')}
               data-qa="provider-dashboard-metric-satisfaction"
             />
           </div>
@@ -274,23 +290,25 @@ export default function ProviderDashboard() {
           <header className="flex items-center gap-3">
             <ChartBarIcon className="h-5 w-5 text-primary" aria-hidden="true" />
             <h2 id="provider-dashboard-revenue" className="text-lg font-semibold text-primary">
-              Revenue & payouts
+              {t('providerDashboard.revenueHeadline')}
             </h2>
           </header>
           <div className="grid gap-6 md:grid-cols-3">
             <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-mtd">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Month-to-date revenue</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{formatters.currency(revenue?.monthToDate ?? 0)}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueMonthToDate')}</p>
+              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.monthToDate ?? 0)}</p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-forecast">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Forecast</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{formatters.currency(revenue?.forecast ?? 0)}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueForecast')}</p>
+              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.forecast ?? 0)}</p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-outstanding">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Outstanding balance</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{formatters.currency(revenue?.outstandingBalance ?? 0)}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueOutstanding')}</p>
+              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.outstandingBalance ?? 0)}</p>
               {revenue?.nextPayoutDate ? (
-                <p className="mt-2 text-xs text-slate-500">Next payout {dateFormatter.format(new Date(revenue.nextPayoutDate))}</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  {t('providerDashboard.nextPayout', { date: format.date(revenue.nextPayoutDate) })}
+                </p>
               ) : null}
             </article>
           </div>
@@ -301,7 +319,7 @@ export default function ProviderDashboard() {
             <header className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
               <h2 id="provider-dashboard-alerts" className="text-lg font-semibold text-primary">
-                Alerts & follow-ups
+                {t('providerDashboard.alertsHeadline')}
               </h2>
             </header>
             <div className="space-y-3">
@@ -317,13 +335,13 @@ export default function ProviderDashboard() {
             <header className="flex items-center gap-3">
               <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
               <h2 id="provider-dashboard-pipeline" className="text-lg font-semibold text-primary">
-                Upcoming bookings
+                {t('providerDashboard.pipelineBookings')}
               </h2>
             </header>
             <ul className="space-y-3">
               {bookings.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                  No upcoming bookings captured for the next 7 days.
+                  {t('providerDashboard.emptyBookings')}
                 </li>
               ) : (
                 bookings.map((booking) => <BookingRow key={booking.id} booking={booking} />)
@@ -333,12 +351,12 @@ export default function ProviderDashboard() {
           <div className="space-y-4">
             <header className="flex items-center gap-3">
               <LifebuoyIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">Compliance watchlist</h2>
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.pipelineCompliance')}</h2>
             </header>
             <ul className="space-y-3">
               {compliance.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                  All compliance artefacts are in good standing.
+                  {t('providerDashboard.allComplianceHealthy')}
                 </li>
               ) : (
                 compliance.map((item) => (
@@ -349,10 +367,14 @@ export default function ProviderDashboard() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-primary">{item.name}</p>
-                      <p className="text-xs text-slate-500">Owner: {item.owner}</p>
+                      <p className="text-xs text-slate-500">
+                        {t('providerDashboard.complianceOwner', { name: item.owner })}
+                      </p>
                     </div>
                     <StatusPill tone="warning">
-                      Expires {item.expiresOn ? dateFormatter.format(new Date(item.expiresOn)) : 'soon'}
+                      {item.expiresOn
+                        ? t('providerDashboard.complianceExpires', { date: format.date(item.expiresOn) })
+                        : t('providerDashboard.complianceExpiresSoon')}
                     </StatusPill>
                   </li>
                 ))
@@ -365,13 +387,13 @@ export default function ProviderDashboard() {
           <header className="flex items-center gap-3">
             <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
             <h2 id="provider-dashboard-servicemen" className="text-lg font-semibold text-primary">
-              Field team performance
+              {t('providerDashboard.servicemenSection')}
             </h2>
           </header>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {servicemen.length === 0 ? (
               <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                We have not received team telemetry for this provider yet.
+                {t('providerDashboard.servicemenEmpty')}
               </li>
             ) : (
               servicemen.map((member) => <ServicemanRow key={member.id} member={member} />)
@@ -383,7 +405,7 @@ export default function ProviderDashboard() {
       {state.loading && !state.data ? (
         <div className="fixed inset-0 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
           <Spinner />
-          <span className="sr-only">Loading provider dashboard</span>
+          <span className="sr-only">{t('providerDashboard.loadingOverlay')}</span>
         </div>
       ) : null}
     </div>

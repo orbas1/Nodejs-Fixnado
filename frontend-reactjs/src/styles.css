@@ -62,6 +62,27 @@
   --fx-seasonal-highlight: #0ea5e9;
 }
 
+.skip-nav-link {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 999;
+  padding: 0.5rem 1rem;
+  transform: translateY(-200%);
+  border-radius: 9999px;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  transition: transform 0.2s ease;
+}
+
+.skip-nav-link:focus {
+  transform: translateY(0);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35);
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
   --fx-color-brand-primary: #5b7cfa;

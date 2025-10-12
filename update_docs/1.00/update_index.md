@@ -330,3 +330,14 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`backend-nodejs/package.json`](../backend-nodejs/package.json) & [`package-lock.json`](../backend-nodejs/package-lock.json) — Added finance, PostGIS, and geospatial dependencies supporting new services.
 - [`backend-nodejs/src`](../backend-nodejs/src) — New controllers, services, models, routes, and jobs for zones/booking (`controllers/{zoneController,bookingController}.js`, `services/{zoneService,bookingService,financeService}.js`, `routes/{zoneRoutes,bookingRoutes}.js`, `models/*`, `jobs/zoneAnalyticsJob.js`, config updates) enabling Task 2 delivery.
 - [`backend-nodejs/tests/zoneRoutes.test.js`](../backend-nodejs/tests/zoneRoutes.test.js) & [`backend-nodejs/tests/bookingRoutes.test.js`](../backend-nodejs/tests/bookingRoutes.test.js) — Added regression suites validating polygons, analytics snapshots, currency math, assignment acceptance, bidding comments, and dispute workflow.
+
+## Newly Updated Artefacts (2025-10-27)
+- [`change_log.md`](change_log.md) — 2025-10-27 entry summarises localisation/accessibility sweep across locale provider, dashboards, and documentation.
+- [`Design_Change_log.md`](Design_Change_log.md) — Added Entry 25 capturing locale provider contract, skip links, bilingual copy decks, and QA instrumentation references to drawings.
+- [`Design_Plan.md`](Design_Plan.md) — Section 35 outlines localisation blueprint, dashboard translation states, and governance guardrails.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Snapshot updated to 2025-10-27 with localisation metrics, narrative entry 23, and QA/performance notes.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Recorded Task 21 Accessibility & Localisation Hardening with evidence/subtasks.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Introduced Milestone M14 capturing localisation/accessibility sign-off and artefact references.
+- [`frontend_updates/change_log.md`](frontend_updates/change_log.md) — Added 2025-10-27 entry for locale provider rollout and accessibility hardening.
+- [`frontend_updates/pages_updates.md`](frontend_updates/pages_updates.md) — Documented localised panels, skip navigation, and QA selectors.
+- [`frontend_updates/provider_dashboard_changes.md`](frontend_updates/provider_dashboard_changes.md) — Logged translated KPI tiles, aria-live toasts, and skip navigation instrumentation.
