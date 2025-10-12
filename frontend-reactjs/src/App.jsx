@@ -6,7 +6,9 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import CompanyRegister from './pages/CompanyRegister.jsx';
 import Feed from './pages/Feed.jsx';
-import Profile from './pages/Profile.jsx';
+import BusinessFront from './pages/BusinessFront.jsx';
+import ProviderDashboard from './pages/ProviderDashboard.jsx';
+import EnterprisePanel from './pages/EnterprisePanel.jsx';
 import Search from './pages/Search.jsx';
 import Services from './pages/Services.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
@@ -26,7 +28,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/register/company" element={<CompanyRegister />} />
           <Route path="/feed" element={<Feed />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+          <Route path="/enterprise/panel" element={<EnterprisePanel />} />
+          <Route path="/providers" element={<BusinessFront />} />
+          <Route path="/providers/:slug" element={<BusinessFront />} />
           <Route path="/search" element={<Search />} />
           <Route path="/services" element={<Services />} />
           <Route path="/admin" element={<AdminLogin />} />

@@ -19,3 +19,10 @@
 - Added `/communications` route and navigation entry (`frontend-reactjs/src/App.jsx`) exposing the new communications workspace for admin/provider roles.
 - Delivered production-grade communications page (`src/pages/Communications.jsx`) composed of conversation rail, message canvas, AI assist sidebar, quiet-hour banner, and Agora launcher components (`src/components/communications/*`) orchestrated via `communicationsClient.js` with retry/backoff and auth propagation.
 - Implemented deterministic tests for `MessageComposer` covering AI assist requests, token usage display, quiet-hour prompts, attachment validation, and keyboard shortcuts, ensuring regressions surface before release.
+
+## 2025-10-23 — Business Fronts & Role Dashboards Integration
+- Routed provider and enterprise personas to live dashboards by adding `/provider/dashboard`, `/enterprise/panel`, and `/providers/:slug` entries in `src/App.jsx` alongside a dashboards mega-menu in `components/Header.jsx` that respects accessibility, hover/focus, and click-outside behaviour.
+- Hardened panel pages (`src/pages/ProviderDashboard.jsx`, `EnterprisePanel.jsx`) with skeleton states, trend charts, analytics widgets, fraud/follow-up rails, and compliance queues sourced from the new panel APIs, including token-aware error messaging for missing auth (`panelClient.js`).
+- Enhanced `src/pages/BusinessFront.jsx` with slug-driven routing, testimonial/service package rendering, operations metrics, and support channel surfacing; fallback data ensures empty states remain production-ready while telemetry/QA selectors document coverage.
+- Refreshed update artefacts and QA selectors to capture dashboards navigation, persona breadcrumbs, and localisation/accessibility follow-ups ahead of Subtask 4.5.
+- Added Vitest aliases/stubs for Turf helpers (`src/testStubs/turfBbox.js`, `turfHelpers.js`) so geometry utilities remain testable without bundler dependencies, keeping explorer regression suites deterministic in CI.
