@@ -21,3 +21,9 @@
 - Reauthored `ProviderDashboard.jsx` and `EnterprisePanel.jsx` with end-to-end metric tiles, revenue/incident summaries, compliance watchlists, escalation tracking, and refresh controls that surface cached snapshots alongside actionable banners.
 - Rebuilt `BusinessFront.jsx` hero, stats rail, package catalogue, testimonials, compliance badges, portfolio gallery, and concierge contact block so `/providers/:slug` renders production storytelling backed by slug-aware fetch + fallback content.
 - Documented regression remediation and new QA selectors across update artefacts to guide Subtask 4.5 accessibility/localisation sweeps and automated dashboard monitoring.
+
+## 2025-10-27 — Localised Panels & Skip Navigation
+- Wired `LocaleProvider` into `src/App.jsx` so skip-to-content anchors and route Suspense boundaries respect the current language and direction, ensuring aria-live loaders surface translated messaging during panel hydration.
+- Updated `components/Header.jsx` to include bilingual language picker, high-contrast skip-link focus state, and analytics instrumentation for locale toggles aligned with `website_drawings.md` and `menu_drawings.md` annotations.
+- Extended `components/Footer.jsx` and `components/accessibility/SkipToContent.jsx` with translated compliance/support copy plus QA selectors (`data-qa="skip-nav"`, `data-qa="language-picker"`) so accessibility sweeps validate navigation order and voiceover cues.
+- Refreshed `ProviderDashboard.jsx`, `EnterprisePanel.jsx`, and `BusinessFront.jsx` copy decks to use translation namespaces with Intl formatting for KPI tiles, alert banners, and concierge storytelling; aria-live toasts announce cache fallbacks in the active locale.

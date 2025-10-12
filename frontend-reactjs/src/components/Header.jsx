@@ -1,35 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { LOGO_URL } from '../constants/branding';
+import { useLocale } from '../hooks/useLocale.js';
 
-const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Solutions', href: '/services#solution-streams' },
-  { name: 'Industries', href: '/#home-marketing' },
-  { name: 'Platform', href: '/#home-operations' },
-  { name: 'Resources', href: '/services#activation-blueprint' },
+const navigationConfig = [
+  { key: 'home', nameKey: 'nav.home', href: '/' },
+  { key: 'solutions', nameKey: 'nav.solutions', href: '/services#solution-streams' },
+  { key: 'industries', nameKey: 'nav.industries', href: '/#home-marketing' },
+  { key: 'platform', nameKey: 'nav.platform', href: '/#home-operations' },
+  { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
   {
-    name: 'Dashboards',
+    key: 'dashboards',
+    nameKey: 'nav.dashboards',
     children: [
       {
-        name: 'Provider console',
-        href: '/provider/dashboard',
-        description: 'Live booking, inventory, and campaign KPIs with compliance alerts.'
+        key: 'provider',
+        nameKey: 'nav.providerConsole',
+        descriptionKey: 'nav.providerConsoleDescription',
+        href: '/provider/dashboard'
       },
       {
-        name: 'Enterprise analytics',
-        href: '/enterprise/panel',
-        description: 'Multi-site SLA monitoring, spend visibility, and upcoming visit planning.'
+        key: 'enterprise',
+        nameKey: 'nav.enterpriseAnalytics',
+        descriptionKey: 'nav.enterpriseAnalyticsDescription',
+        href: '/enterprise/panel'
       },
       {
-        name: 'Business fronts',
-        href: '/providers/metro-power-services',
-        description: 'Curated storefronts showcasing credentials, testimonials, and service packages.'
+        key: 'business-fronts',
+        nameKey: 'nav.businessFronts',
+        descriptionKey: 'nav.businessFrontsDescription',
+        href: '/providers/metro-power-services'
       }
     ]
   },
-  { name: 'Communications', href: '/communications' }
+  { key: 'communications', nameKey: 'nav.communications', href: '/communications' }
 ];
 
 export default function Header() {
@@ -38,6 +43,21 @@ export default function Header() {
   const [mobileMenu, setMobileMenu] = useState(null);
   const menuRefs = useRef({});
   const location = useLocation();
+  const { t, locale, setLocale, availableLocales } = useLocale();
+
+  const navigation = useMemo(
+    () =>
+      navigationConfig.map((item) => ({
+        ...item,
+        name: t(item.nameKey),
+        children: item.children?.map((child) => ({
+          ...child,
+          name: t(child.nameKey),
+          description: child.descriptionKey ? t(child.descriptionKey) : undefined
+        }))
+      })),
+    [t, locale]
+  );
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -73,14 +93,14 @@ export default function Header() {
     setMobileMenu(null);
   }, [location.pathname]);
 
-  const setMenuRef = (name) => (node) => {
+  const setMenuRef = (id) => (node) => {
     if (!menuRefs.current) {
       menuRefs.current = {};
     }
     if (node) {
-      menuRefs.current[name] = node;
+      menuRefs.current[id] = node;
     } else {
-      delete menuRefs.current[name];
+      delete menuRefs.current[id];
     }
   };
 
@@ -98,8 +118,8 @@ export default function Header() {
     return matchPath(item.href);
   };
 
-  const handleMenuBlur = (name, event) => {
-    const container = menuRefs.current?.[name];
+  const handleMenuBlur = (id, event) => {
+    const container = menuRefs.current?.[id];
     if (!container) {
       setDesktopMenu(null);
       return;
@@ -107,7 +127,7 @@ export default function Header() {
     if (event?.relatedTarget && container.contains(event.relatedTarget)) {
       return;
     }
-    setDesktopMenu((current) => (current === name ? null : current));
+    setDesktopMenu((current) => (current === id ? null : current));
   };
 
   return (
@@ -121,27 +141,27 @@ export default function Header() {
             loading="lazy"
           />
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium" aria-label="Primary">
           {navigation.map((item) => (
             item.children ? (
               <div
-                key={item.name}
+                key={item.key}
                 className="relative"
-                ref={setMenuRef(item.name)}
-                onMouseEnter={() => setDesktopMenu(item.name)}
-                onFocus={() => setDesktopMenu(item.name)}
+                ref={setMenuRef(item.key)}
+                onMouseEnter={() => setDesktopMenu(item.key)}
+                onFocus={() => setDesktopMenu(item.key)}
                 onMouseLeave={() => setDesktopMenu(null)}
-                onBlur={(event) => handleMenuBlur(item.name, event)}
+                onBlur={(event) => handleMenuBlur(item.key, event)}
               >
                 <button
                   type="button"
                   className={`flex items-center gap-1 rounded-full px-4 py-2 transition-colors ${
                     isNavItemActive(item) ? 'text-primary' : 'text-slate-600 hover:text-accent'
                   }`}
-                  aria-expanded={desktopMenu === item.name}
+                  aria-expanded={desktopMenu === item.key}
                   aria-haspopup="true"
                   onClick={() =>
-                    setDesktopMenu((current) => (current === item.name ? null : item.name))
+                    setDesktopMenu((current) => (current === item.key ? null : item.key))
                   }
                 >
                   {item.name}
@@ -149,7 +169,7 @@ export default function Header() {
                     ▾
                   </span>
                 </button>
-                {desktopMenu === item.name ? (
+                {desktopMenu === item.key ? (
                   <div
                     role="menu"
                     aria-label={`${item.name} menu`}
@@ -157,7 +177,7 @@ export default function Header() {
                   >
                     <ul className="space-y-2">
                       {item.children.map((child) => (
-                        <li key={child.name}>
+                        <li key={child.key}>
                           <NavLink
                             to={child.href}
                             className="block rounded-2xl p-3 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
@@ -188,17 +208,32 @@ export default function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-3">
+          <label htmlFor="desktop-language-selector" className="sr-only">
+            {t('nav.languageSelector')}
+          </label>
+          <select
+            id="desktop-language-selector"
+            value={locale}
+            onChange={(event) => setLocale(event.target.value)}
+            className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            {availableLocales.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
+              </option>
+            ))}
+          </select>
           <Link
             to="/login"
             className="px-4 py-2 rounded-full border border-accent text-accent font-semibold hover:bg-accent/10"
           >
-            Log in
+            {t('nav.login')}
           </Link>
           <Link
             to="/register"
             className="px-4 py-2 rounded-full bg-accent text-white font-semibold shadow-lg shadow-accent/30 hover:bg-accent/90"
           >
-            Get started
+            {t('nav.getStarted')}
           </Link>
         </div>
         <button
@@ -212,24 +247,24 @@ export default function Header() {
         <div className="md:hidden px-6 pb-6 space-y-4">
           {navigation.map((item) => (
             item.children ? (
-              <div key={item.name}>
+              <div key={item.key}>
                 <button
                   type="button"
                   className="flex w-full items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-left text-base font-semibold text-primary"
                   onClick={() =>
-                    setMobileMenu((current) => (current === item.name ? null : item.name))
+                    setMobileMenu((current) => (current === item.key ? null : item.key))
                   }
-                  aria-expanded={mobileMenu === item.name}
+                  aria-expanded={mobileMenu === item.key}
                 >
                   {item.name}
                   <span aria-hidden="true" className="text-xs text-slate-500">
-                    {mobileMenu === item.name ? '▴' : '▾'}
+                    {mobileMenu === item.key ? '▴' : '▾'}
                   </span>
                 </button>
-                {mobileMenu === item.name ? (
+                {mobileMenu === item.key ? (
                   <ul className="mt-2 space-y-2 rounded-2xl border border-slate-200 bg-white/95 p-3">
                     {item.children.map((child) => (
-                      <li key={child.name}>
+                      <li key={child.key}>
                         <NavLink
                           to={child.href}
                           className="block rounded-xl px-3 py-2 text-sm text-slate-600 transition-colors hover:text-primary"
@@ -250,7 +285,7 @@ export default function Header() {
               </div>
             ) : (
               <NavLink
-                key={item.name}
+                key={item.key}
                 to={item.href}
                 className={({ isActive }) =>
                   `block text-base ${isActive || isNavItemActive(item) ? 'text-primary font-semibold' : 'text-slate-600 hover:text-accent'}`
@@ -261,20 +296,37 @@ export default function Header() {
               </NavLink>
             )
           ))}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-3 pt-4">
+            <label htmlFor="mobile-language-selector" className="sr-only">
+              {t('nav.languageSelector')}
+            </label>
+            <select
+              id="mobile-language-selector"
+              value={locale}
+              onChange={(event) => setLocale(event.target.value)}
+              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              {availableLocales.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-3">
             <Link
               to="/login"
               className="flex-1 px-4 py-2 rounded-full border border-accent text-center text-accent font-semibold hover:bg-accent/10"
               onClick={() => setOpen(false)}
             >
-              Log in
+              {t('nav.login')}
             </Link>
             <Link
               to="/register"
               className="flex-1 px-4 py-2 rounded-full bg-accent text-center text-white font-semibold shadow-lg shadow-accent/30 hover:bg-accent/90"
               onClick={() => setOpen(false)}
             >
-              Get started
+              {t('nav.getStarted')}
             </Link>
           </div>
         </div>

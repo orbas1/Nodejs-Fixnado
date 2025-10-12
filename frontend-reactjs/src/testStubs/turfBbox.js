@@ -37,6 +37,4 @@ export function bbox(collection) {
   return [minX, minY, maxX, maxY];
 }
 
-export default {
-  bbox
-};
+export default bbox;

@@ -1,13 +1,42 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { LOGO_URL } from '../constants/branding';
+import { useLocale } from '../hooks/useLocale.js';
 
-const footerLinks = [
-  { title: 'Company', items: ['About', 'Careers', 'Press', 'Contact'] },
-  { title: 'Support', items: ['Help Center', 'Safety', 'Escrow', 'Disputes'] },
-  { title: 'Marketplace', items: ['Services', 'Live Feed', 'Tool Rentals', 'Materials'] }
+const footerConfig = [
+  {
+    key: 'company',
+    titleKey: 'footer.company',
+    items: ['footer.about', 'footer.careers', 'footer.press', 'footer.contact']
+  },
+  {
+    key: 'support',
+    titleKey: 'footer.support',
+    items: ['footer.helpCenter', 'footer.safety', 'footer.escrow', 'footer.disputes']
+  },
+  {
+    key: 'marketplace',
+    titleKey: 'footer.marketplace',
+    items: ['footer.services', 'footer.liveFeed', 'footer.toolRentals', 'footer.materials']
+  }
 ];
 
 export default function Footer() {
+  const { t } = useLocale();
+
+  const footerLinks = useMemo(
+    () =>
+      footerConfig.map((column) => ({
+        ...column,
+        title: t(column.titleKey),
+        items: column.items.map((itemKey) => ({
+          key: itemKey,
+          label: t(itemKey)
+        }))
+      })),
+    [t]
+  );
+
   return (
     <footer className="bg-white text-slate-700 border-t border-slate-200">
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-10 md:grid-cols-4">
@@ -19,17 +48,17 @@ export default function Footer() {
             loading="lazy"
           />
           <p className="mt-4 text-sm text-slate-500">
-            Fixnado connects households, enterprises, and skilled professionals to orchestrate custom jobs with precision.
+            {t('footer.tagline')}
           </p>
         </div>
         {footerLinks.map((column) => (
-          <div key={column.title}>
+          <div key={column.key}>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">{column.title}</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-500">
               {column.items.map((item) => (
-                <li key={item}>
+                <li key={item.key}>
                   <Link to="#" className="hover:text-accent">
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -39,11 +68,11 @@ export default function Footer() {
       </div>
       <div className="border-t border-slate-200 bg-slate-50/60">
         <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-3">
-          <span>© {new Date().getFullYear()} Fixnado. All rights reserved.</span>
+          <span>{t('footer.copyright', { year: new Date().getFullYear() })}</span>
           <div className="flex gap-4">
-            <Link to="#" className="hover:text-accent">Privacy</Link>
-            <Link to="#" className="hover:text-accent">Terms</Link>
-            <Link to="#" className="hover:text-accent">Cookies</Link>
+            <Link to="#" className="hover:text-accent">{t('footer.privacy')}</Link>
+            <Link to="#" className="hover:text-accent">{t('footer.terms')}</Link>
+            <Link to="#" className="hover:text-accent">{t('footer.cookies')}</Link>
           </div>
         </div>
       </div>
