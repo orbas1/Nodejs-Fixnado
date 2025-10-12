@@ -119,6 +119,17 @@ const config = {
     analyticsEndpoint: process.env.CAMPAIGN_ANALYTICS_ENDPOINT || '',
     analyticsApiKey: process.env.CAMPAIGN_ANALYTICS_API_KEY || '',
     failedRetryMinutes: Math.max(intFromEnv('CAMPAIGN_EXPORT_RETRY_MINUTES', 10), 1)
+  },
+  analyticsPipeline: {
+    ingestEndpoint: process.env.ANALYTICS_INGEST_ENDPOINT || '',
+    ingestApiKey: process.env.ANALYTICS_INGEST_API_KEY || '',
+    batchSize: Math.max(intFromEnv('ANALYTICS_INGEST_BATCH_SIZE', 250), 1),
+    pollIntervalSeconds: Math.max(intFromEnv('ANALYTICS_INGEST_INTERVAL_SECONDS', 60), 15),
+    retentionDays: Math.max(intFromEnv('ANALYTICS_RETENTION_DAYS', 395), 30),
+    requestTimeoutMs: Math.max(intFromEnv('ANALYTICS_INGEST_TIMEOUT_MS', 15000), 1000),
+    purgeBatchSize: Math.max(intFromEnv('ANALYTICS_PURGE_BATCH_SIZE', 300), 50),
+    lookbackHours: Math.max(intFromEnv('ANALYTICS_BACKFILL_LOOKBACK_HOURS', 72), 1),
+    retryScheduleMinutes: jsonFromEnv('ANALYTICS_RETRY_SCHEDULE_MINUTES', [5, 15, 60, 240, 1440])
   }
 };
 

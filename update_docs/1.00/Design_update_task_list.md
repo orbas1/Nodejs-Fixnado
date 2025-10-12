@@ -207,4 +207,5 @@
   2. ✅ Document metadata requirements (demand level, SLA expiry, assignment ID, inspection outcome, spend metrics, suppression reason) and tenant/actor derivation guidance so analytics/ops teams can validate instrumentation without backend spelunking.
   3. ✅ Update QA selectors, aria-live callouts, and automation notes adjacent to telemetry-triggering components in drawings to guarantee accessibility + regression coverage while emitting events.
   4. ✅ Align support copy, retention disclosures, and Looker modelling plan with the new `analytics_events` schema, capturing rehearsal cadence and backfill steps in telemetry runbook + progress trackers.
+  5. ✅ *(2025-10-26 addendum)* Layered warehouse ingestion dashboards, retry/purge swim lanes, and quiet-hour suppression insight widgets into `dashboard_drawings.md`, `Screens_Update.md`, and `Design_Plan.md`, ensuring design artefacts reflect ingestion governance and support escalation workflows enabled by the new analytics pipeline.
 

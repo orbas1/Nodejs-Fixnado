@@ -34,3 +34,8 @@
 - Added `services/analyticsEventService.js` housing immutable event catalogue, metadata validation, tenant inference, actor normalisation, and batch helper to persist governed analytics envelopes with optional transaction support.
 - Updated zone, booking, rental, campaign, and communications services to call the helper during lifecycle events (creation, status transitions, assignment creation, dispute raises, inspections, campaign metric ingestion/fraud detection, message delivery suppression) so telemetry remains consistent across domains.
 - Emitters pass correlation IDs, actor/channel hints, and required metadata (SLA expiry, assignment IDs, inspection charges, fraud signal severity, quiet-hour reason) ensuring downstream ETL and dashboards receive production-grade context.
+
+## 2025-10-26 — Analytics Ingestion Helpers & Communications Telemetry
+- Extended `analyticsEventService` with ingestion lifecycle utilities (pending fetch, mark success/failure, purge expired events, backfill acceleration) plus retention calculations so warehouse delivery jobs can coordinate retries and cleanup without duplicating logic.
+- Adjusted `communicationsService` delivery creation to stage suppressed-delivery analytics until after transaction commit, enrich metadata with `deliveryId`, and surface post-commit promises so API responses only resolve once telemetry persistence has been scheduled/awaited.
+- Batch recording helper now supports array ingestion (`recordAnalyticsEvents`) without logging noise, ensuring analytics pipelines remain performant while complying with transaction boundaries.

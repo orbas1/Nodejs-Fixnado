@@ -37,3 +37,8 @@
 - Extended zone, booking, rental, campaign, and communications route tests to assert analytics event persistence alongside functional outcomes. Suites now verify event count, domain/entity metadata, tenant inference, and key payload fields (e.g., SLA expiry, assignment IDs, inspection totals, fraud signal severity, quiet-hour reason).
 - Added helper expectations ensuring timestamp normalisation and actor attribution behave consistently across sqlite/Postgres by stubbing `Date` values and comparing persisted metadata snapshots.
 - Regression harness now fails fast when new emitters are introduced without catalogue definitions, preventing undocumented events from reaching warehouse ingestion.
+
+## 2025-10-26 — Analytics Ingestion Job Regression Suite
+- Added `tests/analyticsIngestionJob.test.js` covering happy-path delivery, retry/backoff when the warehouse is unavailable, retention purge, and backfill acceleration by exercising new helpers (`fetchPendingAnalyticsEvents`, `markEventIngestionSuccess/Failure`, `purgeExpiredAnalyticsEvents`, `ensureBackfillCoverage`).
+- Test harness mocks `fetch` to assert request payload composition, API key header injection, request timeout handling, and structured logger output for both success and failure branches.
+- Updated `vitest.setup.js` to seed Agora environment defaults so communications suites continue to run hermetically after analytics ingestion job tests reset modules during dependency injection.

@@ -89,6 +89,33 @@ AnalyticsEvent.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: {}
+    },
+    ingestedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'ingested_at'
+    },
+    ingestionAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'ingestion_attempts'
+    },
+    lastIngestionError: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'last_ingestion_error'
+    },
+    nextIngestAttemptAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+      field: 'next_ingest_attempt_at'
+    },
+    retentionExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'retention_expires_at'
     }
   },
   {
@@ -99,7 +126,8 @@ AnalyticsEvent.init(
       { fields: ['domain', 'event_name', 'occurred_at'], name: 'analytics_event_domain_event_occurred' },
       { fields: ['entity_type', 'entity_id'], name: 'analytics_event_entity_lookup' },
       { fields: ['tenant_id', 'occurred_at'], name: 'analytics_event_tenant_time' },
-      { fields: ['correlation_id'], name: 'analytics_event_correlation' }
+      { fields: ['correlation_id'], name: 'analytics_event_correlation' },
+      { fields: ['next_ingest_attempt_at'], name: 'analytics_event_next_ingest' }
     ]
   }
 );

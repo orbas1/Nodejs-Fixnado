@@ -4,6 +4,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key';
 process.env.DB_DIALECT = process.env.DB_DIALECT || 'sqlite';
 process.env.DB_STORAGE = process.env.DB_STORAGE || ':memory:';
 process.env.NODE_ENV = 'test';
+process.env.AGORA_APP_ID = process.env.AGORA_APP_ID || 'test-app-id';
+process.env.AGORA_APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE || 'test-app-cert';
 
 vi.mock('@aws-sdk/client-secrets-manager', () => {
   class SecretsManagerClient {

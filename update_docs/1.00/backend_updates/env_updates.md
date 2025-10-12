@@ -10,3 +10,8 @@
 - Added AI assist configuration: `COMMS_AI_ENDPOINT`, `COMMS_AI_KEY`, `COMMS_AI_MODEL`, `COMMS_AI_TEMPERATURE`, and `COMMS_AI_TIMEOUT_MS` to govern provider calls and heuristic fallbacks.
 - Documented quiet-hour and retention controls (`COMMS_DEFAULT_QUIET_HOURS`, `COMMS_MESSAGE_RETENTION_DAYS`, `COMMS_DELIVERY_MAX_RETRY`) plus notification suppression override toggle `COMMS_ALLOW_OVERRIDE_ROLES`.
 - Captured Agora credentials and session configuration: `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE`, `AGORA_SESSION_TTL_SECONDS`, ensuring operators supply production secrets before enabling video escalation.
+
+## 2025-10-26 — Analytics Pipeline Env Vars
+- Introduced ingestion configuration: `ANALYTICS_INGEST_ENDPOINT`, `ANALYTICS_INGEST_API_KEY`, `ANALYTICS_INGEST_BATCH_SIZE`, `ANALYTICS_INGEST_INTERVAL_SECONDS`, `ANALYTICS_INGEST_TIMEOUT_MS` controlling batch delivery cadence and transport resilience.
+- Added retention/backfill knobs: `ANALYTICS_RETENTION_DAYS`, `ANALYTICS_PURGE_BATCH_SIZE`, `ANALYTICS_BACKFILL_LOOKBACK_HOURS`, `ANALYTICS_RETRY_SCHEDULE_MINUTES` enabling warehouse teams to tune purge cadence and retry schedule without redeploys.
+- Documented expectation that lower environments can omit endpoint/API key (job logs a structured warning and records failure) while staging/production must provide fully qualified HTTPS endpoints for ingestion.
