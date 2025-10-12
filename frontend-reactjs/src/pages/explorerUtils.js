@@ -1,4 +1,4 @@
-import { bbox as turfBbox } from '@turf/bbox';
+import turfBbox from '@turf/bbox';
 import { featureCollection, feature } from '@turf/helpers';
 
 export const EXPLORER_DEFAULT_FILTERS = {

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import Home from './pages/Home.jsx';
@@ -14,11 +14,16 @@ import AdminDashboard from './pages/AdminDashboard.jsx';
 import ThemeStudio from './pages/ThemeStudio.jsx';
 import TelemetryDashboard from './pages/TelemetryDashboard.jsx';
 import Communications from './pages/Communications.jsx';
+import DashboardHub from './pages/DashboardHub.jsx';
+import RoleDashboard from './pages/RoleDashboard.jsx';
 
 function App() {
+  const location = useLocation();
+  const isDashboardExperience = location.pathname.startsWith('/dashboards');
+
   return (
-    <div className="min-h-screen flex flex-col gradient-bg">
-      <Header />
+    <div className={`min-h-screen flex flex-col ${isDashboardExperience ? 'bg-slate-50' : 'gradient-bg'}`}>
+      {!isDashboardExperience && <Header />}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -34,9 +39,11 @@ function App() {
           <Route path="/admin/theme-studio" element={<ThemeStudio />} />
           <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
           <Route path="/communications" element={<Communications />} />
+          <Route path="/dashboards" element={<DashboardHub />} />
+          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
         </Routes>
       </main>
-      <Footer />
+      {!isDashboardExperience && <Footer />}
     </div>
   );
 }
