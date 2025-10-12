@@ -30,6 +30,7 @@ import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
+import AnalyticsEvent from './analyticsEvent.js';
 import Conversation from './conversation.js';
 import ConversationParticipant from './conversationParticipant.js';
 import ConversationMessage from './conversationMessage.js';
@@ -218,6 +219,7 @@ export {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
+  AnalyticsEvent,
   Conversation,
   ConversationParticipant,
   ConversationMessage,

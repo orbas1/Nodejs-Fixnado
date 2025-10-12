@@ -138,6 +138,8 @@ Extend data pipelines, dashboards, and governance to evidence performance, compl
 - **Logic:** Subtasks 5.1 & 5.4 encode metric calculations and threshold evaluation.
 - **Design:** Subtask 5.3 ensures data visualisation standards and accessibility compliance.
 
+*2025-10-24 update:* Subtask **5.1** is production-ready. `backend-nodejs/src/models/analyticsEvent.js`, migration `20250223000000-create-analytics-events.js`, and `services/analyticsEventService.js` define a catalogued schema with tenant inference, actor context, and metadata validation. Zone, booking, rental, campaign, and communications services now emit governed events for creation/status/assignment/dispute/inspection/fraud/message suppression flows, with Vitest suites asserting persisted records. Documentation, database change logs, design artefacts (`Design_Change_log.md`, `Screens_Update.md`, `dashboard_drawings.md`, `App_screens_drawings.md`, `website_drawings.md`) and trackers capture telemetry governance so ETL/Looker pipelines can rely on a unified event backbone.
+
 ### Task 6 — Quality Assurance, Compliance & Launch Readiness (5% complete)
 Converge on testing, documentation, training, and go-live governance to exit with production confidence.
 

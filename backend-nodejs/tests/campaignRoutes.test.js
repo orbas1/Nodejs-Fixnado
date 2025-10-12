@@ -7,7 +7,8 @@ const {
   User,
   Company,
   CampaignAnalyticsExport,
-  CampaignFraudSignal
+  CampaignFraudSignal,
+  AnalyticsEvent
 } = await import('../src/models/index.js');
 
 async function createAdvertiser() {
@@ -144,5 +145,12 @@ describe('Campaign telemetry + fraud monitoring', () => {
     expect(summaryResponse.body.totals.impressions).toBe(1200);
     expect(Number(summaryResponse.body.totals.ctr)).toBeGreaterThan(0.35);
     expect(summaryResponse.body.openFraudSignals).toBeGreaterThanOrEqual(0);
+
+    const events = await AnalyticsEvent.findAll({ where: { domain: 'ads' } });
+    const metricsEvent = events.find((event) => event.eventName === 'ads.campaign.metrics_recorded');
+    expect(metricsEvent).toBeTruthy();
+    expect(metricsEvent.metadata.campaignId).toBe(campaignId);
+    const fraudEvents = events.filter((event) => event.eventName === 'ads.campaign.fraud_signal');
+    expect(fraudEvents.length).toBeGreaterThan(0);
   });
 });

@@ -189,13 +189,22 @@
   4. ✅ Capture Agora session launch UX, hardware permissions, lobby timers, and PSTN fallback interactions across web (`Function Design.md`) and Flutter (`Screens_Update_Logic_Flow.md`, communications controller tests) ensuring cross-channel parity and resilience.
   5. ✅ Catalogue telemetry, accessibility, and QA selectors (`communications.thread.view`, `communications.message.send`, aria-live announcements, focus traps, `data-qa` hooks) within design artefacts and progress tracker so automation, analytics, and support tooling validate communications behaviour end-to-end.
 
-## Task 19 — Business Front & Role Dashboard Integration *(Status: ✅ Complete — 2025-10-23)*
+## Task 19 — Business Front & Role Dashboard Integration *(Status: ✅ Complete — 2025-10-23 — Cache resilience refreshed 2025-10-25)*
 - **Delivery Owner:** Experience Platform UX Lead with Frontend Tech Lead, Provider Success Strategist, and Enterprise Ops partnership.
-- **Evidence:** `frontend-reactjs/src/App.jsx`, `components/Header.jsx`, `pages/BusinessFront.jsx`, `ProviderDashboard.jsx`, `EnterprisePanel.jsx`, updated panel API client (`src/api/panelClient.js`), drawings (`website_drawings.md`, `dashboard_drawings.md`, `menu_drawings.md`, `App_screens_drawings.md`), and refreshed documentation (`Design_Plan.md`, `Design_Change_log.md`, `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`).
+- **Evidence:** `frontend-reactjs/src/App.jsx`, `components/Header.jsx`, `pages/BusinessFront.jsx`, `ProviderDashboard.jsx`, `EnterprisePanel.jsx`, updated panel API client (`src/api/panelClient.js`), drawings (`website_drawings.md`, `dashboard_drawings.md`, `menu_drawings.md`, `App_screens_drawings.md`), and refreshed documentation (`Design_Plan.md`, `Design_Change_log.md`, `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`). 2025-10-25 addendum captures cache-aware fallback banners, concierge storytelling, and QA selectors ensuring `/providers/:slug` renders during outages.
 - **Subtasks:**
   1. ✅ Recompose navigation with dashboards mega-menu, hover/focus states, keyboard support, and mobile accordion behaviour aligning with drawings and accessibility notes.
   2. ✅ Map provider dashboard widgets (KPI tiles, bookings trend, inventory health, campaign analytics, compliance queues, fraud rail) to backend payloads, telemetry events, and QA selectors referenced in `Screens_Update.md` and `dashboard_drawings.md`.
   3. ✅ Document enterprise analytics panel layout (spend trend, provider leaderboard, rental exposure, upcoming visits) with status pills, aria-live alerts, localisation placeholders, and telemetry instrumentation for Task 5 analytics integration.
   4. ✅ Finalise business front storytelling (hero, testimonials, service packages, compliance badges, support channels) with fallback content, telemetry IDs, CTA/breadcrumb copy, and slug routing guidance tied to `/api/business-fronts/:slug`.
   5. ✅ Update change logs, progress trackers, and milestone commentary capturing RBAC guardrails, token/error patterns, localisation/accessibility follow-ups (Task 4.5), and Flutter parity dependencies (Task 4.2).
+
+## Task 20 — Analytics Event Schema UX Alignment *(Status: ✅ Complete — 2025-10-24)*
+- **Delivery Owner:** Data Experience Designer with Analytics Lead, Backend Analytics Engineer, and Communications UX Lead partnership.
+- **Evidence:** Updated telemetry briefs, `Design_Plan.md` Section 34, `Design_Change_log.md` Entry 28, drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`, `website_drawings.md`), and tracker entries (`Design_update_progress_tracker.md`, `Design_update_milestone_list.md`).
+- **Subtasks:**
+  1. ✅ Catalogue analytics events across zones, bookings, rentals, campaigns, and communications with telemetry IDs, trigger descriptions, and UI references embedded in `Screens_Update.md` and `Screens_Update_Logic_Flow.md`.
+  2. ✅ Document metadata requirements (demand level, SLA expiry, assignment ID, inspection outcome, spend metrics, suppression reason) and tenant/actor derivation guidance so analytics/ops teams can validate instrumentation without backend spelunking.
+  3. ✅ Update QA selectors, aria-live callouts, and automation notes adjacent to telemetry-triggering components in drawings to guarantee accessibility + regression coverage while emitting events.
+  4. ✅ Align support copy, retention disclosures, and Looker modelling plan with the new `analytics_events` schema, capturing rehearsal cadence and backfill steps in telemetry runbook + progress trackers.
 

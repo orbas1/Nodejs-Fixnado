@@ -6,6 +6,7 @@ import {
   sequelize
 } from '../models/index.js';
 import { recordInventoryAdjustment } from './inventoryService.js';
+import { recordAnalyticsEvent } from './analyticsEventService.js';
 
 const RENTAL_STATUS_TRANSITIONS = {
   requested: ['approved', 'cancelled'],
@@ -51,6 +52,17 @@ function generateRentalNumber(companyId) {
   return `RA-${shortCompany || 'FX'}-${Date.now().toString(36).toUpperCase()}`;
 }
 
+function resolveRentalActor(actorId, actorRole) {
+  if (!actorId) {
+    return actorRole ? { type: actorRole } : null;
+  }
+
+  return {
+    id: actorId,
+    type: actorRole || 'system'
+  };
+}
+
 async function addCheckpoint(rental, { type, description, recordedBy, recordedByRole, payload = {} }, transaction) {
   return RentalCheckpoint.create(
     {
@@ -61,6 +73,43 @@ async function addCheckpoint(rental, { type, description, recordedBy, recordedBy
       recordedByRole,
       occurredAt: new Date(),
       payload
+    },
+    { transaction }
+  );
+}
+
+async function emitRentalStatusTransition({
+  rental,
+  previousStatus,
+  nextStatus,
+  actorId,
+  actorRole,
+  reason = null,
+  occurredAt = new Date(),
+  metadata = {},
+  transaction
+}) {
+  if (previousStatus === nextStatus) {
+    return;
+  }
+
+  await recordAnalyticsEvent(
+    {
+      name: 'rental.status_transition',
+      entityId: rental.id,
+      actor: resolveRentalActor(actorId, actorRole),
+      tenantId: rental.companyId,
+      occurredAt,
+      metadata: {
+        rentalId: rental.id,
+        companyId: rental.companyId,
+        bookingId: rental.bookingId,
+        itemId: rental.itemId,
+        fromStatus: previousStatus,
+        toStatus: nextStatus,
+        reason,
+        ...metadata
+      }
     },
     { transaction }
   );
@@ -147,6 +196,28 @@ export async function requestRentalAgreement({
       { transaction }
     );
 
+    await recordAnalyticsEvent(
+      {
+        name: 'rental.requested',
+        entityId: rental.id,
+        actor: resolveRentalActor(actorId, actorRole),
+        tenantId: item.companyId,
+        occurredAt: rental.createdAt || new Date(),
+        metadata: {
+          rentalId: rental.id,
+          companyId: item.companyId,
+          itemId: item.id,
+          bookingId,
+          quantity,
+          rentalStartAt: startAt ? startAt.toISOString() : null,
+          rentalEndAt: endAt ? endAt.toISOString() : null,
+          depositAmount: item.depositAmount ? Number(item.depositAmount) : 0,
+          currency: item.rentalRateCurrency || item.depositCurrency || null
+        }
+      },
+      { transaction }
+    );
+
     await recordInventoryAdjustment(
       {
         itemId: item.id,
@@ -188,19 +259,32 @@ export async function approveRentalAgreement(rentalId, { actorId, actorRole = 'p
 
     assertStatusTransition(rental.status, 'approved');
 
+    const previousStatus = rental.status;
+    const now = new Date();
     await rental.update(
       {
         status: 'approved',
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: now,
         meta: {
           ...rental.meta,
           approvalNotes,
           approvedBy: actorId || null,
-          approvedAt: new Date().toISOString()
+          approvedAt: now.toISOString()
         }
       },
       { transaction }
     );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus: 'approved',
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: { approvalNotes },
+      transaction
+    });
 
     await addCheckpoint(
       rental,
@@ -237,21 +321,38 @@ export async function scheduleRentalPickup(rentalId, { actorId, actorRole = 'pro
     const nextStatus = 'pickup_scheduled';
     assertStatusTransition(rental.status, nextStatus);
 
+    const previousStatus = rental.status;
+    const now = new Date();
+
     await rental.update(
       {
         status: nextStatus,
         pickupAt: pickupDate,
         returnDueAt: dueDate,
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: now,
         meta: {
           ...rental.meta,
           logisticsNotes,
           scheduledBy: actorId || null,
-          scheduledAt: new Date().toISOString()
+          scheduledAt: now.toISOString()
         }
       },
       { transaction }
     );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus,
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: {
+        pickupAt: pickupDate.toISOString(),
+        returnDueAt: dueDate.toISOString()
+      },
+      transaction
+    });
 
     await addCheckpoint(
       rental,
@@ -283,6 +384,8 @@ export async function recordRentalCheckout(rentalId, { actorId, actorRole = 'pro
     assertStatusTransition(rental.status, nextStatus);
 
     const startAt = rentalStartAt ? ensureDate(rentalStartAt, 'rentalStartAt') : rental.pickupAt || new Date();
+    const previousStatus = rental.status;
+    const now = new Date();
 
     await recordInventoryAdjustment(
       {
@@ -297,22 +400,38 @@ export async function recordRentalCheckout(rentalId, { actorId, actorRole = 'pro
       transaction
     );
 
+    const depositStatus = rental.depositAmount ? 'held' : rental.depositStatus;
+
     await rental.update(
       {
         status: nextStatus,
         rentalStartAt: startAt,
-        depositStatus: rental.depositAmount ? 'held' : rental.depositStatus,
+        depositStatus,
         conditionOut: { ...conditionOut },
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: now,
         meta: {
           ...rental.meta,
           handoverNotes,
           checkedOutBy: actorId || null,
-          checkedOutAt: new Date().toISOString()
+          checkedOutAt: now.toISOString()
         }
       },
       { transaction }
     );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus,
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: {
+        rentalStartAt: startAt.toISOString(),
+        depositStatus
+      },
+      transaction
+    });
 
     await addCheckpoint(
       rental,
@@ -344,6 +463,7 @@ export async function markRentalReturned(rentalId, { actorId, actorRole = 'custo
     assertStatusTransition(rental.status, nextStatus);
 
     const returnAt = returnedAt ? ensureDate(returnedAt, 'returnedAt') : new Date();
+    const previousStatus = rental.status;
 
     await recordInventoryAdjustment(
       {
@@ -363,7 +483,7 @@ export async function markRentalReturned(rentalId, { actorId, actorRole = 'custo
         status: nextStatus,
         returnedAt: returnAt,
         conditionIn: { ...conditionIn },
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: returnAt,
         meta: {
           ...rental.meta,
           returnNotes: notes,
@@ -373,6 +493,19 @@ export async function markRentalReturned(rentalId, { actorId, actorRole = 'custo
       },
       { transaction }
     );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus,
+      actorId,
+      actorRole,
+      occurredAt: returnAt,
+      metadata: {
+        returnedAt: returnAt.toISOString()
+      },
+      transaction
+    });
 
     await addCheckpoint(
       rental,
@@ -427,18 +560,21 @@ export async function completeRentalInspection(rentalId, { actorId, actorRole = 
       }
     }
 
+    const previousStatus = rental.status;
+    const now = new Date();
+
     await rental.update(
       {
         status: nextStatus,
         depositStatus,
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: now,
         meta: {
           ...rental.meta,
           inspection: {
             outcome,
             inspectionNotes,
             inspectedBy: actorId || null,
-            inspectedAt: new Date().toISOString()
+            inspectedAt: now.toISOString()
           },
           charges: {
             baseCharge,
@@ -447,6 +583,40 @@ export async function completeRentalInspection(rentalId, { actorId, actorRole = 
             total: totalCharges,
             currency: rental.rateCurrency || aggregatedCharges.currency
           }
+        }
+      },
+      { transaction }
+    );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus,
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: {
+        inspectionOutcome: outcome,
+        totalCharges,
+        currency: rental.rateCurrency || aggregatedCharges.currency
+      },
+      transaction
+    });
+
+    await recordAnalyticsEvent(
+      {
+        name: 'rental.inspection.completed',
+        entityId: rental.id,
+        actor: resolveRentalActor(actorId, actorRole),
+        tenantId: rental.companyId,
+        occurredAt: now,
+        metadata: {
+          rentalId: rental.id,
+          companyId: rental.companyId,
+          outcome,
+          totalCharges,
+          currency: rental.rateCurrency || aggregatedCharges.currency,
+          durationDays
         }
       },
       { transaction }
@@ -487,6 +657,9 @@ export async function cancelRentalAgreement(rentalId, { actorId, actorRole = 'pr
 
     assertStatusTransition(rental.status, 'cancelled');
 
+    const previousStatus = rental.status;
+    const now = new Date();
+
     if (rental.status !== 'cancelled') {
       await recordInventoryAdjustment(
         {
@@ -507,16 +680,27 @@ export async function cancelRentalAgreement(rentalId, { actorId, actorRole = 'pr
         status: 'cancelled',
         depositStatus: rental.depositAmount ? 'released' : rental.depositStatus,
         cancellationReason: reason,
-        lastStatusTransitionAt: new Date(),
+        lastStatusTransitionAt: now,
         meta: {
           ...rental.meta,
           cancelledBy: actorId || null,
-          cancelledAt: new Date().toISOString(),
+          cancelledAt: now.toISOString(),
           cancellationReason: reason
         }
       },
       { transaction }
     );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus: 'cancelled',
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: { reason },
+      transaction
+    });
 
     await addCheckpoint(
       rental,

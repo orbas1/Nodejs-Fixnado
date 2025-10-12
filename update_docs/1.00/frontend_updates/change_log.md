@@ -26,3 +26,9 @@
 - Enhanced `src/pages/BusinessFront.jsx` with slug-driven routing, testimonial/service package rendering, operations metrics, and support channel surfacing; fallback data ensures empty states remain production-ready while telemetry/QA selectors document coverage.
 - Refreshed update artefacts and QA selectors to capture dashboards navigation, persona breadcrumbs, and localisation/accessibility follow-ups ahead of Subtask 4.5.
 - Added Vitest aliases/stubs for Turf helpers (`src/testStubs/turfBbox.js`, `turfHelpers.js`) so geometry utilities remain testable without bundler dependencies, keeping explorer regression suites deterministic in CI.
+
+## 2025-10-25 — Panel Fetch Hardening & Build Fix
+- Replaced the stubbed panel fetcher with a cache-aware client (`src/api/panelClient.js`) providing abortable requests, TTL-governed sessionStorage persistence, and schema normalisers that guarantee dashboards/business fronts render even when the API is offline.
+- Reimplemented provider and enterprise dashboards (`src/pages/ProviderDashboard.jsx`, `EnterprisePanel.jsx`) with production-grade KPI tiles, revenue and incident summaries, refresh controls, and error banners that surface cached snapshots when live requests fail.
+- Rebuilt `src/pages/BusinessFront.jsx` to unblock `/providers` builds, adding hero storytelling, curated packages, testimonials, compliance badges, concierge contacts, and CTA wiring with slug-aware fetch + cache fallback behaviour.
+- Updated documentation and QA selectors to highlight the regression fix and cache strategy so Subtask 4.5 accessibility/localisation sweeps can validate new banners, skeletons, and aria-live patterns.

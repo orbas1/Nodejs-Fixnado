@@ -15,3 +15,9 @@
 - Reworked `components/Header.jsx` to include a dashboards mega-menu with click-outside handling, Escape support, and mobile accordion behaviour, exposing provider console, enterprise analytics, and curated business fronts as first-class navigation items.
 - Extended `panelClient.js` usage across `BusinessFront.jsx`, `ProviderDashboard.jsx`, and `EnterprisePanel.jsx` so slug-driven storefronts, KPI dashboards, and enterprise spend trends reuse token-aware fetchers, skeleton states, and aria-live error messaging.
 - Updated QA selectors, breadcrumbs, and action CTAs within panel pages to align with `dashboard_drawings.md` and `menu_drawings.md`, ensuring provider/enterprise localisation and accessibility sweeps (Task 4.5) have production-ready scaffolding.
+
+## 2025-10-25 — Panel Resilience Remediation
+- Replaced `panelClient.js` with a cache-aware implementation that adds abort controllers, memory/sessionStorage TTL caching, token propagation, and schema normalisers so React panels render consistently during transient outages.
+- Reauthored `ProviderDashboard.jsx` and `EnterprisePanel.jsx` with end-to-end metric tiles, revenue/incident summaries, compliance watchlists, escalation tracking, and refresh controls that surface cached snapshots alongside actionable banners.
+- Rebuilt `BusinessFront.jsx` hero, stats rail, package catalogue, testimonials, compliance badges, portfolio gallery, and concierge contact block so `/providers/:slug` renders production storytelling backed by slug-aware fetch + fallback content.
+- Documented regression remediation and new QA selectors across update artefacts to guide Subtask 4.5 accessibility/localisation sweeps and automated dashboard monitoring.

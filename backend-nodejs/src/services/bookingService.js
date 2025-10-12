@@ -1,4 +1,5 @@
 import { Booking, BookingAssignment, BookingBid, BookingBidComment, sequelize } from '../models/index.js';
+import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 import { calculateBookingTotals, resolveSlaExpiry } from './financeService.js';
 
 const ALLOWED_STATUS_TRANSITIONS = {
@@ -52,7 +53,8 @@ export async function createBooking({
   targetCurrency,
   scheduledStart,
   scheduledEnd,
-  metadata = {}
+  metadata = {},
+  actor = null
 }) {
   if (!customerId || !companyId || !zoneId) {
     throw invalidBooking('customerId, companyId, and zoneId are required');
@@ -110,6 +112,31 @@ export async function createBooking({
       { transaction }
     );
 
+    await recordAnalyticsEvent(
+      {
+        name: 'booking.created',
+        entityId: booking.id,
+        actor,
+        tenantId: companyId,
+        occurredAt: now,
+        metadata: {
+          bookingId: booking.id,
+          companyId,
+          zoneId,
+          type: bookingType,
+          demandLevel: demandLevel || 'medium',
+          currency: totals.currency,
+          totalAmount: Number(totals.totalAmount),
+          commissionAmount: Number(totals.commissionAmount),
+          taxAmount: Number(totals.taxAmount),
+          slaExpiresAt: slaExpiresAt.toISOString(),
+          scheduledStart: startAt ? startAt.toISOString() : null,
+          scheduledEnd: endAt ? endAt.toISOString() : null
+        }
+      },
+      { transaction }
+    );
+
     return booking;
   });
 }
@@ -130,6 +157,7 @@ export async function updateBookingStatus(bookingId, nextStatus, context = {}) {
   assertTransition(booking.status, targetStatus);
 
   const lastStatusTransitionAt = new Date();
+  const previousStatus = booking.status;
   const updatedMeta = {
     ...booking.meta,
     lastStatusContext: {
@@ -140,7 +168,28 @@ export async function updateBookingStatus(bookingId, nextStatus, context = {}) {
   };
 
   await booking.update({ status: targetStatus, lastStatusTransitionAt, meta: updatedMeta });
-  return booking.reload();
+  const reloaded = await booking.reload();
+
+  await recordAnalyticsEvent({
+    name: 'booking.status_transition',
+    entityId: reloaded.id,
+    actor: context.actorId
+      ? { id: context.actorId, type: 'user' }
+      : null,
+    tenantId: reloaded.companyId,
+    occurredAt: lastStatusTransitionAt,
+    metadata: {
+      bookingId: reloaded.id,
+      companyId: reloaded.companyId,
+      fromStatus: previousStatus,
+      toStatus: targetStatus,
+      reason: context.reason || null,
+      zoneId: reloaded.zoneId,
+      type: reloaded.type
+    }
+  });
+
+  return reloaded;
 }
 
 export async function assignProviders(bookingId, assignments, actorId) {
@@ -159,6 +208,7 @@ export async function assignProviders(bookingId, assignments, actorId) {
 
   return sequelize.transaction(async (transaction) => {
     const results = [];
+    const assignmentEvents = [];
     for (const assignment of assignments) {
       if (!assignment.providerId) {
         throw invalidBooking('Assignment providerId is required');
@@ -187,6 +237,22 @@ export async function assignProviders(bookingId, assignments, actorId) {
         { transaction }
       );
       results.push(created);
+
+      assignmentEvents.push({
+        name: 'booking.assignment.created',
+        entityId: created.id,
+        actor: actorId ? { id: actorId, type: 'user' } : null,
+        tenantId: booking.companyId,
+        occurredAt: created.assignedAt || now,
+        metadata: {
+          assignmentId: created.id,
+          bookingId,
+          companyId: booking.companyId,
+          providerId: assignment.providerId,
+          role: created.role,
+          status: created.status
+        }
+      });
     }
 
     await booking.update(
@@ -200,11 +266,15 @@ export async function assignProviders(bookingId, assignments, actorId) {
       { transaction }
     );
 
+    if (assignmentEvents.length > 0) {
+      await recordAnalyticsEvents(assignmentEvents, { transaction });
+    }
+
     return results;
   });
 }
 
-async function refreshBookingAfterAcceptance(booking, transaction) {
+async function refreshBookingAfterAcceptance(booking, transaction, { providerId } = {}) {
   const firstAcceptance = booking.meta?.assignmentAcceptedAt;
   const now = new Date();
   const meta = {
@@ -217,11 +287,34 @@ async function refreshBookingAfterAcceptance(booking, transaction) {
     nextStatus = booking.type === 'on_demand' ? 'in_progress' : 'scheduled';
   }
 
+  const previousStatus = booking.status;
   await booking.update({
     status: nextStatus,
     meta,
     lastStatusTransitionAt: now
   }, { transaction });
+
+  if (nextStatus !== previousStatus) {
+    await recordAnalyticsEvent(
+      {
+        name: 'booking.status_transition',
+        entityId: booking.id,
+        actor: providerId ? { id: providerId, type: 'provider' } : null,
+        tenantId: booking.companyId,
+        occurredAt: now,
+        metadata: {
+          bookingId: booking.id,
+          companyId: booking.companyId,
+          fromStatus: previousStatus,
+          toStatus: nextStatus,
+          reason: 'assignment_acceptance',
+          providerId,
+          type: booking.type
+        }
+      },
+      { transaction }
+    );
+  }
 
   return booking;
 }
@@ -261,7 +354,7 @@ export async function recordAssignmentResponse({ bookingId, providerId, status }
     );
 
     if (status === 'accepted') {
-      await refreshBookingAfterAcceptance(booking, transaction);
+      await refreshBookingAfterAcceptance(booking, transaction, { providerId });
     }
 
     return { assignment, booking: await booking.reload({ transaction }) };
@@ -457,6 +550,7 @@ export async function triggerDispute({ bookingId, reason, actorId }) {
   assertTransition(booking.status, 'disputed');
 
   const now = new Date();
+  const previousStatus = booking.status;
   const meta = {
     ...booking.meta,
     dispute: {
@@ -472,7 +566,24 @@ export async function triggerDispute({ bookingId, reason, actorId }) {
     meta
   });
 
-  return booking.reload();
+  const updated = await booking.reload();
+
+  await recordAnalyticsEvent({
+    name: 'booking.dispute.raised',
+    entityId: updated.id,
+    actor: actorId ? { id: actorId, type: 'user' } : null,
+    tenantId: updated.companyId,
+    occurredAt: now,
+    metadata: {
+      bookingId: updated.id,
+      companyId: updated.companyId,
+      reason: reason || 'unspecified',
+      fromStatus: previousStatus,
+      toStatus: 'disputed'
+    }
+  });
+
+  return updated;
 }
 
 export async function listBookings(filters = {}) {
