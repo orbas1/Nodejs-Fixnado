@@ -5,3 +5,8 @@
 - Metric tiles (`MetricTile`), `TrendChart`, and `AnalyticsWidget` components render revenue, SLA breach, deposit exposure, and marketing insights using production number/date formatting with deterministic layout tokens matching `dashboard_drawings.md`.
 - The dashboard actions rail links to business fronts (`/providers/metro-power-services`), communications workspace, inventory ledger, and campaign manager, aligning with navigation flows in `menu_drawings.md` and enabling cross-squad QA selectors (`data-qa="provider-dashboard-*"`).
 - Documentation updates (change log, task tracker, design artefacts) capture telemetry IDs, localisation/accessibility notes, and pending follow-ups for Subtask 4.5 audits and Flutter parity instrumentation.
+
+## 2025-10-25 — Cache-Aware KPI & Pipeline Remediation
+- `ProviderDashboard.jsx` now consumes the rebuilt `panelClient.js`, leveraging abortable fetches, TTL-governed cache layers, and schema normalisers so SLA/utilisation metrics, revenue summaries, upcoming bookings, and compliance watchlists remain available during API outages.
+- Added refresh controls, fallback banners, and cached snapshot messaging to inform operations when live metrics cannot be retrieved while preserving the most recent data set for decision-making.
+- Expanded QA selectors (`data-qa="provider-dashboard-metric-*"`, `provider-dashboard-alert-*`, `provider-dashboard-compliance-*`) and aria-live usage to support accessibility/localisation sweeps scheduled under Task 4.5.

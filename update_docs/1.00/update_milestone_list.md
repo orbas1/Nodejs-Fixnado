@@ -89,6 +89,7 @@
     3. Build persona dashboards and exports for admin, provider, servicemen, and enterprise personas.
     4. Configure alerting for data freshness, SLA breaches, dispute spikes, and ad overspend.
     5. Publish metric catalogue, data dictionary, and access policies for governance sign-off.
+    *2025-10-24 update:* Subtask 5A.1 is production-ready. `analyticsEventService` now enforces catalogued metadata, tenant inference, and actor context across zones, bookings, rentals, campaigns, and communications emitters. Vitest suites assert persisted envelopes, and documentation (change logs, design artefacts, telemetry runbook) maps event IDs to dashboards/drawings, clearing the path for ETL/Looker ingestion work.
   - **Task 5B — Compliance Validation Sprint (7% complete)**
     1. Execute GDPR, insurance/DBS, HMRC, and advertising compliance walkthroughs.
     2. Validate audit logs, retention schedules, and consent records across services.

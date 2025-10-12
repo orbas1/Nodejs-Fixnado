@@ -2,7 +2,7 @@ import request from 'supertest';
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
-const { sequelize, User, Company, InventoryItem, InventoryAlert } = await import('../src/models/index.js');
+const { sequelize, User, Company, InventoryItem, InventoryAlert, AnalyticsEvent } = await import('../src/models/index.js');
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
@@ -163,6 +163,12 @@ describe('Inventory and rental lifecycle', () => {
 
     const alerts = await InventoryAlert.findAll({ where: { itemId } });
     expect(alerts.length).toBe(0);
+
+    const events = await AnalyticsEvent.findAll({ where: { domain: 'rentals' }, order: [['occurred_at', 'ASC']] });
+    const names = events.map((event) => event.eventName);
+    expect(names).toEqual(expect.arrayContaining(['rental.requested', 'rental.status_transition', 'rental.inspection.completed']));
+    const inspectionEvent = events.find((event) => event.eventName === 'rental.inspection.completed');
+    expect(Number(inspectionEvent.metadata.totalCharges)).toBeGreaterThan(0);
   });
 
   it('prevents rentals when insufficient stock is available and creates alerts when stockouts occur', async () => {

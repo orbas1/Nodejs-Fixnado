@@ -11,6 +11,7 @@ import {
   CampaignAnalyticsExport,
   Company
 } from '../models/index.js';
+import { recordAnalyticsEvent } from './analyticsEventService.js';
 
 const campaignConfig = {
   overspendTolerance: config.campaigns?.overspendTolerance ?? 0.15,
@@ -481,41 +482,66 @@ async function openFraudSignals({
     return [];
   }
 
-  return Promise.all(
-    signals.map((signal) =>
-      CampaignFraudSignal.findOrCreate({
-        where: {
+  const records = [];
+  for (const signal of signals) {
+    const [record, created] = await CampaignFraudSignal.findOrCreate({
+      where: {
+        campaignId: campaign.id,
+        flightId: flight ? flight.id : null,
+        metricDate: metric.metricDate,
+        signalType: signal.signalType
+      },
+      defaults: {
+        campaignId: campaign.id,
+        flightId: flight ? flight.id : null,
+        metricDate: metric.metricDate,
+        signalType: signal.signalType,
+        severity: signal.severity,
+        metadata: signal.metadata
+      },
+      transaction
+    });
+
+    const updatedRecord = created
+      ? record
+      : await record.update(
+          {
+            severity: signal.severity,
+            metadata: signal.metadata,
+            detectedAt: new Date(),
+            resolvedAt: null,
+            resolutionNote: null
+          },
+          { transaction }
+        );
+
+    const metricDateIso = metric.metricDate instanceof Date
+      ? metric.metricDate.toISOString()
+      : new Date(metric.metricDate).toISOString();
+
+    await recordAnalyticsEvent(
+      {
+        name: 'ads.campaign.fraud_signal',
+        entityId: updatedRecord.id,
+        tenantId: campaign.companyId,
+        occurredAt: new Date(),
+        metadata: {
           campaignId: campaign.id,
+          companyId: campaign.companyId,
           flightId: flight ? flight.id : null,
-          metricDate: metric.metricDate,
-          signalType: signal.signalType
-        },
-        defaults: {
-          campaignId: campaign.id,
-          flightId: flight ? flight.id : null,
-          metricDate: metric.metricDate,
           signalType: signal.signalType,
           severity: signal.severity,
-          metadata: signal.metadata
-        },
-        transaction
-      }).then(([record, created]) => {
-        if (!created) {
-          return record.update(
-            {
-              severity: signal.severity,
-              metadata: signal.metadata,
-              detectedAt: new Date(),
-              resolvedAt: null,
-              resolutionNote: null
-            },
-            { transaction }
-          );
+          metricDate: metricDateIso,
+          detection: signal.metadata
         }
-        return record;
-      })
-    )
-  );
+      },
+      { transaction }
+    );
+
+    records.push(updatedRecord);
+  }
+
+  return records;
 }
 
 export async function recordCampaignDailyMetrics(campaignId, {
@@ -612,6 +638,30 @@ export async function recordCampaignDailyMetrics(campaignId, {
     metric.anomalyScore = normaliseDecimal(evaluation.anomalyScore, 4);
 
     await metric.save({ transaction });
+
+    await recordAnalyticsEvent(
+      {
+        name: 'ads.campaign.metrics_recorded',
+        entityId: metric.id,
+        tenantId: campaign.companyId,
+        occurredAt: date,
+        metadata: {
+          campaignId: campaign.id,
+          companyId: campaign.companyId,
+          flightId: flight ? flight.id : null,
+          metricDate: date.toISOString(),
+          impressions: normalisedImpressions,
+          clicks: normalisedClicks,
+          conversions: normalisedConversions,
+          spend: normalisedSpend,
+          revenue: normalisedRevenue,
+          currency: campaign.currency,
+          ctr: metric.ctr,
+          cvr: metric.cvr
+        }
+      },
+      { transaction }
+    );
 
     await upsertAnalyticsExport(metric, campaign, flight, transaction);
 
