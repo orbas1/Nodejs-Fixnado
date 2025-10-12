@@ -9,7 +9,8 @@ const {
   Booking,
   BookingAssignment,
   BookingBid,
-  BookingBidComment
+  BookingBidComment,
+  AnalyticsEvent
 } = await import('../src/models/index.js');
 
 const polygon = {
@@ -169,6 +170,14 @@ describe('Booking orchestration', () => {
     expect(storedBooking.BookingBids).toHaveLength(1);
 
     expect(await BookingBidComment.count({ where: { bidId } })).toBe(2);
+
+    const events = await AnalyticsEvent.findAll({ order: [['occurred_at', 'ASC']] });
+    const names = events.map((event) => event.eventName);
+    expect(names).toEqual(expect.arrayContaining(['booking.created', 'booking.assignment.created', 'booking.status_transition', 'booking.dispute.raised']));
+    const disputeEvent = events.find((event) => event.eventName === 'booking.dispute.raised');
+    expect(disputeEvent.metadata.reason).toBe('Damage reported');
+    const assignmentEvent = events.find((event) => event.eventName === 'booking.assignment.created');
+    expect(assignmentEvent.metadata.providerId).toEqual(provider.id);
   });
 
   it('enforces validation on on-demand bookings with schedule payload', async () => {

@@ -199,3 +199,12 @@
   4. ✅ Finalise business front storytelling (hero, testimonials, service packages, compliance badges, support channels) with fallback content, telemetry IDs, CTA/breadcrumb copy, and slug routing guidance tied to `/api/business-fronts/:slug`.
   5. ✅ Update change logs, progress trackers, and milestone commentary capturing RBAC guardrails, token/error patterns, localisation/accessibility follow-ups (Task 4.5), and Flutter parity dependencies (Task 4.2).
 
+## Task 20 — Analytics Event Schema UX Alignment *(Status: ✅ Complete — 2025-10-24)*
+- **Delivery Owner:** Data Experience Designer with Analytics Lead, Backend Analytics Engineer, and Communications UX Lead partnership.
+- **Evidence:** Updated telemetry briefs, `Design_Plan.md` Section 34, `Design_Change_log.md` Entry 28, drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`, `website_drawings.md`), and tracker entries (`Design_update_progress_tracker.md`, `Design_update_milestone_list.md`).
+- **Subtasks:**
+  1. ✅ Catalogue analytics events across zones, bookings, rentals, campaigns, and communications with telemetry IDs, trigger descriptions, and UI references embedded in `Screens_Update.md` and `Screens_Update_Logic_Flow.md`.
+  2. ✅ Document metadata requirements (demand level, SLA expiry, assignment ID, inspection outcome, spend metrics, suppression reason) and tenant/actor derivation guidance so analytics/ops teams can validate instrumentation without backend spelunking.
+  3. ✅ Update QA selectors, aria-live callouts, and automation notes adjacent to telemetry-triggering components in drawings to guarantee accessibility + regression coverage while emitting events.
+  4. ✅ Align support copy, retention disclosures, and Looker modelling plan with the new `analytics_events` schema, capturing rehearsal cadence and backfill steps in telemetry runbook + progress trackers.
+

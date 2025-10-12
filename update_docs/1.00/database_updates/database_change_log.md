@@ -23,3 +23,8 @@
 - Migration `20250221000000-create-communications.js` creates `conversations`, `conversation_participants`, `conversation_messages`, and `message_deliveries` tables with UUID primary keys, role enums, AI assist metadata JSON, quiet-hour window columns, and delivery receipt tracking.
 - Added indexes on `(conversationId, sentAt)` and `(participantId, readAt)` plus foreign keys to `Company`/`User` tables to support fast thread retrieval, unread counts, and audit queries for compliance.
 - Down migration drops enums and dependent tables in dependency order to keep sqlite/Postgres parity; retention window column defaults align with communications config for consistent clean-up jobs.
+
+## 2025-10-24 — Analytics Events Schema
+- Migration `20250223000000-create-analytics-events.js` introduces `analytics_events` with UUID primary key, event name, domain, schema version, entity identifiers, tenant ID, actor metadata, source/channel fields, occurred timestamp, and JSONB metadata column.
+- Added compound index on (`tenantId`, `domain`, `occurredAt DESC`) plus GIN index on `metadata` for Postgres to accelerate warehouse ingestion filters; sqlite fallback uses partial indexes for test determinism.
+- Down migration drops indexes before table removal to maintain Postgres/sqlite parity; retention guidance references 400-day default with retention overrides tracked in analytics governance runbook.

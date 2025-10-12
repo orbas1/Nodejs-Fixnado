@@ -29,3 +29,8 @@
 - Added `services/communicationsService.js` encapsulating conversation lifecycle (create/update, participant enrolment, message threading) with transactional guards ensuring participants and deliveries stay consistent across sqlite/Postgres.
 - Service manages AI assist suggestions by delegating to configured provider or deterministic heuristics, merges results into message drafts, and records provenance metadata alongside quiet-hour suppression windows.
 - Introduced helpers to mint Agora session tokens, record delivery acknowledgements, enforce quiet-hour checks with overrides/escalations, and stream audit events used by notification centre dashboards and Flutter clients.
+
+## 2025-10-24 — Analytics Event Service & Emitters
+- Added `services/analyticsEventService.js` housing immutable event catalogue, metadata validation, tenant inference, actor normalisation, and batch helper to persist governed analytics envelopes with optional transaction support.
+- Updated zone, booking, rental, campaign, and communications services to call the helper during lifecycle events (creation, status transitions, assignment creation, dispute raises, inspections, campaign metric ingestion/fraud detection, message delivery suppression) so telemetry remains consistent across domains.
+- Emitters pass correlation IDs, actor/channel hints, and required metadata (SLA expiry, assignment IDs, inspection charges, fraud signal severity, quiet-hour reason) ensuring downstream ETL and dashboards receive production-grade context.
