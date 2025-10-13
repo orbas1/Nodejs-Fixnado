@@ -185,3 +185,8 @@
 
 ## 2025-11-02 — Flutter Analytics Dashboard Parity
 - Delivered mobile parity for persona analytics via `lib/features/analytics/` (`analytics_repository.dart`, `analytics_controller.dart`, `analytics_dashboard_screen.dart`, custom chart widgets, timezone resolver). Flutter now hydrates `/api/analytics/dashboards/:persona` responses with offline caching, timezone-aware queries, and governed CSV export metadata mirrored from web. Controller tests (`test/features/analytics/analytics_controller_test.dart`) cover refresh/offline/export flows; updated docs (`user_phone_app_updates/*`, `Design_Plan.md`, `Design_Change_log.md`, trackers) record mobile layouts, accessibility copy, and telemetry bindings completing Subtask 5.3c.
+
+## 2025-11-03 — Performance Harness & Load Drill Automation
+- Shipped k6-based performance harness (`performance/k6/main.js`, `performance/k6/utils.js`) with JSON-driven profiles measuring booking, chat, escrow, analytics, and campaign workloads under governed thresholds. Scenario scaling honours `K6_LOAD_MULTIPLIER`, and metrics export Trends/Rates/Counters to baseline p95 latency and success rates for Task 6.3.
+- Added orchestration script `scripts/run-load-tests.mjs` invoked via `npm run load:test`, enforcing k6 availability, required tokens/IDs from `performance/profiles/baseline.json`, and deterministic summary exports into `performance/reports/`. Fail-fast validation prevents misconfigured drills while providing audit-ready artefacts.
+- Authored `performance/README.md` documenting prerequisites, profile tuning, scaling guidance, and reporting expectations so QA, SRE, and compliance teams can schedule staging soak tests and resilience drills ahead of hypercare.
