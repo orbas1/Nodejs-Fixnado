@@ -63,6 +63,19 @@ class ExplorerController extends StateNotifier<ExplorerViewState> {
     state = state.copyWith(filters: state.filters.copyWith(zoneId: zoneId));
   }
 
+  void selectServiceType(String? serviceType) {
+    state = state.copyWith(
+      filters: state.filters.copyWith(
+        serviceType: serviceType,
+        category: serviceType == null ? state.filters.category : null,
+      ),
+    );
+  }
+
+  void selectCategory(String? category) {
+    state = state.copyWith(filters: state.filters.copyWith(category: category));
+  }
+
   @override
   void dispose() {
     _listener.close();
@@ -98,11 +111,19 @@ class ExplorerViewState {
 
   List<ExplorerService> get services {
     if (snapshot == null) return const [];
-    final data = snapshot!.services;
+    Iterable<ExplorerService> data = snapshot!.services;
     if (filters.type == ExplorerResultType.marketplace) {
       return const [];
     }
-    return data;
+    if (filters.serviceType != null && filters.serviceType!.isNotEmpty) {
+      data = data.where((service) => service.type == filters.serviceType);
+    }
+    if (filters.category != null && filters.category!.isNotEmpty) {
+      data = data.where((service) {
+        return service.categorySlug == filters.category || service.category == filters.category;
+      });
+    }
+    return data.toList();
   }
 
   List<ExplorerMarketplaceItem> get marketplaceItems {

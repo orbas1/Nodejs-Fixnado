@@ -4,20 +4,26 @@ class ExplorerService {
     required this.title,
     required this.description,
     required this.category,
+    required this.categorySlug,
+    required this.type,
     required this.price,
     required this.currency,
     required this.companyName,
     required this.providerName,
+    required this.tags,
   });
 
   final String id;
   final String title;
   final String? description;
   final String? category;
+  final String? categorySlug;
+  final String type;
   final double? price;
   final String currency;
   final String? companyName;
   final String? providerName;
+  final List<String> tags;
 
   factory ExplorerService.fromJson(Map<String, dynamic> json) {
     final provider = json['provider'] ?? json['Provider'];
@@ -27,12 +33,18 @@ class ExplorerService {
       title: json['title'] as String,
       description: json['description'] as String?,
       category: json['category'] as String?,
+      categorySlug: json['categorySlug'] as String?,
+      type: (json['type'] as String?) ?? 'general-services',
       price: _toDouble(json['price']),
       currency: (json['currency'] as String?) ?? 'USD',
       companyName: company is Map<String, dynamic> ? company['contactName'] as String? : null,
       providerName: provider is Map<String, dynamic>
           ? [provider['firstName'], provider['lastName']].whereType<String>().where((value) => value.isNotEmpty).join(' ')
           : null,
+      tags: (json['tags'] as List<dynamic>? ?? [])
+          .map((value) => value?.toString() ?? '')
+          .where((value) => value.isNotEmpty)
+          .toList(),
     );
   }
 }
@@ -222,21 +234,29 @@ class ExplorerFilters {
     this.term,
     this.zoneId,
     this.type = ExplorerResultType.all,
+    this.serviceType,
+    this.category,
   });
 
   final String? term;
   final String? zoneId;
   final ExplorerResultType type;
+  final String? serviceType;
+  final String? category;
 
   ExplorerFilters copyWith({
     String? term,
     String? zoneId,
     ExplorerResultType? type,
+    String? serviceType,
+    String? category,
   }) {
     return ExplorerFilters(
       term: term ?? this.term,
       zoneId: zoneId ?? this.zoneId,
       type: type ?? this.type,
+      serviceType: serviceType ?? this.serviceType,
+      category: category ?? this.category,
     );
   }
 
@@ -244,6 +264,8 @@ class ExplorerFilters {
         'term': term,
         'zoneId': zoneId,
         'type': type.name,
+        'serviceType': serviceType,
+        'category': category,
       };
 
   static ExplorerFilters fromJson(Map<String, dynamic> json) {
@@ -256,6 +278,8 @@ class ExplorerFilters {
       term: json['term'] as String?,
       zoneId: json['zoneId'] as String?,
       type: type,
+      serviceType: json['serviceType'] as String?,
+      category: json['category'] as String?,
     );
   }
 }
@@ -282,10 +306,13 @@ Map<String, dynamic> _encode(Object value) {
       'title': value.title,
       'description': value.description,
       'category': value.category,
+      'categorySlug': value.categorySlug,
+      'type': value.type,
       'price': value.price,
       'currency': value.currency,
       'companyName': value.companyName,
       'providerName': value.providerName,
+      'tags': value.tags,
     };
   }
   if (value is ExplorerMarketplaceItem) {

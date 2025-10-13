@@ -32,6 +32,8 @@ class ExplorerRepository {
     try {
       final searchPayload = await _client.getJson('/search', query: {
         if ((filters.term ?? '').isNotEmpty) 'q': filters.term,
+        if ((filters.serviceType ?? '').isNotEmpty) 'serviceType': filters.serviceType,
+        if ((filters.category ?? '').isNotEmpty) 'category': filters.category,
         'limit': 20,
       });
 
