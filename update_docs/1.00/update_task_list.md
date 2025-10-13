@@ -49,6 +49,8 @@ Implement foundational microservices for zones, bookings, bidding, disputes, and
 - ✅ **2.4** Finance engine (`services/financeService.js`, `config/index.js`) manages commission/tax/multi-currency conversions plus metadata persisted on bookings for reconciliation.
 - ✅ **2.5** Vitest regression suites (`backend-nodejs/tests/zoneRoutes.test.js`, `tests/bookingRoutes.test.js`) verify polygon validity, analytics snapshots, monetary calculations, assignment acceptance, bid lifecycle, and dispute handling.
 
+*2025-11-03 update:* Hardened geo-zonal delivery by migrating existing data to MultiPolygon storage, preventing overlapping territories, introducing `ServiceZoneCoverage` persistence, and exposing coverage management APIs + analytics so explorer/admin tooling can attach services to zones with governed telemetry. Regression suite now covers conflict handling and coverage lifecycle.
+
 #### Integration Coverage
 - **Backend:** Subtasks 2.1–2.4 deliver Node services and shared libraries.
 - **Front-end:** Subtask 2.5 prepares fixtures for UI teams; Subtask 2.2 exposes states consumed by React wizard.

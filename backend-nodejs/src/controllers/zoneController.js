@@ -5,7 +5,10 @@ import {
   listZones,
   getZoneWithAnalytics,
   generateAnalyticsSnapshot,
-  importZonesFromGeoJson
+  importZonesFromGeoJson,
+  listZoneServices,
+  syncZoneServices,
+  removeZoneService
 } from '../services/zoneService.js';
 
 function handleServiceError(res, next, error) {
@@ -90,6 +93,42 @@ export async function importZonesHandler(req, res, next) {
       actor: req.body.actor
     });
     res.status(201).json(zones);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function listZoneServicesHandler(req, res, next) {
+  try {
+    const coverages = await listZoneServices(req.params.zoneId);
+    res.json(coverages);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function syncZoneServicesHandler(req, res, next) {
+  try {
+    const coverages = await syncZoneServices({
+      zoneId: req.params.zoneId,
+      coverages: req.body.coverages,
+      actor: req.body.actor ?? null,
+      replace: Boolean(req.body.replace)
+    });
+    res.status(200).json(coverages);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function removeZoneServiceHandler(req, res, next) {
+  try {
+    await removeZoneService({
+      zoneId: req.params.zoneId,
+      coverageId: req.params.coverageId,
+      actor: req.body?.actor ?? null
+    });
+    res.status(204).send();
   } catch (error) {
     handleServiceError(res, next, error);
   }

@@ -105,3 +105,7 @@
 - `src/services/dashboardAnalyticsService.js`
 - `src/controllers/analyticsDashboardController.js`
 - `tests/analyticsDashboards.test.js`
+
+## 2025-10-31 — Added Files
+- `src/models/serviceZoneCoverage.js`
+- `src/database/migrations/20250302000000-upgrade-service-zones.js`

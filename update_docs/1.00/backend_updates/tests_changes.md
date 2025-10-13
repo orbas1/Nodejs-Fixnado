@@ -56,3 +56,7 @@
 ## 2025-10-30 — Regression Execution Evidence
 - Ran `npm test` under `backend-nodejs/` to execute analytics dashboard suites with staging-like fixtures; confirmed 13 files / 33 tests pass, including persona aggregation/export cases, and captured spinner overflow to be resolved by enforcing CI reporters.【3d3b31†L1-L38】
 - Recorded requirement to add CI-friendly reporter defaults (`CI=1`, `--reporter=dot`/`junit`) so audit logs remain reviewable when analytics suites expand with enterprise drill-down coverage.
+
+## 2025-10-31 — Zone Coverage Regression Suite
+- Extended `tests/zoneRoutes.test.js` with overlap prevention and service coverage lifecycle cases, asserting 409 conflicts for overlapping polygons, verifying coverage upsert/list/delete flows, and checking analytics events for coverage attach/detach actions.【F:backend-nodejs/tests/zoneRoutes.test.js†L1-L250】
+- Suite seeds services linked to companies to enforce ownership validation and ensures coverage deletion clears persistence tables, keeping regression evidence aligned with production governance rules.【F:backend-nodejs/tests/zoneRoutes.test.js†L150-L244】

@@ -36,6 +36,7 @@
     4. Integrate commission, tax, and multi-currency calculations within booking lifecycle.
     5. Execute regression suite validating geo-matching accuracy and booking SLA timers.
     *2025-02-10 update:* Zone + booking services, finance engine, analytics job, and Vitest suites landed; explorer/booking drawings referenced to align payloads with admin/provider experience.
+    *2025-11-03 update:* Service zone persistence migrated to MultiPolygon storage with overlap prevention, coverage associations (`ServiceZoneCoverage`) and REST endpoints/analytics now live; Vitest suite regresses coverage attach/detach and conflict handling so Task 2A remains production-hardened ahead of explorer integration.
   - **Task 2B — Early QA & Observability (45% complete)**
     1. Instrument telemetry for zone/booking events with structured logging and tracing.
     2. Stand up Postman/Newman API suites for zone and booking endpoints.
