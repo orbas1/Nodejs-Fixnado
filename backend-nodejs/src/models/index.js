@@ -36,12 +36,30 @@ import Conversation from './conversation.js';
 import ConversationParticipant from './conversationParticipant.js';
 import ConversationMessage from './conversationMessage.js';
 import MessageDelivery from './messageDelivery.js';
+import CustomJobBid from './customJobBid.js';
+import CustomJobBidMessage from './customJobBidMessage.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
+
+Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
+ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
+
+Post.hasMany(CustomJobBid, { foreignKey: 'postId', as: 'bids' });
+CustomJobBid.belongsTo(Post, { foreignKey: 'postId', as: 'job' });
+
+CustomJobBid.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+User.hasMany(CustomJobBid, { foreignKey: 'providerId', as: 'customJobBids' });
+
+CustomJobBid.belongsTo(Company, { foreignKey: 'companyId', as: 'providerCompany' });
+Company.hasMany(CustomJobBid, { foreignKey: 'companyId', as: 'customJobBids' });
+
+CustomJobBid.hasMany(CustomJobBidMessage, { foreignKey: 'bidId', as: 'messages' });
+CustomJobBidMessage.belongsTo(CustomJobBid, { foreignKey: 'bidId', as: 'bid' });
+CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
@@ -205,6 +223,8 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  CustomJobBid,
+  CustomJobBidMessage,
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
