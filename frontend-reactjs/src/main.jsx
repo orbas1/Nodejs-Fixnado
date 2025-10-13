@@ -4,15 +4,18 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { ThemeProvider } from './providers/ThemeProvider.jsx';
 import { LocaleProvider } from './providers/LocaleProvider.jsx';
+import { FeatureToggleProvider } from './providers/FeatureToggleProvider.jsx';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <LocaleProvider>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
+        <FeatureToggleProvider>
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        </FeatureToggleProvider>
       </LocaleProvider>
     </BrowserRouter>
   </React.StrictMode>

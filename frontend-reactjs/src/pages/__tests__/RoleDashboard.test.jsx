@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import RoleDashboard from '../RoleDashboard.jsx';
+import { FeatureToggleContext } from '../../providers/FeatureToggleProvider.jsx';
 
 const dashboardFixture = {
   persona: 'admin',
@@ -64,6 +65,37 @@ const dashboardFixture = {
   }
 };
 
+const enabledToggle = {
+  state: 'enabled',
+  rollout: 1,
+  owner: 'data-ops',
+  ticket: 'FIX-2098',
+  lastModifiedAt: '2025-02-10T10:30:00Z'
+};
+
+function renderWithToggles(ui, { evaluation, toggle = enabledToggle, loading = false, refresh = vi.fn() } = {}) {
+  const evaluate = evaluation
+    ? evaluation
+    : vi.fn((key) => {
+        if (key === 'analytics-dashboards') {
+          return { enabled: true, reason: 'enabled', toggle };
+        }
+        return { enabled: true, reason: 'enabled', toggle: null };
+      });
+
+  const contextValue = {
+    loading,
+    error: null,
+    toggles: { 'analytics-dashboards': toggle },
+    version: 'test',
+    lastFetchedAt: Date.now(),
+    refresh,
+    evaluate
+  };
+
+  return render(<FeatureToggleContext.Provider value={contextValue}>{ui}</FeatureToggleContext.Provider>);
+}
+
 describe('RoleDashboard', () => {
   beforeEach(() => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
@@ -77,7 +109,7 @@ describe('RoleDashboard', () => {
   });
 
   it('renders dashboard data and export CTA', async () => {
-    render(
+    renderWithToggles(
       <MemoryRouter initialEntries={['/dashboards/admin']}>
         <Routes>
           <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
@@ -99,7 +131,7 @@ describe('RoleDashboard', () => {
       json: async () => ({ message: 'persona_not_supported' })
     });
 
-    render(
+    renderWithToggles(
       <MemoryRouter initialEntries={['/dashboards/admin']}>
         <Routes>
           <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
@@ -116,5 +148,28 @@ describe('RoleDashboard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+  });
+
+  it('renders access gate when feature toggle is disabled', async () => {
+    const disabledToggle = {
+      ...enabledToggle,
+      state: 'disabled'
+    };
+
+    renderWithToggles(
+      <MemoryRouter initialEntries={['/dashboards/admin']}>
+        <Routes>
+          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+        </Routes>
+      </MemoryRouter>,
+      {
+        toggle: disabledToggle,
+        evaluation: vi.fn(() => ({ enabled: false, reason: 'disabled', toggle: disabledToggle }))
+      }
+    );
+
+    await waitFor(() => expect(screen.getByText(/analytics dashboards are not yet enabled/i)).toBeInTheDocument());
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/request pilot access/i)).toBeInTheDocument();
   });
 });

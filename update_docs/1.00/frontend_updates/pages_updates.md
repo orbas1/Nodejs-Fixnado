@@ -37,3 +37,8 @@
 - Validated timezone detection fallback, persona guardrails, and retry/onRefresh hooks in `RoleDashboard.jsx` after staging rehearsal; export toolbar now surfaces configured row limits and last-refresh timestamps per design spec.【F:frontend-reactjs/src/pages/RoleDashboard.jsx†L18-L78】
 - Ensured CSV download helper returns filename/blob tuples for download components and raises actionable errors for unsupported personas or server failures, aligning with analytics ops ingestion expectations.【F:frontend-reactjs/src/api/analyticsDashboardClient.js†L40-L58】
 - Recorded QA action to enforce CI reporters in `npm test` to suppress Vitest spinner noise observed during `CI=1` verification and maintain readable console evidence for dashboard regressions.【152a08†L1-L10】
+
+## 2025-10-31 — Persona Dashboard Feature Toggle Experience
+- Added feature toggle context and client (`src/providers/FeatureToggleProvider.jsx`, `src/api/featureToggleClient.js`) so persona dashboards consume Secrets Manager manifests, cache cohort assignments, and expose refresh hooks without reloading the page. `src/main.jsx` now wraps the React tree with the provider.
+- Introduced `DashboardAccessGate.jsx` to block analytics explores when `analytics-dashboards` is disabled or in pilot, surfacing toggle owner/ticket metadata, rollout percentages, and support CTA copy matching `Dashboard Designs.md`. `DashboardLayout.jsx` renders a toggle summary card alongside persona headings.
+- Updated `RoleDashboard.jsx` to respect toggle evaluation before fetching analytics data, surface the access gate, and hydrate toggle metadata for telemetry/export instrumentation. Vitest suite (`src/pages/__tests__/RoleDashboard.test.jsx`) now covers both enabled and gated scenarios.
