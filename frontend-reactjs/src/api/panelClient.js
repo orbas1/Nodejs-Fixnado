@@ -28,6 +28,16 @@ function getStorage() {
   }
 }
 
+function toQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null || value === '') return;
+    searchParams.append(key, value);
+  });
+  const result = searchParams.toString();
+  return result ? `?${result}` : '';
+}
+
 function storageKey(key) {
   return `${CACHE_NAMESPACE}:${key}`;
 }
@@ -644,13 +654,19 @@ export const getProviderDashboard = withFallback(
 export const getEnterprisePanel = withFallback(
   normaliseEnterprisePanel,
   enterpriseFallback,
-  (options = {}) =>
-    request('/panel/enterprise/overview', {
-      cacheKey: 'enterprise-panel',
+  (options = {}) => {
+    const query = toQueryString({
+      companyId: options?.companyId,
+      timezone: options?.timezone
+    });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/enterprise/overview${query}`, {
+      cacheKey: `enterprise-panel${cacheKeySuffix}`,
       ttl: 30000,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
-    })
+    });
+  }
 );
 
 const businessFrontFetcher = withFallback(

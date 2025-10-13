@@ -98,20 +98,32 @@ function ProgrammeRow({ programme }) {
 export default function EnterprisePanel() {
   const { t, format } = useLocale();
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
-
-  const loadPanel = useCallback(async ({ forceRefresh = false, signal } = {}) => {
-    setState((current) => ({ ...current, loading: true, error: null }));
+  const timezone = useMemo(() => {
     try {
-      const result = await getEnterprisePanel({ forceRefresh, signal });
-      setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
     } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load enterprise panel', 500, { cause: error })
-      }));
+      console.warn('[EnterprisePanel] unable to resolve timezone', error);
+      return 'Europe/London';
     }
   }, []);
+
+  const loadPanel = useCallback(
+    async ({ forceRefresh = false, signal } = {}) => {
+      setState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const result = await getEnterprisePanel({ forceRefresh, signal, timezone });
+        setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof PanelApiError ? error : new PanelApiError('Unable to load enterprise panel', 500, { cause: error })
+        }));
+      }
+    },
+    [timezone]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -134,8 +146,8 @@ export default function EnterprisePanel() {
   }, [delivery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20" data-qa="enterprise-panel">
-      <div className="border-b border-slate-200 bg-white/90">
+    <div className="min-h-screen bg-gradient-to-b from-white via-secondary/40 to-white pb-20" data-qa="enterprise-panel">
+      <div className="border-b border-slate-200 bg-white/95 shadow-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{t('enterprisePanel.title')}</p>
