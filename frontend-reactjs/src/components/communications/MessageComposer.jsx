@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
-function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist }) {
+function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist, prefill, onPrefillConsumed }) {
   const [message, setMessage] = useState('');
   const [requestAiAssist, setRequestAiAssist] = useState(Boolean(defaultAiAssist));
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (prefill) {
+      setMessage(prefill);
+      setError(null);
+      if (onPrefillConsumed) {
+        onPrefillConsumed();
+      }
+    }
+  }, [prefill, onPrefillConsumed]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -28,7 +38,10 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-slate-800/60 bg-slate-900/70 p-4 space-y-3">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 border-t border-slate-200 bg-slate-50/60 p-5 shadow-inner shadow-slate-200/60"
+    >
       <textarea
         value={message}
         onChange={(event) => {
@@ -37,14 +50,14 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist 
         }}
         placeholder="Type your response…"
         rows={3}
-        className="w-full rounded-md bg-slate-950/80 border border-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
         disabled={disabled || isSending}
       />
       <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-xs text-slate-300">
+        <label className="flex items-center gap-2 text-xs text-slate-600">
           <input
             type="checkbox"
-            className="h-3 w-3 accent-emerald-400"
+            className="h-3 w-3 accent-sky-500"
             checked={requestAiAssist && aiAssistAvailable}
             onChange={() => setRequestAiAssist((current) => !current)}
             disabled={!aiAssistAvailable || disabled || isSending}
@@ -54,12 +67,12 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist 
         <button
           type="submit"
           disabled={disabled || isSending}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSending ? 'Sending…' : 'Send message'}
         </button>
       </div>
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-red-500">{error}</p> : null}
     </form>
   );
 }
@@ -68,13 +81,17 @@ MessageComposer.propTypes = {
   onSend: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   aiAssistAvailable: PropTypes.bool,
-  defaultAiAssist: PropTypes.bool
+  defaultAiAssist: PropTypes.bool,
+  prefill: PropTypes.string,
+  onPrefillConsumed: PropTypes.func
 };
 
 MessageComposer.defaultProps = {
   disabled: false,
   aiAssistAvailable: false,
-  defaultAiAssist: true
+  defaultAiAssist: true,
+  prefill: '',
+  onPrefillConsumed: undefined
 };
 
 export default MessageComposer;
