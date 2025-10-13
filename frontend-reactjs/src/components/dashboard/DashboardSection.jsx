@@ -214,6 +214,93 @@ ListSection.propTypes = {
   }).isRequired
 };
 
+const SettingsSection = ({ section }) => {
+  const panels = section.data?.panels ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="space-y-6">
+        {panels.map((panel) => (
+          <div
+            key={panel.id ?? panel.title}
+            className="rounded-2xl border border-accent/10 bg-white p-6 shadow-md"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-primary">{panel.title}</h3>
+                {panel.description && <p className="mt-1 text-sm text-slate-600">{panel.description}</p>}
+              </div>
+              {panel.status && (
+                <span className="mt-1 inline-flex h-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {panel.status}
+                </span>
+              )}
+            </div>
+            <ul className="mt-4 divide-y divide-slate-200">
+              {(panel.items ?? []).map((item) => (
+                <li
+                  key={item.id ?? item.label}
+                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-primary">{item.label}</p>
+                    {item.helper && <p className="text-sm text-slate-500">{item.helper}</p>}
+                  </div>
+                  <div className="flex flex-col items-start gap-1 text-sm font-medium text-primary sm:items-end">
+                    {item.type === 'toggle' ? (
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                          item.enabled
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                            : 'border-slate-200 bg-slate-50 text-slate-500'
+                        }`}
+                      >
+                        <span className={`h-2 w-2 rounded-full ${item.enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                        {item.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-slate-600 sm:text-base">{String(item.value ?? '—')}</span>
+                    )}
+                    {item.meta && <span className="text-xs text-slate-400">{item.meta}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+SettingsSection.propTypes = {
+  section: PropTypes.shape({
+    label: PropTypes.string,
+    description: PropTypes.string,
+    data: PropTypes.shape({
+      panels: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          title: PropTypes.string.isRequired,
+          description: PropTypes.string,
+          status: PropTypes.string,
+          items: PropTypes.arrayOf(
+            PropTypes.shape({
+              id: PropTypes.string,
+              label: PropTypes.string.isRequired,
+              helper: PropTypes.string,
+              type: PropTypes.oneOf(['toggle', 'value']).isRequired,
+              enabled: PropTypes.bool,
+              value: PropTypes.string,
+              meta: PropTypes.string
+            })
+          ).isRequired
+        })
+      ).isRequired
+    }).isRequired
+  }).isRequired
+};
+
 const DashboardSection = ({ section }) => {
   switch (section.type) {
     case 'grid':
@@ -224,6 +311,8 @@ const DashboardSection = ({ section }) => {
       return <TableSection section={section} />;
     case 'list':
       return <ListSection section={section} />;
+    case 'settings':
+      return <SettingsSection section={section} />;
     default:
       return null;
   }

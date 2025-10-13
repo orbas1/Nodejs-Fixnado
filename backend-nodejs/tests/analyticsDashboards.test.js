@@ -526,6 +526,9 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.navigation[1].data.columns).toHaveLength(4);
     expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
     expect(response.body.navigation[3].data.items.length).toBeGreaterThan(0);
+    expect(response.body.navigation[0].sidebar.badge).toContain('jobs');
+    expect(response.body.navigation[4].id).toBe('settings');
+    expect(response.body.navigation[4].data.panels.length).toBeGreaterThan(0);
   });
 
   it('streams governed CSV exports for persona dashboards', async () => {

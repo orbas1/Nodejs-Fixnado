@@ -382,6 +382,12 @@ async function loadUserData(context) {
   }));
 
   const escrowFunded = orders.filter((order) => order.Escrow?.status === 'funded').length;
+  const fundedOrders = orders.filter((order) => order.status === 'funded').length;
+  const inProgressOrders = orders.filter((order) => order.status === 'in_progress').length;
+  const awaitingActionOrders = orders.filter((order) => ['draft', 'disputed'].includes(order.status)).length;
+  const timezoneLabel = window.timezone?.replace('_', ' ') ?? DEFAULT_TIMEZONE;
+  const totalOrders = orders.length;
+  const supportConversations = conversations.length;
   const rentalsDueSoon = rentals.filter((rental) => {
     if (!rental.returnDueAt) return false;
     const due = DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone);
@@ -535,6 +541,197 @@ async function loadUserData(context) {
     });
   }
 
+  const overviewSidebar = {
+    badge: `${formatNumber(totalBookings)} jobs`,
+    status:
+      disputes.length > 0
+        ? { label: `${formatNumber(disputes.length)} dispute${disputes.length === 1 ? '' : 's'} open`, tone: 'warning' }
+        : { label: 'Workspace healthy', tone: 'success' },
+    highlights: [
+      { label: 'Active bookings', value: formatNumber(activeBookings.length) },
+      { label: 'Spend', value: formatCurrency(spend, currency) }
+    ]
+  };
+
+  const ordersSidebar = {
+    badge: `${formatNumber(totalOrders)} orders`,
+    status:
+      awaitingActionOrders > 0
+        ? { label: `${formatNumber(awaitingActionOrders)} need action`, tone: 'warning' }
+        : { label: 'Pipeline healthy', tone: 'success' },
+    highlights: [
+      { label: 'Escrow funded', value: formatNumber(fundedOrders) },
+      { label: 'In delivery', value: formatNumber(inProgressOrders) }
+    ]
+  };
+
+  const rentalsSidebar = {
+    badge: `${formatNumber(rentals.length)} rentals`,
+    status:
+      rentalsDueSoon > 0
+        ? { label: `${formatNumber(rentalsDueSoon)} due soon`, tone: 'warning' }
+        : { label: 'All on schedule', tone: 'success' },
+    highlights: [
+      { label: 'In field', value: formatNumber(rentalsInUse) },
+      { label: 'Due soon', value: formatNumber(rentalsDueSoon) }
+    ]
+  };
+
+  const accountSidebar = {
+    badge: `${formatNumber(supportConversations)} support`,
+    status:
+      disputes.length > 0
+        ? { label: 'Escalations open', tone: 'danger' }
+        : supportConversations > 0
+        ? { label: 'Active conversations', tone: 'info' }
+        : { label: 'Support quiet', tone: 'success' },
+    highlights: [
+      { label: 'Disputes', value: formatNumber(disputes.length) },
+      { label: 'Conversations', value: formatNumber(supportConversations) }
+    ]
+  };
+
+  const mfaEnabled = Boolean(user?.twoFactorApp || user?.twoFactorEmail);
+  const settingsSidebar = {
+    badge: mfaEnabled ? 'MFA secured' : 'Security review',
+    status: mfaEnabled ? { label: 'MFA enabled', tone: 'success' } : { label: 'Enable MFA', tone: 'warning' },
+    highlights: [
+      { label: 'Timezone', value: timezoneLabel },
+      { label: 'Currency', value: currency }
+    ]
+  };
+
+  const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
+  const workspaceAlignment = companyId ? 'Linked to company workspace' : 'Standalone workspace';
+
+  const settingsPanels = [
+    {
+      id: 'profile',
+      title: 'Profile & Identity',
+      description: 'Details shared with crews, providers, and support.',
+      items: [
+        {
+          type: 'value',
+          label: 'Full name',
+          value: displayName,
+          helper: 'Shown on bookings, receipts, and support conversations.'
+        },
+        {
+          type: 'value',
+          label: 'Contact email',
+          value: user?.email ?? 'Not provided',
+          helper: 'Primary channel for booking updates and notifications.'
+        },
+        {
+          type: 'value',
+          label: 'Workspace alignment',
+          value: workspaceAlignment,
+          helper: companyId
+            ? 'Bookings inherit company-approved rates and SLAs.'
+            : 'Orders use personal preferences and payment methods.'
+        },
+        {
+          type: 'value',
+          label: 'Local timezone',
+          value: timezoneLabel,
+          helper: 'Applied to scheduling, reminders, and exports.'
+        }
+      ]
+    },
+    {
+      id: 'security',
+      title: 'Security & Access',
+      description: 'Protect the account that controls bookings and payouts.',
+      items: [
+        {
+          type: 'toggle',
+          label: 'Authenticator app 2FA',
+          enabled: Boolean(user?.twoFactorApp),
+          helper: user?.twoFactorApp
+            ? 'Time-based one-time passcodes are required on sign-in.'
+            : 'Add an authenticator app to secure sign-ins.'
+        },
+        {
+          type: 'toggle',
+          label: 'Email verification codes',
+          enabled: Boolean(user?.twoFactorEmail),
+          helper: user?.twoFactorEmail
+            ? 'Backup verification codes are delivered to your inbox.'
+            : 'Enable email codes as a fallback second factor.'
+        },
+        {
+          type: 'value',
+          label: 'Dispute status',
+          value: disputes.length > 0 ? `${formatNumber(disputes.length)} open` : 'None open',
+          helper: disputes.length > 0
+            ? 'Resolve disputes to restore full payout automation.'
+            : 'All escrow payouts releasing automatically.'
+        }
+      ]
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      description: 'Control how Fixnado keeps you informed.',
+      items: [
+        {
+          type: 'toggle',
+          label: 'Support case updates',
+          enabled: supportConversations > 0,
+          helper: supportConversations > 0
+            ? 'Email alerts active for current support cases.'
+            : 'Alerts activate automatically when a case opens.'
+        },
+        {
+          type: 'toggle',
+          label: 'Job dispatch alerts',
+          enabled: activeBookings.length > 0,
+          helper:
+            activeBookings.length > 0
+              ? `${formatNumber(activeBookings.length)} active job${activeBookings.length === 1 ? '' : 's'} will send dispatch nudges.`
+              : 'Dispatch alerts enable once you have active jobs.'
+        },
+        {
+          type: 'value',
+          label: 'Weekly summary',
+          value: totalOrders > 0 ? 'Scheduled' : 'Paused',
+          helper: totalOrders > 0
+            ? 'A weekly health report will arrive each Monday.'
+            : 'Resume once new orders are captured.'
+        }
+      ]
+    },
+    {
+      id: 'billing',
+      title: 'Billing & Payments',
+      description: 'Manage escrow, invoices, and default payment settings.',
+      items: [
+        {
+          type: 'value',
+          label: 'Preferred currency',
+          value: currency,
+          helper: 'All new orders default to this currency.'
+        },
+        {
+          type: 'value',
+          label: 'Funded escrows',
+          value: formatNumber(escrowFunded),
+          helper: escrowFunded > 0
+            ? 'Escrows release once jobs complete and pass inspection.'
+            : 'Fund an order to initialise automated escrow releases.'
+        },
+        {
+          type: 'value',
+          label: 'Invoices this window',
+          value: formatNumber(totalOrders),
+          helper: totalOrders > 0
+            ? `${formatCurrency(spend, currency)} invoiced across service orders.`
+            : 'No invoices generated during this window.'
+        }
+      ]
+    }
+  ];
+
   return {
     persona: 'user',
     name: PERSONA_METADATA.user.name,
@@ -565,13 +762,15 @@ async function loadUserData(context) {
         label: 'Customer Overview',
         description: 'Bookings, spend, and support signals.',
         type: 'overview',
-        analytics: overview
+        analytics: overview,
+        sidebar: overviewSidebar
       },
       {
         id: 'orders',
         label: 'Service Orders',
         description: 'Escrow, delivery, and follow-up pipeline.',
         type: 'board',
+        sidebar: ordersSidebar,
         data: { columns: orderBoardColumns }
       },
       {
@@ -579,6 +778,7 @@ async function loadUserData(context) {
         label: 'Rental Assets',
         description: 'Track equipment associated with your jobs.',
         type: 'table',
+        sidebar: rentalsSidebar,
         data: {
           headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
           rows: rentalRows
@@ -589,7 +789,16 @@ async function loadUserData(context) {
         label: 'Account & Support',
         description: 'Next best actions to keep everything running smoothly.',
         type: 'list',
+        sidebar: accountSidebar,
         data: { items: accountItems }
+      },
+      {
+        id: 'settings',
+        label: 'Account Settings',
+        description: 'Identity, security, and notification preferences.',
+        type: 'settings',
+        sidebar: settingsSidebar,
+        data: { panels: settingsPanels }
       }
     ]
   };
@@ -1549,6 +1758,22 @@ function flattenSection(section) {
     const rows = [['Card', 'Details']];
     for (const card of section.data?.cards ?? []) {
       rows.push([card.title, (card.details ?? []).join(' | ')]);
+    }
+    return rows;
+  }
+
+  if (section.type === 'settings') {
+    const rows = [['Panel', 'Setting', 'Value', 'Details']];
+    for (const panel of section.data?.panels ?? []) {
+      for (const item of panel.items ?? []) {
+        const value =
+          item.type === 'toggle'
+            ? item.enabled
+              ? 'Enabled'
+              : 'Disabled'
+            : item.value ?? '';
+        rows.push([panel.title ?? panel.id ?? 'Panel', item.label ?? '', value, item.helper ?? '']);
+      }
     }
     return rows;
   }

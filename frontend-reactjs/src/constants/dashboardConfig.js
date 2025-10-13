@@ -9,7 +9,8 @@ export const DASHBOARD_ROLES = [
       { id: 'overview', label: 'Customer Overview' },
       { id: 'orders', label: 'Service Orders' },
       { id: 'rentals', label: 'Rental Assets' },
-      { id: 'account', label: 'Account & Support' }
+      { id: 'account', label: 'Account & Support' },
+      { id: 'settings', label: 'Account Settings' }
     ]
   },
   {
