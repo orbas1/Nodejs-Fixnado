@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../features/analytics/presentation/analytics_dashboard_screen.dart';
-import '../features/auth/presentation/role_selector.dart';
-import '../features/bookings/presentation/booking_screen.dart';
-import '../features/explorer/presentation/explorer_screen.dart';
-import '../features/rentals/presentation/rental_screen.dart';
+import '../features/auth/presentation/auth_gate.dart';
+import 'app_shell.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -55,70 +52,7 @@ class FixnadoApp extends ConsumerWidget {
       title: 'Fixnado Mobile',
       debugShowCheckedModeBanner: false,
       theme: theme,
-      home: const AppShell(),
+      home: const AuthGate(),
     );
   }
-}
-
-class AppShell extends ConsumerStatefulWidget {
-  const AppShell({super.key});
-
-  @override
-  ConsumerState<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends ConsumerState<AppShell> {
-  int _index = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final destinations = _NavigationDestination.values;
-    final selected = destinations[_index];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(selected.title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: RoleSelector(),
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          ExplorerScreen(),
-          BookingScreen(),
-          RentalScreen(),
-          AnalyticsDashboardScreen(),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: destinations
-            .map(
-              (destination) => NavigationDestination(
-                icon: Icon(destination.icon),
-                label: destination.title,
-              ),
-            )
-            .toList(),
-        onDestinationSelected: (index) => setState(() => _index = index),
-      ),
-    );
-  }
-}
-
-enum _NavigationDestination {
-  explorer('Explorer', Icons.map_outlined),
-  bookings('Bookings', Icons.event_available_outlined),
-  rentals('Rentals', Icons.inventory_2_outlined),
-  operations('Ops Pulse', Icons.analytics_outlined);
-
-  const _NavigationDestination(this.title, this.icon);
-
-  final String title;
-  final IconData icon;
 }
