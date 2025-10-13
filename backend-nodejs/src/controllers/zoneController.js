@@ -7,6 +7,7 @@ import {
   generateAnalyticsSnapshot,
   importZonesFromGeoJson
 } from '../services/zoneService.js';
+import { matchServicesToCoordinate, previewCoverageWindow } from '../services/geoMatchingService.js';
 
 function handleServiceError(res, next, error) {
   if (error && error.statusCode) {
@@ -90,6 +91,24 @@ export async function importZonesHandler(req, res, next) {
       actor: req.body.actor
     });
     res.status(201).json(zones);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function matchGeoZoneHandler(req, res, next) {
+  try {
+    const result = await matchServicesToCoordinate(req.body);
+    res.json(result);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function previewCoverageHandler(req, res, next) {
+  try {
+    const geometry = await previewCoverageWindow(req.query);
+    res.json({ geometry });
   } catch (error) {
     handleServiceError(res, next, error);
   }

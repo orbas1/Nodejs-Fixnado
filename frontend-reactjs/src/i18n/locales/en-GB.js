@@ -43,6 +43,8 @@ export const enGB = {
     'nav.businessFronts': 'Business fronts',
     'nav.businessFrontsDescription':
       'Curated storefronts showcasing credentials, testimonials, and service packages.',
+    'nav.geoMatching': 'Geo matching',
+    'nav.geoMatchingDescription': 'Enterprise-grade geo-zonal matching workspace for operations administrators.',
     'nav.communications': 'Communications',
     'nav.login': 'Log in',
     'nav.register': 'Register',
@@ -133,6 +135,64 @@ export const enGB = {
     'providerDashboard.onboardingStatus.pending': 'Pending verification',
     'providerDashboard.onboardingStatus.suspended': 'Suspended',
 
+    'geoMatching.badge': 'Operations Control',
+    'geoMatching.heroTitle': 'Geo-zonal matching for enterprise services',
+    'geoMatching.heroSubtitle':
+      'Validate coverage, score dispatch-ready providers, and secure governance in a single control surface. This workspace mirrors production matching logic and respects all RBAC and SLA guardrails.',
+    'geoMatching.heroPillMatching': 'Deterministic scoring engine',
+    'geoMatching.heroPillParity': 'Web + mobile parity assured',
+    'geoMatching.heroPillSecurity': 'RBAC locked to operations admins',
+    'geoMatching.guardrailTitle': 'Launch readiness checks',
+    'geoMatching.guardrailOne': 'Token-based authentication stored client-side with rotation ready hooks.',
+    'geoMatching.guardrailTwo': 'TLS, CSP, and helmet hardening enabled for API calls and preview endpoints.',
+    'geoMatching.guardrailThree': 'Flutter parity shipped with matching repository + controller updates.',
+    'geoMatching.formTitle': 'Calibrate a geo match request',
+    'geoMatching.formSubtitle':
+      'Latitude and longitude drive polygon detection. Radius and demand filters align the scoring engine to your operational priorities.',
+    'geoMatching.latitudeLabel': 'Latitude',
+    'geoMatching.longitudeLabel': 'Longitude',
+    'geoMatching.radiusLabel': 'Search radius (km)',
+    'geoMatching.limitLabel': 'Max services to retrieve',
+    'geoMatching.demandLabel': 'Target demand tiers',
+    'geoMatching.categoriesLabel': 'Restrict to categories (optional)',
+    'geoMatching.categoriesPlaceholder': 'eg. electrical, hvac, fabrication',
+    'geoMatching.categoriesHelp':
+      'Comma-separated list. Leave blank to include all service catalogues within the detected zones.',
+    'geoMatching.submitCta': 'Run enterprise match',
+    'geoMatching.secureNotice':
+      'Only operations administrators with an active session token can execute live matches.',
+    'geoMatching.resultTitle': 'Match intelligence',
+    'geoMatching.resultSubtitle':
+      'Scores are weighted by demand tier, distance to centroid, and the availability of compliant programmes. Enterprise guardrails apply automatically.',
+    'geoMatching.loading': 'Evaluating zones…',
+    'geoMatching.auditTitle': 'Audit trail',
+    'geoMatching.auditSummary':
+      '{count} services surfaced across {zones} zone(s). Coverage window computed at {timestamp}.',
+    'geoMatching.fallbackNotice': 'Fallback engaged: {reason}',
+    'geoMatching.fallbackClosest': 'Point outside all polygons. Selected nearest compliant zone.',
+    'geoMatching.emptyState':
+      'Submit a location to surface weighted matches. Results appear here with demand context, scoring, and governance notes.',
+    'geoMatching.noMatches':
+      'No zones intersected the provided coordinates. The engine expanded to the closest configured polygon so you can sanity check readiness.',
+    'geoMatching.coverageTitle': 'Coverage window preview',
+    'geoMatching.coverageSubtitle':
+      'Bounding box coordinates help operations teams compare dispatch radiuses between web and mobile clients. Flutter mirrors this payload for map overlays.',
+    'geoMatching.coverageEmpty':
+      'Run a match to generate the GeoJSON bounding polygon used by our map layers and Flutter widgets.',
+    'geoMatching.accessCheckingTitle': 'Confirming permissions',
+    'geoMatching.accessCheckingMessage':
+      'Hold tight while we validate your operations administrator role and secure session.',
+    'geoMatching.accessUnauthenticatedTitle': 'Sign in required',
+    'geoMatching.accessUnauthenticatedMessage':
+      'Authenticate with an operations administrator account to unlock the geo matching control surface.',
+    'geoMatching.accessForbiddenTitle': 'Operations administrator role required',
+    'geoMatching.accessForbiddenMessage':
+      'Your profile is active, but it lacks the operations administrator role. Request elevated access from governance before proceeding.',
+    'geoMatching.accessErrorTitle': 'We could not confirm access',
+    'geoMatching.accessErrorMessage':
+      'An unexpected error prevented verifying your access. Retry or contact support if this continues.',
+    'geoMatching.accessRetryCta': 'Retry access check',
+    'geoMatching.accessLoginCta': 'Go to operations login',
     'providerStorefront.heroEyebrow': 'Marketplace storefront',
     'providerStorefront.heroTitle': '{name} storefront operations',
     'providerStorefront.heroSubtitle':

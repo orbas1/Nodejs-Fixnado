@@ -25,6 +25,7 @@ const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
+const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -68,6 +69,7 @@ function App() {
             <Route path="/admin/theme-studio" element={<ThemeStudio />} />
             <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
             <Route path="/communications" element={<Communications />} />
+            <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
           </Routes>
