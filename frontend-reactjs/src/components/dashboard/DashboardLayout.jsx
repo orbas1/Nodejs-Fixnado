@@ -160,7 +160,8 @@ const DashboardLayout = ({
   error,
   onRefresh,
   lastRefreshed,
-  exportHref
+  exportHref,
+  filters
 }) => {
   const navigation = dashboard?.navigation ?? [];
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -273,46 +274,49 @@ const DashboardLayout = ({
                 <p className="text-xs text-slate-400 mt-1">Refreshed {formatRelativeTime(lastRefreshed)}</p>
               )}
             </div>
-            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-              <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-                {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                      {searchResults.map((result) => (
-                        <li key={result.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedSection(result.targetSection);
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
-                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-100"
-                          >
-                            <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                              {resultBadge[result.type] ?? 'Result'}
-                            </span>
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-slate-900">{result.label}</p>
-                              <p className="text-xs text-slate-500">{result.description}</p>
-                            </div>
-                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div className="relative w-full sm:w-72 lg:w-80">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search jobs, orders, analytics, automations..."
+                    className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  {searchResults.length > 0 && (
+                    <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-slate-200 bg-white shadow-xl">
+                      <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                        {searchResults.map((result) => (
+                          <li key={result.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSection(result.targetSection);
+                                setSearchQuery('');
+                                setSearchResults([]);
+                              }}
+                              className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-100"
+                            >
+                              <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                                {resultBadge[result.type] ?? 'Result'}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-slate-900">{result.label}</p>
+                                <p className="text-xs text-slate-500">{result.description}</p>
+                              </div>
+                              <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                {filters ? <div className="sm:w-auto">{filters}</div> : null}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 sm:self-end">
                 <button
                   type="button"
                   onClick={onRefresh}
@@ -362,7 +366,8 @@ DashboardLayout.propTypes = {
   error: PropTypes.string,
   onRefresh: PropTypes.func.isRequired,
   lastRefreshed: PropTypes.string,
-  exportHref: PropTypes.string
+  exportHref: PropTypes.string,
+  filters: PropTypes.node
 };
 
 DashboardLayout.defaultProps = {
@@ -370,7 +375,8 @@ DashboardLayout.defaultProps = {
   loading: false,
   error: null,
   lastRefreshed: null,
-  exportHref: null
+  exportHref: null,
+  filters: null
 };
 
 export default DashboardLayout;
