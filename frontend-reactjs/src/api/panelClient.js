@@ -248,6 +248,16 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function toNumber(value, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toNullableNumber(value) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 const percentageFormatter = new Intl.NumberFormat('en-GB', {
   style: 'percent',
   maximumFractionDigits: 1
@@ -586,8 +596,19 @@ function normaliseBusinessFront(payload = {}) {
     name: item.name || `Material ${index + 1}`,
     category: item.category || 'Materials',
     sku: item.sku || null,
-    quantityOnHand: item.quantityOnHand ?? null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
     unitType: item.unitType || null,
+    status: item.status || 'healthy',
+    condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
     image: item.image || null
   }));
 
@@ -595,9 +616,24 @@ function normaliseBusinessFront(payload = {}) {
     id: item.id || `tool-${index}`,
     name: item.name || `Tool ${index + 1}`,
     category: item.category || 'Tools',
-    rentalRate: item.rentalRate ?? null,
-    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    sku: item.sku || null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
+    unitType: item.unitType || null,
+    status: item.status || 'healthy',
     condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
+    rentalRate: toNullableNumber(item.rentalRate),
+    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    depositAmount: toNullableNumber(item.depositAmount),
+    depositCurrency: item.depositCurrency || item.rentalRateCurrency || item.currency || 'GBP',
     image: item.image || null
   }));
 
@@ -681,6 +717,35 @@ function normaliseBusinessFront(payload = {}) {
     deals,
     materials,
     tools,
+    inventorySummary: (() => {
+      const raw = {
+        skuCount: toNullableNumber(root.inventorySummary?.skuCount),
+        onHand: toNullableNumber(root.inventorySummary?.onHand),
+        reserved: toNullableNumber(root.inventorySummary?.reserved),
+        available: toNullableNumber(root.inventorySummary?.available),
+        alerts: toNullableNumber(root.inventorySummary?.alerts)
+      };
+      const fallbackOnHand =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0);
+      const fallbackReserved =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0);
+      const fallbackAvailable =
+        materials.reduce((sum, item) => sum + toNumber(item.availability, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.availability, 0), 0);
+      const fallbackAlerts =
+        materials.filter((item) => item.status !== 'healthy').length +
+        tools.filter((item) => item.status !== 'healthy').length;
+
+      return {
+        skuCount: raw.skuCount ?? materials.length + tools.length,
+        onHand: raw.onHand ?? fallbackOnHand,
+        reserved: raw.reserved ?? fallbackReserved,
+        available: raw.available ?? fallbackAvailable,
+        alerts: raw.alerts ?? fallbackAlerts
+      };
+    })(),
     servicemen,
     serviceZones,
     taxonomy

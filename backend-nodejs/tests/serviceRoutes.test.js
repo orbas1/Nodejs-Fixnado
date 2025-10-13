@@ -9,6 +9,8 @@ function createToken(userId) {
   return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
+
 beforeAll(async () => {
   await sequelize.sync({ force: true });
 });

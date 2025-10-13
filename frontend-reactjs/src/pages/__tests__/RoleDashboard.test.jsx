@@ -1,69 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import RoleDashboard from '../RoleDashboard.jsx';
 import { FeatureToggleContext } from '../../providers/FeatureToggleProvider.jsx';
+import mockDashboards from '../../api/mockDashboards.js';
 
-const dashboardFixture = {
-  persona: 'admin',
-  name: 'Admin Control Tower',
-  window: {
-    start: '2025-10-01T00:00:00.000Z',
-    end: '2025-10-29T00:00:00.000Z',
-    timezone: 'Europe/London',
-    label: 'Last 28 days'
-  },
-  navigation: [
-    {
-      id: 'overview',
-      label: 'Executive Overview',
-      description: 'Bookings, spend, and SLA metrics.',
-      type: 'overview',
-      analytics: {
-        metrics: [
-          { label: 'Jobs Received', value: '12', change: '+3', trend: 'up' },
-          { label: 'Completion Rate', value: '87%', change: '+4%', trend: 'up' }
-        ],
-        charts: [
-          {
-            id: 'jobs',
-            type: 'bar',
-            title: 'Jobs',
-            description: 'Jobs per week',
-            dataKey: 'count',
-            data: [
-              { name: 'Week 1', count: 3 },
-              { name: 'Week 2', count: 4 }
-            ]
-          }
-        ],
-        upcoming: [
-          { title: 'HVAC tune-up', when: 'Tomorrow', status: 'Scheduled' }
-        ],
-        insights: ['Two bookings require SLA attention.']
-      }
-    },
-    {
-      id: 'operations',
-      label: 'Operations Pipeline',
-      description: 'Stages of delivery.',
-      type: 'board',
-      data: {
-        columns: [
-          {
-            title: 'Intake',
-            items: [{ title: 'Electrical safety', owner: 'Ops', value: '£320' }]
-          }
-        ]
-      }
-    }
-  ],
-  exports: {
-    csv: {
-      href: '/api/analytics/dashboards/admin/export?timezone=Europe%2FLondon'
-    }
-  }
-};
+const createDashboardFixture = (roleId) => JSON.parse(JSON.stringify(mockDashboards[roleId]));
 
 const enabledToggle = {
   state: 'enabled',
@@ -97,26 +39,53 @@ function renderWithToggles(ui, { evaluation, toggle = enabledToggle, loading = f
 }
 
 describe('RoleDashboard', () => {
+  let fetchSpy;
+
   beforeEach(() => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => dashboardFixture
-    });
+    fetchSpy = vi.spyOn(global, 'fetch');
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('renders dashboard data and export CTA', async () => {
+  it('renders provider dashboard with inventory insights and export CTA', async () => {
+    const providerDashboard = createDashboardFixture('provider');
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => providerDashboard
+    });
+
     renderWithToggles(
-      <MemoryRouter initialEntries={['/dashboards/admin']}>
+      <MemoryRouter initialEntries={["/dashboards/provider?timezone=Europe%2FLondon"]}>
         <Routes>
           <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
         </Routes>
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
+    const metricLabel = await screen.findByText((_, element) => element?.textContent?.toLowerCase() === 'first response');
+    expect(metricLabel).toBeInTheDocument();
+
+    const toolsNavLabel = await screen.findByText('Tools & Materials');
+    const toolsNavButton = toolsNavLabel.closest('button');
+    expect(toolsNavButton).not.toBeNull();
+    if (toolsNavButton) {
+      fireEvent.click(toolsNavButton);
+    }
+
+    const availableUnitsLabel = await screen.findByText('Available units');
+    const summaryCard = availableUnitsLabel.closest('div');
+    expect(summaryCard).not.toBeNull();
+    if (summaryCard) {
+      expect(within(summaryCard).getByText('84')).toBeInTheDocument();
+    }
+    expect(screen.getByText('Thermal imaging kit')).toBeInTheDocument();
+
+    expect(screen.getByRole('link', { name: /Download CSV/i })).toHaveAttribute(
+      'href',
+      '/api/analytics/dashboards/provider/export?timezone=Europe%2FLondon'
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
     );
@@ -131,11 +100,14 @@ describe('RoleDashboard', () => {
   });
 
   it('shows an error state when the dashboard fails to load', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'persona_not_supported' })
-    });
+    const originalDashboard = mockDashboards.admin;
+    delete mockDashboards.admin;
 
+    try {
+      fetchSpy.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: 'persona_not_supported' })
+      });
     renderWithToggles(
       <MemoryRouter initialEntries={['/dashboards/admin']}>
         <Routes>
@@ -150,11 +122,28 @@ describe('RoleDashboard', () => {
     const retryButton = await screen.findByRole('button', { name: /try again/i });
     expect(retryButton).toBeInTheDocument();
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => dashboardFixture
-    });
+      renderWithToggles(
+        <MemoryRouter initialEntries={['/dashboards/admin']}>
+          <Routes>
+            <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+          </Routes>
+        </MemoryRouter>
+      );
 
+      await screen.findByRole('heading', { name: /load this dashboard/i });
+
+      mockDashboards.admin = originalDashboard;
+      const dashboardFixture = createDashboardFixture('admin');
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => dashboardFixture
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
+    } finally {
+      mockDashboards.admin = originalDashboard;
+    }
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()

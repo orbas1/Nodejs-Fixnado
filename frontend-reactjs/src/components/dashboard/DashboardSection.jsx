@@ -419,6 +419,170 @@ ListSection.propTypes = {
   }).isRequired
 };
 
+const summaryToneMap = {
+  info: 'border-slate-200 bg-white/85 text-primary',
+  accent: 'border-primary/30 bg-primary/5 text-primary',
+  warning: 'border-amber-200 bg-amber-50 text-amber-700',
+  positive: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+};
+
+const inventoryStatusTone = {
+  healthy: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  low_stock: 'border-amber-200 bg-amber-50 text-amber-700',
+  stockout: 'border-rose-200 bg-rose-50 text-rose-700'
+};
+
+const inventoryStatusLabel = {
+  healthy: 'Healthy',
+  low_stock: 'Low stock',
+  stockout: 'Out of stock'
+};
+
+const numberFormatter = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
+const currencyFormatter = (currency = 'GBP') =>
+  new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 });
+
+const formatInventoryNumber = (value) => {
+  if (!Number.isFinite(value)) {
+    return '0';
+  }
+  return numberFormatter.format(value);
+};
+
+const formatInventoryCurrency = (value, currency) => {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+  try {
+    return currencyFormatter(currency || 'GBP').format(value);
+  } catch (error) {
+    console.warn('Failed to format currency', error);
+    return currencyFormatter('GBP').format(value);
+  }
+};
+
+const formatInventoryDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const InventorySection = ({ section }) => {
+  const summary = section.data?.summary ?? [];
+  const groups = section.data?.groups ?? [];
+
+  return (
+    <div>
+      <SectionHeader section={section} />
+      {summary.length ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {summary.map((item) => {
+            const toneClass = summaryToneMap[item.tone] ?? summaryToneMap.info;
+            return (
+              <div
+                key={item.id ?? item.label}
+                className={`rounded-2xl border p-5 shadow-md ${toneClass}`}
+              >
+                <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{item.label}</p>
+                <p className="mt-2 text-2xl font-semibold text-primary">{formatInventoryNumber(item.value)}</p>
+                {item.helper ? <p className="mt-2 text-xs text-slate-600">{item.helper}</p> : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div className="mt-6 space-y-8">
+        {groups.map((group) => (
+          <div key={group.id ?? group.label} className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-lg font-semibold text-primary">{group.label}</h3>
+              <span className="text-xs uppercase tracking-wide text-slate-500">
+                {formatInventoryNumber(group.items?.length ?? 0)} records
+              </span>
+            </div>
+            {group.items?.length ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {group.items.map((item) => {
+                  const statusTone = inventoryStatusTone[item.status] ?? inventoryStatusTone.healthy;
+                  const statusLabel = inventoryStatusLabel[item.status] ?? item.status;
+                  const rentalLabel = formatInventoryCurrency(item.rentalRate, item.rentalRateCurrency);
+                  const depositLabel = formatInventoryCurrency(item.depositAmount, item.depositCurrency);
+                  const maintenanceLabel = formatInventoryDate(item.nextMaintenanceDue);
+                  return (
+                    <article
+                      key={item.id ?? item.name}
+                      className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm"
+                    >
+                      <header className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-primary">{item.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {[item.sku, item.category].filter(Boolean).join(' • ')}
+                          </p>
+                        </div>
+                        {item.status ? (
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusTone}`}
+                          >
+                            {statusLabel}
+                          </span>
+                        ) : null}
+                      </header>
+                      <dl className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+                        <div>
+                          <dt className="font-medium text-slate-500">Available</dt>
+                          <dd className="mt-1 text-sm font-semibold text-primary">{formatInventoryNumber(item.available)}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-medium text-slate-500">Reserved</dt>
+                          <dd className="mt-1 text-sm font-semibold text-primary">{formatInventoryNumber(item.reserved)}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-medium text-slate-500">On hand</dt>
+                          <dd className="mt-1">{formatInventoryNumber(item.onHand)}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-medium text-slate-500">Safety stock</dt>
+                          <dd className="mt-1">{formatInventoryNumber(item.safetyStock)}</dd>
+                        </div>
+                        {Number.isFinite(item.activeRentals) ? (
+                          <div>
+                            <dt className="font-medium text-slate-500">Active rentals</dt>
+                            <dd className="mt-1">{formatInventoryNumber(item.activeRentals)}</dd>
+                          </div>
+                        ) : null}
+                        {Number.isFinite(item.activeAlerts) ? (
+                          <div>
+                            <dt className="font-medium text-slate-500">Alerts</dt>
+                            <dd className="mt-1">{formatInventoryNumber(item.activeAlerts)}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                      <div className="space-y-2 text-xs text-slate-500">
+                        {item.condition ? (
+                          <p className="font-medium text-slate-600">Condition: <span className="capitalize">{item.condition.replace(/_/g, ' ')}</span></p>
+                        ) : null}
+                        {item.location ? <p>Located in {item.location}</p> : null}
+                        {maintenanceLabel ? <p>Next service due {maintenanceLabel}</p> : null}
+                        {rentalLabel ? <p>Rental rate {rentalLabel}</p> : null}
+                        {depositLabel ? <p>Deposit {depositLabel}</p> : null}
+                        {item.notes ? <p className="italic text-slate-500">{item.notes}</p> : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-secondary/60 p-6 text-sm text-slate-500">
+                Inventory data is syncing.
+              </p>
+            )}
+          </div>
+        ))}
 const adsTrendIcon = {
   up: ArrowTrendingUpIcon,
   down: ArrowTrendingDownIcon,
@@ -674,6 +838,50 @@ const FixnadoAdsSection = ({ section }) => {
   );
 };
 
+InventorySection.propTypes = {
+  section: PropTypes.shape({
+    data: PropTypes.shape({
+      summary: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          label: PropTypes.string.isRequired,
+          value: PropTypes.number,
+          helper: PropTypes.string,
+          tone: PropTypes.string
+        })
+      ),
+      groups: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          label: PropTypes.string.isRequired,
+          items: PropTypes.arrayOf(
+            PropTypes.shape({
+              id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+              name: PropTypes.string.isRequired,
+              sku: PropTypes.string,
+              category: PropTypes.string,
+              status: PropTypes.string,
+              available: PropTypes.number,
+              onHand: PropTypes.number,
+              reserved: PropTypes.number,
+              safetyStock: PropTypes.number,
+              unitType: PropTypes.string,
+              condition: PropTypes.string,
+              location: PropTypes.string,
+              nextMaintenanceDue: PropTypes.oneOfType([
+                PropTypes.string,
+                PropTypes.instanceOf(Date)
+              ]),
+              notes: PropTypes.string,
+              activeAlerts: PropTypes.number,
+              alertSeverity: PropTypes.string,
+              activeRentals: PropTypes.number,
+              rentalRate: PropTypes.number,
+              rentalRateCurrency: PropTypes.string,
+              depositAmount: PropTypes.number,
+              depositCurrency: PropTypes.string
+            })
+          )
 FixnadoAdsSection.propTypes = {
   section: PropTypes.shape({
     label: PropTypes.string,
@@ -957,6 +1165,8 @@ const DashboardSection = ({ section }) => {
       return <TableSection section={section} />;
     case 'list':
       return <ListSection section={section} />;
+    case 'inventory':
+      return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} />;
     case 'settings':

@@ -306,8 +306,24 @@ function InventoryCard({ item, variant }) {
     item.rentalRate != null
       ? format.currency(item.rentalRate, { currency: item.rentalRateCurrency || 'GBP', maximumFractionDigits: 0 })
       : null;
+  const availabilityLabel = Number.isFinite(item.availability) ? format.number(item.availability) : null;
+  const reservedLabel = Number.isFinite(item.quantityReserved) ? format.number(item.quantityReserved) : null;
+  const safetyLabel = Number.isFinite(item.safetyStock) ? format.number(item.safetyStock) : null;
+  const activeAlertsLabel = Number.isFinite(item.activeAlerts) ? format.number(item.activeAlerts) : null;
+  const activeRentalsLabel = Number.isFinite(item.activeRentals) ? format.number(item.activeRentals) : null;
+  const nextMaintenanceLabel = item.nextMaintenanceDue ? format.date(item.nextMaintenanceDue) : null;
+  const statusTone = {
+    healthy: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    low_stock: 'border-amber-200 bg-amber-50 text-amber-700',
+    stockout: 'border-rose-200 bg-rose-50 text-rose-700'
+  };
+  const statusKey = item.status ? `businessFront.inventoryStatus.${item.status}` : null;
+  const statusLabel = statusKey ? t(statusKey) : null;
+  const locationLabel = item.location ? t('businessFront.inventoryLocation', { location: item.location }) : null;
+  const notesLabel = item.notes ?? null;
+
   return (
-    <article className="flex h-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white/85 p-6" data-qa={`business-front-inventory-${variant}-${item.id}`}>
+    <article className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200 bg-white/85 p-6 shadow-sm" data-qa={`business-front-inventory-${variant}-${item.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-primary">{item.name}</h3>
@@ -319,13 +335,61 @@ function InventoryCard({ item, variant }) {
           <WrenchScrewdriverIcon className="h-5 w-5 text-primary" aria-hidden="true" />
         )}
       </div>
+      {statusLabel ? (
+        <span
+          className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+            statusTone[item.status] ?? 'border-slate-200 bg-secondary text-primary'
+          }`}
+        >
+          <span className="h-2 w-2 rounded-full bg-current" />
+          {statusLabel}
+        </span>
+      ) : null}
       {variant === 'materials' ? (
-        <p className="text-xs text-slate-500">{t('businessFront.materialQuantity', { quantity: quantityLabel, unit: item.unitType || 'units' })}</p>
+        <div className="text-xs text-slate-600">
+          <p>{t('businessFront.materialQuantity', { quantity: quantityLabel, unit: item.unitType || 'units' })}</p>
+          {availabilityLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryAvailability', { quantity: availabilityLabel })}</p>
+          ) : null}
+          {reservedLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryReserved', { quantity: reservedLabel })}</p>
+          ) : null}
+          {safetyLabel ? (
+            <p className="mt-1">{t('businessFront.inventorySafetyStock', { quantity: safetyLabel })}</p>
+          ) : null}
+        </div>
       ) : null}
       {variant === 'tools' && rentalLabel ? (
-        <p className="text-xs text-slate-500">{t('businessFront.toolRentalRate', { amount: rentalLabel })}</p>
+        <div className="text-xs text-slate-600">
+          <p>{t('businessFront.toolRentalRate', { amount: rentalLabel })}</p>
+          {availabilityLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryAvailability', { quantity: availabilityLabel })}</p>
+          ) : null}
+          {activeRentalsLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryActiveRentals', { quantity: activeRentalsLabel })}</p>
+          ) : null}
+          {safetyLabel ? (
+            <p className="mt-1">{t('businessFront.inventorySafetyStock', { quantity: safetyLabel })}</p>
+          ) : null}
+          {item.depositAmount != null ? (
+            <p className="mt-1">
+              {t('businessFront.inventoryDeposit', {
+                amount: format.currency(item.depositAmount, {
+                  currency: item.depositCurrency || item.rentalRateCurrency || 'GBP',
+                  maximumFractionDigits: 0
+                })
+              })}
+            </p>
+          ) : null}
+        </div>
       ) : null}
+      <div className="grid gap-1 text-xs text-slate-500">
+        {locationLabel ? <p>{locationLabel}</p> : null}
+        {nextMaintenanceLabel ? <p>{t('businessFront.inventoryNextService', { date: nextMaintenanceLabel })}</p> : null}
+        {activeAlertsLabel ? <p>{t('businessFront.inventoryActiveAlerts', { quantity: activeAlertsLabel })}</p> : null}
+      </div>
       {item.sku ? <p className="text-xs text-slate-400">SKU: {item.sku}</p> : null}
+      {notesLabel ? <p className="text-xs italic text-slate-500">{notesLabel}</p> : null}
     </article>
   );
 }
@@ -336,11 +400,23 @@ InventoryCard.propTypes = {
     name: PropTypes.string.isRequired,
     category: PropTypes.string,
     quantityOnHand: PropTypes.number,
+    quantityReserved: PropTypes.number,
+    availability: PropTypes.number,
+    safetyStock: PropTypes.number,
     unitType: PropTypes.string,
     sku: PropTypes.string,
     image: PropTypes.string,
     rentalRate: PropTypes.number,
-    rentalRateCurrency: PropTypes.string
+    rentalRateCurrency: PropTypes.string,
+    status: PropTypes.string,
+    location: PropTypes.string,
+    nextMaintenanceDue: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    notes: PropTypes.string,
+    activeAlerts: PropTypes.number,
+    alertSeverity: PropTypes.string,
+    activeRentals: PropTypes.number,
+    depositAmount: PropTypes.number,
+    depositCurrency: PropTypes.string
   }).isRequired,
   variant: PropTypes.oneOf(['materials', 'tools']).isRequired
 };
@@ -402,6 +478,7 @@ export default function BusinessFront() {
   const tools = state.data?.tools ?? [];
   const servicemen = state.data?.servicemen ?? [];
   const serviceZones = state.data?.serviceZones ?? [];
+  const inventorySummary = state.data?.inventorySummary ?? null;
   const conciergeHeading = hero?.name
     ? t('businessFront.supportHeadline', { name: hero.name })
     : t('businessFront.supportFallbackHeadline');
@@ -737,6 +814,47 @@ export default function BusinessFront() {
               {t('businessFront.inventoryHeadline')}
             </h2>
           </header>
+          {inventorySummary ? (
+            <dl className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryAvailable')}
+                </dt>
+                <dd className="mt-2 text-xl font-semibold text-primary">
+                  {format.number(inventorySummary.available ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {t('businessFront.inventorySummarySkuCount', { count: format.number(inventorySummary.skuCount ?? 0) })}
+                </dd>
+              </div>
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryReserved')}
+                </dt>
+                <dd className="mt-2 text-xl font-semibold text-primary">
+                  {format.number(inventorySummary.reserved ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {t('businessFront.inventorySummaryOnHand', { count: format.number(inventorySummary.onHand ?? 0) })}
+                </dd>
+              </div>
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryAlerts')}
+                </dt>
+                <dd className={`mt-2 text-xl font-semibold ${
+                  (inventorySummary.alerts ?? 0) > 0 ? 'text-rose-600' : 'text-primary'
+                }`}>
+                  {format.number(inventorySummary.alerts ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {(inventorySummary.alerts ?? 0) > 0
+                    ? t('businessFront.inventorySummaryAlertsAction')
+                    : t('businessFront.inventorySummaryAlertsClear')}
+                </dd>
+              </div>
+            </dl>
+          ) : null}
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
