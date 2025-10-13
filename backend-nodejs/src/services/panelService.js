@@ -53,7 +53,7 @@ function toSlug(input, fallback) {
   return fallback;
 }
 
-async function resolveCompanyId(companyId) {
+export async function resolveCompanyId(companyId) {
   if (companyId) {
     const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
     if (exists) {

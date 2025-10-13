@@ -121,8 +121,11 @@ describe('RoleDashboard', () => {
       expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
     );
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
+    const resolvedTimezone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/London';
     expect(screen.getByText('Download CSV')).toHaveAttribute(
       'href',
+      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(resolvedTimezone)}`
       '/api/analytics/dashboards/admin/export?timezone=UTC'
     );
   });
@@ -141,6 +144,9 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
+    await waitFor(() =>
+      expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
+    );
     const retryButton = await screen.findByRole('button', { name: /try again/i });
     expect(retryButton).toBeInTheDocument();
 
@@ -149,6 +155,10 @@ describe('RoleDashboard', () => {
       json: async () => dashboardFixture
     });
 
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
+    );
     fireEvent.click(retryButton);
     await screen.findByRole('heading', { name: 'Executive Overview' });
   });
