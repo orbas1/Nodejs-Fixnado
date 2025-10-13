@@ -288,9 +288,9 @@ const DashboardLayout = ({
   }
 
   return (
-    <div className="min-h-screen bg-secondary text-slate-900 flex">
-      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-primary/10 bg-white">
-        <div className="p-8 border-b border-primary/10">
+    <div className="min-h-screen flex bg-gradient-to-br from-white via-secondary/40 to-white text-primary">
+      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-slate-200 bg-white/95 backdrop-blur">
+        <div className="p-8 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <Bars3BottomLeftIcon className="h-8 w-8 text-accent" />
             <div>
@@ -327,8 +327,8 @@ const DashboardLayout = ({
                 onClick={() => setSelectedSection(item.id)}
                 className={`w-full text-left rounded-xl px-4 py-3 transition-colors border ${
                   isActive
-                    ? 'bg-accent/10 border-accent/40 text-accent'
-                    : 'bg-white border-primary/10 text-slate-600 hover:bg-secondary hover:text-primary'
+                    ? 'bg-accent/10 border-accent/50 text-accent'
+                    : 'bg-white/80 border-transparent text-primary/70 hover:bg-white hover:border-accent/30 hover:text-primary'
                 }`}
               >
                 <p className="text-sm font-semibold">{item.label}</p>
@@ -348,7 +348,7 @@ const DashboardLayout = ({
       </aside>
 
       <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-primary/10 bg-white/95 backdrop-blur px-6 py-6">
+        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur px-6 py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
@@ -358,54 +358,51 @@ const DashboardLayout = ({
               )}
               <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
             </div>
-            <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
-              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-                <div className="relative w-full sm:w-72 lg:w-80">
-                  <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search jobs, orders, analytics, automations..."
-                    className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                  {searchResults.length > 0 && (
-                    <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-slate-200 bg-white shadow-xl">
-                      <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                        {searchResults.map((result) => (
-                          <li key={result.id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedSection(result.targetSection);
-                                setSearchQuery('');
-                                setSearchResults([]);
-                              }}
-                              className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-100"
-                            >
-                              <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                                {resultBadge[result.type] ?? 'Result'}
-                              </span>
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-slate-900">{result.label}</p>
-                                <p className="text-xs text-slate-500">{result.description}</p>
-                              </div>
-                              <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                {filters ? <div className="sm:w-auto">{filters}</div> : null}
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <div className="relative w-full sm:w-80">
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search jobs, orders, analytics, automations..."
+                  className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                {searchResults.length > 0 && (
+                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-slate-200 bg-white shadow-xl">
+                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                      {searchResults.map((result) => (
+                        <li key={result.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSection(result.targetSection);
+                              setSearchQuery('');
+                              setSearchResults([]);
+                            }}
+                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary/60"
+                          >
+                            <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                              {resultBadge[result.type] ?? 'Result'}
+                            </span>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-primary">{result.label}</p>
+                              <p className="text-xs text-slate-500">{result.description}</p>
+                            </div>
+                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 sm:self-end">
                 <button
                   type="button"
                   onClick={onRefresh}
                   disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
                 </button>

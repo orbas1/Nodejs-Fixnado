@@ -28,6 +28,16 @@ function getStorage() {
   }
 }
 
+function toQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null || value === '') return;
+    searchParams.append(key, value);
+  });
+  const result = searchParams.toString();
+  return result ? `?${result}` : '';
+}
+
 function storageKey(key) {
   return `${CACHE_NAMESPACE}:${key}`;
 }
@@ -899,11 +909,37 @@ function withFallback(normaliser, fallback, fetcherFactory) {
   return async function handler(options = {}) {
     try {
       const { data, meta } = await fetcherFactory(options);
-      const normalised = normaliser(data);
-      if (meta.fromCache && meta.stale) {
-        return { data: normalised, meta: { ...meta, fallback: true } };
+      let payloadMeta;
+      let payloadData = data;
+
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        ({ meta: payloadMeta, ...payloadData } = data);
       }
-      return { data: normalised, meta };
+
+      const normalised = normaliser(payloadData);
+      const responseMeta = { ...(meta ?? {}) };
+
+      if (payloadMeta && typeof payloadMeta === 'object') {
+        responseMeta.payload = payloadMeta;
+        if (payloadMeta.fallback) {
+          responseMeta.fallback = true;
+        }
+        if (payloadMeta.sections) {
+          responseMeta.sections = payloadMeta.sections;
+        }
+        if (payloadMeta.reason) {
+          responseMeta.reason = payloadMeta.reason;
+        }
+      }
+
+      if (responseMeta.fromCache && responseMeta.stale) {
+        responseMeta.fallback = true;
+      }
+
+      return {
+        data: normalised,
+        meta: Object.keys(responseMeta).length > 0 ? responseMeta : undefined
+      };
     } catch (error) {
       if (error instanceof PanelApiError) {
         console.warn('[panelClient] falling back to cached payload', error);
@@ -952,13 +988,19 @@ export const getProviderDashboard = withFallback(
 export const getEnterprisePanel = withFallback(
   normaliseEnterprisePanel,
   enterpriseFallback,
-  (options = {}) =>
-    request('/panel/enterprise/overview', {
-      cacheKey: 'enterprise-panel',
+  (options = {}) => {
+    const query = toQueryString({
+      companyId: options?.companyId,
+      timezone: options?.timezone
+    });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/enterprise/overview${query}`, {
+      cacheKey: `enterprise-panel${cacheKeySuffix}`,
       ttl: 30000,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
-    })
+    });
+  }
 );
 
 const businessFrontFetcher = withFallback(
