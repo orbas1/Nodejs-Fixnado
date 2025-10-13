@@ -175,7 +175,7 @@
 - **Subtasks:**
   1. ✅ Backfill controller coverage for bookings/rentals ensuring cached refresh vs live fetch parity, offline banner messaging, and lifecycle actions align with drawings.
   2. ✅ Document rental creation time selection + UTC persistence within design artefacts to close pre-update evaluation gaps.
-  3. 🚧 Extend parity tests to enterprise/provider dashboard widgets once chat + business fronts land (blocked by Subtask 4.4 backlog).
+  3. ✅ Extended parity coverage to analytics dashboards: Flutter `AnalyticsDashboardScreen` now mirrors web widgets (metrics, insight rails, workflow boards) with timezone/export treatments and controller tests referencing `App_screens_drawings.md` + `dashboard_drawings.md`.
   4. 🚧 Capture device farm/performance benchmarks for offline-first caching before Milestone M4 exit.
   5. 🚧 Update Flutter design QA checklist with chat/notification entry points once Task 4.3 comms stack integrations are prototyped.
 
