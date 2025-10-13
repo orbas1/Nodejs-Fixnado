@@ -48,15 +48,15 @@ const GridSection = ({ section }) => {
         {cards.map((card) => (
           <div
             key={card.title}
-            className={`rounded-2xl border border-primary/10 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-sm`}
+            className={`rounded-2xl border border-accent/10 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-md`}
           >
             <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               {(card.details ?? []).map((detail) => (
                 <li key={detail} className="flex items-start gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-accent/60" />
-                <span>{detail}</span>
-              </li>
+                    <span className="mt-1 h-2 w-2 rounded-full bg-accent/70" />
+                  <span>{detail}</span>
+                </li>
               ))}
             </ul>
           </div>
@@ -89,20 +89,20 @@ const BoardSection = ({ section }) => {
       <SectionHeader section={section} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {columns.map((column) => (
-          <div key={column.title} className="bg-white/95 border border-primary/10 rounded-2xl p-4 space-y-4 shadow-sm">
+          <div key={column.title} className="bg-white border border-accent/10 rounded-2xl p-4 space-y-4 shadow-md">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary/70">{column.title}</h3>
-            <span className="text-xs text-primary/50">{column.items?.length ?? 0} items</span>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">{column.title}</h3>
+              <span className="text-xs text-slate-500">{column.items?.length ?? 0} items</span>
             </div>
             <div className="space-y-4">
-            {(column.items ?? []).map((item) => (
-              <div key={item.title} className="rounded-xl border border-primary/10 bg-secondary p-4 space-y-2">
-                <p className="font-medium text-primary">{item.title}</p>
-                {item.owner && <p className="text-sm text-slate-600">{item.owner}</p>}
-                {item.value && <p className="text-sm text-accent font-semibold">{item.value}</p>}
-                {item.eta && <p className="text-xs text-primary/60">{item.eta}</p>}
-              </div>
-            ))}
+              {(column.items ?? []).map((item) => (
+                <div key={item.title} className="rounded-xl border border-accent/10 bg-secondary p-4 space-y-2">
+                  <p className="font-medium text-primary">{item.title}</p>
+                  {item.owner && <p className="text-sm text-slate-600">{item.owner}</p>}
+                  {item.value && <p className="text-sm text-accent font-semibold">{item.value}</p>}
+                  {item.eta && <p className="text-xs text-slate-500">{item.eta}</p>}
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -139,26 +139,26 @@ const TableSection = ({ section }) => {
   return (
     <div>
       <SectionHeader section={section} />
-      <div className="overflow-hidden rounded-2xl border border-primary/10 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-primary/10 text-sm">
-          <thead className="bg-secondary text-primary/70">
+      <div className="overflow-hidden rounded-2xl border border-accent/10 bg-white shadow-md">
+        <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <thead className="bg-secondary text-primary">
             <tr>
               {headers.map((header) => (
-              <th key={header} className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-xs">
-                {header}
-              </th>
+                <th key={header} className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-xs">
+                  {header}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-primary/10 text-slate-700">
             {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="hover:bg-secondary">
-              {row.map((value, cellIndex) => (
-                <td key={cellIndex} className="px-4 py-3 align-top">
-                  {value}
-                </td>
-              ))}
-            </tr>
+              <tr key={rowIndex} className="hover:bg-secondary/70">
+                {row.map((value, cellIndex) => (
+                  <td key={cellIndex} className="px-4 py-3 align-top">
+                    {value}
+                  </td>
+                ))}
+              </tr>
             ))}
           </tbody>
         </table>
@@ -185,7 +185,7 @@ const ListSection = ({ section }) => {
       <SectionHeader section={section} />
       <div className="space-y-4">
         {items.map((item) => (
-          <div key={item.title} className="rounded-2xl border border-primary/10 bg-white/95 p-5 shadow-sm">
+          <div key={item.title} className="rounded-2xl border border-accent/10 bg-white p-5 shadow-md">
             <div className="flex flex-col gap-1">
               <p className="text-base font-semibold text-primary">{item.title}</p>
               <p className="text-sm text-slate-600">{item.description}</p>
@@ -214,6 +214,93 @@ ListSection.propTypes = {
   }).isRequired
 };
 
+const SettingsSection = ({ section }) => {
+  const panels = section.data?.panels ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="space-y-6">
+        {panels.map((panel) => (
+          <div
+            key={panel.id ?? panel.title}
+            className="rounded-2xl border border-accent/10 bg-white p-6 shadow-md"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-primary">{panel.title}</h3>
+                {panel.description && <p className="mt-1 text-sm text-slate-600">{panel.description}</p>}
+              </div>
+              {panel.status && (
+                <span className="mt-1 inline-flex h-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {panel.status}
+                </span>
+              )}
+            </div>
+            <ul className="mt-4 divide-y divide-slate-200">
+              {(panel.items ?? []).map((item) => (
+                <li
+                  key={item.id ?? item.label}
+                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-primary">{item.label}</p>
+                    {item.helper && <p className="text-sm text-slate-500">{item.helper}</p>}
+                  </div>
+                  <div className="flex flex-col items-start gap-1 text-sm font-medium text-primary sm:items-end">
+                    {item.type === 'toggle' ? (
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                          item.enabled
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                            : 'border-slate-200 bg-slate-50 text-slate-500'
+                        }`}
+                      >
+                        <span className={`h-2 w-2 rounded-full ${item.enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                        {item.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-slate-600 sm:text-base">{String(item.value ?? '—')}</span>
+                    )}
+                    {item.meta && <span className="text-xs text-slate-400">{item.meta}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+SettingsSection.propTypes = {
+  section: PropTypes.shape({
+    label: PropTypes.string,
+    description: PropTypes.string,
+    data: PropTypes.shape({
+      panels: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          title: PropTypes.string.isRequired,
+          description: PropTypes.string,
+          status: PropTypes.string,
+          items: PropTypes.arrayOf(
+            PropTypes.shape({
+              id: PropTypes.string,
+              label: PropTypes.string.isRequired,
+              helper: PropTypes.string,
+              type: PropTypes.oneOf(['toggle', 'value']).isRequired,
+              enabled: PropTypes.bool,
+              value: PropTypes.string,
+              meta: PropTypes.string
+            })
+          ).isRequired
+        })
+      ).isRequired
+    }).isRequired
+  }).isRequired
+};
+
 const DashboardSection = ({ section }) => {
   switch (section.type) {
     case 'grid':
@@ -224,6 +311,8 @@ const DashboardSection = ({ section }) => {
       return <TableSection section={section} />;
     case 'list':
       return <ListSection section={section} />;
+    case 'settings':
+      return <SettingsSection section={section} />;
     default:
       return null;
   }

@@ -147,6 +147,10 @@ const config = {
         companyId: process.env.DASHBOARDS_PROVIDER_COMPANY_ID || null,
         providerId: process.env.DASHBOARDS_PROVIDER_PROVIDER_ID || null
       },
+      user: {
+        userId: process.env.DASHBOARDS_USER_USER_ID || null,
+        companyId: process.env.DASHBOARDS_USER_COMPANY_ID || null
+      },
       serviceman: {
         providerId: process.env.DASHBOARDS_SERVICEMAN_PROVIDER_ID || null
       },
