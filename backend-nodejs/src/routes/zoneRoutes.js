@@ -7,6 +7,9 @@ import {
   getZoneHandler,
   createZoneSnapshotHandler,
   importZonesHandler,
+  listZoneServicesHandler,
+  syncZoneServicesHandler,
+  removeZoneServiceHandler
   matchGeoZoneHandler,
   previewCoverageHandler
 } from '../controllers/zoneController.js';
@@ -23,5 +26,8 @@ router.get('/:zoneId', getZoneHandler);
 router.put('/:zoneId', updateZoneHandler);
 router.delete('/:zoneId', deleteZoneHandler);
 router.post('/:zoneId/analytics/snapshot', createZoneSnapshotHandler);
+router.get('/:zoneId/services', listZoneServicesHandler);
+router.post('/:zoneId/services', syncZoneServicesHandler);
+router.delete('/:zoneId/services/:coverageId', removeZoneServiceHandler);
 
 export default router;

@@ -44,3 +44,7 @@
 - Exercised `getPersonaDashboard` to confirm resolved window metadata (start/end ISO strings, timezone labels) and export hrefs populate correctly after staging validation; ensured unsupported persona requests continue to return 404 without leaking stack traces.【F:backend-nodejs/src/controllers/analyticsDashboardController.js†L1-L63】
 - Verified `exportPersonaDashboard` streams CSV content with deterministic filenames and metadata headers while sharing validation semantics with the JSON endpoint; row limits reflect app config and throw 422 for invalid parameters.【F:backend-nodejs/src/controllers/analyticsDashboardController.js†L64-L105】
 - Logged backlog item to replace Vitest spinner reporter noise with CI-friendly output so controller regression logs remain reviewable by QA and auditors.【3d3b31†L1-L38】
+
+## 2025-10-31 — Zone Controller Coverage Management
+- Extended `zoneController.js` with coverage handlers (`listZoneServicesHandler`, `syncZoneServicesHandler`, `removeZoneServiceHandler`) returning enriched coverage arrays and mapping domain errors to 400/404/409 responses. Handlers forward actor metadata to analytics service and support replace semantics for transactional detach flows.【F:backend-nodejs/src/controllers/zoneController.js†L1-L154】
+- Coverage sync enforces company ownership, validates payload shapes, and returns the refreshed coverage list so React/Flutter panels can hydrate service tiles deterministically.【F:backend-nodejs/src/controllers/zoneController.js†L78-L120】

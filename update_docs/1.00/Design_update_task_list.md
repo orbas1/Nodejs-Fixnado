@@ -201,6 +201,16 @@
   4. ✅ Capture Agora session launch UX, hardware permissions, lobby timers, and PSTN fallback interactions across web (`Function Design.md`) and Flutter (`Screens_Update_Logic_Flow.md`, communications controller tests) ensuring cross-channel parity and resilience.
   5. ✅ Catalogue telemetry, accessibility, and QA selectors (`communications.thread.view`, `communications.message.send`, aria-live announcements, focus traps, `data-qa` hooks) within design artefacts and progress tracker so automation, analytics, and support tooling validate communications behaviour end-to-end.
 
+## Task 19 — Geo-Zonal & Booking Experience Alignment *(Status: ✅ Complete — 2025-02-10)*
+- **Delivery Owner:** Geo-Zone Product Designer with Booking PM, Backend Lead, and Analytics Designer partnership.
+- **Evidence:** Backend delivery (`backend-nodejs/src/services/zoneService.js`, `services/bookingService.js`, `services/financeService.js`, associated controllers/routes/models/tests), updated drawings (`website_drawings.md`, `dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`), and refreshed design artefacts (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Design_Plan.md` Section 38, `Design_Change_log.md` Section 15, `Design_update_progress_tracker.md`).
+- **Subtasks:**
+  1. ✅ Update explorer overlays and zone insight panels with centroid, bounds, demand tiers, SLA breach banners, and analytics snapshot callouts mapped to `/api/zones?includeAnalytics=true` payloads.
+  2. ✅ Detail booking orchestrator journeys (on-demand vs scheduled, multi-serviceman assignment, SLA timers, escalation prompts) across admin/provider/mobile flows with telemetry IDs and QA selectors aligned to `/api/bookings` responses.
+  3. ✅ Document bidding comments, revision history, and dispute escalation drawers with compliance copy, attachment validation, quiet-hour messaging, and analytics hooks (`booking.bid.submit`, `booking.dispute.raise`) for React/Flutter parity.
+  4. ✅ Surface finance disclosures—commission, tax, discounts, multi-currency—to finance/reconciliation panels with copy decks, exchange rate tooltips, and CTA flows referencing `financeService` metadata and reconciliation runbooks.
+  5. ✅ Record analytics governance tables, accessibility guidance (aria-live SLA timers, keyboard travel), and QA selectors inside design artefacts so automation, dashboards, and audits stay aligned with the production booking + zone services.
+
 ## Task 19 — Business Front & Role Dashboard Integration *(Status: ✅ Complete — 2025-10-23 — Cache resilience refreshed 2025-10-25)*
 - **Delivery Owner:** Experience Platform UX Lead with Frontend Tech Lead, Provider Success Strategist, and Enterprise Ops partnership.
 - **Evidence:** `frontend-reactjs/src/App.jsx`, `components/Header.jsx`, `pages/BusinessFront.jsx`, `ProviderDashboard.jsx`, `EnterprisePanel.jsx`, updated panel API client (`src/api/panelClient.js`), drawings (`website_drawings.md`, `dashboard_drawings.md`, `menu_drawings.md`, `App_screens_drawings.md`), and refreshed documentation (`Design_Plan.md`, `Design_Change_log.md`, `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`). 2025-10-25 addendum captures cache-aware fallback banners, concierge storytelling, and QA selectors ensuring `/providers/:slug` renders during outages.
