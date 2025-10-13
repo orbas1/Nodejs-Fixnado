@@ -35,14 +35,14 @@ function formatRelativeTime(timestamp) {
 function ConversationList({ conversations, activeConversationId, onSelect }) {
   if (!conversations.length) {
     return (
-      <div className="p-4 text-sm text-slate-400">
+      <div className="p-4 text-sm text-slate-500">
         No conversations yet. Start a chat from a booking, rental, or campaign record to see it listed here.
       </div>
     );
   }
 
   return (
-    <ul className="divide-y divide-slate-800/40">
+    <ul className="divide-y divide-slate-200">
       {conversations.map((conversation) => {
         const participantSummary = conversation.participants
           .filter((participant) => participant.role !== 'ai_assistant')
@@ -55,34 +55,34 @@ function ConversationList({ conversations, activeConversationId, onSelect }) {
               type="button"
               onClick={() => onSelect(conversation.id)}
               className={clsx(
-                'w-full text-left px-4 py-3 transition-colors duration-150',
+                'w-full text-left px-5 py-4 transition-colors duration-150 rounded-xl',
                 activeConversationId === conversation.id
-                  ? 'bg-slate-800/70 border-l-4 border-emerald-400 text-white'
-                  : 'hover:bg-slate-800/40 text-slate-200'
+                  ? 'bg-sky-50 border border-sky-200 text-slate-900 shadow-sm'
+                  : 'hover:bg-slate-50 text-slate-700'
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-sm truncate" title={conversation.subject}>
+                <p className="truncate text-sm font-semibold" title={conversation.subject}>
                   {conversation.subject}
                 </p>
-                <span className="text-xs text-slate-400">{formatRelativeTime(latestMessage?.createdAt)}</span>
+                <span className="text-xs text-slate-500">{formatRelativeTime(latestMessage?.createdAt)}</span>
               </div>
-              <p className="mt-1 text-xs text-slate-400 truncate" title={participantSummary}>
+              <p className="mt-1 truncate text-xs text-slate-500" title={participantSummary}>
                 {participantSummary}
               </p>
               {latestMessage?.body ? (
-                <p className="mt-1 text-xs text-slate-500 truncate" title={latestMessage.body}>
+                <p className="mt-2 truncate text-xs text-slate-500" title={latestMessage.body}>
                   {latestMessage.messageType === 'assistant' ? 'Assistant • ' : ''}
                   {latestMessage.body}
                 </p>
               ) : null}
-              <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-emerald-300">
-                {conversation.aiAssistDefault ? <span className="uppercase tracking-wide">AI Assist</span> : null}
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em] text-sky-600">
+                {conversation.aiAssistDefault ? <span>AI Assist</span> : null}
                 {conversation.metadata?.bookingId ? (
-                  <span className="uppercase tracking-wide">Booking #{conversation.metadata.bookingId}</span>
+                  <span>Booking #{conversation.metadata.bookingId}</span>
                 ) : null}
                 {conversation.metadata?.priority ? (
-                  <span className="uppercase tracking-wide">{conversation.metadata.priority}</span>
+                  <span>{conversation.metadata.priority}</span>
                 ) : null}
               </div>
             </button>
