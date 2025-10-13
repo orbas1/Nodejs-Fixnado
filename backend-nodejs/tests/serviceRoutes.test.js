@@ -3,7 +3,15 @@ import jwt from 'jsonwebtoken';
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
-const { sequelize, User, Service, Order, Escrow } = await import('../src/models/index.js');
+const {
+  sequelize,
+  User,
+  Service,
+  Order,
+  Escrow,
+  Company,
+  ServiceZone
+} = await import('../src/models/index.js');
 
 function createToken(userId) {
   return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -33,6 +41,15 @@ describe('POST /api/services', () => {
       type: 'servicemen'
     });
 
+    await Company.create({
+      userId: provider.id,
+      legalStructure: 'limited',
+      contactName: 'Alex Griffin',
+      contactEmail: 'ops@griffin-services.test',
+      serviceRegions: 'London, Manchester',
+      verified: true
+    });
+
     const response = await request(app)
       .post('/api/services')
       .set('Authorization', `Bearer ${createToken(provider.id)}`)
@@ -51,9 +68,12 @@ describe('POST /api/services', () => {
       currency: 'GBP'
     });
 
+    expect(response.body.companyId).toBeTruthy();
+
     const stored = await Service.findByPk(response.body.id);
     expect(stored).not.toBeNull();
     expect(stored.providerId).toEqual(provider.id);
+    expect(stored.companyId).toEqual(response.body.companyId);
   });
 
   it('rejects authenticated users without provider permissions', async () => {
@@ -86,6 +106,15 @@ describe('POST /api/services/:id/purchase', () => {
       type: 'servicemen'
     });
 
+    const company = await Company.create({
+      userId: provider.id,
+      legalStructure: 'limited',
+      contactName: 'Kai Jordan',
+      contactEmail: 'kai@hvac-pro.test',
+      serviceRegions: 'London',
+      verified: true
+    });
+
     const buyer = await User.create({
       firstName: 'Morgan',
       lastName: 'Stone',
@@ -94,8 +123,19 @@ describe('POST /api/services/:id/purchase', () => {
       type: 'user'
     });
 
+    const zone = await ServiceZone.create({
+      companyId: company.id,
+      name: 'Central London',
+      boundary: { type: 'Polygon', coordinates: [] },
+      centroid: { type: 'Point', coordinates: [0, 0] },
+      boundingBox: { west: 0, east: 0, north: 0, south: 0 },
+      metadata: { code: 'central' },
+      demandLevel: 'high'
+    });
+
     const service = await Service.create({
       providerId: provider.id,
+      companyId: company.id,
       title: 'Commercial HVAC diagnostics',
       description: 'Includes load calculations and uptime risk scoring.',
       category: 'HVAC',
@@ -106,7 +146,7 @@ describe('POST /api/services/:id/purchase', () => {
     const response = await request(app)
       .post(`/api/services/${service.id}/purchase`)
       .set('Authorization', `Bearer ${createToken(buyer.id)}`)
-      .send({ scheduledFor: new Date().toISOString() })
+      .send({ zoneId: zone.id, bookingType: 'scheduled', scheduledStart: new Date(Date.now() + 3600_000).toISOString(), scheduledEnd: new Date(Date.now() + 7200_000).toISOString() })
       .expect(201);
 
     expect(response.body.order).toMatchObject({
@@ -118,6 +158,12 @@ describe('POST /api/services/:id/purchase', () => {
     expect(response.body.escrow).toMatchObject({
       orderId: response.body.order.id,
       status: 'funded'
+    });
+
+    expect(response.body.booking).toMatchObject({
+      companyId: company.id,
+      zoneId: zone.id,
+      meta: expect.objectContaining({ serviceId: service.id, orderId: response.body.order.id })
     });
 
     const orderRecord = await Order.findByPk(response.body.order.id, { include: Escrow });
@@ -134,6 +180,15 @@ describe('POST /api/services/:id/purchase', () => {
       type: 'servicemen'
     });
 
+    const company = await Company.create({
+      userId: provider.id,
+      legalStructure: 'limited',
+      contactName: 'Olivia Chen',
+      contactEmail: 'olivia@elevate.test',
+      serviceRegions: 'London',
+      verified: true
+    });
+
     const buyer = await User.create({
       firstName: 'Harper',
       lastName: 'Cole',
@@ -142,8 +197,19 @@ describe('POST /api/services/:id/purchase', () => {
       type: 'user'
     });
 
+    const zone = await ServiceZone.create({
+      companyId: company.id,
+      name: 'Southbank',
+      boundary: { type: 'Polygon', coordinates: [] },
+      centroid: { type: 'Point', coordinates: [0, 0] },
+      boundingBox: { west: 0, east: 0, north: 0, south: 0 },
+      metadata: { code: 'southbank' },
+      demandLevel: 'medium'
+    });
+
     const service = await Service.create({
       providerId: provider.id,
+      companyId: company.id,
       title: 'High-risk electrical remediation',
       description: 'Deploy NICEIC-certified engineer with surge remediation plan.',
       category: 'Electrical',
@@ -156,7 +222,7 @@ describe('POST /api/services/:id/purchase', () => {
     const response = await request(app)
       .post(`/api/services/${service.id}/purchase`)
       .set('Authorization', `Bearer ${createToken(buyer.id)}`)
-      .send({})
+      .send({ zoneId: zone.id })
       .expect(500);
 
     expect(response.body).toMatchObject({ message: 'Internal server error' });
