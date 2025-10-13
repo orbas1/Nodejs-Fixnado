@@ -83,7 +83,7 @@
 - **Target Window:** Weeks 8–12
 - **Objective:** Complete data products, governance artefacts, and compliance validation.
 - **Tasks:**
-  - **Task 5A — Analytics & Alerting Delivery (38% complete)**
+  - **Task 5A — Analytics & Alerting Delivery (55% complete)**
     1. Finalise unified event schema across zones, bookings, rentals, disputes, ads, and comms.
     2. Update ETL/ELT pipelines with GDPR-compliant retention and anonymisation.
     3. Build persona dashboards and exports for admin, provider, servicemen, and enterprise personas.
@@ -93,6 +93,7 @@
     *2025-10-28 update:* Subtask 5A.2 (5.2c rollout) now provides production pause/resume controls, control caching, and auditable run history. `analyticsPipelineService` mediates Secrets Manager toggles while `AnalyticsPipelineRun` records batch metrics, purge totals, and failure streaks surfaced through the new `/api/analytics/pipeline` endpoints. Documentation, database updates, design artefacts, and test plan entries capture dashboard widgets, runbook copy, and rollback governance so Milestone M5 advances toward analytics dashboard delivery.
     *2025-10-29 update:* Subtask 5A.3 persona dashboards & CSV export APIs are live. Backend service/controller/routes aggregate bookings, rentals, campaigns, fraud, compliance, and communications telemetry per persona with CSV serialization and Supertest coverage; React `RoleDashboard.jsx` hydrates live payloads with retry/offline handling, export CTA, localisation, and Vitest assertions. Documentation, design artefacts, trackers, and test plan capture persona layouts, telemetry IDs, accessibility/localisation rules, and Looker ingestion hooks; remaining scope focuses on enterprise drill-down insights, mobile parity, and extended export QA.
     *2025-10-31 update:* Feature toggle gating now wraps persona dashboards via `FeatureToggleProvider.jsx` + `DashboardAccessGate.jsx`, exposing toggle summary metadata, pilot request workflow, and refresh CTA tied to Secrets Manager manifests. Vitest coverage asserts gated states, and documentation/test plan call out telemetry + ops runbook references so analytics cohorts can be rolled out incrementally without manual interventions.
+    *2025-11-02 update:* Flutter `AnalyticsDashboardScreen` reaches parity with web persona dashboards, rendering overview metrics, charts, rental tables, and workflow boards via cached Riverpod controller and timezone-aware repository. CSV export automation now stores metadata for mobile governance while controller tests cover refresh/offline/export paths; design artefacts and trackers updated to document mobile layouts, chart treatments, and accessibility copy.
   - **Task 5B — Compliance Validation Sprint (7% complete)**
     1. Execute GDPR, insurance/DBS, HMRC, and advertising compliance walkthroughs.
     2. Validate audit logs, retention schedules, and consent records across services.
