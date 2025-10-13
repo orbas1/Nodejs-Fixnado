@@ -80,6 +80,64 @@ const config = {
       scheduled: 240
     })
   },
+  subscriptions: {
+    enabled: process.env.SUBSCRIPTIONS_ENABLED !== 'false',
+    enforceFeatures: process.env.SUBSCRIPTIONS_ENFORCE_FEATURES !== 'false',
+    defaultTier: process.env.SUBSCRIPTIONS_DEFAULT_TIER || 'standard',
+    restrictedFeatures: jsonFromEnv('SUBSCRIPTIONS_RESTRICTED_FEATURES', [
+      'advanced-analytics',
+      'campaigns',
+      'priority-support'
+    ]),
+    tiers: jsonFromEnv('SUBSCRIPTIONS_DEFAULT_TIERS', [
+      {
+        id: 'standard',
+        label: 'Standard',
+        description: 'Core marketplace tools with baseline analytics.',
+        features: ['core-marketplace', 'basic-analytics']
+      },
+      {
+        id: 'growth',
+        label: 'Growth',
+        description: 'Unlock campaigns, advanced reporting, and premium support.',
+        features: ['core-marketplace', 'advanced-analytics', 'campaigns', 'priority-support']
+      }
+    ])
+  },
+  integrations: {
+    stripe: {
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+      secretKey: process.env.STRIPE_SECRET_KEY || '',
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+      accountId: process.env.STRIPE_ACCOUNT_ID || ''
+    },
+    escrow: {
+      apiKey: process.env.ESCROW_API_KEY || '',
+      apiSecret: process.env.ESCROW_API_SECRET || '',
+      environment: process.env.ESCROW_ENVIRONMENT || 'sandbox'
+    },
+    smtp: {
+      host: process.env.SMTP_HOST || '',
+      port: intFromEnv('SMTP_PORT', 587),
+      username: process.env.SMTP_USERNAME || '',
+      password: process.env.SMTP_PASSWORD || '',
+      fromEmail: process.env.SMTP_FROM_EMAIL || '',
+      secure: process.env.SMTP_SECURE === 'true'
+    },
+    cloudflareR2: {
+      accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID || '',
+      accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+      bucket: process.env.CLOUDFLARE_R2_BUCKET || '',
+      publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || '',
+      endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || ''
+    },
+    app: {
+      name: process.env.APP_NAME || 'Fixnado',
+      url: process.env.APP_URL || '',
+      supportEmail: process.env.SUPPORT_EMAIL || ''
+    }
+  },
   zoneAnalytics: {
     snapshotIntervalMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_INTERVAL_MINUTES', 30), 5),
     staleBookingThresholdMinutes: Math.max(intFromEnv('ZONE_ANALYTICS_STALE_MINUTES', 120), 15)

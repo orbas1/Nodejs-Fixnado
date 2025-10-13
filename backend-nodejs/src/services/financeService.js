@@ -1,4 +1,5 @@
 import config from '../config/index.js';
+import { getCachedPlatformSettings } from './platformSettingsService.js';
 
 function normaliseCurrency(code) {
   return (code || '').toUpperCase();
@@ -65,12 +66,22 @@ export function calculateBookingTotals({
   const nativeCurrency = normaliseCurrency(currency || config.finance.defaultCurrency);
   const outputCurrency = normaliseCurrency(targetCurrency || nativeCurrency);
 
-  const commissionRate = resolveRate(config.finance.commissionRates, [
-    `${bookingType}:${demand}`,
-    bookingType,
-    demand,
-    'default'
-  ]);
+  const platformSettings = getCachedPlatformSettings();
+  const commissionSettings = platformSettings.commissions ?? {};
+  const commissionEnabled = commissionSettings.enabled !== false;
+  const commissionRates = {
+    ...(commissionSettings.customRates ?? {}),
+    ...(config.finance.commissionRates ?? {})
+  };
+  const baseCommissionRate = commissionEnabled
+    ? toNumber(commissionSettings.baseRate ?? commissionRates.default ?? 0)
+    : 0;
+
+  commissionRates.default = baseCommissionRate;
+
+  const commissionRate = commissionEnabled
+    ? resolveRate(commissionRates, [`${bookingType}:${demand}`, bookingType, demand, 'default'], baseCommissionRate)
+    : 0;
 
   const taxRate = resolveRate(
     config.finance.taxRates,

@@ -18,6 +18,7 @@ const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
@@ -61,6 +62,7 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/monetisation" element={<AdminMonetization />} />
             <Route path="/admin/theme-studio" element={<ThemeStudio />} />
             <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
             <Route path="/communications" element={<Communications />} />

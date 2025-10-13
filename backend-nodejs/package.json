@@ -9,7 +9,8 @@
     "bootstrap:postgis": "node ./scripts/bootstrap-postgis.mjs",
     "lint": "eslint .",
     "test": "cross-env NODE_ENV=test vitest run",
-    "test:watch": "cross-env NODE_ENV=test vitest --watch"
+    "test:watch": "cross-env NODE_ENV=test vitest --watch",
+    "load:test": "node ../scripts/run-load-tests.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.585.0",

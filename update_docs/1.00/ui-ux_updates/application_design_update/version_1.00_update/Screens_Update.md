@@ -89,6 +89,13 @@ All layouts described below reference a base viewport of **360 × 780 dp** (Andr
 - Each row includes message `Inter 14/20`, timestamp, CTA chip ("Review policy" 120×32dp). Fraud alerts show `Investigation ETA` badge `IBM Plex Mono 12/16`.
 - Drawer supports batch actions (Select all → `Mark as read`, `Escalate`). Batch toolbar appears when ≥1 selected; height 56dp, background `rgba(20,69,224,0.08)`.
 
+### 4.6 Performance Drill Monitor (2025-11-03)
+- **Status Cards:** Three cards 328×148dp stacked vertically showing Booking latency, Chat success, Campaign ingestion. Each card includes metric (Manrope 28/36), status badge (Healthy/Warning/Breach) using palette `#0F766E`, `#B45309`, `#B91C1C`, and last run timestamp caption `Inter 12/16`.
+- **Action Buttons:** Row of buttons `View summary` (primary 320×52dp) and `Schedule drill` (outline) separated by 12dp gap; schedule button opens modal capturing desired profile + rehearsal date/time.
+- **Drill Timeline Sheet:** Secondary sheet reveals past runs list (tiles 64dp high) with profile chip, actor initials avatar, status pill, download icon. Tapping tile opens details screen with JSON snippet, CTA `Download report` (telemetry `performance.load_drill.summary_download`).
+- **Empty/Breach States:** Empty state uses illustration 200×160dp + CTA `Schedule rehearsal`; breach state surfaces amber banner with copy "Threshold exceeded—review summary" and CTA `Notify SRE` linking to contact sheet.
+- **Accessibility & Telemetry:** SnackBar announces breaches for screen readers; ensure semantics labels for status badges. Emit telemetry `performance.load_drill.run` when refreshing, `performance.load_drill.schedule_request` when scheduling, and `performance.load_drill.summary_download` on report export.
+
 ## 5. Messaging & Support Cluster
 
 ### 5.1 Conversation List

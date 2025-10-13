@@ -75,3 +75,10 @@ This document maps user intents to the screen stack transitions. It complements 
 - Focus order resets when bottom sheet opens, ensuring first focus on header title. `Semantics` tree updated to hide background content for modal states.
 - VoiceOver gestures map to primary actions; e.g., Explore bottom sheet includes "Swipe up for full provider list" hint triggered on first open per session.
 - Large text mode triggers fallback path where segmented controls convert to dropdown menus; path documented for QA.
+
+## Performance Drill Monitor Flow (2025-11-03)
+1. From admin navigation, selecting `Performance` tab triggers parallel fetch of `/operations/performance/status` and `/operations/performance/runs` APIs.
+2. While data loads, skeleton shimmer displays; once resolved, status cards animate metrics in (200ms fade). Breach states fire SnackBar with voiceover message and haptic alert.
+3. `View summary` CTA opens modal bottom sheet; app fetches `/operations/performance/summary/:runId` if not cached and renders JSON snippet + chart. Download button triggers `performance.load_drill.summary_download` telemetry and stores file to secure storage with share sheet option.
+4. `Schedule drill` CTA opens form capturing profile (dropdown), multiplier (slider), target window (date/time pickers). Submitting posts to `/operations/performance/schedule` and shows success toast + appends placeholder run to timeline with status `Scheduled`.
+5. Pull-to-refresh or top-right refresh icon reissues status/runs requests, resets skeletons, increments analytics `performance.load_drill.run` counter, and logs error state if network fails (display offline banner + retry button).

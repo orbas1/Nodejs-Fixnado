@@ -207,6 +207,7 @@ Converge on testing, documentation, training, and go-live governance to exit wit
 
 *2025-02-08 update:* Subtask **6.1** master test plan now covers feature toggle governance (admin panel + backend service), adds Vitest/Supertest coverage targets, and codifies Flutter widget automation for flag banners to unblock CI reporting.
 *2025-02-09 update:* Subtask **6.2** automation suites now execute production Vitest API/contract coverage for service purchase + escrow flows, React ThemeProvider telemetry regression tests, and Flutter widget validation for live feed banners with chaos rollback assertions feeding CI pipelines.
+*2025-11-03 update:* Subtask **6.3** baselines performance, load, and resilience drills via the new k6 harness (`performance/k6/main.js`, `performance/profiles/baseline.json`) orchestrated through `npm run load:test`. Scenarios cover booking orchestration, chat/Agora provisioning, escrow purchases, persona analytics, and campaign telemetry with success-rate/latency thresholds, governed env validation, and summary exports for CI. Documentation (`performance/README.md`, `update_docs/1.00/test_plan.md`, `update_tests/backend_test_results.md`) and trackers log staging rehearsal guidance, required JWT/env variables, and next-step soak/soak extensions so ops can schedule repeatable drills.
 
 #### Task 6 Iteration Plan
 - **Iteration A (In progress)** — Close 6.1a–6.1c and 6.2a with shared taxonomy and fixture coverage notes. Target exit: *2025-10-31*.
