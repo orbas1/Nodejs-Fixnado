@@ -10,9 +10,14 @@ import {
   Company,
   ComplianceDocument,
   ConversationParticipant,
+  Dispute,
+  Escrow,
   InventoryAlert,
   InventoryItem,
-  RentalAgreement
+  Order,
+  RentalAgreement,
+  Service,
+  User
 } from '../models/index.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
@@ -39,7 +44,7 @@ function resolvePersona(persona) {
     return null;
   }
   const normalised = persona.trim().toLowerCase();
-  if (['admin', 'provider', 'serviceman', 'enterprise'].includes(normalised)) {
+  if (['admin', 'provider', 'serviceman', 'enterprise', 'user'].includes(normalised)) {
     return normalised;
   }
   return null;
@@ -153,6 +158,10 @@ function groupByWeek(records, accessor, window) {
 }
 
 const PERSONA_METADATA = {
+  user: {
+    name: 'User Command Center',
+    headline: 'Coordinate service orders, rentals, and support in a single workspace.'
+  },
   admin: {
     name: 'Admin Control Tower',
     headline: 'Command multi-tenant operations, compliance, and SLA performance in real time.'
@@ -178,6 +187,412 @@ async function resolveCompanyId({ companyId }) {
   }
   const fallback = await Company.findOne({ attributes: ['id'], order: [['createdAt', 'ASC']] });
   return fallback?.id ?? null;
+}
+
+async function resolveUserId({ userId }) {
+  const coerced = normaliseUuid(userId);
+  if (coerced) {
+    return coerced;
+  }
+
+  const fallback = await User.findOne({
+    where: { type: 'user' },
+    attributes: ['id'],
+    order: [['createdAt', 'ASC']]
+  });
+
+  return fallback?.id ?? null;
+}
+
+function humanise(value) {
+  if (!value) {
+    return '';
+  }
+  return value
+    .toString()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+async function loadUserData(context) {
+  const { userId, companyId, window } = context;
+
+  const bookingWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { customerId: userId } : {}),
+    ...(companyId ? { companyId } : {})
+  };
+
+  const previousBookingWhere = {
+    createdAt: asDateRange(window.previousStart, window.previousEnd),
+    ...(userId ? { customerId: userId } : {}),
+    ...(companyId ? { companyId } : {})
+  };
+
+  const orderWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { buyerId: userId } : {})
+  };
+
+  const previousOrderWhere = {
+    createdAt: asDateRange(window.previousStart, window.previousEnd),
+    ...(userId ? { buyerId: userId } : {})
+  };
+
+  const rentalWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { renterId: userId } : {})
+  };
+
+  const conversationWhere = {
+    participantType: 'user',
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { participantReferenceId: userId } : {})
+  };
+
+  const [
+    user,
+    bookings,
+    previousBookings,
+    orders,
+    previousOrders,
+    rentals,
+    disputes,
+    conversations
+  ] = await Promise.all([
+    userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
+    Booking.findAll({ where: bookingWhere }),
+    Booking.findAll({ where: previousBookingWhere }),
+    Order.findAll({
+      where: orderWhere,
+      include: [
+        { model: Service, attributes: ['title', 'category', 'currency'], required: false },
+        { model: Escrow, required: false }
+      ]
+    }),
+    Order.findAll({ where: previousOrderWhere }),
+    RentalAgreement.findAll({
+      where: rentalWhere,
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['name'],
+          required: false
+        }
+      ]
+    }),
+    Dispute.findAll({
+      where: { createdAt: asDateRange(window.start, window.end) },
+      include: [
+        {
+          model: Escrow,
+          required: true,
+          include: [
+            {
+              model: Order,
+              required: true,
+              where: orderWhere,
+              include: [{ model: Service, attributes: ['title'], required: false }]
+            }
+          ]
+        }
+      ]
+    }),
+    ConversationParticipant.findAll({ where: conversationWhere })
+  ]);
+
+  const totalBookings = bookings.length;
+  const previousTotalBookings = previousBookings.length;
+  const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
+  const previousCompletedBookings = previousBookings.filter((booking) => booking.status === 'completed').length;
+  const activeBookings = bookings.filter((booking) =>
+    ['pending', 'awaiting_assignment', 'scheduled', 'in_progress'].includes(booking.status)
+  );
+
+  const bookingsMetric = computeTrend(totalBookings, previousTotalBookings, formatNumber, ' jobs');
+
+  const completionRate = totalBookings ? completedBookings / totalBookings : 0;
+  const previousCompletionRate = previousTotalBookings ? previousCompletedBookings / previousTotalBookings : 0;
+  const completionDelta = (completionRate - previousCompletionRate) * 100;
+  const completionMetric = {
+    label: 'Completion rate',
+    value: `${(completionRate * 100).toFixed(1)}%`,
+    change:
+      previousTotalBookings > 0
+        ? `${completionDelta >= 0 ? '+' : '-'}${Math.abs(completionDelta).toFixed(1)} pts vs prev`
+        : `${formatNumber(activeBookings.length)} active jobs`,
+    trend: completionDelta > 0.1 ? 'up' : completionDelta < -0.1 ? 'down' : 'flat'
+  };
+
+  const spend = orders.reduce((sum, order) => sum + parseDecimal(order.totalAmount), 0);
+  const previousSpend = previousOrders.reduce((sum, order) => sum + parseDecimal(order.totalAmount), 0);
+  const currency = orders[0]?.currency || orders[0]?.Service?.currency || 'GBP';
+  const spendMetric = computeTrend(spend, previousSpend, (value) => formatCurrency(value, currency));
+
+  const conversationMetric = {
+    label: 'Conversations touched',
+    value: formatNumber(conversations.length),
+    change:
+      disputes.length > 0
+        ? `${formatNumber(disputes.length)} dispute${disputes.length === 1 ? '' : 's'} open`
+        : 'All clear',
+    trend: conversations.length > 0 ? 'up' : 'flat'
+  };
+
+  const now = DateTime.now().setZone(window.timezone);
+  const upcoming = bookings
+    .filter((booking) => booking.scheduledStart)
+    .filter((booking) => DateTime.fromJSDate(booking.scheduledStart).setZone(window.timezone) >= now)
+    .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart))
+    .slice(0, UPCOMING_LIMIT)
+    .map((booking) => ({
+      title: booking.meta?.title || `Booking ${booking.id.slice(0, 6).toUpperCase()}`,
+      when: DateTime.fromJSDate(booking.scheduledStart)
+        .setZone(window.timezone)
+        .toLocaleString(DateTime.DATETIME_MED_WITH_WEEKDAY),
+      status: humanise(booking.status)
+    }));
+
+  const spendBuckets = orders.reduce((acc, order) => {
+    const dateKey = DateTime.fromJSDate(order.createdAt).setZone(window.timezone).toISODate();
+    if (!dateKey) {
+      return acc;
+    }
+    const current = acc.get(dateKey) ?? 0;
+    acc.set(dateKey, current + parseDecimal(order.totalAmount));
+    return acc;
+  }, new Map());
+
+  const spendSeries = Array.from(spendBuckets.entries())
+    .sort(([a], [b]) => (a > b ? 1 : -1))
+    .map(([date, value]) => ({
+      name: DateTime.fromISO(date, { zone: window.timezone }).toFormat('dd LLL'),
+      value: Number.parseFloat(value.toFixed(2))
+    }));
+
+  const statusData = [
+    { key: 'draft', label: 'Draft' },
+    { key: 'funded', label: 'Funded' },
+    { key: 'in_progress', label: 'In delivery' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'disputed', label: 'Disputed' }
+  ].map(({ key, label }) => ({
+    name: label,
+    count: orders.filter((order) => order.status === key).length
+  }));
+
+  const escrowFunded = orders.filter((order) => order.Escrow?.status === 'funded').length;
+  const rentalsDueSoon = rentals.filter((rental) => {
+    if (!rental.returnDueAt) return false;
+    const due = DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone);
+    return due >= now && due.diff(now, 'days').days <= 3;
+  }).length;
+  const rentalsInUse = rentals.filter((rental) =>
+    ['in_use', 'pickup_scheduled', 'return_pending', 'inspection_pending'].includes(rental.status)
+  ).length;
+
+  const overview = {
+    metrics: [bookingsMetric, completionMetric, spendMetric, conversationMetric],
+    charts: [
+      {
+        id: 'bookings-volume',
+        title: 'Bookings per week',
+        description: 'New bookings placed this window.',
+        type: 'line',
+        dataKey: 'count',
+        data: groupByWeek(bookings, (booking) => booking.createdAt, window)
+      },
+      {
+        id: 'order-spend',
+        title: 'Service order spend',
+        description: 'Escrow commitments captured per day.',
+        type: 'area',
+        dataKey: 'value',
+        data: spendSeries
+      },
+      {
+        id: 'order-status-mix',
+        title: 'Order status mix',
+        description: 'Pipeline distribution across your service orders.',
+        type: 'bar',
+        dataKey: 'count',
+        data: statusData
+      }
+    ],
+    upcoming,
+    insights: [
+      `${formatNumber(activeBookings.length)} active bookings across your workspace`,
+      `${formatCurrency(spend, currency)} committed across ${formatNumber(orders.length)} service orders`,
+      `${formatNumber(escrowFunded)} funded escrow${escrowFunded === 1 ? '' : 's'} ready for delivery`,
+      rentalsDueSoon
+        ? `${formatNumber(rentalsDueSoon)} rental${rentalsDueSoon === 1 ? '' : 's'} due within 72 hours`
+        : `${formatNumber(rentalsInUse)} rental asset${rentalsInUse === 1 ? '' : 's'} currently in the field`
+    ]
+  };
+
+  const orderBoardColumns = [
+    {
+      title: 'Quotes & Drafts',
+      filter: (order) => order.status === 'draft'
+    },
+    {
+      title: 'Escrow Funded',
+      filter: (order) => order.status === 'funded'
+    },
+    {
+      title: 'In Delivery',
+      filter: (order) => order.status === 'in_progress'
+    },
+    {
+      title: 'Wrap-up & Follow-up',
+      filter: (order) => ['completed', 'disputed'].includes(order.status)
+    }
+  ].map((column) => ({
+    title: column.title,
+    items: orders
+      .filter(column.filter)
+      .slice(0, 4)
+      .map((order) => {
+        const etaLabel =
+          order.status === 'disputed'
+            ? 'Dispute in progress'
+            : order.scheduledFor
+            ? DateTime.fromJSDate(order.scheduledFor)
+                .setZone(window.timezone)
+                .toRelative({ base: window.end })
+            : 'Schedule pending';
+        return {
+          title: order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
+          owner: order.Service?.category || 'Service order',
+          value: formatCurrency(order.totalAmount, order.currency || order.Service?.currency || 'GBP'),
+          eta: etaLabel
+        };
+      })
+  }));
+
+  const rentalRows = rentals.slice(0, EXPORT_ROW_LIMIT).map((rental) => [
+    rental.rentalNumber,
+    rental.InventoryItem?.name ?? 'Asset',
+    humanise(rental.status),
+    rental.returnDueAt
+      ? DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone).toISODate()
+      : '—',
+    humanise(rental.depositStatus)
+  ]);
+
+  const accountItems = [];
+
+  if (disputes.length > 0) {
+    disputes.slice(0, 4).forEach((dispute) => {
+      const order = dispute.Escrow?.Order;
+      accountItems.push({
+        title: order?.Service?.title || 'Service dispute',
+        description: dispute.reason || 'Resolution pending with Fixnado support.',
+        status: humanise(dispute.status)
+      });
+    });
+  } else {
+    accountItems.push({
+      title: 'Escrow and disputes',
+      description: 'No disputes or chargebacks are currently open.',
+      status: 'Healthy'
+    });
+  }
+
+  if (rentalsDueSoon > 0) {
+    accountItems.push({
+      title: 'Rental returns due',
+      description: `${formatNumber(rentalsDueSoon)} rental${rentalsDueSoon === 1 ? '' : 's'} need returning within 72 hours.`,
+      status: 'Action required'
+    });
+  } else {
+    accountItems.push({
+      title: 'Rental logistics',
+      description: 'All rental equipment is within the agreed return window.',
+      status: 'On track'
+    });
+  }
+
+  if (user && !(user.twoFactorApp || user.twoFactorEmail)) {
+    accountItems.push({
+      title: 'Secure your account',
+      description: 'Enable two-factor authentication to protect bookings and escrow payouts.',
+      status: 'Recommendation'
+    });
+  } else {
+    accountItems.push({
+      title: 'Account security',
+      description: 'Multi-factor authentication is enabled for this account.',
+      status: 'Compliant'
+    });
+  }
+
+  if (conversations.length > 0) {
+    accountItems.push({
+      title: 'Support conversations',
+      description: `${formatNumber(conversations.length)} support touchpoint${conversations.length === 1 ? '' : 's'} logged this window.`,
+      status: 'In progress'
+    });
+  }
+
+  return {
+    persona: 'user',
+    name: PERSONA_METADATA.user.name,
+    headline: PERSONA_METADATA.user.headline,
+    window,
+    metadata: {
+      userId: userId ?? null,
+      companyId: companyId ?? null,
+      user: user
+        ? {
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`.trim(),
+            email: user.email
+          }
+        : null,
+      totals: {
+        bookings: totalBookings,
+        activeBookings: activeBookings.length,
+        spend,
+        rentals: rentals.length,
+        disputes: disputes.length,
+        conversations: conversations.length
+      }
+    },
+    navigation: [
+      {
+        id: 'overview',
+        label: 'Customer Overview',
+        description: 'Bookings, spend, and support signals.',
+        type: 'overview',
+        analytics: overview
+      },
+      {
+        id: 'orders',
+        label: 'Service Orders',
+        description: 'Escrow, delivery, and follow-up pipeline.',
+        type: 'board',
+        data: { columns: orderBoardColumns }
+      },
+      {
+        id: 'rentals',
+        label: 'Rental Assets',
+        description: 'Track equipment associated with your jobs.',
+        type: 'table',
+        data: {
+          headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
+          rows: rentalRows
+        }
+      },
+      {
+        id: 'account',
+        label: 'Account & Support',
+        description: 'Next best actions to keep everything running smoothly.',
+        type: 'list',
+        data: { items: accountItems }
+      }
+    ]
+  };
 }
 
 async function loadAdminData(context) {
@@ -993,18 +1408,41 @@ async function loadEnterpriseData(context) {
 
 async function resolveContext(persona, query, window) {
   const defaults = PERSONA_DEFAULTS[persona] ?? {};
-  const companyId = await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId });
-  const providerId = normaliseUuid(query.providerId ?? defaults.providerId);
 
   switch (persona) {
     case 'admin':
-      return { persona, window, companyId };
+      return {
+        persona,
+        window,
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
     case 'provider':
-      return { persona, window, providerId, companyId };
+      return {
+        persona,
+        window,
+        providerId: normaliseUuid(query.providerId ?? defaults.providerId),
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
     case 'serviceman':
-      return { persona, window, providerId };
+      return {
+        persona,
+        window,
+        providerId: normaliseUuid(query.providerId ?? defaults.providerId)
+      };
     case 'enterprise':
-      return { persona, window, companyId };
+      return {
+        persona,
+        window,
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
+    case 'user': {
+      const resolvedUserId = await resolveUserId({ userId: query.userId ?? defaults.userId });
+      const shouldResolveCompany = query.companyId || defaults.companyId;
+      const resolvedCompanyId = shouldResolveCompany
+        ? await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+        : null;
+      return { persona, window, userId: resolvedUserId, companyId: resolvedCompanyId };
+    }
     default:
       throw new Error('Unsupported persona');
   }
@@ -1021,6 +1459,9 @@ export async function getPersonaDashboard(personaInput, query = {}) {
   const window = resolveWindow(query);
   const context = await resolveContext(persona, query, window);
 
+  if (persona === 'user') {
+    return loadUserData(context);
+  }
   if (persona === 'admin') {
     return loadAdminData(context);
   }

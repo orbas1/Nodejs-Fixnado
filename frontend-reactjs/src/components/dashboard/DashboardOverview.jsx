@@ -96,9 +96,9 @@ const MetricCard = ({ metric }) => {
   const trendColor = metric.trend === 'down' ? 'text-rose-400' : 'text-emerald-400';
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+    <div className="bg-white/95 border border-accent/10 rounded-2xl p-6 shadow-glow">
       <p className="text-sm uppercase tracking-wide text-slate-500">{metric.label}</p>
-      <p className="mt-3 text-3xl font-semibold text-slate-900">{metric.value}</p>
+      <p className="mt-3 text-3xl font-semibold text-primary">{metric.value}</p>
       <div className={`mt-4 flex items-center gap-2 text-xs font-medium ${trendColor}`}>
         <Icon className="h-4 w-4" />
         {metric.change}
@@ -119,8 +119,8 @@ MetricCard.propTypes = {
 const Timeline = ({ upcoming }) => (
   <ol className="space-y-4">
     {upcoming.map((event) => (
-      <li key={event.title} className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex flex-col gap-1">
-        <p className="font-medium text-slate-900">{event.title}</p>
+      <li key={event.title} className="bg-white border border-accent/10 rounded-xl px-4 py-3 flex flex-col gap-1 shadow-sm">
+        <p className="font-medium text-primary">{event.title}</p>
         <p className="text-sm text-slate-600">{event.when}</p>
         <span className="text-xs uppercase tracking-wide text-slate-500">{event.status}</span>
       </li>
@@ -142,7 +142,7 @@ const InsightList = ({ insights }) => (
   <ul className="space-y-3 text-sm text-slate-600">
     {insights.map((item) => (
       <li key={item} className="flex gap-3">
-        <span className="mt-1 h-2 w-2 rounded-full bg-accent/70" />
+        <span className="mt-1 h-2 w-2 rounded-full bg-accent" />
         <span>{item}</span>
       </li>
     ))}
@@ -169,8 +169,8 @@ const DashboardOverview = ({ analytics }) => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {charts.map((chart) => (
-          <div key={chart.id} className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">{chart.title}</h3>
+          <div key={chart.id} className="lg:col-span-1 bg-white border border-accent/10 rounded-2xl p-6 shadow-md">
+            <h3 className="text-lg font-semibold text-primary">{chart.title}</h3>
             <p className="mt-2 text-sm text-slate-600">{chart.description}</p>
             <div className="mt-4 h-60">
               <ChartRenderer chart={chart} />
@@ -180,15 +180,15 @@ const DashboardOverview = ({ analytics }) => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Upcoming & Commitments</h3>
+        <div className="lg:col-span-2 bg-white border border-accent/10 rounded-2xl p-6 shadow-md">
+          <h3 className="text-lg font-semibold text-primary">Upcoming & Commitments</h3>
           <p className="mt-2 text-sm text-slate-600">Stay ahead of scheduled workstreams and critical checkpoints.</p>
           <div className="mt-4">
             <Timeline upcoming={upcoming} />
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Insights & Calls to Action</h3>
+        <div className="bg-white border border-accent/10 rounded-2xl p-6 shadow-md">
+          <h3 className="text-lg font-semibold text-primary">Insights & Calls to Action</h3>
           <p className="mt-2 text-sm text-slate-600">AI-curated recommendations to improve velocity and outcomes.</p>
           <div className="mt-4">
             <InsightList insights={insights} />
