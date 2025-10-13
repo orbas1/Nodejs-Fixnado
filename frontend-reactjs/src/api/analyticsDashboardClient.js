@@ -1,3 +1,5 @@
+import mockDashboards from './mockDashboards.js';
+
 const API_BASE = '/api/analytics/dashboards';
 
 function toQueryString(params = {}) {
@@ -15,19 +17,29 @@ export function buildExportUrl(persona, params = {}) {
 }
 
 export async function fetchDashboard(persona, params = {}) {
-  const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
-    headers: {
-      Accept: 'application/json'
+  try {
+    const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      const message = error?.message || `Failed to load ${persona} dashboard`;
+      throw new Error(message);
     }
-  });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    const message = error?.message || `Failed to load ${persona} dashboard`;
-    throw new Error(message);
+    return response.json();
+  } catch (error) {
+    const fallback = mockDashboards?.[persona];
+    if (import.meta.env.DEV && fallback) {
+      console.warn(`Falling back to mock ${persona} dashboard`, error);
+      return fallback;
+    }
+
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function downloadDashboardCsv(persona, params = {}) {
