@@ -113,6 +113,7 @@
 
     *2025-02-08 update:* Master test plan expanded with feature toggle governance coverage, RBAC audit checkpoints, and Vitest/Playwright/Flutter automation commitments to feed CI readiness metrics ahead of performance drill scheduling.
     *2025-02-09 update:* Backend Vitest suites validate escrow rollback and contract schema parity, React telemetry automation executes in CI, and Flutter widget coverage confirms live feed banners; chaos injection verifies graceful degradation, elevating Task 6A automation readiness to focus on load/performance drill design.
+    *2025-11-03 update:* Baseline load/performance/resilience drills operational — `performance/k6/main.js`, `performance/profiles/baseline.json`, and `scripts/run-load-tests.mjs` execute via `npm run load:test`, validating bookings/chat/escrow/analytics/campaign workloads with governed thresholds and summary exports. Documentation (performance README, test plan, progress tracker) records staging rehearsal cadence, env requirements, and follow-up soak/chaos backlog to progress Task 6A toward certification.
   - **Task 6B — Launch Operations & Hypercare (6% complete)**
     1. Publish release notes, training curriculum, support playbooks, and hypercare rota.
     2. Conduct go-live rehearsals with rollback drills and communication templates.

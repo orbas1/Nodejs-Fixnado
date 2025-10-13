@@ -8,6 +8,8 @@ import {
   BookingBid,
   CampaignDailyMetric,
   CampaignFraudSignal,
+  CampaignFlight,
+  CampaignInvoice,
   Company,
   ComplianceDocument,
   ConversationParticipant,
@@ -38,6 +40,27 @@ function normaliseUuid(value) {
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function inventoryAvailable(item) {
+  const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+  const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+  if (!Number.isFinite(onHand) || !Number.isFinite(reserved)) {
+    return 0;
+  }
+  return Math.max(onHand - reserved, 0);
+}
+
+function inventoryStatus(item) {
+  const available = inventoryAvailable(item);
+  const safety = Number.parseInt(item.safetyStock ?? 0, 10);
+  if (available <= 0) {
+    return 'stockout';
+  }
+  if (Number.isFinite(safety) && available <= Math.max(safety, 0)) {
+    return 'low_stock';
+  }
+  return 'healthy';
 }
 
 function resolvePersona(persona) {
@@ -1097,7 +1120,20 @@ async function loadAdminData(context) {
 async function loadProviderData(context) {
   const { providerId, companyId, window } = context;
 
-  const [assignments, previousAssignments, rentals, inventoryAlerts] = await Promise.all([
+  const [assignments, previousAssignments, rentals, inventoryAlerts, inventoryItems] = await Promise.all([
+  const campaignFilter = companyId ? { companyId } : undefined;
+
+  const [
+    assignments,
+    previousAssignments,
+    rentals,
+    inventoryAlerts,
+    campaigns,
+    campaignMetrics,
+    previousCampaignMetrics,
+    campaignInvoices,
+    campaignSignals
+  ] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...(providerId ? { providerId } : {}),
@@ -1129,6 +1165,98 @@ async function loadProviderData(context) {
       where: {
         createdAt: asDateRange(window.start, window.end)
       }
+    }),
+    InventoryItem.findAll({
+      where: {
+        ...(companyId ? { companyId } : {}),
+        updatedAt: {
+          [Op.lte]: window.end.toJSDate()
+        }
+      },
+      include: [
+        {
+          model: InventoryAlert,
+          required: false,
+          where: { status: { [Op.in]: ['active', 'acknowledged'] } }
+        }
+      ],
+      order: [['updatedAt', 'DESC']],
+    AdCampaign.findAll({
+      where: campaignFilter,
+      include: [{ model: CampaignFlight, as: 'flights' }],
+      order: [['updatedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
+    }),
+    CampaignDailyMetric.findAll({
+      include: [
+        {
+          model: AdCampaign,
+          attributes: ['id', 'name', 'currency', 'companyId'],
+          where: campaignFilter,
+          required: !!campaignFilter
+        },
+        {
+          model: CampaignFlight,
+          attributes: ['id', 'name', 'status', 'startAt', 'endAt'],
+          required: false
+        }
+      ],
+      where: {
+        metricDate: asDateRange(window.start, window.end)
+      }
+    }),
+    CampaignDailyMetric.findAll({
+      include: [
+        {
+          model: AdCampaign,
+          attributes: ['id', 'name', 'currency', 'companyId'],
+          where: campaignFilter,
+          required: !!campaignFilter
+        }
+      ],
+      where: {
+        metricDate: asDateRange(window.previousStart, window.previousEnd)
+      }
+    }),
+    CampaignInvoice.findAll({
+      include: [
+        {
+          model: AdCampaign,
+          attributes: ['id', 'name', 'currency'],
+          where: campaignFilter,
+          required: !!campaignFilter
+        },
+        {
+          model: CampaignFlight,
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ],
+      where: {
+        issuedAt: asDateRange(window.start, window.end)
+      },
+      order: [['issuedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
+    }),
+    CampaignFraudSignal.findAll({
+      include: [
+        {
+          model: AdCampaign,
+          attributes: ['id', 'name'],
+          where: campaignFilter,
+          required: !!campaignFilter
+        },
+        {
+          model: CampaignFlight,
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ],
+      where: {
+        detectedAt: asDateRange(window.start, window.end)
+      },
+      order: [['detectedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
     })
   ]);
 
@@ -1277,6 +1405,397 @@ async function loadProviderData(context) {
     status: alert.status
   }));
 
+  const rentalsByItem = rentals.reduce((acc, rental) => {
+    const activeStatuses = new Set([
+      'requested',
+      'approved',
+      'ready_for_pickup',
+      'checked_out',
+      'in_progress'
+    ]);
+    if (rental.itemId && activeStatuses.has(rental.status)) {
+      acc.set(rental.itemId, (acc.get(rental.itemId) ?? 0) + rental.quantity);
+    }
+    return acc;
+  }, new Map());
+
+  const severityRank = { critical: 3, warning: 2, info: 1 };
+
+  const mapInventoryRecord = (item) => {
+    const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10) || 0;
+    const reserved = Number.parseInt(item.quantityReserved ?? 0, 10) || 0;
+    const safetyStock = Number.parseInt(item.safetyStock ?? 0, 10) || 0;
+    const available = inventoryAvailable(item);
+    const alerts = Array.isArray(item.InventoryAlerts) ? item.InventoryAlerts : [];
+    const activeAlert = alerts
+      .filter((alert) => alert.status === 'active')
+      .sort((a, b) => (severityRank[b.severity] ?? 0) - (severityRank[a.severity] ?? 0))[0];
+
+    return {
+      id: item.id || item.sku || item.name,
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      status: inventoryStatus(item),
+      available,
+      onHand,
+      reserved,
+      safetyStock,
+      unitType: item.unitType,
+      condition: item.conditionRating,
+      location: item.metadata?.warehouse || item.metadata?.location || null,
+      nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.inspectionDue || null,
+      notes: item.metadata?.notes || null,
+      activeAlerts: alerts.filter((alert) => alert.status === 'active').length,
+      alertSeverity: activeAlert?.severity || null,
+      activeRentals: rentalsByItem.get(item.id) ?? 0,
+      rentalRate: item.rentalRate ? Number.parseFloat(item.rentalRate) : null,
+      rentalRateCurrency: item.rentalRateCurrency || 'GBP',
+      depositAmount: item.depositAmount ? Number.parseFloat(item.depositAmount) : null,
+      depositCurrency: item.depositCurrency || item.rentalRateCurrency || 'GBP'
+    };
+  };
+
+  const inventorySummary = inventoryItems.reduce(
+    (acc, item) => {
+      const available = inventoryAvailable(item);
+      const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+      const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+      const alerts = Array.isArray(item.InventoryAlerts) ? item.InventoryAlerts : [];
+      const hasActiveAlert = alerts.some((alert) => alert.status === 'active');
+      return {
+        onHand: acc.onHand + (Number.isFinite(onHand) ? onHand : 0),
+        reserved: acc.reserved + (Number.isFinite(reserved) ? reserved : 0),
+        available: acc.available + available,
+        alerts: acc.alerts + (hasActiveAlert || inventoryStatus(item) !== 'healthy' ? 1 : 0)
+      };
+    },
+    { onHand: 0, reserved: 0, available: 0, alerts: 0 }
+  );
+
+  const lower = (value) => (typeof value === 'string' ? value.toLowerCase() : String(value ?? '').toLowerCase());
+
+  const materialsInventory = inventoryItems
+    .filter((item) => {
+      const category = lower(item.category);
+      const type = lower(item.metadata?.type);
+      const usage = lower(item.metadata?.usage);
+      const hasRental = Number.isFinite(Number.parseFloat(item.rentalRate ?? NaN));
+      if (hasRental) {
+        return false;
+      }
+      if (category.includes('tool')) {
+        return false;
+      }
+      if (category.includes('material') || type === 'material' || usage === 'consumable') {
+        return true;
+      }
+      return true;
+    })
+    .slice(0, 10)
+    .map(mapInventoryRecord);
+
+  const toolsInventory = inventoryItems
+    .filter((item) => {
+      const category = lower(item.category);
+      if (category.includes('tool')) {
+        return true;
+      }
+      return Number.isFinite(Number.parseFloat(item.rentalRate ?? NaN));
+    })
+    .slice(0, 10)
+    .map(mapInventoryRecord);
+  const aggregateCampaignMetrics = (collection) => {
+    const totals = { spend: 0, revenue: 0, impressions: 0, clicks: 0, conversions: 0, target: 0 };
+    const byCampaign = new Map();
+
+    for (const metric of collection) {
+      const id = metric.campaignId;
+      if (!id) continue;
+      const entry = byCampaign.get(id) ?? {
+        spend: 0,
+        revenue: 0,
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        target: 0,
+        lastMetricDate: null
+      };
+
+      entry.spend += parseDecimal(metric.spend);
+      entry.revenue += parseDecimal(metric.revenue);
+      entry.impressions += Number(metric.impressions ?? 0);
+      entry.clicks += Number(metric.clicks ?? 0);
+      entry.conversions += Number(metric.conversions ?? 0);
+      entry.target += parseDecimal(metric.spendTarget ?? 0);
+      if (metric.metricDate) {
+        entry.lastMetricDate = DateTime.fromJSDate(metric.metricDate).setZone(window.timezone).toISODate();
+      }
+
+      byCampaign.set(id, entry);
+
+      totals.spend += parseDecimal(metric.spend);
+      totals.revenue += parseDecimal(metric.revenue);
+      totals.impressions += Number(metric.impressions ?? 0);
+      totals.clicks += Number(metric.clicks ?? 0);
+      totals.conversions += Number(metric.conversions ?? 0);
+      totals.target += parseDecimal(metric.spendTarget ?? 0);
+    }
+
+    return { totals, byCampaign };
+  };
+
+  const { totals: currentCampaignTotals, byCampaign: metricsByCampaign } = aggregateCampaignMetrics(campaignMetrics);
+  const { totals: previousCampaignTotals, byCampaign: previousMetricsByCampaign } = aggregateCampaignMetrics(previousCampaignMetrics);
+
+  const adsSourcedCount = assignments.filter((assignment) => assignment.Booking?.meta?.source === 'fixnado_ads').length;
+  const previousAdsSourced = previousAssignments.filter((assignment) => assignment.Booking?.meta?.source === 'fixnado_ads').length;
+  const adsShare = totalAssignments ? adsSourcedCount / totalAssignments : 0;
+  const previousAdsShare = previousTotal ? previousAdsSourced / Math.max(previousTotal, 1) : 0;
+
+  const currency =
+    campaigns[0]?.currency ||
+    campaignMetrics[0]?.AdCampaign?.currency ||
+    campaignInvoices[0]?.currency ||
+    'GBP';
+
+  const activeCampaigns = campaigns.filter((campaign) => ['active', 'scheduled'].includes(campaign.status));
+
+  const spendTrend = computeTrend(
+    currentCampaignTotals.spend,
+    previousCampaignTotals.spend,
+    (value) => formatCurrency(value, currency)
+  );
+  const revenueTrend = computeTrend(
+    currentCampaignTotals.revenue,
+    previousCampaignTotals.revenue,
+    (value) => formatCurrency(value, currency)
+  );
+  const conversionsTrend = computeTrend(
+    currentCampaignTotals.conversions,
+    previousCampaignTotals.conversions,
+    formatNumber
+  );
+  const shareTrend = computeTrend(adsShare, previousAdsShare, (value) => formatPercent(value, 1));
+
+  const summaryCards = [
+    {
+      title: 'Managed spend',
+      ...spendTrend,
+      helper: `${formatNumber(activeCampaigns.length)} active campaigns`
+    },
+    {
+      title: 'Attributed revenue',
+      ...revenueTrend,
+      helper:
+        currentCampaignTotals.spend > 0
+          ? `ROAS ${formatPercent(currentCampaignTotals.revenue, currentCampaignTotals.spend)}`
+          : 'ROAS 0.0%'
+    },
+    {
+      title: 'Conversions',
+      ...conversionsTrend,
+      helper:
+        currentCampaignTotals.conversions > 0
+          ? `CPA ${formatCurrency(currentCampaignTotals.spend / currentCampaignTotals.conversions, currency)}`
+          : `CPA ${formatCurrency(0, currency)}`
+    },
+    {
+      title: 'Fixnado Ads share',
+      value: shareTrend.value,
+      change: shareTrend.change,
+      trend: shareTrend.trend,
+      helper: `${formatNumber(adsSourcedCount)} jobs attributed`
+    }
+  ];
+
+  const ctr = currentCampaignTotals.impressions
+    ? currentCampaignTotals.clicks / currentCampaignTotals.impressions
+    : 0;
+  const cvr = currentCampaignTotals.clicks
+    ? currentCampaignTotals.conversions / currentCampaignTotals.clicks
+    : 0;
+
+  const funnelStages = [
+    {
+      title: 'Impressions',
+      value: formatNumber(currentCampaignTotals.impressions),
+      helper:
+        currentCampaignTotals.impressions > 0
+          ? `${formatPercent(currentCampaignTotals.clicks, currentCampaignTotals.impressions)} CTR`
+          : 'No delivery'
+    },
+    {
+      title: 'Clicks',
+      value: formatNumber(currentCampaignTotals.clicks),
+      helper: currentCampaignTotals.clicks > 0 ? `${formatPercent(cvr, 1)} CVR` : 'Awaiting engagement'
+    },
+    {
+      title: 'Conversions',
+      value: formatNumber(currentCampaignTotals.conversions),
+      helper: `${formatCurrency(currentCampaignTotals.spend, currency)} spend`
+    },
+    {
+      title: 'Jobs won',
+      value: formatNumber(adsSourcedCount),
+      helper:
+        currentCampaignTotals.conversions > 0
+          ? `${formatPercent(adsSourcedCount, currentCampaignTotals.conversions)} of conversions`
+          : 'Link bookings for attribution'
+    }
+  ];
+
+  const campaignsData = campaigns.slice(0, 8).map((campaign) => {
+    const metrics = metricsByCampaign.get(campaign.id) ?? {
+      spend: 0,
+      revenue: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      target: 0,
+      lastMetricDate: null
+    };
+    const previous = previousMetricsByCampaign.get(campaign.id) ?? {
+      spend: 0,
+      revenue: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      target: 0,
+      lastMetricDate: null
+    };
+
+    const spendByCampaign = computeTrend(
+      metrics.spend,
+      previous.spend,
+      (value) => formatCurrency(value, campaign.currency ?? currency)
+    );
+    const conversionsByCampaign = computeTrend(metrics.conversions, previous.conversions, formatNumber);
+    const roasValue = metrics.spend > 0 ? metrics.revenue / metrics.spend : 0;
+    const previousRoasValue = previous.spend > 0 ? previous.revenue / previous.spend : 0;
+    const roasTrend = computeTrend(roasValue, previousRoasValue, (value) => formatPercent(value, 1));
+    const pacingRatio = metrics.target > 0 ? metrics.spend / metrics.target : 0;
+
+    return {
+      id: campaign.id,
+      name: campaign.name,
+      status: humanise(campaign.status),
+      objective: humanise(campaign.objective),
+      spend: spendByCampaign.value,
+      spendChange: spendByCampaign.change,
+      conversions: conversionsByCampaign.value,
+      conversionsChange: conversionsByCampaign.change,
+      cpa:
+        metrics.conversions > 0
+          ? formatCurrency(metrics.spend / metrics.conversions, campaign.currency ?? currency)
+          : formatCurrency(metrics.spend, campaign.currency ?? currency),
+      roas: roasTrend.value,
+      roasChange: roasTrend.change,
+      pacing: pacingRatio > 0 ? `${Math.min(Math.round(pacingRatio * 100), 999)}% of target` : 'No pacing target',
+      lastMetricDate: metrics.lastMetricDate,
+      flights: (campaign.flights ?? []).length,
+      window: `${campaign.startAt ? DateTime.fromJSDate(campaign.startAt).setZone(window.timezone).toISODate() : '—'} → ${
+        campaign.endAt ? DateTime.fromJSDate(campaign.endAt).setZone(window.timezone).toISODate() : '—'
+      }`
+    };
+  });
+
+  const overdueInvoices = campaignInvoices.filter((invoice) => invoice.status === 'overdue');
+  const invoiceRows = campaignInvoices.slice(0, EXPORT_ROW_LIMIT).map((invoice) => ({
+    invoiceNumber: invoice.invoiceNumber,
+    campaign: invoice.AdCampaign?.name ?? 'Campaign',
+    status: humanise(invoice.status),
+    amountDue: formatCurrency(
+      parseDecimal(invoice.amountDue),
+      invoice.currency || invoice.AdCampaign?.currency || currency
+    ),
+    amountPaid: formatCurrency(
+      parseDecimal(invoice.amountPaid),
+      invoice.currency || invoice.AdCampaign?.currency || currency
+    ),
+    dueDate: DateTime.fromJSDate(invoice.dueDate).setZone(window.timezone).toISODate()
+  }));
+
+  const adsAlerts = [
+    ...campaignSignals.slice(0, 5).map((signal) => ({
+      title: `${humanise(signal.signalType)} • ${signal.AdCampaign?.name ?? 'Campaign'}`,
+      severity: humanise(signal.severity),
+      description: signal.resolutionNote || 'Investigate flagged performance.',
+      detectedAt: DateTime.fromJSDate(signal.detectedAt).setZone(window.timezone).toISODate(),
+      flight: signal.CampaignFlight?.name ?? null
+    })),
+    ...overdueInvoices.slice(0, 3).map((invoice) => ({
+      title: `Invoice ${invoice.invoiceNumber}`,
+      severity: 'Warning',
+      description: `Overdue • ${formatCurrency(
+        parseDecimal(invoice.amountDue) - parseDecimal(invoice.amountPaid),
+        invoice.currency || invoice.AdCampaign?.currency || currency
+      )} outstanding for ${invoice.AdCampaign?.name ?? 'campaign'}.`,
+      detectedAt: DateTime.fromJSDate(invoice.dueDate).setZone(window.timezone).toISODate(),
+      flight: invoice.CampaignFlight?.name ?? null
+    }))
+  ];
+
+  const timeline = campaigns
+    .flatMap((campaign) =>
+      (campaign.flights ?? []).map((flight) => ({
+        title: `${flight.name} • ${campaign.name}`,
+        status: humanise(flight.status),
+        start: DateTime.fromJSDate(flight.startAt).setZone(window.timezone).toISODate(),
+        end: DateTime.fromJSDate(flight.endAt).setZone(window.timezone).toISODate(),
+        budget: formatCurrency(parseDecimal(flight.budget), campaign.currency ?? currency)
+      }))
+    )
+    .sort((a, b) => new Date(a.start) - new Date(b.start))
+    .slice(0, 6);
+
+  const recommendations = [];
+  if (adsShare < 0.2 && campaigns.length > 0) {
+    recommendations.push({
+      title: 'Expand Fixnado Ads coverage',
+      description: 'Increase daily caps or add high-intent zones to lift attributed bookings.',
+      action: 'Review targeting'
+    });
+  }
+  if (ctr < 0.015) {
+    recommendations.push({
+      title: 'Refresh creative set',
+      description: 'CTR below marketplace benchmark. Rotate creatives or optimise headlines.',
+      action: 'Update creatives'
+    });
+  }
+  if (overdueInvoices.length > 0) {
+    recommendations.push({
+      title: 'Resolve overdue invoices',
+      description: `${overdueInvoices.length} invoice${overdueInvoices.length === 1 ? '' : 's'} require payment to keep delivery uninterrupted.`,
+      action: 'Open billing centre'
+    });
+  }
+  if (campaignSignals.some((signal) => signal.severity === 'critical')) {
+    recommendations.push({
+      title: 'Investigate critical fraud alerts',
+      description: 'Critical anomalies detected. Validate traffic sources and pause impacted flights.',
+      action: 'View fraud centre'
+    });
+  }
+  if (recommendations.length === 0) {
+    recommendations.push({
+      title: 'Maintain optimisation cadence',
+      description: 'Delivery, pacing, and billing are healthy. Continue monitoring automated guardrails.',
+      action: 'Schedule weekly review'
+    });
+  }
+
+  const adsData = {
+    summaryCards,
+    funnel: funnelStages,
+    campaigns: campaignsData,
+    invoices: invoiceRows.slice(0, 8),
+    alerts: adsAlerts.slice(0, 6),
+    recommendations,
+    timeline
+  };
+
   return {
     persona: 'provider',
     name: PERSONA_METADATA.provider.name,
@@ -1289,7 +1808,20 @@ async function loadProviderData(context) {
         assignments: totalAssignments,
         revenue,
         acceptanceRate,
-        completionRate
+        completionRate,
+        inventory: {
+          onHand: inventorySummary.onHand,
+          reserved: inventorySummary.reserved,
+          available: inventorySummary.available,
+          skuCount: inventoryItems.length,
+          alerts: inventorySummary.alerts
+        ads: {
+          spend: currentCampaignTotals.spend,
+          revenue: currentCampaignTotals.revenue,
+          conversions: currentCampaignTotals.conversions,
+          share: adsShare,
+          jobs: adsSourcedCount
+        }
       }
     },
     navigation: [
@@ -1316,6 +1848,47 @@ async function loadProviderData(context) {
           headers: ['Rental', 'Status', 'Pickup', 'Return Due', 'Deposit'],
           rows: rentalRows
         }
+      },
+      {
+        id: 'inventory',
+        label: 'Tools & Materials',
+        description: 'Inventory availability, low-stock signals, and maintenance cadence.',
+        type: 'inventory',
+        data: {
+          summary: [
+            {
+              id: 'available',
+              label: 'Available units',
+              value: inventorySummary.available,
+              helper: `${formatNumber(inventoryItems.length)} SKUs tracked`,
+              tone: 'info'
+            },
+            {
+              id: 'reserved',
+              label: 'Reserved',
+              value: inventorySummary.reserved,
+              helper: `${formatNumber(inventorySummary.onHand)} on hand`,
+              tone: 'accent'
+            },
+            {
+              id: 'alerts',
+              label: 'Alerts',
+              value: inventorySummary.alerts,
+              helper: inventorySummary.alerts > 0 ? 'Action required' : 'All healthy',
+              tone: inventorySummary.alerts > 0 ? 'warning' : 'positive'
+            }
+          ],
+          groups: [
+            { id: 'materials', label: 'Materials', items: materialsInventory },
+            { id: 'tools', label: 'Tools', items: toolsInventory }
+          ]
+        }
+        id: 'fixnado-ads',
+        label: 'Fixnado Ads',
+        description: 'Campaign pacing, spend, guardrails, and billing.',
+        icon: 'analytics',
+        type: 'ads',
+        data: adsData
       },
       {
         id: 'asset-alerts',
@@ -2019,6 +2592,31 @@ function flattenSection(section) {
     const rows = [['Card', 'Details']];
     for (const card of section.data?.cards ?? []) {
       rows.push([card.title, (card.details ?? []).join(' | ')]);
+    }
+    return rows;
+  }
+
+  if (section.type === 'ads') {
+    const rows = [['Category', 'Name', 'Value', 'Notes']];
+    for (const card of section.data?.summaryCards ?? []) {
+      rows.push(['Summary', card.title, card.value, `${card.change ?? ''} ${card.helper ?? ''}`.trim()]);
+    }
+    for (const stage of section.data?.funnel ?? []) {
+      rows.push(['Funnel', stage.title, stage.value, stage.helper ?? '']);
+    }
+    for (const campaign of section.data?.campaigns ?? []) {
+      rows.push([
+        'Campaign',
+        campaign.name,
+        campaign.spend,
+        `Status ${campaign.status} · ${campaign.pacing} · ROAS ${campaign.roas ?? ''}`.trim()
+      ]);
+    }
+    for (const invoice of section.data?.invoices ?? []) {
+      rows.push(['Invoice', invoice.invoiceNumber ?? '', invoice.amountDue ?? '', `${invoice.campaign ?? ''} • ${invoice.status ?? ''} • due ${invoice.dueDate ?? ''}`.trim()]);
+    }
+    for (const alert of section.data?.alerts ?? []) {
+      rows.push(['Alert', alert.title ?? '', alert.severity ?? '', `${alert.description ?? ''} ${alert.detectedAt ?? ''}`.trim()]);
     }
     return rows;
   }

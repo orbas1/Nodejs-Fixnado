@@ -218,3 +218,40 @@ a:focus-visible {
   white-space: nowrap;
   border: 0;
 }
+
+.speech-bubble {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 1.75rem;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.92) 0%, rgba(20, 69, 224, 0.9) 100%);
+  color: var(--fx-color-hero-foreground);
+  box-shadow: 0 20px 40px -28px rgba(20, 69, 224, 0.55);
+  max-width: 260px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  right: 36px;
+  border-width: 12px 10px 0 10px;
+  border-style: solid;
+  border-color: rgba(20, 69, 224, 0.85) transparent transparent transparent;
+}
+
+@media (max-width: 768px) {
+  .speech-bubble {
+    position: static;
+    margin-bottom: 1.5rem;
+    max-width: none;
+  }
+
+  .speech-bubble::after {
+    display: none;
+  }
+}

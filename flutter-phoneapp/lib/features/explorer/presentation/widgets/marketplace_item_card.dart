@@ -9,10 +9,12 @@ class MarketplaceItemCard extends StatelessWidget {
     super.key,
     required this.item,
     this.onTap,
+    this.onHire,
   });
 
   final ExplorerMarketplaceItem item;
   final VoidCallback? onTap;
+  final VoidCallback? onHire;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +126,17 @@ class MarketplaceItemCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (onHire != null) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onHire,
+                    icon: const Icon(Icons.handyman_outlined),
+                    label: const Text('Hire this tool'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

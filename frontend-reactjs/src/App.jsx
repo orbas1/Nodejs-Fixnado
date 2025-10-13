@@ -13,16 +13,19 @@ const CompanyRegister = lazy(() => import('./pages/CompanyRegister.jsx'));
 const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
+const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
+const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -54,6 +57,7 @@ function App() {
             <Route path="/register/company" element={<CompanyRegister />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+            <Route path="/provider/storefront" element={<ProviderStorefront />} />
             <Route path="/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/providers" element={<BusinessFront />} />
             <Route path="/providers/:slug" element={<BusinessFront />} />
@@ -61,9 +65,11 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/monetisation" element={<AdminMonetization />} />
             <Route path="/admin/theme-studio" element={<ThemeStudio />} />
             <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
             <Route path="/communications" element={<Communications />} />
+            <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
           </Routes>

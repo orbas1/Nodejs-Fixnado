@@ -167,7 +167,8 @@
   2. ✅ Capture export toolbar behaviour (persona badge, reporting window, timezone indicator, CSV CTA, success/error toasts) with accessibility/localisation guidance and telemetry schema alignment (`analytics.dashboard.export`).
   3. ✅ Document insight/fraud/compliance widgets (copy decks, tooltip formulas, escalation links) for admin, provider, serviceman, and enterprise roles, including translation keys and badge tokens for analytics palette reuse.
   4. ✅ Record feature toggle gating states, pilot access workflow, and enterprise drill-down backlog links. Specs now include toggle summary card metadata, access request copy, telemetry IDs (`feature.toggle.refresh`, `feature.toggle.request_access`), and Flutter parity notes to ensure mobile/web gating remains aligned while enterprise drill-down widgets remain backlog-tracked.
-  5. ✅ Pair with analytics/data engineering to validate CSV schema parity with Looker ingestion requirements and annotate QA scenarios/test plan with export verification coverage (2025-10-30 verification adds export toolbar copy, timezone messaging, and Vitest reporter hardening backlog).
+ 5. ✅ Pair with analytics/data engineering to validate CSV schema parity with Looker ingestion requirements and annotate QA scenarios/test plan with export verification coverage (2025-10-30 verification adds export toolbar copy, timezone messaging, and Vitest reporter hardening backlog).
+  6. ✅ *(2025-11-03 addendum)* Added performance drill status widget specs consuming `performance/reports/*.json` exports with breach copy, telemetry IDs (`performance.load_drill.*`), and accessibility hooks so Task 6.3 load harness evidence surfaces inside persona/ops dashboards without design debt.
 
 ## Task 17 — Flutter Parity QA Hardening *(Status: 🚧 In Progress — 2025-10-21)*
 - **Delivery Owner:** Mobile UX Lead with Flutter Tech Lead & QA Architect partnership.
@@ -186,8 +187,9 @@
   1. ✅ Document MapLibre overlays, legend treatments, and zone insight panel states mapped to `/api/zones?includeAnalytics=true` payloads — explorer drawings updated with demand tiers, SLA metrics, and accessibility copy.
   2. ✅ Capture result card patterns for services & marketplace inventory with provider attribution, compliance disclosures, and CTA routing that mirrors Services blueprint guidance.
   3. ✅ Specify filter orchestration (keyword, type, zone, availability, category, demand), URL sync rules, telemetry events, and QA selectors so automation validates demand toggles, map clicks, and SLA announcements.
-  4. 🚧 Outline booking wizard, chat entry points, and Flutter parity requirements leveraging the new explorer foundation — backlog entries recorded in change log/progress tracker; wireframes pending Flutter sync with follow-up work item logged against Task 4.2.
-  5. 🚧 Produce accessibility validation checklist (MapLibre keyboard handling, aria-live for zone announcements, high-contrast legends) and schedule Stark/axe audits post booking wizard integration — draft checklist linked in backlog, awaiting audit scheduling once booking wizard specs land.
+  4. ✅ *(2025-02-10 addendum)* Document zone health badge states (stable/warning/critical) with tooltip copy, escalation links, and telemetry IDs mapped to `zone.analytics.snapshot_created` metadata. Updated drawings note backlog ageing, assignment load, and SLA breach explanations for explorer/admin panels.
+  5. 🚧 Outline booking wizard, chat entry points, and Flutter parity requirements leveraging the new explorer foundation — backlog entries recorded in change log/progress tracker; wireframes pending Flutter sync with follow-up work item logged against Task 4.2.
+  6. 🚧 Produce accessibility validation checklist (MapLibre keyboard handling, aria-live for zone announcements, high-contrast legends) and schedule Stark/axe audits post booking wizard integration — draft checklist linked in backlog, awaiting audit scheduling once booking wizard specs land.
 
 ## Task 18 — Communications Suite & Notification Centre *(Status: ✅ Complete — 2025-10-22)*
 - **Delivery Owner:** Communications UX Lead with Frontend Tech Lead, Mobile UX Lead, and Support Operations partner.
@@ -246,4 +248,13 @@
   2. ✅ Define pause/resume modal UX capturing actor, role, ticket ID, justification, expected duration, and acknowledgement toggles; embed telemetry schema (`analytics.pipeline.control`) and runbook links ensuring audit readiness.
   3. ✅ Document run history table + detail drawer mirroring `AnalyticsPipelineRun` schema (processed/purged counts, duration, status, response excerpt) with accessibility guidance (sticky headers, keyboard navigation, live region updates) and export CTAs.
   4. ✅ Update cross-channel artefacts noting staging read-only behaviour, Secrets Manager fallback messaging, Flutter parity backlog, and migration dependency `20250225000000-create-analytics-pipeline-runs.js`, keeping ops/support/legal alignment explicit in trackers.
+
+## Task 23 — Analytics Governance Catalogue & Publishing UX *(Status: ✅ Complete — 2025-11-05)*
+- **Delivery Owner:** Data Experience Designer with Compliance Lead, Analytics Ops Lead, and Design Ops partnership.
+- **Evidence:** `Design_Plan.md` Section 38, `Design_Change_log.md` Entry 29, `ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`, `ui-ux_updates/web_application_design_update/version_1.00_update/Dashboard Designs.md`, updated drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `App_screens_drawings.md`), runbook updates (`docs/telemetry/ui-preference-dashboard.md` governance section), and QA artefacts (`docs/design/handoff/ui-qa-scenarios.csv`).
+- **Subtasks:**
+  1. ✅ Blueprint admin “Analytics Governance” dashboard card with version stamp, publish timestamp, approval roster, and escalation CTAs mapped to `dataGovernancePublishJob` states; document status pills (Healthy, Pending approvals, Blocked) plus runbook link `OPS-AN-15`.
+  2. ✅ Map `/api/data-governance/*` UX including markdown preview modal, publish hotkeys (`Shift+P`, `Shift+O`), fallback download flows, and error banners for portal outages in `Screens_Update.md` and `Screens_Update_Logic_Flow.md`, ensuring telemetry IDs `analytics.catalogue.publish`, `analytics.catalogue.preview`, `analytics.catalogue.fallback` are captured.
+  3. ✅ Add QA selectors (`data-qa="catalogue-publish"`, `data-qa="catalogue-approval-list"`, `data-qa="catalogue-status-pill"`), aria-live announcements for approval changes, and governance checklist references to `Design_update_progress_tracker.md` and QA scenarios so automation rehearses success, retry, and fallback states.
+  4. ✅ Capture mobile parity note in `App_screens_drawings.md` (read-only governance tile), record backlog for provider/compliance dashboards once multi-tenant catalogue support lands, and update trackers/milestones with catalogue approval triad responsibilities and rehearsal cadence.
 

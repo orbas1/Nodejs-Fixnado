@@ -6,9 +6,12 @@ import '../../../core/utils/datetime_formatter.dart';
 import '../../auth/domain/user_role.dart';
 import '../../explorer/domain/models.dart';
 import '../../explorer/presentation/explorer_controller.dart';
+import '../../services/domain/service_catalog_models.dart';
+import '../../services/presentation/service_catalog_controller.dart';
 import '../domain/booking_models.dart';
 import 'booking_controller.dart';
 import 'widgets/booking_card.dart';
+import 'widgets/booking_creation_sheet.dart';
 
 class BookingScreen extends ConsumerWidget {
   const BookingScreen({super.key});
@@ -19,10 +22,13 @@ class BookingScreen extends ConsumerWidget {
     final controller = ref.read(bookingControllerProvider.notifier);
     final List<ZoneSummary> zones = ref.watch(explorerControllerProvider).snapshot?.zones ?? const [];
 
+    final catalogState = ref.watch(serviceCatalogControllerProvider);
+    final ServiceCatalogSnapshot? catalog = catalogState.snapshot;
+
     return Scaffold(
       floatingActionButton: state.role == UserRole.customer || state.role == UserRole.enterprise
           ? FloatingActionButton.extended(
-              onPressed: () => _openCreationSheet(context, ref, zones),
+              onPressed: () => _openCreationSheet(context, ref, zones, catalog: catalog),
               icon: const Icon(Icons.add),
               label: const Text('New booking'),
             )
@@ -98,6 +104,25 @@ class BookingScreen extends ConsumerWidget {
                         child: Text(
                           state.errorMessage!,
                           style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                    if (catalogState.errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          'Service catalogue unavailable: ${catalogState.errorMessage}',
+                          style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                    if (catalogState.offline)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          'Showing cached service catalogue. Some package details may be outdated.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                   ],
@@ -195,240 +220,25 @@ class BookingScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openCreationSheet(BuildContext context, WidgetRef ref, List<dynamic> zones) async {
+  Future<void> _openCreationSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<ZoneSummary> zones, {
+    ServiceCatalogSnapshot? catalog,
+    ServicePackage? initialPackage,
+  }) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => BookingCreationSheet(zones: zones),
-    );
-  }
-}
-
-class BookingCreationSheet extends ConsumerStatefulWidget {
-  const BookingCreationSheet({super.key, required this.zones});
-
-  final List<dynamic> zones;
-
-  @override
-  ConsumerState<BookingCreationSheet> createState() => _BookingCreationSheetState();
-}
-
-class _BookingCreationSheetState extends ConsumerState<BookingCreationSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final _customerController = TextEditingController();
-  final _companyController = TextEditingController();
-  final _baseAmountController = TextEditingController(text: '120.00');
-  String? _zoneId;
-  String _type = 'on_demand';
-  DateTime? _start;
-  DateTime? _end;
-  String? _demandLevel;
-  bool _submitting = false;
-
-  @override
-  void dispose() {
-    _customerController.dispose();
-    _companyController.dispose();
-    _baseAmountController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Create booking', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
-                  IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Zone'),
-                value: _zoneId,
-                items: widget.zones
-                    .map(
-                      (zone) => DropdownMenuItem<String>(
-                        value: zone.id,
-                        child: Text(zone.name ?? zone.id),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _zoneId = value),
-                validator: (value) => value == null ? 'Select a zone' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _customerController,
-                decoration: const InputDecoration(labelText: 'Customer ID'),
-                validator: (value) => value == null || value.isEmpty ? 'Enter a customer ID' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _companyController,
-                decoration: const InputDecoration(labelText: 'Company ID'),
-                validator: (value) => value == null || value.isEmpty ? 'Enter a company ID' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _baseAmountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Quoted amount (GBP)'),
-                validator: (value) => value == null || value.isEmpty ? 'Enter base amount' : null,
-              ),
-              const SizedBox(height: 16),
-              Text('Booking type', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
-              Row(
-                children: [
-                  Radio<String>(
-                    value: 'on_demand',
-                    groupValue: _type,
-                    onChanged: (value) => setState(() => _type = value!),
-                  ),
-                  const Text('On-demand'),
-                  const SizedBox(width: 12),
-                  Radio<String>(
-                    value: 'scheduled',
-                    groupValue: _type,
-                    onChanged: (value) => setState(() => _type = value!),
-                  ),
-                  const Text('Scheduled'),
-                ],
-              ),
-              if (_type == 'scheduled') ...[
-                const SizedBox(height: 12),
-                _DateField(
-                  label: 'Start window',
-                  value: _start,
-                  onChanged: (value) => setState(() => _start = value),
-                ),
-                const SizedBox(height: 12),
-                _DateField(
-                  label: 'End window',
-                  value: _end,
-                  onChanged: (value) => setState(() => _end = value),
-                ),
-              ],
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Demand level'),
-                value: _demandLevel,
-                items: const [
-                  DropdownMenuItem(value: 'low', child: Text('Low')),
-                  DropdownMenuItem(value: 'medium', child: Text('Medium')),
-                  DropdownMenuItem(value: 'high', child: Text('High')),
-                ],
-                onChanged: (value) => setState(() => _demandLevel = value),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : () => _submit(ref),
-                  child: _submitting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Create booking'),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _submit(WidgetRef ref) async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    if (_type == 'scheduled' && (_start == null || _end == null || _end!.isBefore(_start!))) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Provide a valid schedule window.')));
-      return;
-    }
-
-    setState(() => _submitting = true);
-    try {
-      final request = CreateBookingRequest(
-        customerId: _customerController.text.trim(),
-        companyId: _companyController.text.trim(),
-        zoneId: _zoneId!,
-        type: _type,
-        currency: 'GBP',
-        baseAmount: double.parse(_baseAmountController.text.trim()),
-        demandLevel: _demandLevel,
-        scheduledStart: _type == 'scheduled' ? _start : null,
-        scheduledEnd: _type == 'scheduled' ? _end : null,
-        metadata: {
-          'source': 'mobile_app',
-          'createdVia': 'booking_sheet',
-        },
-      );
-      final booking = await ref.read(bookingControllerProvider.notifier).createBooking(request);
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking ${booking.id.substring(0, 6)} created.')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create booking: $error')),
-      );
-      setState(() => _submitting = false);
-    }
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({required this.label, required this.value, required this.onChanged});
-
-  final String label;
-  final DateTime? value;
-  final ValueChanged<DateTime?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final display = value == null ? 'Select date' : DateTimeFormatter.full(value!);
-    return OutlinedButton(
-      onPressed: () async {
-        final now = DateTime.now();
-        final selected = await showDatePicker(
-          context: context,
-          initialDate: value ?? now,
-          firstDate: now.subtract(const Duration(days: 1)),
-          lastDate: now.add(const Duration(days: 365)),
-        );
-        if (selected == null) {
-          return;
-        }
-        final time = await showTimePicker(
-          context: context,
-          initialTime: const TimeOfDay(hour: 9, minute: 0),
-        );
-        if (time == null) {
-          return;
-        }
-        final dateTime = DateTime(selected.year, selected.month, selected.day, time.hour, time.minute);
-        onChanged(dateTime.toUtc());
-      },
-      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), alignment: Alignment.centerLeft),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$label: $display', style: GoogleFonts.inter(fontSize: 14)),
-          const Icon(Icons.calendar_today_outlined),
-        ],
+      builder: (context) => BookingCreationSheet(
+        zones: zones,
+        categories: catalog?.categories ?? const [],
+        serviceTypes: catalog?.types ?? const [],
+        packages: catalog?.packages ?? const [],
+        catalogue: catalog?.catalogue ?? const [],
+        initialCategory: initialPackage?.serviceCategorySlug,
+        initialPackageId: initialPackage?.id,
+        initialServiceId: initialPackage?.serviceId,
       ),
     );
   }
