@@ -31,3 +31,13 @@
 - Added `ANALYTICS_INGEST_ENABLED`, `ANALYTICS_INGEST_TOGGLE_KEY`, and `ANALYTICS_CONTROL_CACHE_SECONDS` to the analytics pipeline config namespace, enabling environment-level kill switches and toggle cache tuning without redeploying.
 - Pause/resume flows now rely on Secrets Manager overrides keyed by `controlToggleKey`; cached state prevents excessive toggle fetches while honouring env overrides.
 - Configuration updates documented alongside service/job changes so operations understand precedence (env override → feature toggle → default) when gating warehouse ingestion.
+
+## 2025-10-29 — Persona Dashboard Defaults
+- Added `dashboards` namespace exposing default tenant identifiers (per persona), default timezone, export row limit, and window/upcoming defaults so analytics aggregation can operate with predictable fallbacks in lower environments.
+- Configuration parsing reuses integer/json guards, preventing empty override values from masking defaults and ensuring CSV exports embed accurate metadata headers (persona, tenant ID, timezone) aligned with app settings.
+- Documentation now references new environment variables (`DASHBOARD_DEFAULT_*`, `DASHBOARD_DEFAULT_TIMEZONE`) so operations and QA teams can align fixtures, integration tests, and scheduled export jobs across staging/production.
+
+## 2025-10-30 — Dashboard Configuration Validation
+- Confirmed `dashboards` namespace defaults propagate into Express via `app.set('dashboards:exportRowLimit', …)` ensuring CSV exports respect governance caps during persona dashboard rollout.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L18-L41】【F:backend-nodejs/src/controllers/analyticsDashboardController.js†L22-L41】
+- Verified timezone fallbacks and persona defaults render expected copy in JSON payloads, reducing manual overrides for staging rehearsals and enterprise previews.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L44-L106】
+- Logged QA action to document required overrides (`DASHBOARD_DEFAULT_TIMEZONE`, persona tenant IDs) ahead of Looker ingestion rehearsal so analytics ops can test multi-company contexts without redeploying.

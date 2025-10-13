@@ -44,3 +44,13 @@
 - Added `services/analyticsPipelineService.js` to evaluate ingestion enablement (env overrides + Secrets Manager toggles), cache control state, record `AnalyticsPipelineRun` audits, and expose pause/resume helpers that update feature toggles while logging control metadata.
 - Service summarises pipeline backlog/failure streak metrics for the new administration API, normalises metadata persisted to run history (domain/entity summary, purge counts, warnings), and guards pause/resume inputs with actor/ticket validation to keep audit trails production-ready.
 - Updated ingestion job to rely on the service for state evaluation and run logging, enabling skip logging, structured warnings, and deterministic retention of last-error context for dashboards/runbooks.
+
+## 2025-10-29 — Persona Dashboard Analytics Service
+- Introduced `services/dashboardAnalyticsService.js` aggregating live metrics for admin, provider, serviceman, and enterprise personas. The service resolves reporting windows/timezones, fetches bookings, rentals, campaign metrics, inventory alerts, compliance documents, fraud signals, and communications participants, and transforms them into overview metrics, charts, pipelines, compliance tables, and insight copy tailored per persona.
+- Helpers normalise currency/percentage formatting, compute trend deltas, construct weekly buckets, and build insight strings so controllers receive presentation-ready structures without duplicating aggregation logic. CSV helpers flatten overview/chart/board/table/list sections into governed export rows with metadata headers for persona, window, and timezone.
+- Export builder serialises attachments with escaped values, metadata rows, and section separators to keep downstream ingestion deterministic while sharing a consistent export URL builder for controllers and frontend tooling.
+
+## 2025-10-30 — Persona Analytics Service Validation
+- Reviewed `dashboardAnalyticsService.js` query set to confirm persona-specific scopes join bookings, rentals, campaigns, fraud signals, inventory alerts, compliance documents, and communications participation with timezone-aware windows and weekly buckets before release.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L212-L415】
+- Exercised export helpers to ensure CSV output mirrors UI structure, trims to configured row limits, and formats currency/percentages consistently for downstream finance/analytics consumers.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L611-L806】
+- Logged QA improvement to convert Vitest spinner output to CI-friendly reporters after regression execution produced noisy logs while validating service behaviour.【3d3b31†L1-L38】

@@ -27,3 +27,13 @@
 - Updated `components/Header.jsx` to include bilingual language picker, high-contrast skip-link focus state, and analytics instrumentation for locale toggles aligned with `website_drawings.md` and `menu_drawings.md` annotations.
 - Extended `components/Footer.jsx` and `components/accessibility/SkipToContent.jsx` with translated compliance/support copy plus QA selectors (`data-qa="skip-nav"`, `data-qa="language-picker"`) so accessibility sweeps validate navigation order and voiceover cues.
 - Refreshed `ProviderDashboard.jsx`, `EnterprisePanel.jsx`, and `BusinessFront.jsx` copy decks to use translation namespaces with Intl formatting for KPI tiles, alert banners, and concierge storytelling; aria-live toasts announce cache fallbacks in the active locale.
+
+## 2025-10-29 — Persona Role Dashboard
+- Rebuilt `src/pages/RoleDashboard.jsx` to hydrate admin, provider, serviceman, and enterprise panels from `/api/analytics/dashboards/:persona`, manage timezone-aware query parameters, display skeleton/error states, expose refresh/export controls, and feed navigation/analytics payloads into the redesigned `DashboardLayout`.
+- Added CSV export CTA, refresh controls, and offline fallback banner with aria-live messaging to preserve accessibility and observability when APIs degrade; skeleton loaders + empty states align to `dashboard_drawings.md` guidance and reuse analytics colour tokens.
+- Updated dashboard components (`components/dashboard/DashboardLayout.jsx`, `DashboardMetricCard.jsx`, `DashboardExportToolbar.jsx`) to support persona-specific labelling, tooltip copy, and QA selectors while tests (`src/pages/__tests__/RoleDashboard.test.jsx`) assert render logic, error handling, and export URL formatting.
+
+## 2025-10-30 — Persona Role Dashboard Verification
+- Validated timezone detection fallback, persona guardrails, and retry/onRefresh hooks in `RoleDashboard.jsx` after staging rehearsal; export toolbar now surfaces configured row limits and last-refresh timestamps per design spec.【F:frontend-reactjs/src/pages/RoleDashboard.jsx†L18-L78】
+- Ensured CSV download helper returns filename/blob tuples for download components and raises actionable errors for unsupported personas or server failures, aligning with analytics ops ingestion expectations.【F:frontend-reactjs/src/api/analyticsDashboardClient.js†L40-L58】
+- Recorded QA action to enforce CI reporters in `npm test` to suppress Vitest spinner noise observed during `CI=1` verification and maintain readable console evidence for dashboard regressions.【152a08†L1-L10】

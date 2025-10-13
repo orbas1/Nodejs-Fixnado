@@ -133,6 +133,27 @@ const config = {
     retryScheduleMinutes: jsonFromEnv('ANALYTICS_RETRY_SCHEDULE_MINUTES', [5, 15, 60, 240, 1440]),
     controlToggleKey: process.env.ANALYTICS_INGEST_TOGGLE_KEY || 'analytics.pipeline.enabled',
     controlCacheSeconds: Math.max(intFromEnv('ANALYTICS_CONTROL_CACHE_SECONDS', 30), 5)
+  },
+  dashboards: {
+    defaultTimezone: process.env.DASHBOARDS_TIMEZONE || 'Europe/London',
+    defaultWindowDays: Math.max(intFromEnv('DASHBOARDS_DEFAULT_WINDOW_DAYS', 28), 7),
+    upcomingLimit: Math.max(intFromEnv('DASHBOARDS_UPCOMING_LIMIT', 8), 3),
+    exportRowLimit: Math.max(intFromEnv('DASHBOARDS_EXPORT_ROW_LIMIT', 5000), 500),
+    defaults: {
+      admin: {
+        companyId: process.env.DASHBOARDS_ADMIN_COMPANY_ID || null
+      },
+      provider: {
+        companyId: process.env.DASHBOARDS_PROVIDER_COMPANY_ID || null,
+        providerId: process.env.DASHBOARDS_PROVIDER_PROVIDER_ID || null
+      },
+      serviceman: {
+        providerId: process.env.DASHBOARDS_SERVICEMAN_PROVIDER_ID || null
+      },
+      enterprise: {
+        companyId: process.env.DASHBOARDS_ENTERPRISE_COMPANY_ID || null
+      }
+    }
   }
 };
 

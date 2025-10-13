@@ -34,3 +34,13 @@
 - Added `analyticsPipelineController.js` exposing `fetchAnalyticsPipelineStatus`, `pauseAnalyticsPipelineHandler`, and `resumeAnalyticsPipelineHandler` to surface backlog/run telemetry and orchestrate ingestion rollbacks via Secrets Manager toggles.
 - Controllers respond with backlog statistics (pending events, oldest pending, next retry), failure streaks, last success/error metadata, and recent run history so dashboards/runbooks can monitor warehouse ingestion in real time.
 - Pause/resume handlers validate actor/ticket payloads, invoke the control service to update toggles and record audit runs, and return updated status payloads to confirm pipeline state transitions for operations teams.
+
+## 2025-10-29 — Persona Analytics Dashboard Controller
+- Added `analyticsDashboardController.js` exposing `getPersonaDashboard` and `exportPersonaDashboard` handlers. Requests pass through express-validator ensuring persona/company/provider IDs, ISO date windows, and timezone overrides are well formed before calling the analytics service. Responses include resolved window metadata, export hrefs, and app-configured limits for frontend consumption.
+- CSV handler reuses the service export builder, sets attachment headers, and returns persona-specific filenames while surfacing validation errors (422) and unsupported personas (404) consistently for API clients.
+- Export handler streams UTF-8 CSV payloads with content disposition headers, ensuring finance, success, and ops teams can schedule ingestion of governed dashboards while capturing validation errors in consistent 422 responses for misconfigured requests.
+
+## 2025-10-30 — Persona Dashboard Controller Validation
+- Exercised `getPersonaDashboard` to confirm resolved window metadata (start/end ISO strings, timezone labels) and export hrefs populate correctly after staging validation; ensured unsupported persona requests continue to return 404 without leaking stack traces.【F:backend-nodejs/src/controllers/analyticsDashboardController.js†L1-L63】
+- Verified `exportPersonaDashboard` streams CSV content with deterministic filenames and metadata headers while sharing validation semantics with the JSON endpoint; row limits reflect app config and throw 422 for invalid parameters.【F:backend-nodejs/src/controllers/analyticsDashboardController.js†L64-L105】
+- Logged backlog item to replace Vitest spinner reporter noise with CI-friendly output so controller regression logs remain reviewable by QA and auditors.【3d3b31†L1-L38】

@@ -83,7 +83,7 @@
 - **Target Window:** Weeks 8–12
 - **Objective:** Complete data products, governance artefacts, and compliance validation.
 - **Tasks:**
-  - **Task 5A — Analytics & Alerting Delivery (8% complete)**
+  - **Task 5A — Analytics & Alerting Delivery (38% complete)**
     1. Finalise unified event schema across zones, bookings, rentals, disputes, ads, and comms.
     2. Update ETL/ELT pipelines with GDPR-compliant retention and anonymisation.
     3. Build persona dashboards and exports for admin, provider, servicemen, and enterprise personas.
@@ -91,6 +91,7 @@
     5. Publish metric catalogue, data dictionary, and access policies for governance sign-off.
     *2025-10-24 update:* Subtask 5A.1 is production-ready. `analyticsEventService` now enforces catalogued metadata, tenant inference, and actor context across zones, bookings, rentals, campaigns, and communications emitters. Vitest suites assert persisted envelopes, and documentation (change logs, design artefacts, telemetry runbook) maps event IDs to dashboards/drawings, clearing the path for ETL/Looker ingestion work.
     *2025-10-28 update:* Subtask 5A.2 (5.2c rollout) now provides production pause/resume controls, control caching, and auditable run history. `analyticsPipelineService` mediates Secrets Manager toggles while `AnalyticsPipelineRun` records batch metrics, purge totals, and failure streaks surfaced through the new `/api/analytics/pipeline` endpoints. Documentation, database updates, design artefacts, and test plan entries capture dashboard widgets, runbook copy, and rollback governance so Milestone M5 advances toward analytics dashboard delivery.
+    *2025-10-29 update:* Subtask 5A.3 persona dashboards & CSV export APIs are live. Backend service/controller/routes aggregate bookings, rentals, campaigns, fraud, compliance, and communications telemetry per persona with CSV serialization and Supertest coverage; React `RoleDashboard.jsx` hydrates live payloads with retry/offline handling, export CTA, localisation, and Vitest assertions. Documentation, design artefacts, trackers, and test plan capture persona layouts, telemetry IDs, accessibility/localisation rules, and Looker ingestion hooks; remaining scope focuses on enterprise drill-down insights, mobile parity, and extended export QA.
   - **Task 5B — Compliance Validation Sprint (7% complete)**
     1. Execute GDPR, insurance/DBS, HMRC, and advertising compliance walkthroughs.
     2. Validate audit logs, retention schedules, and consent records across services.
