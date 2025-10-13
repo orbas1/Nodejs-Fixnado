@@ -99,7 +99,7 @@ class ExplorerViewState {
   List<ExplorerService> get services {
     if (snapshot == null) return const [];
     final data = snapshot!.services;
-    if (filters.type == ExplorerResultType.marketplace) {
+    if (filters.type == ExplorerResultType.marketplace || filters.type == ExplorerResultType.tools) {
       return const [];
     }
     return data;
@@ -110,6 +110,9 @@ class ExplorerViewState {
     final data = snapshot!.items;
     if (filters.type == ExplorerResultType.services) {
       return const [];
+    }
+    if (filters.type == ExplorerResultType.tools) {
+      return data.where((item) => item.supportsRental).toList();
     }
     return data;
   }

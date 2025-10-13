@@ -60,6 +60,16 @@ class ExplorerMarketplaceItem {
   final String status;
   final bool insuredOnly;
 
+  bool get supportsRental {
+    final availabilityValue = availability.toLowerCase();
+    final statusValue = status.toLowerCase();
+    return availabilityValue.contains('rent') ||
+        availabilityValue.contains('hire') ||
+        statusValue.contains('rent') ||
+        statusValue.contains('hire') ||
+        pricePerDay != null;
+  }
+
   factory ExplorerMarketplaceItem.fromJson(Map<String, dynamic> json) {
     return ExplorerMarketplaceItem(
       id: json['id'] as String,
@@ -260,7 +270,7 @@ class ExplorerFilters {
   }
 }
 
-enum ExplorerResultType { services, marketplace, all }
+enum ExplorerResultType { services, marketplace, tools, all }
 
 double? _toDouble(dynamic value) {
   if (value == null) {

@@ -7,6 +7,7 @@ import '../domain/models.dart';
 import 'explorer_controller.dart';
 import 'widgets/marketplace_item_card.dart';
 import 'widgets/service_result_card.dart';
+import 'widgets/tool_hire_sheet.dart';
 import 'widgets/zone_analytics_card.dart';
 
 class ExplorerScreen extends ConsumerStatefulWidget {
@@ -42,7 +43,9 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
       _controller.selection = TextSelection.fromPosition(TextPosition(offset: _controller.text.length));
     }
 
-    return RefreshIndicator(  
+    final showToolsOnly = state.filters.type == ExplorerResultType.tools;
+
+    return RefreshIndicator(
       onRefresh: () => controller.refresh(bypassCache: true),
       child: CustomScrollView(
         slivers: [
@@ -80,11 +83,18 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                     ],
                     if (state.marketplaceItems.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Text('Marketplace items', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      Text(
+                        showToolsOnly ? 'Tools for hire' : 'Marketplace items',
+                        style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: 16),
                       ...state.marketplaceItems.map((item) => Padding(
                             padding: const EdgeInsets.only(bottom: 16),
-                            child: MarketplaceItemCard(item: item),
+                            child: MarketplaceItemCard(
+                              item: item,
+                              onTap: item.supportsRental ? () => _openHireSheet(context, item) : null,
+                              onHire: item.supportsRental ? () => _openHireSheet(context, item) : null,
+                            ),
                           )),
                     ],
                     if (state.services.isEmpty && state.marketplaceItems.isEmpty && state.errorMessage == null)
@@ -169,6 +179,13 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 label: 'Marketplace',
                 selected: state.filters.type == ExplorerResultType.marketplace,
                 onSelected: () => controller.updateResultType(ExplorerResultType.marketplace),
+              ),
+              const SizedBox(width: 12),
+              _buildFilterChip(
+                context,
+                label: 'Tools',
+                selected: state.filters.type == ExplorerResultType.tools,
+                onSelected: () => controller.updateResultType(ExplorerResultType.tools),
               ),
               const SizedBox(width: 12),
               DropdownButtonHideUnderline(
@@ -258,6 +275,14 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
     );
   }
 }
+
+  void _openHireSheet(BuildContext context, ExplorerMarketplaceItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => ToolHireSheet(item: item),
+    );
+  }
 
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message, required this.offline});
