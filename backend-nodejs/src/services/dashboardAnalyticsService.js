@@ -5,14 +5,20 @@ import {
   AdCampaign,
   Booking,
   BookingAssignment,
+  BookingBid,
   CampaignDailyMetric,
   CampaignFraudSignal,
   Company,
   ComplianceDocument,
   ConversationParticipant,
+  Dispute,
+  Escrow,
   InventoryAlert,
   InventoryItem,
-  RentalAgreement
+  Order,
+  RentalAgreement,
+  Service,
+  User
 } from '../models/index.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
@@ -39,7 +45,7 @@ function resolvePersona(persona) {
     return null;
   }
   const normalised = persona.trim().toLowerCase();
-  if (['admin', 'provider', 'serviceman', 'enterprise'].includes(normalised)) {
+  if (['admin', 'provider', 'serviceman', 'enterprise', 'user'].includes(normalised)) {
     return normalised;
   }
   return null;
@@ -153,6 +159,10 @@ function groupByWeek(records, accessor, window) {
 }
 
 const PERSONA_METADATA = {
+  user: {
+    name: 'User Command Center',
+    headline: 'Coordinate service orders, rentals, and support in a single workspace.'
+  },
   admin: {
     name: 'Admin Control Tower',
     headline: 'Command multi-tenant operations, compliance, and SLA performance in real time.'
@@ -178,6 +188,621 @@ async function resolveCompanyId({ companyId }) {
   }
   const fallback = await Company.findOne({ attributes: ['id'], order: [['createdAt', 'ASC']] });
   return fallback?.id ?? null;
+}
+
+async function resolveUserId({ userId }) {
+  const coerced = normaliseUuid(userId);
+  if (coerced) {
+    return coerced;
+  }
+
+  const fallback = await User.findOne({
+    where: { type: 'user' },
+    attributes: ['id'],
+    order: [['createdAt', 'ASC']]
+  });
+
+  return fallback?.id ?? null;
+}
+
+function humanise(value) {
+  if (!value) {
+    return '';
+  }
+  return value
+    .toString()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+async function loadUserData(context) {
+  const { userId, companyId, window } = context;
+
+  const bookingWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { customerId: userId } : {}),
+    ...(companyId ? { companyId } : {})
+  };
+
+  const previousBookingWhere = {
+    createdAt: asDateRange(window.previousStart, window.previousEnd),
+    ...(userId ? { customerId: userId } : {}),
+    ...(companyId ? { companyId } : {})
+  };
+
+  const orderWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { buyerId: userId } : {})
+  };
+
+  const previousOrderWhere = {
+    createdAt: asDateRange(window.previousStart, window.previousEnd),
+    ...(userId ? { buyerId: userId } : {})
+  };
+
+  const rentalWhere = {
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { renterId: userId } : {})
+  };
+
+  const conversationWhere = {
+    participantType: 'user',
+    createdAt: asDateRange(window.start, window.end),
+    ...(userId ? { participantReferenceId: userId } : {})
+  };
+
+  const [
+    user,
+    bookings,
+    previousBookings,
+    orders,
+    previousOrders,
+    rentals,
+    disputes,
+    conversations
+  ] = await Promise.all([
+    userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
+    Booking.findAll({ where: bookingWhere }),
+    Booking.findAll({ where: previousBookingWhere }),
+    Order.findAll({
+      where: orderWhere,
+      include: [
+        { model: Service, attributes: ['title', 'category', 'currency'], required: false },
+        { model: Escrow, required: false }
+      ]
+    }),
+    Order.findAll({ where: previousOrderWhere }),
+    RentalAgreement.findAll({
+      where: rentalWhere,
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['name'],
+          required: false
+        }
+      ]
+    }),
+    Dispute.findAll({
+      where: { createdAt: asDateRange(window.start, window.end) },
+      include: [
+        {
+          model: Escrow,
+          required: true,
+          include: [
+            {
+              model: Order,
+              required: true,
+              where: orderWhere,
+              include: [{ model: Service, attributes: ['title'], required: false }]
+            }
+          ]
+        }
+      ]
+    }),
+    ConversationParticipant.findAll({ where: conversationWhere })
+  ]);
+
+  const totalBookings = bookings.length;
+  const previousTotalBookings = previousBookings.length;
+  const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
+  const previousCompletedBookings = previousBookings.filter((booking) => booking.status === 'completed').length;
+  const activeBookings = bookings.filter((booking) =>
+    ['pending', 'awaiting_assignment', 'scheduled', 'in_progress'].includes(booking.status)
+  );
+
+  const bookingsMetric = computeTrend(totalBookings, previousTotalBookings, formatNumber, ' jobs');
+
+  const completionRate = totalBookings ? completedBookings / totalBookings : 0;
+  const previousCompletionRate = previousTotalBookings ? previousCompletedBookings / previousTotalBookings : 0;
+  const completionDelta = (completionRate - previousCompletionRate) * 100;
+  const completionMetric = {
+    label: 'Completion rate',
+    value: `${(completionRate * 100).toFixed(1)}%`,
+    change:
+      previousTotalBookings > 0
+        ? `${completionDelta >= 0 ? '+' : '-'}${Math.abs(completionDelta).toFixed(1)} pts vs prev`
+        : `${formatNumber(activeBookings.length)} active jobs`,
+    trend: completionDelta > 0.1 ? 'up' : completionDelta < -0.1 ? 'down' : 'flat'
+  };
+
+  const spend = orders.reduce((sum, order) => sum + parseDecimal(order.totalAmount), 0);
+  const previousSpend = previousOrders.reduce((sum, order) => sum + parseDecimal(order.totalAmount), 0);
+  const currency = orders[0]?.currency || orders[0]?.Service?.currency || 'GBP';
+  const spendMetric = computeTrend(spend, previousSpend, (value) => formatCurrency(value, currency));
+
+  const conversationMetric = {
+    label: 'Conversations touched',
+    value: formatNumber(conversations.length),
+    change:
+      disputes.length > 0
+        ? `${formatNumber(disputes.length)} dispute${disputes.length === 1 ? '' : 's'} open`
+        : 'All clear',
+    trend: conversations.length > 0 ? 'up' : 'flat'
+  };
+
+  const now = DateTime.now().setZone(window.timezone);
+  const upcoming = bookings
+    .filter((booking) => booking.scheduledStart)
+    .filter((booking) => DateTime.fromJSDate(booking.scheduledStart).setZone(window.timezone) >= now)
+    .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart))
+    .slice(0, UPCOMING_LIMIT)
+    .map((booking) => ({
+      title: booking.meta?.title || `Booking ${booking.id.slice(0, 6).toUpperCase()}`,
+      when: DateTime.fromJSDate(booking.scheduledStart)
+        .setZone(window.timezone)
+        .toLocaleString(DateTime.DATETIME_MED_WITH_WEEKDAY),
+      status: humanise(booking.status)
+    }));
+
+  const spendBuckets = orders.reduce((acc, order) => {
+    const dateKey = DateTime.fromJSDate(order.createdAt).setZone(window.timezone).toISODate();
+    if (!dateKey) {
+      return acc;
+    }
+    const current = acc.get(dateKey) ?? 0;
+    acc.set(dateKey, current + parseDecimal(order.totalAmount));
+    return acc;
+  }, new Map());
+
+  const spendSeries = Array.from(spendBuckets.entries())
+    .sort(([a], [b]) => (a > b ? 1 : -1))
+    .map(([date, value]) => ({
+      name: DateTime.fromISO(date, { zone: window.timezone }).toFormat('dd LLL'),
+      value: Number.parseFloat(value.toFixed(2))
+    }));
+
+  const statusData = [
+    { key: 'draft', label: 'Draft' },
+    { key: 'funded', label: 'Funded' },
+    { key: 'in_progress', label: 'In delivery' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'disputed', label: 'Disputed' }
+  ].map(({ key, label }) => ({
+    name: label,
+    count: orders.filter((order) => order.status === key).length
+  }));
+
+  const escrowFunded = orders.filter((order) => order.Escrow?.status === 'funded').length;
+  const fundedOrders = orders.filter((order) => order.status === 'funded').length;
+  const inProgressOrders = orders.filter((order) => order.status === 'in_progress').length;
+  const awaitingActionOrders = orders.filter((order) => ['draft', 'disputed'].includes(order.status)).length;
+  const timezoneLabel = window.timezone?.replace('_', ' ') ?? DEFAULT_TIMEZONE;
+  const totalOrders = orders.length;
+  const supportConversations = conversations.length;
+  const rentalsDueSoon = rentals.filter((rental) => {
+    if (!rental.returnDueAt) return false;
+    const due = DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone);
+    return due >= now && due.diff(now, 'days').days <= 3;
+  }).length;
+  const rentalsInUse = rentals.filter((rental) =>
+    ['in_use', 'pickup_scheduled', 'return_pending', 'inspection_pending'].includes(rental.status)
+  ).length;
+
+  const overview = {
+    metrics: [bookingsMetric, completionMetric, spendMetric, conversationMetric],
+    charts: [
+      {
+        id: 'bookings-volume',
+        title: 'Bookings per week',
+        description: 'New bookings placed this window.',
+        type: 'line',
+        dataKey: 'count',
+        data: groupByWeek(bookings, (booking) => booking.createdAt, window)
+      },
+      {
+        id: 'order-spend',
+        title: 'Service order spend',
+        description: 'Escrow commitments captured per day.',
+        type: 'area',
+        dataKey: 'value',
+        data: spendSeries
+      },
+      {
+        id: 'order-status-mix',
+        title: 'Order status mix',
+        description: 'Pipeline distribution across your service orders.',
+        type: 'bar',
+        dataKey: 'count',
+        data: statusData
+      }
+    ],
+    upcoming,
+    insights: [
+      `${formatNumber(activeBookings.length)} active bookings across your workspace`,
+      `${formatCurrency(spend, currency)} committed across ${formatNumber(orders.length)} service orders`,
+      `${formatNumber(escrowFunded)} funded escrow${escrowFunded === 1 ? '' : 's'} ready for delivery`,
+      rentalsDueSoon
+        ? `${formatNumber(rentalsDueSoon)} rental${rentalsDueSoon === 1 ? '' : 's'} due within 72 hours`
+        : `${formatNumber(rentalsInUse)} rental asset${rentalsInUse === 1 ? '' : 's'} currently in the field`
+    ]
+  };
+
+  const orderBoardColumns = [
+    {
+      title: 'Quotes & Drafts',
+      filter: (order) => order.status === 'draft'
+    },
+    {
+      title: 'Escrow Funded',
+      filter: (order) => order.status === 'funded'
+    },
+    {
+      title: 'In Delivery',
+      filter: (order) => order.status === 'in_progress'
+    },
+    {
+      title: 'Wrap-up & Follow-up',
+      filter: (order) => ['completed', 'disputed'].includes(order.status)
+    }
+  ].map((column) => ({
+    title: column.title,
+    items: orders
+      .filter(column.filter)
+      .slice(0, 4)
+      .map((order) => {
+        const etaLabel =
+          order.status === 'disputed'
+            ? 'Dispute in progress'
+            : order.scheduledFor
+            ? DateTime.fromJSDate(order.scheduledFor)
+                .setZone(window.timezone)
+                .toRelative({ base: window.end })
+            : 'Schedule pending';
+        return {
+          title: order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
+          owner: order.Service?.category || 'Service order',
+          value: formatCurrency(order.totalAmount, order.currency || order.Service?.currency || 'GBP'),
+          eta: etaLabel
+        };
+      })
+  }));
+
+  const rentalRows = rentals.slice(0, EXPORT_ROW_LIMIT).map((rental) => [
+    rental.rentalNumber,
+    rental.InventoryItem?.name ?? 'Asset',
+    humanise(rental.status),
+    rental.returnDueAt
+      ? DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone).toISODate()
+      : '—',
+    humanise(rental.depositStatus)
+  ]);
+
+  const accountItems = [];
+
+  if (disputes.length > 0) {
+    disputes.slice(0, 4).forEach((dispute) => {
+      const order = dispute.Escrow?.Order;
+      accountItems.push({
+        title: order?.Service?.title || 'Service dispute',
+        description: dispute.reason || 'Resolution pending with Fixnado support.',
+        status: humanise(dispute.status)
+      });
+    });
+  } else {
+    accountItems.push({
+      title: 'Escrow and disputes',
+      description: 'No disputes or chargebacks are currently open.',
+      status: 'Healthy'
+    });
+  }
+
+  if (rentalsDueSoon > 0) {
+    accountItems.push({
+      title: 'Rental returns due',
+      description: `${formatNumber(rentalsDueSoon)} rental${rentalsDueSoon === 1 ? '' : 's'} need returning within 72 hours.`,
+      status: 'Action required'
+    });
+  } else {
+    accountItems.push({
+      title: 'Rental logistics',
+      description: 'All rental equipment is within the agreed return window.',
+      status: 'On track'
+    });
+  }
+
+  if (user && !(user.twoFactorApp || user.twoFactorEmail)) {
+    accountItems.push({
+      title: 'Secure your account',
+      description: 'Enable two-factor authentication to protect bookings and escrow payouts.',
+      status: 'Recommendation'
+    });
+  } else {
+    accountItems.push({
+      title: 'Account security',
+      description: 'Multi-factor authentication is enabled for this account.',
+      status: 'Compliant'
+    });
+  }
+
+  if (conversations.length > 0) {
+    accountItems.push({
+      title: 'Support conversations',
+      description: `${formatNumber(conversations.length)} support touchpoint${conversations.length === 1 ? '' : 's'} logged this window.`,
+      status: 'In progress'
+    });
+  }
+
+  const overviewSidebar = {
+    badge: `${formatNumber(totalBookings)} jobs`,
+    status:
+      disputes.length > 0
+        ? { label: `${formatNumber(disputes.length)} dispute${disputes.length === 1 ? '' : 's'} open`, tone: 'warning' }
+        : { label: 'Workspace healthy', tone: 'success' },
+    highlights: [
+      { label: 'Active bookings', value: formatNumber(activeBookings.length) },
+      { label: 'Spend', value: formatCurrency(spend, currency) }
+    ]
+  };
+
+  const ordersSidebar = {
+    badge: `${formatNumber(totalOrders)} orders`,
+    status:
+      awaitingActionOrders > 0
+        ? { label: `${formatNumber(awaitingActionOrders)} need action`, tone: 'warning' }
+        : { label: 'Pipeline healthy', tone: 'success' },
+    highlights: [
+      { label: 'Escrow funded', value: formatNumber(fundedOrders) },
+      { label: 'In delivery', value: formatNumber(inProgressOrders) }
+    ]
+  };
+
+  const rentalsSidebar = {
+    badge: `${formatNumber(rentals.length)} rentals`,
+    status:
+      rentalsDueSoon > 0
+        ? { label: `${formatNumber(rentalsDueSoon)} due soon`, tone: 'warning' }
+        : { label: 'All on schedule', tone: 'success' },
+    highlights: [
+      { label: 'In field', value: formatNumber(rentalsInUse) },
+      { label: 'Due soon', value: formatNumber(rentalsDueSoon) }
+    ]
+  };
+
+  const accountSidebar = {
+    badge: `${formatNumber(supportConversations)} support`,
+    status:
+      disputes.length > 0
+        ? { label: 'Escalations open', tone: 'danger' }
+        : supportConversations > 0
+        ? { label: 'Active conversations', tone: 'info' }
+        : { label: 'Support quiet', tone: 'success' },
+    highlights: [
+      { label: 'Disputes', value: formatNumber(disputes.length) },
+      { label: 'Conversations', value: formatNumber(supportConversations) }
+    ]
+  };
+
+  const mfaEnabled = Boolean(user?.twoFactorApp || user?.twoFactorEmail);
+  const settingsSidebar = {
+    badge: mfaEnabled ? 'MFA secured' : 'Security review',
+    status: mfaEnabled ? { label: 'MFA enabled', tone: 'success' } : { label: 'Enable MFA', tone: 'warning' },
+    highlights: [
+      { label: 'Timezone', value: timezoneLabel },
+      { label: 'Currency', value: currency }
+    ]
+  };
+
+  const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
+  const workspaceAlignment = companyId ? 'Linked to company workspace' : 'Standalone workspace';
+
+  const settingsPanels = [
+    {
+      id: 'profile',
+      title: 'Profile & Identity',
+      description: 'Details shared with crews, providers, and support.',
+      items: [
+        {
+          type: 'value',
+          label: 'Full name',
+          value: displayName,
+          helper: 'Shown on bookings, receipts, and support conversations.'
+        },
+        {
+          type: 'value',
+          label: 'Contact email',
+          value: user?.email ?? 'Not provided',
+          helper: 'Primary channel for booking updates and notifications.'
+        },
+        {
+          type: 'value',
+          label: 'Workspace alignment',
+          value: workspaceAlignment,
+          helper: companyId
+            ? 'Bookings inherit company-approved rates and SLAs.'
+            : 'Orders use personal preferences and payment methods.'
+        },
+        {
+          type: 'value',
+          label: 'Local timezone',
+          value: timezoneLabel,
+          helper: 'Applied to scheduling, reminders, and exports.'
+        }
+      ]
+    },
+    {
+      id: 'security',
+      title: 'Security & Access',
+      description: 'Protect the account that controls bookings and payouts.',
+      items: [
+        {
+          type: 'toggle',
+          label: 'Authenticator app 2FA',
+          enabled: Boolean(user?.twoFactorApp),
+          helper: user?.twoFactorApp
+            ? 'Time-based one-time passcodes are required on sign-in.'
+            : 'Add an authenticator app to secure sign-ins.'
+        },
+        {
+          type: 'toggle',
+          label: 'Email verification codes',
+          enabled: Boolean(user?.twoFactorEmail),
+          helper: user?.twoFactorEmail
+            ? 'Backup verification codes are delivered to your inbox.'
+            : 'Enable email codes as a fallback second factor.'
+        },
+        {
+          type: 'value',
+          label: 'Dispute status',
+          value: disputes.length > 0 ? `${formatNumber(disputes.length)} open` : 'None open',
+          helper: disputes.length > 0
+            ? 'Resolve disputes to restore full payout automation.'
+            : 'All escrow payouts releasing automatically.'
+        }
+      ]
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      description: 'Control how Fixnado keeps you informed.',
+      items: [
+        {
+          type: 'toggle',
+          label: 'Support case updates',
+          enabled: supportConversations > 0,
+          helper: supportConversations > 0
+            ? 'Email alerts active for current support cases.'
+            : 'Alerts activate automatically when a case opens.'
+        },
+        {
+          type: 'toggle',
+          label: 'Job dispatch alerts',
+          enabled: activeBookings.length > 0,
+          helper:
+            activeBookings.length > 0
+              ? `${formatNumber(activeBookings.length)} active job${activeBookings.length === 1 ? '' : 's'} will send dispatch nudges.`
+              : 'Dispatch alerts enable once you have active jobs.'
+        },
+        {
+          type: 'value',
+          label: 'Weekly summary',
+          value: totalOrders > 0 ? 'Scheduled' : 'Paused',
+          helper: totalOrders > 0
+            ? 'A weekly health report will arrive each Monday.'
+            : 'Resume once new orders are captured.'
+        }
+      ]
+    },
+    {
+      id: 'billing',
+      title: 'Billing & Payments',
+      description: 'Manage escrow, invoices, and default payment settings.',
+      items: [
+        {
+          type: 'value',
+          label: 'Preferred currency',
+          value: currency,
+          helper: 'All new orders default to this currency.'
+        },
+        {
+          type: 'value',
+          label: 'Funded escrows',
+          value: formatNumber(escrowFunded),
+          helper: escrowFunded > 0
+            ? 'Escrows release once jobs complete and pass inspection.'
+            : 'Fund an order to initialise automated escrow releases.'
+        },
+        {
+          type: 'value',
+          label: 'Invoices this window',
+          value: formatNumber(totalOrders),
+          helper: totalOrders > 0
+            ? `${formatCurrency(spend, currency)} invoiced across service orders.`
+            : 'No invoices generated during this window.'
+        }
+      ]
+    }
+  ];
+
+  return {
+    persona: 'user',
+    name: PERSONA_METADATA.user.name,
+    headline: PERSONA_METADATA.user.headline,
+    window,
+    metadata: {
+      userId: userId ?? null,
+      companyId: companyId ?? null,
+      user: user
+        ? {
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`.trim(),
+            email: user.email
+          }
+        : null,
+      totals: {
+        bookings: totalBookings,
+        activeBookings: activeBookings.length,
+        spend,
+        rentals: rentals.length,
+        disputes: disputes.length,
+        conversations: conversations.length
+      }
+    },
+    navigation: [
+      {
+        id: 'overview',
+        label: 'Customer Overview',
+        description: 'Bookings, spend, and support signals.',
+        type: 'overview',
+        analytics: overview,
+        sidebar: overviewSidebar
+      },
+      {
+        id: 'orders',
+        label: 'Service Orders',
+        description: 'Escrow, delivery, and follow-up pipeline.',
+        type: 'board',
+        sidebar: ordersSidebar,
+        data: { columns: orderBoardColumns }
+      },
+      {
+        id: 'rentals',
+        label: 'Rental Assets',
+        description: 'Track equipment associated with your jobs.',
+        type: 'table',
+        sidebar: rentalsSidebar,
+        data: {
+          headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
+          rows: rentalRows
+        }
+      },
+      {
+        id: 'account',
+        label: 'Account & Support',
+        description: 'Next best actions to keep everything running smoothly.',
+        type: 'list',
+        sidebar: accountSidebar,
+        data: { items: accountItems }
+      },
+      {
+        id: 'settings',
+        label: 'Account Settings',
+        description: 'Identity, security, and notification preferences.',
+        type: 'settings',
+        sidebar: settingsSidebar,
+        data: { panels: settingsPanels }
+      }
+    ]
+  };
 }
 
 async function loadAdminData(context) {
@@ -706,13 +1331,35 @@ async function loadProviderData(context) {
 async function loadServicemanData(context) {
   const { providerId, window } = context;
 
-  const [assignments] = await Promise.all([
+  const providerFilter = providerId ? { providerId } : {};
+
+  const [assignments, previousAssignments, bids, services] = await Promise.all([
     BookingAssignment.findAll({
       where: {
-        ...(providerId ? { providerId } : {}),
+        ...providerFilter,
         createdAt: asDateRange(window.start, window.end)
       },
       include: [{ model: Booking }]
+    }),
+    BookingAssignment.findAll({
+      where: {
+        ...providerFilter,
+        createdAt: asDateRange(window.previousStart, window.previousEnd)
+      },
+      include: [{ model: Booking }]
+    }),
+    BookingBid.findAll({
+      where: {
+        ...providerFilter,
+        submittedAt: asDateRange(window.start, window.end)
+      },
+      include: [{ model: Booking }],
+      order: [['submittedAt', 'DESC']]
+    }),
+    Service.findAll({
+      where: providerFilter,
+      limit: EXPORT_ROW_LIMIT,
+      order: [['updatedAt', 'DESC']]
     })
   ]);
 
@@ -721,30 +1368,109 @@ async function loadServicemanData(context) {
   const scheduled = assignments.filter((assignment) => assignment.Booking?.status === 'scheduled').length;
   const revenue = assignments.reduce((sum, assignment) => sum + parseDecimal(assignment.Booking?.commissionAmount), 0);
 
+  const previousCompleted = previousAssignments.filter((assignment) => assignment.Booking?.status === 'completed').length;
+  const previousScheduled = previousAssignments.filter((assignment) => assignment.Booking?.status === 'scheduled').length;
+  const previousInProgress = previousAssignments.filter((assignment) => assignment.Booking?.status === 'in_progress').length;
+  const previousRevenue = previousAssignments.reduce(
+    (sum, assignment) => sum + parseDecimal(assignment.Booking?.commissionAmount),
+    0
+  );
+
   const travelBufferMinutes = assignments.reduce((sum, assignment) => {
     const metaMinutes = Number.parseInt(assignment.Booking?.meta?.travelMinutes ?? 0, 10);
     return sum + (Number.isFinite(metaMinutes) ? metaMinutes : 0);
   }, 0);
-  const avgTravelMinutes = assignments.length ? Math.round(travelBufferMinutes / assignments.length) : 0;
+  const previousTravelBufferMinutes = previousAssignments.reduce((sum, assignment) => {
+    const metaMinutes = Number.parseInt(assignment.Booking?.meta?.travelMinutes ?? 0, 10);
+    return sum + (Number.isFinite(metaMinutes) ? metaMinutes : 0);
+  }, 0);
 
-  const upcoming = assignments
+  const avgTravelMinutes = assignments.length ? Math.round(travelBufferMinutes / assignments.length) : 0;
+  const previousAvgTravelMinutes = previousAssignments.length
+    ? Math.round(previousTravelBufferMinutes / previousAssignments.length)
+    : 0;
+
+  const autoMatchedAssignments = assignments.filter((assignment) => assignment.Booking?.meta?.autoMatched);
+  const autoMatchedCount = autoMatchedAssignments.length;
+  const adsSourcedCount = assignments.filter(
+    (assignment) => assignment.Booking?.meta?.source === 'fixnado_ads'
+  ).length;
+
+  const bookingCurrency = assignments[0]?.Booking?.currency ?? 'GBP';
+
+  const scheduledUpcoming = assignments
     .filter((assignment) => assignment.Booking?.scheduledStart)
     .sort((a, b) => new Date(a.Booking.scheduledStart) - new Date(b.Booking.scheduledStart))
     .slice(0, UPCOMING_LIMIT)
-    .map((assignment) => ({
-      title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
-      when: DateTime.fromJSDate(assignment.Booking.scheduledStart)
-        .setZone(window.timezone)
-        .toLocaleString(DateTime.DATETIME_MED_WITH_WEEKDAY),
-      status: assignment.Booking?.zoneId ? 'Confirmed' : 'Pending zone'
-    }));
+    .map((assignment) => {
+      const scheduledStart = assignment.Booking?.scheduledStart;
+      const status = assignment.Booking?.status ?? 'scheduled';
+      const statusLabel = status.replace(/_/g, ' ');
+      return {
+        title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
+        when: scheduledStart
+          ? DateTime.fromJSDate(scheduledStart)
+              .setZone(window.timezone)
+              .toLocaleString(DateTime.DATETIME_MED_WITH_WEEKDAY)
+          : 'Awaiting schedule',
+        status: statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)
+      };
+    });
+
+  const weeklyVelocityBuckets = [];
+  let cursor = window.start.startOf('week');
+  while (cursor < window.end) {
+    const bucketEnd = cursor.plus({ weeks: 1 });
+    weeklyVelocityBuckets.push({
+      start: cursor,
+      end: bucketEnd,
+      label: cursor.toFormat('dd LLL'),
+      accepted: 0,
+      autoMatches: 0
+    });
+    cursor = bucketEnd;
+  }
+
+  for (const assignment of assignments) {
+    const assignedAt = assignment.assignedAt ?? assignment.createdAt;
+    if (!assignedAt) continue;
+    const dt = DateTime.fromJSDate(assignedAt).setZone(window.timezone);
+    const bucket = weeklyVelocityBuckets.find((entry) => dt >= entry.start && dt < entry.end);
+    if (!bucket) continue;
+    if (assignment.status === 'accepted') {
+      bucket.accepted += 1;
+    }
+    if (assignment.Booking?.meta?.autoMatched) {
+      bucket.autoMatches += 1;
+    }
+  }
 
   const overview = {
     metrics: [
-      { label: 'Assignments Completed', value: formatNumber(completed), change: `${formatNumber(inProgress)} in progress`, trend: completed >= inProgress ? 'up' : 'down' },
-      { label: 'Scheduled', value: formatNumber(scheduled), change: `${formatNumber(upcoming.length)} upcoming`, trend: 'up' },
-      { label: 'Avg. Travel Buffer', value: `${formatNumber(avgTravelMinutes)} mins`, change: `${formatNumber(assignments.length)} total jobs`, trend: 'up' },
-      { label: 'Commission Earned', value: formatCurrency(revenue, 'GBP'), change: 'After platform fees', trend: 'up' }
+      {
+        label: 'Assignments Completed',
+        ...computeTrend(completed, previousCompleted, formatNumber, ' jobs')
+      },
+      {
+        label: 'In Progress',
+        ...computeTrend(inProgress, previousInProgress, formatNumber, ' jobs')
+      },
+      {
+        label: 'Scheduled',
+        ...computeTrend(scheduled, previousScheduled, formatNumber, ' jobs')
+      },
+      {
+        label: 'Avg. Travel Buffer',
+        ...computeTrend(
+          avgTravelMinutes,
+          previousAvgTravelMinutes,
+          (value) => `${formatNumber(value)} mins`
+        )
+      },
+      {
+        label: 'Commission Earned',
+        ...computeTrend(revenue, previousRevenue, (value) => formatCurrency(value, bookingCurrency))
+      }
     ],
     charts: [
       {
@@ -758,13 +1484,26 @@ async function loadServicemanData(context) {
           { name: 'Accepted', count: assignments.filter((assignment) => assignment.status === 'accepted').length },
           { name: 'Declined', count: assignments.filter((assignment) => assignment.status === 'declined').length }
         ]
+      },
+      {
+        id: 'assignment-velocity',
+        title: 'Assignment Velocity',
+        description: 'Accepted jobs and auto-matches per week.',
+        type: 'bar',
+        dataKey: 'accepted',
+        secondaryKey: 'autoMatches',
+        data: weeklyVelocityBuckets.map((bucket) => ({
+          name: bucket.label,
+          accepted: bucket.accepted,
+          autoMatches: bucket.autoMatches
+        }))
       }
     ],
-    upcoming,
+    upcoming: scheduledUpcoming,
     insights: [
-      `${formatNumber(inProgress)} active jobs with ${formatNumber(avgTravelMinutes)} min avg travel buffer`,
-      `${formatCurrency(revenue, 'GBP')} commission accrued this window`,
-      `${formatNumber(assignments.filter((assignment) => assignment.status === 'declined').length)} declines logged – review load balancing`
+      `${formatNumber(inProgress)} active jobs and ${formatNumber(scheduled)} scheduled this window`,
+      `${formatCurrency(revenue, bookingCurrency)} commission accrued after platform fees`,
+      `${formatNumber(autoMatchedCount)} assignments auto-matched • ${formatNumber(adsSourcedCount)} sourced via Fixnado Ads`
     ]
   };
 
@@ -780,7 +1519,7 @@ async function loadServicemanData(context) {
         .slice(0, 4)
         .map((assignment) => ({
           title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
-          owner: assignment.Booking?.meta?.siteContact || 'Contact pending',
+          owner: assignment.Booking?.meta?.siteContact || assignment.Booking?.meta?.requester || 'Contact pending',
           value: formatCurrency(assignment.Booking?.totalAmount, assignment.Booking?.currency),
           eta: assignment.Booking?.scheduledStart
             ? DateTime.fromJSDate(assignment.Booking.scheduledStart).setZone(window.timezone).toRelative({ base: window.end })
@@ -798,7 +1537,7 @@ async function loadServicemanData(context) {
         .slice(0, 4)
         .map((assignment) => ({
           title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
-          owner: assignment.Booking?.meta?.zoneName || 'Zone pending',
+          owner: assignment.Booking?.meta?.zoneName || assignment.Booking?.meta?.owner || 'Zone pending',
           value: formatCurrency(assignment.Booking?.totalAmount, assignment.Booking?.currency),
           eta: assignment.Booking?.scheduledStart
             ? DateTime.fromJSDate(assignment.Booking.scheduledStart).setZone(window.timezone).toRelative({ base: window.end })
@@ -812,7 +1551,7 @@ async function loadServicemanData(context) {
         .slice(0, 4)
         .map((assignment) => ({
           title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
-          owner: 'Support',
+          owner: assignment.Booking?.meta?.owner || 'Support',
           value: formatCurrency(assignment.Booking?.totalAmount, assignment.Booking?.currency),
           eta: 'Dispute open'
         }))
@@ -824,10 +1563,133 @@ async function loadServicemanData(context) {
         .slice(0, 4)
         .map((assignment) => ({
           title: assignment.Booking?.meta?.title || `Job ${assignment.Booking?.id?.slice(0, 4)}`,
-          owner: assignment.Booking?.meta?.customerName || 'Client',
+          owner: assignment.Booking?.meta?.customerName || assignment.Booking?.meta?.requester || 'Client',
           value: formatCurrency(assignment.Booking?.totalAmount, assignment.Booking?.currency),
           eta: 'Feedback requested'
         }))
+    }
+  ];
+
+  const bidStageLookup = {
+    new: 'New Requests',
+    negotiation: 'Negotiation',
+    awarded: 'Awarded',
+    closed: 'Closed Out'
+  };
+
+  const determineBidStage = (bid) => {
+    if (bid.status === 'accepted') {
+      return 'awarded';
+    }
+    if (bid.status === 'declined' || bid.status === 'withdrawn') {
+      return 'closed';
+    }
+    const revisions = Array.isArray(bid.revisionHistory) ? bid.revisionHistory.length : 0;
+    const audits = Array.isArray(bid.auditLog) ? bid.auditLog.length : 0;
+    if (revisions > 0 || audits > 0) {
+      return 'negotiation';
+    }
+    return 'new';
+  };
+
+  const bidColumns = Object.entries(bidStageLookup).map(([stage, title]) => ({
+    stage,
+    title,
+    items: []
+  }));
+
+  for (const bid of bids) {
+    const booking = bid.Booking;
+    const column = bidColumns.find((col) => col.stage === determineBidStage(bid));
+    if (!column) continue;
+    const submittedAt = bid.submittedAt ? DateTime.fromJSDate(bid.submittedAt).setZone(window.timezone) : null;
+    column.items.push({
+      title: booking?.meta?.title || `Bid ${bid.id.slice(0, 6)}`,
+      owner: booking?.meta?.requester || booking?.meta?.owner || 'Client',
+      value: formatCurrency(bid.amount, bid.currency || booking?.currency || bookingCurrency),
+      eta: submittedAt ? `Submitted ${submittedAt.toRelative({ base: window.end })}` : 'Submission pending'
+    });
+  }
+
+  const serviceLookup = new Map(services.map((service) => [service.id, service]));
+  const serviceStats = new Map();
+
+  for (const assignment of assignments) {
+    const booking = assignment.Booking;
+    if (!booking?.meta?.serviceId) continue;
+    const service = serviceLookup.get(booking.meta.serviceId);
+    if (!service) continue;
+    const currentStats = serviceStats.get(service.id) ?? {
+      total: 0,
+      active: 0,
+      completed: 0,
+      revenue: 0,
+      autoMatches: 0,
+      sources: {}
+    };
+    currentStats.total += 1;
+    if (booking.status === 'completed') {
+      currentStats.completed += 1;
+    } else if (['scheduled', 'in_progress'].includes(booking.status)) {
+      currentStats.active += 1;
+    }
+    currentStats.revenue += parseDecimal(booking.totalAmount);
+    if (booking.meta?.autoMatched) {
+      currentStats.autoMatches += 1;
+    }
+    const source = booking.meta?.source ?? 'marketplace';
+    currentStats.sources[source] = (currentStats.sources[source] ?? 0) + 1;
+    serviceStats.set(service.id, currentStats);
+  }
+
+  const sourceLabels = {
+    fixnado_ads: 'Fixnado Ads',
+    marketplace: 'Marketplace',
+    partner_referral: 'Partner referral'
+  };
+
+  const serviceCards = services.slice(0, 9).map((service) => {
+    const stats = serviceStats.get(service.id) ?? {
+      total: 0,
+      active: 0,
+      completed: 0,
+      revenue: 0,
+      autoMatches: 0,
+      sources: {}
+    };
+    const averageValue = stats.total ? stats.revenue / stats.total : 0;
+    const topSourceEntry = Object.entries(stats.sources).sort((a, b) => b[1] - a[1])[0];
+    const topSourceLabel = topSourceEntry ? sourceLabels[topSourceEntry[0]] ?? topSourceEntry[0] : 'Marketplace';
+
+    return {
+      title: service.title,
+      details: [
+        `${formatNumber(stats.completed)} completed • ${formatNumber(stats.active)} active`,
+        `Avg value ${formatCurrency(averageValue, service.currency ?? bookingCurrency)}`,
+        stats.autoMatches > 0
+          ? `${formatNumber(stats.autoMatches)} auto-matched wins`
+          : 'Awaiting auto-match wins',
+        `Top source: ${topSourceLabel}`
+      ],
+      accent: 'from-sky-50 via-white to-indigo-100'
+    };
+  });
+
+  const automationItems = [
+    {
+      title: 'Auto-match performance',
+      description: `${formatPercent(autoMatchedCount, assignments.length || 1)} of jobs auto-routed to your crew this window`,
+      status: autoMatchedCount / Math.max(assignments.length, 1) >= 0.5 ? 'On track' : 'Needs review'
+    },
+    {
+      title: 'Fixnado Ads impact',
+      description: `${formatNumber(adsSourcedCount)} jobs sourced via Fixnado Ads in the current window`,
+      status: adsSourcedCount > 0 ? 'Active campaigns' : 'Launch campaign'
+    },
+    {
+      title: 'Travel buffer health',
+      description: `Average buffer ${formatNumber(avgTravelMinutes)} mins across ${formatNumber(assignments.length)} jobs`,
+      status: avgTravelMinutes > 45 ? 'Optimise routing' : 'Efficient routing'
     }
   ];
 
@@ -842,7 +1704,9 @@ async function loadServicemanData(context) {
         completed,
         inProgress,
         scheduled,
-        revenue
+        revenue,
+        autoMatched: autoMatchedCount,
+        adsSourced: adsSourcedCount
       }
     },
     navigation: [
@@ -859,6 +1723,27 @@ async function loadServicemanData(context) {
         description: 'Daily and weekly workload.',
         type: 'board',
         data: { columns: boardColumns }
+      },
+      {
+        id: 'bid-pipeline',
+        label: 'Bid Pipeline',
+        description: 'Track bids from submission through award.',
+        type: 'board',
+        data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
+      },
+      {
+        id: 'service-catalogue',
+        label: 'Service Catalogue',
+        description: 'Performance of services offered to Fixnado clients.',
+        type: 'grid',
+        data: { cards: serviceCards }
+      },
+      {
+        id: 'automation',
+        label: 'Automation & Growth',
+        description: 'Auto-match, routing, and acquisition insights.',
+        type: 'list',
+        data: { items: automationItems }
       }
     ]
   };
@@ -993,18 +1878,41 @@ async function loadEnterpriseData(context) {
 
 async function resolveContext(persona, query, window) {
   const defaults = PERSONA_DEFAULTS[persona] ?? {};
-  const companyId = await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId });
-  const providerId = normaliseUuid(query.providerId ?? defaults.providerId);
 
   switch (persona) {
     case 'admin':
-      return { persona, window, companyId };
+      return {
+        persona,
+        window,
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
     case 'provider':
-      return { persona, window, providerId, companyId };
+      return {
+        persona,
+        window,
+        providerId: normaliseUuid(query.providerId ?? defaults.providerId),
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
     case 'serviceman':
-      return { persona, window, providerId };
+      return {
+        persona,
+        window,
+        providerId: normaliseUuid(query.providerId ?? defaults.providerId)
+      };
     case 'enterprise':
-      return { persona, window, companyId };
+      return {
+        persona,
+        window,
+        companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+      };
+    case 'user': {
+      const resolvedUserId = await resolveUserId({ userId: query.userId ?? defaults.userId });
+      const shouldResolveCompany = query.companyId || defaults.companyId;
+      const resolvedCompanyId = shouldResolveCompany
+        ? await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
+        : null;
+      return { persona, window, userId: resolvedUserId, companyId: resolvedCompanyId };
+    }
     default:
       throw new Error('Unsupported persona');
   }
@@ -1021,6 +1929,9 @@ export async function getPersonaDashboard(personaInput, query = {}) {
   const window = resolveWindow(query);
   const context = await resolveContext(persona, query, window);
 
+  if (persona === 'user') {
+    return loadUserData(context);
+  }
   if (persona === 'admin') {
     return loadAdminData(context);
   }
@@ -1108,6 +2019,22 @@ function flattenSection(section) {
     const rows = [['Card', 'Details']];
     for (const card of section.data?.cards ?? []) {
       rows.push([card.title, (card.details ?? []).join(' | ')]);
+    }
+    return rows;
+  }
+
+  if (section.type === 'settings') {
+    const rows = [['Panel', 'Setting', 'Value', 'Details']];
+    for (const panel of section.data?.panels ?? []) {
+      for (const item of panel.items ?? []) {
+        const value =
+          item.type === 'toggle'
+            ? item.enabled
+              ? 'Enabled'
+              : 'Disabled'
+            : item.value ?? '';
+        rows.push([panel.title ?? panel.id ?? 'Panel', item.label ?? '', value, item.helper ?? '']);
+      }
     }
     return rows;
   }

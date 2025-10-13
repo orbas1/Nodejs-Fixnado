@@ -165,6 +165,13 @@ export const enGB = {
     'enterprisePanel.programmeUpdated': 'Updated {date}',
     'enterprisePanel.errorSummary': 'Live metrics could not be refreshed.',
     'enterprisePanel.errorFallbackHint': 'Showing the most recent cached snapshot.',
+    'enterprisePanel.fallbackNoticeTitle': 'Showing cached enterprise metrics',
+    'enterprisePanel.fallbackNoticeFull':
+      'We are still syncing live data. This snapshot keeps every section populated while the connection stabilises.',
+    'enterprisePanel.fallbackNoticePartial':
+      'Live data is temporarily unavailable for {sections}. We are displaying the most recent saved values for those areas.',
+    'enterprisePanel.fallbackNoticeNoCompany':
+      'We could not match this enterprise account, so you are seeing the Fixnado demo snapshot instead.',
     'enterprisePanel.spendHeadline': 'Spend & budget pacing',
     'enterprisePanel.spendMonthToDate': 'Month-to-date spend',
     'enterprisePanel.spendBudget': 'Budget pacing',

@@ -28,6 +28,16 @@ function getStorage() {
   }
 }
 
+function toQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null || value === '') return;
+    searchParams.append(key, value);
+  });
+  const result = searchParams.toString();
+  return result ? `?${result}` : '';
+}
+
 function storageKey(key) {
   return `${CACHE_NAMESPACE}:${key}`;
 }
@@ -428,6 +438,302 @@ function normaliseBusinessFront(payload = {}) {
   };
 }
 
+function normaliseAdminDashboard(payload = {}) {
+  const timeframe = typeof payload.timeframe === 'string' ? payload.timeframe : '7d';
+  const generatedAt = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
+
+  const timeframeOptions = ensureArray(payload.timeframeOptions).map((option) => ({
+    value: typeof option?.value === 'string' ? option.value : `${option?.value ?? '7d'}`,
+    label: option?.label || `${option?.value ?? '7 days'}`
+  }));
+
+  const tiles = ensureArray(payload.metrics?.command?.tiles).map((tile, index) => ({
+    id: tile.id || tile.key || `metric-${index}`,
+    label: tile.label || tile.name || `Metric ${index + 1}`,
+    value: {
+      amount: Number.parseFloat(tile.value?.amount ?? tile.valueAmount ?? tile.value ?? 0) || 0,
+      currency: tile.value?.currency || tile.currency || null
+    },
+    valueLabel:
+      tile.valueLabel ||
+      (typeof tile.value === 'string' ? tile.value : tile.value?.amount != null ? String(tile.value.amount) : '—'),
+    delta: tile.delta || tile.deltaLabel || '',
+    deltaTone: tile.deltaTone || 'positive',
+    caption: tile.caption || '',
+    status: tile.status || null
+  }));
+
+  const summary = payload.metrics?.command?.summary || {};
+
+  const escrowTrend = ensureArray(payload.charts?.escrowTrend?.buckets).map((bucket, index) => ({
+    label: bucket.label || `Bucket ${index + 1}`,
+    value: Number.parseFloat(bucket.value ?? bucket.actual ?? 0) || 0,
+    target: Number.parseFloat(bucket.target ?? 0) || 0
+  }));
+
+  const disputeBreakdown = ensureArray(payload.charts?.disputeBreakdown?.buckets).map((bucket, index) => ({
+    label: bucket.label || `Period ${index + 1}`,
+    resolved: Number.parseInt(bucket.resolved ?? 0, 10) || 0,
+    escalated: Number.parseInt(bucket.escalated ?? 0, 10) || 0
+  }));
+
+  const securitySignals = ensureArray(payload.security?.signals).map((signal, index) => ({
+    label: signal.label || `Signal ${index + 1}`,
+    valueLabel:
+      signal.valueLabel ||
+      (signal.value != null ? String(signal.value) : signal.percentage != null ? `${signal.percentage}%` : '—'),
+    caption: signal.caption || '',
+    tone: signal.tone || 'info'
+  }));
+
+  const automationBacklog = ensureArray(payload.security?.automationBacklog).map((item, index) => ({
+    name: item.name || `Automation ${index + 1}`,
+    status: item.status || 'Monitor',
+    notes: item.notes || '',
+    tone: item.tone || 'info'
+  }));
+
+  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
+    id: board.id || `board-${index}`,
+    title: board.title || board.name || `Queue ${index + 1}`,
+    summary: board.summary || '',
+    updates: ensureArray(board.updates),
+    owner: board.owner || 'Operations'
+  }));
+
+  const complianceControls = ensureArray(payload.queues?.complianceControls).map((control, index) => ({
+    id: control.id || `control-${index}`,
+    name: control.name || `Control ${index + 1}`,
+    detail: control.detail || '',
+    due: control.due || 'Due soon',
+    owner: control.owner || 'Compliance Ops',
+    tone: control.tone || 'info'
+  }));
+
+  const auditTimeline = ensureArray(payload.audit?.timeline).map((item, index) => ({
+    time: item.time || '--:--',
+    event: item.event || `Audit event ${index + 1}`,
+    owner: item.owner || 'Operations',
+    status: item.status || 'Scheduled'
+  }));
+
+  return {
+    timeframe,
+    timeframeLabel: payload.timeframeLabel || '7 days',
+    generatedAt,
+    timeframeOptions: timeframeOptions.length ? timeframeOptions : [
+      { value: '7d', label: '7 days' },
+      { value: '30d', label: '30 days' },
+      { value: '90d', label: '90 days' }
+    ],
+    metrics: {
+      command: {
+        tiles,
+        summary: {
+          escrowTotal: Number.parseFloat(summary.escrowTotal ?? summary.escrowTotalAmount ?? 0) || 0,
+          escrowTotalLabel: summary.escrowTotalLabel || summary.escrowTotal || '—',
+          slaCompliance: Number.parseFloat(summary.slaCompliance ?? 0) || 0,
+          slaComplianceLabel: summary.slaComplianceLabel || summary.slaCompliance || '—',
+          openDisputes: Number.parseInt(summary.openDisputes ?? 0, 10) || 0,
+          openDisputesLabel: summary.openDisputesLabel || `${summary.openDisputes ?? 0}`
+        }
+      }
+    },
+    charts: {
+      escrowTrend: { buckets: escrowTrend },
+      disputeBreakdown: { buckets: disputeBreakdown }
+    },
+    security: {
+      signals: securitySignals,
+      automationBacklog
+    },
+    queues: {
+      boards: queueBoards,
+      complianceControls
+    },
+    audit: {
+      timeline: auditTimeline
+    }
+  };
+}
+
+const adminFallback = normaliseAdminDashboard({
+  timeframe: '7d',
+  timeframeLabel: '7 days',
+  generatedAt: new Date().toISOString(),
+  timeframeOptions: [
+    { value: '7d', label: '7 days' },
+    { value: '30d', label: '30 days' },
+    { value: '90d', label: '90 days' }
+  ],
+  metrics: {
+    command: {
+      tiles: [
+        {
+          id: 'escrow',
+          label: 'Escrow under management',
+          value: { amount: 18_200_000, currency: 'GBP' },
+          valueLabel: '£18.2m',
+          delta: '+6.2%',
+          deltaTone: 'positive',
+          caption: 'Across 1,284 active bookings',
+          status: { label: 'Stabilised', tone: 'info' }
+        },
+        {
+          id: 'disputes',
+          label: 'Disputes requiring action',
+          value: { amount: 12 },
+          valueLabel: '12',
+          delta: '-2.1%',
+          deltaTone: 'positive',
+          caption: 'Median response 38 minutes',
+          status: { label: 'Managed', tone: 'success' }
+        },
+        {
+          id: 'jobs',
+          label: 'Live jobs',
+          value: { amount: 1204 },
+          valueLabel: '1,204',
+          delta: '+3.7%',
+          deltaTone: 'positive',
+          caption: 'Coverage across 92 zones',
+          status: { label: 'Peak period', tone: 'warning' }
+        },
+        {
+          id: 'sla',
+          label: 'SLA compliance',
+          value: { amount: 98.2 },
+          valueLabel: '98.2%',
+          delta: '+1.2%',
+          deltaTone: 'positive',
+          caption: 'Goal ≥ 97%',
+          status: { label: 'On target', tone: 'success' }
+        }
+      ],
+      summary: {
+        escrowTotal: 18_200_000,
+        escrowTotalLabel: '£18.2m',
+        slaCompliance: 98.2,
+        slaComplianceLabel: '98.2%',
+        openDisputes: 12,
+        openDisputesLabel: '12'
+      }
+    }
+  },
+  charts: {
+    escrowTrend: {
+      buckets: [
+        { label: 'Mon', value: 17.6, target: 16.5 },
+        { label: 'Tue', value: 17.9, target: 16.7 },
+        { label: 'Wed', value: 18.1, target: 16.9 },
+        { label: 'Thu', value: 18.4, target: 17.1 },
+        { label: 'Fri', value: 18.7, target: 17.2 },
+        { label: 'Sat', value: 18.5, target: 17.1 },
+        { label: 'Sun', value: 18.2, target: 17.0 }
+      ]
+    },
+    disputeBreakdown: {
+      buckets: [
+        { label: 'Mon', resolved: 52, escalated: 6 },
+        { label: 'Tue', resolved: 48, escalated: 7 },
+        { label: 'Wed', resolved: 50, escalated: 5 },
+        { label: 'Thu', resolved: 46, escalated: 5 },
+        { label: 'Fri', resolved: 58, escalated: 4 },
+        { label: 'Sat', resolved: 49, escalated: 6 },
+        { label: 'Sun', resolved: 43, escalated: 3 }
+      ]
+    }
+  },
+  security: {
+    signals: [
+      { label: 'MFA adoption', valueLabel: '96.4%', caption: 'Enterprise + provider portals', tone: 'success' },
+      { label: 'Critical alerts', valueLabel: '0', caption: 'Security Operations Center overnight review', tone: 'success' },
+      { label: 'Audit log ingestion', valueLabel: '100%', caption: '24h ingestion completeness from Splunk', tone: 'info' }
+    ],
+    automationBacklog: [
+      {
+        name: 'Escrow ledger reconciliation',
+        status: 'Ready for QA',
+        notes: 'Extends double-entry validation to rental deposits; requires finance sign-off.',
+        tone: 'success'
+      },
+      {
+        name: 'Compliance webhook retries',
+        status: 'In build',
+        notes: 'Retries failed submissions to insurance partners with exponential backoff.',
+        tone: 'info'
+      },
+      {
+        name: 'Dispute document summarisation',
+        status: 'Discovery',
+        notes: 'Pilot with AI summarisation flagged for accuracy review before production rollout.',
+        tone: 'warning'
+      }
+    ]
+  },
+  queues: {
+    boards: [
+      {
+        id: 1,
+        title: 'Provider verification queue',
+        summary:
+          'Identity verifications, insurance checks, and DBS renewals are grouped into a single command queue with automation fallbacks.',
+        updates: [
+          '4 documents awaiting manual agent review after OCR warnings.',
+          'Average handling time 1.2h (target ≤ 1.5h).',
+          'Auto-reminders triggered for 12 providers via email + SMS.'
+        ],
+        owner: 'Compliance Ops'
+      },
+      {
+        id: 2,
+        title: 'Dispute resolution board',
+        summary: 'High-risk disputes flagged for legal oversight with evidence packs collated via secure storage.',
+        updates: [
+          '3 disputes escalated to Stage 2 review.',
+          'AI summarisation enabled for transcripts; manual review still required for regulated industries.',
+          'Median time-to-resolution: 19 hours (goal 24 hours).'
+        ],
+        owner: 'Support & Legal'
+      }
+    ],
+    complianceControls: [
+      {
+        id: 1,
+        name: 'Provider KYC refresh',
+        detail: '8 providers triggered by expiring IDs; automated reminders dispatched with secure upload links.',
+        due: 'Due today',
+        owner: 'Compliance Ops',
+        tone: 'warning'
+      },
+      {
+        id: 2,
+        name: 'Insurance certificate review',
+        detail: 'Three enterprise clients require renewed liability certificates before next milestone.',
+        due: 'Due in 2 days',
+        owner: 'Risk & Legal',
+        tone: 'info'
+      },
+      {
+        id: 3,
+        name: 'GDPR DSAR queue',
+        detail: 'Two data export requests awaiting legal approval; SLA 72 hours.',
+        due: 'Due in 18 hours',
+        owner: 'Privacy Office',
+        tone: 'danger'
+      }
+    ]
+  },
+  audit: {
+    timeline: [
+      { time: '08:30', event: 'GDPR DSAR pack exported', owner: 'Legal', status: 'Completed' },
+      { time: '09:45', event: 'Escrow reconciliation (daily)', owner: 'Finance Ops', status: 'In progress' },
+      { time: '11:00', event: 'Provider onboarding review', owner: 'Compliance Ops', status: 'Scheduled' },
+      { time: '14:30', event: 'Pen-test retest results review', owner: 'Security', status: 'Scheduled' }
+    ]
+  }
+});
+
 const providerFallback = normaliseProviderDashboard({
   provider: {
     legalName: 'Metro Power Services',
@@ -637,6 +943,18 @@ function withFallback(normaliser, fallback, fetcherFactory) {
   };
 }
 
+export const getAdminDashboard = withFallback(
+  normaliseAdminDashboard,
+  adminFallback,
+  (options = {}) =>
+    request(`/admin/dashboard?timeframe=${encodeURIComponent(options?.timeframe ?? '7d')}`, {
+      cacheKey: `admin-dashboard:${options?.timeframe ?? '7d'}`,
+      ttl: 20000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    })
+);
+
 export const getProviderDashboard = withFallback(
   normaliseProviderDashboard,
   providerFallback,
@@ -652,13 +970,19 @@ export const getProviderDashboard = withFallback(
 export const getEnterprisePanel = withFallback(
   normaliseEnterprisePanel,
   enterpriseFallback,
-  (options = {}) =>
-    request('/panel/enterprise/overview', {
-      cacheKey: 'enterprise-panel',
+  (options = {}) => {
+    const query = toQueryString({
+      companyId: options?.companyId,
+      timezone: options?.timezone
+    });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/enterprise/overview${query}`, {
+      cacheKey: `enterprise-panel${cacheKeySuffix}`,
       ttl: 30000,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
-    })
+    });
+  }
 );
 
 const businessFrontFetcher = withFallback(

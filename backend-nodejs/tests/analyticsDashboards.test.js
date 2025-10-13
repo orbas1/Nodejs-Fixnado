@@ -8,14 +8,20 @@ const {
   AdCampaign,
   Booking,
   BookingAssignment,
+  BookingBid,
   CampaignDailyMetric,
   CampaignFraudSignal,
   Company,
   ComplianceDocument,
   ConversationParticipant,
+  Dispute,
+  Escrow,
   InventoryAlert,
   InventoryItem,
+  Order,
+  Service,
   RentalAgreement,
+  Service,
   ServiceZone,
   User,
   Conversation
@@ -75,7 +81,8 @@ async function seedAdminFixtures(company) {
     createUser(IDS.customerOne, { email: 'customer1@example.com' }),
     createUser(IDS.customerTwo, { email: 'customer2@example.com' }),
     createUser(IDS.customerThree, { email: 'customer3@example.com' }),
-    createUser(IDS.renter, { email: 'renter@example.com' })
+    createUser(IDS.renter, { email: 'renter@example.com' }),
+    createUser(IDS.provider, { email: 'provider@example.com', type: 'provider' })
   ]);
 
   await Promise.all([
@@ -107,6 +114,38 @@ async function seedAdminFixtures(company) {
       metadata: {}
     })
   ]);
+  const providerId = IDS.provider;
+
+  const [generatorService, plumbingService, liftService] = await Promise.all([
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Generator Maintenance',
+      description: 'Quarterly generator servicing',
+      category: 'Electrical',
+      price: 540,
+      currency: 'GBP'
+    }),
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Emergency Plumbing',
+      description: 'Rapid leak repair',
+      category: 'Plumbing',
+      price: 360,
+      currency: 'GBP'
+    }),
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Lift Inspection',
+      description: 'Safety inspection and certification',
+      category: 'Mechanical',
+      price: 220,
+      currency: 'GBP'
+    })
+  ]);
+
   const bookingOne = await Booking.create({
     customerId: IDS.customerOne,
     companyId: company.id,
@@ -126,7 +165,10 @@ async function seedAdminFixtures(company) {
       requester: 'Facilities Ops',
       primaryCrew: 'Team Volt',
       zoneName: 'Central',
-      travelMinutes: 25
+      travelMinutes: 25,
+      serviceId: generatorService.id,
+      source: 'fixnado_ads',
+      autoMatched: true
     },
     lastStatusTransitionAt: now.minus({ days: 5 }).toJSDate()
   });
@@ -149,12 +191,15 @@ async function seedAdminFixtures(company) {
       title: 'Emergency plumbing',
       requester: 'HR',
       owner: 'Ops Escalation',
-      travelMinutes: 35
+      travelMinutes: 35,
+      serviceId: plumbingService.id,
+      source: 'marketplace',
+      autoMatched: false
     },
     lastStatusTransitionAt: now.toJSDate()
   });
 
-  await Booking.create({
+  const bookingThree = await Booking.create({
     customerId: IDS.customerThree,
     companyId: company.id,
     zoneId: IDS.zoneSouth,
@@ -172,12 +217,14 @@ async function seedAdminFixtures(company) {
       title: 'Lift repair',
       owner: 'Support Escalations',
       primaryCrew: 'Lift Masters',
-      travelMinutes: 18
+      travelMinutes: 18,
+      serviceId: liftService.id,
+      source: 'partner_referral',
+      autoMatched: true
     },
     lastStatusTransitionAt: now.minus({ hours: 1 }).toJSDate()
   });
 
-  const providerId = IDS.provider;
   await BookingAssignment.create({
     bookingId: bookingOne.id,
     providerId,
@@ -191,6 +238,49 @@ async function seedAdminFixtures(company) {
     role: 'support',
     status: 'pending',
     assignedAt: dateMinus(1)
+  });
+  await BookingAssignment.create({
+    bookingId: bookingThree.id,
+    providerId,
+    role: 'support',
+    status: 'accepted',
+    assignedAt: dateMinus(2)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingOne.id,
+    providerId,
+    amount: 540,
+    currency: 'GBP',
+    status: 'accepted',
+    revisionHistory: [],
+    auditLog: [],
+    submittedAt: dateMinus(6),
+    updatedAt: dateMinus(5)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingTwo.id,
+    providerId,
+    amount: 360,
+    currency: 'GBP',
+    status: 'pending',
+    revisionHistory: [{ amount: 360, at: dateMinus(2) }],
+    auditLog: [{ action: 'counter_offer', at: dateMinus(1) }],
+    submittedAt: dateMinus(3),
+    updatedAt: dateMinus(1)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingThree.id,
+    providerId,
+    amount: 220,
+    currency: 'GBP',
+    status: 'declined',
+    revisionHistory: [],
+    auditLog: [{ action: 'declined', at: dateMinus(1) }],
+    submittedAt: dateMinus(4),
+    updatedAt: dateMinus(1)
   });
 
   const inventoryItem = await InventoryItem.create({
@@ -296,6 +386,153 @@ async function seedAdminFixtures(company) {
   return { bookingTwo, providerId };
 }
 
+async function seedUserFixtures(company) {
+  const now = DateTime.now().setZone('Europe/London');
+
+  const [serviceOne, serviceTwo] = await Promise.all([
+    Service.create({
+      companyId: company.id,
+      providerId: company.userId,
+      title: 'Critical facilities response',
+      description: 'Emergency diagnostics with rapid mobilisation.',
+      category: 'Electrical',
+      price: 540,
+      currency: 'GBP'
+    }),
+    Service.create({
+      companyId: company.id,
+      providerId: company.userId,
+      title: 'Preventative HVAC care',
+      description: 'Seasonal maintenance programme across zones.',
+      category: 'HVAC',
+      price: 380,
+      currency: 'GBP'
+    })
+  ]);
+
+  const draftOrder = await Order.create({
+    buyerId: IDS.customerOne,
+    serviceId: serviceTwo.id,
+    status: 'draft',
+    totalAmount: 320,
+    currency: 'GBP',
+    scheduledFor: now.plus({ days: 10 }).toJSDate(),
+    createdAt: now.minus({ days: 6 }).toJSDate(),
+    updatedAt: now.minus({ days: 6 }).toJSDate()
+  });
+
+  const fundedOrder = await Order.create({
+    buyerId: IDS.customerOne,
+    serviceId: serviceOne.id,
+    status: 'funded',
+    totalAmount: 540,
+    currency: 'GBP',
+    scheduledFor: now.plus({ days: 2 }).toJSDate(),
+    createdAt: now.minus({ days: 3 }).toJSDate(),
+    updatedAt: now.minus({ days: 3 }).toJSDate()
+  });
+  await Escrow.create({
+    orderId: fundedOrder.id,
+    status: 'funded',
+    fundedAt: now.minus({ days: 2 }).toJSDate(),
+    createdAt: now.minus({ days: 3 }).toJSDate(),
+    updatedAt: now.minus({ days: 2 }).toJSDate()
+  });
+
+  const inProgressOrder = await Order.create({
+    buyerId: IDS.customerOne,
+    serviceId: serviceOne.id,
+    status: 'in_progress',
+    totalAmount: 620,
+    currency: 'GBP',
+    scheduledFor: now.plus({ hours: 6 }).toJSDate(),
+    createdAt: now.minus({ days: 1 }).toJSDate(),
+    updatedAt: now.minus({ hours: 1 }).toJSDate()
+  });
+  await Escrow.create({
+    orderId: inProgressOrder.id,
+    status: 'funded',
+    fundedAt: now.minus({ days: 1 }).toJSDate()
+  });
+
+  const disputedOrder = await Order.create({
+    buyerId: IDS.customerOne,
+    serviceId: serviceTwo.id,
+    status: 'disputed',
+    totalAmount: 410,
+    currency: 'GBP',
+    scheduledFor: now.minus({ days: 1 }).toJSDate(),
+    createdAt: now.minus({ days: 8 }).toJSDate(),
+    updatedAt: now.minus({ hours: 5 }).toJSDate()
+  });
+  const disputedEscrow = await Escrow.create({
+    orderId: disputedOrder.id,
+    status: 'disputed',
+    fundedAt: now.minus({ days: 7 }).toJSDate(),
+    createdAt: now.minus({ days: 8 }).toJSDate(),
+    updatedAt: now.minus({ hours: 5 }).toJSDate()
+  });
+  await Dispute.create({
+    escrowId: disputedEscrow.id,
+    openedBy: IDS.customerOne,
+    reason: 'Crew departed without closing open checklist items.',
+    status: 'open',
+    createdAt: now.minus({ hours: 4 }).toJSDate(),
+    updatedAt: now.minus({ hours: 4 }).toJSDate()
+  });
+
+  const inventory = await InventoryItem.create({
+    companyId: company.id,
+    name: 'Thermal imaging kit',
+    sku: 'THERM-200',
+    category: 'Diagnostics',
+    quantityOnHand: 5,
+    quantityReserved: 1,
+    safetyStock: 1,
+    metadata: {}
+  });
+
+  await RentalAgreement.create({
+    rentalNumber: 'RA-USER-001',
+    itemId: inventory.id,
+    companyId: company.id,
+    renterId: IDS.customerOne,
+    status: 'in_use',
+    depositStatus: 'held',
+    quantity: 1,
+    pickupAt: now.minus({ days: 2 }).toJSDate(),
+    returnDueAt: now.plus({ days: 2 }).toJSDate(),
+    meta: {},
+    createdAt: now.minus({ days: 2 }).toJSDate(),
+    updatedAt: now.minus({ days: 1 }).toJSDate()
+  });
+
+  const conversation = await Conversation.create({
+    subject: 'Support escalation',
+    createdById: IDS.customerOne,
+    createdByType: 'user',
+    defaultTimezone: 'Europe/London',
+    metadata: {},
+    createdAt: now.minus({ days: 1 }).toJSDate(),
+    updatedAt: now.minus({ days: 1 }).toJSDate()
+  });
+
+  await ConversationParticipant.create({
+    conversationId: conversation.id,
+    participantType: 'user',
+    participantReferenceId: IDS.customerOne,
+    displayName: 'Jordan Miles',
+    role: 'customer',
+    timezone: 'Europe/London',
+    createdAt: now.minus({ hours: 12 }).toJSDate()
+  });
+
+  return {
+    userId: IDS.customerOne,
+    orders: [draftOrder, fundedOrder, inProgressOrder, disputedOrder]
+  };
+}
+
 async function seedEnterpriseFixtures(company) {
   const conversation = await Conversation.create({
     id: IDS.conversation,
@@ -358,6 +595,26 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.persona).toBe('provider');
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Assignments Received');
     expect(response.body.navigation[2].data.rows[0][0]).toBe('RA-001');
+  });
+
+  it('delivers a user command center with orders, rentals, and support signals', async () => {
+    const company = await seedCompany();
+    await seedAdminFixtures(company);
+    const { userId } = await seedUserFixtures(company);
+
+    const response = await request(app)
+      .get('/api/analytics/dashboards/user')
+      .query({ userId, timezone: 'Europe/London' })
+      .expect(200);
+
+    expect(response.body.persona).toBe('user');
+    expect(response.body.navigation[0].analytics.metrics).toHaveLength(4);
+    expect(response.body.navigation[1].data.columns).toHaveLength(4);
+    expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
+    expect(response.body.navigation[3].data.items.length).toBeGreaterThan(0);
+    expect(response.body.navigation[0].sidebar.badge).toContain('jobs');
+    expect(response.body.navigation[4].id).toBe('settings');
+    expect(response.body.navigation[4].data.panels.length).toBeGreaterThan(0);
   });
 
   it('streams governed CSV exports for persona dashboards', async () => {

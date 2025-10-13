@@ -3,6 +3,8 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { buildExportUrl, fetchDashboard } from '../api/analyticsDashboardClient.js';
+import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx';
+import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
 
 const RoleDashboard = () => {
   const { roleId } = useParams();
@@ -13,6 +15,24 @@ const RoleDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const toggleOptions = useMemo(
+    () => ({
+      scope: roleMeta?.id ?? 'global',
+      fallback: true,
+      allowStaging: import.meta.env.MODE !== 'production'
+    }),
+    [roleMeta?.id]
+  );
+
+  const {
+    enabled: toggleEnabled,
+    loading: toggleLoading,
+    reason: toggleReason,
+    toggle,
+    cohort,
+    refresh: refreshToggles
+  } = useFeatureToggle('analytics-dashboards', toggleOptions);
 
   const query = useMemo(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -31,7 +51,8 @@ const RoleDashboard = () => {
   }, [searchParams]);
 
   const loadDashboard = useCallback(async () => {
-    if (!roleMeta?.registered) {
+    if (!roleMeta?.registered || toggleEnabled === false) {
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -46,12 +67,16 @@ const RoleDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [roleMeta, query]);
+  }, [roleMeta, query, toggleEnabled]);
 
   useEffect(() => {
     let active = true;
-    if (!roleMeta?.registered) {
-      return;
+    if (!roleMeta?.registered || toggleEnabled === false) {
+      setLoading(false);
+      setDashboard(null);
+      return () => {
+        active = false;
+      };
     }
 
     (async () => {
@@ -74,7 +99,27 @@ const RoleDashboard = () => {
     return () => {
       active = false;
     };
-  }, [roleMeta, query]);
+  }, [roleMeta, query, toggleEnabled]);
+
+  useEffect(() => {
+    if (toggleEnabled === false && !toggleLoading) {
+      setDashboard(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [toggleEnabled, toggleLoading]);
+
+  const handleRefresh = useCallback(async () => {
+    if (toggleEnabled === false) {
+      try {
+        await refreshToggles({ force: true });
+      } catch (caught) {
+        console.error('Failed to refresh feature toggles', caught);
+      }
+      return;
+    }
+    loadDashboard();
+  }, [toggleEnabled, refreshToggles, loadDashboard]);
 
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;
@@ -84,6 +129,22 @@ const RoleDashboard = () => {
     return <Navigate to="/dashboards" replace />;
   }
 
+  if (!toggleLoading && toggleEnabled === false) {
+    return (
+      <DashboardAccessGate
+        roleMeta={roleMeta}
+        toggle={toggle}
+        reason={toggleReason}
+        cohort={cohort}
+        onRetry={() => {
+          refreshToggles({ force: true }).catch((caught) => {
+            console.error('Failed to refresh feature toggles', caught);
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <DashboardLayout
       roleMeta={roleMeta}
@@ -91,9 +152,11 @@ const RoleDashboard = () => {
       dashboard={dashboard}
       loading={loading}
       error={error}
-      onRefresh={loadDashboard}
+      onRefresh={handleRefresh}
       lastRefreshed={lastRefreshed}
       exportHref={buildExportUrl(roleMeta.id, query)}
+      toggleMeta={toggle}
+      toggleReason={toggleReason}
     />
   );
 };
