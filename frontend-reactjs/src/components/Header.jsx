@@ -31,6 +31,12 @@ const navigationConfig = [
         nameKey: 'nav.businessFronts',
         descriptionKey: 'nav.businessFrontsDescription',
         href: '/providers/metro-power-services'
+      },
+      {
+        key: 'geo-matching',
+        nameKey: 'nav.geoMatching',
+        descriptionKey: 'nav.geoMatchingDescription',
+        href: '/operations/geo-matching'
       }
     ]
   },
