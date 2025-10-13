@@ -6,6 +6,7 @@ import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
 import '../features/bookings/presentation/booking_screen.dart';
 import '../features/explorer/presentation/explorer_screen.dart';
+import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 
 class FixnadoApp extends ConsumerWidget {
@@ -91,6 +92,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ExplorerScreen(),
           BookingScreen(),
           RentalScreen(),
+          ProfileManagementScreen(),
           AnalyticsDashboardScreen(),
         ],
       ),
@@ -115,6 +117,7 @@ enum _NavigationDestination {
   explorer('Explorer', Icons.map_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
+  profile('Profile', Icons.person_outline),
   operations('Ops Pulse', Icons.analytics_outlined);
 
   const _NavigationDestination(this.title, this.icon);
