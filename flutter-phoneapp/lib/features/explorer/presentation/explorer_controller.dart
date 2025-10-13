@@ -111,6 +111,8 @@ class ExplorerViewState {
 
   List<ExplorerService> get services {
     if (snapshot == null) return const [];
+    final data = snapshot!.services;
+    if (filters.type == ExplorerResultType.marketplace || filters.type == ExplorerResultType.tools) {
     Iterable<ExplorerService> data = snapshot!.services;
     if (filters.type == ExplorerResultType.marketplace) {
       return const [];
@@ -176,6 +178,10 @@ class ExplorerViewState {
       case ExplorerResultType.storefronts:
         return const [];
     }
+    if (filters.type == ExplorerResultType.tools) {
+      return data.where((item) => item.supportsRental).toList();
+    }
+    return data;
   }
 
   List<ZoneSummary> get zones {
