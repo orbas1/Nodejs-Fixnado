@@ -78,6 +78,16 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`frontend-reactjs/src/utils/telemetry.js`](../frontend-reactjs/src/utils/telemetry.js) — New utility resolving session context, building beacon payloads, and generating correlation IDs.
 - [`backend-nodejs/src/models/uiPreferenceTelemetry.js`](../backend-nodejs/src/models/uiPreferenceTelemetry.js) — Introduced Sequelize model for persisted telemetry with hashed IP governance.
 - [`backend-nodejs/src/controllers/telemetryController.js`](../backend-nodejs/src/controllers/telemetryController.js), [`backend-nodejs/src/services/telemetryService.js`](../backend-nodejs/src/services/telemetryService.js), [`backend-nodejs/src/routes/telemetryRoutes.js`](../backend-nodejs/src/routes/telemetryRoutes.js) — New ingestion + analytics endpoints powering Looker dashboard integration.
+
+## Newly Updated Artefacts (2025-11-05)
+- [`Design_Change_log.md`](Design_Change_log.md) — Logged analytics governance catalogue publishing entry covering dashboard panel, approval rail, telemetry IDs, and Flutter parity backlog.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Added Task 23 capturing catalogue UX delivery, evidence, QA selectors, and mobile backlog notes.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Snapshot refreshed with analytics governance commentary, new progress narrative item, and review focus on publish/fallback rehearsals.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Milestone notes updated to evidence M13 readiness via analytics governance panel and approval triad responsibilities.
+- [`ui-ux_updates/design_change_log.md`](ui-ux_updates/design_change_log.md) — Documented 2025-11-05 analytics governance update with telemetry, QA, and runbook references.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard%20Designs.md) — Added analytics governance panel blueprint (operations card, approval rail, telemetry hooks, fallback messaging).
+- [`ui-ux_updates/web_application_design_update/version_1.00_update/Dashboard Designs.md`](ui-ux_updates/web_application_design_update/version_1.00_update/Dashboard%20Designs.md) — Synced admin dashboard specification with catalogue status card, publish controls, and responsive/mobile notes.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Appended analytics governance publish rehearsal scenario covering preview, publish, and fallback verification steps.
 - [`backend-nodejs/src/routes/index.js`](../backend-nodejs/src/routes/index.js) & [`backend-nodejs/src/models/index.js`](../backend-nodejs/src/models/index.js) — Wired telemetry routes and model exports into the API surface.
 
 ## Newly Updated Artefacts (2025-02-03)
@@ -330,6 +340,10 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`backend-nodejs/package.json`](../backend-nodejs/package.json) & [`package-lock.json`](../backend-nodejs/package-lock.json) — Added finance, PostGIS, and geospatial dependencies supporting new services.
 - [`backend-nodejs/src`](../backend-nodejs/src) — New controllers, services, models, routes, and jobs for zones/booking (`controllers/{zoneController,bookingController}.js`, `services/{zoneService,bookingService,financeService}.js`, `routes/{zoneRoutes,bookingRoutes}.js`, `models/*`, `jobs/zoneAnalyticsJob.js`, config updates) enabling Task 2 delivery.
 - [`backend-nodejs/tests/zoneRoutes.test.js`](../backend-nodejs/tests/zoneRoutes.test.js) & [`backend-nodejs/tests/bookingRoutes.test.js`](../backend-nodejs/tests/bookingRoutes.test.js) — Added regression suites validating polygons, analytics snapshots, currency math, assignment acceptance, bidding comments, and dispute workflow.
+- [`backend-nodejs/src/services/zoneService.js`](../backend-nodejs/src/services/zoneService.js) — Expanded analytics snapshot generation with backlog diagnostics, capacity utilisation, percentile acceptance metrics, health scoring, and `zone.analytics.snapshot_created` telemetry emission.
+- [`backend-nodejs/src/database/migrations/20250302000000-augment-zone-analytics.js`](../backend-nodejs/src/database/migrations/20250302000000-augment-zone-analytics.js) — Migration adding assignment load, percentile, breach rate, capacity, and health status columns to `ZoneAnalyticsSnapshot`.
+- [`backend-nodejs/tests/zoneRoutes.test.js`](../backend-nodejs/tests/zoneRoutes.test.js) — New assertions covering health scoring payloads, backlog metadata, and analytics event persistence for snapshots.
+- [`update_docs/1.00/update_progress_tracker.md`](update_progress_tracker.md), [`update_docs/1.00/update_task_list.md`](update_task_list.md), [`update_docs/1.00/update_milestone_list.md`](update_milestone_list.md), [`update_docs/1.00/change_log.md`](change_log.md) — Follow-up entries documenting zone health telemetry delivery and Task 2 progress uplift.
 
 ## Newly Updated Artefacts (2025-10-27)
 - [`change_log.md`](change_log.md) — 2025-10-27 entry summarises localisation/accessibility sweep across locale provider, dashboards, and documentation.
