@@ -8,7 +8,23 @@ import {
   ArrowTopRightOnSquareIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  Squares2X2Icon,
+  UserCircleIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  WrenchScrewdriverIcon,
+  InboxStackIcon,
+  Cog8ToothIcon,
+  UsersIcon,
+  ChartPieIcon,
+  BuildingOfficeIcon,
+  ShieldCheckIcon,
+  MapIcon,
+  BoltIcon,
+  BanknotesIcon,
+  ClipboardDocumentCheckIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
@@ -104,6 +120,32 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting'
+};
+
+const navIconMap = {
+  profile: UserCircleIcon,
+  calendar: CalendarDaysIcon,
+  pipeline: ClipboardDocumentListIcon,
+  availability: UsersIcon,
+  assets: CubeIcon,
+  support: InboxStackIcon,
+  settings: Cog8ToothIcon,
+  crew: WrenchScrewdriverIcon,
+  compliance: ShieldCheckIcon,
+  enterprise: BuildingOfficeIcon,
+  finance: BanknotesIcon,
+  analytics: ChartPieIcon,
+  automation: BoltIcon,
+  map: MapIcon,
+  documents: ClipboardDocumentCheckIcon
+};
+
+const getNavIcon = (item) => {
+  if (!item?.icon) {
+    return Squares2X2Icon;
+  }
+
+  return navIconMap[item.icon] ?? Squares2X2Icon;
 };
 
 const formatRelativeTime = (timestamp) => {
@@ -214,52 +256,9 @@ const buildSearchIndex = (navigation) =>
     return entries;
   });
 
-const statusToneClasses = (tone, isActive) => {
-  if (isActive) {
-    return 'border border-white/30 bg-white/15 text-white';
-  }
-
-  switch (tone) {
-    case 'success':
-      return 'border border-emerald-200 bg-emerald-50 text-emerald-600';
-    case 'warning':
-      return 'border border-amber-200 bg-amber-50 text-amber-700';
-    case 'danger':
-      return 'border border-rose-200 bg-rose-50 text-rose-700';
-    case 'info':
-      return 'border border-sky-200 bg-sky-50 text-sky-700';
-    default:
-      return 'border border-accent/10 bg-white text-primary/80';
-  }
-};
-
-const statusDotClasses = (tone, isActive) => {
-  if (isActive) {
-    return 'bg-white';
-  }
-
-  switch (tone) {
-    case 'success':
-      return 'bg-emerald-500';
-    case 'warning':
-      return 'bg-amber-500';
-    case 'danger':
-      return 'bg-rose-500';
-    case 'info':
-      return 'bg-sky-500';
-    default:
-      return 'bg-accent';
-  }
-};
-
-const badgeClasses = (isActive) => (isActive ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent');
-
-const highlightClasses = (isActive) =>
-  isActive ? 'border border-white/25 bg-white/10 text-white/90' : 'border border-accent/10 bg-white text-primary/80';
-
 const Skeleton = () => (
   <div className="px-6 py-10">
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       <div className="animate-pulse space-y-4">
         <div className="h-6 w-52 rounded bg-primary/10" />
         <div className="h-4 w-full rounded bg-primary/10" />
@@ -310,14 +309,14 @@ const DashboardLayout = ({
   onRefresh,
   lastRefreshed,
   exportHref,
-  filters,
   toggleMeta,
   toggleReason
 }) => {
-  const navigation = dashboard?.navigation ?? [];
+  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [navCollapsed, setNavCollapsed] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -357,106 +356,101 @@ const DashboardLayout = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
-      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white">
-        <div className="p-8 border-b border-accent/10">
-          <div className="flex items-center gap-3">
-            <Bars3BottomLeftIcon className="h-8 w-8 text-accent" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Fixnado</p>
-              <p className="text-lg font-semibold text-primary">{roleMeta.name}</p>
-            </div>
-          </div>
-          <p className="mt-4 text-sm text-slate-600">{roleMeta.headline}</p>
-          <div className="mt-6 space-y-2">
-            <label className="text-xs uppercase tracking-wide text-primary/70" htmlFor="roleSwitcher">
-              Switch dashboard
-            </label>
-            <select
-              id="roleSwitcher"
-              value={roleMeta.id}
-              onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-              className="w-full rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              {registeredOptions.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <aside
+        className={`hidden lg:flex ${navCollapsed ? 'w-24' : 'w-80 xl:w-96'} flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white transition-[width] duration-300`}
+      >
+        <div className="flex items-center justify-between border-b border-accent/10 px-6 py-5">
+          <Link to="/dashboards" className="flex items-center gap-2 text-primary" title="Dashboard hub">
+            <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
+            {!navCollapsed && (
+              <div className="leading-tight">
+                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
+                <p className="text-lg font-semibold">{roleMeta.name}</p>
+              </div>
+            )}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setNavCollapsed((value) => !value)}
+            className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
+            aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+          >
+            <Squares2X2Icon className={`h-5 w-5 transition-transform ${navCollapsed ? 'rotate-180' : ''}`} />
+          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
             const isActive = item.id === activeSection?.id;
+            const Icon = getNavIcon(item);
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedSection(item.id)}
-                className={`w-full text-left rounded-xl border px-4 py-4 transition-colors flex flex-col gap-3 ${
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
-                    ? 'bg-accent text-white border-accent shadow-glow'
-                    : 'bg-white/80 border-accent/10 text-primary/80 hover:border-accent/40 hover:text-primary'
-                }`}
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                } ${navCollapsed ? 'justify-center px-2' : ''}`}
+                title={navCollapsed ? item.label : undefined}
+                aria-pressed={isActive}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                {!navCollapsed && (
+                  <div className="flex-1">
                     <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
-                  </div>
-                  {item.sidebar?.badge && (
-                    <span className={`h-fit rounded-full px-3 py-1 text-xs font-semibold ${badgeClasses(isActive)}`}>
-                      {item.sidebar.badge}
-                    </span>
-                  )}
-                </div>
-                {item.sidebar?.status?.label && (
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wide ${statusToneClasses(item.sidebar.status.tone, isActive)}`}
-                  >
-                    <span className={`h-2 w-2 rounded-full ${statusDotClasses(item.sidebar.status.tone, isActive)}`} />
-                    {item.sidebar.status.label}
-                  </span>
-                )}
-                {Array.isArray(item.sidebar?.highlights) && item.sidebar.highlights.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {item.sidebar.highlights.map((highlight) => (
-                      <div
-                        key={`${item.id}-${highlight.label}`}
-                        className={`rounded-lg px-3 py-2 ${highlightClasses(isActive)}`}
-                      >
-                        <p className="text-sm font-semibold">{String(highlight.value ?? '—')}</p>
-                        <p className="mt-1 text-[0.6rem] uppercase tracking-wide">{highlight.label}</p>
-                      </div>
-                    ))}
+                    {item.description ? (
+                      <p className="text-xs text-slate-500">{item.description}</p>
+                    ) : null}
                   </div>
                 )}
               </button>
             );
           })}
         </nav>
-        <div className="p-6 border-t border-accent/10">
-          <Link
-            to="/"
-            className="flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white shadow-glow hover:bg-accent/90"
-          >
-            <ArrowLeftOnRectangleIcon className="h-5 w-5" /> Return to Fixnado.com
-          </Link>
-        </div>
       </aside>
 
       <main className="flex-1 min-h-screen">
         <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-6 py-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
-              <p className="text-sm text-slate-600 max-w-2xl">{roleMeta.persona}</p>
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
+                <span className="rounded-full border border-slate-200 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary/70">
+                  {roleMeta.persona}
+                </span>
+              </div>
               {lastRefreshed && (
-                <p className="text-xs text-primary/60 mt-1">Refreshed {formatRelativeTime(lastRefreshed)}</p>
+                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
               )}
               <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
             </div>
-            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+              <div className="flex w-full flex-col gap-2 sm:w-64">
+                <label className="text-xs uppercase tracking-wide text-primary/60" htmlFor="roleSwitcher">
+                  Switch workspace
+                </label>
+                <select
+                  id="roleSwitcher"
+                  value={roleMeta.id}
+                  onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
+                  className="rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  {registeredOptions.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="relative w-full sm:w-80">
                 <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <input
@@ -495,7 +489,13 @@ const DashboardLayout = ({
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 sm:self-end">
+              <div className="flex flex-wrap gap-2 sm:self-end">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
+                >
+                  <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Public site
+                </Link>
                 <button
                   type="button"
                   onClick={onRefresh}
@@ -521,7 +521,7 @@ const DashboardLayout = ({
           <Skeleton />
         ) : (
           <div className="px-6 py-10">
-            <div className="mx-auto max-w-6xl space-y-8">{renderSection()}</div>
+            <div className="space-y-8">{renderSection()}</div>
           </div>
         )}
       </main>
@@ -552,7 +552,6 @@ DashboardLayout.propTypes = {
   onRefresh: PropTypes.func.isRequired,
   lastRefreshed: PropTypes.string,
   exportHref: PropTypes.string,
-  filters: PropTypes.node,
   toggleMeta: PropTypes.shape({
     state: PropTypes.string,
     rollout: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -569,7 +568,6 @@ DashboardLayout.defaultProps = {
   error: null,
   lastRefreshed: null,
   exportHref: null,
-  filters: null,
   toggleMeta: null,
   toggleReason: null
 };

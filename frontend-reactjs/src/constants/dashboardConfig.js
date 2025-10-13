@@ -6,11 +6,13 @@ export const DASHBOARD_ROLES = [
     headline: 'Coordinate service orders, equipment rentals, and support in one workspace.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Customer Overview' },
-      { id: 'orders', label: 'Service Orders' },
-      { id: 'rentals', label: 'Rental Assets' },
-      { id: 'account', label: 'Account & Support' },
-      { id: 'settings', label: 'Account Settings' }
+      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
+      { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
+      { id: 'availability', label: 'Availability Planner', icon: 'availability' },
+      { id: 'rentals', label: 'Asset Management', icon: 'assets' },
+      { id: 'support', label: 'Support & Communications', icon: 'support' },
+      { id: 'settings', label: 'Account Settings', icon: 'settings' }
     ]
   },
   {
@@ -20,10 +22,13 @@ export const DASHBOARD_ROLES = [
     headline: 'Command multi-tenant operations, compliance, and SLA performance in real time.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Executive Overview' },
-      { id: 'operations', label: 'Operations Pipeline' },
-      { id: 'compliance', label: 'Compliance & Risk' },
-      { id: 'assets', label: 'Assets & Rentals' }
+      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'calendar', label: 'Network Calendar', icon: 'calendar' },
+      { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
+      { id: 'availability', label: 'Serviceman Management', icon: 'crew' },
+      { id: 'assets', label: 'Asset & Rental Control', icon: 'assets' },
+      { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
+      { id: 'settings', label: 'Platform Settings', icon: 'settings' }
     ]
   },
   {
@@ -33,10 +38,14 @@ export const DASHBOARD_ROLES = [
     headline: 'Monitor revenue, crew utilisation, and asset readiness for every contract.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Provider Overview' },
-      { id: 'workboard', label: 'Workboard' },
-      { id: 'rentals', label: 'Rental Lifecycle' },
-      { id: 'asset-alerts', label: 'Asset Alerts' }
+      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
+      { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
+      { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
+      { id: 'rentals', label: 'Asset Lifecycle', icon: 'assets' },
+      { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
+      { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
+      { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]
   },
   {
@@ -46,8 +55,12 @@ export const DASHBOARD_ROLES = [
     headline: 'Stay ahead of assignments, travel buffers, and completion quality markers.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Crew Overview' },
-      { id: 'schedule', label: 'Schedule Board' }
+      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
+      { id: 'availability', label: 'Shift Availability', icon: 'availability' },
+      { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
+      { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
     ]
   },
   {
@@ -57,8 +70,13 @@ export const DASHBOARD_ROLES = [
     headline: 'Track spend, campaign pacing, and risk signals across every facility.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Enterprise Overview' },
-      { id: 'compliance', label: 'Compliance Library' }
+      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'calendar', label: 'Portfolio Calendar', icon: 'calendar' },
+      { id: 'portfolio', label: 'Program Portfolio', icon: 'enterprise' },
+      { id: 'campaigns', label: 'Campaign Delivery', icon: 'pipeline' },
+      { id: 'finance', label: 'Financial Controls', icon: 'finance' },
+      { id: 'compliance', label: 'Compliance & Risk', icon: 'compliance' },
+      { id: 'vendors', label: 'Vendor Network', icon: 'crew' }
     ]
   }
 ];
