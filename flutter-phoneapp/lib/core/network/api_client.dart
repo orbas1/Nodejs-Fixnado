@@ -44,6 +44,23 @@ class FixnadoApiClient {
     return _decodeResponse(response);
   }
 
+  Future<String> getText(String path, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
+    final uri = _buildUri(path, query);
+    _logger.fine('GET $uri (text)');
+    final response = await client.get(uri, headers: _headers(headers)).timeout(requestTimeout);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.body;
+    }
+
+    Object? parsed;
+    try {
+      parsed = response.body.isEmpty ? null : jsonDecode(response.body);
+    } catch (_) {
+      parsed = response.body;
+    }
+    throw ApiException(response.statusCode, 'Request failed with status ${response.statusCode}', details: parsed);
+  }
+
   Future<List<dynamic>> getJsonList(String path, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
     final payload = await getJson(path, query: query, headers: headers);
     if (payload['data'] is List) {

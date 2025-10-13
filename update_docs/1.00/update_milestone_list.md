@@ -36,6 +36,7 @@
     4. Integrate commission, tax, and multi-currency calculations within booking lifecycle.
     5. Execute regression suite validating geo-matching accuracy and booking SLA timers.
     *2025-02-10 update:* Zone + booking services, finance engine, analytics job, and Vitest suites landed; explorer/booking drawings referenced to align payloads with admin/provider experience.
+    *2025-11-03 update:* Service zone persistence migrated to MultiPolygon storage with overlap prevention, coverage associations (`ServiceZoneCoverage`) and REST endpoints/analytics now live; Vitest suite regresses coverage attach/detach and conflict handling so Task 2A remains production-hardened ahead of explorer integration.
   - **Task 2B — Early QA & Observability (45% complete)**
     1. Instrument telemetry for zone/booking events with structured logging and tracing.
     2. Stand up Postman/Newman API suites for zone and booking endpoints.
@@ -83,7 +84,7 @@
 - **Target Window:** Weeks 8–12
 - **Objective:** Complete data products, governance artefacts, and compliance validation.
 - **Tasks:**
-  - **Task 5A — Analytics & Alerting Delivery (38% complete)**
+  - **Task 5A — Analytics & Alerting Delivery (55% complete)**
     1. Finalise unified event schema across zones, bookings, rentals, disputes, ads, and comms.
     2. Update ETL/ELT pipelines with GDPR-compliant retention and anonymisation.
     3. Build persona dashboards and exports for admin, provider, servicemen, and enterprise personas.
@@ -95,6 +96,7 @@
     *2025-10-31 update:* Feature toggle gating now wraps persona dashboards via `FeatureToggleProvider.jsx` + `DashboardAccessGate.jsx`, exposing toggle summary metadata, pilot request workflow, and refresh CTA tied to Secrets Manager manifests. Vitest coverage asserts gated states, and documentation/test plan call out telemetry + ops runbook references so analytics cohorts can be rolled out incrementally without manual interventions.
     *2025-11-01 update:* Flutter operations dashboard delivers governed persona experiences for provider, serviceman, enterprise, and user roles. Riverpod repository/controller layers hydrate analytics metrics, pipelines, and compliance tables from `/api/analytics/dashboards/:persona`, enforce offline cache + Secrets Manager row limits, and persist CSV exports to device storage with status banners aligned to `Screens_Update.md`/`dashboard_drawings.md`. Controller tests (`test/features/analytics/operations_dashboard_controller_test.dart`) cover live/offline refresh and export failure handling, while design/test artefacts document cross-channel rehearsal steps and QA selectors so Task 5A now advances with mobile parity validated ahead of monitoring automation work.
     *2025-11-02 update:* Warehouse freshness monitor now guards analytics SLAs end-to-end. `backend-nodejs/src/jobs/warehouseFreshnessJob.js` polls dataset recency, backlog depth, and pipeline failure streaks with OpsGenie alerting via `services/opsgenieService.js` and governed thresholds in `config/index.js`. Vitest suite `tests/warehouseFreshnessJob.test.js` asserts stale detection, recovery closure, backlog escalation, and disabled-integration fallbacks while telemetry runbook/design drawings surface OpsGenie runbook copy and dashboard alert banners. Task 5A focus shifts to SLA/dispute/ad anomaly rules (5.4b) and governance publishing (5.5).
+    *2025-11-02 update:* Flutter `AnalyticsDashboardScreen` reaches parity with web persona dashboards, rendering overview metrics, charts, rental tables, and workflow boards via cached Riverpod controller and timezone-aware repository. CSV export automation now stores metadata for mobile governance while controller tests cover refresh/offline/export paths; design artefacts and trackers updated to document mobile layouts, chart treatments, and accessibility copy.
   - **Task 5B — Compliance Validation Sprint (7% complete)**
     1. Execute GDPR, insurance/DBS, HMRC, and advertising compliance walkthroughs.
     2. Validate audit logs, retention schedules, and consent records across services.
@@ -113,6 +115,7 @@
 
     *2025-02-08 update:* Master test plan expanded with feature toggle governance coverage, RBAC audit checkpoints, and Vitest/Playwright/Flutter automation commitments to feed CI readiness metrics ahead of performance drill scheduling.
     *2025-02-09 update:* Backend Vitest suites validate escrow rollback and contract schema parity, React telemetry automation executes in CI, and Flutter widget coverage confirms live feed banners; chaos injection verifies graceful degradation, elevating Task 6A automation readiness to focus on load/performance drill design.
+    *2025-11-03 update:* Baseline load/performance/resilience drills operational — `performance/k6/main.js`, `performance/profiles/baseline.json`, and `scripts/run-load-tests.mjs` execute via `npm run load:test`, validating bookings/chat/escrow/analytics/campaign workloads with governed thresholds and summary exports. Documentation (performance README, test plan, progress tracker) records staging rehearsal cadence, env requirements, and follow-up soak/chaos backlog to progress Task 6A toward certification.
   - **Task 6B — Launch Operations & Hypercare (6% complete)**
     1. Publish release notes, training curriculum, support playbooks, and hypercare rota.
     2. Conduct go-live rehearsals with rollback drills and communication templates.

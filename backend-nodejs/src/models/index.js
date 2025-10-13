@@ -5,6 +5,7 @@ import Service from './service.js';
 import Post from './post.js';
 import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
+import ServiceZoneCoverage from './serviceZoneCoverage.js';
 import Order from './order.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
@@ -38,6 +39,7 @@ import ConversationMessage from './conversationMessage.js';
 import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
+import PlatformSetting from './platformSetting.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -190,6 +192,12 @@ ZoneAnalyticsSnapshot.belongsTo(ServiceZone, { foreignKey: 'zoneId' });
 ServiceZone.hasMany(Booking, { foreignKey: 'zoneId' });
 Booking.belongsTo(ServiceZone, { foreignKey: 'zoneId' });
 
+ServiceZone.hasMany(ServiceZoneCoverage, { foreignKey: 'zoneId', as: 'coverages' });
+ServiceZoneCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
+
+Service.hasMany(ServiceZoneCoverage, { foreignKey: 'serviceId', as: 'zoneCoverage' });
+ServiceZoneCoverage.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -213,6 +221,7 @@ export {
   Post,
   MarketplaceItem,
   ServiceZone,
+  ServiceZoneCoverage,
   Order,
   Escrow,
   Dispute,
@@ -245,5 +254,6 @@ export {
   Conversation,
   ConversationParticipant,
   ConversationMessage,
-  MessageDelivery
+  MessageDelivery,
+  PlatformSetting
 };

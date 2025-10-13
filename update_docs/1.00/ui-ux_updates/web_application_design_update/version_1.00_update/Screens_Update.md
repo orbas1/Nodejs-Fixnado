@@ -63,7 +63,14 @@ Specifications reference desktop (1440×900), tablet (1024×768), and mobile (37
 - Use ECharts for zone heatmap, line charts for bookings. Charts span 8 columns, height 320px.
 - KPI summary cards top row 4 columns each.
 
-### 12. Settings & Account
+### 12. Performance & Resilience Control (2025-11-03)
+- **Status Tile Placement:** Insert 4-column tile in admin dashboard grid (row below analytics overview) summarising latest load drill metrics. Tile height 220px with metric stack (value 32/40, label 14/20) and badge states for `Healthy`, `Warning`, `Breach`. Footer houses `View summary` ghost button (width 160px) linking to modal with JSON preview.
+- **Drill History Drawer:** Clicking tile opens right-side drawer width 420px listing previous drills (profile, timestamp, owner) with CTA `Download report`. Drawer surfaces inline alerts when thresholds breached and includes copy referencing runbook `OPS-PERF-02`.
+- **Empty/Breach States:** When no drills available, show empty state with illustration (200px) and CTA `Schedule rehearsal`. Breach state displays amber banner with icon + text "Threshold exceeded — review summary" and `Notify SRE` secondary button.
+- **Accessibility & Localisation:** Provide aria-live region for breach warnings, focus trap within drawer, and translation keys `performance.status.*`. Ensure theme tokens maintain 4.5:1 contrast for badges across light/dark palettes.
+- **Data Source:** Tile consumes `/api/operations/performance/status` (derived from `performance/reports/*.json`). Poll every 10 minutes; show skeleton (shimmer 1.2s) while loading and stale indicator when last run >24h.
+
+### 13. Settings & Account
 - Two-column layout (form left 8 columns, preview right 4 columns). On mobile, stack vertically.
 - Tabs for Profile, Notifications, Security. Each tab loads form sections with 24px spacing.
 

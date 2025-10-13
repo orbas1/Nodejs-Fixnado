@@ -159,6 +159,14 @@
 4. Overdue scenario: scheduler marks invoice overdue; UI displays red badge and prompts escalation. Escalation action triggers POST `/api/campaigns/:id/invoices/:invoiceId/escalate` notifying finance Slack + email with payload containing invoice metadata.
 5. Invoice dispute: button opens modal capturing dispute reason, attachments. POST `/api/campaigns/:id/invoices/:invoiceId/dispute`. Status set to `in_dispute`; UI shows amber badge and logs event.
 
+## 22. Zone Coverage Sync Flow (2025-11-03)
+1. Admin selects `Manage coverage` on zone detail. UI fetches existing attachments via `GET /api/zones/:zoneId/services` and pre-populates drawer list.
+2. User selects services and sets priority/effective windows. Submitting `Attach` posts to `/api/zones/:zoneId/services` with payload `{ coverages: [{ serviceId, coverageType, priority, effectiveFrom, effectiveTo, metadata }], actor }`.
+3. Backend responds with updated coverage array; UI replaces table rows, fires telemetry `zone.coverage.attach`, and updates analytics panel counters. If `replace=true`, UI refreshes attachments and shows confirmation that stale services were detached.
+4. Conflict path: If backend returns 409 (overlap), UI renders warning banner referencing conflicting zone name and locks submit button until geometry adjusted. Telemetry `zone.coverage.conflict` logged for analytics dashboards.
+5. Detach flow: User selects `Remove` on coverage row → confirmation modal summarises impact. DELETE `/api/zones/:zoneId/services/:coverageId` with actor metadata. On success, row removed, toast shown, telemetry `zone.coverage.detach` emitted.
+6. Mobile provider screen caches coverage list offline; on reconnect, sync compares `updatedAt` from response to local store, resolves conflicts by preferring server state. Offline attempts queue patch requests with actor metadata for retry.
+
 ## 22. Campaign Archive & Deletion Flow
 1. User selects `Archive campaign`; modal summarises outstanding invoices and flights. If open invoices exist, disable action with explanation.
 2. When eligible, POST `/api/campaigns/:id/actions/archive` setting status `archived`, closing active flights. UI removes campaign from default list, accessible via status filter.

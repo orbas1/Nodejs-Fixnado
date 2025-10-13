@@ -17,6 +17,8 @@ const {
   InventoryAlert,
   InventoryItem,
   RentalAgreement,
+  MarketplaceItem,
+  MarketplaceModerationAction,
   Service,
   ServiceZone,
   User,
@@ -269,17 +271,89 @@ async function createCompanyWithFixtures() {
     timezone: 'Europe/London'
   });
 
+  const approvedListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: '13kVA generator with ATS',
+    description: 'Escrow-backed rental with telemetry sensors and concierge logistics.',
+    pricePerDay: 420,
+    purchasePrice: 68000,
+    location: 'London Docklands',
+    availability: 'both',
+    status: 'approved',
+    insuredOnly: true,
+    complianceHoldUntil: now.plus({ days: 21 }).toJSDate(),
+    lastReviewedAt: now.minus({ days: 5 }).toJSDate(),
+    complianceSnapshot: { status: 'approved', complianceScore: 92 }
+  });
+
+  const pendingListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: 'HVAC telemetry deployment',
+    description: 'IoT sensors, dashboards and commissioning labour.',
+    pricePerDay: 260,
+    availability: 'rent',
+    location: 'Canary Wharf',
+    status: 'pending_review',
+    insuredOnly: false
+  });
+
+  const suspendedListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: 'Roof access safety kit',
+    description: 'Includes edge protection and harness bundle.',
+    pricePerDay: 120,
+    availability: 'rent',
+    location: 'Stratford',
+    status: 'suspended',
+    insuredOnly: false,
+    moderationNotes: 'Missing inspection evidence for harness lifelines.'
+  });
+
+  await MarketplaceModerationAction.create({
+    entityType: 'marketplace_item',
+    entityId: suspendedListing.id,
+    action: 'suspended',
+    reason: 'Expired inspection certificate',
+    metadata: { status: 'suspended' }
+  });
+
+  await MarketplaceModerationAction.create({
+    entityType: 'marketplace_item',
+    entityId: pendingListing.id,
+    action: 'submitted_for_review',
+    metadata: { status: 'pending_review' }
+  });
+
   await RentalAgreement.create({
     rentalNumber: 'RA-1001',
     itemId: inventoryItem.id,
+    marketplaceItemId: approvedListing.id,
     companyId: company.id,
     renterId: IDS.renter,
-    status: 'inspection_pending',
+    status: 'in_use',
     depositStatus: 'held',
-    quantity: 1,
-    pickupAt: now.minus({ days: 3 }).toJSDate(),
+    quantity: 2,
+    rentalStartAt: now.minus({ days: 3 }).toJSDate(),
     returnDueAt: now.plus({ days: 4 }).toJSDate(),
-    meta: {}
+    dailyRate: 420,
+    rateCurrency: 'GBP',
+    meta: { project: 'Generator swap' }
+  });
+
+  await RentalAgreement.create({
+    rentalNumber: 'RA-1002',
+    itemId: inventoryItem.id,
+    marketplaceItemId: approvedListing.id,
+    companyId: company.id,
+    renterId: IDS.renter,
+    status: 'settled',
+    depositStatus: 'released',
+    quantity: 1,
+    rentalStartAt: now.minus({ days: 45 }).toJSDate(),
+    returnDueAt: now.minus({ days: 40 }).toJSDate(),
+    dailyRate: 390,
+    rateCurrency: 'GBP',
+    meta: { project: 'Completed works' }
   });
 
   return company;
@@ -334,6 +408,31 @@ describe('Panel routes', () => {
     expect(response.body.data.hero.name).toContain('Metro');
     expect(response.body.data.packages.length).toBeGreaterThan(0);
     expect(response.body.data.stats[0].value).toBeGreaterThanOrEqual(0);
+  });
+
+  it('returns a storefront management snapshot with listing intelligence for provider roles', async () => {
+    const company = await createCompanyWithFixtures();
+
+    const response = await request(app)
+      .get('/api/panel/provider/storefront')
+      .set('X-Fixnado-Role', 'company')
+      .query({ companyId: company.id })
+      .expect(200);
+
+    expect(response.body.meta.companyId).toBe(company.id);
+    expect(response.body.data.storefront.metrics.activeListings).toBeGreaterThan(0);
+    expect(response.body.data.storefront.metrics.pendingReview).toBeGreaterThanOrEqual(0);
+    expect(response.body.data.listings.length).toBeGreaterThan(0);
+    expect(response.body.data.playbooks.length).toBeGreaterThan(0);
+    expect(response.body.data.timeline[0].listingTitle).toBeDefined();
+  });
+
+  it('rejects storefront access without provider context', async () => {
+    await createCompanyWithFixtures();
+
+    const response = await request(app).get('/api/panel/provider/storefront').expect(401);
+
+    expect(response.body).toMatchObject({ message: 'Storefront access restricted to providers' });
   });
 });
 
