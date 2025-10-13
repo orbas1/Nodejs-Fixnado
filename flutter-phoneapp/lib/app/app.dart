@@ -4,6 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../features/auth/presentation/auth_gate.dart';
 import 'app_shell.dart';
+import '../features/analytics/presentation/analytics_dashboard_screen.dart';
+import '../features/auth/presentation/role_selector.dart';
+import '../features/bookings/presentation/booking_screen.dart';
+import '../features/feed/presentation/live_feed_screen.dart';
+import '../features/explorer/presentation/explorer_screen.dart';
+import '../features/profile/presentation/profile_management_screen.dart';
+import '../features/rentals/presentation/rental_screen.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -55,4 +62,71 @@ class FixnadoApp extends ConsumerWidget {
       home: const AuthGate(),
     );
   }
+}
+
+class AppShell extends ConsumerStatefulWidget {
+  const AppShell({super.key});
+
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final destinations = _NavigationDestination.values;
+    final selected = destinations[_index];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(selected.title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: RoleSelector(),
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          ExplorerScreen(),
+          LiveFeedScreen(),
+          BookingScreen(),
+          RentalScreen(),
+          ProfileManagementScreen(),
+          AnalyticsDashboardScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: destinations
+            .map(
+              (destination) => NavigationDestination(
+                icon: Icon(destination.icon),
+                label: destination.title,
+              ),
+            )
+            .toList(),
+        onDestinationSelected: (index) => setState(() => _index = index),
+      ),
+    );
+  }
+}
+
+enum _NavigationDestination {
+  explorer('Explorer', Icons.map_outlined),
+  feed('Feed', Icons.dynamic_feed_outlined),
+  bookings('Bookings', Icons.event_available_outlined),
+  rentals('Rentals', Icons.inventory_2_outlined),
+  profile('Profile', Icons.person_outline),
+  operations('Ops Pulse', Icons.analytics_outlined);
+
+  const _NavigationDestination(this.title, this.icon);
+
+  final String title;
+  final IconData icon;
 }

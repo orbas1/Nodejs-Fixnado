@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { BanknotesIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
-import { SegmentedControl, StatusPill } from '../components/ui/index.js';
+import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 
 const DEFAULT_TIMEFRAME = '7d';
 const FALLBACK_TIMEFRAME_OPTIONS = [
@@ -349,6 +350,15 @@ export default function AdminDashboard() {
 
   const filters = (
     <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+      <Button
+        to="/admin/monetisation"
+        size="sm"
+        variant="secondary"
+        icon={BanknotesIcon}
+        iconPosition="start"
+      >
+        Monetisation controls
+      </Button>
       <SegmentedControl
         name="Command metrics timeframe"
         value={timeframe}
