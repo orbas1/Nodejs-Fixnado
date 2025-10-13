@@ -14,6 +14,8 @@ import marketplaceRoutes from './marketplaceRoutes.js';
 import campaignRoutes from './campaignRoutes.js';
 import communicationsRoutes from './communicationsRoutes.js';
 import analyticsPipelineRoutes from './analyticsPipelineRoutes.js';
+import panelRoutes from './panelRoutes.js';
+import businessFrontRoutes from './businessFrontRoutes.js';
 
 const router = Router();
 
@@ -32,5 +34,7 @@ router.use('/marketplace', marketplaceRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/communications', communicationsRoutes);
 router.use('/analytics', analyticsPipelineRoutes);
+router.use('/panel', panelRoutes);
+router.use('/business-fronts', businessFrontRoutes);
 
 export default router;
