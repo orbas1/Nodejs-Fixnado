@@ -4,6 +4,7 @@ import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
+import DashboardShell from '../components/dashboard/DashboardShell.jsx';
 import {
   ChartBarIcon,
   ClockIcon,
@@ -169,51 +170,116 @@ export default function ProviderDashboard() {
     return 'success';
   }, [metrics]);
 
-  return (
-    <div className="min-h-screen bg-slate-50 pb-20" data-qa="provider-dashboard">
-      <div className="border-b border-slate-200 bg-white/90">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{t('providerDashboard.title')}</p>
-            <h1 className="text-3xl font-semibold text-primary" data-qa="provider-dashboard-name">
-              {provider?.tradingName || provider?.name || t('providerDashboard.defaultName')}
-            </h1>
-            <p className="text-sm text-slate-600" data-qa="provider-dashboard-region">
-              {t('common.operatingRegion', { region: provider?.region ?? t('common.notAvailable') })}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <StatusPill tone={heroStatusTone}>
-                {t('common.slaStatus', {
-                  value: format.percentage(metrics?.slaHitRate ?? 0)
-                })}
-              </StatusPill>
-              <StatusPill tone="info">
-                {t('common.utilisationStatus', {
-                  value: format.percentage(metrics?.utilisation ?? 0)
-                })}
-              </StatusPill>
-            </div>
-          </div>
-          <div className="flex flex-col items-start gap-3 lg:items-end">
-            <Link
-              to={`/providers/${provider?.slug ?? 'featured'}`}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-            >
-              {t('providerDashboard.businessFrontCta')}
-            </Link>
-            <div className="flex gap-3 text-xs text-slate-500">
-              {provider?.supportEmail ? (
-                <span>{t('providerDashboard.supportEmail', { email: provider.supportEmail })}</span>
-              ) : null}
-              {provider?.supportPhone ? (
-                <span>{t('providerDashboard.supportPhone', { phone: provider.supportPhone })}</span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </div>
+  const navigation = useMemo(() => {
+    const items = [
+      {
+        id: 'provider-dashboard-kpis',
+        label: t('providerDashboard.metricsHeadline'),
+        description: t('providerDashboard.nav.metrics')
+      },
+      {
+        id: 'provider-dashboard-revenue',
+        label: t('providerDashboard.revenueHeadline'),
+        description: t('providerDashboard.nav.revenue')
+      },
+      alerts.length > 0
+        ? {
+            id: 'provider-dashboard-alerts',
+            label: t('providerDashboard.alertsHeadline'),
+            description: t('providerDashboard.nav.alerts')
+          }
+        : null,
+      {
+        id: 'provider-dashboard-pipeline',
+        label: t('providerDashboard.pipelineHeadline'),
+        description: t('providerDashboard.nav.pipeline')
+      },
+      {
+        id: 'provider-dashboard-servicemen',
+        label: t('providerDashboard.servicemenHeadline'),
+        description: t('providerDashboard.nav.servicemen')
+      }
+    ];
 
-      <div className="mx-auto max-w-6xl px-6 py-10 space-y-10">
+    return items.filter(Boolean);
+  }, [alerts.length, t]);
+
+  const heroBadges = useMemo(
+    () => [
+      {
+        tone: heroStatusTone,
+        label: t('common.slaStatus', { value: format.percentage(metrics?.slaHitRate ?? 0) })
+      },
+      {
+        tone: 'info',
+        label: t('common.utilisationStatus', { value: format.percentage(metrics?.utilisation ?? 0) })
+      }
+    ],
+    [format, heroStatusTone, metrics?.slaHitRate, metrics?.utilisation, t]
+  );
+
+  const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
+  const onboardingKey = provider?.onboardingStatus
+    ? `providerDashboard.onboardingStatus.${provider.onboardingStatus}`
+    : 'providerDashboard.onboardingStatus.active';
+  const onboardingTranslation = t(onboardingKey);
+  const onboardingStatus = onboardingTranslation === onboardingKey
+    ? provider?.onboardingStatus ?? t('providerDashboard.onboardingStatus.active')
+    : onboardingTranslation;
+
+  const heroAside = (
+    <>
+      <Link
+        to={`/providers/${provider?.slug ?? 'featured'}`}
+        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+      >
+        {t('providerDashboard.businessFrontCta')}
+      </Link>
+      <div className="flex flex-col items-start gap-1 text-xs text-slate-500 lg:items-end lg:text-right">
+        {provider?.supportEmail ? (
+          <span>{t('providerDashboard.supportEmail', { email: provider.supportEmail })}</span>
+        ) : null}
+        {provider?.supportPhone ? (
+          <span>{t('providerDashboard.supportPhone', { phone: provider.supportPhone })}</span>
+        ) : null}
+        {snapshotTime ? <span>{t('providerDashboard.snapshotGenerated', { time: snapshotTime })}</span> : null}
+      </div>
+    </>
+  );
+
+  const sidebarMeta = [
+    {
+      label: t('providerDashboard.sidebarRegionLabel'),
+      value: provider?.region ?? t('common.notAvailable')
+    },
+    {
+      label: t('providerDashboard.sidebarOnboardingLabel'),
+      value: onboardingStatus
+    },
+    {
+      label: t('providerDashboard.sidebarActiveBookingsLabel'),
+      value: format.number(metrics?.activeBookings ?? 0)
+    }
+  ];
+
+  if (snapshotTime) {
+    sidebarMeta.push({
+      label: t('providerDashboard.sidebarSnapshotLabel'),
+      value: snapshotTime
+    });
+  }
+
+  return (
+    <div data-qa="provider-dashboard">
+      <DashboardShell
+        eyebrow={t('providerDashboard.title')}
+        title={provider?.tradingName || provider?.name || t('providerDashboard.defaultName')}
+        subtitle={t('common.operatingRegion', { region: provider?.region ?? t('common.notAvailable') })}
+        heroBadges={heroBadges}
+        heroAside={heroAside}
+        navigation={navigation}
+        sidebar={{ meta: sidebarMeta }}
+      >
         {state.loading ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label={t('common.loading')}>
             {Array.from({ length: 4 }).map((_, index) => (
@@ -227,18 +293,14 @@ export default function ProviderDashboard() {
             <p className="text-sm font-semibold text-rose-600">{t('providerDashboard.errorSummary')}</p>
             <p className="mt-1 text-xs text-rose-500">
               {state.error.message}
-              {state.meta?.fallback
-                ? ` — ${t('providerDashboard.errorFallbackHint')}`
-                : ''}
+              {state.meta?.fallback ? ` — ${t('providerDashboard.errorFallbackHint')}` : ''}
             </p>
           </div>
         ) : null}
 
-        <section aria-labelledby="provider-dashboard-kpis" className="space-y-6">
-          <header className="flex items-center justify-between">
-            <h2 id="provider-dashboard-kpis" className="text-lg font-semibold text-primary">
-              {t('providerDashboard.metricsHeadline')}
-            </h2>
+        <section id="provider-dashboard-kpis" aria-labelledby="provider-dashboard-kpis" className="space-y-6">
+          <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.metricsHeadline')}</h2>
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
@@ -286,12 +348,10 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="provider-dashboard-revenue" className="space-y-4">
+        <section id="provider-dashboard-revenue" aria-labelledby="provider-dashboard-revenue" className="space-y-4">
           <header className="flex items-center gap-3">
             <ChartBarIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 id="provider-dashboard-revenue" className="text-lg font-semibold text-primary">
-              {t('providerDashboard.revenueHeadline')}
-            </h2>
+            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.revenueHeadline')}</h2>
           </header>
           <div className="grid gap-6 md:grid-cols-3">
             <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-mtd">
@@ -315,12 +375,10 @@ export default function ProviderDashboard() {
         </section>
 
         {alerts.length > 0 ? (
-          <section aria-labelledby="provider-dashboard-alerts" className="space-y-4">
+          <section id="provider-dashboard-alerts" aria-labelledby="provider-dashboard-alerts" className="space-y-4">
             <header className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
-              <h2 id="provider-dashboard-alerts" className="text-lg font-semibold text-primary">
-                {t('providerDashboard.alertsHeadline')}
-              </h2>
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.alertsHeadline')}</h2>
             </header>
             <div className="space-y-3">
               {alerts.map((alert) => (
@@ -330,13 +388,11 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
-        <section aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
+        <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <header className="flex items-center gap-3">
               <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 id="provider-dashboard-pipeline" className="text-lg font-semibold text-primary">
-                {t('providerDashboard.pipelineBookings')}
-              </h2>
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.pipelineBookings')}</h2>
             </header>
             <ul className="space-y-3">
               {bookings.length === 0 ? (
@@ -367,9 +423,7 @@ export default function ProviderDashboard() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-primary">{item.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {t('providerDashboard.complianceOwner', { name: item.owner })}
-                      </p>
+                      <p className="text-xs text-slate-500">{t('providerDashboard.complianceOwner', { name: item.owner })}</p>
                     </div>
                     <StatusPill tone="warning">
                       {item.expiresOn
@@ -383,12 +437,10 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
+        <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
           <header className="flex items-center gap-3">
             <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 id="provider-dashboard-servicemen" className="text-lg font-semibold text-primary">
-              {t('providerDashboard.servicemenSection')}
-            </h2>
+            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.servicemenSection')}</h2>
           </header>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {servicemen.length === 0 ? (
@@ -400,10 +452,10 @@ export default function ProviderDashboard() {
             )}
           </ul>
         </section>
-      </div>
+      </DashboardShell>
 
       {state.loading && !state.data ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
           <Spinner />
           <span className="sr-only">{t('providerDashboard.loadingOverlay')}</span>
         </div>
