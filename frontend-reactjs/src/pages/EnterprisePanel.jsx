@@ -4,6 +4,7 @@ import { getEnterprisePanel, PanelApiError } from '../api/panelClient.js';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
+import DashboardShell from '../components/dashboard/DashboardShell.jsx';
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -178,62 +179,112 @@ export default function EnterprisePanel() {
     return 'success';
   }, [delivery]);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-secondary/40 to-white pb-20" data-qa="enterprise-panel">
-      <div className="border-b border-slate-200 bg-white/95 shadow-sm">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{t('enterprisePanel.title')}</p>
-            <h1 className="text-3xl font-semibold text-primary" data-qa="enterprise-panel-name">
-              {enterprise?.name || t('enterprisePanel.defaultName')}
-            </h1>
-            <p className="text-sm text-slate-600" data-qa="enterprise-panel-sector">
-              {t('enterprisePanel.sectorLabel', { sector: enterprise?.sector ?? t('common.notAvailable') })}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <StatusPill tone={deliveryTone}>
-                {t('common.slaStatus', {
-                  value: format.percentage(delivery?.slaCompliance ?? 0)
-                })}
-              </StatusPill>
-              <StatusPill tone="info">
-                {t('common.activeSites', {
-                  count: format.number(enterprise?.activeSites ?? 0)
-                })}
-              </StatusPill>
-            </div>
-          </div>
-          <div className="flex flex-col items-start gap-3 text-sm text-slate-500 lg:items-end">
-            {enterprise?.accountManager ? (
-              <span>{t('common.accountManager', { name: enterprise.accountManager })}</span>
-            ) : null}
-            {enterprise?.serviceMix?.length ? (
-              <span
-                className="inline-flex flex-wrap gap-2"
-                data-qa="enterprise-panel-service-mix"
-                aria-label={t('enterprisePanel.serviceMixLabel')}
-              >
-                {enterprise.serviceMix.map((service) => (
-                  <span
-                    key={service}
-                    className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-                  >
-                    {service}
-                  </span>
-                ))}
-              </span>
-            ) : null}
-            <Link
-              to="/communications"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
-            >
-              {t('enterprisePanel.openWorkspace')}
-            </Link>
-          </div>
-        </div>
-      </div>
+  const navigation = useMemo(() => {
+    const items = [
+      {
+        id: 'enterprise-panel-metrics',
+        label: t('enterprisePanel.metricsHeadline'),
+        description: t('enterprisePanel.nav.delivery')
+      },
+      {
+        id: 'enterprise-panel-spend',
+        label: t('enterprisePanel.spendHeadline'),
+        description: t('enterprisePanel.nav.spend')
+      },
+      {
+        id: 'enterprise-panel-programmes',
+        label: t('enterprisePanel.programmeHeadline'),
+        description: t('enterprisePanel.nav.programmes')
+      },
+      escalations.length > 0
+        ? {
+            id: 'enterprise-panel-escalations',
+            label: t('enterprisePanel.escalationsHeadline'),
+            description: t('enterprisePanel.nav.escalations')
+          }
+        : null
+    ];
 
-      <div className="mx-auto max-w-6xl px-6 py-10 space-y-10">
+    return items.filter(Boolean);
+  }, [escalations.length, t]);
+
+  const heroBadges = useMemo(
+    () => [
+      {
+        tone: deliveryTone,
+        label: t('common.slaStatus', { value: format.percentage(delivery?.slaCompliance ?? 0) })
+      },
+      {
+        tone: 'info',
+        label: t('common.activeSites', { count: format.number(enterprise?.activeSites ?? 0) })
+      }
+    ],
+    [delivery?.slaCompliance, deliveryTone, enterprise?.activeSites, format, t]
+  );
+
+  const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
+
+  const heroAside = (
+    <div className="flex flex-col items-start gap-3 text-sm text-slate-500 lg:items-end lg:text-right">
+      {enterprise?.accountManager ? (
+        <span>{t('common.accountManager', { name: enterprise.accountManager })}</span>
+      ) : null}
+      {enterprise?.serviceMix?.length ? (
+        <div
+          className="flex flex-wrap gap-2"
+          data-qa="enterprise-panel-service-mix"
+          aria-label={t('enterprisePanel.serviceMixLabel')}
+        >
+          {enterprise.serviceMix.map((service) => (
+            <span
+              key={service}
+              className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+            >
+              {service}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <Link
+        to="/communications"
+        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
+      >
+        {t('enterprisePanel.openWorkspace')}
+      </Link>
+      {snapshotTime ? <span className="text-xs text-slate-400">{t('enterprisePanel.snapshotGenerated', { time: snapshotTime })}</span> : null}
+    </div>
+  );
+
+  const sidebarMeta = [
+    {
+      label: t('enterprisePanel.sidebarAccountManager'),
+      value: enterprise?.accountManager ?? t('common.notAvailable')
+    },
+    {
+      label: t('enterprisePanel.sidebarSites'),
+      value: format.number(enterprise?.activeSites ?? 0)
+    },
+    {
+      label: t('enterprisePanel.sidebarSpend'),
+      value: format.currency(spend?.monthToDate ?? 0)
+    }
+  ];
+
+  if (snapshotTime) {
+    sidebarMeta.push({ label: t('enterprisePanel.sidebarSnapshotLabel'), value: snapshotTime });
+  }
+
+  return (
+    <div data-qa="enterprise-panel">
+      <DashboardShell
+        eyebrow={t('enterprisePanel.title')}
+        title={enterprise?.name || t('enterprisePanel.defaultName')}
+        subtitle={t('enterprisePanel.sectorLabel', { sector: enterprise?.sector ?? t('common.notAvailable') })}
+        heroBadges={heroBadges}
+        heroAside={heroAside}
+        navigation={navigation}
+        sidebar={{ meta: sidebarMeta }}
+      >
         {state.loading ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label={t('common.loading')}>
             {Array.from({ length: 4 }).map((_, index) => (
@@ -268,7 +319,7 @@ export default function EnterprisePanel() {
           </div>
         ) : null}
 
-        <section aria-labelledby="enterprise-panel-metrics" className="space-y-6">
+        <section id="enterprise-panel-metrics" aria-labelledby="enterprise-panel-metrics" className="space-y-6">
           <header className="flex items-center justify-between">
             <h2 id="enterprise-panel-metrics" className="text-lg font-semibold text-primary">
               {t('enterprisePanel.metricsHeadline')}
@@ -326,7 +377,7 @@ export default function EnterprisePanel() {
           </div>
         </section>
 
-        <section aria-labelledby="enterprise-panel-spend" className="space-y-4">
+        <section id="enterprise-panel-spend" aria-labelledby="enterprise-panel-spend" className="space-y-4">
           <header className="flex items-center gap-3">
             <BanknotesIcon className="h-5 w-5 text-primary" aria-hidden="true" />
             <h2 id="enterprise-panel-spend" className="text-lg font-semibold text-primary">
@@ -362,7 +413,7 @@ export default function EnterprisePanel() {
           </div>
         </section>
 
-        <section aria-labelledby="enterprise-panel-programmes" className="grid gap-8 lg:grid-cols-2">
+        <section id="enterprise-panel-programmes" aria-labelledby="enterprise-panel-programmes" className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <header className="flex items-center gap-3">
               <MapPinIcon className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -380,7 +431,7 @@ export default function EnterprisePanel() {
               )}
             </ul>
           </div>
-          <div className="space-y-4">
+          <div id="enterprise-panel-escalations" className="space-y-4">
             <header className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-primary">{t('enterprisePanel.escalationsHeadline')}</h2>
@@ -414,10 +465,10 @@ export default function EnterprisePanel() {
             </ul>
           </div>
         </section>
-      </div>
+      </DashboardShell>
 
       {state.loading && !state.data ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/30" role="status" aria-live="polite">
           <Spinner />
           <span className="sr-only">{t('enterprisePanel.loadingOverlay')}</span>
         </div>

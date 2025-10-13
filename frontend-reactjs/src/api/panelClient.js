@@ -264,19 +264,20 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
 });
 
 function normaliseProviderDashboard(payload = {}) {
-  const provider = payload.provider || payload.profile || {};
-  const metrics = payload.metrics || {};
-  const finances = payload.finances || payload.finance || {};
+  const root = payload?.data ?? payload;
+  const provider = root.provider || root.profile || {};
+  const metrics = root.metrics || {};
+  const finances = root.finances || root.finance || {};
 
   return {
     provider: {
       name: provider.legalName || provider.name || 'Provider',
       tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
       region: provider.region || provider.operatingRegion || 'United Kingdom',
-      slug: provider.slug || payload.slug || 'provider',
+      slug: provider.slug || root.slug || 'provider',
       onboardingStatus: provider.onboardingStatus || 'active',
-      supportEmail: provider.supportEmail || provider.contactEmail || payload.contactEmail || null,
-      supportPhone: provider.supportPhone || provider.contactPhone || payload.contactPhone || null
+      supportEmail: provider.supportEmail || provider.contactEmail || root.contactEmail || null,
+      supportPhone: provider.supportPhone || provider.contactPhone || root.contactPhone || null
     },
     metrics: {
       utilisation: metrics.utilisation ?? metrics.capacityUtilisation ?? 0.74,
@@ -291,7 +292,7 @@ function normaliseProviderDashboard(payload = {}) {
       outstandingBalance: finances.outstandingBalance ?? finances.pendingPayout ?? 12400,
       nextPayoutDate: finances.nextPayoutDate || finances.nextPayout || null
     },
-    alerts: ensureArray(payload.alerts).map((alert, index) => ({
+    alerts: ensureArray(root.alerts).map((alert, index) => ({
       id: alert.id || `alert-${index}`,
       severity: alert.severity || 'medium',
       message: alert.message || alert.text || 'Operational insight requires review.',
@@ -299,7 +300,7 @@ function normaliseProviderDashboard(payload = {}) {
       actionHref: alert.actionHref || alert.ctaHref || null
     })),
     pipeline: {
-      upcomingBookings: ensureArray(payload.pipeline?.upcomingBookings || payload.upcomingBookings).map((booking, index) => ({
+      upcomingBookings: ensureArray(root.pipeline?.upcomingBookings || root.upcomingBookings).map((booking, index) => ({
         id: booking.id || `booking-${index}`,
         client: booking.client || booking.customer || 'Client',
         service: booking.service || booking.serviceName || 'Service request',
@@ -307,14 +308,14 @@ function normaliseProviderDashboard(payload = {}) {
         value: booking.value ?? booking.estimatedValue ?? null,
         zone: booking.zone || booking.location || 'Zone'
       })),
-      expiringCompliance: ensureArray(payload.pipeline?.expiringCompliance).map((item, index) => ({
+      expiringCompliance: ensureArray(root.pipeline?.expiringCompliance).map((item, index) => ({
         id: item.id || `compliance-${index}`,
         name: item.name || item.document || 'Compliance document',
         expiresOn: item.expiresOn || item.expiry || null,
         owner: item.owner || item.assignee || 'Operations'
       }))
     },
-    servicemen: ensureArray(payload.servicemen || payload.teams).map((member, index) => ({
+    servicemen: ensureArray(root.servicemen || root.teams).map((member, index) => ({
       id: member.id || `serviceman-${index}`,
       name: member.name || member.displayName || 'Team member',
       role: member.role || member.specialism || 'Engineer',
@@ -325,17 +326,18 @@ function normaliseProviderDashboard(payload = {}) {
 }
 
 function normaliseEnterprisePanel(payload = {}) {
-  const enterprise = payload.enterprise || payload.account || {};
-  const metrics = payload.metrics || {};
-  const spend = payload.spend || payload.finance || {};
+  const root = payload?.data ?? payload;
+  const enterprise = root.enterprise || root.account || {};
+  const metrics = root.metrics || {};
+  const spend = root.spend || root.finance || {};
 
   return {
     enterprise: {
       name: enterprise.name || enterprise.legalName || 'Enterprise account',
       sector: enterprise.sector || enterprise.industry || 'Multi-site operations',
-      accountManager: enterprise.accountManager || payload.accountManager || null,
+      accountManager: enterprise.accountManager || root.accountManager || null,
       activeSites: enterprise.activeSites ?? enterprise.siteCount ?? 12,
-      serviceMix: ensureArray(enterprise.serviceMix || payload.serviceMix)
+      serviceMix: ensureArray(enterprise.serviceMix || root.serviceMix)
     },
     delivery: {
       slaCompliance: metrics.slaCompliance ?? metrics.sla ?? 0.94,
@@ -347,7 +349,7 @@ function normaliseEnterprisePanel(payload = {}) {
       monthToDate: spend.monthToDate ?? spend.mtd ?? 189000,
       budgetPacing: spend.budgetPacing ?? spend.pacing ?? 0.78,
       savingsIdentified: spend.savingsIdentified ?? spend.savings ?? 12400,
-      invoicesAwaitingApproval: ensureArray(spend.invoicesAwaitingApproval || payload.invoices).map(
+      invoicesAwaitingApproval: ensureArray(spend.invoicesAwaitingApproval || root.invoices).map(
         (invoice, index) => ({
           id: invoice.id || `invoice-${index}`,
           vendor: invoice.vendor || invoice.provider || 'Vendor',
@@ -357,7 +359,7 @@ function normaliseEnterprisePanel(payload = {}) {
         })
       )
     },
-    programmes: ensureArray(payload.programmes || payload.projects).map((programme, index) => ({
+    programmes: ensureArray(root.programmes || root.projects).map((programme, index) => ({
       id: programme.id || `programme-${index}`,
       name: programme.name || programme.title || 'Programme',
       status: programme.status || 'on-track',
@@ -365,7 +367,7 @@ function normaliseEnterprisePanel(payload = {}) {
       health: programme.health || 'on-track',
       lastUpdated: programme.lastUpdated || programme.updatedAt || null
     })),
-    escalations: ensureArray(payload.escalations).map((escalation, index) => ({
+    escalations: ensureArray(root.escalations).map((escalation, index) => ({
       id: escalation.id || `escalation-${index}`,
       title: escalation.title || escalation.summary || 'Escalation',
       owner: escalation.owner || escalation.assignee || 'Operations',
@@ -376,8 +378,9 @@ function normaliseEnterprisePanel(payload = {}) {
 }
 
 function normaliseBusinessFront(payload = {}) {
-  const profile = payload.profile || payload.provider || {};
-  const stats = ensureArray(payload.stats || payload.metrics).map((metric, index) => ({
+  const root = payload?.data ?? payload;
+  const profile = root.profile || root.provider || {};
+  const stats = ensureArray(root.stats || root.metrics).map((metric, index) => ({
     id: metric.id || `metric-${index}`,
     label: metric.label || metric.name || 'Metric',
     value: metric.value ?? metric.stat ?? 0,
@@ -386,27 +389,27 @@ function normaliseBusinessFront(payload = {}) {
   }));
 
   return {
-    slug: profile.slug || payload.slug || 'featured',
+    slug: profile.slug || root.slug || 'featured',
     hero: {
       name: profile.displayName || profile.legalName || profile.name || 'Featured provider',
       strapline:
-        payload.strapline ||
+        root.strapline ||
         profile.tagline ||
         'Escrow-backed field services, delivered by certified teams across the UK.',
-      locations: ensureArray(profile.locations || payload.locations || []).map((location) =>
+      locations: ensureArray(profile.locations || root.locations || []).map((location) =>
         typeof location === 'string'
           ? location
           : location.name || `${location.city}, ${location.country}`
       ),
-      media: payload.media || profile.media || {}
+      media: root.media || profile.media || {}
     },
-    testimonials: ensureArray(payload.testimonials).map((testimonial, index) => ({
+    testimonials: ensureArray(root.testimonials).map((testimonial, index) => ({
       id: testimonial.id || `testimonial-${index}`,
       quote: testimonial.quote || testimonial.text || 'Outstanding delivery and communication.',
       client: testimonial.client || testimonial.attribution || 'Client partner',
       role: testimonial.role || testimonial.position || null
     })),
-    packages: ensureArray(payload.packages).map((pkg, index) => ({
+    packages: ensureArray(root.packages).map((pkg, index) => ({
       id: pkg.id || `package-${index}`,
       name: pkg.name || pkg.title || 'Service package',
       description: pkg.description || pkg.summary || 'Comprehensive field services bundle.',
@@ -414,18 +417,18 @@ function normaliseBusinessFront(payload = {}) {
       currency: pkg.currency || 'GBP',
       highlights: ensureArray(pkg.highlights || pkg.features)
     })),
-    certifications: ensureArray(payload.certifications || payload.compliance).map((cert, index) => ({
+    certifications: ensureArray(root.certifications || root.compliance).map((cert, index) => ({
       id: cert.id || `cert-${index}`,
       name: cert.name || cert.title || 'Certification',
       issuer: cert.issuer || cert.authority || null,
       expiresOn: cert.expiresOn || cert.expiry || null
     })),
     support: {
-      email: payload.support?.email || profile.supportEmail || payload.contactEmail || null,
-      phone: payload.support?.phone || profile.supportPhone || payload.contactPhone || null,
-      concierge: payload.support?.concierge || null
+      email: root.support?.email || profile.supportEmail || root.contactEmail || null,
+      phone: root.support?.phone || profile.supportPhone || root.contactPhone || null,
+      concierge: root.support?.concierge || null
     },
-    gallery: ensureArray(payload.gallery || payload.portfolio).map((item, index) => ({
+    gallery: ensureArray(root.gallery || root.portfolio).map((item, index) => ({
       id: item.id || `gallery-${index}`,
       title: item.title || item.caption || 'Project highlight',
       description: item.description || null,
@@ -908,38 +911,17 @@ const businessFrontFallback = normaliseBusinessFront({
 function withFallback(normaliser, fallback, fetcherFactory) {
   return async function handler(options = {}) {
     try {
-      const { data, meta } = await fetcherFactory(options);
-      let payloadMeta;
-      let payloadData = data;
-
-      if (data && typeof data === 'object' && !Array.isArray(data)) {
-        ({ meta: payloadMeta, ...payloadData } = data);
+      const { data, meta: transportMeta } = await fetcherFactory(options);
+      const payload = data?.data ?? data;
+      const serverMeta = data?.meta;
+      const resolvedMeta = serverMeta
+        ? { ...(transportMeta ?? {}), ...serverMeta }
+        : { ...(transportMeta ?? {}) };
+      const normalised = normaliser(payload);
+      if (resolvedMeta.fromCache && resolvedMeta.stale) {
+        return { data: normalised, meta: { ...resolvedMeta, fallback: true } };
       }
-
-      const normalised = normaliser(payloadData);
-      const responseMeta = { ...(meta ?? {}) };
-
-      if (payloadMeta && typeof payloadMeta === 'object') {
-        responseMeta.payload = payloadMeta;
-        if (payloadMeta.fallback) {
-          responseMeta.fallback = true;
-        }
-        if (payloadMeta.sections) {
-          responseMeta.sections = payloadMeta.sections;
-        }
-        if (payloadMeta.reason) {
-          responseMeta.reason = payloadMeta.reason;
-        }
-      }
-
-      if (responseMeta.fromCache && responseMeta.stale) {
-        responseMeta.fallback = true;
-      }
-
-      return {
-        data: normalised,
-        meta: Object.keys(responseMeta).length > 0 ? responseMeta : undefined
-      };
+      return { data: normalised, meta: resolvedMeta };
     } catch (error) {
       if (error instanceof PanelApiError) {
         console.warn('[panelClient] falling back to cached payload', error);
