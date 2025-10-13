@@ -1,21 +1,11 @@
-import { Escrow, Dispute, Order } from '../models/index.js';
+import buildAdminDashboard from '../services/adminDashboardService.js';
 
 export async function dashboard(req, res, next) {
   try {
-    const [escrowCount, disputes, liveOrders] = await Promise.all([
-      Escrow.count({ where: { status: 'funded' } }),
-      Dispute.findAll({ limit: 10, order: [['createdAt', 'DESC']] }),
-      Order.count({ where: { status: 'in_progress' } })
-    ]);
-
-    res.json({
-      metrics: {
-        activeEscrows: escrowCount,
-        openDisputes: disputes.filter((d) => d.status !== 'resolved').length,
-        liveOrders
-      },
-      disputes
-    });
+    const timeframe = req.query.timeframe ?? '7d';
+    const timezone = req.app?.get?.('dashboards:defaultTimezone') ?? 'Europe/London';
+    const payload = await buildAdminDashboard({ timeframe, timezone });
+    res.json(payload);
   } catch (error) {
     next(error);
   }
