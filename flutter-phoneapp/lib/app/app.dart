@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../features/auth/presentation/auth_gate.dart';
+import 'app_shell.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
 import '../features/bookings/presentation/booking_screen.dart';
@@ -57,7 +59,7 @@ class FixnadoApp extends ConsumerWidget {
       title: 'Fixnado Mobile',
       debugShowCheckedModeBanner: false,
       theme: theme,
-      home: const AppShell(),
+      home: const AuthGate(),
     );
   }
 }
