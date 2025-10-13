@@ -56,3 +56,8 @@
 ## 2025-10-30 — Regression Execution Evidence
 - Ran `npm test` under `backend-nodejs/` to execute analytics dashboard suites with staging-like fixtures; confirmed 13 files / 33 tests pass, including persona aggregation/export cases, and captured spinner overflow to be resolved by enforcing CI reporters.【3d3b31†L1-L38】
 - Recorded requirement to add CI-friendly reporter defaults (`CI=1`, `--reporter=dot`/`junit`) so audit logs remain reviewable when analytics suites expand with enterprise drill-down coverage.
+
+## 2025-11-03 — Performance Harness Orchestration
+- Added k6-based load harness executed through `npm run load:test`, which invokes `scripts/run-load-tests.mjs` to validate prerequisites, hydrate profile-defined environment variables, and stream deterministic summary exports for audit trails.
+- Baseline profile `performance/profiles/baseline.json` encodes arrival stages, persona concurrency, and thresholds referenced by `performance/k6/main.js`; the harness now measures booking/chat/escrow/analytics/campaign flows with custom Trends/Rates/Counters for Task 6.3 evidence.
+- Load drill not executed in CI due to missing k6 binary within the container; execution guidance captured in `performance/README.md` for staging rehearsals.

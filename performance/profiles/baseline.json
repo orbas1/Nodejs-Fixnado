@@ -1,0 +1,116 @@
+{
+  "profile": "Baseline Performance Envelope v1",
+  "description": "5-minute ramping arrival profile validating booking, chat, payments, analytics, and campaign workloads ahead of launch.",
+  "requiredEnv": [
+    "K6_COMPANY_ID",
+    "K6_PROVIDER_ID",
+    "K6_CUSTOMER_ID",
+    "K6_USER_TOKEN",
+    "K6_PROVIDER_TOKEN",
+    "K6_ADMIN_TOKEN"
+  ],
+  "settings": {
+    "defaultMultiplier": 1,
+    "defaultSleepSeconds": 0.35,
+    "baseUrl": "http://localhost:4000",
+    "booking": {
+      "baseAmountMin": 85,
+      "baseAmountMax": 260,
+      "scheduledShare": 0.4,
+      "leadMinutesMin": 120,
+      "leadMinutesMax": 720,
+      "windowMinutesMin": 90,
+      "windowMinutesMax": 360,
+      "sleepSeconds": 0.35
+    },
+    "communications": {
+      "sleepSeconds": 0.4,
+      "sessionTtlSeconds": 1200,
+      "messageSeeds": [
+        "Please confirm the on-site arrival window.",
+        "Sharing photos and requesting remote triage.",
+        "Need tooling checklist before dispatch."
+      ]
+    },
+    "payments": {
+      "sleepSeconds": 0.4
+    },
+    "analytics": {
+      "timezone": "Europe/London",
+      "windowDays": 7,
+      "sleepSeconds": 0.45
+    },
+    "ads": {
+      "sleepSeconds": 0.5
+    }
+  },
+  "scenarios": {
+    "booking_flow": {
+      "executor": "ramping-arrival-rate",
+      "startRate": 5,
+      "timeUnit": "1s",
+      "preAllocatedVUs": 25,
+      "maxVUs": 60,
+      "stages": [
+        { "duration": "2m", "target": 18 },
+        { "duration": "3m", "target": 36 },
+        { "duration": "1m", "target": 0 }
+      ]
+    },
+    "chat_flow": {
+      "executor": "ramping-arrival-rate",
+      "startRate": 4,
+      "timeUnit": "1s",
+      "preAllocatedVUs": 20,
+      "maxVUs": 45,
+      "stages": [
+        { "duration": "2m", "target": 14 },
+        { "duration": "3m", "target": 28 },
+        { "duration": "1m", "target": 0 }
+      ]
+    },
+    "payments_flow": {
+      "executor": "constant-arrival-rate",
+      "timeUnit": "1s",
+      "rate": 6,
+      "preAllocatedVUs": 18,
+      "maxVUs": 30,
+      "duration": "6m"
+    },
+    "analytics_flow": {
+      "executor": "constant-vus",
+      "vus": 10,
+      "duration": "6m"
+    },
+    "ads_flow": {
+      "executor": "ramping-arrival-rate",
+      "startRate": 3,
+      "timeUnit": "1s",
+      "preAllocatedVUs": 16,
+      "maxVUs": 32,
+      "stages": [
+        { "duration": "2m", "target": 10 },
+        { "duration": "3m", "target": 20 },
+        { "duration": "1m", "target": 0 }
+      ]
+    }
+  },
+  "thresholds": {
+    "booking_flow_success_rate": ["rate>0.98"],
+    "booking_flow_duration": ["p(95)<1400", "avg<700"],
+    "chat_flow_success_rate": ["rate>0.98"],
+    "chat_flow_duration": ["p(95)<1200"],
+    "payments_flow_success_rate": ["rate>0.98"],
+    "payments_flow_duration": ["p(95)<1100"],
+    "analytics_flow_success_rate": ["rate>0.99"],
+    "analytics_flow_duration": ["p(95)<900"],
+    "ads_flow_success_rate": ["rate>0.97"],
+    "ads_flow_duration": ["p(95)<1300"],
+    "http_req_duration{scenario:booking_flow}": ["p(95)<1200"],
+    "http_req_duration{scenario:chat_flow}": ["p(95)<1000"],
+    "http_req_duration{scenario:payments_flow}": ["p(95)<950"],
+    "http_req_duration{scenario:analytics_flow}": ["p(95)<900"],
+    "http_req_duration{scenario:ads_flow}": ["p(95)<1150"],
+    "http_req_failed": ["rate<0.02"]
+  }
+}

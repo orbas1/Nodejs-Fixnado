@@ -37,3 +37,14 @@
 - Desktop: left sidebar + top bar.
 - Tablet: sidebar collapses to icon rail; overlay drawer accessible via hamburger button.
 - Mobile: bottom navigation (4 icons) + floating action button for quick actions.
+
+## Admin Dashboard (2025-11-03 update)
+1. Load `/admin` route → fetch persona config + feature toggle manifest.
+2. Parallel requests for KPI summaries, analytics charts, compliance queues, and performance status (`/api/operations/performance/status`).
+3. When performance response returns:
+   - Update load drill tile metrics + status badge.
+   - Trigger aria-live message if `status === "breach"`.
+   - Render drill timeline list sorted by `executedAt`.
+4. `View summary` CTA opens drawer with JSON preview; on open fetch `/api/operations/performance/summary/:id` if not cached.
+5. `Download report` button triggers file download + telemetry (`performance.load_drill.summary_download`).
+6. Empty state path (no drills) displays CTA `Schedule rehearsal` linking to operations planner and logs telemetry `performance.load_drill.schedule_request`.
