@@ -152,6 +152,13 @@ export const esES = {
     'enterprisePanel.programmeUpdated': 'Actualizado {date}',
     'enterprisePanel.errorSummary': 'No se pudieron actualizar las métricas en vivo.',
     'enterprisePanel.errorFallbackHint': 'Mostramos la instantánea más reciente en caché.',
+    'enterprisePanel.fallbackNoticeTitle': 'Mostramos métricas empresariales en caché',
+    'enterprisePanel.fallbackNoticeFull':
+      'Seguimos sincronizando los datos en vivo. Esta instantánea mantiene cada sección rellena mientras se estabiliza la conexión.',
+    'enterprisePanel.fallbackNoticePartial':
+      'Los datos en vivo no están disponibles temporalmente para {sections}. Mostramos los valores guardados más recientes para esas áreas.',
+    'enterprisePanel.fallbackNoticeNoCompany':
+      'No pudimos vincular esta cuenta empresarial, así que estás viendo la instantánea de demostración de Fixnado.',
     'enterprisePanel.spendHeadline': 'Gasto y control presupuestario',
     'enterprisePanel.spendMonthToDate': 'Gasto del mes en curso',
     'enterprisePanel.spendBudget': 'Seguimiento de presupuesto',

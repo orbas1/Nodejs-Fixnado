@@ -12,11 +12,12 @@ import {
   CartesianGrid,
   Tooltip
 } from 'recharts';
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusSmallIcon } from '@heroicons/react/24/outline';
 
 const trendIcon = {
   up: ArrowTrendingUpIcon,
-  down: ArrowTrendingDownIcon
+  down: ArrowTrendingDownIcon,
+  flat: MinusSmallIcon
 };
 
 const ChartRenderer = ({ chart }) => {
@@ -93,7 +94,8 @@ ChartRenderer.propTypes = {
 
 const MetricCard = ({ metric }) => {
   const Icon = trendIcon[metric.trend] ?? ArrowTrendingUpIcon;
-  const trendColor = metric.trend === 'down' ? 'text-rose-400' : 'text-emerald-400';
+  const trendColor =
+    metric.trend === 'down' ? 'text-rose-500' : metric.trend === 'flat' ? 'text-primary/60' : 'text-emerald-500';
 
   return (
     <div className="bg-white/95 border border-accent/10 rounded-2xl p-6 shadow-glow">
@@ -122,7 +124,7 @@ const Timeline = ({ upcoming }) => (
       <li key={event.title} className="bg-white border border-accent/10 rounded-xl px-4 py-3 flex flex-col gap-1 shadow-sm">
         <p className="font-medium text-primary">{event.title}</p>
         <p className="text-sm text-slate-600">{event.when}</p>
-        <span className="text-xs uppercase tracking-wide text-slate-500">{event.status}</span>
+        <span className="text-xs uppercase tracking-wide text-primary/60">{event.status}</span>
       </li>
     ))}
   </ol>

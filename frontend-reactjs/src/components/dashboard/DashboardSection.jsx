@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 
 const softenGradient = (accent) => {
   if (!accent) {
-    return 'from-white via-slate-50 to-slate-100';
+    return 'from-white via-secondary to-sky-50';
   }
 
   const tokens = accent.split(' ');
@@ -27,7 +27,7 @@ const softenGradient = (accent) => {
 
 const SectionHeader = ({ section }) => (
   <div className="mb-6 space-y-2">
-    <h2 className="text-2xl font-semibold text-slate-900">{section.label}</h2>
+    <h2 className="text-2xl font-semibold text-primary">{section.label}</h2>
     <p className="text-sm text-slate-600 max-w-2xl">{section.description}</p>
   </div>
 );
@@ -150,7 +150,7 @@ const TableSection = ({ section }) => {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 text-slate-700">
+          <tbody className="divide-y divide-primary/10 text-slate-700">
             {rows.map((row, rowIndex) => (
               <tr key={rowIndex} className="hover:bg-secondary/70">
                 {row.map((value, cellIndex) => (
@@ -189,7 +189,7 @@ const ListSection = ({ section }) => {
             <div className="flex flex-col gap-1">
               <p className="text-base font-semibold text-primary">{item.title}</p>
               <p className="text-sm text-slate-600">{item.description}</p>
-              <span className="text-xs uppercase tracking-wide text-slate-500">{item.status}</span>
+              <span className="text-xs uppercase tracking-wide text-primary/60">{item.status}</span>
             </div>
           </div>
         ))}

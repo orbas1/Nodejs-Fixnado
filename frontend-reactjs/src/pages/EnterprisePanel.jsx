@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   ClipboardDocumentCheckIcon,
   ExclamationTriangleIcon,
+  InformationCircleIcon,
   MapPinIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
@@ -98,20 +99,32 @@ function ProgrammeRow({ programme }) {
 export default function EnterprisePanel() {
   const { t, format } = useLocale();
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
-
-  const loadPanel = useCallback(async ({ forceRefresh = false, signal } = {}) => {
-    setState((current) => ({ ...current, loading: true, error: null }));
+  const timezone = useMemo(() => {
     try {
-      const result = await getEnterprisePanel({ forceRefresh, signal });
-      setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
     } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load enterprise panel', 500, { cause: error })
-      }));
+      console.warn('[EnterprisePanel] unable to resolve timezone', error);
+      return 'Europe/London';
     }
   }, []);
+
+  const loadPanel = useCallback(
+    async ({ forceRefresh = false, signal } = {}) => {
+      setState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const result = await getEnterprisePanel({ forceRefresh, signal, timezone });
+        setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof PanelApiError ? error : new PanelApiError('Unable to load enterprise panel', 500, { cause: error })
+        }));
+      }
+    },
+    [timezone]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -125,6 +138,38 @@ export default function EnterprisePanel() {
   const programmes = state.data?.programmes ?? [];
   const escalations = state.data?.escalations ?? [];
   const invoices = spend?.invoicesAwaitingApproval ?? [];
+  const fallbackMeta = state.meta?.payload ?? {};
+  const fallbackSections = Array.isArray(fallbackMeta.sections) ? fallbackMeta.sections : [];
+  const fallbackSectionLabels = useMemo(
+    () => ({
+      delivery: t('enterprisePanel.metricsHeadline'),
+      spend: t('enterprisePanel.spendHeadline'),
+      programmes: t('enterprisePanel.programmeSection'),
+      escalations: t('enterprisePanel.escalationsHeadline'),
+      invoices: t('enterprisePanel.invoicesHeadline'),
+      serviceMix: t('enterprisePanel.serviceMixLabel')
+    }),
+    [t]
+  );
+  const fallbackDescription = useMemo(() => {
+    if (!state.meta?.fallback || state.error || state.loading) {
+      return null;
+    }
+
+    if (fallbackSections.length > 0) {
+      const sectionList = fallbackSections
+        .map((section) => fallbackSectionLabels[section] || section)
+        .filter(Boolean)
+        .join(', ');
+      return t('enterprisePanel.fallbackNoticePartial', { sections: sectionList });
+    }
+
+    if (fallbackMeta.reason === 'enterprise_company_not_found') {
+      return t('enterprisePanel.fallbackNoticeNoCompany');
+    }
+
+    return t('enterprisePanel.fallbackNoticeFull');
+  }, [fallbackMeta.reason, fallbackSectionLabels, fallbackSections, state.error, state.loading, state.meta?.fallback, t]);
 
   const deliveryTone = useMemo(() => {
     if (!delivery) return 'neutral';
@@ -134,8 +179,8 @@ export default function EnterprisePanel() {
   }, [delivery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20" data-qa="enterprise-panel">
-      <div className="border-b border-slate-200 bg-white/90">
+    <div className="min-h-screen bg-gradient-to-b from-white via-secondary/40 to-white pb-20" data-qa="enterprise-panel">
+      <div className="border-b border-slate-200 bg-white/95 shadow-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{t('enterprisePanel.title')}</p>
@@ -194,6 +239,22 @@ export default function EnterprisePanel() {
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton key={index} className="h-36 rounded-3xl" />
             ))}
+          </div>
+        ) : null}
+
+        {!state.loading && state.meta?.fallback && !state.error && fallbackDescription ? (
+          <div
+            className="rounded-2xl border border-sky-200 bg-sky-50/80 p-5 text-sky-700"
+            role="status"
+            data-qa="enterprise-panel-fallback"
+          >
+            <div className="flex items-start gap-3">
+              <InformationCircleIcon className="mt-0.5 h-5 w-5" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold">{t('enterprisePanel.fallbackNoticeTitle')}</p>
+                <p className="mt-1 text-xs">{fallbackDescription}</p>
+              </div>
+            </div>
           </div>
         ) : null}
 

@@ -8,6 +8,7 @@ const {
   AdCampaign,
   Booking,
   BookingAssignment,
+  BookingBid,
   CampaignDailyMetric,
   CampaignFraudSignal,
   Company,
@@ -20,6 +21,7 @@ const {
   Order,
   Service,
   RentalAgreement,
+  Service,
   ServiceZone,
   User,
   Conversation
@@ -79,7 +81,8 @@ async function seedAdminFixtures(company) {
     createUser(IDS.customerOne, { email: 'customer1@example.com' }),
     createUser(IDS.customerTwo, { email: 'customer2@example.com' }),
     createUser(IDS.customerThree, { email: 'customer3@example.com' }),
-    createUser(IDS.renter, { email: 'renter@example.com' })
+    createUser(IDS.renter, { email: 'renter@example.com' }),
+    createUser(IDS.provider, { email: 'provider@example.com', type: 'provider' })
   ]);
 
   await Promise.all([
@@ -111,6 +114,38 @@ async function seedAdminFixtures(company) {
       metadata: {}
     })
   ]);
+  const providerId = IDS.provider;
+
+  const [generatorService, plumbingService, liftService] = await Promise.all([
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Generator Maintenance',
+      description: 'Quarterly generator servicing',
+      category: 'Electrical',
+      price: 540,
+      currency: 'GBP'
+    }),
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Emergency Plumbing',
+      description: 'Rapid leak repair',
+      category: 'Plumbing',
+      price: 360,
+      currency: 'GBP'
+    }),
+    Service.create({
+      providerId,
+      companyId: company.id,
+      title: 'Lift Inspection',
+      description: 'Safety inspection and certification',
+      category: 'Mechanical',
+      price: 220,
+      currency: 'GBP'
+    })
+  ]);
+
   const bookingOne = await Booking.create({
     customerId: IDS.customerOne,
     companyId: company.id,
@@ -130,7 +165,10 @@ async function seedAdminFixtures(company) {
       requester: 'Facilities Ops',
       primaryCrew: 'Team Volt',
       zoneName: 'Central',
-      travelMinutes: 25
+      travelMinutes: 25,
+      serviceId: generatorService.id,
+      source: 'fixnado_ads',
+      autoMatched: true
     },
     lastStatusTransitionAt: now.minus({ days: 5 }).toJSDate()
   });
@@ -153,12 +191,15 @@ async function seedAdminFixtures(company) {
       title: 'Emergency plumbing',
       requester: 'HR',
       owner: 'Ops Escalation',
-      travelMinutes: 35
+      travelMinutes: 35,
+      serviceId: plumbingService.id,
+      source: 'marketplace',
+      autoMatched: false
     },
     lastStatusTransitionAt: now.toJSDate()
   });
 
-  await Booking.create({
+  const bookingThree = await Booking.create({
     customerId: IDS.customerThree,
     companyId: company.id,
     zoneId: IDS.zoneSouth,
@@ -176,12 +217,14 @@ async function seedAdminFixtures(company) {
       title: 'Lift repair',
       owner: 'Support Escalations',
       primaryCrew: 'Lift Masters',
-      travelMinutes: 18
+      travelMinutes: 18,
+      serviceId: liftService.id,
+      source: 'partner_referral',
+      autoMatched: true
     },
     lastStatusTransitionAt: now.minus({ hours: 1 }).toJSDate()
   });
 
-  const providerId = IDS.provider;
   await BookingAssignment.create({
     bookingId: bookingOne.id,
     providerId,
@@ -195,6 +238,49 @@ async function seedAdminFixtures(company) {
     role: 'support',
     status: 'pending',
     assignedAt: dateMinus(1)
+  });
+  await BookingAssignment.create({
+    bookingId: bookingThree.id,
+    providerId,
+    role: 'support',
+    status: 'accepted',
+    assignedAt: dateMinus(2)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingOne.id,
+    providerId,
+    amount: 540,
+    currency: 'GBP',
+    status: 'accepted',
+    revisionHistory: [],
+    auditLog: [],
+    submittedAt: dateMinus(6),
+    updatedAt: dateMinus(5)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingTwo.id,
+    providerId,
+    amount: 360,
+    currency: 'GBP',
+    status: 'pending',
+    revisionHistory: [{ amount: 360, at: dateMinus(2) }],
+    auditLog: [{ action: 'counter_offer', at: dateMinus(1) }],
+    submittedAt: dateMinus(3),
+    updatedAt: dateMinus(1)
+  });
+
+  await BookingBid.create({
+    bookingId: bookingThree.id,
+    providerId,
+    amount: 220,
+    currency: 'GBP',
+    status: 'declined',
+    revisionHistory: [],
+    auditLog: [{ action: 'declined', at: dateMinus(1) }],
+    submittedAt: dateMinus(4),
+    updatedAt: dateMinus(1)
   });
 
   const inventoryItem = await InventoryItem.create({
