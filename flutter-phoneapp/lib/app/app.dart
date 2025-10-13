@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
 import '../features/bookings/presentation/booking_screen.dart';
+import '../features/communications/presentation/communications_screen.dart';
 import '../features/explorer/presentation/explorer_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 
@@ -91,6 +92,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ExplorerScreen(),
           BookingScreen(),
           RentalScreen(),
+          CommunicationsScreen(),
           AnalyticsDashboardScreen(),
         ],
       ),
@@ -115,6 +117,7 @@ enum _NavigationDestination {
   explorer('Explorer', Icons.map_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
+  inbox('Inbox', Icons.inbox_outlined),
   operations('Ops Pulse', Icons.analytics_outlined);
 
   const _NavigationDestination(this.title, this.icon);
