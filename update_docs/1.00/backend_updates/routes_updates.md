@@ -20,3 +20,8 @@
 - Registered `communicationsRoutes.js` to expose `/api/communications` endpoints for conversation listing, creation, participant enrolment, AI-assisted message sends, delivery acknowledgements, quiet-hour overrides, and Agora session token minting.
 - Updated `routes/index.js` to mount the communications router and ensure request logging/audit middleware capture chat traffic alongside existing marketplace/monetisation services.
 - Added validation middleware enforcing attachment limits, AI toggle presence, and quiet-hour acknowledgement metadata so downstream controllers receive production-safe payloads.
+
+## 2025-10-28 — Analytics Pipeline Routes
+- Mounted `analyticsPipelineRoutes.js` under `/api/analytics`, exposing `GET /pipeline/status` for backlog/run telemetry plus `POST /pipeline/pause` and `POST /pipeline/resume` control endpoints guarded by payload validation.
+- Status responses now surface backlog counts, oldest pending timestamp, next retry window, failure streak, last success/error metadata, and recent run summaries for dashboards and runbooks.
+- Pipeline control endpoints push updates through the feature toggle service and record audit runs so operations teams can gate ingestion safely; `routes/index.js` updated to mount the router alongside communications/marketplace modules.

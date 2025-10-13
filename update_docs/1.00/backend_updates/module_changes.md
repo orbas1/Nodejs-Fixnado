@@ -23,3 +23,7 @@
 - Extended `models/analyticsEvent.js` with ingestion governance attributes (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) and supporting indexes on `(ingestedAt, nextIngestAttemptAt)` to drive warehouse retry/backfill workflows.
 - Model getters/setters now normalise ingestion attempt defaults and expose computed retention expiry to background jobs enforcing GDPR-compliant purges.
 - Updated `models/index.js` registration to surface new scopes for pending ingestion and retention cleanup consumed by the analytics ingestion job.
+
+## 2025-10-28 — Analytics Pipeline Run Auditing
+- Added `models/analyticsPipelineRun.js` capturing per-cycle metrics (batch counts, purge totals, duration, failure streak metadata, toggle actor/ticket, warehouse endpoint) so runbooks and dashboards can evidence ingestion governance.
+- Registered the model inside `models/index.js`, wiring associations and default scopes that expose recent history queries consumed by pipeline status endpoints and Looker exports.

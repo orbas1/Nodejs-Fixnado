@@ -15,3 +15,8 @@
 - Introduced ingestion configuration: `ANALYTICS_INGEST_ENDPOINT`, `ANALYTICS_INGEST_API_KEY`, `ANALYTICS_INGEST_BATCH_SIZE`, `ANALYTICS_INGEST_INTERVAL_SECONDS`, `ANALYTICS_INGEST_TIMEOUT_MS` controlling batch delivery cadence and transport resilience.
 - Added retention/backfill knobs: `ANALYTICS_RETENTION_DAYS`, `ANALYTICS_PURGE_BATCH_SIZE`, `ANALYTICS_BACKFILL_LOOKBACK_HOURS`, `ANALYTICS_RETRY_SCHEDULE_MINUTES` enabling warehouse teams to tune purge cadence and retry schedule without redeploys.
 - Documented expectation that lower environments can omit endpoint/API key (job logs a structured warning and records failure) while staging/production must provide fully qualified HTTPS endpoints for ingestion.
+
+## 2025-10-28 — Analytics Pipeline Control Env Vars
+- Added `ANALYTICS_INGEST_ENABLED` to allow emergency disablement without redeploying; defaults to `true` so production stays online unless explicitly paused.
+- Introduced `ANALYTICS_INGEST_TOGGLE_KEY` for Secrets Manager integration, aligning pause/resume endpoints with the governed toggle namespace used by other feature controls.
+- Captured `ANALYTICS_CONTROL_CACHE_SECONDS` to tune control-state caching and ensure dashboard/API responses reflect toggle changes within a predictable window for operations teams.

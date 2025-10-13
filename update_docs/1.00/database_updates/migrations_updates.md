@@ -32,3 +32,8 @@
 - Added `20250224000000-augment-analytics-events.js` adding ingestion lifecycle columns (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) plus supporting indexes for retry scheduling and retention pruning.
 - Migration backfills existing rows with zero attempts, null ingestion timestamps, and immediate retry windows to keep backlog events eligible for the new ingestion job without manual SQL.
 - Down migration removes the columns/indexes while preserving the base event payload schema, ensuring compatibility with earlier emitter releases if rollback occurs.
+
+## 2025-10-28 — Analytics Pipeline Run Ledger
+- Added `20250225000000-create-analytics-pipeline-runs.js` creating `analytics_pipeline_runs` with UUID primary keys, status enum, correlation ID, batch/purge metrics, duration, failure streak counters, toggle actor/ticket metadata, and response snapshot JSON for observability.
+- Migration seeds the status enum (`success`, `warning`, `failed`, `skipped`) and creates indexes on `startedAt` and `(status, startedAt)` to support dashboard queries; down migration drops indexes and enum types before removing the table to keep Postgres/sqlite parity.
+- Notes instruct operators to run the migration before enabling pause/resume endpoints so audit logging is available from the first controlled run.

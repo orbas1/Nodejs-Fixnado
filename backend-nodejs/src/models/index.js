@@ -31,6 +31,7 @@ import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
 import AnalyticsEvent from './analyticsEvent.js';
+import AnalyticsPipelineRun from './analyticsPipelineRun.js';
 import Conversation from './conversation.js';
 import ConversationParticipant from './conversationParticipant.js';
 import ConversationMessage from './conversationMessage.js';
@@ -220,6 +221,7 @@ export {
   CampaignFraudSignal,
   CampaignAnalyticsExport,
   AnalyticsEvent,
+  AnalyticsPipelineRun,
   Conversation,
   ConversationParticipant,
   ConversationMessage,

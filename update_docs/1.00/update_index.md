@@ -341,3 +341,18 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`frontend_updates/change_log.md`](frontend_updates/change_log.md) — Added 2025-10-27 entry for locale provider rollout and accessibility hardening.
 - [`frontend_updates/pages_updates.md`](frontend_updates/pages_updates.md) — Documented localised panels, skip navigation, and QA selectors.
 - [`frontend_updates/provider_dashboard_changes.md`](frontend_updates/provider_dashboard_changes.md) — Logged translated KPI tiles, aria-live toasts, and skip navigation instrumentation.
+
+## Newly Updated Artefacts (2025-10-28)
+- [`backend_updates/module_changes.md`](backend_updates/module_changes.md) — Added analytics pipeline run auditing model entry.
+- [`backend_updates/backend_new_files.md`](backend_updates/backend_new_files.md) — Recorded new analytics pipeline controller/service/route/model/test assets.
+- [`backend_updates/env_updates.md`](backend_updates/env_updates.md) — Documented pipeline control env variables (`ANALYTICS_INGEST_ENABLED`, `ANALYTICS_INGEST_TOGGLE_KEY`, `ANALYTICS_CONTROL_CACHE_SECONDS`).
+- [`database_updates/database_change_log.md`](database_updates/database_change_log.md) & [`database_updates/migrations_updates.md`](database_updates/migrations_updates.md) — Logged `analytics_pipeline_runs` migration and rollback guidance.
+- [`update_task_list.md`](update_task_list.md) — Marked Subtask 5.2c complete with production rollout summary and documentation references.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Task 5 maturity metrics reflecting pipeline control delivery and Vitest coverage.
+- [`update_milestone_list.md`](update_milestone_list.md) — Added Milestone M5 note capturing pause/resume controls, run ledger, and documentation alignment.
+- [`features_update_plan.md`](features_update_plan.md) — Extended ETL/ELT plan with pipeline control service + run ledger obligations.
+- [`test_plan.md`](test_plan.md) — Introduced analytics pipeline control test coverage row.
+- [`Design_Change_log.md`](Design_Change_log.md) & [`Design_Plan.md`](Design_Plan.md) — Documented analytics pipeline control console blueprint, run history ledger, and telemetry widgets.
+- [`Design_update_task_list.md`](Design_update_task_list.md), [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md), [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Added Task 22, updated progress metrics, and milestone commentary for analytics control UX.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md) & [`Screens_Update_Logic_Flow.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md) — Captured pipeline control cards, pause/resume flow, run ledger interactions, and accessibility notes.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md) — Added analytics ops widgets (status tile, backlog sparkline, toggle audit feed) with QA hooks.

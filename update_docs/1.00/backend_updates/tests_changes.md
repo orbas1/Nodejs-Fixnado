@@ -42,3 +42,8 @@
 - Added `tests/analyticsIngestionJob.test.js` covering happy-path delivery, retry/backoff when the warehouse is unavailable, retention purge, and backfill acceleration by exercising new helpers (`fetchPendingAnalyticsEvents`, `markEventIngestionSuccess/Failure`, `purgeExpiredAnalyticsEvents`, `ensureBackfillCoverage`).
 - Test harness mocks `fetch` to assert request payload composition, API key header injection, request timeout handling, and structured logger output for both success and failure branches.
 - Updated `vitest.setup.js` to seed Agora environment defaults so communications suites continue to run hermetically after analytics ingestion job tests reset modules during dependency injection.
+
+## 2025-10-28 — Analytics Pipeline Control Tests
+- Added `tests/analyticsPipelineRoutes.test.js` exercising the new `/api/analytics/pipeline` endpoints: status responses (backlog counts, failure streak, last success/error timestamps, run summaries) and pause/resume control flows.
+- Tests seed sqlite with pending events and pipeline runs, verify pause/resume audit entries (`AnalyticsPipelineRun` metadata), validate actor payload requirements, and ensure pipeline state toggles propagate through the control service without polling actual Secrets Manager.
+- Extended `tests/analyticsIngestionJob.test.js` to cover pipeline disablement logging and audit recording so skip scenarios remain regression-proof when toggles gate ingestion.

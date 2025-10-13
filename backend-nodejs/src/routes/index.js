@@ -13,6 +13,7 @@ import complianceRoutes from './complianceRoutes.js';
 import marketplaceRoutes from './marketplaceRoutes.js';
 import campaignRoutes from './campaignRoutes.js';
 import communicationsRoutes from './communicationsRoutes.js';
+import analyticsPipelineRoutes from './analyticsPipelineRoutes.js';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/compliance', complianceRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/communications', communicationsRoutes);
+router.use('/analytics', analyticsPipelineRoutes);
 
 export default router;
