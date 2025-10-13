@@ -117,11 +117,15 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
+    );
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
+    const resolvedTimezone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/London';
     expect(screen.getByText('Download CSV')).toHaveAttribute(
       'href',
-      '/api/analytics/dashboards/admin/export?timezone=Europe%2FLondon'
+      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(resolvedTimezone)}`
     );
   });
 
@@ -139,7 +143,9 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
+    );
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -147,7 +153,9 @@ describe('RoleDashboard', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
+    );
   });
 
   it('renders access gate when feature toggle is disabled', async () => {

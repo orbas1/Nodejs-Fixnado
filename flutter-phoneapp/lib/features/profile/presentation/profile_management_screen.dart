@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../auth/domain/role_scope.dart';
 import '../domain/profile_models.dart';
 import 'profile_controller.dart';
+import '../../storefront/presentation/storefront_screen.dart';
 
 class ProfileManagementScreen extends ConsumerStatefulWidget {
   const ProfileManagementScreen({super.key});
@@ -420,6 +421,16 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
                           ),
                         )
                         .toList(),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const StorefrontScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: const Text('Gestionar escaparate y listados'),
+                    ),
                   ),
                 ),
               ),
