@@ -21,6 +21,12 @@ const navigationConfig = [
         href: '/provider/dashboard'
       },
       {
+        key: 'provider-storefront',
+        nameKey: 'nav.providerStorefront',
+        descriptionKey: 'nav.providerStorefrontDescription',
+        href: '/provider/storefront'
+      },
+      {
         key: 'enterprise',
         nameKey: 'nav.enterpriseAnalytics',
         descriptionKey: 'nav.enterpriseAnalyticsDescription',

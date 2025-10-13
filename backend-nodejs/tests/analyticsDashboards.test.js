@@ -594,6 +594,10 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.persona).toBe('provider');
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Assignments Received');
     expect(response.body.navigation[2].data.rows[0][0]).toBe('RA-001');
+    const inventorySection = response.body.navigation.find((section) => section.id === 'inventory');
+    expect(inventorySection).toBeTruthy();
+    expect(inventorySection.data.summary[0].label).toBe('Available units');
+    expect(inventorySection.data.groups[0].items.length).toBeGreaterThan(0);
   });
 
   it('delivers a user command center with orders, rentals, and support signals', async () => {

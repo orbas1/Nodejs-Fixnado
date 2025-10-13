@@ -297,15 +297,66 @@ class ToolingItem {
   const ToolingItem({
     required this.name,
     required this.description,
+    this.category,
+    this.sku,
+    this.status,
+    this.available,
+    this.reserved,
+    this.onHand,
+    this.safetyStock,
+    this.unitType,
+    this.location,
+    this.nextMaintenanceDue,
+    this.activeAlerts,
+    this.activeRentals,
+    this.rentalRate,
+    this.rentalRateCurrency,
+    this.depositAmount,
+    this.depositCurrency,
+    this.notes,
   });
 
   final String name;
   final String description;
+  final String? category;
+  final String? sku;
+  final String? status;
+  final int? available;
+  final int? reserved;
+  final int? onHand;
+  final int? safetyStock;
+  final String? unitType;
+  final String? location;
+  final DateTime? nextMaintenanceDue;
+  final int? activeAlerts;
+  final int? activeRentals;
+  final double? rentalRate;
+  final String? rentalRateCurrency;
+  final double? depositAmount;
+  final String? depositCurrency;
+  final String? notes;
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'description': description,
+      'category': category,
+      'sku': sku,
+      'status': status,
+      'available': available,
+      'reserved': reserved,
+      'onHand': onHand,
+      'safetyStock': safetyStock,
+      'unitType': unitType,
+      'location': location,
+      'nextMaintenanceDue': nextMaintenanceDue?.toIso8601String(),
+      'activeAlerts': activeAlerts,
+      'activeRentals': activeRentals,
+      'rentalRate': rentalRate,
+      'rentalRateCurrency': rentalRateCurrency,
+      'depositAmount': depositAmount,
+      'depositCurrency': depositCurrency,
+      'notes': notes,
     };
   }
 
@@ -313,6 +364,69 @@ class ToolingItem {
     return ToolingItem(
       name: json['name'] as String? ?? 'Tooling capability',
       description: json['description'] as String? ?? '',
+      category: json['category'] as String?,
+      sku: json['sku'] as String?,
+      status: json['status'] as String?,
+      available: (json['available'] as num?)?.toInt(),
+      reserved: (json['reserved'] as num?)?.toInt(),
+      onHand: (json['onHand'] as num?)?.toInt(),
+      safetyStock: (json['safetyStock'] as num?)?.toInt(),
+      unitType: json['unitType'] as String?,
+      location: json['location'] as String?,
+      nextMaintenanceDue: json['nextMaintenanceDue'] != null
+          ? DateTime.tryParse(json['nextMaintenanceDue'].toString())
+          : null,
+      activeAlerts: (json['activeAlerts'] as num?)?.toInt(),
+      activeRentals: (json['activeRentals'] as num?)?.toInt(),
+      rentalRate: (json['rentalRate'] as num?)?.toDouble(),
+      rentalRateCurrency: json['rentalRateCurrency'] as String?,
+      depositAmount: (json['depositAmount'] as num?)?.toDouble(),
+      depositCurrency: json['depositCurrency'] as String?,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  ToolingItem copyWith({
+    String? name,
+    String? description,
+    String? category,
+    String? sku,
+    String? status,
+    int? available,
+    int? reserved,
+    int? onHand,
+    int? safetyStock,
+    String? unitType,
+    String? location,
+    DateTime? nextMaintenanceDue,
+    int? activeAlerts,
+    int? activeRentals,
+    double? rentalRate,
+    String? rentalRateCurrency,
+    double? depositAmount,
+    String? depositCurrency,
+    String? notes,
+  }) {
+    return ToolingItem(
+      name: name ?? this.name,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      sku: sku ?? this.sku,
+      status: status ?? this.status,
+      available: available ?? this.available,
+      reserved: reserved ?? this.reserved,
+      onHand: onHand ?? this.onHand,
+      safetyStock: safetyStock ?? this.safetyStock,
+      unitType: unitType ?? this.unitType,
+      location: location ?? this.location,
+      nextMaintenanceDue: nextMaintenanceDue ?? this.nextMaintenanceDue,
+      activeAlerts: activeAlerts ?? this.activeAlerts,
+      activeRentals: activeRentals ?? this.activeRentals,
+      rentalRate: rentalRate ?? this.rentalRate,
+      rentalRateCurrency: rentalRateCurrency ?? this.rentalRateCurrency,
+      depositAmount: depositAmount ?? this.depositAmount,
+      depositCurrency: depositCurrency ?? this.depositCurrency,
+      notes: notes ?? this.notes,
     );
   }
 }
