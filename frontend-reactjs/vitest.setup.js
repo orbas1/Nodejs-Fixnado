@@ -13,6 +13,20 @@ if (typeof window !== 'undefined') {
     });
   }
 
+  if (typeof window.ResizeObserver !== 'function') {
+    window.ResizeObserver = class {
+      constructor(callback = () => {}) {
+        this.callback = callback;
+      }
+
+      observe() {}
+
+      unobserve() {}
+
+      disconnect() {}
+    };
+  }
+
   if (!window.dataLayer) {
     window.dataLayer = [];
   }
