@@ -126,6 +126,7 @@ describe('RoleDashboard', () => {
     expect(screen.getByText('Download CSV')).toHaveAttribute(
       'href',
       `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(resolvedTimezone)}`
+      '/api/analytics/dashboards/admin/export?timezone=UTC'
     );
   });
 
@@ -146,6 +147,8 @@ describe('RoleDashboard', () => {
     await waitFor(() =>
       expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
     );
+    const retryButton = await screen.findByRole('button', { name: /try again/i });
+    expect(retryButton).toBeInTheDocument();
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -156,6 +159,8 @@ describe('RoleDashboard', () => {
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
     );
+    fireEvent.click(retryButton);
+    await screen.findByRole('heading', { name: 'Executive Overview' });
   });
 
   it('renders access gate when feature toggle is disabled', async () => {

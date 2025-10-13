@@ -36,6 +36,8 @@ export async function fetchDashboard(persona, params = {}) {
     const mode = import.meta.env?.MODE ?? process.env?.NODE_ENV;
     const allowDevFallback = import.meta.env?.DEV && mode !== 'test';
     if (allowDevFallback && fallback) {
+    const allowFallback = import.meta.env.DEV && import.meta.env.MODE !== 'test';
+    if (allowFallback && fallback) {
       console.warn(`Falling back to mock ${persona} dashboard`, error);
       return fallback;
     }
