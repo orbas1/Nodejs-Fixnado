@@ -613,11 +613,37 @@ function withFallback(normaliser, fallback, fetcherFactory) {
   return async function handler(options = {}) {
     try {
       const { data, meta } = await fetcherFactory(options);
-      const normalised = normaliser(data);
-      if (meta.fromCache && meta.stale) {
-        return { data: normalised, meta: { ...meta, fallback: true } };
+      let payloadMeta;
+      let payloadData = data;
+
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        ({ meta: payloadMeta, ...payloadData } = data);
       }
-      return { data: normalised, meta };
+
+      const normalised = normaliser(payloadData);
+      const responseMeta = { ...(meta ?? {}) };
+
+      if (payloadMeta && typeof payloadMeta === 'object') {
+        responseMeta.payload = payloadMeta;
+        if (payloadMeta.fallback) {
+          responseMeta.fallback = true;
+        }
+        if (payloadMeta.sections) {
+          responseMeta.sections = payloadMeta.sections;
+        }
+        if (payloadMeta.reason) {
+          responseMeta.reason = payloadMeta.reason;
+        }
+      }
+
+      if (responseMeta.fromCache && responseMeta.stale) {
+        responseMeta.fallback = true;
+      }
+
+      return {
+        data: normalised,
+        meta: Object.keys(responseMeta).length > 0 ? responseMeta : undefined
+      };
     } catch (error) {
       if (error instanceof PanelApiError) {
         console.warn('[panelClient] falling back to cached payload', error);
