@@ -40,6 +40,27 @@ function normaliseUuid(value) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function inventoryAvailable(item) {
+  const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+  const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+  if (!Number.isFinite(onHand) || !Number.isFinite(reserved)) {
+    return 0;
+  }
+  return Math.max(onHand - reserved, 0);
+}
+
+function inventoryStatus(item) {
+  const available = inventoryAvailable(item);
+  const safety = Number.parseInt(item.safetyStock ?? 0, 10);
+  if (available <= 0) {
+    return 'stockout';
+  }
+  if (Number.isFinite(safety) && available <= Math.max(safety, 0)) {
+    return 'low_stock';
+  }
+  return 'healthy';
+}
+
 function resolvePersona(persona) {
   if (typeof persona !== 'string') {
     return null;
@@ -1097,7 +1118,7 @@ async function loadAdminData(context) {
 async function loadProviderData(context) {
   const { providerId, companyId, window } = context;
 
-  const [assignments, previousAssignments, rentals, inventoryAlerts] = await Promise.all([
+  const [assignments, previousAssignments, rentals, inventoryAlerts, inventoryItems] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...(providerId ? { providerId } : {}),
@@ -1129,6 +1150,23 @@ async function loadProviderData(context) {
       where: {
         createdAt: asDateRange(window.start, window.end)
       }
+    }),
+    InventoryItem.findAll({
+      where: {
+        ...(companyId ? { companyId } : {}),
+        updatedAt: {
+          [Op.lte]: window.end.toJSDate()
+        }
+      },
+      include: [
+        {
+          model: InventoryAlert,
+          required: false,
+          where: { status: { [Op.in]: ['active', 'acknowledged'] } }
+        }
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
     })
   ]);
 
@@ -1277,6 +1315,107 @@ async function loadProviderData(context) {
     status: alert.status
   }));
 
+  const rentalsByItem = rentals.reduce((acc, rental) => {
+    const activeStatuses = new Set([
+      'requested',
+      'approved',
+      'ready_for_pickup',
+      'checked_out',
+      'in_progress'
+    ]);
+    if (rental.itemId && activeStatuses.has(rental.status)) {
+      acc.set(rental.itemId, (acc.get(rental.itemId) ?? 0) + rental.quantity);
+    }
+    return acc;
+  }, new Map());
+
+  const severityRank = { critical: 3, warning: 2, info: 1 };
+
+  const mapInventoryRecord = (item) => {
+    const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10) || 0;
+    const reserved = Number.parseInt(item.quantityReserved ?? 0, 10) || 0;
+    const safetyStock = Number.parseInt(item.safetyStock ?? 0, 10) || 0;
+    const available = inventoryAvailable(item);
+    const alerts = Array.isArray(item.InventoryAlerts) ? item.InventoryAlerts : [];
+    const activeAlert = alerts
+      .filter((alert) => alert.status === 'active')
+      .sort((a, b) => (severityRank[b.severity] ?? 0) - (severityRank[a.severity] ?? 0))[0];
+
+    return {
+      id: item.id || item.sku || item.name,
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      status: inventoryStatus(item),
+      available,
+      onHand,
+      reserved,
+      safetyStock,
+      unitType: item.unitType,
+      condition: item.conditionRating,
+      location: item.metadata?.warehouse || item.metadata?.location || null,
+      nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.inspectionDue || null,
+      notes: item.metadata?.notes || null,
+      activeAlerts: alerts.filter((alert) => alert.status === 'active').length,
+      alertSeverity: activeAlert?.severity || null,
+      activeRentals: rentalsByItem.get(item.id) ?? 0,
+      rentalRate: item.rentalRate ? Number.parseFloat(item.rentalRate) : null,
+      rentalRateCurrency: item.rentalRateCurrency || 'GBP',
+      depositAmount: item.depositAmount ? Number.parseFloat(item.depositAmount) : null,
+      depositCurrency: item.depositCurrency || item.rentalRateCurrency || 'GBP'
+    };
+  };
+
+  const inventorySummary = inventoryItems.reduce(
+    (acc, item) => {
+      const available = inventoryAvailable(item);
+      const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+      const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+      const alerts = Array.isArray(item.InventoryAlerts) ? item.InventoryAlerts : [];
+      const hasActiveAlert = alerts.some((alert) => alert.status === 'active');
+      return {
+        onHand: acc.onHand + (Number.isFinite(onHand) ? onHand : 0),
+        reserved: acc.reserved + (Number.isFinite(reserved) ? reserved : 0),
+        available: acc.available + available,
+        alerts: acc.alerts + (hasActiveAlert || inventoryStatus(item) !== 'healthy' ? 1 : 0)
+      };
+    },
+    { onHand: 0, reserved: 0, available: 0, alerts: 0 }
+  );
+
+  const lower = (value) => (typeof value === 'string' ? value.toLowerCase() : String(value ?? '').toLowerCase());
+
+  const materialsInventory = inventoryItems
+    .filter((item) => {
+      const category = lower(item.category);
+      const type = lower(item.metadata?.type);
+      const usage = lower(item.metadata?.usage);
+      const hasRental = Number.isFinite(Number.parseFloat(item.rentalRate ?? NaN));
+      if (hasRental) {
+        return false;
+      }
+      if (category.includes('tool')) {
+        return false;
+      }
+      if (category.includes('material') || type === 'material' || usage === 'consumable') {
+        return true;
+      }
+      return true;
+    })
+    .slice(0, 10)
+    .map(mapInventoryRecord);
+
+  const toolsInventory = inventoryItems
+    .filter((item) => {
+      const category = lower(item.category);
+      if (category.includes('tool')) {
+        return true;
+      }
+      return Number.isFinite(Number.parseFloat(item.rentalRate ?? NaN));
+    })
+    .slice(0, 10)
+    .map(mapInventoryRecord);
+
   return {
     persona: 'provider',
     name: PERSONA_METADATA.provider.name,
@@ -1289,7 +1428,14 @@ async function loadProviderData(context) {
         assignments: totalAssignments,
         revenue,
         acceptanceRate,
-        completionRate
+        completionRate,
+        inventory: {
+          onHand: inventorySummary.onHand,
+          reserved: inventorySummary.reserved,
+          available: inventorySummary.available,
+          skuCount: inventoryItems.length,
+          alerts: inventorySummary.alerts
+        }
       }
     },
     navigation: [
@@ -1315,6 +1461,41 @@ async function loadProviderData(context) {
         data: {
           headers: ['Rental', 'Status', 'Pickup', 'Return Due', 'Deposit'],
           rows: rentalRows
+        }
+      },
+      {
+        id: 'inventory',
+        label: 'Tools & Materials',
+        description: 'Inventory availability, low-stock signals, and maintenance cadence.',
+        type: 'inventory',
+        data: {
+          summary: [
+            {
+              id: 'available',
+              label: 'Available units',
+              value: inventorySummary.available,
+              helper: `${formatNumber(inventoryItems.length)} SKUs tracked`,
+              tone: 'info'
+            },
+            {
+              id: 'reserved',
+              label: 'Reserved',
+              value: inventorySummary.reserved,
+              helper: `${formatNumber(inventorySummary.onHand)} on hand`,
+              tone: 'accent'
+            },
+            {
+              id: 'alerts',
+              label: 'Alerts',
+              value: inventorySummary.alerts,
+              helper: inventorySummary.alerts > 0 ? 'Action required' : 'All healthy',
+              tone: inventorySummary.alerts > 0 ? 'warning' : 'positive'
+            }
+          ],
+          groups: [
+            { id: 'materials', label: 'Materials', items: materialsInventory },
+            { id: 'tools', label: 'Tools', items: toolsInventory }
+          ]
         }
       },
       {

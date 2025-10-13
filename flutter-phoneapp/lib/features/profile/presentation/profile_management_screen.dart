@@ -407,20 +407,7 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
                 child: _SectionCard(
                   title: 'Tooling & storefront',
                   subtitle: 'Reassure clients with visibility into assets and inventory available for deployments.',
-                  child: Column(
-                    children: profile.tooling
-                        .map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(item.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                              subtitle: Text(item.description, style: GoogleFonts.inter()),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
+                  child: _ToolingInventoryView(items: profile.tooling),
                 ),
               ),
             ),
@@ -495,6 +482,249 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
     controller.value = TextEditingValue(
       text: value,
       selection: TextSelection.collapsed(offset: value.length),
+    );
+  }
+}
+
+class _ToolingInventoryView extends StatelessWidget {
+  const _ToolingInventoryView({required this.items});
+
+  final List<ToolingItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'Tooling data will populate once inventory synchronises.',
+          style: GoogleFonts.inter(color: Theme.of(context).colorScheme.outline),
+        ),
+      );
+    }
+
+    final numberFormat = NumberFormat.decimalPattern();
+    final totalAvailable = items.fold<int>(0, (sum, item) => sum + (item.available ?? 0));
+    final totalOnHand = items.fold<int>(0, (sum, item) => sum + (item.onHand ?? item.available ?? 0));
+    final totalAlerts = items.fold<int>(0, (sum, item) => sum + (item.activeAlerts ?? 0));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _ToolingSummaryCard(
+              title: 'Available units',
+              value: numberFormat.format(totalAvailable),
+              helper: '${numberFormat.format(items.length)} SKUs tracked',
+            ),
+            _ToolingSummaryCard(
+              title: 'On hand',
+              value: numberFormat.format(totalOnHand),
+              helper: '${numberFormat.format(totalOnHand - totalAvailable)} reserved',
+            ),
+            _ToolingSummaryCard(
+              title: 'Alerts',
+              value: numberFormat.format(totalAlerts),
+              helper: totalAlerts > 0 ? 'Action required' : 'All healthy',
+              accentColor: totalAlerts > 0
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.primary,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ...items.map((item) => _ToolingTile(item: item)).toList(),
+      ],
+    );
+  }
+}
+
+class _ToolingSummaryCard extends StatelessWidget {
+  const _ToolingSummaryCard({
+    required this.title,
+    required this.value,
+    required this.helper,
+    this.accentColor,
+  });
+
+  final String title;
+  final String value;
+  final String helper;
+  final Color? accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accentColor ?? Theme.of(context).colorScheme.primary;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 200),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title.toUpperCase(), style: GoogleFonts.inter(letterSpacing: 2, fontSize: 10, color: color.withOpacity(0.7))),
+          const SizedBox(height: 6),
+          Text(value, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700, color: color)),
+          const SizedBox(height: 4),
+          Text(helper, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.outline)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToolingTile extends StatelessWidget {
+  const _ToolingTile({required this.item});
+
+  final ToolingItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final numberFormat = NumberFormat.decimalPattern();
+    final currencyFormat = NumberFormat.simpleCurrency(name: item.rentalRateCurrency ?? 'GBP');
+    final statusTone = {
+      'healthy': Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      'low_stock': const Color(0xFFFFF3E0),
+      'stockout': const Color(0xFFFFEBEE)
+    };
+    final statusLabel = item.status != null ? item.status!.replaceAll('_', ' ') : 'status unknown';
+    final maintenanceLabel = item.nextMaintenanceDue != null
+        ? DateFormat('d MMM yyyy').format(item.nextMaintenanceDue!.toLocal())
+        : null;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.4)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.name, style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+                    if (item.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(item.description, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.outline)),
+                      ),
+                  ],
+                ),
+              ),
+              if (item.status != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusTone[item.status] ?? Theme.of(context).colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                  ),
+                  child: Text(statusLabel.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _MetricChip(label: 'Available', value: numberFormat.format(item.available ?? 0)),
+              _MetricChip(label: 'Reserved', value: numberFormat.format(item.reserved ?? 0)),
+              _MetricChip(label: 'On hand', value: numberFormat.format(item.onHand ?? (item.available ?? 0))),
+              if (item.safetyStock != null)
+                _MetricChip(label: 'Safety', value: numberFormat.format(item.safetyStock!)),
+              if (item.activeRentals != null)
+                _MetricChip(label: 'Active rentals', value: numberFormat.format(item.activeRentals!)),
+              if (item.activeAlerts != null)
+                _MetricChip(label: 'Alerts', value: numberFormat.format(item.activeAlerts!)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              if (item.location != null)
+                _InfoLine(icon: Icons.place_outlined, label: item.location!),
+              if (maintenanceLabel != null)
+                _InfoLine(icon: Icons.event_available_outlined, label: 'Next service $maintenanceLabel'),
+              if (item.rentalRate != null)
+                _InfoLine(
+                  icon: Icons.currency_pound,
+                  label: 'Rate ${currencyFormat.format(item.rentalRate)} / day',
+                ),
+              if (item.depositAmount != null)
+                _InfoLine(
+                  icon: Icons.lock_outline,
+                  label: 'Deposit ${currencyFormat.format(item.depositAmount)}',
+                ),
+              if (item.sku != null)
+                _InfoLine(icon: Icons.qr_code_2, label: 'SKU ${item.sku}'),
+              if (item.notes != null && item.notes!.isNotEmpty)
+                _InfoLine(icon: Icons.notes, label: item.notes!),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  const _MetricChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text('$label: $value', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 6),
+        Text(label, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.outline)),
+      ],
     );
   }
 }
