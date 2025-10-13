@@ -419,6 +419,22 @@ Refer to the directory-specific documents within `ui-ux_updates/application_desi
 - [`ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md) — Detailed gating flow, toggle refresh, and audit logging before dashboard hydration.
 
 ## Newly Updated Artefacts (2025-11-02)
+- [`change_log.md`](change_log.md) — Logged warehouse freshness monitoring and OpsGenie integration with references to backend job/service/config updates and Vitest coverage.
+- [`Design_Plan.md`](Design_Plan.md) — Added Section 33 detailing OpsGenie-enabled warehouse freshness banners, runbook rehearsal steps, and design follow-ups for Subtask 5.4a.
+- [`Design_Change_log.md`](Design_Change_log.md) — Recorded warehouse freshness & OpsGenie escalation entry linking to updated drawings, runbook, and backend artefacts.
+- [`Design_update_task_list.md`](Design_update_task_list.md) — Introduced Task 19 documenting OpsGenie alert UX, evidence, and subtasks.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Snapshot metrics and narrative updated to include OpsGenie banners and rehearsal coverage.
+- [`Design_update_milestone_list.md`](Design_update_milestone_list.md) — Milestone M13 progress note expanded with OpsGenie escalation guidance referencing new backend integrations.
+- [`update_task_list.md`](update_task_list.md) — Subtask 5.4a completion logged with job/service/test artefacts.
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Task 5 commentary updated to highlight OpsGenie-driven warehouse monitor and Vitest coverage.
+- [`update_milestone_list.md`](update_milestone_list.md) — Task 5A section now references OpsGenie monitor and remaining 5.4b/5.5 scope.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md) — Added warehouse freshness banner specs with copy, CTA behaviour, and QA selectors.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update_Logic_Flow.md) — Documented OpsGenie alert lifecycle for telemetry dashboards.
+- [`ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`](ui-ux_updates/Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md) — Detailed warehouse freshness banner layout, tokens, and telemetry IDs.
+- [`user_phone_app_updates/app_screen_updates.md`](user_phone_app_updates/app_screen_updates.md) — Captured Flutter analytics banner parity, CTA behaviour, and QA scenarios.
+- [`docs/telemetry/ui-preference-dashboard.md`](../docs/telemetry/ui-preference-dashboard.md) — Runbook now includes OpsGenie escalation checklist and rehearsal guidance.
+- [`docs/design/handoff/ui-qa-scenarios.csv`](../docs/design/handoff/ui-qa-scenarios.csv) — Added OpsGenie warehouse freshness rehearsal scenario with data hooks.
+- [`test_plan.md`](test_plan.md) — New operational test row for warehouse freshness & OpsGenie escalation covering Vitest/OpsGenie/Playwright responsibilities.
 - [`flutter-phoneapp/lib/features/analytics`](../flutter-phoneapp/lib/features/analytics) — Added production analytics module covering repository, domain models, Riverpod controller, timezone resolver, chart widgets, and dashboard screen parity with governed offline/export behaviour matching persona specs.
 - [`flutter-phoneapp/lib/app/app.dart`](../flutter-phoneapp/lib/app/app.dart) — Registered analytics route and bootstrap wiring so the Flutter shell exposes the new dashboard entry point.
 - [`flutter-phoneapp/lib/shared/widgets/metric_card.dart`](../flutter-phoneapp/lib/shared/widgets/metric_card.dart) & [`flutter-phoneapp/lib/core/network/api_client.dart`](../flutter-phoneapp/lib/core/network/api_client.dart) — Extended shared widgets and API client with analytics-ready loading states, formatting, and authenticated requests.
