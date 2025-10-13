@@ -21,7 +21,6 @@ const {
   Order,
   Service,
   RentalAgreement,
-  Service,
   ServiceZone,
   User,
   Conversation

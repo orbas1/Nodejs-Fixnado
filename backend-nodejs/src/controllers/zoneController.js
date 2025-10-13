@@ -4,7 +4,8 @@ import {
   deleteZone,
   listZones,
   getZoneWithAnalytics,
-  generateAnalyticsSnapshot
+  generateAnalyticsSnapshot,
+  importZonesFromGeoJson
 } from '../services/zoneService.js';
 
 function handleServiceError(res, next, error) {
@@ -74,6 +75,21 @@ export async function createZoneSnapshotHandler(req, res, next) {
   try {
     const snapshot = await generateAnalyticsSnapshot(req.params.zoneId);
     res.status(201).json(snapshot);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function importZonesHandler(req, res, next) {
+  try {
+    const zones = await importZonesFromGeoJson({
+      companyId: req.body.companyId,
+      geojson: req.body.geojson ?? req.body.payload ?? req.body,
+      demandLevel: req.body.demandLevel,
+      metadata: req.body.metadata,
+      actor: req.body.actor
+    });
+    res.status(201).json(zones);
   } catch (error) {
     handleServiceError(res, next, error);
   }

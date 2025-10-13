@@ -14,8 +14,16 @@ import {
   InventoryItem,
   RentalAgreement,
   Service,
-  ServiceZone
+  ServiceZone,
+  User
 } from '../models/index.js';
+import {
+  describeCategory,
+  describeType,
+  enrichServiceMetadata,
+  listServiceCategories,
+  listServiceTypes
+} from '../constants/serviceCatalog.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress'];
 const SLA_EVALUATION_STATUSES = ['completed', 'disputed'];
@@ -423,15 +431,32 @@ export async function buildBusinessFront({ slug }) {
         return candidateSlug === slug || company.id === slug;
       }) || allCompanies[0];
 
-  const [bookings, services, complianceDocs, serviceZones] = await Promise.all([
-    Booking.findAll({ where: { companyId: resolved.id }, order: [['createdAt', 'DESC']], limit: 12 }),
-    Service.findAll({ where: { companyId: resolved.id }, limit: 6 }),
+  const [bookings, services, complianceDocs, serviceZones, inventoryItems] = await Promise.all([
+    Booking.findAll({ where: { companyId: resolved.id }, order: [['createdAt', 'DESC']], limit: 24 }),
+    Service.findAll({
+      where: { companyId: resolved.id },
+      include: [{ association: Service.associations.provider, attributes: ['id', 'firstName', 'lastName'] }],
+      limit: 12
+    }),
     ComplianceDocument.findAll({ where: { companyId: resolved.id, status: 'approved' } }),
-    ServiceZone.findAll({ where: { companyId: resolved.id }, attributes: ['name'], raw: true })
+    ServiceZone.findAll({
+      where: { companyId: resolved.id },
+      attributes: ['id', 'name', 'demandLevel', 'metadata'],
+      order: [['createdAt', 'ASC']],
+      raw: true
+    }),
+    InventoryItem.findAll({
+      where: { companyId: resolved.id },
+      order: [['updatedAt', 'DESC']],
+      limit: 20,
+      raw: true
+    })
   ]);
 
   const slugified = toSlug(resolved.contactName, `company-${resolved.id.slice(0, 8)}`);
   const now = DateTime.now();
+  const zoneById = new Map(serviceZones.map((zone) => [zone.id, zone]));
+
   const stats = [
     {
       id: 'completed-bookings',
@@ -471,12 +496,19 @@ export async function buildBusinessFront({ slug }) {
       ),
       format: 'minutes',
       caption: 'From dispatch to acknowledgment'
+    },
+    {
+      id: 'zones-covered',
+      label: 'Active service zones',
+      value: serviceZones.length,
+      format: 'number',
+      caption: 'Geo-fenced coverage imported from client GeoJSON'
     }
   ];
 
   const testimonials = bookings
     .filter((booking) => booking.status === 'completed')
-    .slice(0, 3)
+    .slice(0, 4)
     .map((booking, index) => ({
       id: booking.id || `testimonial-${index}`,
       quote: booking.meta?.feedback || 'Outstanding communication and quality delivery.',
@@ -493,16 +525,66 @@ export async function buildBusinessFront({ slug }) {
     });
   }
 
-  const packages = services.map((service, index) => ({
-    id: service.id || `package-${index}`,
+  const enrichedServices = services.map((service) => {
+    const payload = service.get({ plain: true });
+    const enriched = enrichServiceMetadata(payload);
+    const categoryDescriptor = describeCategory(payload.category);
+    const upcoming = bookings
+      .filter((booking) => booking.scheduledStart && booking.meta?.serviceId === payload.id)
+      .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
+    const nextAvailability = upcoming.find((booking) => DateTime.fromJSDate(booking.scheduledStart) > now);
+
+    return {
+      ...payload,
+      typeLabel: describeType(enriched.type).label,
+      categoryLabel: categoryDescriptor.label,
+      categorySlug: enriched.categorySlug,
+      tags: enriched.tags,
+      availability: nextAvailability
+        ? {
+            status: 'scheduled',
+            label: 'Next availability',
+            detail: DateTime.fromJSDate(nextAvailability.scheduledStart).toISO()
+          }
+        : {
+            status: 'open',
+            label: 'Available now',
+            detail: 'Same-day dispatch windows'
+          }
+    };
+  });
+
+  const coverageNames = serviceZones.map((zone) => zone.name);
+
+  const serviceCatalogue = enrichedServices.map((service, index) => ({
+    id: service.id || `service-${index}`,
     name: service.title,
-    description: service.description || 'Service package tailored for multi-site operations.',
+    description:
+      service.description || `${service.categoryLabel} crew with telemetry-backed governance and issue triage`,
+    category: service.categoryLabel,
+    type: service.typeLabel,
     price: coerceNumber(service.price, null),
     currency: service.currency || 'GBP',
+    availability: service.availability,
+    tags: service.tags,
+    coverage: coverageNames.slice(0, 6),
+    provider:
+      service.provider?.firstName && service.provider?.lastName
+        ? `${service.provider.firstName} ${service.provider.lastName}`
+        : null,
+    providerId: service.providerId || service.provider?.id || null
+  }));
+
+  const packages = serviceCatalogue.slice(0, 4).map((service, index) => ({
+    id: service.id || `package-${index}`,
+    name: `${service.name} programme`,
+    description: service.description,
+    price: service.price,
+    currency: service.currency,
     highlights: [
-      service.category ? `${service.category} specialists` : 'Specialist crew',
-      'Escrow-backed milestones',
-      'Telemetry dashboard access'
+      `${service.type} coverage`,
+      service.availability.status === 'scheduled' ? 'Priority waitlist access' : 'Same-day deployment',
+      'Escrow-backed milestones'
     ]
   }));
 
@@ -513,30 +595,171 @@ export async function buildBusinessFront({ slug }) {
     expiresOn: doc.expiryAt
   }));
 
-  const gallery = serviceZones.slice(0, 4).map((zone, index) => ({
-    id: `zone-${index}`,
-    title: `${zone.name} operations`,
-    description: 'Escrow-backed delivery in this territory.',
+  const previousJobs = bookings
+    .filter((booking) => booking.status === 'completed')
+    .slice(0, 6)
+    .map((booking, index) => {
+      const zone = zoneById.get(booking.zoneId);
+      return {
+        id: booking.id || `job-${index}`,
+        title: booking.meta?.title || `${zone?.name || 'Zone'} service wrap`,
+        description:
+          booking.meta?.summary ||
+          booking.meta?.feedback ||
+          'Escrow-backed completion with client sign-off within SLA.',
+        completedOn: booking.lastStatusTransitionAt
+          ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISODate()
+          : null,
+        zone: zone?.name || null,
+        value: coerceNumber(booking.totalAmount, null),
+        currency: booking.currency,
+        image: `/media/${slugified}/jobs-${index + 1}.jpg`
+      };
+    });
+
+  const reviews = bookings
+    .filter((booking) => booking.meta?.feedback)
+    .slice(0, 6)
+    .map((booking, index) => ({
+      id: booking.id || `review-${index}`,
+      reviewer: booking.meta?.requester || 'Client stakeholder',
+      rating: Number.isFinite(booking.meta?.csat) ? Number(booking.meta.csat) : 4.8,
+      comment: booking.meta.feedback,
+      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement'
+    }));
+
+  const deals = serviceCatalogue
+    .filter((service) => Number.isFinite(service.price))
+    .slice(0, 3)
+    .map((service, index) => ({
+      id: `deal-${service.id || index}`,
+      title: `${service.name} bundle`,
+      description: `Escrow-backed ${service.type.toLowerCase()} package covering ${
+        service.coverage.slice(0, 2).join(', ') || 'priority zones'
+      }.`,
+      savings: Number((service.price * 0.12).toFixed(2)),
+      currency: service.currency,
+      validUntil: now.plus({ days: (index + 1) * 7 }).toISODate(),
+      tags: service.tags.slice(0, 2)
+    }));
+
+  const materials = inventoryItems
+    .filter((item) =>
+      (item.category || '').toLowerCase().includes('material') ||
+      (!item.rentalRate && (item.metadata?.type === 'material' || item.metadata?.usage === 'consumable'))
+    )
+    .slice(0, 6)
+    .map((item, index) => ({
+      id: item.id || `material-${index}`,
+      name: item.name,
+      category: item.category,
+      sku: item.sku,
+      quantityOnHand: item.quantityOnHand,
+      unitType: item.unitType,
+      image: `/media/${slugified}/materials-${index + 1}.jpg`
+    }));
+
+  const tools = inventoryItems
+    .filter((item) =>
+      (item.category || '').toLowerCase().includes('tool') ||
+      Number.isFinite(coerceNumber(item.rentalRate, NaN))
+    )
+    .slice(0, 6)
+    .map((item, index) => ({
+      id: item.id || `tool-${index}`,
+      name: item.name,
+      category: item.category,
+      rentalRate: coerceNumber(item.rentalRate, null),
+      rentalRateCurrency: item.rentalRateCurrency || 'GBP',
+      condition: item.conditionRating,
+      image: `/media/${slugified}/tools-${index + 1}.jpg`
+    }));
+
+  const providerIds = Array.from(new Set(enrichedServices.map((service) => service.providerId).filter(Boolean)));
+  const providers = providerIds.length
+    ? await User.findAll({ where: { id: { [Op.in]: providerIds } }, raw: true })
+    : [];
+
+  const servicemen = providers.map((provider, index) => {
+    const providerServices = serviceCatalogue.filter((service) => service.providerId === provider.id);
+    const primaryCategories = Array.from(new Set(providerServices.map((service) => service.category)));
+    const futureBookings = bookings
+      .filter((booking) => booking.meta?.assignedProviders?.includes?.(provider.id))
+      .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
+    const nextBooking = futureBookings.find((booking) => booking.scheduledStart && DateTime.fromJSDate(booking.scheduledStart) > now);
+
+    return {
+      id: provider.id || `serviceman-${index}`,
+      name: `${provider.firstName} ${provider.lastName}`,
+      trades: primaryCategories.length > 0 ? primaryCategories : ['Multi-trade lead'],
+      availability: nextBooking
+        ? `Booked until ${DateTime.fromJSDate(nextBooking.scheduledStart).toFormat('dd LLL')}`
+        : 'Available this week',
+      avatar: `/media/${slugified}/provider-${index + 1}.jpg`
+    };
+  });
+
+  const heroTags = new Set();
+  serviceCatalogue.forEach((service) => service.tags.forEach((tag) => heroTags.add(tag)));
+
+  const heroCategoryLabels = Array.from(new Set(serviceCatalogue.map((service) => service.type)));
+
+  const carousel = serviceZones.slice(0, 6).map((zone, index) => ({
+    id: `carousel-${zone.id || index}`,
+    title: `${zone.name} zone`,
+    description: zone.metadata?.purpose || 'Live telemetry feed from imported polygon zones.',
     image: `/media/${slugified}/zone-${index + 1}.jpg`
+  }));
+
+  const hero = {
+    name: resolved.contactName || 'Featured provider',
+    strapline:
+      resolved.marketplaceIntent || 'Escrow-backed field services delivered across the United Kingdom.',
+    tagline: heroCategoryLabels.join(' • ') || 'Certified multi-trade delivery crews',
+    bio:
+      resolved.marketplaceIntent ||
+      'Fixnado-certified SME with escrow-governed programmes, geo-zonal telemetry and concierge escalation.',
+    locations: resolved.serviceRegions ? resolved.serviceRegions.split(',').map((region) => region.trim()) : [],
+    tags: Array.from(heroTags).slice(0, 6),
+    categories: heroCategoryLabels,
+    media: {
+      heroImage: `/media/${slugified}/hero.jpg`,
+      bannerImage: `/media/${slugified}/banner.jpg`,
+      brandImage: `/media/${slugified}/brand.png`,
+      profileImage: `/media/${slugified}/profile.jpg`,
+      showcaseVideo: `/media/${slugified}/showcase.mp4`,
+      carousel
+    }
+  };
+
+  const gallery = previousJobs.map((job) => ({
+    id: `gallery-${job.id}`,
+    title: job.title,
+    description: job.description,
+    image: job.image
   }));
 
   return {
     data: {
       slug: slugified,
-      hero: {
-        name: resolved.contactName || 'Featured provider',
-        strapline:
-          resolved.marketplaceIntent || 'Escrow-backed field services delivered across the United Kingdom.',
-        locations: resolved.serviceRegions ? resolved.serviceRegions.split(',').map((region) => region.trim()) : [],
-        media: {
-          heroImage: `/media/${slugified}/hero.jpg`
-        }
-      },
+      hero,
       stats,
       testimonials,
       packages,
       certifications,
       gallery,
+      previousJobs,
+      reviews,
+      deals,
+      serviceCatalogue,
+      materials,
+      tools,
+      servicemen,
+      serviceZones,
+      taxonomy: {
+        categories: listServiceCategories(),
+        types: listServiceTypes()
+      },
       support: {
         email: resolved.contactEmail || null,
         phone: null,

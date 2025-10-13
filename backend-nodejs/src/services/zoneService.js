@@ -269,6 +269,79 @@ function calculateAcceptanceMinutes(booking) {
   return Number.isFinite(diff) && diff >= 0 ? diff : null;
 }
 
+export async function importZonesFromGeoJson({ companyId, geojson, demandLevel = 'medium', metadata = {}, actor = null }) {
+  if (!companyId) {
+    throw validationError('A companyId is required to import service zones');
+  }
+
+  if (!geojson) {
+    throw validationError('GeoJSON payload is required');
+  }
+
+  let payload = geojson;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch (error) {
+      throw validationError('Unable to parse GeoJSON payload');
+    }
+  }
+
+  let features = [];
+  if (payload.type === 'FeatureCollection') {
+    features = payload.features || [];
+  } else if (payload.type === 'Feature') {
+    features = [payload];
+  } else if (payload.type === 'Polygon' || payload.type === 'MultiPolygon') {
+    features = [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: payload
+      }
+    ];
+  }
+
+  if (!Array.isArray(features) || features.length === 0) {
+    throw validationError('GeoJSON payload does not contain any polygon features');
+  }
+
+  const createdZones = [];
+
+  for (const [index, feature] of features.entries()) {
+    const geometry = feature.geometry || feature;
+    if (!geometry) {
+      throw validationError(`Feature at index ${index} does not include geometry data`);
+    }
+
+    const zoneMetadata = { ...metadata, ...(feature.properties || {}) };
+    const zoneName = zoneMetadata.name || `Imported zone ${index + 1}`;
+    const zoneDemand = zoneMetadata.demandLevel || demandLevel;
+
+    delete zoneMetadata.name;
+    delete zoneMetadata.demandLevel;
+
+    try {
+      const zone = await createZone({
+        companyId,
+        name: zoneName,
+        geometry,
+        demandLevel: zoneDemand,
+        metadata: zoneMetadata,
+        actor
+      });
+      createdZones.push(zone);
+    } catch (error) {
+      if (error?.statusCode === 400) {
+        throw validationError(`Unable to import feature ${index + 1}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  return createdZones;
+}
+
 export async function generateAnalyticsSnapshot(zoneId, now = new Date()) {
   const bookings = await Booking.findAll({ where: { zoneId } });
   const totals = {};

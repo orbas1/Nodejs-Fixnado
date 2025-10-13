@@ -37,6 +37,26 @@ export async function fetchExplorerResults(filters, { signal } = {}) {
     params.set('q', filters.term);
   }
 
+  if (filters?.type && filters.type !== 'all') {
+    params.set('type', filters.type);
+  }
+
+  if (filters?.zoneId && filters.zoneId !== 'all') {
+    params.set('zoneId', filters.zoneId);
+  }
+
+  if (filters?.availability && filters.availability !== 'any') {
+    params.set('availability', filters.availability);
+  }
+
+  if (filters?.serviceType && filters.serviceType !== 'all') {
+    params.set('serviceType', filters.serviceType);
+  }
+
+  if (filters?.category) {
+    params.set('category', filters.category);
+  }
+
   params.set('limit', String(filters?.limit ?? DEFAULT_LIMIT));
 
   const response = await fetch(`/api/search?${params.toString()}`, { signal });

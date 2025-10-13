@@ -20,7 +20,7 @@ const availabilityOptions = [
   { value: 'both', label: 'Rental & sale' }
 ];
 
-export default function ExplorerFilters({ filters, onChange, onReset, zones, categories, isBusy }) {
+export default function ExplorerFilters({ filters, onChange, onReset, zones, categories, serviceTypes, isBusy }) {
   const handleUpdate = (next) => {
     onChange({ ...filters, ...next });
   };
@@ -100,6 +100,25 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           </select>
         </FormField>
 
+        <FormField id="explorer-service-type" label="Service type" optionalLabel="Optional">
+          <select
+            id="explorer-service-type"
+            className="fx-select"
+            value={filters.serviceType ?? 'all'}
+            onChange={(event) =>
+              handleUpdate({ serviceType: event.target.value === 'all' ? undefined : event.target.value })
+            }
+            data-qa="explorer-filter.serviceType"
+          >
+            <option value="all">All service types</option>
+            {serviceTypes.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
         <FormField id="explorer-category" label="Service category" optionalLabel="Optional">
           <select
             id="explorer-category"
@@ -110,8 +129,8 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           >
             <option value="all">All categories</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category.value} value={category.value}>
+                {category.label}
               </option>
             ))}
           </select>
@@ -163,7 +182,8 @@ ExplorerFilters.propTypes = {
     zoneId: PropTypes.string,
     availability: PropTypes.string,
     demand: PropTypes.arrayOf(PropTypes.string),
-    category: PropTypes.string
+    category: PropTypes.string,
+    serviceType: PropTypes.string
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
@@ -173,7 +193,18 @@ ExplorerFilters.propTypes = {
       name: PropTypes.string.isRequired
     })
   ).isRequired,
-  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  categories: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired
+    })
+  ).isRequired,
+  serviceTypes: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired
+    })
+  ).isRequired,
   isBusy: PropTypes.bool
 };
 

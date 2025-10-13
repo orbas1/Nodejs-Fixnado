@@ -388,6 +388,118 @@ function normaliseBusinessFront(payload = {}) {
     caption: metric.caption || metric.description || null
   }));
 
+  const heroMedia = root.hero?.media || root.media || {};
+  const carouselMedia = ensureArray(heroMedia.carousel || root.carousel).map((item, index) => ({
+    id: item.id || `carousel-${index}`,
+    title: item.title || item.name || `Showcase ${index + 1}`,
+    description: item.description || '',
+    image: item.image || item.url || null
+  }));
+
+  const taxonomy = {
+    categories: ensureArray(root.taxonomy?.categories).map((category, index) => ({
+      slug: category.slug || category.id || `category-${index}`,
+      label: category.label || category.name || 'Service category',
+      type: category.type || 'general-services',
+      defaultTags: ensureArray(category.defaultTags)
+    })),
+    types: ensureArray(root.taxonomy?.types).map((entry, index) => ({
+      type: entry.type || entry.id || `type-${index}`,
+      label: entry.label || entry.name || 'Service type',
+      description: entry.description || '',
+      categories: ensureArray(entry.categories)
+    }))
+  };
+
+  const serviceCatalogue = ensureArray(root.serviceCatalogue || root.services).map((service, index) => ({
+    id: service.id || `catalogue-${index}`,
+    name: service.name || service.title || 'Service',
+    description: service.description || '',
+    category: service.category || service.categoryLabel || 'General services',
+    type: service.type || service.typeLabel || 'General services',
+    price: service.price ?? null,
+    currency: service.currency || 'GBP',
+    availability: service.availability
+      ? {
+          status: service.availability.status || 'open',
+          label: service.availability.label || 'Availability',
+          detail: service.availability.detail || ''
+        }
+      : {
+          status: 'open',
+          label: 'Availability',
+          detail: ''
+        },
+    tags: ensureArray(service.tags),
+    coverage: ensureArray(service.coverage),
+    provider: service.provider || null,
+    providerId: service.providerId || null
+  }));
+
+  const previousJobs = ensureArray(root.previousJobs || root.jobs).map((job, index) => ({
+    id: job.id || `job-${index}`,
+    title: job.title || job.name || `Project ${index + 1}`,
+    description: job.description || '',
+    completedOn: job.completedOn || job.completed_at || job.date || null,
+    zone: job.zone || job.location || null,
+    value: job.value ?? null,
+    currency: job.currency || 'GBP',
+    image: job.image || job.thumbnail || null
+  }));
+
+  const reviews = ensureArray(root.reviews).map((review, index) => ({
+    id: review.id || `review-${index}`,
+    reviewer: review.reviewer || review.client || 'Client partner',
+    rating: Number.parseFloat(review.rating ?? review.score ?? 0) || 0,
+    comment: review.comment || review.quote || '',
+    job: review.job || review.project || null
+  }));
+
+  const deals = ensureArray(root.deals).map((deal, index) => ({
+    id: deal.id || `deal-${index}`,
+    title: deal.title || `Deal ${index + 1}`,
+    description: deal.description || '',
+    savings: deal.savings ?? null,
+    currency: deal.currency || 'GBP',
+    validUntil: deal.validUntil || deal.expiresOn || null,
+    tags: ensureArray(deal.tags)
+  }));
+
+  const materials = ensureArray(root.materials).map((item, index) => ({
+    id: item.id || `material-${index}`,
+    name: item.name || `Material ${index + 1}`,
+    category: item.category || 'Materials',
+    sku: item.sku || null,
+    quantityOnHand: item.quantityOnHand ?? null,
+    unitType: item.unitType || null,
+    image: item.image || null
+  }));
+
+  const tools = ensureArray(root.tools).map((item, index) => ({
+    id: item.id || `tool-${index}`,
+    name: item.name || `Tool ${index + 1}`,
+    category: item.category || 'Tools',
+    rentalRate: item.rentalRate ?? null,
+    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    condition: item.condition || item.conditionRating || null,
+    image: item.image || null
+  }));
+
+  const servicemen = ensureArray(root.servicemen || root.servicers).map((member, index) => ({
+    id: member.id || `serviceman-${index}`,
+    name: member.name || member.fullName || `Serviceman ${index + 1}`,
+    trades: ensureArray(member.trades || member.skills),
+    availability: member.availability || 'Available',
+    avatar: member.avatar || member.image || null
+  }));
+
+  const serviceZones = ensureArray(root.serviceZones || root.zones).map((zone, index) => ({
+    id: zone.id || `zone-${index}`,
+    name: zone.name || `Zone ${index + 1}`,
+    demandLevel: zone.demandLevel || zone.demand || 'medium',
+    metadata: zone.metadata || {}
+  }));
+
   return {
     slug: profile.slug || root.slug || 'featured',
     hero: {
@@ -396,12 +508,24 @@ function normaliseBusinessFront(payload = {}) {
         root.strapline ||
         profile.tagline ||
         'Escrow-backed field services, delivered by certified teams across the UK.',
+      tagline: root.hero?.tagline || profile.tagline || null,
+      bio: root.hero?.bio || root.bio || profile.bio || null,
       locations: ensureArray(profile.locations || root.locations || []).map((location) =>
         typeof location === 'string'
           ? location
           : location.name || `${location.city}, ${location.country}`
       ),
-      media: root.media || profile.media || {}
+      tags: ensureArray(root.hero?.tags || root.tags),
+      categories: ensureArray(root.hero?.categories || root.serviceCategories),
+      media: {
+        ...(heroMedia || {}),
+        heroImage: heroMedia.heroImage || root.media?.heroImage || null,
+        bannerImage: heroMedia.bannerImage || null,
+        brandImage: heroMedia.brandImage || null,
+        profileImage: heroMedia.profileImage || null,
+        showcaseVideo: heroMedia.showcaseVideo || heroMedia.video || null,
+        carousel: carouselMedia
+      }
     },
     testimonials: ensureArray(root.testimonials).map((testimonial, index) => ({
       id: testimonial.id || `testimonial-${index}`,
@@ -434,7 +558,16 @@ function normaliseBusinessFront(payload = {}) {
       description: item.description || null,
       image: item.image || item.url || null
     })),
-    stats
+    stats,
+    serviceCatalogue,
+    previousJobs,
+    reviews,
+    deals,
+    materials,
+    tools,
+    servicemen,
+    serviceZones,
+    taxonomy
   };
 }
 
@@ -855,15 +988,39 @@ const enterpriseFallback = normaliseEnterprisePanel({
 
 const businessFrontFallback = normaliseBusinessFront({
   slug: 'metro-power-services',
-  profile: {
-    displayName: 'Metro Power Services',
-    tagline: 'Critical electrical & HVAC support for corporate campuses',
-    locations: ['London', 'Essex', 'Kent']
+  hero: {
+    name: 'Metro Power Services',
+    strapline: 'Critical electrical & HVAC support for corporate campuses',
+    tagline: 'NICEIC electricians • HVAC engineers • Logistics crews',
+    bio: 'Trusted SME delivering escrow-backed, telemetry-visible field services across the South East.',
+    locations: ['London', 'Essex', 'Kent'],
+    tags: ['High-voltage certified', '24/7 dispatch', 'Telemetry enabled', 'Geo-zonal routing'],
+    categories: ['Trade services', 'Logistics & removals'],
+    media: {
+      heroImage: '/media/metro-power/hero.jpg',
+      bannerImage: '/media/metro-power/banner.jpg',
+      brandImage: '/media/metro-power/brand.png',
+      profileImage: '/media/metro-power/profile.jpg',
+      showcaseVideo: '/media/metro-power/showcase.mp4',
+      carousel: [
+        {
+          title: 'London Docklands zone',
+          description: 'Imported GeoJSON polygon from enterprise CAFM.',
+          image: '/media/metro-power/zone-1.jpg'
+        },
+        {
+          title: 'Canary Wharf UPS deployment',
+          description: 'Telemetry tracked installation',
+          image: '/media/metro-power/zone-2.jpg'
+        }
+      ]
+    }
   },
   stats: [
     { label: 'SLA hit rate', value: 0.98, format: 'percent', caption: 'Tracked weekly with telemetry exports' },
     { label: 'Avg. response', value: 38, format: 'minutes', caption: 'Engineer dispatch, Q3 rolling' },
-    { label: 'Projects delivered', value: 164, format: 'number', caption: 'Enterprise programmes completed' }
+    { label: 'Projects delivered', value: 164, format: 'number', caption: 'Enterprise programmes completed' },
+    { label: 'Service zones', value: 9, format: 'number', caption: 'Imported from GeoJSON polygon library' }
   ],
   testimonials: [
     {
@@ -905,7 +1062,108 @@ const businessFrontFallback = normaliseBusinessFront({
       description: 'Critical electrical resiliency project delivering Tier 3 redundancy.',
       image: '/media/metro-power/case-study-finova.jpg'
     }
-  ]
+  ],
+  serviceCatalogue: [
+    {
+      name: 'Electrical LV & HV response',
+      description: 'NICEIC certified electricians with telemetry-enabled incident response kits.',
+      category: 'Carpentry',
+      type: 'Trade services',
+      price: 320,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Available now', detail: 'Same-day dispatch windows' },
+      tags: ['High-voltage', 'Permit to work'],
+      coverage: ['London Docklands', 'City of London']
+    },
+    {
+      name: 'Data hall HVAC stabilisation',
+      description: 'Critical environment HVAC engineers with remote telemetry and redundancy planning.',
+      category: 'Painting & decorating',
+      type: 'Trade services',
+      price: 680,
+      currency: 'GBP',
+      availability: { status: 'scheduled', label: 'Next availability', detail: new Date(Date.now() + 86400000).toISOString() },
+      tags: ['HVAC', 'Telemetry'],
+      coverage: ['Slough', 'Reading']
+    }
+  ],
+  previousJobs: [
+    {
+      title: 'Trading floor resilience upgrade',
+      description: 'Tier 3 UPS build with escrow-backed milestones and 0 downtime.',
+      completedOn: new Date(Date.now() - 1209600000).toISOString().slice(0, 10),
+      zone: 'Canary Wharf',
+      value: 86000,
+      currency: 'GBP',
+      image: '/media/metro-power/jobs-1.jpg'
+    }
+  ],
+  reviews: [
+    {
+      reviewer: 'Campus Operations Lead',
+      rating: 4.9,
+      comment: 'Engineers arrive on time, telemetry updates are constant, and escrow settlements are seamless.',
+      job: 'Campus SLA Programme'
+    }
+  ],
+  deals: [
+    {
+      title: 'Multi-site electrical cover',
+      description: 'Bundle high-voltage response with HVAC standby across 3 geo-zones.',
+      savings: 1200,
+      currency: 'GBP',
+      validUntil: new Date(Date.now() + 604800000).toISOString(),
+      tags: ['Trade services', 'Bundle']
+    }
+  ],
+  materials: [
+    {
+      name: 'Cat6A bulk cable drums',
+      category: 'Materials',
+      sku: 'CAB-6A-500',
+      quantityOnHand: 24,
+      unitType: 'drum',
+      image: '/media/metro-power/materials-1.jpg'
+    }
+  ],
+  tools: [
+    {
+      name: 'Thermal imaging kit',
+      category: 'Tools',
+      rentalRate: 145,
+      rentalRateCurrency: 'GBP',
+      condition: 'excellent',
+      image: '/media/metro-power/tools-1.jpg'
+    }
+  ],
+  servicemen: [
+    {
+      name: 'Amelia Shaw',
+      trades: ['Electrical lead', 'Fire systems'],
+      availability: 'Available this week',
+      avatar: '/media/metro-power/provider-1.jpg'
+    },
+    {
+      name: 'Callum Price',
+      trades: ['HVAC engineer'],
+      availability: 'Booked until 12 Mar',
+      avatar: '/media/metro-power/provider-2.jpg'
+    }
+  ],
+  serviceZones: [
+    { name: 'London Docklands', demandLevel: 'high', metadata: { client: 'Finova' } },
+    { name: 'Canary Wharf', demandLevel: 'high', metadata: { client: 'Finova' } }
+  ],
+  taxonomy: {
+    categories: [
+      { slug: 'carpentry', label: 'Carpentry', type: 'trade-services', defaultTags: ['Fit-outs'] },
+      { slug: 'removals', label: 'Removals', type: 'logistics', defaultTags: ['Crate management'] }
+    ],
+    types: [
+      { type: 'trade-services', label: 'Trade services', description: 'Certified trades', categories: ['carpentry', 'painting'] },
+      { type: 'logistics', label: 'Logistics & removals', description: 'Move and delivery crews', categories: ['removals'] }
+    ]
+  }
 });
 
 function withFallback(normaliser, fallback, fetcherFactory) {

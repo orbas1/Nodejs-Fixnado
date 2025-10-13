@@ -18,6 +18,7 @@ import ExplorerMap from '../components/explorer/ExplorerMap.jsx';
 import ExplorerResultList from '../components/explorer/ExplorerResultList.jsx';
 import ZoneInsightPanel from '../components/explorer/ZoneInsightPanel.jsx';
 import '../styles.css';
+import { SERVICE_TYPES, SERVICE_CATEGORIES } from '../constants/services.js';
 
 function normaliseFilters(filters) {
   return {
@@ -33,6 +34,7 @@ function filtersAreEqual(a, b) {
     a.type === b.type &&
     a.zoneId === b.zoneId &&
     a.availability === b.availability &&
+    a.serviceType === b.serviceType &&
     a.category === b.category &&
     a.limit === b.limit &&
     Array.isArray(a.demand) &&
@@ -162,9 +164,22 @@ export default function Search() {
     [results.items]
   );
 
+  const typeFilteredServices = useMemo(
+    () =>
+      filters.serviceType
+        ? results.services.filter((service) => service.type === filters.serviceType)
+        : results.services,
+    [results.services, filters.serviceType]
+  );
+
   const categoryFilteredServices = useMemo(
-    () => (filters.category ? results.services.filter((service) => service.category === filters.category) : results.services),
-    [results.services, filters.category]
+    () =>
+      filters.category
+        ? typeFilteredServices.filter(
+            (service) => (service.categorySlug || service.category) === filters.category
+          )
+        : typeFilteredServices,
+    [typeFilteredServices, filters.category]
   );
 
   const filteredResults = useMemo(
@@ -210,10 +225,24 @@ export default function Search() {
     return determineExplorerBounds(zonesFilteredByDemand);
   }, [selectedZone, zonesFilteredByDemand]);
 
-  const categories = useMemo(
-    () => extractServiceCategories(results.services),
-    [results.services]
-  );
+  const categories = useMemo(() => {
+    const derived = extractServiceCategories(results.services);
+    if (derived.length > 0) {
+      return derived;
+    }
+
+    return SERVICE_CATEGORIES.map(({ value, label }) => ({ value, label }));
+  }, [results.services]);
+
+  const serviceTypes = useMemo(() => {
+    const present = new Set(results.services.map((service) => service.type).filter(Boolean));
+    if (present.size === 0) {
+      return SERVICE_TYPES;
+    }
+
+    const filtered = SERVICE_TYPES.filter((type) => present.has(type.value));
+    return filtered.length > 0 ? filtered : SERVICE_TYPES;
+  }, [results.services]);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-12">
@@ -232,6 +261,7 @@ export default function Search() {
         onReset={handleReset}
         zones={zoneOptions}
         categories={categories}
+        serviceTypes={serviceTypes}
         isBusy={results.isLoading || zonesLoading}
       />
 

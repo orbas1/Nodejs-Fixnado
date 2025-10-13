@@ -1,4 +1,5 @@
-import { buildBusinessFront, buildEnterprisePanel, buildProviderDashboard } from '../services/panelService.js';
+import { buildBusinessFront, buildProviderDashboard } from '../services/panelService.js';
+import { getEnterprisePanelOverview } from '../services/enterprisePanelService.js';
 
 export async function getProviderDashboardHandler(req, res, next) {
   try {
@@ -14,8 +15,11 @@ export async function getProviderDashboardHandler(req, res, next) {
 
 export async function getEnterprisePanelHandler(req, res, next) {
   try {
-    const { data, meta } = await buildEnterprisePanel({ companyId: req.query.companyId });
-    res.json({ data, meta });
+    const payload = await getEnterprisePanelOverview({
+      companyId: req.query.companyId,
+      timezone: req.query.timezone
+    });
+    res.json({ data: payload, ...payload });
   } catch (error) {
     if (error.statusCode === 404) {
       return res.status(404).json({ message: error.message || 'company_not_found' });

@@ -5,12 +5,14 @@ import {
   deleteZoneHandler,
   listZonesHandler,
   getZoneHandler,
-  createZoneSnapshotHandler
+  createZoneSnapshotHandler,
+  importZonesHandler
 } from '../controllers/zoneController.js';
 
 const router = Router();
 
 router.post('/', createZoneHandler);
+router.post('/import', importZonesHandler);
 router.get('/', listZonesHandler);
 router.get('/:zoneId', getZoneHandler);
 router.put('/:zoneId', updateZoneHandler);
