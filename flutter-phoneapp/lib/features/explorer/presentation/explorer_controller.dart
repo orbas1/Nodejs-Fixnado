@@ -63,6 +63,19 @@ class ExplorerController extends StateNotifier<ExplorerViewState> {
     state = state.copyWith(filters: state.filters.copyWith(zoneId: zoneId));
   }
 
+  void selectServiceType(String? serviceType) {
+    state = state.copyWith(
+      filters: state.filters.copyWith(
+        serviceType: serviceType,
+        category: serviceType == null ? state.filters.category : null,
+      ),
+    );
+  }
+
+  void selectCategory(String? category) {
+    state = state.copyWith(filters: state.filters.copyWith(category: category));
+  }
+
   @override
   void dispose() {
     _listener.close();
@@ -100,16 +113,70 @@ class ExplorerViewState {
     if (snapshot == null) return const [];
     final data = snapshot!.services;
     if (filters.type == ExplorerResultType.marketplace || filters.type == ExplorerResultType.tools) {
+    Iterable<ExplorerService> data = snapshot!.services;
+    if (filters.type == ExplorerResultType.marketplace) {
       return const [];
     }
-    return data;
+    if (filters.serviceType != null && filters.serviceType!.isNotEmpty) {
+      data = data.where((service) => service.type == filters.serviceType);
+    }
+    if (filters.category != null && filters.category!.isNotEmpty) {
+      data = data.where((service) {
+        return service.categorySlug == filters.category || service.category == filters.category;
+      });
+    }
+    return data.toList();
+    final data = snapshot!.services;
+    switch (filters.type) {
+      case ExplorerResultType.services:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return const [];
+    }
   }
 
   List<ExplorerMarketplaceItem> get marketplaceItems {
     if (snapshot == null) return const [];
     final data = snapshot!.items;
-    if (filters.type == ExplorerResultType.services) {
-      return const [];
+    switch (filters.type) {
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return const [];
+    }
+  }
+
+  List<ExplorerStorefront> get storefronts {
+    if (snapshot == null) return const [];
+    final data = snapshot!.storefronts;
+    switch (filters.type) {
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.businessFronts:
+        return const [];
+    }
+  }
+
+  List<ExplorerBusinessFront> get businessFronts {
+    if (snapshot == null) return const [];
+    final data = snapshot!.businessFronts;
+    switch (filters.type) {
+      case ExplorerResultType.businessFronts:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.storefronts:
+        return const [];
     }
     if (filters.type == ExplorerResultType.tools) {
       return data.where((item) => item.supportsRental).toList();

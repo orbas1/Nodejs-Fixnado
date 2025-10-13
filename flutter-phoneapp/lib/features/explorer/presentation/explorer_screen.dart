@@ -3,11 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/utils/datetime_formatter.dart';
+import '../../bookings/presentation/widgets/booking_creation_sheet.dart';
+import '../../services/domain/service_catalog_models.dart';
+import '../../services/presentation/service_catalog_controller.dart';
+import '../../services/presentation/widgets/service_package_card.dart';
 import '../domain/models.dart';
 import 'explorer_controller.dart';
+import 'widgets/business_front_card.dart';
 import 'widgets/marketplace_item_card.dart';
 import 'widgets/service_result_card.dart';
 import 'widgets/tool_hire_sheet.dart';
+import 'widgets/storefront_card.dart';
 import 'widgets/zone_analytics_card.dart';
 
 class ExplorerScreen extends ConsumerStatefulWidget {
@@ -37,6 +43,11 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(explorerControllerProvider);
     final controller = ref.read(explorerControllerProvider.notifier);
+    final catalogState = ref.watch(serviceCatalogControllerProvider);
+    final ServiceCatalogSnapshot? catalog = catalogState.snapshot;
+    final packages = catalog?.packages ?? const <ServicePackage>[];
+    final serviceTypes = catalog?.types ?? const <ServiceTypeDefinition>[];
+    final categories = catalog?.categories ?? const <ServiceCategory>[];
 
     if (state.filters.term != _controller.text) {
       _controller.text = state.filters.term ?? '';
@@ -51,7 +62,15 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            sliver: SliverToBoxAdapter(child: _buildHeader(context, state, controller)),
+            sliver: SliverToBoxAdapter(
+              child: _buildHeader(
+                context,
+                state,
+                controller,
+                serviceTypes,
+                categories,
+              ),
+            ),
           ),
           if (state.isLoading)
             const SliverToBoxAdapter(
@@ -71,8 +90,47 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (catalogState.errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'Unable to refresh service packages: ${catalogState.errorMessage}',
+                          style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                    if (catalogState.offline)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'Showing cached service packages while offline.',
+                          style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                    if (packages.isNotEmpty) ...[
+                      Text('Service packages', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: packages
+                              .map(
+                                (package) => Padding(
+                                  padding: const EdgeInsets.only(right: 16),
+                                  child: ServicePackageCard(
+                                    package: package,
+                                    onBook: () => _openBookingSheet(context, catalog, package),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     if (state.errorMessage != null)
                       _ErrorBanner(message: state.errorMessage!, offline: state.offline),
+                    final hasResults =
+                        state.services.isNotEmpty || state.marketplaceItems.isNotEmpty || state.storefronts.isNotEmpty || state.businessFronts.isNotEmpty;
                     if (state.services.isNotEmpty) ...[
                       Text('Services', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 16),
@@ -97,7 +155,25 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                             ),
                           )),
                     ],
-                    if (state.services.isEmpty && state.marketplaceItems.isEmpty && state.errorMessage == null)
+                    if (state.storefronts.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text('Storefronts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 16),
+                      ...state.storefronts.map((storefront) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: StorefrontCard(storefront: storefront),
+                          )),
+                    ],
+                    if (state.businessFronts.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text('Business fronts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 16),
+                      ...state.businessFronts.map((front) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: BusinessFrontCard(front: front),
+                          )),
+                    ],
+                    if (!hasResults && state.errorMessage == null)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 80),
                         child: Column(
@@ -130,7 +206,29 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ExplorerViewState state, ExplorerController controller) {
+  Widget _buildHeader(
+    BuildContext context,
+    ExplorerViewState state,
+    ExplorerController controller,
+    List<ServiceTypeDefinition> serviceTypes,
+    List<ServiceCategory> categories,
+  ) {
+    ServiceTypeDefinition? selectedTypeDefinition;
+    if (state.filters.serviceType != null) {
+      for (final entry in serviceTypes) {
+        if (entry.type == state.filters.serviceType) {
+          selectedTypeDefinition = entry;
+          break;
+        }
+      }
+    }
+
+    final filteredCategories = selectedTypeDefinition == null
+        ? categories
+        : categories
+            .where((category) => selectedTypeDefinition!.categories.isEmpty || selectedTypeDefinition!.categories.contains(category.slug))
+            .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,6 +284,16 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 label: 'Tools',
                 selected: state.filters.type == ExplorerResultType.tools,
                 onSelected: () => controller.updateResultType(ExplorerResultType.tools),
+                label: 'Storefronts',
+                selected: state.filters.type == ExplorerResultType.storefronts,
+                onSelected: () => controller.updateResultType(ExplorerResultType.storefronts),
+              ),
+              const SizedBox(width: 12),
+              _buildFilterChip(
+                context,
+                label: 'Business fronts',
+                selected: state.filters.type == ExplorerResultType.businessFronts,
+                onSelected: () => controller.updateResultType(ExplorerResultType.businessFronts),
               ),
               const SizedBox(width: 12),
               DropdownButtonHideUnderline(
@@ -217,6 +325,80 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
             ],
           ),
         ),
+        if (serviceTypes.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _buildFilterChip(
+                    context,
+                    label: 'All service types',
+                    selected: state.filters.serviceType == null,
+                    onSelected: () {
+                      controller.selectServiceType(null);
+                      controller.refresh(bypassCache: true);
+                    },
+                  ),
+                ),
+                ...serviceTypes.map(
+                  (type) => Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _buildFilterChip(
+                      context,
+                      label: type.label,
+                      selected: state.filters.serviceType == type.type,
+                      onSelected: () {
+                        final isSelected = state.filters.serviceType == type.type;
+                        controller.selectServiceType(isSelected ? null : type.type);
+                        controller.refresh(bypassCache: true);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (filteredCategories.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _buildFilterChip(
+                    context,
+                    label: 'All categories',
+                    selected: state.filters.category == null,
+                    onSelected: () {
+                      controller.selectCategory(null);
+                      controller.refresh(bypassCache: true);
+                    },
+                  ),
+                ),
+                ...filteredCategories.map(
+                  (category) => Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _buildFilterChip(
+                      context,
+                      label: category.label,
+                      selected: state.filters.category == category.slug,
+                      onSelected: () {
+                        final isSelected = state.filters.category == category.slug;
+                        controller.selectCategory(isSelected ? null : category.slug);
+                        controller.refresh(bypassCache: true);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -236,6 +418,24 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    );
+  }
+
+  Future<void> _openBookingSheet(BuildContext context, ServiceCatalogSnapshot? catalog, ServicePackage package) async {
+    final zones = ref.read(explorerControllerProvider).snapshot?.zones ?? const <ZoneSummary>[];
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => BookingCreationSheet(
+        zones: zones,
+        categories: catalog?.categories ?? const [],
+        serviceTypes: catalog?.types ?? const [],
+        packages: catalog?.packages ?? const [],
+        catalogue: catalog?.catalogue ?? const [],
+        initialCategory: package.serviceCategorySlug,
+        initialPackageId: package.id,
+        initialServiceId: package.serviceId,
+      ),
     );
   }
 

@@ -38,6 +38,7 @@ import ConversationMessage from './conversationMessage.js';
 import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
+import PlatformSetting from './platformSetting.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -245,5 +246,6 @@ export {
   Conversation,
   ConversationParticipant,
   ConversationMessage,
-  MessageDelivery
+  MessageDelivery,
+  PlatformSetting
 };
