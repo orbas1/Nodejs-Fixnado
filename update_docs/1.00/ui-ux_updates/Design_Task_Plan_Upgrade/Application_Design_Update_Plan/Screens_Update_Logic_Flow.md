@@ -239,3 +239,11 @@
 4. Connection failure surfaces options: retry, switch to voice-only, or dial PSTN number. PSTN selection opens bottom sheet showing number + PIN and logs telemetry `chat.session.pstn_mobile`.
 5. Session end cleans Riverpod state, logs `chat.session.end_mobile` with duration, participant count, quality rating, and resets UI to thread view.
 
+
+### Analytics Pipeline Control Flow (2025-10-28)
+1. **Status Load:** `/api/analytics/pipeline` fetched on admin dashboard mount. Response hydrates status card, backlog trend, and failure streak gauge. If Secrets Manager toggle unreachable, display warning badge with support CTA.
+2. **Pause Sequence:** Operator selects `Pause pipeline` → modal prompts for actor, role, ticket ID, justification, expected resume time. Validation ensures required fields + acknowledgement checked. Submit calls `POST /api/analytics/pipeline/pause`; on success, record telemetry `analytics.pipeline.control` and append entry to toggle audit feed.
+3. **Resume Sequence:** Similar modal with pre-filled ticket ID and optional note capturing reason for resuming. API call `POST /api/analytics/pipeline/resume` updates status; UI displays toast confirming resume and backlog card transitions to Active state.
+4. **Run Ledger Refresh:** After control actions or periodic interval (60s), UI requests `/api/analytics/pipeline/runs?limit=25`. Table sorts by `startedAt DESC`; selecting a run opens drawer showing response snippet, purge totals, error message, and CTA `Escalate to data engineering` linking to support workflow.
+5. **Accessibility Guards:** Focus moves to modal header on open; pressing `Esc` closes modal and returns focus to trigger button. Live regions announce state transitions ("Pipeline paused" / "Pipeline resumed"). Keyboard shortcuts: `Shift+P` (pause), `Shift+R` (resume), `Ctrl+Shift+H` (focus run history).
+6. **Staging Behaviour:** If environment flag `analyticsPipeline.readOnly=true`, disable control buttons and show tooltip “Managed in production Secrets Manager — read-only in staging”. Telemetry events still fire for status viewing but omit actor metadata.

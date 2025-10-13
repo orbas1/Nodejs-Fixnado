@@ -92,3 +92,11 @@
 - `src/jobs/analyticsIngestionJob.js`
 - `tests/analyticsIngestionJob.test.js`
 - `src/database/migrations/20250224000000-augment-analytics-events.js`
+
+## 2025-10-28 — Added Files
+- `src/models/analyticsPipelineRun.js`
+- `src/database/migrations/20250225000000-create-analytics-pipeline-runs.js`
+- `src/services/analyticsPipelineService.js`
+- `src/controllers/analyticsPipelineController.js`
+- `src/routes/analyticsPipelineRoutes.js`
+- `tests/analyticsPipelineRoutes.test.js`

@@ -121,6 +121,7 @@ const config = {
     failedRetryMinutes: Math.max(intFromEnv('CAMPAIGN_EXPORT_RETRY_MINUTES', 10), 1)
   },
   analyticsPipeline: {
+    enabled: process.env.ANALYTICS_INGEST_ENABLED !== 'false',
     ingestEndpoint: process.env.ANALYTICS_INGEST_ENDPOINT || '',
     ingestApiKey: process.env.ANALYTICS_INGEST_API_KEY || '',
     batchSize: Math.max(intFromEnv('ANALYTICS_INGEST_BATCH_SIZE', 250), 1),
@@ -129,7 +130,9 @@ const config = {
     requestTimeoutMs: Math.max(intFromEnv('ANALYTICS_INGEST_TIMEOUT_MS', 15000), 1000),
     purgeBatchSize: Math.max(intFromEnv('ANALYTICS_PURGE_BATCH_SIZE', 300), 50),
     lookbackHours: Math.max(intFromEnv('ANALYTICS_BACKFILL_LOOKBACK_HOURS', 72), 1),
-    retryScheduleMinutes: jsonFromEnv('ANALYTICS_RETRY_SCHEDULE_MINUTES', [5, 15, 60, 240, 1440])
+    retryScheduleMinutes: jsonFromEnv('ANALYTICS_RETRY_SCHEDULE_MINUTES', [5, 15, 60, 240, 1440]),
+    controlToggleKey: process.env.ANALYTICS_INGEST_TOGGLE_KEY || 'analytics.pipeline.enabled',
+    controlCacheSeconds: Math.max(intFromEnv('ANALYTICS_CONTROL_CACHE_SECONDS', 30), 5)
   }
 };
 

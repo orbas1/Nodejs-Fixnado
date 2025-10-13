@@ -26,3 +26,8 @@
 - Added `analyticsPipeline` namespace with endpoint/API key, batch sizing, poll interval, retry schedule, retention horizon, purge batch size, lookback window, and request timeout knobs sourced from `ANALYTICS_*` environment variables to drive the new ingestion job.
 - Extended JSON/int parsing helpers to normalise retry schedules and guard against invalid numeric overrides so ingestion cadence remains predictable across environments.
 - Documented expectation that staging/production supply warehouse endpoints + API keys while lower environments rely on default noop behaviour, keeping CI hermetic yet configuration-complete.
+
+## 2025-10-28 — Analytics Pipeline Control Toggles
+- Added `ANALYTICS_INGEST_ENABLED`, `ANALYTICS_INGEST_TOGGLE_KEY`, and `ANALYTICS_CONTROL_CACHE_SECONDS` to the analytics pipeline config namespace, enabling environment-level kill switches and toggle cache tuning without redeploying.
+- Pause/resume flows now rely on Secrets Manager overrides keyed by `controlToggleKey`; cached state prevents excessive toggle fetches while honouring env overrides.
+- Configuration updates documented alongside service/job changes so operations understand precedence (env override → feature toggle → default) when gating warehouse ingestion.

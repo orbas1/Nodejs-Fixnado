@@ -218,3 +218,12 @@
   3. ✅ Capture dashboard/business front widget translations (KPI tiles, alerts, concierge modules) with Intl formatting guidance and aria-live refresh banners to safeguard WCAG 2.2 AA during Suspense/loading states.
   4. ✅ Update QA selectors, pseudo-locale stress scripts, translation cache invalidation checklist, and performance guardrails within `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`, and `Design_update_task_list.md` to keep localisation accessibility sign-off auditable before Milestone M4 closure.
 
+## Task 22 — Analytics Pipeline Control Console UX *(Status: ✅ Complete — 2025-10-28)*
+- **Delivery Owner:** Data Experience Designer with Analytics Ops Lead, Support Ops Manager, and Backend Analytics Engineer partnership.
+- **Evidence:** `Design_Plan.md` Section 36, `Design_Change_log.md` Entry 26, updated artefacts (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Design_Task_Plan_Upgrade/Application_Design_Update_Plan/Screens_Update.md`, `Design_Task_Plan_Upgrade/Web_Application_Design_Update/Dashboard Designs.md`), drawings (`Admin_panel_drawings.md`, `dashboard_drawings.md`), and tracker updates across `Design_update_progress_tracker.md` & `Design_update_milestone_list.md`.
+- **Subtasks:**
+  1. ✅ Blueprint analytics pipeline status card and telemetry widgets mapping `/api/analytics/pipeline` metrics (status, backlog, oldest pending, next retry, failure streak) with severity badges, compliance copy, and QA selectors for automation.
+  2. ✅ Define pause/resume modal UX capturing actor, role, ticket ID, justification, expected duration, and acknowledgement toggles; embed telemetry schema (`analytics.pipeline.control`) and runbook links ensuring audit readiness.
+  3. ✅ Document run history table + detail drawer mirroring `AnalyticsPipelineRun` schema (processed/purged counts, duration, status, response excerpt) with accessibility guidance (sticky headers, keyboard navigation, live region updates) and export CTAs.
+  4. ✅ Update cross-channel artefacts noting staging read-only behaviour, Secrets Manager fallback messaging, Flutter parity backlog, and migration dependency `20250225000000-create-analytics-pipeline-runs.js`, keeping ops/support/legal alignment explicit in trackers.
+

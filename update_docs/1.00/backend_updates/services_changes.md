@@ -39,3 +39,8 @@
 - Extended `analyticsEventService` with ingestion lifecycle utilities (pending fetch, mark success/failure, purge expired events, backfill acceleration) plus retention calculations so warehouse delivery jobs can coordinate retries and cleanup without duplicating logic.
 - Adjusted `communicationsService` delivery creation to stage suppressed-delivery analytics until after transaction commit, enrich metadata with `deliveryId`, and surface post-commit promises so API responses only resolve once telemetry persistence has been scheduled/awaited.
 - Batch recording helper now supports array ingestion (`recordAnalyticsEvents`) without logging noise, ensuring analytics pipelines remain performant while complying with transaction boundaries.
+
+## 2025-10-28 — Analytics Pipeline Control Service
+- Added `services/analyticsPipelineService.js` to evaluate ingestion enablement (env overrides + Secrets Manager toggles), cache control state, record `AnalyticsPipelineRun` audits, and expose pause/resume helpers that update feature toggles while logging control metadata.
+- Service summarises pipeline backlog/failure streak metrics for the new administration API, normalises metadata persisted to run history (domain/entity summary, purge counts, warnings), and guards pause/resume inputs with actor/ticket validation to keep audit trails production-ready.
+- Updated ingestion job to rely on the service for state evaluation and run logging, enabling skip logging, structured warnings, and deterministic retention of last-error context for dashboards/runbooks.

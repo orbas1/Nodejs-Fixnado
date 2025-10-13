@@ -110,6 +110,7 @@
    - Extend schemas for zones, bookings, custom jobs, inventory, ads, disputes, compliance documents, communication metrics.
 2. **ETL/ELT Pipelines**
    - Update ingestion jobs, ensure near-real-time feeds for dashboards, handle GDPR-compliant data retention.
+   - Ship pause/resume control service with Secrets Manager-backed toggles, cached control state, and auditable run ledger so operations can halt ingestion safely and evidence warehouse health.
 3. **Analytics Products**
    - Build dashboards per persona (Admin, Provider, Serviceman, Enterprise) featuring KPIs, alerts, and drill-downs.
 4. **Alerting & Monitoring**

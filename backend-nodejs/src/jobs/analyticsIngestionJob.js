@@ -6,6 +6,7 @@ import {
   markEventIngestionSuccess,
   purgeExpiredAnalyticsEvents
 } from '../services/analyticsEventService.js';
+import { evaluatePipelineState, recordPipelineRun } from '../services/analyticsPipelineService.js';
 
 const DEFAULT_RETRY_SCHEDULE = [5, 15, 60, 240, 1440];
 
@@ -145,25 +146,62 @@ async function runCycle(settings, logger) {
   await ensureBackfillCoverage({ lookbackHours: settings.lookbackHours, now });
 
   const events = await fetchPendingAnalyticsEvents({ limit: settings.batchSize, now });
+  const summary = summariseEvents(events);
 
   if (events.length === 0) {
-    await purgeExpiredAnalyticsEvents({ now, batchSize: settings.purgeBatchSize });
-    return;
+    const purged = await purgeExpiredAnalyticsEvents({ now, batchSize: settings.purgeBatchSize });
+    return {
+      status: 'idle',
+      processed: 0,
+      failed: 0,
+      batches: 0,
+      purged,
+      summary,
+      error: null
+    };
   }
 
   if (!settings.ingestEndpoint) {
-    await handleFailure(events, settings, logger, new Error('Analytics ingest endpoint is not configured'));
-    return;
+    const error = new Error('Analytics ingest endpoint is not configured');
+    await handleFailure(events, settings, logger, error);
+    const purged = await purgeExpiredAnalyticsEvents({ now: new Date(), batchSize: settings.purgeBatchSize });
+    return {
+      status: 'failed',
+      processed: 0,
+      failed: events.length,
+      batches: 0,
+      purged,
+      summary,
+      error
+    };
   }
 
   try {
     await deliverBatch(events, settings, logger);
     await handleSuccess(events, settings.retentionDays);
+    const purged = await purgeExpiredAnalyticsEvents({ now: new Date(), batchSize: settings.purgeBatchSize });
+    return {
+      status: 'success',
+      processed: events.length,
+      failed: 0,
+      batches: 1,
+      purged,
+      summary,
+      error: null
+    };
   } catch (error) {
     await handleFailure(events, settings, logger, error);
+    const purged = await purgeExpiredAnalyticsEvents({ now: new Date(), batchSize: settings.purgeBatchSize });
+    return {
+      status: 'failed',
+      processed: 0,
+      failed: events.length,
+      batches: 0,
+      purged,
+      summary,
+      error
+    };
   }
-
-  await purgeExpiredAnalyticsEvents({ now: new Date(), batchSize: settings.purgeBatchSize });
 }
 
 export function startAnalyticsIngestionJob(logger = console) {
@@ -180,12 +218,63 @@ export function startAnalyticsIngestionJob(logger = console) {
     lookbackHours: Math.max(pipelineConfig.lookbackHours || 48, 1)
   };
 
-  const tick = () => {
-    runCycle(settings, logger).catch((error) => {
+  const tick = async () => {
+    const startedAt = new Date();
+    try {
+      const state = await evaluatePipelineState();
+
+      if (!state.enabled) {
+        logger.warn?.('analytics-ingestion-disabled', {
+          reason: state.reason || 'disabled',
+          source: state.source,
+          toggleState: state.toggleState
+        });
+
+        await recordPipelineRun({
+          status: 'skipped',
+          startedAt,
+          finishedAt: new Date(),
+          metadata: {
+            pipelineState: {
+              source: state.source,
+              toggleState: state.toggleState,
+              rollout: state.rollout ?? null,
+              reason: state.reason ?? null,
+              warning: state.warning ?? null
+            }
+          }
+        });
+        return;
+      }
+
+      const result = await runCycle(settings, logger);
+      const finishedAt = new Date();
+
+      await recordPipelineRun({
+        status: result.status,
+        startedAt,
+        finishedAt,
+        eventsProcessed: result.processed,
+        eventsFailed: result.failed,
+        batchesDelivered: result.batches,
+        purgedEvents: result.purged,
+        lastError: result.error ? (result.error instanceof Error ? result.error.message : String(result.error)) : null,
+        metadata: {
+          summary: result.summary,
+          pipelineState: {
+            source: state.source,
+            toggleState: state.toggleState,
+            rollout: state.rollout ?? null,
+            reason: state.reason ?? null,
+            warning: state.warning ?? null
+          }
+        }
+      });
+    } catch (error) {
       logger.error?.('analytics-ingestion-job-failed', {
         error: error instanceof Error ? error.message : String(error)
       });
-    });
+    }
   };
 
   tick();

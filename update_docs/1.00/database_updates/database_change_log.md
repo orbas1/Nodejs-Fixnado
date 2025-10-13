@@ -33,3 +33,8 @@
 - Migration `20250224000000-augment-analytics-events.js` augments `analytics_events` with ingestion governance columns (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) and supporting indexes on `nextIngestAttemptAt` and `retentionExpiresAt` to accelerate retry scheduling and purge queries.
 - Backfills existing rows with default attempt counts and schedules immediate ingestion for legacy events, ensuring the new background job can resume without manual intervention.
 - Down migration removes added columns/indexes while preserving base analytics event data so prior pipelines remain functional if rollback is required.
+
+## 2025-10-28 — Analytics Pipeline Run Ledger
+- Migration `20250225000000-create-analytics-pipeline-runs.js` introduces `analytics_pipeline_runs` capturing cycle timestamps, batch sizes, purge counts, failure streak metadata, toggle actor/ticket details, and response diagnostics for warehouse monitoring.
+- Added indexes on `(startedAt DESC)` and `(status, startedAt)` to power dashboard lookups while ensuring down migration removes dependent indexes before dropping the table for clean rollback across Postgres/sqlite.
+- Run history is linked to ingestion telemetry via foreign-key friendly correlation IDs so runbooks, dashboards, and compliance exports can evidence pause/resume actions alongside pipeline throughput.

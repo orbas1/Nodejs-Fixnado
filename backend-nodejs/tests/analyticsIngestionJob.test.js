@@ -17,6 +17,8 @@ const fetchPendingAnalyticsEvents = vi.fn();
 const markEventIngestionFailure = vi.fn();
 const markEventIngestionSuccess = vi.fn();
 const purgeExpiredAnalyticsEvents = vi.fn();
+const evaluatePipelineState = vi.fn();
+const recordPipelineRun = vi.fn();
 
 let startAnalyticsIngestionJob;
 
@@ -48,6 +50,14 @@ beforeEach(async () => {
     markEventIngestionFailure,
     markEventIngestionSuccess,
     purgeExpiredAnalyticsEvents
+  }));
+
+  evaluatePipelineState.mockResolvedValue({ enabled: true, source: 'default', reason: null, toggleState: null });
+  recordPipelineRun.mockResolvedValue();
+
+  vi.doMock('../src/services/analyticsPipelineService.js', () => ({
+    evaluatePipelineState,
+    recordPipelineRun
   }));
 
   ({ startAnalyticsIngestionJob } = await import('../src/jobs/analyticsIngestionJob.js'));
@@ -123,6 +133,16 @@ describe('analytics ingestion job', () => {
       expect.objectContaining({ count: 2, endpoint: pipelineConfig.ingestEndpoint })
     );
 
+    expect(recordPipelineRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'success',
+        eventsProcessed: 2,
+        eventsFailed: 0,
+        batchesDelivered: 1,
+        purgedEvents: expect.any(Number)
+      })
+    );
+
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), pipelineConfig.pollIntervalSeconds * 1000);
 
     clearInterval(handle);
@@ -171,6 +191,15 @@ describe('analytics ingestion job', () => {
       expect.objectContaining({ eventId: events[0].id, attempts: 3 })
     );
 
+    expect(recordPipelineRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        eventsProcessed: 0,
+        eventsFailed: 1,
+        lastError: expect.stringContaining('503')
+      })
+    );
+
     clearInterval(handle);
   });
 
@@ -212,6 +241,34 @@ describe('analytics ingestion job', () => {
       'analytics-event-ingest-error',
       expect.objectContaining({ eventId: events[0].id })
     );
+
+    expect(recordPipelineRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        eventsProcessed: 0,
+        eventsFailed: 1,
+        lastError: expect.stringContaining('not configured')
+      })
+    );
+
+    clearInterval(handle);
+  });
+
+  it('skips execution when the pipeline is disabled via control toggle', async () => {
+    evaluatePipelineState.mockResolvedValueOnce({
+      enabled: false,
+      source: 'feature_toggle',
+      reason: 'maintenance window',
+      toggleState: 'disabled'
+    });
+
+    const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn() };
+    const handle = startAnalyticsIngestionJob(logger);
+    await flushPromises();
+
+    expect(fetchPendingAnalyticsEvents).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith('analytics-ingestion-disabled', expect.any(Object));
+    expect(recordPipelineRun).toHaveBeenCalledWith(expect.objectContaining({ status: 'skipped' }));
 
     clearInterval(handle);
   });

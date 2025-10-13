@@ -29,3 +29,8 @@
 - Introduced `communicationsController.js` exposing conversation CRUD, participant management, and message send endpoints with schema validation covering AI assist toggles, attachments, and quiet-hour acknowledgements.
 - Controller surfaces AI assist metadata (source, confidence, token usage) in responses, coordinates delivery acknowledgements, and maps Agora session generation errors to actionable 503 responses with retry hints for clients.
 - Added quiet-hour override endpoint returning audit payload (actor, reason, duration) to satisfy compliance requirements and feed notification centre dashboards.
+
+## 2025-10-28 — Analytics Pipeline Controller
+- Added `analyticsPipelineController.js` exposing `fetchAnalyticsPipelineStatus`, `pauseAnalyticsPipelineHandler`, and `resumeAnalyticsPipelineHandler` to surface backlog/run telemetry and orchestrate ingestion rollbacks via Secrets Manager toggles.
+- Controllers respond with backlog statistics (pending events, oldest pending, next retry), failure streaks, last success/error metadata, and recent run history so dashboards/runbooks can monitor warehouse ingestion in real time.
+- Pause/resume handlers validate actor/ticket payloads, invoke the control service to update toggles and record audit runs, and return updated status payloads to confirm pipeline state transitions for operations teams.
