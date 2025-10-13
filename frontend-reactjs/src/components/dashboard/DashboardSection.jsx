@@ -39,29 +39,32 @@ SectionHeader.propTypes = {
   }).isRequired
 };
 
-const GridSection = ({ section }) => (
-  <div>
-    <SectionHeader section={section} />
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {section.data.cards.map((card) => (
-        <div
-          key={card.title}
-          className={`rounded-2xl border border-slate-200 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-sm`}
-        >
-          <h3 className="text-lg font-semibold text-slate-900">{card.title}</h3>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            {card.details.map((detail) => (
+const GridSection = ({ section }) => {
+  const cards = section.data?.cards ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {cards.map((card) => (
+          <div
+            key={card.title}
+            className={`rounded-2xl border border-slate-200 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-sm`}
+          >
+            <h3 className="text-lg font-semibold text-slate-900">{card.title}</h3>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            {(card.details ?? []).map((detail) => (
               <li key={detail} className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-2 rounded-full bg-slate-300" />
                 <span>{detail}</span>
               </li>
             ))}
-          </ul>
-        </div>
-      ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 GridSection.propTypes = {
   section: PropTypes.shape({
@@ -79,18 +82,20 @@ GridSection.propTypes = {
   }).isRequired
 };
 
-const BoardSection = ({ section }) => (
-  <div>
-    <SectionHeader section={section} />
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {section.data.columns.map((column) => (
-        <div key={column.title} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600">{column.title}</h3>
-            <span className="text-xs text-slate-500">{column.items.length} items</span>
-          </div>
-          <div className="space-y-4">
-            {column.items.map((item) => (
+const BoardSection = ({ section }) => {
+  const columns = section.data?.columns ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {columns.map((column) => (
+          <div key={column.title} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600">{column.title}</h3>
+            <span className="text-xs text-slate-500">{column.items?.length ?? 0} items</span>
+            </div>
+            <div className="space-y-4">
+            {(column.items ?? []).map((item) => (
               <div key={item.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
                 <p className="font-medium text-slate-900">{item.title}</p>
                 {item.owner && <p className="text-sm text-slate-600">{item.owner}</p>}
@@ -98,12 +103,13 @@ const BoardSection = ({ section }) => (
                 {item.eta && <p className="text-xs text-slate-500">{item.eta}</p>}
               </div>
             ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 BoardSection.propTypes = {
   section: PropTypes.shape({
@@ -127,22 +133,25 @@ BoardSection.propTypes = {
   }).isRequired
 };
 
-const TableSection = ({ section }) => (
-  <div>
-    <SectionHeader section={section} />
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-100 text-slate-600">
-          <tr>
-            {section.data.headers.map((header) => (
+const TableSection = ({ section }) => {
+  const headers = section.data?.headers ?? [];
+  const rows = section.data?.rows ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <thead className="bg-slate-100 text-slate-600">
+            <tr>
+              {headers.map((header) => (
               <th key={header} className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-xs">
                 {header}
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 text-slate-700">
-          {section.data.rows.map((row, rowIndex) => (
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 text-slate-700">
+            {rows.map((row, rowIndex) => (
             <tr key={rowIndex} className="hover:bg-slate-50">
               {row.map((value, cellIndex) => (
                 <td key={cellIndex} className="px-4 py-3 align-top">
@@ -150,12 +159,13 @@ const TableSection = ({ section }) => (
                 </td>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 TableSection.propTypes = {
   section: PropTypes.shape({
@@ -168,22 +178,25 @@ TableSection.propTypes = {
   }).isRequired
 };
 
-const ListSection = ({ section }) => (
-  <div>
-    <SectionHeader section={section} />
-    <div className="space-y-4">
-      {section.data.items.map((item) => (
-        <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-1">
-            <p className="text-base font-semibold text-slate-900">{item.title}</p>
-            <p className="text-sm text-slate-600">{item.description}</p>
-            <span className="text-xs uppercase tracking-wide text-slate-500">{item.status}</span>
+const ListSection = ({ section }) => {
+  const items = section.data?.items ?? [];
+  return (
+    <div>
+      <SectionHeader section={section} />
+      <div className="space-y-4">
+        {items.map((item) => (
+          <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-1">
+              <p className="text-base font-semibold text-slate-900">{item.title}</p>
+              <p className="text-sm text-slate-600">{item.description}</p>
+              <span className="text-xs uppercase tracking-wide text-slate-500">{item.status}</span>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 ListSection.propTypes = {
   section: PropTypes.shape({

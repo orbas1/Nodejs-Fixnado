@@ -66,3 +66,17 @@
 - Lazy-load charts; show skeleton placeholder 320px height.
 - Virtualise activity feed beyond 30 items using `react-window`.
 - Debounce filter controls 300ms to avoid re-render thrash.
+
+## Analytics Pipeline Control Widgets (2025-10-28)
+- **Control Card:** Status chip (Active/Paused/Degraded) sits above backlog metric, oldest pending timestamp, and next retry countdown. Quick actions `Pause`/`Resume` open modal described in `Screens_Update.md`. Card uses alert palette background + border tokens and includes `data-qa="analytics-control-status"` for automation.
+- **Run History Table:** 4-column span table with sticky header, zebra rows, and inline alert for failed runs. Columns: Start, Duration, Processed/Purged counts, Status pill, Failure streak, Triggered by, Ticket. Row click opens detail drawer containing response snapshot and escalation CTAs.
+- **Toggle Audit Feed & Telemetry Widgets:** Right rail houses audit feed list (avatar, ticket badge, summary, timestamp), backlog sparkline (12-hour lookback), and failure streak gauge. Widgets provide tooltip definitions, accessible text, and link to ops runbook `OPS-AN-07`. Read-only variant displays disabled controls + banner when Secrets Manager toggle absent.
+
+## Persona Analytics Dashboard Tiles & Export (2025-10-29)
+- **Overview KPI Row:** Four KPI cards sized 280×168 per persona; includes metric value, delta chip, timeframe label, and tooltip describing calculation + escalation guidance. Admin emphasises SLA breach %, provider surfaces revenue + invoice backlog, serviceman shows active assignments + travel time, enterprise highlights spend variance + contract renewal status.
+- **Pipeline Widgets:** Two 4-column modules track workload pipelines (bookings awaiting assignment, inspections due) and operational backlog (support tickets, disputes). Each widget lists top five items with CTA `View all` linking to relevant workspace; uses severity badges and `data-qa="dashboard-queue"` selectors.
+- **Fraud/Compliance Rail:** Right column stacks cards for fraud alerts, compliance actions, and communications backlog. Cards surface counts, trend arrows, and CTA buttons; colours follow analytics palette (amber warning, red critical, teal info).
+- **Export Toolbar:** Sticky toolbar above grid shows persona avatar, reporting window pill, timezone tag, refresh ghost button, and `Download CSV` primary button. Export button displays spinner + success toast anchor; keyboard hint `Shift+E` displayed for power users.
+- **Export Metadata (2025-10-30):** Toolbar copy now references configured row limit (e.g., "Up to 5,000 rows per export"), displays "Last refreshed" timestamp tied to API response, and surfaces timezone abbreviation. Success toast includes filename + row count; error toast references analytics ops channel. QA note: ensure Vitest reporter swap removes spinner noise when testing export CTA states.
+- **Offline/Empty States:** Offline banner spans width with icon, copy, retry CTA, and support link; uses `role="alert"`. Empty states feature illustration + persona copy (“All SLA commitments met — great work!”) with CTA to view runbooks or schedule exports.
+- **Responsive Behaviour:** 12-column desktop grid collapses to 8-column (tablet) and single column (mobile). Export toolbar remains sticky with drop shadow when scrolled. Queue tables convert to stacked cards on ≤640px with horizontal scroll for metrics.

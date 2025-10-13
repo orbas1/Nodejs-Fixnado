@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import routes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { sequelize } from './models/index.js';
+import config from './config/index.js';
 
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(
 app.use(cors());
 app.use(express.json());
 app.use(morgan('tiny'));
+
+app.set('dashboards:exportRowLimit', config.dashboards?.exportRowLimit ?? 5000);
+app.set('dashboards:defaultTimezone', config.dashboards?.defaultTimezone ?? 'Europe/London');
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'Fixnado API' });

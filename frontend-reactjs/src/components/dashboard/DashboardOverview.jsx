@@ -20,8 +20,9 @@ const trendIcon = {
 };
 
 const ChartRenderer = ({ chart }) => {
+  const data = chart.data ?? [];
   const commonProps = {
-    data: chart.data,
+    data,
     margin: { top: 16, right: 16, bottom: 0, left: 0 }
   };
 
@@ -152,44 +153,51 @@ InsightList.propTypes = {
   insights: PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
-const DashboardOverview = ({ analytics }) => (
-  <div className="space-y-8">
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-      {analytics.metrics.map((metric) => (
-        <MetricCard key={metric.label} metric={metric} />
-      ))}
-    </div>
+const DashboardOverview = ({ analytics }) => {
+  const metrics = analytics?.metrics ?? [];
+  const charts = analytics?.charts ?? [];
+  const upcoming = analytics?.upcoming ?? [];
+  const insights = analytics?.insights ?? [];
 
-    <div className="grid gap-6 lg:grid-cols-3">
-      {analytics.charts.map((chart) => (
-        <div key={chart.id} className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">{chart.title}</h3>
-          <p className="mt-2 text-sm text-slate-600">{chart.description}</p>
-          <div className="mt-4 h-60">
-            <ChartRenderer chart={chart} />
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <MetricCard key={metric.label} metric={metric} />
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {charts.map((chart) => (
+          <div key={chart.id} className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">{chart.title}</h3>
+            <p className="mt-2 text-sm text-slate-600">{chart.description}</p>
+            <div className="mt-4 h-60">
+              <ChartRenderer chart={chart} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Upcoming & Commitments</h3>
+          <p className="mt-2 text-sm text-slate-600">Stay ahead of scheduled workstreams and critical checkpoints.</p>
+          <div className="mt-4">
+            <Timeline upcoming={upcoming} />
           </div>
         </div>
-      ))}
-    </div>
-
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Upcoming & Commitments</h3>
-        <p className="mt-2 text-sm text-slate-600">Stay ahead of scheduled workstreams and critical checkpoints.</p>
-        <div className="mt-4">
-          <Timeline upcoming={analytics.upcoming} />
-        </div>
-      </div>
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Insights & Calls to Action</h3>
-        <p className="mt-2 text-sm text-slate-600">AI-curated recommendations to improve velocity and outcomes.</p>
-        <div className="mt-4">
-          <InsightList insights={analytics.insights} />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Insights & Calls to Action</h3>
+          <p className="mt-2 text-sm text-slate-600">AI-curated recommendations to improve velocity and outcomes.</p>
+          <div className="mt-4">
+            <InsightList insights={insights} />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 DashboardOverview.propTypes = {
   analytics: PropTypes.shape({

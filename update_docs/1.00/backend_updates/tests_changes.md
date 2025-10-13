@@ -47,3 +47,12 @@
 - Added `tests/analyticsPipelineRoutes.test.js` exercising the new `/api/analytics/pipeline` endpoints: status responses (backlog counts, failure streak, last success/error timestamps, run summaries) and pause/resume control flows.
 - Tests seed sqlite with pending events and pipeline runs, verify pause/resume audit entries (`AnalyticsPipelineRun` metadata), validate actor payload requirements, and ensure pipeline state toggles propagate through the control service without polling actual Secrets Manager.
 - Extended `tests/analyticsIngestionJob.test.js` to cover pipeline disablement logging and audit recording so skip scenarios remain regression-proof when toggles gate ingestion.
+
+## 2025-10-29 — Persona Dashboard Aggregation Tests
+- Added `tests/analyticsDashboards.test.js` seeding users, companies, service zones, bookings, rentals, campaign metrics, fraud signals, inventory alerts, compliance docs, and conversations to validate admin, provider, serviceman, and enterprise persona responses end-to-end.
+- Suite asserts overview KPI calculations, trend deltas, pipeline columns, compliance tables, metadata formatting, and export URL wiring while confirming CSV downloads include persona/window headers and escaped values for ingestion jobs.
+- Fixtures mirror sqlite/Postgres schema (including UUID validation) and exercise validation errors (invalid persona → 404, malformed query → 422) so regression coverage protects controller/service logic and export serialization.
+
+## 2025-10-30 — Regression Execution Evidence
+- Ran `npm test` under `backend-nodejs/` to execute analytics dashboard suites with staging-like fixtures; confirmed 13 files / 33 tests pass, including persona aggregation/export cases, and captured spinner overflow to be resolved by enforcing CI reporters.【3d3b31†L1-L38】
+- Recorded requirement to add CI-friendly reporter defaults (`CI=1`, `--reporter=dot`/`junit`) so audit logs remain reviewable when analytics suites expand with enterprise drill-down coverage.
