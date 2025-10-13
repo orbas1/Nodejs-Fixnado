@@ -40,7 +40,7 @@ const DashboardHub = () => {
                 </div>
                 <p className="text-sm text-slate-600">{featureCopy[role.id]}</p>
                 <div className="grid gap-3 text-sm text-slate-600">
-                  {role.navigation.slice(0, 4).map((item) => (
+                  {(role.navigation ?? []).slice(0, 4).map((item) => (
                     <div key={item.id} className="flex items-start gap-2">
                       <span className="mt-1 h-2 w-2 rounded-full bg-accent" />
                       <span>{item.label}</span>
@@ -83,7 +83,7 @@ const DashboardHub = () => {
                   </div>
                   <p className="mt-4 text-sm text-slate-600">{featureCopy[role.id]}</p>
                   <ul className="mt-4 space-y-2 text-xs text-slate-500">
-                    {role.navigation.slice(0, 4).map((item) => (
+                    {(role.navigation ?? []).slice(0, 4).map((item) => (
                       <li key={item.id}>{item.label}</li>
                     ))}
                   </ul>

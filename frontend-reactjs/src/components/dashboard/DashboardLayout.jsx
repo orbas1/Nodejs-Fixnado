@@ -195,13 +195,13 @@ const Skeleton = () => (
   <div className="px-6 py-10">
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="animate-pulse space-y-4">
-        <div className="h-6 w-52 rounded bg-slate-200" />
-        <div className="h-4 w-full rounded bg-slate-200" />
-        <div className="h-4 w-3/4 rounded bg-slate-200" />
+        <div className="h-6 w-52 rounded bg-primary/10" />
+        <div className="h-4 w-full rounded bg-primary/10" />
+        <div className="h-4 w-3/4 rounded bg-primary/10" />
       </div>
       <div className="animate-pulse grid gap-6 md:grid-cols-2">
-        <div className="h-40 rounded-2xl bg-slate-200" />
-        <div className="h-40 rounded-2xl bg-slate-200" />
+        <div className="h-40 rounded-2xl bg-primary/10" />
+        <div className="h-40 rounded-2xl bg-primary/10" />
       </div>
     </div>
   </div>
@@ -289,26 +289,26 @@ const DashboardLayout = ({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
-      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-slate-200 bg-white/90 backdrop-blur">
-        <div className="p-8 border-b border-slate-200">
+    <div className="min-h-screen bg-secondary text-slate-900 flex">
+      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-primary/10 bg-white">
+        <div className="p-8 border-b border-primary/10">
           <div className="flex items-center gap-3">
             <Bars3BottomLeftIcon className="h-8 w-8 text-accent" />
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Fixnado</p>
-              <p className="text-lg font-semibold text-slate-900">{roleMeta.name}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary/70">Fixnado</p>
+              <p className="text-lg font-semibold text-primary">{roleMeta.name}</p>
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-600">{roleMeta.headline}</p>
           <div className="mt-6 space-y-2">
-            <label className="text-xs uppercase tracking-wide text-slate-500" htmlFor="roleSwitcher">
+            <label className="text-xs uppercase tracking-wide text-primary/70" htmlFor="roleSwitcher">
               Switch dashboard
             </label>
             <select
               id="roleSwitcher"
               value={roleMeta.id}
               onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-xl border border-primary/20 bg-secondary px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {registeredOptions.map((role) => (
                 <option key={role.id} value={role.id}>
@@ -329,7 +329,7 @@ const DashboardLayout = ({
                 className={`w-full text-left rounded-xl px-4 py-3 transition-colors border ${
                   isActive
                     ? 'bg-accent/10 border-accent/40 text-accent'
-                    : 'bg-white border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    : 'bg-white border-primary/10 text-slate-600 hover:bg-secondary hover:text-primary'
                 }`}
               >
                 <p className="text-sm font-semibold">{item.label}</p>
@@ -338,10 +338,10 @@ const DashboardLayout = ({
             );
           })}
         </nav>
-        <div className="p-6 border-t border-slate-200">
+        <div className="p-6 border-t border-primary/10">
           <Link
             to="/"
-            className="flex items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent hover:bg-accent/20"
+            className="flex items-center justify-center gap-2 rounded-xl border border-accent/30 bg-white px-4 py-3 text-sm font-semibold text-accent shadow-sm hover:bg-accent/10"
           >
             <ArrowLeftOnRectangleIcon className="h-5 w-5" /> Return to Fixnado.com
           </Link>
@@ -349,29 +349,29 @@ const DashboardLayout = ({
       </aside>
 
       <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur px-6 py-6">
+        <div className="sticky top-0 z-10 border-b border-primary/10 bg-white/95 backdrop-blur px-6 py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">{activeSection?.label ?? roleMeta.name}</h1>
+              <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
               <p className="text-sm text-slate-600 max-w-2xl">{roleMeta.persona}</p>
               {lastRefreshed && (
-                <p className="text-xs text-slate-400 mt-1">Refreshed {formatRelativeTime(lastRefreshed)}</p>
+                <p className="text-xs text-primary/60 mt-1">Refreshed {formatRelativeTime(lastRefreshed)}</p>
               )}
               <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
             </div>
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
               <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary/40" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full rounded-full bg-white border border-primary/20 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-primary/10 bg-white shadow-xl">
+                    <ul className="max-h-72 overflow-y-auto divide-y divide-primary/10">
                       {searchResults.map((result) => (
                         <li key={result.id}>
                           <button
@@ -381,16 +381,16 @@ const DashboardLayout = ({
                               setSearchQuery('');
                               setSearchResults([]);
                             }}
-                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-100"
+                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
                           >
-                            <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                            <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-primary/70">
                               {resultBadge[result.type] ?? 'Result'}
                             </span>
                             <div className="flex-1">
-                              <p className="text-sm font-semibold text-slate-900">{result.label}</p>
+                              <p className="text-sm font-semibold text-primary">{result.label}</p>
                               <p className="text-xs text-slate-500">{result.description}</p>
                             </div>
-                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
+                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-primary/40" />
                           </button>
                         </li>
                       ))}
@@ -403,14 +403,14 @@ const DashboardLayout = ({
                   type="button"
                   onClick={onRefresh}
                   disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
                 </button>
                 {exportHref && (
                   <a
                     href={exportHref}
-                    className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow hover:bg-accent/80"
+                    className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-accent/30 hover:bg-accent/90"
                   >
                     <ArrowDownTrayIcon className="h-4 w-4" /> Download CSV
                   </a>
