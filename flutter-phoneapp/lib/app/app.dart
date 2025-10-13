@@ -7,6 +7,7 @@ import 'app_shell.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
 import '../features/bookings/presentation/booking_screen.dart';
+import '../features/communications/presentation/communications_screen.dart';
 import '../features/feed/presentation/live_feed_screen.dart';
 import '../features/explorer/presentation/explorer_screen.dart';
 import '../features/profile/presentation/profile_management_screen.dart';
@@ -96,6 +97,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           LiveFeedScreen(),
           BookingScreen(),
           RentalScreen(),
+          CommunicationsScreen(),
           ProfileManagementScreen(),
           AnalyticsDashboardScreen(),
         ],
@@ -122,6 +124,7 @@ enum _NavigationDestination {
   feed('Feed', Icons.dynamic_feed_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
+  inbox('Inbox', Icons.inbox_outlined),
   profile('Profile', Icons.person_outline),
   operations('Ops Pulse', Icons.analytics_outlined);
 
