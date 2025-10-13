@@ -13,6 +13,20 @@ if (typeof window !== 'undefined') {
     });
   }
 
+  if (typeof window.ResizeObserver !== 'function') {
+    window.ResizeObserver = class {
+      constructor(callback = () => {}) {
+        this.callback = callback;
+      }
+
+      observe() {}
+
+      unobserve() {}
+
+      disconnect() {}
+    };
+  }
+
   if (!window.dataLayer) {
     window.dataLayer = [];
   }
@@ -58,5 +72,20 @@ if (typeof window !== 'undefined') {
 
     window.ResizeObserver = ResizeObserverMock;
     global.ResizeObserver = ResizeObserverMock;
+  if (typeof window.ResizeObserver !== 'function') {
+    class ResizeObserver {
+      constructor(callback = () => {}) {
+        this.callback = callback;
+      }
+
+      observe() {}
+
+      unobserve() {}
+
+      disconnect() {}
+    }
+
+    window.ResizeObserver = ResizeObserver;
+    globalThis.ResizeObserver = ResizeObserver;
   }
 }

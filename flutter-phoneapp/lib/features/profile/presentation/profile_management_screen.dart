@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../auth/domain/role_scope.dart';
 import '../domain/profile_models.dart';
 import 'profile_controller.dart';
+import '../../storefront/presentation/storefront_screen.dart';
 
 class ProfileManagementScreen extends ConsumerStatefulWidget {
   const ProfileManagementScreen({super.key});
@@ -408,6 +409,30 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
                   title: 'Tooling & storefront',
                   subtitle: 'Reassure clients with visibility into assets and inventory available for deployments.',
                   child: _ToolingInventoryView(items: profile.tooling),
+                  child: Column(
+                    children: profile.tooling
+                        .map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(item.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                              subtitle: Text(item.description, style: GoogleFonts.inter()),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const StorefrontScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: const Text('Gestionar escaparate y listados'),
+                    ),
+                  ),
                 ),
               ),
             ),

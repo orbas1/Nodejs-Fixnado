@@ -1,4 +1,11 @@
 import PropTypes from 'prop-types';
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  MinusSmallIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -576,6 +583,256 @@ const InventorySection = ({ section }) => {
             )}
           </div>
         ))}
+const adsTrendIcon = {
+  up: ArrowTrendingUpIcon,
+  down: ArrowTrendingDownIcon,
+  flat: MinusSmallIcon
+};
+
+const severityBadgeClasses = {
+  Critical: 'border-rose-200 bg-rose-50 text-rose-700',
+  Warning: 'border-amber-200 bg-amber-50 text-amber-700',
+  Info: 'border-sky-200 bg-sky-50 text-sky-700',
+  default: 'border-slate-200 bg-slate-100 text-slate-600'
+};
+
+const FixnadoAdsSection = ({ section }) => {
+  const summaryCards = section.data?.summaryCards ?? [];
+  const funnel = section.data?.funnel ?? [];
+  const campaigns = section.data?.campaigns ?? [];
+  const invoices = section.data?.invoices ?? [];
+  const alerts = section.data?.alerts ?? [];
+  const recommendations = section.data?.recommendations ?? [];
+  const timeline = section.data?.timeline ?? [];
+
+  return (
+    <div className="space-y-8">
+      <SectionHeader section={section} />
+
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => {
+          const TrendIcon = adsTrendIcon[card.trend] ?? MinusSmallIcon;
+          const trendColor =
+            card.trend === 'down' ? 'text-rose-500' : card.trend === 'up' ? 'text-emerald-500' : 'text-primary/60';
+          return (
+            <div key={card.title} className="rounded-2xl border border-accent/10 bg-white/95 p-6 shadow-md">
+              <p className="text-xs uppercase tracking-wide text-primary/60">{card.title}</p>
+              <div className="mt-3 flex items-end justify-between gap-2">
+                <p className="text-2xl font-semibold text-primary">{card.value}</p>
+                {card.change ? (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs font-semibold ${trendColor}`}
+                  >
+                    <TrendIcon className="h-4 w-4" />
+                    {card.change}
+                  </span>
+                ) : null}
+              </div>
+              {card.helper ? <p className="mt-3 text-sm text-slate-600">{card.helper}</p> : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2 rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-primary">Active campaigns</h3>
+            <span className="text-xs uppercase tracking-wide text-primary/60">{campaigns.length} in view</span>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] divide-y divide-slate-200 text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-primary/60">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Campaign</th>
+                  <th className="px-4 py-3 font-semibold">Spend</th>
+                  <th className="px-4 py-3 font-semibold">Conversions</th>
+                  <th className="px-4 py-3 font-semibold">ROAS</th>
+                  <th className="px-4 py-3 font-semibold">Pacing</th>
+                  <th className="px-4 py-3 font-semibold">Window</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-600">
+                {campaigns.length > 0 ? (
+                  campaigns.map((campaign) => (
+                    <tr key={campaign.id ?? campaign.name} className="hover:bg-secondary/60">
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-primary">{campaign.name}</p>
+                        <p className="text-xs text-primary/60">{campaign.objective}</p>
+                        <p className="text-xs text-slate-500">Last metric {campaign.lastMetricDate ?? '—'}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-primary">{campaign.spend}</p>
+                        <p className="text-xs text-primary/60">{campaign.spendChange}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-primary">{campaign.conversions}</p>
+                        <p className="text-xs text-primary/60">{campaign.conversionsChange}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-primary">{campaign.roas}</p>
+                        <p className="text-xs text-primary/60">{campaign.roasChange}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{campaign.pacing}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{campaign.window}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                      No Fixnado Ads campaigns in this window.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-accent/10 bg-gradient-to-br from-secondary/50 via-white to-white p-6 shadow-md">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-primary">Upcoming flights</h3>
+            <span className="text-xs uppercase tracking-wide text-primary/60">{timeline.length} scheduled</span>
+          </div>
+          <ul className="mt-4 space-y-4">
+            {timeline.length > 0 ? (
+              timeline.map((entry) => (
+                <li key={`${entry.title}-${entry.start}`} className="rounded-2xl border border-accent/10 bg-white/80 px-4 py-3 text-sm text-slate-600">
+                  <p className="font-semibold text-primary">{entry.title}</p>
+                  <p className="text-xs text-primary/60">{entry.status}</p>
+                  <p className="mt-1 text-xs text-slate-500">{entry.start} → {entry.end}</p>
+                  <p className="mt-1 text-xs text-primary/70">Budget {entry.budget}</p>
+                </li>
+              ))
+            ) : (
+              <li className="rounded-2xl border border-dashed border-accent/40 bg-white/70 px-4 py-6 text-center text-sm text-slate-500">
+                No upcoming flights scheduled.
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+          <h3 className="text-lg font-semibold text-primary">Acquisition funnel</h3>
+          <ul className="mt-4 space-y-3">
+            {funnel.map((stage) => (
+              <li
+                key={stage.title}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-accent/10 bg-secondary px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-primary">{stage.title}</p>
+                  <p className="text-xs text-primary/60">{stage.helper}</p>
+                </div>
+                <span className="text-base font-semibold text-primary">{stage.value}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+          <h3 className="text-lg font-semibold text-primary">Recommendations</h3>
+          <ul className="mt-4 space-y-4">
+            {recommendations.map((item) => (
+              <li key={item.title} className="flex items-start gap-3 rounded-2xl border border-accent/10 bg-secondary px-4 py-3">
+                <CheckCircleIcon className="mt-1 h-5 w-5 text-emerald-500" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-primary">{item.title}</p>
+                  <p className="text-xs text-slate-600">{item.description}</p>
+                  {item.action ? (
+                    <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-primary">
+                      {item.action}
+                    </span>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-primary">Billing cadence</h3>
+            <span className="text-xs uppercase tracking-wide text-primary/60">{invoices.length} invoices</span>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] divide-y divide-slate-200 text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-primary/60">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Invoice</th>
+                  <th className="px-4 py-3 font-semibold">Campaign</th>
+                  <th className="px-4 py-3 font-semibold">Amount</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Due</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-600">
+                {invoices.length > 0 ? (
+                  invoices.map((invoice) => (
+                    <tr key={invoice.invoiceNumber ?? `${invoice.campaign}-${invoice.dueDate}`} className="hover:bg-secondary/60">
+                      <td className="px-4 py-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
+                      <td className="px-4 py-3">{invoice.campaign}</td>
+                      <td className="px-4 py-3">{invoice.amountDue}</td>
+                      <td className="px-4 py-3">{invoice.status}</td>
+                      <td className="px-4 py-3">{invoice.dueDate}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                      No invoices issued this window.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-primary">Guardrails &amp; alerts</h3>
+            <span className="text-xs uppercase tracking-wide text-primary/60">{alerts.length} alerts</span>
+          </div>
+          <ul className="mt-4 space-y-4">
+            {alerts.length > 0 ? (
+              alerts.map((alert) => {
+                const badgeClass = severityBadgeClasses[alert.severity] ?? severityBadgeClasses.default;
+                return (
+                  <li
+                    key={`${alert.title}-${alert.detectedAt}`}
+                    className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3 text-sm text-slate-600"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <ExclamationTriangleIcon className="h-4 w-4 text-primary/60" />
+                          <p className="text-sm font-semibold text-primary">{alert.title}</p>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass}`}>
+                          {alert.severity}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600">{alert.description}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-[0.65rem] uppercase tracking-wide text-primary/60">
+                        {alert.flight ? <span>{alert.flight}</span> : null}
+                        {alert.detectedAt ? <span>{alert.detectedAt}</span> : null}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })
+            ) : (
+              <li className="rounded-2xl border border-dashed border-accent/40 bg-secondary px-4 py-6 text-center text-sm text-slate-500">
+                No alerts raised. Guardrails are steady.
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -625,6 +882,78 @@ InventorySection.propTypes = {
               depositCurrency: PropTypes.string
             })
           )
+FixnadoAdsSection.propTypes = {
+  section: PropTypes.shape({
+    label: PropTypes.string,
+    description: PropTypes.string,
+    data: PropTypes.shape({
+      summaryCards: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string.isRequired,
+          value: PropTypes.string.isRequired,
+          change: PropTypes.string,
+          trend: PropTypes.string,
+          helper: PropTypes.string
+        })
+      ),
+      funnel: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string.isRequired,
+          value: PropTypes.string.isRequired,
+          helper: PropTypes.string
+        })
+      ),
+      campaigns: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          name: PropTypes.string.isRequired,
+          status: PropTypes.string,
+          objective: PropTypes.string,
+          spend: PropTypes.string,
+          spendChange: PropTypes.string,
+          conversions: PropTypes.string,
+          conversionsChange: PropTypes.string,
+          cpa: PropTypes.string,
+          roas: PropTypes.string,
+          roasChange: PropTypes.string,
+          pacing: PropTypes.string,
+          lastMetricDate: PropTypes.string,
+          flights: PropTypes.number,
+          window: PropTypes.string
+        })
+      ),
+      invoices: PropTypes.arrayOf(
+        PropTypes.shape({
+          invoiceNumber: PropTypes.string,
+          campaign: PropTypes.string,
+          amountDue: PropTypes.string,
+          status: PropTypes.string,
+          dueDate: PropTypes.string
+        })
+      ),
+      alerts: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string,
+          severity: PropTypes.string,
+          description: PropTypes.string,
+          detectedAt: PropTypes.string,
+          flight: PropTypes.string
+        })
+      ),
+      recommendations: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string.isRequired,
+          description: PropTypes.string.isRequired,
+          action: PropTypes.string
+        })
+      ),
+      timeline: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string.isRequired,
+          status: PropTypes.string,
+          start: PropTypes.string,
+          end: PropTypes.string,
+          budget: PropTypes.string
         })
       )
     })
@@ -838,6 +1167,8 @@ const DashboardSection = ({ section }) => {
       return <ListSection section={section} />;
     case 'inventory':
       return <InventorySection section={section} />;
+    case 'ads':
+      return <FixnadoAdsSection section={section} />;
     case 'settings':
       return <SettingsSection section={section} />;
     case 'calendar':

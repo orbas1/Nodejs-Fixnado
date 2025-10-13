@@ -86,6 +86,16 @@ describe('RoleDashboard', () => {
     expect(screen.getByRole('link', { name: /Download CSV/i })).toHaveAttribute(
       'href',
       '/api/analytics/dashboards/provider/export?timezone=Europe%2FLondon'
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
+    );
+    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
+    const resolvedTimezone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/London';
+    expect(screen.getByText('Download CSV')).toHaveAttribute(
+      'href',
+      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(resolvedTimezone)}`
+      '/api/analytics/dashboards/admin/export?timezone=UTC'
     );
   });
 
@@ -98,6 +108,19 @@ describe('RoleDashboard', () => {
         ok: false,
         json: async () => ({ message: 'persona_not_supported' })
       });
+    renderWithToggles(
+      <MemoryRouter initialEntries={['/dashboards/admin']}>
+        <Routes>
+          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
+    );
+    const retryButton = await screen.findByRole('button', { name: /try again/i });
+    expect(retryButton).toBeInTheDocument();
 
       renderWithToggles(
         <MemoryRouter initialEntries={['/dashboards/admin']}>
@@ -121,6 +144,12 @@ describe('RoleDashboard', () => {
     } finally {
       mockDashboards.admin = originalDashboard;
     }
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
+    );
+    fireEvent.click(retryButton);
+    await screen.findByRole('heading', { name: 'Executive Overview' });
   });
 
   it('renders access gate when feature toggle is disabled', async () => {
