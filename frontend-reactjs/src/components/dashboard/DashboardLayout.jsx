@@ -310,7 +310,9 @@ const DashboardLayout = ({
   onRefresh,
   lastRefreshed,
   exportHref,
-  filters
+  filters,
+  toggleMeta,
+  toggleReason
 }) => {
   const navigation = dashboard?.navigation ?? [];
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -550,7 +552,15 @@ DashboardLayout.propTypes = {
   onRefresh: PropTypes.func.isRequired,
   lastRefreshed: PropTypes.string,
   exportHref: PropTypes.string,
-  filters: PropTypes.node
+  filters: PropTypes.node,
+  toggleMeta: PropTypes.shape({
+    state: PropTypes.string,
+    rollout: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    owner: PropTypes.string,
+    ticket: PropTypes.string,
+    lastModifiedAt: PropTypes.string
+  }),
+  toggleReason: PropTypes.string
 };
 
 DashboardLayout.defaultProps = {
@@ -559,7 +569,9 @@ DashboardLayout.defaultProps = {
   error: null,
   lastRefreshed: null,
   exportHref: null,
-  filters: null
+  filters: null,
+  toggleMeta: null,
+  toggleReason: null
 };
 
 export default DashboardLayout;

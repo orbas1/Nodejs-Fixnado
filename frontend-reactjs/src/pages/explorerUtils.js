@@ -7,6 +7,7 @@ export const EXPLORER_DEFAULT_FILTERS = {
   zoneId: 'all',
   availability: 'any',
   demand: ['high', 'medium', 'low'],
+  serviceType: 'all',
   limit: 50
 };
 
@@ -25,6 +26,7 @@ export function parseFiltersFromSearchParams(searchParams) {
       ? params.availability
       : EXPLORER_DEFAULT_FILTERS.availability,
     demand: params.demand ? params.demand.split(',').filter(Boolean) : EXPLORER_DEFAULT_FILTERS.demand,
+    serviceType: params.serviceType ?? EXPLORER_DEFAULT_FILTERS.serviceType,
     limit: Number.parseInt(params.limit, 10) > 0 ? Number.parseInt(params.limit, 10) : EXPLORER_DEFAULT_FILTERS.limit
   };
 }
@@ -50,6 +52,10 @@ export function toSearchParams(filters) {
 
   if (Array.isArray(filters.demand) && filters.demand.length < EXPLORER_DEFAULT_FILTERS.demand.length) {
     params.set('demand', filters.demand.join(','));
+  }
+
+  if (filters.serviceType && filters.serviceType !== 'all') {
+    params.set('serviceType', filters.serviceType);
   }
 
   if (filters.limit && filters.limit !== EXPLORER_DEFAULT_FILTERS.limit) {
@@ -219,12 +225,21 @@ export function determineExplorerBounds(zones) {
 }
 
 export function extractServiceCategories(services) {
-  const categories = new Set();
+  const categories = new Map();
   services.forEach((service) => {
-    if (service.category) {
-      categories.add(service.category);
+    const slug = (service.categorySlug || service.category || '').toString().trim();
+    if (!slug) {
+      return;
+    }
+
+    const key = slug.toLowerCase();
+    if (!categories.has(key)) {
+      categories.set(key, {
+        value: slug,
+        label: service.category || service.categorySlug || slug
+      });
     }
   });
 
-  return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  return Array.from(categories.values()).sort((a, b) => a.label.localeCompare(b.label));
 }

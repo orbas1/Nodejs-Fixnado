@@ -7,6 +7,7 @@ import {
   CampaignDailyMetric,
   CampaignFlight,
   CampaignInvoice,
+  CampaignFraudSignal,
   Company,
   ConversationParticipant,
   ServiceZone
@@ -223,8 +224,8 @@ function determineProgrammeHealth(flight, metrics) {
   return 'on-track';
 }
 
-function buildEscalations(bookings, timezone) {
-  return bookings
+function buildEscalations(bookings, timezone, fraudSignals = []) {
+  const bookingIncidents = bookings
     .filter((booking) => {
       const status = booking.status;
       const meta = booking.meta ?? {};
@@ -233,8 +234,11 @@ function buildEscalations(bookings, timezone) {
       if (typeof meta.severity === 'string') return true;
       return false;
     })
-    .sort((a, b) => new Date(b.lastStatusTransitionAt || b.updatedAt || b.createdAt) - new Date(a.lastStatusTransitionAt || a.updatedAt || a.createdAt))
-    .slice(0, UPCOMING_LIMIT)
+    .sort(
+      (a, b) =>
+        new Date(b.lastStatusTransitionAt || b.updatedAt || b.createdAt) -
+        new Date(a.lastStatusTransitionAt || a.updatedAt || a.createdAt)
+    )
     .map((booking) => {
       const meta = booking.meta ?? {};
       const openedAt = booking.lastStatusTransitionAt || booking.updatedAt || booking.createdAt;
@@ -242,10 +246,37 @@ function buildEscalations(bookings, timezone) {
         id: booking.id,
         title: meta.title || `Service ${booking.id.slice(0, 4).toUpperCase()}`,
         owner: meta.owner || meta.requester || 'Operations',
-        openedAt: openedAt ? DateTime.fromJSDate(new Date(openedAt)).setZone(timezone).toISO() : null,
-        severity: (meta.severity && String(meta.severity).toLowerCase()) === 'low' ? 'medium' : booking.status === 'disputed' ? 'high' : 'warning'
+        openedAt: openedAt
+          ? DateTime.fromJSDate(new Date(openedAt)).setZone(timezone).toISO()
+          : null,
+        severity:
+          (meta.severity && String(meta.severity).toLowerCase()) === 'low'
+            ? 'medium'
+            : booking.status === 'disputed'
+              ? 'high'
+              : 'warning'
       };
     });
+
+  const marketingSignals = fraudSignals
+    .filter((signal) => signal && signal.AdCampaign)
+    .sort(
+      (a, b) =>
+        new Date(b.detectedAt || b.createdAt || 0) - new Date(a.detectedAt || a.createdAt || 0)
+    )
+    .map((signal) => ({
+      id: signal.id,
+      title: `${signal.signalType?.replace(/_/g, ' ') || 'Campaign alert'} • ${
+        signal.AdCampaign?.name ?? 'Campaign'
+      }`,
+      owner: signal.metadata?.owner || 'Marketing operations',
+      openedAt: signal.detectedAt
+        ? DateTime.fromJSDate(new Date(signal.detectedAt)).setZone(timezone).toISO()
+        : null,
+      severity: signal.severity || 'medium'
+    }));
+
+  return [...marketingSignals, ...bookingIncidents].slice(0, UPCOMING_LIMIT);
 }
 
 export async function getEnterprisePanelOverview({ companyId, timezone } = {}) {
@@ -259,7 +290,7 @@ export async function getEnterprisePanelOverview({ companyId, timezone } = {}) {
     return { ...fallback, meta: { fallback: true, reason: 'enterprise_company_not_found' } };
   }
 
-  const [zones, bookings, campaigns, metrics, flights, participants] = await Promise.all([
+  const [zones, bookings, campaigns, metrics, flights, participants, fraudSignals] = await Promise.all([
     ServiceZone.findAll({ where: { companyId: company.id } }),
     Booking.findAll({
       where: {
@@ -305,6 +336,16 @@ export async function getEnterprisePanelOverview({ companyId, timezone } = {}) {
         participantType: 'enterprise',
         participantReferenceId: company.id
       }
+    }),
+    CampaignFraudSignal.findAll({
+      include: [
+        {
+          model: AdCampaign,
+          attributes: ['id', 'name', 'companyId'],
+          where: { companyId: company.id },
+          required: true
+        }
+      ]
     })
   ]);
 
@@ -436,7 +477,7 @@ export async function getEnterprisePanelOverview({ companyId, timezone } = {}) {
       };
     });
 
-  const escalations = buildEscalations(incidentBookings, tz);
+  const escalations = buildEscalations(incidentBookings, tz, fraudSignals);
 
   const fallback = buildFallbackPanel(tz, company);
 
