@@ -167,7 +167,8 @@
   2. ✅ Capture export toolbar behaviour (persona badge, reporting window, timezone indicator, CSV CTA, success/error toasts) with accessibility/localisation guidance and telemetry schema alignment (`analytics.dashboard.export`).
   3. ✅ Document insight/fraud/compliance widgets (copy decks, tooltip formulas, escalation links) for admin, provider, serviceman, and enterprise roles, including translation keys and badge tokens for analytics palette reuse.
   4. ✅ Record feature toggle gating states, pilot access workflow, and enterprise drill-down backlog links. Specs now include toggle summary card metadata, access request copy, telemetry IDs (`feature.toggle.refresh`, `feature.toggle.request_access`), and Flutter parity notes to ensure mobile/web gating remains aligned while enterprise drill-down widgets remain backlog-tracked.
-  5. ✅ Pair with analytics/data engineering to validate CSV schema parity with Looker ingestion requirements and annotate QA scenarios/test plan with export verification coverage (2025-10-30 verification adds export toolbar copy, timezone messaging, and Vitest reporter hardening backlog).
+ 5. ✅ Pair with analytics/data engineering to validate CSV schema parity with Looker ingestion requirements and annotate QA scenarios/test plan with export verification coverage (2025-10-30 verification adds export toolbar copy, timezone messaging, and Vitest reporter hardening backlog).
+  6. ✅ *(2025-11-03 addendum)* Added performance drill status widget specs consuming `performance/reports/*.json` exports with breach copy, telemetry IDs (`performance.load_drill.*`), and accessibility hooks so Task 6.3 load harness evidence surfaces inside persona/ops dashboards without design debt.
 
 ## Task 17 — Flutter Parity QA Hardening *(Status: 🚧 In Progress — 2025-10-21)*
 - **Delivery Owner:** Mobile UX Lead with Flutter Tech Lead & QA Architect partnership.
