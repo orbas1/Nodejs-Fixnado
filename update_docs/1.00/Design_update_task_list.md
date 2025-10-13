@@ -159,14 +159,14 @@
   4. ✅ Specify notification patterns (Slack/email templates, push badge states) for exporter failure and critical anomaly alerts, ensuring cross-channel parity across admin web and provider mobile.
   5. ✅ Embed accessibility notes (live region announcements, keyboard shortcuts), QA selectors, and telemetry events (`campaign.analytics.export.retry`, `campaign.fraud.resolve`, `campaign.summary.view`) to support automation and analytics instrumentation.
 
-## Task 17 — Persona Analytics Dashboards & Export UX *(Status: 🚧 In Progress — 2025-10-30)*
+## Task 17 — Persona Analytics Dashboards & Export UX *(Status: ✅ Complete — 2025-10-31)*
 - **Delivery Owner:** Design Systems Engineer with Analytics Ops Lead, Finance Ops Partner, and Customer Success Strategist.
-- **Evidence:** Updated drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `website_drawings.md`, `App_screens_drawings.md`), dashboard specs (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Web_Application_Design_Update/Dashboard Designs.md`), and design change log entry dated 29 Oct covering persona layouts, insight copy, and export workflows.
+- **Evidence:** Updated drawings (`dashboard_drawings.md`, `Admin_panel_drawings.md`, `website_drawings.md`, `App_screens_drawings.md`), dashboard specs (`Screens_Update.md`, `Screens_Update_Logic_Flow.md`, `Web_Application_Design_Update/Dashboard Designs.md`), design change log entry dated 29 Oct, and 31 Oct toggle gating addendum aligning `DashboardAccessGate.jsx`, `FeatureToggleProvider.jsx`, and Secrets Manager manifests with governed UX copy.
 - **Subtasks:**
   1. ✅ Define persona dashboard tile architecture mapping service payloads (overview metrics, pipelines, alerts) into governed layout slots with responsive/density variants and QA selectors.
   2. ✅ Capture export toolbar behaviour (persona badge, reporting window, timezone indicator, CSV CTA, success/error toasts) with accessibility/localisation guidance and telemetry schema alignment (`analytics.dashboard.export`).
   3. ✅ Document insight/fraud/compliance widgets (copy decks, tooltip formulas, escalation links) for admin, provider, serviceman, and enterprise roles, including translation keys and badge tokens for analytics palette reuse.
-  4. 🚧 Coordinate Flutter/mobile parity notes and enterprise drill-down blueprint backlog (segmented revenue, compliance scorecards) for next sprint; link open items to design backlog + analytics ops rehearsal checklist.
+  4. ✅ Record feature toggle gating states, pilot access workflow, and enterprise drill-down backlog links. Specs now include toggle summary card metadata, access request copy, telemetry IDs (`feature.toggle.refresh`, `feature.toggle.request_access`), and Flutter parity notes to ensure mobile/web gating remains aligned while enterprise drill-down widgets remain backlog-tracked.
   5. ✅ Pair with analytics/data engineering to validate CSV schema parity with Looker ingestion requirements and annotate QA scenarios/test plan with export verification coverage (2025-10-30 verification adds export toolbar copy, timezone messaging, and Vitest reporter hardening backlog).
 
 ## Task 17 — Flutter Parity QA Hardening *(Status: 🚧 In Progress — 2025-10-21)*

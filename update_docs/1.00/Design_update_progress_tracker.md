@@ -1,6 +1,6 @@
 # Design Update Progress Tracker — Version 1.00 UI/UX
 
-## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-30 — Persona Dashboard Verification)
+## Snapshot (As of Sprint 4 Kick-off — Updated 2025-10-31 — Persona Dashboard Toggle Gating)
 | Metric | Status (%) | Observations & Next Actions |
 | --- | --- | --- |
 | Design Quality | 99 | Communications workspace, AI assist composer, dashboards mega-menu, business front storytelling, analytics ingestion dashboards, localisation/accessibility sweep, and the new analytics pipeline control console sit alongside campaign/inventory/rental specs so operations, support, finance, field, and analytics teams share governed journeys across admin/provider/mobile channels. |
@@ -47,6 +47,7 @@
 24. **Analytics Pipeline Control Console:** Admin status card, pause/resume modal, run history ledger, and analytics ops widgets are documented across `Design_Plan.md` Section 36, `Design_Change_log.md` Entry 26, `Screens_Update.md`, `Screens_Update_Logic_Flow.md`, and updated drawings. Specifications capture Secrets Manager governance, telemetry schema (`analytics.pipeline.control`), accessibility cues, and cross-environment guidance so ops/support/legal teams can rehearse pipeline rollbacks alongside new backend controls.
 25. **Persona Analytics Dashboards & CSV Export:** `Design_Plan.md` Section 37 and `Design_Change_log.md` Entry 27 document admin/provider/serviceman/enterprise dashboard tile architecture, insight copy, localisation requirements, and governed export toolbar tied to `/api/analytics/dashboards/:persona` and CSV endpoints. Drawings capture responsive layouts, skeleton/empty states, telemetry IDs (`analytics.dashboard.metric.view`, `analytics.dashboard.export`), and QA selectors so frontend, analytics ops, finance, and success teams share production-ready blueprints ahead of Task 5.3 completion.
 26. **Persona Dashboard Verification (2025-10-30):** Staging walkthrough validated export toolbar copy (row limits, timezone tag, last refresh timestamp), localisation fallbacks, and CSV annotations. QA logged Vitest reporter hardening to remove spinner noise from analytics regression evidence, and drawings now include accessibility callouts (aria-live banners, keyboard shortcuts) to complete Task 5.3a readiness.
+27. **Persona Dashboard Toggle Gating (2025-10-31):** Added Secrets Manager-aware gating specs across `DashboardAccessGate.jsx`, `FeatureToggleProvider.jsx`, and drawings so persona dashboards surface pilot banners, toggle summary metadata, and access request workflow with telemetry (`feature.toggle.refresh`, `feature.toggle.request_access`). Tracker commentary updated with Flutter parity notes and enterprise drill-down backlog links to evidence Task 17 Subtask 4 completion.
 
 ## Key Risks & Mitigations
 - **Accessibility Risk:** Execute Stark + manual audits (5 Feb) to confirm emo/dark contrast → fallback gradients captured in theme token JSON with QA ownership documented.
