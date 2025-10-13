@@ -124,15 +124,58 @@ class ExplorerViewState {
       });
     }
     return data.toList();
+    final data = snapshot!.services;
+    switch (filters.type) {
+      case ExplorerResultType.services:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return const [];
+    }
   }
 
   List<ExplorerMarketplaceItem> get marketplaceItems {
     if (snapshot == null) return const [];
     final data = snapshot!.items;
-    if (filters.type == ExplorerResultType.services) {
-      return const [];
+    switch (filters.type) {
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return const [];
     }
-    return data;
+  }
+
+  List<ExplorerStorefront> get storefronts {
+    if (snapshot == null) return const [];
+    final data = snapshot!.storefronts;
+    switch (filters.type) {
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.businessFronts:
+        return const [];
+    }
+  }
+
+  List<ExplorerBusinessFront> get businessFronts {
+    if (snapshot == null) return const [];
+    final data = snapshot!.businessFronts;
+    switch (filters.type) {
+      case ExplorerResultType.businessFronts:
+      case ExplorerResultType.all:
+        return data;
+      case ExplorerResultType.services:
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.storefronts:
+        return const [];
+    }
   }
 
   List<ZoneSummary> get zones {

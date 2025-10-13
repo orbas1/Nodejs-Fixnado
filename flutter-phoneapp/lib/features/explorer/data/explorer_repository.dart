@@ -47,6 +47,12 @@ class ExplorerRepository {
       final items = (searchPayload['items'] as List<dynamic>? ?? [])
           .map((item) => ExplorerMarketplaceItem.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
+      final storefronts = (searchPayload['storefronts'] as List<dynamic>? ?? [])
+          .map((item) => ExplorerStorefront.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      final businessFronts = (searchPayload['businessFronts'] as List<dynamic>? ?? [])
+          .map((item) => ExplorerBusinessFront.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
 
       final zones = (zonePayload['data'] as List<dynamic>? ?? [])
           .map((item) => ZoneSummary.fromJson(Map<String, dynamic>.from(item as Map)))
@@ -55,6 +61,8 @@ class ExplorerRepository {
       final snapshot = ExplorerSnapshot(
         services: services,
         items: items,
+        storefronts: storefronts,
+        businessFronts: businessFronts,
         zones: zones,
         filters: filters,
         generatedAt: DateTime.now(),
@@ -84,6 +92,8 @@ extension on ExplorerSnapshot {
     return ExplorerSnapshot(
       services: services,
       items: items,
+      storefronts: storefronts,
+      businessFronts: businessFronts,
       zones: zones,
       filters: filters,
       generatedAt: generatedAt,

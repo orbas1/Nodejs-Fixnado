@@ -9,8 +9,10 @@ import '../../services/presentation/service_catalog_controller.dart';
 import '../../services/presentation/widgets/service_package_card.dart';
 import '../domain/models.dart';
 import 'explorer_controller.dart';
+import 'widgets/business_front_card.dart';
 import 'widgets/marketplace_item_card.dart';
 import 'widgets/service_result_card.dart';
+import 'widgets/storefront_card.dart';
 import 'widgets/zone_analytics_card.dart';
 
 class ExplorerScreen extends ConsumerStatefulWidget {
@@ -124,6 +126,8 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                     ],
                     if (state.errorMessage != null)
                       _ErrorBanner(message: state.errorMessage!, offline: state.offline),
+                    final hasResults =
+                        state.services.isNotEmpty || state.marketplaceItems.isNotEmpty || state.storefronts.isNotEmpty || state.businessFronts.isNotEmpty;
                     if (state.services.isNotEmpty) ...[
                       Text('Services', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 16),
@@ -141,7 +145,25 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                             child: MarketplaceItemCard(item: item),
                           )),
                     ],
-                    if (state.services.isEmpty && state.marketplaceItems.isEmpty && state.errorMessage == null)
+                    if (state.storefronts.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text('Storefronts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 16),
+                      ...state.storefronts.map((storefront) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: StorefrontCard(storefront: storefront),
+                          )),
+                    ],
+                    if (state.businessFronts.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text('Business fronts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 16),
+                      ...state.businessFronts.map((front) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: BusinessFrontCard(front: front),
+                          )),
+                    ],
+                    if (!hasResults && state.errorMessage == null)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 80),
                         child: Column(
@@ -245,6 +267,20 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 label: 'Marketplace',
                 selected: state.filters.type == ExplorerResultType.marketplace,
                 onSelected: () => controller.updateResultType(ExplorerResultType.marketplace),
+              ),
+              const SizedBox(width: 12),
+              _buildFilterChip(
+                context,
+                label: 'Storefronts',
+                selected: state.filters.type == ExplorerResultType.storefronts,
+                onSelected: () => controller.updateResultType(ExplorerResultType.storefronts),
+              ),
+              const SizedBox(width: 12),
+              _buildFilterChip(
+                context,
+                label: 'Business fronts',
+                selected: state.filters.type == ExplorerResultType.businessFronts,
+                onSelected: () => controller.updateResultType(ExplorerResultType.businessFronts),
               ),
               const SizedBox(width: 12),
               DropdownButtonHideUnderline(

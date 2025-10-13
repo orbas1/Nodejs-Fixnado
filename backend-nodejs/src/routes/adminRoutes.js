@@ -6,6 +6,10 @@ import {
   updateToggle,
   upsertToggleValidators
 } from '../controllers/featureToggleController.js';
+import {
+  fetchPlatformSettings,
+  savePlatformSettings
+} from '../controllers/platformSettingsController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
@@ -20,5 +24,8 @@ router.patch(
   upsertToggleValidators,
   updateToggle
 );
+
+router.get('/platform-settings', authenticate, authorize(['company']), fetchPlatformSettings);
+router.put('/platform-settings', authenticate, authorize(['company']), savePlatformSettings);
 
 export default router;
