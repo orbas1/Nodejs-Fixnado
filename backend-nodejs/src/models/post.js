@@ -20,7 +20,47 @@ Post.init(
     },
     description: DataTypes.TEXT,
     budget: DataTypes.STRING,
+    budgetAmount: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true
+    },
+    budgetCurrency: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'GBP'
+    },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    categoryOther: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    images: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    metadata: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {}
+    },
     location: DataTypes.STRING,
+    zoneId: {
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+    allowOutOfZone: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    bidDeadline: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     status: {
       type: DataTypes.ENUM('open', 'assigned', 'completed'),
       defaultValue: 'open'

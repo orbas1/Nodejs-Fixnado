@@ -63,8 +63,22 @@ export async function up({ context: queryInterface }) {
       title: 'Need urgent plumbing fix',
       description: 'Pipe burst in kitchen, need help within 2 hours',
       budget: '$200',
+      budget_amount: 200,
+      budget_currency: 'USD',
+      category: 'Plumbing',
+      images: JSON.stringify([
+        'https://cdn.fixnado.com/jobs/55555555-5555-5555-5555-555555555555/1.jpg',
+        'https://cdn.fixnado.com/jobs/55555555-5555-5555-5555-555555555555/2.jpg'
+      ]),
+      metadata: JSON.stringify({
+        scope: 'Kitchen burst pipe',
+        accessNotes: 'Concierge will provide access, parking available at rear entrance.'
+      }),
       location: 'San Francisco, CA',
+      zone_id: '77777777-7777-7777-7777-777777777777',
+      allow_out_of_zone: true,
       status: 'open',
+      bid_deadline: new Date(Date.now() + 4 * 60 * 60 * 1000),
       created_at: new Date(),
       updated_at: new Date()
     }
@@ -90,7 +104,26 @@ export async function up({ context: queryInterface }) {
       id: '77777777-7777-7777-7777-777777777777',
       company_id: companyId,
       name: 'Downtown Core',
-      geo_json: JSON.stringify({ type: 'Polygon', coordinates: [] }),
+      boundary: JSON.stringify({
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-122.402, 37.792],
+            [-122.405, 37.784],
+            [-122.394, 37.782],
+            [-122.389, 37.789],
+            [-122.402, 37.792]
+          ]
+        ]
+      }),
+      centroid: JSON.stringify({ type: 'Point', coordinates: [-122.3975, 37.7875] }),
+      bounding_box: JSON.stringify({
+        west: -122.405,
+        south: 37.782,
+        east: -122.389,
+        north: 37.792
+      }),
+      metadata: JSON.stringify({ municipality: 'San Francisco', zoneCode: 'DTC-01' }),
       demand_level: 'high',
       created_at: new Date(),
       updated_at: new Date()
