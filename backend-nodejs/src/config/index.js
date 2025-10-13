@@ -44,6 +44,32 @@ function jsonFromEnv(key, defaultValue) {
   return defaultValue;
 }
 
+const DEFAULT_WAREHOUSE_THRESHOLDS = {
+  default: 120,
+  bookings: 30,
+  rentals: 30,
+  disputes: 60,
+  ads: 45,
+  communications: 20,
+  zones: 90
+};
+
+function normaliseThresholds(source, fallback) {
+  const base = { ...fallback };
+  if (!source || typeof source !== 'object') {
+    return base;
+  }
+
+  for (const [key, value] of Object.entries(source)) {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      base[key] = parsed;
+    }
+  }
+
+  return base;
+}
+
 const config = {
   env,
   port: intFromEnv('PORT', 4000),
@@ -156,6 +182,34 @@ const config = {
       },
       enterprise: {
         companyId: process.env.DASHBOARDS_ENTERPRISE_COMPANY_ID || null
+      }
+    }
+  },
+  monitoring: {
+    warehouseFreshness: {
+      pollIntervalMinutes: Math.max(intFromEnv('WAREHOUSE_FRESHNESS_POLL_MINUTES', 5), 1),
+      datasetThresholdMinutes: normaliseThresholds(
+        jsonFromEnv('WAREHOUSE_FRESHNESS_THRESHOLDS', {}),
+        DEFAULT_WAREHOUSE_THRESHOLDS
+      ),
+      backlogThreshold: Math.max(intFromEnv('WAREHOUSE_BACKLOG_THRESHOLD', 1500), 0),
+      backlogAgeMinutes: Math.max(intFromEnv('WAREHOUSE_BACKLOG_MAX_AGE_MINUTES', 45), 5),
+      failureStreakThreshold: Math.max(intFromEnv('WAREHOUSE_FAILURE_STREAK_THRESHOLD', 3), 1),
+      maxRunGapMinutes: Math.max(intFromEnv('WAREHOUSE_MAX_RUN_GAP_MINUTES', 15), 5),
+      opsgenie: {
+        enabled: process.env.OPSGENIE_ENABLED !== 'false',
+        apiKey: process.env.OPSGENIE_API_KEY || '',
+        baseUrl: process.env.OPSGENIE_BASE_URL || 'https://api.opsgenie.com',
+        teamName: process.env.OPSGENIE_TEAM_NAME || '',
+        responders: jsonFromEnv('OPSGENIE_RESPONDERS', []),
+        tags: jsonFromEnv('OPSGENIE_ALERT_TAGS', ['analytics', 'freshness']),
+        priority: process.env.OPSGENIE_PRIORITY || 'P3',
+        note: process.env.OPSGENIE_ALERT_NOTE ||
+          'Investigate analytics ingestion freshness via docs/telemetry/ui-preference-dashboard.md.',
+        closeNote:
+          process.env.OPSGENIE_ALERT_CLOSE_NOTE ||
+          'Freshness restored automatically by warehouse monitor.',
+        service: process.env.OPSGENIE_SERVICE || 'Fixnado Analytics'
       }
     }
   }

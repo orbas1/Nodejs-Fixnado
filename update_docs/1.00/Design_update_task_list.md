@@ -237,3 +237,12 @@
   3. ✅ Document run history table + detail drawer mirroring `AnalyticsPipelineRun` schema (processed/purged counts, duration, status, response excerpt) with accessibility guidance (sticky headers, keyboard navigation, live region updates) and export CTAs.
   4. ✅ Update cross-channel artefacts noting staging read-only behaviour, Secrets Manager fallback messaging, Flutter parity backlog, and migration dependency `20250225000000-create-analytics-pipeline-runs.js`, keeping ops/support/legal alignment explicit in trackers.
 
+
+## Task 19 — Warehouse Freshness Monitoring UX *(Status: ✅ Complete — 2025-11-02)*
+- **Delivery Owner:** Design Systems Engineer with Data Engineering Ops Lead & SRE On-call Captain.
+- **Evidence:** Dashboard alert specs in `Screens_Update.md`/`Dashboard Designs.md`, mobile parity callouts in `App_screens_drawings.md`, OpsGenie runbook updates in `docs/telemetry/ui-preference-dashboard.md`, and backend artefacts (`backend-nodejs/src/jobs/warehouseFreshnessJob.js`, `services/opsgenieService.js`, `tests/warehouseFreshnessJob.test.js`).
+- **Subtasks:**
+  1. ✅ Define freshness alert banner/pill treatments for admin React telemetry console and Flutter operations dashboard, including severity colours, incident metadata slots, and action CTAs referencing OpsGenie runbook.
+  2. ✅ Document OpsGenie escalation workflow (responders, aliases, recovery notes) within design artefacts and telemetry runbook so on-call teams rehearse incident routing alongside dashboard acknowledgement flows.
+  3. ✅ Align configuration + copy decks with new thresholds/backlog tolerances in `config/index.js`, ensuring localisation files capture alert strings and QA selectors tag instrumentation (`data-qa="analytics-alert-freshness"`).
+  4. ✅ Update QA/test plan with alert rehearsal scenario (force stale dataset, assert OpsGenie payload, verify dashboard banner + closure) referencing Vitest coverage and Slack/Looker follow-up actions.
