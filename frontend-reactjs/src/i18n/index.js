@@ -1,9 +1,25 @@
+import { arSA } from './locales/ar-SA.js';
+import { deDE } from './locales/de-DE.js';
 import { enGB } from './locales/en-GB.js';
 import { esES } from './locales/es-ES.js';
+import { frFR } from './locales/fr-FR.js';
+import { hiIN } from './locales/hi-IN.js';
+import { itIT } from './locales/it-IT.js';
+import { plPL } from './locales/pl-PL.js';
+import { ptBR } from './locales/pt-BR.js';
+import { ruRU } from './locales/ru-RU.js';
 
 export const dictionaries = {
+  'ar-SA': arSA,
+  'de-DE': deDE,
   'en-GB': enGB,
-  'es-ES': esES
+  'es-ES': esES,
+  'fr-FR': frFR,
+  'hi-IN': hiIN,
+  'it-IT': itIT,
+  'pl-PL': plPL,
+  'pt-BR': ptBR,
+  'ru-RU': ruRU
 };
 
 export function resolveLocale(candidate) {
