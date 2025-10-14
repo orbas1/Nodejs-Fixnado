@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../geo_matching_controller.dart';
+import 'geo_zone_builder_card.dart';
 
 class GeoMatchingPanel extends ConsumerStatefulWidget {
   const GeoMatchingPanel({super.key});
@@ -192,6 +193,8 @@ class _GeoMatchingPanelState extends ConsumerState<GeoMatchingPanel> {
                 'Results appear here once you run a match.',
                 style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
+            const SizedBox(height: 24),
+            const GeoZoneBuilderCard(),
           ],
         ),
       ),

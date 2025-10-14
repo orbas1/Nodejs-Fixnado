@@ -15,6 +15,10 @@ import {
   sequelize
 } from '../models/index.js';
 import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
+import {
+  attachOpenStreetMapMetadata,
+  enforceOpenStreetMapCompliance
+} from './openStreetMapService.js';
 
 function validationError(message) {
   const error = new Error(message);
@@ -192,14 +196,16 @@ export async function createZone({ companyId, name, geometry, demandLevel = 'med
   const multiPoly = normalisePolygon(geometry);
   validateGeometry(multiPoly);
   await ensureNoZoneOverlap(companyId, multiPoly);
+  const openStreetMap = await enforceOpenStreetMapCompliance(multiPoly);
   const attributes = computeAttributes(multiPoly);
   const areaSqMeters = calculateAreaSqMeters(multiPoly);
+  const metadataWithCompliance = attachOpenStreetMapMetadata(metadata, openStreetMap);
 
   const zone = await ServiceZone.create({
     companyId,
     name,
     demandLevel,
-    metadata,
+    metadata: metadataWithCompliance,
     ...attributes
   });
 
@@ -216,7 +222,8 @@ export async function createZone({ companyId, name, geometry, demandLevel = 'med
       areaSqMeters,
       centroid: attributes.centroid,
       boundingBox: attributes.boundingBox,
-      metadataKeys: Object.keys(metadata || {})
+      metadataKeys: Object.keys(metadataWithCompliance || {}),
+      openStreetMap
     }
   });
 
@@ -234,6 +241,7 @@ export async function updateZone(id, updates) {
   const { actor = null, ...payload } = updates || {};
   const previous = zone.get({ plain: true });
   let areaSqMeters = previous.boundary ? calculateAreaSqMeters(previous.boundary) : null;
+  let openStreetMap = null;
 
   if (updates?.geometry) {
     const multiPoly = normalisePolygon(updates.geometry);
@@ -241,6 +249,15 @@ export async function updateZone(id, updates) {
     await ensureNoZoneOverlap(zone.companyId, multiPoly, { ignoreZoneId: zone.id });
     Object.assign(payload, computeAttributes(multiPoly));
     areaSqMeters = calculateAreaSqMeters(payload.boundary);
+    openStreetMap = await enforceOpenStreetMapCompliance(payload.boundary);
+  }
+
+  if (payload.metadata) {
+    payload.metadata = attachOpenStreetMapMetadata(payload.metadata, openStreetMap || previous.metadata?.compliance?.openStreetMap);
+  }
+
+  if (!payload.metadata && openStreetMap) {
+    payload.metadata = attachOpenStreetMapMetadata(previous.metadata, openStreetMap);
   }
 
   await zone.update(payload);
@@ -280,7 +297,8 @@ export async function updateZone(id, updates) {
         companyId: reloaded.companyId,
         changes,
         areaSqMeters,
-        demandLevel: reloaded.demandLevel
+        demandLevel: reloaded.demandLevel,
+        openStreetMap: openStreetMap || previous.metadata?.compliance?.openStreetMap || null
       }
     });
   }

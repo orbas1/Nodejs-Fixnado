@@ -1,5 +1,6 @@
 import PageHeader from '../components/blueprints/PageHeader.jsx';
 import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
+import AffiliateDashboardSection from '../components/affiliate/AffiliateDashboardSection.jsx';
 
 const badges = ['Top rated', 'Escrow trusted', 'Rapid responder'];
 
@@ -84,6 +85,8 @@ export default function Profile() {
       />
 
       <div className="mx-auto max-w-7xl px-6 pt-16 space-y-14">
+        <AffiliateDashboardSection />
+
         <BlueprintSection
           eyebrow="Service catalogue"
           title="High-availability electrical services"

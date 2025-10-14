@@ -367,6 +367,7 @@ const DashboardLayout = ({
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -566,6 +567,12 @@ const DashboardLayout = ({
             <DashboardBlogRail posts={blogPosts} />
             {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
             <div className="space-y-8">{renderSection()}</div>
+          <div className="space-y-8 px-6 py-10">
+            {shouldShowServicemanSummary ? (
+              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+            ) : null}
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+            {renderSection()}
           </div>
         )}
       </main>

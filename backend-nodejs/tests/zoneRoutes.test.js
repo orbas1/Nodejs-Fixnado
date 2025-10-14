@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -58,6 +58,17 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  vi.restoreAllMocks();
+  vi.spyOn(global, 'fetch').mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      display_name: 'London',
+      place_id: 321,
+      boundingbox: ['51.48', '51.53', '-0.16', '-0.09'],
+      licence: 'Data © OpenStreetMap contributors'
+    })
+  });
+
   await sequelize.truncate({ cascade: true, restartIdentity: true });
 });
 
@@ -96,6 +107,12 @@ describe('Zone routes', () => {
       name: 'Central London',
       demandLevel: 'high',
       metadata: { categories: ['plumbing', 'electrical'] }
+    });
+
+    expect(response.body.metadata?.compliance?.openStreetMap).toMatchObject({
+      status: 'verified',
+      placeId: 321,
+      displayName: 'London'
     });
 
     expect(response.body.centroid).toBeTruthy();

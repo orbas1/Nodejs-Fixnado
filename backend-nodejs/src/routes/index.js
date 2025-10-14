@@ -19,6 +19,7 @@ import panelRoutes from './panelRoutes.js';
 import businessFrontRoutes from './businessFrontRoutes.js';
 import blogRoutes from './blogRoutes.js';
 import adminBlogRoutes from './adminBlogRoutes.js';
+import affiliateRoutes from './affiliateRoutes.js';
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use('/panel', panelRoutes);
 router.use('/business-fronts', businessFrontRoutes);
 router.use('/blog', blogRoutes);
 router.use('/admin/blog', adminBlogRoutes);
+router.use('/affiliate', affiliateRoutes);
 
 export default router;

@@ -1,0 +1,15 @@
+.fx-zone-drawing-map {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 45px -30px rgba(15, 23, 42, 0.45);
+}
+
+@media (max-width: 768px) {
+  .fx-zone-drawing-map {
+    min-height: 360px;
+  }
+}

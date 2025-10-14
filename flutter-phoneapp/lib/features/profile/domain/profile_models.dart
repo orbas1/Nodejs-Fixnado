@@ -431,6 +431,195 @@ class ToolingItem {
   }
 }
 
+class AffiliateCommissionTier {
+  AffiliateCommissionTier({
+    required this.id,
+    required this.name,
+    required this.tierLabel,
+    required this.commissionRate,
+    required this.minValue,
+    required this.maxValue,
+    required this.recurrence,
+    this.recurrenceLimit,
+  });
+
+  final String id;
+  final String name;
+  final String tierLabel;
+  final double commissionRate;
+  final double minValue;
+  final double? maxValue;
+  final String recurrence;
+  final int? recurrenceLimit;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'tierLabel': tierLabel,
+      'commissionRate': commissionRate,
+      'minValue': minValue,
+      'maxValue': maxValue,
+      'recurrence': recurrence,
+      'recurrenceLimit': recurrenceLimit,
+    };
+  }
+
+  factory AffiliateCommissionTier.fromJson(Map<String, dynamic> json) {
+    return AffiliateCommissionTier(
+      id: json['id'] as String? ?? 'tier',
+      name: json['name'] as String? ?? 'Commission tier',
+      tierLabel: json['tierLabel'] as String? ?? 'Tier',
+      commissionRate: (json['commissionRate'] as num?)?.toDouble() ?? 0,
+      minValue: (json['minTransactionValue'] as num?)?.toDouble() ?? (json['minValue'] as num?)?.toDouble() ?? 0,
+      maxValue: (json['maxTransactionValue'] as num?)?.toDouble() ?? (json['maxValue'] as num?)?.toDouble(),
+      recurrence: json['recurrenceType'] as String? ?? json['recurrence'] as String? ?? 'one_time',
+      recurrenceLimit: (json['recurrenceLimit'] as num?)?.toInt(),
+    );
+  }
+}
+
+class AffiliateReferralSummary {
+  AffiliateReferralSummary({
+    required this.code,
+    required this.status,
+    required this.conversions,
+    required this.revenue,
+    required this.commission,
+  });
+
+  final String code;
+  final String status;
+  final int conversions;
+  final double revenue;
+  final double commission;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'code': code,
+      'status': status,
+      'conversions': conversions,
+      'revenue': revenue,
+      'commission': commission,
+    };
+  }
+
+  factory AffiliateReferralSummary.fromJson(Map<String, dynamic> json) {
+    return AffiliateReferralSummary(
+      code: json['referralCodeUsed'] as String? ?? json['code'] as String? ?? 'REF',
+      status: json['status'] as String? ?? 'pending',
+      conversions: (json['conversionsCount'] as num?)?.toInt() ?? (json['conversions'] as num?)?.toInt() ?? 0,
+      revenue: (json['totalRevenue'] as num?)?.toDouble() ?? (json['revenue'] as num?)?.toDouble() ?? 0,
+      commission: (json['totalCommissionEarned'] as num?)?.toDouble() ?? (json['commission'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+class AffiliateSettingsSummary {
+  AffiliateSettingsSummary({
+    required this.autoApprove,
+    required this.payoutCadenceDays,
+    required this.minimumPayout,
+    required this.attributionWindowDays,
+    this.disclosureUrl,
+  });
+
+  final bool autoApprove;
+  final int payoutCadenceDays;
+  final double minimumPayout;
+  final int attributionWindowDays;
+  final String? disclosureUrl;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'autoApproveReferrals': autoApprove,
+      'payoutCadenceDays': payoutCadenceDays,
+      'minimumPayoutAmount': minimumPayout,
+      'referralAttributionWindowDays': attributionWindowDays,
+      'disclosureUrl': disclosureUrl,
+    };
+  }
+
+  factory AffiliateSettingsSummary.fromJson(Map<String, dynamic> json) {
+    return AffiliateSettingsSummary(
+      autoApprove: json['autoApproveReferrals'] as bool? ?? json['autoApprove'] as bool? ?? false,
+      payoutCadenceDays: (json['payoutCadenceDays'] as num?)?.toInt() ?? 30,
+      minimumPayout: (json['minimumPayoutAmount'] as num?)?.toDouble() ?? (json['minimumPayout'] as num?)?.toDouble() ?? 0,
+      attributionWindowDays:
+          (json['referralAttributionWindowDays'] as num?)?.toInt() ?? (json['attributionWindowDays'] as num?)?.toInt() ?? 0,
+      disclosureUrl: json['disclosureUrl'] as String?,
+    );
+  }
+}
+
+class AffiliateProgrammeSnapshot {
+  AffiliateProgrammeSnapshot({
+    required this.referralCode,
+    required this.status,
+    required this.tierLabel,
+    required this.totalCommission,
+    required this.totalRevenue,
+    required this.pendingCommission,
+    required this.transactionCount,
+    required this.settings,
+    required this.tiers,
+    required this.referrals,
+  });
+
+  final String referralCode;
+  final String status;
+  final String? tierLabel;
+  final double totalCommission;
+  final double totalRevenue;
+  final double pendingCommission;
+  final int transactionCount;
+  final AffiliateSettingsSummary settings;
+  final List<AffiliateCommissionTier> tiers;
+  final List<AffiliateReferralSummary> referrals;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'referralCode': referralCode,
+      'status': status,
+      'tierLabel': tierLabel,
+      'totalCommission': totalCommission,
+      'totalRevenue': totalRevenue,
+      'pendingCommission': pendingCommission,
+      'transactionCount': transactionCount,
+      'settings': settings.toJson(),
+      'tiers': tiers.map((tier) => tier.toJson()).toList(),
+      'referrals': referrals.map((referral) => referral.toJson()).toList(),
+    };
+  }
+
+  factory AffiliateProgrammeSnapshot.fromJson(Map<String, dynamic> json) {
+    return AffiliateProgrammeSnapshot(
+      referralCode: json['referralCode'] as String? ?? 'AFFILIATE',
+      status: json['status'] as String? ?? 'active',
+      tierLabel: json['tierLabel'] as String?,
+      totalCommission: (json['earnings']?['totalCommission'] as num?)?.toDouble() ??
+          (json['totalCommission'] as num?)?.toDouble() ??
+          0,
+      totalRevenue: (json['earnings']?['totalRevenue'] as num?)?.toDouble() ??
+          (json['totalRevenue'] as num?)?.toDouble() ??
+          0,
+      pendingCommission: (json['profile']?['pendingCommission'] as num?)?.toDouble() ??
+          (json['pendingCommission'] as num?)?.toDouble() ??
+          0,
+      transactionCount: (json['earnings']?['transactionCount'] as num?)?.toInt() ??
+          (json['transactionCount'] as num?)?.toInt() ??
+          0,
+      settings: AffiliateSettingsSummary.fromJson(Map<String, dynamic>.from(json['settings'] as Map? ?? {})),
+      tiers: (json['commissionRules'] as List<dynamic>? ?? json['tiers'] as List<dynamic>? ?? const [])
+          .map((item) => AffiliateCommissionTier.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+      referrals: (json['referrals'] as List<dynamic>? ?? const [])
+          .map((item) => AffiliateReferralSummary.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+    );
+  }
+}
+
 class ProfileSnapshot {
   ProfileSnapshot({
     required this.identity,
@@ -448,6 +637,7 @@ class ProfileSnapshot {
     required this.shareProfile,
     required this.requestQuote,
     required this.generatedAt,
+    this.affiliate,
   });
 
   final ProviderIdentity identity;
@@ -465,6 +655,7 @@ class ProfileSnapshot {
   final bool shareProfile;
   final bool requestQuote;
   final DateTime generatedAt;
+  final AffiliateProgrammeSnapshot? affiliate;
 
   ProfileSnapshot copyWith({
     ProviderIdentity? identity,
@@ -482,6 +673,7 @@ class ProfileSnapshot {
     bool? shareProfile,
     bool? requestQuote,
     DateTime? generatedAt,
+    AffiliateProgrammeSnapshot? affiliate,
   }) {
     return ProfileSnapshot(
       identity: identity ?? this.identity,
@@ -501,6 +693,7 @@ class ProfileSnapshot {
       shareProfile: shareProfile ?? this.shareProfile,
       requestQuote: requestQuote ?? this.requestQuote,
       generatedAt: generatedAt ?? this.generatedAt,
+      affiliate: affiliate ?? this.affiliate,
     );
   }
 
@@ -521,6 +714,7 @@ class ProfileSnapshot {
       'shareProfile': shareProfile,
       'requestQuote': requestQuote,
       'generatedAt': generatedAt.toIso8601String(),
+      'affiliate': affiliate?.toJson(),
     };
   }
 
@@ -566,6 +760,9 @@ class ProfileSnapshot {
       generatedAt: json['generatedAt'] != null
           ? DateTime.tryParse(json['generatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      affiliate: json['affiliate'] != null
+          ? AffiliateProgrammeSnapshot.fromJson(Map<String, dynamic>.from(json['affiliate'] as Map))
+          : null,
     );
   }
 }

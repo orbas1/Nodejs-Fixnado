@@ -137,6 +137,10 @@ export const esES = {
     'providerDashboard.sidebarOnboardingLabel': 'Estado de incorporación',
     'providerDashboard.sidebarActiveBookingsLabel': 'Reservas activas',
     'providerDashboard.sidebarSnapshotLabel': 'Instantánea capturada',
+    'providerDashboard.sidebarEyebrow': 'Contexto operativo',
+    'providerDashboard.sidebarTitle': 'Centro de mando del proveedor',
+    'providerDashboard.sidebarDescription':
+      'Mantente listo para auditorías con postura de cumplimiento, utilización en vivo y contactos de liderazgo en un solo lugar.',
     'providerDashboard.onboardingStatus.active': 'Activo',
     'providerDashboard.onboardingStatus.pending': 'Verificación pendiente',
     'providerDashboard.onboardingStatus.suspended': 'Suspendido',
