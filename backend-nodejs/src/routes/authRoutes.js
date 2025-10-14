@@ -17,7 +17,11 @@ router.post(
   register
 );
 
-router.post('/login', [body('email').isEmail(), body('password').notEmpty()], login);
+router.post(
+  '/login',
+  [body('email').isEmail(), body('password').notEmpty(), body('securityToken').optional().isString()],
+  login
+);
 router.get('/me', authenticate, profile);
 
 export default router;

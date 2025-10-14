@@ -409,6 +409,8 @@ class AnalyticsRepository {
         return 'serviceman';
       case UserRole.enterprise:
         return 'enterprise';
+      case UserRole.admin:
+        return 'admin';
     }
   }
 }

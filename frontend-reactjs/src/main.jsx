@@ -5,6 +5,7 @@ import App from './App.jsx';
 import { ThemeProvider } from './providers/ThemeProvider.jsx';
 import { LocaleProvider } from './providers/LocaleProvider.jsx';
 import { FeatureToggleProvider } from './providers/FeatureToggleProvider.jsx';
+import { AdminSessionProvider } from './providers/AdminSessionProvider.jsx';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <LocaleProvider>
         <FeatureToggleProvider>
           <ThemeProvider>
-            <App />
+            <AdminSessionProvider>
+              <App />
+            </AdminSessionProvider>
           </ThemeProvider>
         </FeatureToggleProvider>
       </LocaleProvider>

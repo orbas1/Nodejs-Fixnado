@@ -5,6 +5,7 @@ import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
 import Spinner from './components/ui/Spinner.jsx';
 import { useLocale } from './hooks/useLocale.js';
+import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -64,10 +65,38 @@ function App() {
             <Route path="/search" element={<Search />} />
             <Route path="/services" element={<Services />} />
             <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/monetisation" element={<AdminMonetization />} />
-            <Route path="/admin/theme-studio" element={<ThemeStudio />} />
-            <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/monetisation"
+              element={
+                <AdminProtectedRoute>
+                  <AdminMonetization />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/theme-studio"
+              element={
+                <AdminProtectedRoute>
+                  <ThemeStudio />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/telemetry"
+              element={
+                <AdminProtectedRoute>
+                  <TelemetryDashboard />
+                </AdminProtectedRoute>
+              }
+            />
             <Route path="/communications" element={<Communications />} />
             <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />

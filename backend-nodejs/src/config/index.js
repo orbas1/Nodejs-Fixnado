@@ -44,6 +44,16 @@ function jsonFromEnv(key, defaultValue) {
   return defaultValue;
 }
 
+function listFromEnv(key) {
+  const raw = process.env[key];
+  if (typeof raw !== 'string' || raw.trim() === '') {
+    return [];
+  }
+
+  return raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
 const DEFAULT_WAREHOUSE_THRESHOLDS = {
   default: 120,
   bookings: 30,
@@ -86,6 +96,14 @@ const config = {
   jwt: {
     secret: process.env.JWT_SECRET || 'change_this_secret',
     expiresIn: '12h'
+  },
+  auth: {
+    admin: {
+      securityToken: process.env.ADMIN_SECURITY_TOKEN || '',
+      allowedEmails: listFromEnv('ADMIN_ALLOWED_EMAILS'),
+      allowedDomains: listFromEnv('ADMIN_ALLOWED_DOMAINS'),
+      sessionTtlHours: Math.max(intFromEnv('ADMIN_SESSION_TTL_HOURS', 12), 1)
+    }
   },
   telemetry: {
     slackWebhookUrl: process.env.TELEMETRY_SLACK_WEBHOOK_URL || '',
