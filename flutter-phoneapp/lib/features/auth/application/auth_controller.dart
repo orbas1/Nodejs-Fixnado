@@ -12,11 +12,16 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
 
 final availableRolesProvider = Provider<List<UserRole>>((ref) {
   final state = ref.watch(authControllerProvider);
+  final publicRoles = UserRole.values.where((role) => !role.isInternal).toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
   if (state.availableRoles.isEmpty) {
-    return UserRole.values;
+    return publicRoles;
   }
-  final roles = state.availableRoles.toList()..sort((a, b) => a.index.compareTo(b.index));
-  return roles;
+  final roles = state.availableRoles
+      .where((role) => !role.isInternal)
+      .toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
+  return roles.isEmpty ? publicRoles : roles;
 });
 
 class AuthController extends StateNotifier<AuthState> {

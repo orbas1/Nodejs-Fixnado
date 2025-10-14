@@ -256,6 +256,97 @@ class AnalyticsRepository {
         };
       }
 
+      if (section is AnalyticsAdsSection) {
+        return {
+          ...base,
+          'data': {
+            'summaryCards': section.data.summaryCards
+                .map(
+                  (card) => {
+                    'title': card.title,
+                    'value': card.value,
+                    'change': card.change,
+                    'trend': card.trend,
+                    'helper': card.helper,
+                  },
+                )
+                .toList(),
+            'funnel': section.data.funnel
+                .map(
+                  (stage) => {
+                    'title': stage.title,
+                    'value': stage.value,
+                    'helper': stage.helper,
+                  },
+                )
+                .toList(),
+            'campaigns': section.data.campaigns
+                .map(
+                  (campaign) => {
+                    'id': campaign.id,
+                    'name': campaign.name,
+                    'status': campaign.status,
+                    'objective': campaign.objective,
+                    'spend': campaign.spend,
+                    'spendChange': campaign.spendChange,
+                    'conversions': campaign.conversions,
+                    'conversionsChange': campaign.conversionsChange,
+                    'cpa': campaign.cpa,
+                    'roas': campaign.roas,
+                    'roasChange': campaign.roasChange,
+                    'pacing': campaign.pacing,
+                    'lastMetricDate': campaign.lastMetricDate,
+                    'flights': campaign.flights,
+                    'window': campaign.window,
+                  },
+                )
+                .toList(),
+            'invoices': section.data.invoices
+                .map(
+                  (invoice) => {
+                    'invoiceNumber': invoice.invoiceNumber,
+                    'campaign': invoice.campaign,
+                    'amountDue': invoice.amountDue,
+                    'status': invoice.status,
+                    'dueDate': invoice.dueDate,
+                  },
+                )
+                .toList(),
+            'alerts': section.data.alerts
+                .map(
+                  (alert) => {
+                    'title': alert.title,
+                    'severity': alert.severity,
+                    'description': alert.description,
+                    'detectedAt': alert.detectedAt,
+                    'flight': alert.flight,
+                  },
+                )
+                .toList(),
+            'recommendations': section.data.recommendations
+                .map(
+                  (recommendation) => {
+                    'title': recommendation.title,
+                    'description': recommendation.description,
+                    'action': recommendation.action,
+                  },
+                )
+                .toList(),
+            'timeline': section.data.timeline
+                .map(
+                  (entry) => {
+                    'title': entry.title,
+                    'status': entry.status,
+                    'start': entry.start,
+                    'end': entry.end,
+                    'budget': entry.budget,
+                  },
+                )
+                .toList(),
+          },
+        };
+      }
+
       if (section is AnalyticsSettingsSection) {
         return {
           ...base,
@@ -318,6 +409,8 @@ class AnalyticsRepository {
         return 'serviceman';
       case UserRole.enterprise:
         return 'enterprise';
+      case UserRole.admin:
+        return 'admin';
     }
   }
 }

@@ -15,6 +15,7 @@ import 'widgets/service_result_card.dart';
 import 'widgets/tool_hire_sheet.dart';
 import 'widgets/storefront_card.dart';
 import 'widgets/zone_analytics_card.dart';
+import 'widgets/geo_matching_panel.dart';
 
 class ExplorerScreen extends ConsumerStatefulWidget {
   const ExplorerScreen({super.key});
@@ -71,6 +72,10 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 categories,
               ),
             ),
+          ),
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+            sliver: SliverToBoxAdapter(child: GeoMatchingPanel()),
           ),
           if (state.isLoading)
             const SliverToBoxAdapter(
