@@ -310,7 +310,8 @@ const DashboardLayout = ({
   lastRefreshed,
   exportHref,
   toggleMeta,
-  toggleReason
+  toggleReason,
+  onLogout
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -494,8 +495,17 @@ const DashboardLayout = ({
                   to="/"
                   className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
                 >
-                  <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Public site
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
                 </Link>
+                {onLogout ? (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+                  >
+                    <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={onRefresh}
@@ -559,7 +569,8 @@ DashboardLayout.propTypes = {
     ticket: PropTypes.string,
     lastModifiedAt: PropTypes.string
   }),
-  toggleReason: PropTypes.string
+  toggleReason: PropTypes.string,
+  onLogout: PropTypes.func
 };
 
 DashboardLayout.defaultProps = {
@@ -569,7 +580,8 @@ DashboardLayout.defaultProps = {
   lastRefreshed: null,
   exportHref: null,
   toggleMeta: null,
-  toggleReason: null
+  toggleReason: null,
+  onLogout: null
 };
 
 export default DashboardLayout;

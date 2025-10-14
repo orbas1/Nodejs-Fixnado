@@ -31,7 +31,7 @@ User.init(
     address: DataTypes.STRING,
     age: DataTypes.INTEGER,
     type: {
-      type: DataTypes.ENUM('user', 'company', 'servicemen'),
+      type: DataTypes.ENUM('user', 'company', 'servicemen', 'admin'),
       allowNull: false,
       defaultValue: 'user'
     },
