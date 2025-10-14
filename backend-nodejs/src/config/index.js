@@ -236,6 +236,11 @@ const config = {
     controlToggleKey: process.env.ANALYTICS_INGEST_TOGGLE_KEY || 'analytics.pipeline.enabled',
     controlCacheSeconds: Math.max(intFromEnv('ANALYTICS_CONTROL_CACHE_SECONDS', 30), 5)
   },
+  materialsShowcase: {
+    cacheSeconds: Math.max(intFromEnv('MATERIALS_SHOWCASE_CACHE_SECONDS', 45), 10),
+    fallbackCacheSeconds: Math.max(intFromEnv('MATERIALS_SHOWCASE_FALLBACK_SECONDS', 10), 5),
+    maxCacheEntries: Math.max(intFromEnv('MATERIALS_SHOWCASE_MAX_CACHE_ENTRIES', 24), 1)
+  },
   dashboards: {
     defaultTimezone: process.env.DASHBOARDS_TIMEZONE || 'Europe/London',
     defaultWindowDays: Math.max(intFromEnv('DASHBOARDS_DEFAULT_WINDOW_DAYS', 28), 7),

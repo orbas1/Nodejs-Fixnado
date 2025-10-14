@@ -19,7 +19,81 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await sequelize.truncate({ cascade: true, restartIdentity: true });
+  const service = await import('../src/services/materialsShowcaseService.js');
+  service.clearMaterialsShowcaseCache();
 });
+
+async function seedProviderWithInventory() {
+  const provider = await User.create({
+    firstName: 'Noah',
+    lastName: 'Stevens',
+    email: 'noah@provider.test',
+    passwordHash: 'hashed',
+    type: 'servicemen'
+  });
+
+  const company = await Company.create({
+    userId: provider.id,
+    legalStructure: 'Ltd',
+    contactName: 'Noah Stevens',
+    contactEmail: provider.email,
+    serviceRegions: 'Docklands',
+    marketplaceIntent: 'materials',
+    verified: true
+  });
+
+  const firstItem = await InventoryItem.create({
+    companyId: company.id,
+    name: 'Cat6A bulk cable drums',
+    sku: 'CAB-6A-500',
+    category: 'materials',
+    unitType: 'drum',
+    quantityOnHand: 28,
+    quantityReserved: 6,
+    safetyStock: 12,
+    metadata: {
+      unitCost: 245,
+      supplier: { name: 'Metro Cabling Co' },
+      leadTimeDays: 3,
+      compliance: ['CE'],
+      nextArrival: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      carbonCategory: 'low'
+    }
+  });
+
+  await InventoryItem.create({
+    companyId: company.id,
+    name: '6kg CO2 extinguishers',
+    sku: 'FS-CO2-60',
+    category: 'fire safety materials',
+    unitType: 'unit',
+    quantityOnHand: 60,
+    quantityReserved: 18,
+    safetyStock: 48,
+    metadata: {
+      unitCost: 70,
+      supplier: 'Civic Compliance',
+      leadTimeDays: 5,
+      compliance: ['BS EN3'],
+      nextArrival: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  });
+
+  await InventoryAlert.create({
+    itemId: firstItem.id,
+    type: 'low_stock',
+    severity: 'warning',
+    status: 'active',
+    metadata: { available: 22, safetyStock: 24 }
+  });
+
+  return {
+    provider,
+    company,
+    firstItem,
+    token: createToken(provider.id)
+  };
+}
 
 describe('GET /api/materials/showcase', () => {
   it('requires authentication', async () => {
@@ -45,76 +119,23 @@ describe('GET /api/materials/showcase', () => {
   });
 
   it('returns aggregated showcase data for provider actors', async () => {
-    const provider = await User.create({
-      firstName: 'Noah',
-      lastName: 'Stevens',
-      email: 'noah@provider.test',
-      passwordHash: 'hashed',
-      type: 'servicemen'
-    });
-
-    const company = await Company.create({
-      userId: provider.id,
-      legalStructure: 'Ltd',
-      contactName: 'Noah Stevens',
-      contactEmail: provider.email,
-      serviceRegions: 'Docklands',
-      marketplaceIntent: 'materials',
-      verified: true
-    });
-
-    const firstItem = await InventoryItem.create({
-      companyId: company.id,
-      name: 'Cat6A bulk cable drums',
-      sku: 'CAB-6A-500',
-      category: 'materials',
-      unitType: 'drum',
-      quantityOnHand: 28,
-      quantityReserved: 6,
-      safetyStock: 12,
-      metadata: {
-        unitCost: 245,
-        supplier: { name: 'Metro Cabling Co' },
-        leadTimeDays: 3,
-        compliance: ['CE'],
-        nextArrival: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        carbonCategory: 'low'
-      }
-    });
-
-    await InventoryItem.create({
-      companyId: company.id,
-      name: '6kg CO2 extinguishers',
-      sku: 'FS-CO2-60',
-      category: 'fire safety materials',
-      unitType: 'unit',
-      quantityOnHand: 60,
-      quantityReserved: 18,
-      safetyStock: 48,
-      metadata: {
-        unitCost: 70,
-        supplier: 'Civic Compliance',
-        leadTimeDays: 5,
-        compliance: ['BS EN3'],
-        nextArrival: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
-      }
-    });
-
-    await InventoryAlert.create({
-      itemId: firstItem.id,
-      type: 'low_stock',
-      severity: 'warning',
-      status: 'active',
-      metadata: { available: 22, safetyStock: 24 }
-    });
+    const { company, token } = await seedProviderWithInventory();
 
     const response = await request(app)
       .get('/api/materials/showcase')
       .query({ companyId: company.id })
-      .set('Authorization', `Bearer ${createToken(provider.id)}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(response.body.meta).toMatchObject({ fallback: false });
+    expect(response.headers['cache-control']).toBe('private, max-age=45');
+    expect(response.body.meta).toMatchObject({
+      fallback: false,
+      cache: {
+        hit: false,
+        key: `materials:company:${company.id}`,
+        ttlSeconds: 45
+      }
+    });
     expect(response.body.data.stats.totalSkus).toBeGreaterThanOrEqual(2);
     expect(response.body.data.inventory).toEqual(
       expect.arrayContaining([
@@ -126,5 +147,31 @@ describe('GET /api/materials/showcase', () => {
     );
     expect(response.body.data.collections.length).toBeGreaterThan(0);
     expect(response.body.data.insights.compliance.passingRate).toBeGreaterThan(0);
+  });
+
+  it('serves cached payloads until a force refresh is requested', async () => {
+    const { company, token, firstItem } = await seedProviderWithInventory();
+
+    const issueRequest = (query = {}) =>
+      request(app)
+        .get('/api/materials/showcase')
+        .query({ companyId: company.id, ...query })
+        .set('Authorization', `Bearer ${token}`);
+
+    const initial = await issueRequest().expect(200);
+    const initialGeneratedAt = initial.body.meta.generatedAt;
+
+    await InventoryItem.update({ quantityOnHand: 5 }, { where: { id: firstItem.id } });
+
+    const cached = await issueRequest().expect(200);
+    const cachedItem = cached.body.data.inventory.find((item) => item.id === firstItem.id);
+    expect(cachedItem.quantityOnHand).toBe(28);
+    expect(cached.body.meta.cache).toMatchObject({ hit: true, key: `materials:company:${company.id}` });
+
+    const refreshed = await issueRequest({ forceRefresh: 'true' }).expect(200);
+    const refreshedItem = refreshed.body.data.inventory.find((item) => item.id === firstItem.id);
+    expect(refreshedItem.quantityOnHand).toBe(5);
+    expect(refreshed.body.meta.cache).toMatchObject({ hit: false });
+    expect(refreshed.body.meta.generatedAt).not.toBe(initialGeneratedAt);
   });
 });

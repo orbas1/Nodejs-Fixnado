@@ -1,3 +1,4 @@
+import config from '../config/index.js';
 import { listInventoryItems } from './inventoryService.js';
 
 const FALLBACK_DATA = Object.freeze({
@@ -194,6 +195,136 @@ const FALLBACK_DATA = Object.freeze({
     }
   }
 });
+
+const CACHE_TTL_MS = Math.max((config.materialsShowcase?.cacheSeconds ?? 45) * 1000, 5000);
+const FALLBACK_CACHE_TTL_MS = Math.max(
+  (config.materialsShowcase?.fallbackCacheSeconds ?? 10) * 1000,
+  5000
+);
+const MAX_CACHE_ENTRIES = Math.max(config.materialsShowcase?.maxCacheEntries ?? 24, 1);
+
+const materialsCache = new Map();
+
+function buildCacheKey(companyId) {
+  return companyId ? `materials:company:${companyId}` : 'materials:global';
+}
+
+function pruneCache() {
+  if (materialsCache.size <= MAX_CACHE_ENTRIES) {
+    return;
+  }
+
+  const now = Date.now();
+  for (const [key, entry] of materialsCache.entries()) {
+    if (entry?.promise) {
+      continue;
+    }
+    if (entry.expiresAt <= now) {
+      materialsCache.delete(key);
+    }
+  }
+
+  if (materialsCache.size <= MAX_CACHE_ENTRIES) {
+    return;
+  }
+
+  for (const [key, entry] of materialsCache.entries()) {
+    if (entry?.promise) {
+      continue;
+    }
+    materialsCache.delete(key);
+    if (materialsCache.size <= MAX_CACHE_ENTRIES) {
+      break;
+    }
+  }
+}
+
+function buildResponse(entry, { hit, key }) {
+  const { value, expiresAt, ttlMs, cachedAt } = entry;
+  const baseMeta = value.meta ?? {};
+  return {
+    data: value.data,
+    meta: {
+      ...baseMeta,
+      cache: {
+        ...(baseMeta.cache ?? {}),
+        key,
+        hit,
+        cachedAt: new Date(cachedAt).toISOString(),
+        expiresAt: new Date(expiresAt).toISOString(),
+        ttlSeconds: Math.max(Math.round(ttlMs / 1000), 1)
+      }
+    }
+  };
+}
+
+function cacheResolvedEntry(key, payload, ttlMs) {
+  const cachedAt = Date.now();
+  const entry = {
+    value: payload,
+    expiresAt: cachedAt + ttlMs,
+    ttlMs,
+    cachedAt
+  };
+  materialsCache.set(key, entry);
+  pruneCache();
+  return buildResponse(entry, { hit: false, key });
+}
+
+async function computeAndStore(key, params, token) {
+  let result;
+  try {
+    result = await buildMaterialsShowcase(params);
+  } catch (error) {
+    const current = materialsCache.get(key);
+    if (current?.token === token) {
+      materialsCache.delete(key);
+    }
+    throw error;
+  }
+
+  const ttlMs = result.meta?.fallback ? FALLBACK_CACHE_TTL_MS : CACHE_TTL_MS;
+  const payload = {
+    data: result.data,
+    meta: { ...result.meta }
+  };
+  const current = materialsCache.get(key);
+  if (!current || current.token !== token) {
+    const cachedAt = Date.now();
+    const entry = {
+      value: payload,
+      ttlMs,
+      cachedAt,
+      expiresAt: cachedAt + ttlMs
+    };
+    return buildResponse(entry, { hit: false, key });
+  }
+
+  return cacheResolvedEntry(key, payload, ttlMs);
+}
+
+function getCacheEntry(key) {
+  const entry = materialsCache.get(key);
+  if (!entry) {
+    return null;
+  }
+  if (entry.promise) {
+    return entry;
+  }
+  if (entry.expiresAt <= Date.now()) {
+    materialsCache.delete(key);
+    return null;
+  }
+  return entry;
+}
+
+export function clearMaterialsShowcaseCache({ companyId } = {}) {
+  if (companyId) {
+    materialsCache.delete(buildCacheKey(companyId));
+    return;
+  }
+  materialsCache.clear();
+}
 
 function normaliseString(value) {
   if (!value) return null;
@@ -500,7 +631,7 @@ function mergeWithFallback(dynamic) {
   };
 }
 
-export async function getMaterialsShowcase({ companyId } = {}) {
+async function buildMaterialsShowcase({ companyId } = {}) {
   try {
     const materialsRaw = await listInventoryItems({
       companyId,
@@ -515,7 +646,17 @@ export async function getMaterialsShowcase({ companyId } = {}) {
       .map((item) => mapInventoryItem(item));
 
     if (materials.length === 0) {
-      return { data: FALLBACK_DATA, meta: { fallback: true, generatedAt: FALLBACK_DATA.generatedAt } };
+      return {
+        data: FALLBACK_DATA,
+        meta: {
+          fallback: true,
+          reason: 'empty',
+          generatedAt: FALLBACK_DATA.generatedAt,
+          companyId: companyId ?? null,
+          source: 'fallback',
+          materialsCount: 0
+        }
+      };
     }
 
     const stats = computeStats(materials);
@@ -560,13 +701,50 @@ export async function getMaterialsShowcase({ companyId } = {}) {
       data: mergeWithFallback(dynamicPayload),
       meta: {
         fallback: false,
-        generatedAt: dynamicPayload.generatedAt
+        generatedAt: dynamicPayload.generatedAt,
+        companyId: companyId ?? null,
+        source: 'inventory',
+        materialsCount: materials.length
       }
     };
   } catch (error) {
     console.warn('[materialsShowcase] falling back to static payload', error);
-    return { data: FALLBACK_DATA, meta: { fallback: true, generatedAt: FALLBACK_DATA.generatedAt, error: error.message } };
+    return {
+      data: FALLBACK_DATA,
+      meta: {
+        fallback: true,
+        reason: 'error',
+        generatedAt: FALLBACK_DATA.generatedAt,
+        companyId: companyId ?? null,
+        source: 'fallback',
+        materialsCount: 0,
+        error: { message: error.message }
+      }
+    };
   }
+}
+
+export async function getMaterialsShowcase({ companyId, forceRefresh = false } = {}) {
+  const key = buildCacheKey(companyId);
+
+  if (!forceRefresh) {
+    const cached = getCacheEntry(key);
+    if (cached) {
+      if (cached.promise) {
+        return cached.promise;
+      }
+      materialsCache.delete(key);
+      materialsCache.set(key, cached);
+      return buildResponse(cached, { hit: true, key });
+    }
+  } else {
+    materialsCache.delete(key);
+  }
+
+  const token = Symbol('materials-cache');
+  const promise = computeAndStore(key, { companyId }, token);
+  materialsCache.set(key, { promise, token });
+  return promise;
 }
 
 export { FALLBACK_DATA };
