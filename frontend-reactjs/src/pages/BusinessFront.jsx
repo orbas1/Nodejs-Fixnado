@@ -49,6 +49,7 @@ StatCard.propTypes = {
   stat: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     format: PropTypes.string,
     caption: PropTypes.string
@@ -156,6 +157,17 @@ function PackageCard({ pkg }) {
   );
 }
 
+PackageCard.propTypes = {
+  pkg: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    highlights: PropTypes.arrayOf(PropTypes.string).isRequired,
+    price: PropTypes.number,
+    currency: PropTypes.string
+  }).isRequired
+};
+
 function TestimonialCard({ testimonial }) {
   return (
     <blockquote
@@ -170,6 +182,15 @@ function TestimonialCard({ testimonial }) {
     </blockquote>
   );
 }
+
+TestimonialCard.propTypes = {
+  testimonial: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    quote: PropTypes.string.isRequired,
+    client: PropTypes.string.isRequired,
+    role: PropTypes.string
+  }).isRequired
+};
 
 function Chip({ icon: Icon, children }) {
   return (
@@ -316,17 +337,56 @@ DealCard.propTypes = {
   }).isRequired
 };
 
-function ReviewCard({ review }) {
+function ReviewCard({ review, highlighted }) {
+  const { format, t } = useLocale();
+  const submittedLabel = review.submittedAt ? format.date(review.submittedAt) : null;
+  const responseLabel = Number.isFinite(review.responseTimeMinutes)
+    ? t('businessFront.reviewResponseTime', { minutes: format.number(Math.max(review.responseTimeMinutes, 1)) })
+    : null;
+
   return (
-    <article className="flex h-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-6" data-qa={`business-front-review-${review.id}`}>
-      <div className="flex items-center gap-2 text-primary">
-        <StarIcon className="h-5 w-5" aria-hidden="true" />
-        <span className="text-sm font-semibold">{review.rating?.toFixed?.(1) ?? review.rating}</span>
+    <article
+      className={`flex h-full flex-col gap-4 rounded-3xl border bg-white/90 p-6 shadow-sm transition focus-within:ring-2 focus-within:ring-primary/40 ${
+        highlighted ? 'border-primary/40 shadow-primary/10 ring-1 ring-primary/30' : 'border-slate-200'
+      }`}
+      data-qa={`business-front-review-${review.id}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-primary">
+          <StarIcon className="h-5 w-5" aria-hidden="true" />
+          <span className="text-base font-semibold">
+            {Number.isFinite(review.rating) ? review.rating.toFixed(1) : t('businessFront.reviewNoScore')}
+          </span>
+        </div>
+        {review.verified ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-primary">
+            <CheckBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('businessFront.reviewVerified')}
+          </span>
+        ) : null}
       </div>
-      <p className="flex-1 text-sm text-slate-600">“{review.comment}”</p>
-      <footer className="text-xs uppercase tracking-[0.3em] text-primary/60">
-        {review.reviewer}
-        {review.job ? <span className="block text-[0.65rem] text-primary/40 normal-case">{review.job}</span> : null}
+      {submittedLabel ? (
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/50">
+          {t('businessFront.reviewSubmittedOn', { date: submittedLabel })}
+        </p>
+      ) : null}
+      <p className="flex-1 text-sm leading-relaxed text-slate-600">“{review.comment}”</p>
+      {review.response ? (
+        <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-xs leading-relaxed text-primary/80">
+          <p className="font-semibold uppercase tracking-[0.3em] text-primary/70">
+            {t('businessFront.reviewProviderResponse')}
+          </p>
+          <p className="mt-2 text-[0.85rem] text-primary/80">{review.response}</p>
+          {responseLabel ? (
+            <p className="mt-3 text-[0.65rem] uppercase tracking-[0.3em] text-primary/50">{responseLabel}</p>
+          ) : null}
+        </div>
+      ) : null}
+      <footer className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{review.reviewer}</p>
+        <div className="flex flex-wrap gap-2 text-xs text-primary/60">
+          {review.job ? <Chip icon={SparklesIcon}>{review.job}</Chip> : null}
+        </div>
       </footer>
     </article>
   );
@@ -339,6 +399,16 @@ ReviewCard.propTypes = {
     rating: PropTypes.number,
     comment: PropTypes.string.isRequired,
     job: PropTypes.string,
+    submittedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    verified: PropTypes.bool,
+    response: PropTypes.string,
+    responseTimeMinutes: PropTypes.number
+  }).isRequired,
+  highlighted: PropTypes.bool
+};
+
+ReviewCard.defaultProps = {
+  highlighted: false
     createdAt: PropTypes.string
   }).isRequired
 };
@@ -504,6 +574,101 @@ InventoryCard.propTypes = {
   variant: PropTypes.oneOf(['materials', 'tools']).isRequired
 };
 
+function ReviewSummaryPanel({ summary, reviews }) {
+  const { format, t } = useLocale();
+  const highlighted = reviews.find((review) => review.id === summary.highlightedReviewId) || reviews[0];
+  const lastReviewLabel = summary.lastReviewAt ? format.date(summary.lastReviewAt) : null;
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-3" data-qa="business-front-review-summary">
+      <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-white to-white p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('businessFront.reviewsOverall')}</p>
+        <div className="mt-4 flex items-end gap-3">
+          <span className="text-4xl font-semibold text-primary">
+            {Number.isFinite(summary.averageRating) ? summary.averageRating.toFixed(2) : '—'}
+          </span>
+          <span className="text-sm text-primary/70">
+            {t('businessFront.reviewsAverage', { total: format.number(summary.totalReviews ?? 0) })}
+          </span>
+        </div>
+        <dl className="mt-6 space-y-3 text-sm text-primary/70">
+          <div className="flex items-center justify-between">
+            <dt className="uppercase tracking-[0.3em] text-[0.65rem]">{t('businessFront.reviewsVerifiedShare')}</dt>
+            <dd className="font-semibold text-primary">{format.percentage(summary.verifiedShare ?? 0)}</dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt className="uppercase tracking-[0.3em] text-[0.65rem]">{t('businessFront.reviewsResponseRate')}</dt>
+            <dd className="font-semibold text-primary">{format.percentage(summary.responseRate ?? 0)}</dd>
+          </div>
+        </dl>
+        {lastReviewLabel ? (
+          <p className="mt-6 text-xs uppercase tracking-[0.3em] text-primary/50">
+            {t('businessFront.reviewsLastUpdated', { date: lastReviewLabel })}
+          </p>
+        ) : null}
+      </div>
+      <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{t('businessFront.reviewsDistribution')}</p>
+        <ul className="mt-5 space-y-4">
+          {[...summary.ratingBuckets]
+            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+            .map((bucket) => {
+            const share = summary.totalReviews ? bucket.count / summary.totalReviews : 0;
+            const widthPercent = Math.max(share * 100, bucket.count > 0 ? 6 : 0);
+            return (
+              <li key={bucket.score}>
+                <div className="flex items-center justify-between text-sm text-primary">
+                  <span className="font-medium">{t('businessFront.reviewScoreLabel', { score: bucket.score })}</span>
+                  <span>{format.percentage(share)}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-slate-100">
+                  <div
+                    className="h-2 rounded-full bg-primary/60 transition-all"
+                    style={{ width: `${widthPercent}%` }}
+                    aria-hidden="true"
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {highlighted ? (
+        <div className="rounded-3xl border border-primary/15 bg-primary/5 p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('businessFront.reviewsHighlight')}</p>
+          <p className="mt-4 text-sm leading-relaxed text-primary/80">“{summary.excerpt || highlighted.comment}”</p>
+          <div className="mt-5 space-y-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{highlighted.reviewer}</p>
+            <div className="flex flex-wrap gap-2 text-xs text-primary/60">
+              {highlighted.job ? <Chip icon={SparklesIcon}>{highlighted.job}</Chip> : null}
+              <Chip icon={StarIcon}>{Number.isFinite(highlighted.rating) ? highlighted.rating.toFixed(1) : '—'}</Chip>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+ReviewSummaryPanel.propTypes = {
+  summary: PropTypes.shape({
+    averageRating: PropTypes.number,
+    totalReviews: PropTypes.number,
+    verifiedShare: PropTypes.number,
+    responseRate: PropTypes.number,
+    ratingBuckets: PropTypes.arrayOf(
+      PropTypes.shape({
+        score: PropTypes.number,
+        count: PropTypes.number
+      })
+    ).isRequired,
+    lastReviewAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    highlightedReviewId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    excerpt: PropTypes.string
+  }).isRequired,
+  reviews: PropTypes.arrayOf(ReviewCard.propTypes.review).isRequired
+};
+
 function ZoneBadge({ zone }) {
   return (
     <li className="rounded-3xl border border-slate-200 bg-white/80 p-4" data-qa={`business-front-zone-${zone.id ?? zone.name}`}>
@@ -618,10 +783,13 @@ export default function BusinessFront() {
   const deals = state.data?.deals ?? [];
   const previousJobs = state.data?.previousJobs ?? [];
   const reviews = state.data?.reviews ?? [];
+  const reviewSummary = state.data?.reviewSummary ?? null;
   const materials = state.data?.materials ?? [];
   const tools = state.data?.tools ?? [];
   const servicemen = state.data?.servicemen ?? [];
   const serviceZones = state.data?.serviceZones ?? [];
+  const reviewAccess = state.meta?.reviewAccess ?? {};
+  const canViewReviews = reviewAccess.granted !== false;
   const scores = state.data?.scores ?? {};
   const trustScore = scores?.trust;
   const reviewScore = scores?.review;
@@ -994,15 +1162,51 @@ export default function BusinessFront() {
             </h2>
             <p className="text-sm text-slate-600">{t('businessFront.reviewsDescription')}</p>
           </header>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                {t('businessFront.reviewsEmpty')}
-              </p>
-            ) : (
-              reviews.map((review) => <ReviewCard key={review.id} review={review} />)
-            )}
-          </div>
+          {canViewReviews ? (
+            <>
+              {reviewSummary && reviews.length ? (
+                <ReviewSummaryPanel summary={reviewSummary} reviews={reviews} />
+              ) : null}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {reviews.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
+                    {t('businessFront.reviewsEmpty')}
+                  </p>
+                ) : (
+                  reviews.map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      highlighted={reviewSummary?.highlightedReviewId === review.id}
+                    />
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3 rounded-3xl border border-primary/30 bg-white/80 p-6 text-sm text-primary/70">
+              <div className="flex items-center gap-3">
+                <LockClosedIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <p className="font-semibold text-primary">
+                  {reviewAccess.reason || t('businessFront.reviewsAccessRestricted')}
+                </p>
+              </div>
+              {Array.isArray(reviewAccess.allowedRoles) && reviewAccess.allowedRoles.length ? (
+                <p className="text-xs uppercase tracking-[0.3em] text-primary/50">
+                  {t('businessFront.reviewsAccessCta', {
+                    roles: reviewAccess.allowedRoles.join(' • ')
+                  })}
+                </p>
+              ) : null}
+              {reviewSummary ? (
+                <p className="text-xs text-primary/50">
+                  {t('businessFront.reviewsAccessSummary', {
+                    total: format.number(reviewSummary.totalReviews ?? 0)
+                  })}
+                </p>
+              ) : null}
+            </div>
+          )}
         </section>
 
         <section aria-labelledby="business-front-testimonials" className="space-y-5">

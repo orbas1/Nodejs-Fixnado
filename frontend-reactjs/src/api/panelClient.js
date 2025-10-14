@@ -186,7 +186,7 @@ async function request(path, {
       let errorBody = null;
       try {
         errorBody = await response.json();
-      } catch (error) {
+      } catch {
         // ignore JSON parsing failure — keep body as null
       }
 
@@ -602,9 +602,50 @@ function normaliseBusinessFront(payload = {}) {
   const reviews = ensureArray(root.reviews).map((review, index) => ({
     id: review.id || `review-${index}`,
     reviewer: review.reviewer || review.client || 'Client partner',
-    rating: Number.parseFloat(review.rating ?? review.score ?? 0) || 0,
+    rating: Number.isFinite(Number.parseFloat(review.rating ?? review.score))
+      ? Number.parseFloat(review.rating ?? review.score)
+      : 0,
     comment: review.comment || review.quote || '',
     job: review.job || review.project || null,
+    submittedAt: review.submittedAt || review.createdAt || review.updatedAt || null,
+    verified: review.verified !== false,
+    response: review.response || review.reply || null,
+    responseTimeMinutes: Number.isFinite(Number(review.responseTimeMinutes))
+      ? Number(review.responseTimeMinutes)
+      : null,
+    visibility: review.visibility || 'public'
+  }));
+
+  const reviewSummaryRaw = root.reviewSummary || {};
+  const reviewSummary = {
+    averageRating: Number.isFinite(Number(reviewSummaryRaw.averageRating))
+      ? Number(reviewSummaryRaw.averageRating)
+      : (reviews.length ? reviews.reduce((total, entry) => total + (entry.rating ?? 0), 0) / reviews.length : null),
+    totalReviews: Number.isFinite(Number(reviewSummaryRaw.totalReviews))
+      ? Number(reviewSummaryRaw.totalReviews)
+      : reviews.length,
+    verifiedShare: Number.isFinite(Number(reviewSummaryRaw.verifiedShare))
+      ? Number(reviewSummaryRaw.verifiedShare)
+      : (reviews.length ? reviews.filter((review) => review.verified).length / reviews.length : 0),
+    ratingBuckets: ensureArray(reviewSummaryRaw.ratingBuckets).length
+      ? ensureArray(reviewSummaryRaw.ratingBuckets).map((bucket, index) => ({
+          score: Number.isFinite(Number(bucket.score)) ? Number(bucket.score) : index + 1,
+          count: Number.isFinite(Number(bucket.count)) ? Number(bucket.count) : 0
+        }))
+      : [1, 2, 3, 4, 5].map((score) => ({
+          score,
+          count: reviews.filter((review) => Math.round(review.rating ?? 0) === score).length
+        })),
+    lastReviewAt: reviewSummaryRaw.lastReviewAt || null,
+    responseRate: Number.isFinite(Number(reviewSummaryRaw.responseRate))
+      ? Number(reviewSummaryRaw.responseRate)
+      : (reviews.length
+          ? reviews.filter((review) => Number.isFinite(review.responseTimeMinutes)).length / reviews.length
+          : 0),
+    highlightedReviewId: reviewSummaryRaw.highlightedReviewId || reviews[0]?.id || null,
+    latestReviewId: reviewSummaryRaw.latestReviewId || reviews.find((review) => review.submittedAt)?.id || null,
+    excerpt: reviewSummaryRaw.excerpt || (reviews[0]?.comment ? `${reviews[0].comment.slice(0, 200)}${reviews[0].comment.length > 200 ? '…' : ''}` : null)
+  };
     createdAt: review.createdAt || review.created_at || null
   }));
 
@@ -745,6 +786,7 @@ function normaliseBusinessFront(payload = {}) {
     serviceCatalogue,
     previousJobs,
     reviews,
+    reviewSummary,
     deals,
     materials,
     tools,
@@ -1522,6 +1564,23 @@ const businessFrontFallback = normaliseBusinessFront({
       job: 'Campus SLA Programme'
     }
   ],
+  reviewSummary: {
+    averageRating: 4.9,
+    totalReviews: 1,
+    verifiedShare: 1,
+    responseRate: 0.92,
+    ratingBuckets: [
+      { score: 5, count: 1 },
+      { score: 4, count: 0 },
+      { score: 3, count: 0 },
+      { score: 2, count: 0 },
+      { score: 1, count: 0 }
+    ],
+    lastReviewAt: new Date().toISOString(),
+    highlightedReviewId: 'review-0',
+    latestReviewId: 'review-0',
+    excerpt: 'Engineers arrive on time, telemetry updates are constant, and escrow settlements are seamless.'
+  },
   deals: [
     {
       title: 'Multi-site electrical cover',
