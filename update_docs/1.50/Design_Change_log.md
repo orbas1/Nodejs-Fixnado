@@ -68,7 +68,12 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Added guidance for rate-limiting and CORS violation messaging within global alert components so UI surfaces remain consistent with backend enforcement.
    - Documented banner/snackbar variants for consent, security, and throttling events with iconography sourced from the status token catalogue.
    - Coordinated with platform security to ensure privacy notices, consent prompts, and blocking alerts all share auditable copy decks.
-11. **Privacy & PII Disclosure Patterns**
+11. **Consent & Trust Surfaces**
+   - Delivered responsive consent banner specs covering cookie, privacy, and AI-personalisation toggles with inline legal copy, session-level persistence, and analytics hooks.
+   - Designed audit-ready consent receipts, history drawers, and privacy preference panels aligned with backend consent APIs and audit log schema.
+   - Introduced scam alert overlays for live feed, bid, and messaging flows, pairing risk scores with recommended remediation actions for providers and operations teams.
+   - Added state diagrams mapping cookie+session consent to vaulted secret rotation flows so design can signal re-authentication requirements after session revocation events.
+12. **Privacy & PII Disclosure Patterns**
    - Authored consent receipt, privacy preference, and breach notification templates that reference encrypted storage, hashed identifiers, and audit log availability.
    - Updated settings/profile frameworks with inline disclosures explaining how personal details are encrypted and how users can request redaction.
    - Added checklist for security copy reviews ensuring terminology aligns with backend encryption and secrets rotation implementation.

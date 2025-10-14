@@ -2,8 +2,8 @@
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 48 | 54 | 45 | 52 | 60 | 44 | 62 | 64 | 52 | 38 | 52 | 54 | 36 | 38 | 50 | 49 |
-| D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
+| D1 | Token & System Foundation | 54 | 60 | 50 | 58 | 64 | 50 | 68 | 70 | 58 | 44 | 58 | 60 | 42 | 44 | 56 | 55 |
+| D2 | Navigation & IA Harmonisation | 40 | 38 | 42 | 44 | 40 | 38 | 50 | 48 | 40 | 36 | 44 | 56 | 38 | 36 | 40 | 42 |
 | D3 | Page Templates & Partial Library | 25 | 24 | 26 | 28 | 26 | 24 | 32 | 28 | 24 | 22 | 28 | 40 | 22 | 24 | 26 | 27 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
 | D5 | Mobile Parity & Component Adaptation | 18 | 20 | 18 | 20 | 18 | 18 | 24 | 24 | 20 | 18 | 24 | 34 | 18 | 18 | 20 | 20 |
@@ -16,6 +16,7 @@
 > - **Compliance & Security Grades** track integration of privacy prompts, consent cues, and security messaging within the design artefacts.
 > - Task D1 security score increased after documenting rate-limit and CORS alert tokens that align with the hardened backend behaviours.
 > - Privacy banner, consent receipt, and PII breach notification patterns were added to the token catalogue, lifting D1 security, compliance, and QA readiness scores.
+> - Vault rotation indicators, consent preference drawers, and navigation placements for privacy actions are now documented, driving notable increases in D1/D2 organisation, functionality, and QA marks.
 > - **Overall Grade %** is an average of all recorded metrics, rounded to the nearest whole number.
 
 ## Action Items to Improve Scores
