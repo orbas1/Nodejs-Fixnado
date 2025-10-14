@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../about/presentation/about_screen.dart';
 import '../../auth/domain/role_scope.dart';
+import '../../communications/presentation/communications_screen.dart';
+import '../../storefront/presentation/storefront_screen.dart';
 import '../domain/profile_models.dart';
 import 'profile_controller.dart';
 import '../../storefront/presentation/storefront_screen.dart';
 import '../../legal/presentation/legal_terms_screen.dart';
 import '../../legal/application/legal_terms_loader.dart';
 import '../../legal/domain/legal_terms_models.dart';
+import '../../compliance/presentation/privacy_policy_screen.dart';
 
 class ProfileManagementScreen extends ConsumerStatefulWidget {
   const ProfileManagementScreen({super.key});
@@ -177,6 +181,54 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
               ),
             ),
           if (draft != null && profile != null) ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              sliver: SliverToBoxAdapter(
+                child: _SectionCard(
+                  title: 'Company & trust',
+                  subtitle: 'Access Fixnado mission, trust centre, and readiness updates.',
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                          child: Icon(Icons.flag_outlined, color: Theme.of(context).colorScheme.primary),
+                        ),
+                        title: Text('About Fixnado', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          'Mission, leadership, and global operations readiness.',
+                          style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AboutScreen()),
+                        ),
+                      ),
+                      const Divider(height: 24),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                          child: Icon(Icons.support_agent_outlined, color: Theme.of(context).colorScheme.primary),
+                        ),
+                        title: Text('Schedule readiness review', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          'Coordinate with our command centre for enterprise launch checks.',
+                          style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CommunicationsScreen()),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               sliver: SliverToBoxAdapter(
@@ -358,6 +410,54 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               sliver: SliverToBoxAdapter(
                 child: _SectionCard(
+                  title: 'Legal & privacy center',
+                  subtitle: 'Review platform policies, request signed documentation, and track privacy escalations.',
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          child: const Icon(Icons.privacy_tip_outlined),
+                        ),
+                        title: Text('Privacy policy', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          'Access the full Fixnado privacy posture covering web and mobile with region-specific supplements.',
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const PrivacyPolicyScreen(),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 32),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                          child: const Icon(Icons.description_outlined),
+                        ),
+                        title: Text('Request DPA / SCC pack', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          'Launch a guided workflow to request signed data processing addenda, SCC copies, or privacy attestations.',
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                        trailing: const Icon(Icons.support_agent_outlined),
+                        onTap: _showPrivacyContacts,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              sliver: SliverToBoxAdapter(
+                child: _SectionCard(
                   title: 'Availability & workflow',
                   subtitle: 'Set scheduling windows and surface your engagement blueprint.',
                   child: Column(
@@ -519,6 +619,56 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
+    );
+  }
+
+  void _showPrivacyContacts() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Privacy Office contacts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              Text(
+                'Reach the Blackwellen Ltd Privacy Office for signed data processing addenda, DPIA templates, and regulator-facing queries.',
+                style: GoogleFonts.inter(fontSize: 14, height: 1.6, color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                  foregroundColor: theme.colorScheme.primary,
+                  child: const Icon(Icons.mail_outline),
+                ),
+                title: Text('privacy@fixnado.com', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                subtitle: Text('Primary contact • 5 business hour SLA', style: GoogleFonts.inter(fontSize: 13)),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.secondaryContainer,
+                  foregroundColor: theme.colorScheme.onSecondaryContainer,
+                  child: const Icon(Icons.phone_outlined),
+                ),
+                title: Text('+44 20 7993 5520', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                subtitle: Text('Security hotline • 24/7 escalation', style: GoogleFonts.inter(fontSize: 13)),
+              ),
+              const SizedBox(height: 8),
+              Text('Include your tenant ID and a summary of the request so we can route it immediately.', style: GoogleFonts.ibmPlexMono(fontSize: 12, color: theme.colorScheme.primary)),
+            ],
+          ),
+        );
+      },
     );
   }
 

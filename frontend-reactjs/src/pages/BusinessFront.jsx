@@ -11,11 +11,14 @@ import {
   EnvelopeIcon,
   LockClosedIcon,
   MapPinIcon,
+  PaintBrushIcon,
   PhoneArrowDownLeftIcon,
   PlayIcon,
+  PhotoIcon,
   SparklesIcon,
   ShieldCheckIcon,
   StarIcon,
+  SwatchIcon,
   TagIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon
@@ -207,6 +210,126 @@ Chip.propTypes = {
 
 Chip.defaultProps = {
   icon: null
+};
+
+function PaletteSwatch({ label, value }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600">
+      <span className="h-4 w-4 rounded-full border border-white/70 shadow-inner" style={{ backgroundColor: value }} aria-hidden="true" />
+      <span>{label}</span>
+    </span>
+  );
+}
+
+PaletteSwatch.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired
+};
+
+function BannerStyleCard({ style }) {
+  const { t } = useLocale();
+  const gradientBackground = `linear-gradient(135deg, ${style.palette.background}, ${style.palette.accent})`;
+  const previewTextClass = style.textTone === 'dark' ? 'text-slate-900' : 'text-white';
+  const previewOverlay = style.textTone === 'dark' ? 'bg-white/80 text-slate-700' : 'bg-black/30 text-white';
+  const normaliseLabel = (value) =>
+    typeof value === 'string'
+      ? value
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/[-_]/g, ' ')
+          .replace(/^./, (char) => char.toUpperCase())
+      : '';
+  const toneLabel = normaliseLabel(style.textTone) || t('businessFront.bannerStylesToneFallback');
+  const layoutLabel = normaliseLabel(style.layout) || t('businessFront.bannerStylesLayoutFallback');
+  const badges = Array.isArray(style.badges) ? style.badges : [];
+
+  return (
+    <article className="flex h-full flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm" data-qa={`business-front-banner-style-${style.id}`}>
+      <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-inner">
+        {style.preview ? (
+          <div className="relative h-44 w-full">
+            <img src={style.preview} alt={style.name} className="h-full w-full object-cover" />
+            <div className={`absolute inset-0 flex flex-col justify-between p-5 ${previewTextClass}`}>
+              <span className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] ${previewOverlay}`}>
+                {t('businessFront.bannerStylesHeroLabel')}
+              </span>
+              <div className={`flex flex-col gap-1 ${style.textTone === 'dark' ? 'text-slate-900' : 'text-white'}`}>
+                <span className="text-xs uppercase tracking-[0.3em] opacity-70">
+                  {t('businessFront.bannerStylesPreviewTone', { tone: toneLabel })}
+                </span>
+                <span className="text-lg font-semibold">{style.name}</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`flex h-44 flex-col justify-between rounded-2xl p-5 ${previewTextClass}`}
+            style={{ backgroundImage: gradientBackground, backgroundColor: style.palette.background }}
+          >
+            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em]">
+              {t('businessFront.bannerStylesHeroLabel')}
+            </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-[0.3em] opacity-80">
+                {t('businessFront.bannerStylesPreviewTone', { tone: toneLabel })}
+              </span>
+              <span className="text-lg font-semibold">{style.name}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {style.description ? <p className="text-sm text-slate-600">{style.description}</p> : null}
+        {style.recommendedUse ? (
+          <p className="rounded-2xl bg-secondary/70 px-4 py-3 text-xs text-primary/80">
+            <span className="font-semibold text-primary">{t('businessFront.bannerStylesRecommendedUse')}</span>{' '}
+            {style.recommendedUse}
+          </p>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <PaletteSwatch label={t('businessFront.bannerStylesPaletteBackground')} value={style.palette.background} />
+          <PaletteSwatch label={t('businessFront.bannerStylesPaletteAccent')} value={style.palette.accent} />
+          <PaletteSwatch label={t('businessFront.bannerStylesPaletteHighlight')} value={style.palette.highlight} />
+          <PaletteSwatch label={t('businessFront.bannerStylesPaletteText')} value={style.palette.text} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Chip icon={PaintBrushIcon}>{t('businessFront.bannerStylesLayout', { layout: layoutLabel })}</Chip>
+          {style.supportsVideo ? <Chip icon={PlayIcon}>{t('businessFront.bannerStylesSupportsVideo')}</Chip> : null}
+          {style.supportsCarousel ? <Chip icon={PhotoIcon}>{t('businessFront.bannerStylesSupportsCarousel')}</Chip> : null}
+        </div>
+        {badges.length ? (
+          <div className="flex flex-wrap gap-2">
+            {badges.map((badge) => (
+              <Chip key={badge} icon={SparklesIcon}>
+                {badge}
+              </Chip>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+BannerStyleCard.propTypes = {
+  style: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    layout: PropTypes.string,
+    recommendedUse: PropTypes.string,
+    preview: PropTypes.string,
+    palette: PropTypes.shape({
+      background: PropTypes.string.isRequired,
+      accent: PropTypes.string.isRequired,
+      highlight: PropTypes.string.isRequired,
+      text: PropTypes.string.isRequired
+    }).isRequired,
+    supportsVideo: PropTypes.bool,
+    supportsCarousel: PropTypes.bool,
+    textTone: PropTypes.string,
+    badges: PropTypes.arrayOf(PropTypes.string)
+  }).isRequired
 };
 
 function ServiceCatalogueCard({ service }) {
@@ -775,6 +898,7 @@ export default function BusinessFront() {
   const testimonials = state.data?.testimonials ?? [];
   const certifications = state.data?.certifications ?? [];
   const gallery = state.data?.gallery ?? [];
+  const bannerStyles = state.data?.bannerStyles ?? [];
   const support = state.data?.support ?? {};
   const stats = state.data?.stats ?? [];
   const serviceCatalogue = state.data?.serviceCatalogue ?? [];
@@ -786,6 +910,14 @@ export default function BusinessFront() {
   const tools = state.data?.tools ?? [];
   const servicemen = state.data?.servicemen ?? [];
   const serviceZones = state.data?.serviceZones ?? [];
+  const styleGuide = state.data?.styleGuide ?? {};
+  const styleGuidePaletteEntries = useMemo(
+    () =>
+      Object.entries(styleGuide?.palette ?? {})
+        .filter(([, value]) => typeof value === 'string' && value.trim())
+        .map(([key, value]) => ({ key, value: value.trim() })),
+    [styleGuide]
+  );
   const reviewAccess = state.meta?.reviewAccess ?? {};
   const canViewReviews = reviewAccess.granted !== false;
   const scores = state.data?.scores ?? {};
@@ -1016,6 +1148,42 @@ export default function BusinessFront() {
             </p>
           </div>
         ) : null}
+
+        <section aria-labelledby="business-front-banner-styles" className="space-y-5">
+          <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <PaintBrushIcon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 id="business-front-banner-styles" className="text-lg font-semibold text-primary">
+                  {t('businessFront.bannerStylesHeadline')}
+                </h2>
+                <p className="text-sm text-slate-600">{t('businessFront.bannerStylesDescription')}</p>
+              </div>
+            </div>
+            {styleGuidePaletteEntries.length ? (
+              <div className="flex flex-wrap gap-2" aria-label={t('businessFront.bannerStylesPaletteLabel')}>
+                {styleGuidePaletteEntries.map((entry) => (
+                  <PaletteSwatch
+                    key={entry.key}
+                    label={t('businessFront.bannerStylesPaletteKey', { key: formatCodeLabel(entry.key) })}
+                    value={entry.value}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </header>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {bannerStyles.length === 0 ? (
+              <p className="rounded-3xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
+                {t('businessFront.bannerStylesEmpty')}
+              </p>
+            ) : (
+              bannerStyles.map((style) => <BannerStyleCard key={style.id} style={style} />)
+            )}
+          </div>
+        </section>
 
         {hasShowcase ? (
           <section aria-labelledby="business-front-showcase" className="space-y-5">
