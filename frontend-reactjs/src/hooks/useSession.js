@@ -1,77 +1,5 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isRolePermitted, normaliseRole } from '../constants/accessControl.js';
-
-const DEFAULT_SESSION = Object.freeze({
-  role: 'guest',
-  userId: null,
-  tenantId: null,
-  locale: 'en-GB',
-  features: [],
-  permissions: []
-});
-
-function sanitiseString(value) {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function sanitiseStringArray(value) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.filter((entry) => typeof entry === 'string' && entry.trim().length > 0).map((entry) => entry.trim());
-}
-
-function readSessionSnapshot() {
-  if (typeof window === 'undefined') {
-    return DEFAULT_SESSION;
-  }
-
-  try {
-    const payload = window.__FIXNADO_SESSION__;
-    if (!payload || typeof payload !== 'object') {
-      return DEFAULT_SESSION;
-    }
-
-    const role = normaliseRole(payload.role) || DEFAULT_SESSION.role;
-    const userId = sanitiseString(payload.userId);
-    const tenantId = sanitiseString(payload.tenantId);
-    const locale = sanitiseString(payload.locale) || DEFAULT_SESSION.locale;
-    const features = sanitiseStringArray(payload.features);
-    const permissions = sanitiseStringArray(payload.permissions);
-
-    return Object.freeze({ role, userId, tenantId, locale, features, permissions });
-  } catch (error) {
-    console.warn('[useSession] Failed to read session payload', error);
-    return DEFAULT_SESSION;
-  }
-}
-
-export function useSession() {
-  const snapshot = useMemo(() => readSessionSnapshot(), []);
-
-  const hasRole = useCallback(
-    (roles) => {
-      if (!roles || (Array.isArray(roles) && roles.length === 0)) {
-        return true;
-      }
-
-      return isRolePermitted(snapshot.role, roles);
-    },
-    [snapshot.role]
-  );
-
-  return {
-    ...snapshot,
-    isAuthenticated: Boolean(snapshot.userId),
-    hasRole
-  };
-}
-
-import { useEffect, useMemo, useState } from 'react';
 
 const SESSION_STORAGE_KEY = 'fx.session';
 const TOKEN_STORAGE_KEY = 'fixnado:accessToken';
@@ -80,8 +8,11 @@ const FALLBACK_SESSION = Object.freeze({
   tenantId: 'fixnado-demo',
   role: 'guest',
   userId: null,
+  locale: 'en-GB',
   dashboards: Object.freeze([]),
   scopes: Object.freeze([]),
+  features: Object.freeze([]),
+  permissions: Object.freeze([]),
   token: null,
   isAuthenticated: false
 });
@@ -96,44 +27,62 @@ const ROLE_DASHBOARD_MAP = {
   user: ['user']
 };
 
-function sanitiseString(value, fallback = null) {
+const normaliseArray = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const result = [];
+
+  value.forEach((entry) => {
+    if (typeof entry !== 'string') {
+      return;
+    }
+    const trimmed = entry.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      return;
+    }
+    seen.add(trimmed);
+    result.push(trimmed);
+  });
+
+  return result;
+};
+
+const sanitiseString = (value, fallback = null) => {
   if (typeof value === 'string' && value.trim()) {
     return value.trim();
   }
   return fallback;
-}
+};
 
-function uniqueStrings(values = []) {
-  const seen = new Set();
-  const result = [];
-  values.forEach((value) => {
-    if (typeof value !== 'string') return;
-    const trimmed = value.trim();
-    if (!trimmed || seen.has(trimmed)) return;
-    seen.add(trimmed);
-    result.push(trimmed);
-  });
-  return result;
-}
-
-function resolveSessionFromWindow() {
+const resolveSessionFromWindow = () => {
   if (typeof window === 'undefined') {
     return FALLBACK_SESSION;
   }
 
-  const base = { ...FALLBACK_SESSION };
-  const globalSession = window.__FIXNADO_SESSION__;
+  const base = {
+    tenantId: FALLBACK_SESSION.tenantId,
+    role: FALLBACK_SESSION.role,
+    userId: FALLBACK_SESSION.userId,
+    locale: FALLBACK_SESSION.locale,
+    dashboards: [],
+    scopes: [],
+    features: [],
+    permissions: []
+  };
 
+  const globalSession = window.__FIXNADO_SESSION__;
   if (globalSession && typeof globalSession === 'object') {
     base.tenantId = sanitiseString(globalSession.tenantId, base.tenantId);
     base.role = sanitiseString(globalSession.role, base.role);
     base.userId = sanitiseString(globalSession.userId, base.userId);
-    if (Array.isArray(globalSession.dashboards)) {
-      base.dashboards = uniqueStrings(globalSession.dashboards);
-    }
-    if (Array.isArray(globalSession.scopes)) {
-      base.scopes = Object.freeze(uniqueStrings(globalSession.scopes));
-    }
+    base.locale = sanitiseString(globalSession.locale, base.locale);
+    base.dashboards = normaliseArray(globalSession.dashboards);
+    base.scopes = normaliseArray(globalSession.scopes);
+    base.features = normaliseArray(globalSession.features);
+    base.permissions = normaliseArray(globalSession.permissions);
   }
 
   try {
@@ -143,11 +92,18 @@ function resolveSessionFromWindow() {
       base.tenantId = sanitiseString(parsed.tenantId, base.tenantId);
       base.role = sanitiseString(parsed.role, base.role);
       base.userId = sanitiseString(parsed.userId, base.userId);
+      base.locale = sanitiseString(parsed.locale, base.locale);
       if (Array.isArray(parsed.dashboards)) {
-        base.dashboards = uniqueStrings(parsed.dashboards);
+        base.dashboards = normaliseArray(parsed.dashboards);
       }
       if (Array.isArray(parsed.scopes)) {
-        base.scopes = Object.freeze(uniqueStrings(parsed.scopes));
+        base.scopes = normaliseArray(parsed.scopes);
+      }
+      if (Array.isArray(parsed.features)) {
+        base.features = normaliseArray(parsed.features);
+      }
+      if (Array.isArray(parsed.permissions)) {
+        base.permissions = normaliseArray(parsed.permissions);
       }
     }
   } catch (error) {
@@ -163,29 +119,49 @@ function resolveSessionFromWindow() {
     }
   })();
 
-  const dashboards = base.dashboards.length
-    ? base.dashboards
-    : ROLE_DASHBOARD_MAP[base.role] ?? ROLE_DASHBOARD_MAP[sanitiseString(base.role)] ?? [];
+  const resolvedRole = normaliseRole(base.role) || FALLBACK_SESSION.role;
+  const dashboards = base.dashboards.length ? base.dashboards : ROLE_DASHBOARD_MAP[resolvedRole] ?? [];
 
   return {
     tenantId: base.tenantId,
-    role: base.role,
+    role: resolvedRole,
     userId: base.userId,
+    locale: base.locale,
     dashboards: Object.freeze(dashboards),
-    scopes: base.scopes,
+    scopes: Object.freeze(base.scopes),
+    features: Object.freeze(base.features),
+    permissions: Object.freeze(base.permissions),
     token: accessToken,
     isAuthenticated: Boolean(accessToken || base.userId)
   };
-}
+};
 
-export function readSessionSnapshot() {
-  return resolveSessionFromWindow();
-}
+export const readSessionSnapshot = () => resolveSessionFromWindow();
 
-export default function useSession() {
+export function useSession() {
   const [session, setSession] = useState(() => resolveSessionFromWindow());
 
-  const stableSession = useMemo(() => ({ ...session, dashboards: session.dashboards }), [session]);
+  const stableSession = useMemo(
+    () => ({
+      ...session,
+      dashboards: session.dashboards ?? [],
+      scopes: session.scopes ?? [],
+      features: session.features ?? [],
+      permissions: session.permissions ?? []
+    }),
+    [session]
+  );
+
+  const hasRole = useCallback(
+    (roles) => {
+      if (!roles || (Array.isArray(roles) && roles.length === 0)) {
+        return true;
+      }
+
+      return isRolePermitted(stableSession.role, roles);
+    },
+    [stableSession.role]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -203,14 +179,22 @@ export default function useSession() {
       refresh();
     };
 
+    refresh();
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('fixnado:session-updated', refresh);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('fixnado:session:update', refresh);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('fixnado:session-updated', refresh);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('fixnado:session:update', refresh);
     };
   }, []);
 
-  return stableSession;
+  return {
+    ...stableSession,
+    hasRole
+  };
 }
+
+export default useSession;

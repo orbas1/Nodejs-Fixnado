@@ -6,7 +6,6 @@ export const COMMUNICATIONS_ALLOWED_ROLES = [
   'operations'
 ];
 
-export const normaliseRole = (role) => {
 export const BUSINESS_FRONT_ALLOWED_ROLES = ['enterprise', 'admin'];
 
 export const ROLE_DISPLAY_NAMES = {
@@ -15,10 +14,12 @@ export const ROLE_DISPLAY_NAMES = {
   admin: 'Admin Control Tower',
   provider: 'Provider Operations Studio',
   serviceman: 'Crew Performance Cockpit',
-  enterprise: 'Enterprise Performance Suite'
+  enterprise: 'Enterprise Performance Suite',
+  support: 'Support Response Hub',
+  operations: 'Operations Coordination Hub'
 };
 
-export function normaliseRole(role) {
+export const normaliseRole = (role) => {
   if (typeof role !== 'string') {
     return '';
   }
@@ -43,9 +44,8 @@ export const formatRoleLabel = (role) => {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 };
-}
 
-export function isRolePermitted(role, allowedRoles = []) {
+export const isRolePermitted = (role, allowedRoles = []) => {
   const current = normaliseRole(role);
   if (!current) {
     return false;
@@ -57,4 +57,4 @@ export function isRolePermitted(role, allowedRoles = []) {
   }
 
   return list.some((candidate) => normaliseRole(candidate) === current);
-}
+};

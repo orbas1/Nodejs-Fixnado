@@ -678,6 +678,8 @@ function normaliseBusinessFront(payload = {}) {
     comment: review.comment || review.quote || '',
     job: review.job || review.project || null,
     submittedAt: review.submittedAt || review.createdAt || review.updatedAt || null,
+    createdAt: review.createdAt || review.created_at || null,
+    updatedAt: review.updatedAt || review.updated_at || null,
     verified: review.verified !== false,
     response: review.response || review.reply || null,
     responseTimeMinutes: Number.isFinite(Number(review.responseTimeMinutes))
@@ -716,8 +718,6 @@ function normaliseBusinessFront(payload = {}) {
     latestReviewId: reviewSummaryRaw.latestReviewId || reviews.find((review) => review.submittedAt)?.id || null,
     excerpt: reviewSummaryRaw.excerpt || (reviews[0]?.comment ? `${reviews[0].comment.slice(0, 200)}${reviews[0].comment.length > 200 ? '…' : ''}` : null)
   };
-    createdAt: review.createdAt || review.created_at || null
-  }));
 
   const rawScores = root.scores || {};
   const trustScore = normaliseScore(rawScores.trust, root.trustScore ?? root.trust?.value);

@@ -583,6 +583,11 @@ const InventorySection = ({ section }) => {
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
 const adsTrendIcon = {
   up: ArrowTrendingUpIcon,
   down: ArrowTrendingDownIcon,
@@ -882,6 +887,12 @@ InventorySection.propTypes = {
               depositCurrency: PropTypes.string
             })
           )
+        })
+      )
+    })
+  }).isRequired
+};
+
 FixnadoAdsSection.propTypes = {
   section: PropTypes.shape({
     label: PropTypes.string,
