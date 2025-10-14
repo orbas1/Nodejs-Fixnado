@@ -2513,7 +2513,10 @@ export const getProviderStorefront = withFallback(
     return request(`/panel/provider/storefront${query}`, {
       cacheKey: `provider-storefront${cacheKeySuffix}`,
       ttl: 20000,
-      headers: { 'X-Fixnado-Role': options?.role ?? 'company' },
+      headers: {
+        'X-Fixnado-Role': options?.role ?? 'company',
+        'X-Fixnado-Persona': options?.persona ?? 'provider'
+      },
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
     });

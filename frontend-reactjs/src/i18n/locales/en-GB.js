@@ -241,6 +241,12 @@ export const enGB = {
     'providerStorefront.heroConversion': 'Conversion {value}',
     'providerStorefront.heroCta': 'Preview business front',
     'providerStorefront.heroSecondaryCta': 'Return to provider studio',
+    'providerStorefront.guard.restricted': 'Restricted module',
+    'providerStorefront.guard.title': 'Storefront access is limited',
+    'providerStorefront.guard.body':
+      'Switch to an authorised provider or admin persona to continue. Marketplace storefront controls are reserved for {roles} to protect inventory governance.',
+    'providerStorefront.guard.help':
+      'Use the persona switcher in the header or contact your Fixnado administrator to request storefront access.',
     'providerStorefront.sidebar.eyebrow': 'Storefront insight',
     'providerStorefront.sidebar.title': 'Marketplace readiness',
     'providerStorefront.sidebar.description':
@@ -261,11 +267,19 @@ export const enGB = {
     'providerStorefront.metrics.holdExpiring': 'Compliance holds expiring',
     'providerStorefront.metrics.insuredOnly': 'Insured-only',
     'providerStorefront.metrics.avgDailyRate': 'Average daily rate',
+    'providerStorefront.metrics.pill.danger': 'Action required',
+    'providerStorefront.metrics.pill.warning': 'Monitor closely',
+    'providerStorefront.metrics.pill.success': 'On track',
+    'providerStorefront.metrics.pill.info': 'Healthy signal',
+    'providerStorefront.metrics.pill.neutral': 'Status update',
     'providerStorefront.refresh': 'Refresh data',
     'providerStorefront.offlineNotice':
       'Showing cached storefront intelligence while we reconnect to the marketplace API.',
     'providerStorefront.errorLoading':
       'We were unable to refresh storefront metrics. Retry once your connection stabilises.',
+    'providerStorefront.overview.heading': 'Performance snapshot',
+    'providerStorefront.overview.trustStatement':
+      'Insured inventory, compliance telemetry, and response SLAs remain in force across every listing.',
     'providerStorefront.nav.overview': 'Performance snapshot',
     'providerStorefront.nav.overviewDescription': 'Compliance, conversion, and listing health overview.',
     'providerStorefront.nav.listings': 'Listings intelligence',

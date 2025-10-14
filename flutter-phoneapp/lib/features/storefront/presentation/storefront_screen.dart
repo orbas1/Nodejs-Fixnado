@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/datetime_formatter.dart';
 import '../domain/storefront_models.dart';
 import 'storefront_controller.dart';
+import '../../auth/presentation/role_selector.dart';
 
 class StorefrontScreen extends ConsumerWidget {
   const StorefrontScreen({super.key});
@@ -27,12 +28,14 @@ class StorefrontScreen extends ConsumerWidget {
           style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700),
         ),
       ),
-      body: snapshot == null && state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => controller.refresh(),
-              child: CustomScrollView(
-                slivers: [
+      body: !state.accessGranted
+          ? _StorefrontAccessGate(state: state)
+          : snapshot == null && state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () => controller.refresh(),
+                  child: CustomScrollView(
+                    slivers: [
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                     sliver: SliverToBoxAdapter(
@@ -563,6 +566,60 @@ class StorefrontScreen extends ConsumerWidget {
       default:
         return status.replace('_', ' ');
     }
+  }
+}
+
+class _StorefrontAccessGate extends StatelessWidget {
+  const _StorefrontAccessGate({required this.state});
+
+  final StorefrontState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 520),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: scheme.primary.withOpacity(0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cambia de persona para continuar',
+                style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700, color: scheme.primary),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'El escaparate del marketplace está reservado para personas proveedoras o administradoras. Cambia desde el selector para gestionar inventario y listados.',
+                style: GoogleFonts.inter(fontSize: 14, height: 1.6, color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+              const RoleSelector(),
+              const SizedBox(height: 12),
+              Text(
+                'Persona activa: ${state.role.displayName}',
+                style: GoogleFonts.inter(fontSize: 13, color: scheme.onSurfaceVariant),
+              ),
+              if (state.errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    state.errorMessage!,
+                    style: GoogleFonts.inter(fontSize: 13, color: scheme.error),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

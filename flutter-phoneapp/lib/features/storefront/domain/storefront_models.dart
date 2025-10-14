@@ -458,3 +458,12 @@ class StorefrontFetchResult {
   final StorefrontSnapshot snapshot;
   final bool offline;
 }
+
+class StorefrontAccessDenied implements Exception {
+  StorefrontAccessDenied(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}

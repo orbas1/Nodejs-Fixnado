@@ -32,19 +32,36 @@ export function authorize(types = []) {
   };
 }
 
-const STORE_FRONT_ALLOWED = new Set(['company', 'provider']);
+const STORE_FRONT_ALLOWED_ROLES = new Set(['company', 'provider', 'admin']);
+const STORE_FRONT_ALLOWED_PERSONAS = new Set(['provider', 'admin']);
 
 export function requireStorefrontRole(req, res, next) {
   const headerRole = `${req.headers['x-fixnado-role'] ?? ''}`.toLowerCase();
+  const headerPersona = `${req.headers['x-fixnado-persona'] ?? ''}`.toLowerCase();
   const userRole = `${req.user?.type ?? ''}`.toLowerCase();
 
-  if (STORE_FRONT_ALLOWED.has(userRole)) {
+  const personaProvided = Boolean(headerPersona);
+  const personaAllowed = STORE_FRONT_ALLOWED_PERSONAS.has(headerPersona);
+
+  if (personaProvided && !personaAllowed) {
+    return res.status(403).json({ message: 'Persona not authorised for storefront operations' });
+  }
+
+  if (
+    STORE_FRONT_ALLOWED_ROLES.has(userRole) &&
+    (!personaProvided || personaAllowed || STORE_FRONT_ALLOWED_PERSONAS.has(userRole))
+  ) {
     return next();
   }
 
-  if (STORE_FRONT_ALLOWED.has(headerRole)) {
+  if (
+    STORE_FRONT_ALLOWED_ROLES.has(headerRole) &&
+    personaProvided &&
+    personaAllowed
+  ) {
     return next();
   }
 
-  return res.status(req.user ? 403 : 401).json({ message: 'Storefront access restricted to providers' });
+  const status = req.user ? 403 : 401;
+  return res.status(status).json({ message: 'Storefront access restricted to providers or admins' });
 }
