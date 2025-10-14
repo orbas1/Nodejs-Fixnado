@@ -33,6 +33,7 @@ const Blog = lazy(() => import('./pages/Blog.jsx'));
 const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 
 function App() {
@@ -73,6 +74,7 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/materials" element={<Materials />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
