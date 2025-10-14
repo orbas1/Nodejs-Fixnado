@@ -29,6 +29,7 @@ const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
+const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -98,6 +99,14 @@ function App() {
               element={
                 <AdminProtectedRoute>
                   <TelemetryDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/zones"
+              element={
+                <AdminProtectedRoute>
+                  <AdminZones />
                 </AdminProtectedRoute>
               }
             />
