@@ -39,9 +39,14 @@ function renderWithToggles(ui, { evaluation, toggle = enabledToggle, loading = f
 }
 
 describe('RoleDashboard', () => {
+  let resolvedOptionsMock;
   let fetchSpy;
 
   beforeEach(() => {
+    resolvedOptionsMock = vi
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockReturnValue({ timeZone: 'Europe/London' });
+
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => dashboardFixture
@@ -52,6 +57,7 @@ describe('RoleDashboard', () => {
   });
 
   afterEach(() => {
+    resolvedOptionsMock?.mockRestore();
     vi.restoreAllMocks();
     window.localStorage.clear();
   });
@@ -71,6 +77,7 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
+    expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument());
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
     const exportLink = screen.getByText('Download CSV');
@@ -83,6 +90,26 @@ describe('RoleDashboard', () => {
   });
 
   it('shows an error state when the dashboard fails to load', async () => {
+    const originalDev = import.meta.env.DEV;
+    import.meta.env.DEV = false;
+
+    try {
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: 'persona_not_supported' })
+      });
+
+      renderWithToggles(
+        <MemoryRouter initialEntries={['/dashboards/admin']}>
+          <Routes>
+            <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByText(/couldn’t load this dashboard/i)).toBeInTheDocument();
+
+      global.fetch.mockResolvedValueOnce({
     global.fetch.mockResolvedValueOnce({
       ok: false,
       status: 404,
@@ -181,6 +208,10 @@ describe('RoleDashboard', () => {
       });
 
       fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+      expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
+    } finally {
+      import.meta.env.DEV = originalDev;
+    }
       await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
     } finally {
       mockDashboards.admin = originalDashboard;

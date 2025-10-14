@@ -169,7 +169,7 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                             child: StorefrontCard(storefront: storefront),
                           )),
                     ],
-                    if (state.businessFronts.isNotEmpty) ...[
+                    if (state.canAccessBusinessFronts && state.businessFronts.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Text('Business fronts', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 16),
@@ -177,6 +177,39 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                             padding: const EdgeInsets.only(bottom: 16),
                             child: BusinessFrontCard(front: front),
                           )),
+                    ],
+                    if (!state.canAccessBusinessFronts) ...[
+                      const SizedBox(height: 16),
+                      Card(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.lock_outline, size: 28, color: Theme.of(context).colorScheme.primary),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Provision enterprise access to unlock business fronts.',
+                                      style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Enterprise control tower teams can review live business fronts with inventory, deals, and concierge contacts.',
+                                      style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                     if (!hasResults && state.errorMessage == null)
                       Padding(
@@ -289,17 +322,34 @@ class _ExplorerScreenState extends ConsumerState<ExplorerScreen> {
                 label: 'Tools',
                 selected: state.filters.type == ExplorerResultType.tools,
                 onSelected: () => controller.updateResultType(ExplorerResultType.tools),
-                label: 'Storefronts',
-                selected: state.filters.type == ExplorerResultType.storefronts,
-                onSelected: () => controller.updateResultType(ExplorerResultType.storefronts),
               ),
               const SizedBox(width: 12),
               _buildFilterChip(
                 context,
-                label: 'Business fronts',
-                selected: state.filters.type == ExplorerResultType.businessFronts,
-                onSelected: () => controller.updateResultType(ExplorerResultType.businessFronts),
+                label: 'Storefronts',
+                selected: state.filters.type == ExplorerResultType.storefronts,
+                onSelected: () => controller.updateResultType(ExplorerResultType.storefronts),
               ),
+              if (state.canAccessBusinessFronts) ...[
+                const SizedBox(width: 12),
+                _buildFilterChip(
+                  context,
+                  label: 'Business fronts',
+                  selected: state.filters.type == ExplorerResultType.businessFronts,
+                  onSelected: () => controller.updateResultType(ExplorerResultType.businessFronts),
+                ),
+              ],
+              if (!state.canAccessBusinessFronts) ...[
+                const SizedBox(width: 12),
+                Chip(
+                  avatar: const Icon(Icons.lock_outline, size: 18),
+                  label: Text(
+                    'Enterprise role unlocks business fronts',
+                    style: GoogleFonts.inter(fontSize: 12),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                ),
+              ],
               const SizedBox(width: 12),
               DropdownButtonHideUnderline(
                 child: Container(

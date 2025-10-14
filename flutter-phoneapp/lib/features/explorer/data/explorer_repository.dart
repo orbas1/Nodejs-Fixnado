@@ -50,9 +50,10 @@ class ExplorerRepository {
       final storefronts = (searchPayload['storefronts'] as List<dynamic>? ?? [])
           .map((item) => ExplorerStorefront.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
-      final businessFronts = (searchPayload['businessFronts'] as List<dynamic>? ?? [])
+      final rawBusinessFronts = (searchPayload['businessFronts'] as List<dynamic>? ?? [])
           .map((item) => ExplorerBusinessFront.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
+      final businessFronts = role.canAccessBusinessFronts ? rawBusinessFronts : const <ExplorerBusinessFront>[];
 
       final zones = (zonePayload['data'] as List<dynamic>? ?? [])
           .map((item) => ZoneSummary.fromJson(Map<String, dynamic>.from(item as Map)))
