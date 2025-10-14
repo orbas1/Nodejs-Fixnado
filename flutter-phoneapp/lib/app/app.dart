@@ -83,8 +83,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final role = ref.watch(currentRoleProvider);
-    final destinations = _NavigationDestination.values;
-    final selected = destinations[_index];
+    final destinations = _visibleDestinationsForRole(role);
+    final currentIndex = _index.clamp(0, destinations.length - 1);
+    final selected = destinations[currentIndex];
     final selectedTitle = selected == _NavigationDestination.operations && role == UserRole.provider
         ? 'Service Ops'
         : selected.title;
@@ -100,6 +101,10 @@ class _AppShellState extends ConsumerState<AppShell> {
         ],
       ),
       body: IndexedStack(
+        index: currentIndex,
+        children: destinations
+            .map((destination) => _buildScreenForDestination(destination, role))
+            .toList(growable: false),
         index: _index,
         children: [
           const ExplorerScreen(),
@@ -116,7 +121,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         ],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
+        selectedIndex: currentIndex,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: destinations
             .map(
@@ -131,6 +136,54 @@ class _AppShellState extends ConsumerState<AppShell> {
         onDestinationSelected: (index) => setState(() => _index = index),
       ),
     );
+  }
+
+  static const Set<UserRole> _communicationsAllowedRoles = {
+    UserRole.provider,
+    UserRole.enterprise,
+    UserRole.support,
+    UserRole.operations,
+    UserRole.admin,
+  };
+
+  List<_NavigationDestination> _visibleDestinationsForRole(UserRole role) {
+    final items = <_NavigationDestination>[
+      _NavigationDestination.explorer,
+      _NavigationDestination.feed,
+      _NavigationDestination.bookings,
+      _NavigationDestination.rentals,
+      _NavigationDestination.materials,
+      _NavigationDestination.inbox,
+      _NavigationDestination.profile,
+      _NavigationDestination.operations,
+    ];
+    if (!_communicationsAllowedRoles.contains(role)) {
+      items.remove(_NavigationDestination.inbox);
+    }
+    return items;
+  }
+
+  Widget _buildScreenForDestination(_NavigationDestination destination, UserRole role) {
+    switch (destination) {
+      case _NavigationDestination.explorer:
+        return const ExplorerScreen();
+      case _NavigationDestination.feed:
+        return const LiveFeedScreen();
+      case _NavigationDestination.bookings:
+        return const BookingScreen();
+      case _NavigationDestination.rentals:
+        return const RentalScreen();
+      case _NavigationDestination.materials:
+        return const MaterialsScreen();
+      case _NavigationDestination.inbox:
+        return const CommunicationsScreen();
+      case _NavigationDestination.profile:
+        return const ProfileManagementScreen();
+      case _NavigationDestination.operations:
+        return role == UserRole.provider
+            ? const ServiceManagementScreen()
+            : const AnalyticsDashboardScreen();
+    }
   }
 }
 
