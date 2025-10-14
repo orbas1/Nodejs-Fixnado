@@ -7,8 +7,11 @@ import {
   listInventory,
   resolveAlert
 } from '../controllers/inventoryController.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
+
+router.use(authenticate, authorize(['company']));
 
 router.post('/items', createInventoryItem);
 router.get('/items', listInventory);

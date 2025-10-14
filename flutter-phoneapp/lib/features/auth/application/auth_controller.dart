@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'auth_token_controller.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/auth_models.dart';
@@ -12,11 +14,16 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
 
 final availableRolesProvider = Provider<List<UserRole>>((ref) {
   final state = ref.watch(authControllerProvider);
+  final publicRoles = UserRole.values.where((role) => !role.isInternal).toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
   if (state.availableRoles.isEmpty) {
-    return UserRole.values;
+    return publicRoles;
   }
-  final roles = state.availableRoles.toList()..sort((a, b) => a.index.compareTo(b.index));
-  return roles;
+  final roles = state.availableRoles
+      .where((role) => !role.isInternal)
+      .toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
+  return roles.isEmpty ? publicRoles : roles;
 });
 
 class AuthController extends StateNotifier<AuthState> {
@@ -92,5 +99,9 @@ class AuthController extends StateNotifier<AuthState> {
   void signOut() {
     state = AuthState.initial();
     _ref.read(currentRoleProvider.notifier).state = UserRole.customer;
+    // Clear any cached API credentials to mirror server-side session revocation.
+    // Intentionally not awaiting to avoid blocking UI transitions.
+    // ignore: discarded_futures
+    _ref.read(authTokenProvider.notifier).setToken(null);
   }
 }

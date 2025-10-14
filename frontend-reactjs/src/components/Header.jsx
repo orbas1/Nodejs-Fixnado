@@ -23,6 +23,12 @@ const navigationConfig = [
         href: '/provider/dashboard'
       },
       {
+        key: 'provider-storefront',
+        nameKey: 'nav.providerStorefront',
+        descriptionKey: 'nav.providerStorefrontDescription',
+        href: '/provider/storefront'
+      },
+      {
         key: 'enterprise',
         nameKey: 'nav.enterpriseAnalytics',
         descriptionKey: 'nav.enterpriseAnalyticsDescription',
@@ -33,6 +39,12 @@ const navigationConfig = [
         nameKey: 'nav.businessFronts',
         descriptionKey: 'nav.businessFrontsDescription',
         href: '/providers/metro-power-services'
+      },
+      {
+        key: 'geo-matching',
+        nameKey: 'nav.geoMatching',
+        descriptionKey: 'nav.geoMatchingDescription',
+        href: '/operations/geo-matching'
       }
     ]
   },
