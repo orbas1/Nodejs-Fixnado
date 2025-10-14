@@ -166,6 +166,13 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
               ),
             ),
           ),
+          if (profile?.affiliate != null)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              sliver: SliverToBoxAdapter(
+                child: AffiliateProgrammeCard(snapshot: profile!.affiliate!),
+              ),
+            ),
           if (draft != null && profile != null) ...[
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -750,6 +757,253 @@ class _InfoLine extends StatelessWidget {
         const SizedBox(width: 6),
         Text(label, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.outline)),
       ],
+    );
+  }
+}
+
+class AffiliateProgrammeCard extends StatelessWidget {
+  const AffiliateProgrammeCard({super.key, required this.snapshot});
+
+  final AffiliateProgrammeSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currency = NumberFormat.simpleCurrency();
+    final referrals = snapshot.referrals.take(3).toList();
+    final tiers = snapshot.tiers.take(3).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF8FAFF), Color(0xFFEFF4FF), Color(0xFFE9F5FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Affiliate programme', style: GoogleFonts.inter(letterSpacing: 4, fontSize: 11, color: theme.colorScheme.primary.withOpacity(0.7))),
+            const SizedBox(height: 8),
+            Text(
+              snapshot.tierLabel != null ? '${snapshot.tierLabel} affiliate revenue intelligence' : 'Affiliate revenue intelligence',
+              style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Monitor the enterprise affiliate stream with parity across web and mobile. Guardrails shown here align with the admin dashboard configuration.',
+              style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 18),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white,
+                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.08)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Referral code', style: GoogleFonts.inter(fontSize: 11, letterSpacing: 2.5, color: theme.colorScheme.primary.withOpacity(0.6))),
+                    const SizedBox(height: 6),
+                    Text(snapshot.referralCode.toUpperCase(), style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text('Status: ${snapshot.status.toUpperCase()}', style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 540;
+                final metrics = [
+                  _AffiliateMetric('Commission approved', currency.format(snapshot.totalCommission)),
+                  _AffiliateMetric('Revenue influenced', currency.format(snapshot.totalRevenue)),
+                  _AffiliateMetric('Pending commission', currency.format(snapshot.pendingCommission)),
+                ];
+                return isCompact
+                    ? Column(children: metrics.map((metric) => Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: metric)).toList())
+                    : Row(children: metrics.map((metric) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: metric))).toList());
+              },
+            ),
+            const SizedBox(height: 18),
+            Text('Commission tiers', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: tiers.isNotEmpty
+                  ? tiers
+                      .map(
+                        (tier) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            color: Colors.white,
+                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.12)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${tier.tierLabel} • ${tier.name}', style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+                              const SizedBox(height: 4),
+                              Text('${tier.commissionRate.toStringAsFixed(2)}% commission', style: GoogleFonts.inter(fontSize: 12)),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${currency.format(tier.minValue)} – ${tier.maxValue != null ? currency.format(tier.maxValue!) : '∞'} • ${_formatRecurrence(tier)}',
+                                style: GoogleFonts.inter(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList()
+                  : [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          color: Colors.white,
+                          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.12)),
+                        ),
+                        child: Text('Commission tiers will appear once configured in admin.', style: GoogleFonts.inter(fontSize: 12)),
+                      ),
+                    ],
+            ),
+            const SizedBox(height: 18),
+            Text('Payout guardrails', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+            const SizedBox(height: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _GuardrailLine(label: 'Payout cadence', value: 'Every ${snapshot.settings.payoutCadenceDays} days'),
+                _GuardrailLine(label: 'Minimum payout', value: currency.format(snapshot.settings.minimumPayout)),
+                _GuardrailLine(label: 'Attribution window', value: '${snapshot.settings.attributionWindowDays} days'),
+                _GuardrailLine(label: 'Auto approval', value: snapshot.settings.autoApprove ? 'Enabled for trusted partners' : 'Manual review'),
+                if (snapshot.settings.disclosureUrl != null)
+                  _GuardrailLine(label: 'Disclosure', value: snapshot.settings.disclosureUrl!),
+              ],
+            ),
+            if (referrals.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Text('Recent referrals', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+              const SizedBox(height: 8),
+              Column(
+                children: referrals
+                    .map(
+                      (ref) => Container(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.08)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(ref.code.toUpperCase(), style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+                                  const SizedBox(height: 2),
+                                  Text('${ref.conversions} conversions • ${ref.status}', style: GoogleFonts.inter(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(currency.format(ref.revenue), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                                Text('${currency.format(ref.commission)} commission', style: GoogleFonts.inter(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatRecurrence(AffiliateCommissionTier tier) {
+    switch (tier.recurrence) {
+      case 'infinite':
+        return 'Infinite';
+      case 'finite':
+        final limit = tier.recurrenceLimit;
+        return limit != null ? '$limit conversions' : 'Finite window';
+      default:
+        return 'One time';
+    }
+  }
+}
+
+class _AffiliateMetric extends StatelessWidget {
+  const _AffiliateMetric(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 6),
+          Text(value, style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuardrailLine extends StatelessWidget {
+  const _GuardrailLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          ),
+          Text(value, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
+        ],
+      ),
     );
   }
 }

@@ -40,6 +40,10 @@ import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
 import PlatformSetting from './platformSetting.js';
+import AffiliateProfile from './affiliateProfile.js';
+import AffiliateCommissionRule from './affiliateCommissionRule.js';
+import AffiliateReferral from './affiliateReferral.js';
+import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -198,6 +202,20 @@ ServiceZoneCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' })
 Service.hasMany(ServiceZoneCoverage, { foreignKey: 'serviceId', as: 'zoneCoverage' });
 ServiceZoneCoverage.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
 
+User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
+AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+AffiliateProfile.hasMany(AffiliateReferral, { foreignKey: 'affiliateProfileId', as: 'referrals' });
+AffiliateReferral.belongsTo(AffiliateProfile, { foreignKey: 'affiliateProfileId', as: 'affiliate' });
+AffiliateReferral.belongsTo(User, { foreignKey: 'referredUserId', as: 'referredUser' });
+
+AffiliateProfile.hasMany(AffiliateLedgerEntry, { foreignKey: 'affiliateProfileId', as: 'ledgerEntries' });
+AffiliateLedgerEntry.belongsTo(AffiliateProfile, { foreignKey: 'affiliateProfileId', as: 'affiliate' });
+AffiliateLedgerEntry.belongsTo(AffiliateReferral, { foreignKey: 'referralId', as: 'referral' });
+AffiliateLedgerEntry.belongsTo(AffiliateCommissionRule, { foreignKey: 'commissionRuleId', as: 'commissionRule' });
+
+AffiliateCommissionRule.hasMany(AffiliateLedgerEntry, { foreignKey: 'commissionRuleId', as: 'ledgerEntries' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -255,5 +273,9 @@ export {
   ConversationParticipant,
   ConversationMessage,
   MessageDelivery,
-  PlatformSetting
+  PlatformSetting,
+  AffiliateProfile,
+  AffiliateCommissionRule,
+  AffiliateReferral,
+  AffiliateLedgerEntry
 };

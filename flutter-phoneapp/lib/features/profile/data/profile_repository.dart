@@ -113,6 +113,15 @@ class ProfileRepository {
     final services = serviceCatalogue.take(6).map(_mapServiceOffering).toList();
     final tooling = _mapTooling(tools, materials);
 
+    AffiliateProgrammeSnapshot? affiliate;
+    try {
+      final affiliatePayload = await _client.getJson('/affiliate/dashboard');
+      final affiliateData = Map<String, dynamic>.from(affiliatePayload['data'] as Map? ?? affiliatePayload as Map? ?? {});
+      affiliate = AffiliateProgrammeSnapshot.fromJson(affiliateData);
+    } catch (error) {
+      // Silent fallback — affiliate programme may not be configured for all tenants yet.
+    }
+
     final identity = ProviderIdentity(
       displayName: provider['tradingName'] as String? ?? provider['name'] as String? ?? hero['name'] as String? ?? 'Provider',
       headline: _resolveHeadline(hero, serviceTags.toList()),
@@ -145,6 +154,7 @@ class ProfileRepository {
       shareProfile: true,
       requestQuote: true,
       generatedAt: DateTime.now(),
+      affiliate: affiliate,
     );
   }
 
