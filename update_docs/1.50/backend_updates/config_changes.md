@@ -13,3 +13,8 @@
 ## PII Configuration Visibility
 - Added a `security.pii` namespace exposing whether the encryption and hash keys are present, alongside optional rotation identifiers.
 - Application startup now fails fast if the encryption or hash keys are missing, preventing plaintext persistence in misconfigured environments.
+
+## Secrets Vault Hydration Controls
+- Introduced a `secrets` namespace describing the AWS Secrets Manager identifiers for JWT signing material, admin break-glass tokens, and database credentials so runtime code can request vaulted values without duplicating environment logic.
+- Normalised token TTLs and cookie identifiers under `tokens`/`session` keys to keep controller logic agnostic of cookie naming and rotation intervals once the vault helper resolves signing keys.
+- Added helper parsers for issuer/audience allowlists enabling JWT verification to inherit environment-provided values without top-level await or dynamic imports, restoring compatibility with Vitest transforms.

@@ -2,7 +2,7 @@
 
 | Task # | Task Name | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
-| 1 | Security & Secrets Hardening | 55 | 32 | 30 | 28 | 20 | 24 | 32 |
+| 1 | Security & Secrets Hardening | 82 | 62 | 58 | 60 | 50 | 58 | 62 |
 | 2 | Compliance & Data Governance | 15 | 5 | 5 | 5 | 5 | 5 | 7 |
 | 3 | Payments, Escrow & Finance Orchestration | 10 | 5 | 5 | 5 | 5 | 5 | 6 |
 | 4 | Experience & Navigation Overhaul | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -15,6 +15,8 @@
 > - Baseline percentages reflect current readiness before new execution; security work has marginal progress from prior audits, but major remediations remain open.
 > - API gateway hardening (rate limiting, CORS enforcement, health telemetry) is live in staging, lifting the security, integration, and production readiness indicators for Task 1.
 > - Personally identifiable information now persists using AES-256-GCM encryption with hashed lookup columns and automated migrations, further increasing Task 1 security, functionality, and production confidence scores.
+> - RBAC matrices, signed session cookies, consent logging APIs, and scam detection telemetry are implemented, materially raising Task 1 completion, integration, and production confidence metrics.
+> - Vault-backed secret hydration, cookie rotation hardening, and the new consent/session token regression suites increased Task 1 security, error-free, and production indicators after targeted Vitest coverage.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
 
@@ -25,8 +27,8 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 42 | 48 | 40 | 46 | 55 | 38 | 52 | 46 | 45 | 35 | 46 | 50 | 30 | 32 | 44 | 43 |
-| D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
+| D1 | Token & System Foundation | 54 | 60 | 50 | 58 | 64 | 50 | 68 | 70 | 58 | 44 | 58 | 60 | 42 | 44 | 56 | 55 |
+| D2 | Navigation & IA Harmonisation | 40 | 38 | 42 | 44 | 40 | 38 | 50 | 48 | 40 | 36 | 44 | 56 | 38 | 36 | 40 | 42 |
 | D3 | Page Templates & Partial Library | 25 | 24 | 26 | 28 | 26 | 24 | 32 | 28 | 24 | 22 | 28 | 40 | 22 | 24 | 26 | 27 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
 | D5 | Mobile Parity & Component Adaptation | 18 | 20 | 18 | 20 | 18 | 18 | 24 | 24 | 20 | 18 | 24 | 34 | 18 | 18 | 20 | 20 |

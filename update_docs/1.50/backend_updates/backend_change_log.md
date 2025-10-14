@@ -9,3 +9,8 @@
 - Migrated user and company PII to AES-256-GCM encrypted columns with SHA-512/HMAC lookup hashes, ensuring email uniqueness without storing cleartext identifiers.
 - Added transactional migration to backfill encrypted payloads, drop legacy plaintext columns, and enforce new uniqueness constraints on hashed values.
 - Introduced shared field encryption utility, model hooks, and targeted Vitest coverage to verify encrypted persistence and case-insensitive lookups.
+
+## 2025-03-01 – Vault Integration, Session Assurance & Compliance Testing
+- Added `secretVaultService` to hydrate JWT, admin, and database credentials from AWS Secrets Manager with rotation-aware caching and cache invalidation hooks for operational runbooks.
+- Refactored `authController` to defer token signing and admin break-glass validation to the vault helper, aligning cookie issuance with the rotated session token model and httpOnly cookie policy.
+- Authored regression suites covering session token issuance/rotation, consent event storage, and the security hardening migration rollback path while documenting the outstanding `panelService` parsing defect blocking full-suite execution.

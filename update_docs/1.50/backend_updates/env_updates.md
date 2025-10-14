@@ -14,6 +14,9 @@
 - `PII_HASH_KEY`: Base64-encoded 32-byte key used for deterministic SHA-512/HMAC hashes enabling encrypted lookups.
 - `PII_ENCRYPTION_KEY_ID`: Optional identifier to track the active key version for rotation runbooks.
 - `PII_ENCRYPTION_KEY_PREVIOUS`: Optional base64 key stored temporarily during rotations for decrypt-only operations.
+- `JWT_SECRET_SECRET_ID`, `ADMIN_SECURITY_TOKEN_SECRET_ID`, `DB_PASSWORD_SECRET_ID`: AWS Secrets Manager identifiers consumed by `secretVaultService` when direct environment variables are absent.
+- `ACCESS_TOKEN_COOKIE_NAME`, `REFRESH_TOKEN_COOKIE_NAME`, `SESSION_COOKIE_NAME`: Cookie identifiers surfaced through configuration to align cookie parsing middleware and vault-backed token issuance.
+- `TOKEN_ROTATION_INTERVAL_MINUTES`, `TOKEN_ACCESS_TTL_MINUTES`, `TOKEN_REFRESH_TTL_HOURS`: Rotation and TTL tunables for the session token service, enabling environment-level adjustments without code changes.
 
 ## Operational Guidance
 - Production environments must explicitly set the allowlist to partner domains; staging/test environments can retain open access by leaving the variable unset.
