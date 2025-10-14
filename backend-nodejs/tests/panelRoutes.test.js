@@ -1,4 +1,5 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
 
@@ -33,6 +34,10 @@ const IDS = {
   campaign: '55555555-5555-4555-8555-eeeeeeeeeeee',
   conversation: '66666666-6666-4666-8666-ffffffffffff'
 };
+
+function createToken(userId) {
+  return jwt.sign({ sub: userId }, process.env.JWT_SECRET ?? 'change_this_secret', { expiresIn: '1h' });
+}
 
 async function createCompanyWithFixtures() {
   const user = await User.create({
@@ -356,7 +361,7 @@ async function createCompanyWithFixtures() {
     meta: { project: 'Completed works' }
   });
 
-  return company;
+  return { company, owner: user };
 }
 
 beforeAll(async () => {
@@ -373,11 +378,12 @@ beforeEach(async () => {
 
 describe('Panel routes', () => {
   it('returns provider dashboard data with operational metrics', async () => {
-    const company = await createCompanyWithFixtures();
+    const { company, owner } = await createCompanyWithFixtures();
 
     const response = await request(app)
       .get('/api/panel/provider/dashboard')
       .query({ companyId: company.id })
+      .set('Authorization', `Bearer ${createToken(owner.id)}`)
       .expect(200);
 
     expect(response.body.data.provider.tradingName).toContain('Metro');
@@ -386,8 +392,71 @@ describe('Panel routes', () => {
     expect(response.body.meta.companyId).toBe(company.id);
   });
 
+  it('requires authentication for provider dashboards', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    const response = await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: company.id })
+      .expect(401);
+
+    expect(response.body).toMatchObject({ message: 'Missing authorization header' });
+  });
+
+  it('rejects access for users without company permissions', async () => {
+    await createCompanyWithFixtures();
+
+    const user = await User.create({
+      firstName: 'Jamie',
+      lastName: 'Cole',
+      email: `user-${Date.now()}@example.com`,
+      passwordHash: 'hash',
+      type: 'user'
+    });
+
+    const response = await request(app)
+      .get('/api/panel/provider/dashboard')
+      .set('Authorization', `Bearer ${createToken(user.id)}`)
+      .expect(403);
+
+    expect(response.body).toMatchObject({ message: 'Forbidden' });
+  });
+
+  it('prevents company owners from querying other organisations', async () => {
+    const { owner } = await createCompanyWithFixtures();
+
+    const outsiderOwner = await User.create({
+      firstName: 'River',
+      lastName: 'Lang',
+      email: `outsider-${Date.now()}@example.com`,
+      passwordHash: 'hash',
+      type: 'company'
+    });
+
+    const outsiderCompany = await Company.create({
+      userId: outsiderOwner.id,
+      legalStructure: 'limited',
+      contactName: 'Outsider Ops',
+      contactEmail: 'ops@outsider.example',
+      serviceRegions: 'North',
+      marketplaceIntent: 'External',
+      verified: false,
+      insuredSellerStatus: 'pending_documents',
+      complianceScore: 80
+    });
+
+    const response = await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: outsiderCompany.id })
+      .set('Authorization', `Bearer ${createToken(owner.id)}`)
+      .expect(403);
+
+    expect(response.body).toMatchObject({ message: 'forbidden' });
+    expect(response.headers['www-authenticate']).toBeUndefined();
+  });
+
   it('returns enterprise panel aggregates including spend and programmes', async () => {
-    const company = await createCompanyWithFixtures();
+    const { company } = await createCompanyWithFixtures();
 
     const response = await request(app)
       .get('/api/panel/enterprise/overview')

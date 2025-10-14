@@ -4,11 +4,17 @@ import { getEnterprisePanelOverview } from '../services/enterprisePanelService.j
 
 export async function getProviderDashboardHandler(req, res, next) {
   try {
-    const { data, meta } = await buildProviderDashboard({ companyId: req.query.companyId });
+    const { data, meta } = await buildProviderDashboard({
+      companyId: req.query.companyId,
+      actor: req.user
+    });
     res.json({ data, meta });
   } catch (error) {
     if (error.statusCode === 404) {
       return res.status(404).json({ message: error.message || 'company_not_found' });
+    }
+    if (error.statusCode === 403) {
+      return res.status(403).json({ message: error.message || 'forbidden' });
     }
     next(error);
   }

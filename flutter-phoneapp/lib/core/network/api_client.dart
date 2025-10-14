@@ -11,7 +11,10 @@ class FixnadoApiClient {
     required this.client,
     required this.defaultHeaders,
     required this.requestTimeout,
+    String? Function()? accessTokenProvider,
     Logger? logger,
+  })  : _accessTokenProvider = accessTokenProvider,
+        _logger = logger ?? Logger('FixnadoApiClient');
     String? Function()? authTokenResolver,
   })  : _logger = logger ?? Logger('FixnadoApiClient'),
         _authTokenResolver = authTokenResolver;
@@ -21,6 +24,7 @@ class FixnadoApiClient {
   final Map<String, String> defaultHeaders;
   final Duration requestTimeout;
   final Logger _logger;
+  final String? Function()? _accessTokenProvider;
   final String? Function()? _authTokenResolver;
 
   Uri _buildUri(String path, [Map<String, dynamic>? query]) {
@@ -35,6 +39,32 @@ class FixnadoApiClient {
     });
   }
 
+  String? _resolveAccessToken() {
+    if (_accessTokenProvider == null) {
+      return null;
+    }
+    try {
+      final token = _accessTokenProvider!.call();
+      if (token == null || token.isEmpty) {
+        return null;
+      }
+      return token;
+    } catch (error, stackTrace) {
+      _logger.warning('Failed to resolve access token', error, stackTrace);
+      return null;
+    }
+  }
+
+  Map<String, String> _headers([Map<String, String>? headers]) {
+    final resolved = <String, String>{
+      ...defaultHeaders,
+    };
+    final token = _resolveAccessToken();
+    if (token != null) {
+      resolved['Authorization'] = 'Bearer $token';
+    }
+    if (headers != null) {
+      resolved.addAll(headers);
   Map<String, String> _headers([Map<String, String>? headers]) {
     final resolved = {
       ...defaultHeaders,

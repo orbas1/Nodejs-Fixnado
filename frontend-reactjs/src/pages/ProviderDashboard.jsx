@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
@@ -13,6 +13,9 @@ import {
   UsersIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
+import useSession from '../hooks/useSession.js';
+import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
+import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -133,9 +136,19 @@ function BookingRow({ booking }) {
 
 export default function ProviderDashboard() {
   const { t, format } = useLocale();
+  const session = useSession();
+  const providerRoleMeta = useMemo(
+    () => DASHBOARD_ROLES.find((role) => role.id === 'provider') || null,
+    []
+  );
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
+  const hasProviderAccess = session.dashboards.includes('provider');
+  const allowProviderDashboard = session.isAuthenticated && hasProviderAccess;
 
   const loadDashboard = useCallback(async ({ forceRefresh = false, signal } = {}) => {
+    if (!allowProviderDashboard) {
+      return;
+    }
     setState((current) => ({ ...current, loading: true, error: null }));
     try {
       const result = await getProviderDashboard({ forceRefresh, signal });
@@ -147,13 +160,22 @@ export default function ProviderDashboard() {
         error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load dashboard', 500, { cause: error })
       }));
     }
-  }, []);
+  }, [allowProviderDashboard]);
 
   useEffect(() => {
+    if (!allowProviderDashboard) {
+      return undefined;
+    }
     const controller = new AbortController();
     loadDashboard({ signal: controller.signal });
     return () => controller.abort();
-  }, [loadDashboard]);
+  }, [allowProviderDashboard, loadDashboard]);
+
+  useEffect(() => {
+    if (!allowProviderDashboard) {
+      setState({ loading: false, data: null, meta: null, error: null });
+    }
+  }, [allowProviderDashboard]);
 
   const provider = state.data?.provider;
   const metrics = state.data?.metrics;
@@ -273,6 +295,14 @@ export default function ProviderDashboard() {
       label: t('providerDashboard.sidebarSnapshotLabel'),
       value: snapshotTime
     });
+  }
+
+  if (!session.isAuthenticated) {
+    return <Navigate to="/login" replace state={{ redirectTo: '/provider/dashboard' }} />;
+  }
+
+  if (!hasProviderAccess) {
+    return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
 
   return (
