@@ -1107,6 +1107,71 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
     image: `/media/${slugified}/zone-${index + 1}.jpg`
   }));
 
+  const brandPalette = {
+    primary: '#0B1D3A',
+    accent: '#1F4ED8',
+    highlight: '#00BFA6',
+    neutral: '#F4F7FA',
+    text: '#FFFFFF'
+  };
+
+  const bannerStyles = [
+    {
+      id: 'impact-gradient',
+      name: 'Impact gradient hero',
+      description: 'Immersive gradient with luminous accent flare designed for enterprise showcases.',
+      layout: 'full-bleed-gradient',
+      recommendedUse: 'Use for flagship campaigns and enterprise onboarding moments.',
+      previewImage: `/media/${slugified}/banner-impact.jpg`,
+      palette: {
+        background: brandPalette.primary,
+        accent: brandPalette.accent,
+        highlight: brandPalette.highlight,
+        text: brandPalette.text
+      },
+      supportsVideo: true,
+      supportsCarousel: true,
+      textTone: 'light',
+      badges: ['Escrow-backed CTA', 'Video overlay ready']
+    },
+    {
+      id: 'precision-overlay',
+      name: 'Precision overlay',
+      description: 'Crisp photography treatment with translucent navy overlay and elevated typography lockup.',
+      layout: 'image-overlay',
+      recommendedUse: 'Best for operational updates and photographic storytelling across facilities.',
+      previewImage: `/media/${slugified}/banner-precision.jpg`,
+      palette: {
+        background: brandPalette.primary,
+        accent: '#152A52',
+        highlight: brandPalette.accent,
+        text: brandPalette.text
+      },
+      supportsVideo: false,
+      supportsCarousel: true,
+      textTone: 'light',
+      badges: ['Photography safe', 'KPI ticker ready']
+    },
+    {
+      id: 'elevated-minimal',
+      name: 'Elevated minimal',
+      description: 'Minimalist split layout with generous whitespace and accent underline for executive briefings.',
+      layout: 'split-minimal',
+      recommendedUse: 'Ideal for executive briefings, compliance renewals, and calm storytelling moments.',
+      previewImage: `/media/${slugified}/banner-minimal.jpg`,
+      palette: {
+        background: brandPalette.neutral,
+        accent: brandPalette.primary,
+        highlight: brandPalette.accent,
+        text: '#0F172A'
+      },
+      supportsVideo: false,
+      supportsCarousel: false,
+      textTone: 'dark',
+      badges: ['Accessibility AAA', 'Mobile parity certified']
+    }
+  ];
+
   const hero = {
     name: resolved.contactName || 'Featured provider',
     strapline:
@@ -1139,6 +1204,7 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
     data: {
       slug: slugified,
       hero,
+      bannerStyles,
       stats,
       testimonials,
       packages,
@@ -1156,6 +1222,7 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
       scores: {
         trust: trustScore,
         review: reviewScore
+      },
       inventorySummary: {
         skuCount: inventorySummary.skuCount,
         onHand: inventorySummary.totals.onHand,
@@ -1171,6 +1238,13 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
         email: resolved.contactEmail || null,
         phone: null,
         concierge: `Account managed by ${resolved.contactName || 'Fixnado concierge'}`
+      },
+      styleGuide: {
+        palette: brandPalette,
+        typography: {
+          heading: 'Inter SemiBold',
+          body: 'Inter Regular'
+        }
       }
     },
     meta: {

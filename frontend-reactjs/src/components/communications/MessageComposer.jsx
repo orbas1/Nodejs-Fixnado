@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
 function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist, prefill, onPrefillConsumed }) {
@@ -6,16 +6,29 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
   const [requestAiAssist, setRequestAiAssist] = useState(Boolean(defaultAiAssist));
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     if (prefill) {
       setMessage(prefill);
       setError(null);
+      if (textareaRef.current) {
+        textareaRef.current.focus({ preventScroll: true });
+      }
       if (onPrefillConsumed) {
         onPrefillConsumed();
       }
     }
   }, [prefill, onPrefillConsumed]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    if (!disabled && !isSending && textareaRef.current && document.activeElement !== textareaRef.current) {
+      textareaRef.current.focus({ preventScroll: true });
+    }
+  }, [disabled, isSending]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -43,6 +56,7 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
       className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm"
     >
       <textarea
+        ref={textareaRef}
         value={message}
         onChange={(event) => {
           setMessage(event.target.value);
@@ -72,7 +86,11 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
           {isSending ? 'Sending…' : 'Send message'}
         </button>
       </div>
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+      {error ? (
+        <p className="text-xs text-red-500" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

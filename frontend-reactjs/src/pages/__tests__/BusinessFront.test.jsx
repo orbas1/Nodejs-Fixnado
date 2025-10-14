@@ -67,6 +67,26 @@ describe('BusinessFront access control', () => {
         testimonials: [],
         certifications: [],
         gallery: [],
+        bannerStyles: [
+          {
+            id: 'impact',
+            name: 'Impact gradient hero',
+            description: 'Immersive gradient hero.',
+            layout: 'full-bleed-gradient',
+            recommendedUse: 'Flagship campaigns',
+            preview: null,
+            palette: {
+              background: '#0B1D3A',
+              accent: '#1F4ED8',
+              highlight: '#00BFA6',
+              text: '#FFFFFF'
+            },
+            supportsVideo: true,
+            supportsCarousel: true,
+            textTone: 'light',
+            badges: ['Escrow-backed CTA']
+          }
+        ],
         support: {},
         serviceCatalogue: [],
         deals: [],
@@ -75,7 +95,16 @@ describe('BusinessFront access control', () => {
         materials: [],
         tools: [],
         servicemen: [],
-        serviceZones: []
+        serviceZones: [],
+        styleGuide: {
+          palette: {
+            primary: '#0B1D3A',
+            accent: '#1F4ED8',
+            highlight: '#00BFA6',
+            neutral: '#F4F7FA',
+            text: '#FFFFFF'
+          }
+        }
       },
       meta: {}
     });
@@ -85,6 +114,8 @@ describe('BusinessFront access control', () => {
     await waitFor(() => expect(getBusinessFront).toHaveBeenCalled());
     expect(screen.getByText('Metro Power Services')).toBeInTheDocument();
     expect(screen.getByText(/Live service catalogue/i)).toBeInTheDocument();
+    expect(screen.getByText('Hero banner style guide')).toBeInTheDocument();
+    expect(screen.getByText('Impact gradient hero')).toBeInTheDocument();
   });
 });
 
