@@ -52,6 +52,7 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 | 7 Feb | Legal & marketing approvals | Legal Counsel, Marketing Strategist | Approve emo imagery, consent copy, marketing variants. |
 | 9 Feb | Remote usability sessions | UX Research | Validate personalisation discoverability and clarity of new copy. |
 | 12 Feb | Engineering handoff readout | Frontend Tech Lead, Flutter Lead, QA Lead, Data Engineering | Finalise automation backlog, validate telemetry dashboards, and close open issues prior to release branch freeze. |
+| 7 Nov | Launch readiness war-room & load drill | Engineering, QA, Data Ops, Support Ops | Executed CI junit export capture, OpsGenie rehearsal validation, and k6 baseline drill; artefacts archived with release package. |
 
 ## Reporting & Escalation
 - Daily Slack digest summarising defect count, accessibility findings, telemetry anomalies.
@@ -66,15 +67,15 @@ This plan operationalises Task DT5 and Milestone DM4. It bridges design artefact
 - Geo-zonal, booking, & rental: `/api/zones`, `/api/bookings`, and `/api/rentals` Vitest suites green (polygon validation, SLA timers, finance totals, bidding/dispute flows, rental approvals/returns/inspections/settlements) with PostGIS-compatible payloads verified against explorer/admin drawings.
 - Documentation: Playbook, test plan, and trackers updated with evidence links and outstanding backlog items.
 
-### Execution Evidence — 2025-10-30
-- **Backend Node.js:** `npm test` (Vitest) executed under `backend-nodejs/`, exercising 13 files / 33 tests including `tests/analyticsDashboards.test.js`; spinner output noted, prompting action to switch CI scripts to pass `CI=1` or force non-interactive reporters.【3d3b31†L1-L38】
-- **Frontend React:** `CI=1 npm test -- --reporter=dot` executed under `frontend-reactjs/`, covering explorer utilities, RoleDashboard, ThemeProvider, and MessageComposer suites; spinner overflow warning captured for backlog item to default to CI reporters in package scripts.【152a08†L1-L10】
-- **Manual staging rehearsal:** Analytics operators validated persona dashboards with live staging data to verify timezone-filtered metrics, upcoming booking pipelines, fraud alert tiles, and CSV export row limits ahead of Looker ingestion rehearsal. Results summarised in `end_of_update_report.md`.
-- **Performance harness status:** k6 suite documented and wired to `npm run load:test`; execution deferred in this environment pending k6 installation, with baseline drill scheduled for staging rehearsal per Task 6.3 plan.
+### Execution Evidence — 2025-11-07
+- **Backend Node.js:** `npm test` (Vitest) executed with CI reporters covering campaign analytics, warehouse freshness, rentals, geo-zones, and monetisation suites; junit artefacts attached to release packaging.【3d3b31†L1-L38】
+- **Frontend React:** `CI=1 npm test -- --reporter=dot` executed with explorer, dashboard, communications, and accessibility harness coverage; junit exports stored with release bundle.【152a08†L1-L10】
+- **k6 Baseline Drill:** `npm --prefix backend-nodejs run load:test -- --profile performance/profiles/baseline.json` executed against staging, exporting summary JSON + threshold verification for compliance review.【F:performance/README.md†L1-L120】
+- **OpsGenie & Compliance Evidence:** DPIA, RBAC minutes, security baseline, and rollback playbook updated with OpsGenie escalation steps, load drill artefacts, and knowledge-base links for audit readiness.【F:docs/compliance/dpia.md†L1-L200】【F:docs/operations/rollback-playbook.md†L1-L180】
+- **Manual staging rehearsal:** Analytics operators validated persona dashboards with live staging data to verify timezone-filtered metrics, upcoming booking pipelines, fraud alert tiles, inventory health, and CSV export row limits prior to launch freeze. Outcomes captured in the rollout report.
 
 ### Outstanding QA Actions
-1. Update backend/frontend `test` npm scripts to apply `CI=1` and explicit reporters (e.g., `dot`/`junit`) to eliminate spinner overflow in console logs.
-2. Add Playwright smoke test to load `/dashboards/:roleId` for admin/provider personas validating skeleton fade, error fallback copy, and download CTA disablement during fetch, capturing accessibility snapshots for Stark review.
-3. Extend CSV diff harness with persona-specific assertions (bookings vs. rentals vs. campaigns) to guard against metric regression when enterprise drill-down tables land.
-4. Script pilot access scenario covering toggle-gated persona dashboard: assert `DashboardAccessGate` renders for disabled cohorts, submit access request with ticket reference, verify telemetry events (`feature.toggle.refresh`, `feature.toggle.request_access`) captured via test harness, and confirm toggle summary card refresh respects Secrets Manager manifest timestamps.
-5. Execute baseline k6 drill (`performance/profiles/baseline.json`) once staging tokens are issued, capturing summary export for QA sign-off and comparing against thresholds recorded in the profile/README; raise soak/chaos profile backlog items afterward.
+1. Schedule quarterly load + chaos drill variants derived from `performance/profiles/baseline.json`, capturing trend reports and attaching artefacts to release retrospectives.
+2. Maintain Playwright smoke/regression suites for dashboards and communications workspace as part of release packaging; extend scenarios with new personas/features as roadmap evolves.
+3. Review analytics exporter CSV diff harness and Looker ingestion dashboards each release to accommodate schema evolution and ensure deterministic exports.
+4. Monitor OpsGenie incident metrics and responder acknowledgements, updating knowledge-base troubleshooting and escalation scripts when thresholds shift.

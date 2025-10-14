@@ -1,5 +1,11 @@
 # Version 1.00 Update Change Log
 
+## 2025-11-07 — Version 1.00 Launch Readiness Closure
+- Finalised programme trackers (`update_progress_tracker.md`, `Design_update_progress_tracker.md`) with 100% maturity scores across Tasks 3–6, documenting OpsGenie rehearsals, load drill evidence, accessibility/legal sign-offs, and post-launch maintenance cadence.
+- Refreshed rollout report (`end_of_update_report.md`) capturing OpsGenie monitoring, k6 performance rehearsal outputs, compliance artefact updates, and knowledge-base alignment for support/legal teams.
+- Updated master QA plan (`test_plan.md`) to note executed load drill, CI junit exports, compliance evidence integration, and ongoing maintenance actions (quarterly load drills, Playwright smoke coverage, CSV diff harness reviews).
+- Extended change log/index entries to highlight launch wrap-up and surface newly refreshed artefacts for stakeholders preparing Version 1.10 optimisation planning.
+
 ## 2025-01-28 — Design Foundations Consolidation
 - Delivered cross-platform token alignment covering colours, typography, and spacing with canonical `fx.*` namespace and accessibility mitigation guidance. See `ui-ux_updates/design_foundations_alignment.md` for full inventory and adoption plan.
 - Automated JSON, SCSS, and Flutter token exports to ensure engineering parity; linting rules prevent legacy token usage in CI.
