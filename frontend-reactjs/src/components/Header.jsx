@@ -37,7 +37,7 @@ const navigationConfig = [
         key: 'enterprise',
         nameKey: 'nav.enterpriseAnalytics',
         descriptionKey: 'nav.enterpriseAnalyticsDescription',
-        href: '/enterprise/panel'
+        href: '/dashboards/enterprise/panel'
       },
       {
         key: 'business-fronts',
@@ -68,6 +68,7 @@ export default function Header() {
   );
   const { hasRole } = useSession();
   const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
+  const allowEnterprisePanel = hasRole(['enterprise']);
 
   const navigation = useMemo(() => {
     const filtered = navigationConfig
@@ -83,7 +84,15 @@ export default function Header() {
         }
 
         const children = item.children
-          .filter((child) => child.key !== 'business-fronts' || allowBusinessFronts)
+          .filter((child) => {
+            if (child.key === 'business-fronts') {
+              return allowBusinessFronts;
+            }
+            if (child.key === 'enterprise') {
+              return allowEnterprisePanel;
+            }
+            return true;
+          })
           .map((child) => ({
             ...child,
             name: t(child.nameKey),
@@ -99,7 +108,7 @@ export default function Header() {
       .filter(Boolean);
 
     return filtered;
-  }, [sessionRole, t, locale, allowBusinessFronts]);
+  }, [sessionRole, t, locale, allowBusinessFronts, allowEnterprisePanel]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
