@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
@@ -13,7 +13,6 @@ const RoleDashboard = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId);
-  const personaId = roleMeta?.id;
   const registeredRoles = DASHBOARD_ROLES.filter((role) => role.registered);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +20,8 @@ const RoleDashboard = () => {
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [unauthorised, setUnauthorised] = useState(false);
   const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
+  const controllerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   const toggleOptions = useMemo(
     () => ({
@@ -56,89 +57,105 @@ const RoleDashboard = () => {
     return params;
   }, [searchParams]);
 
-  const loadDashboard = useCallback(async () => {
-    if (!roleMeta?.registered || toggleEnabled === false) {
-      setLoading(false);
-      return;
+  const abortActiveRequest = useCallback(() => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+      controllerRef.current = null;
     }
-    if (!hasAccess(roleMeta.id)) {
-      setDashboard(null);
-      setLoading(false);
-      setError(null);
-      setUnauthorised(true);
-      return;
-    }
-    setUnauthorised(false);
-    setLoading(true);
-    try {
-      const data = await fetchDashboard(roleMeta.id, query);
-      setDashboard(data);
-      setError(null);
-      setLastRefreshed(new Date().toISOString());
-    } catch (caught) {
-      if (caught?.status === 403) {
+  }, []);
+
+  const runDashboardFetch = useCallback(
+    async ({ silent = false } = {}) => {
+      const persona = roleMeta?.id ?? null;
+
+      if (!roleMeta?.registered || !persona) {
+        abortActiveRequest();
+        setDashboard(null);
+        setLastRefreshed(null);
+        setError(null);
+        setUnauthorised(false);
+        setLoading(false);
+        return { status: 'unavailable' };
+      }
+
+      if (toggleEnabled === false) {
+        abortActiveRequest();
+        setDashboard(null);
+        setLastRefreshed(null);
+        setError(null);
+        setUnauthorised(false);
+        setLoading(false);
+        return { status: 'feature-disabled' };
+      }
+
+      if (!hasAccess(persona)) {
+        abortActiveRequest();
+        setDashboard(null);
+        setLastRefreshed(null);
+        setError(null);
         setUnauthorised(true);
-        setDashboard(null);
-        setError(null);
-      } else {
-        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
-        setDashboard(null);
+        setLoading(false);
+        return { status: 'unauthorised' };
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [roleMeta, query, toggleEnabled, hasAccess]);
 
-  useEffect(() => {
-    let active = true;
-    if (!roleMeta?.registered || toggleEnabled === false) {
-      setLoading(false);
-      setDashboard(null);
-      return () => {
-        active = false;
-      };
-    }
-
-    if (!hasAccess(roleMeta.id)) {
-      setDashboard(null);
+      setUnauthorised(false);
       setError(null);
-      setLoading(false);
-      setUnauthorised(true);
-      return () => {
-        active = false;
-      };
-    }
+      if (!silent) {
+        setLoading(true);
+      }
 
-    setUnauthorised(false);
-    (async () => {
-      setLoading(true);
+      abortActiveRequest();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+
       try {
-        const data = await fetchDashboard(roleMeta.id, query);
-        if (!active) return;
+        const data = await fetchDashboard(persona, query, { signal: controller.signal });
+        if (requestIdRef.current !== requestId) {
+          return { status: 'stale' };
+        }
         setDashboard(data);
-        setError(null);
         setLastRefreshed(new Date().toISOString());
+        return { status: 'resolved' };
       } catch (caught) {
-        if (!active) return;
-        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
-        setDashboard(null);
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
+        if (controller.signal.aborted || caught?.name === 'AbortError') {
+          return { status: 'aborted' };
+        }
 
-    return () => {
-      active = false;
-    };
-  }, [roleMeta, query, toggleEnabled, hasAccess]);
+        if (requestIdRef.current !== requestId) {
+          return { status: 'stale' };
+        }
+
+        if (caught?.status === 401 || caught?.status === 403) {
+          setDashboard(null);
+          setLastRefreshed(null);
+          setError(null);
+          setUnauthorised(true);
+          return { status: 'unauthorised' };
+        }
+
+        setDashboard(null);
+        setLastRefreshed(null);
+        setUnauthorised(false);
+        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
+        return { status: 'error', error: caught };
+      } finally {
+        if (requestIdRef.current === requestId) {
+          setLoading(false);
+          controllerRef.current = null;
+        }
+      }
+    },
+    [abortActiveRequest, hasAccess, query, roleMeta, toggleEnabled]
+  );
 
   useEffect(() => {
-    if (toggleEnabled === false && !toggleLoading) {
-      setDashboard(null);
-      setError(null);
-      setLoading(false);
-    }
-  }, [toggleEnabled, toggleLoading]);
+    runDashboardFetch({ silent: false });
+    return () => {
+      abortActiveRequest();
+    };
+  }, [runDashboardFetch, abortActiveRequest]);
 
   const handleRefresh = useCallback(async () => {
     if (toggleEnabled === false) {
@@ -150,20 +167,11 @@ const RoleDashboard = () => {
       return;
     }
 
-    if (!personaId) {
-      return;
-    }
-
-    if (!hasAccess(personaId)) {
+    const result = await runDashboardFetch({ silent: false });
+    if (result.status === 'unauthorised') {
       refreshPersonaAccess();
-      setDashboard(null);
-      setError(null);
-      setUnauthorised(true);
-      return;
     }
-
-    loadDashboard();
-  }, [toggleEnabled, refreshToggles, loadDashboard, personaId, hasAccess, refreshPersonaAccess]);
+  }, [toggleEnabled, refreshToggles, runDashboardFetch, refreshPersonaAccess]);
 
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;
@@ -196,9 +204,7 @@ const RoleDashboard = () => {
         onNavigateHome={() => navigate('/dashboards')}
         onRetry={() => {
           refreshPersonaAccess();
-          if (personaId && hasAccess(personaId)) {
-            loadDashboard();
-          }
+          runDashboardFetch({ silent: false });
         }}
       />
     );
