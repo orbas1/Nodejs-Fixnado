@@ -334,6 +334,14 @@ const mockDashboards = {
                   type: 'toggle',
                   enabled: readSecurityPreferences().twoFactorEnabled
                 },
+                {
+                  id: 'security-manage',
+                  label: 'Two-factor methods',
+                  helper: 'Update authenticator apps and backup codes from the dedicated security centre.',
+                  type: 'action',
+                  cta: 'Open security settings',
+                  href: '/settings/security'
+                },
                 { id: 'security-sso', label: 'SAML single sign-on', type: 'toggle', enabled: false, helper: 'Available on enterprise plan' }
               ]
             },
