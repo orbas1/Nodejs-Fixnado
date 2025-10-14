@@ -30,6 +30,7 @@ const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const Terms = lazy(() => import('./pages/Terms.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -114,6 +115,7 @@ function App() {
             <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+            <Route path="/legal/terms" element={<Terms />} />
           </Routes>
         </Suspense>
       </main>

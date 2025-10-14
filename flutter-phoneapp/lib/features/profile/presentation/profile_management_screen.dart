@@ -7,6 +7,9 @@ import '../../auth/domain/role_scope.dart';
 import '../domain/profile_models.dart';
 import 'profile_controller.dart';
 import '../../storefront/presentation/storefront_screen.dart';
+import '../../legal/presentation/legal_terms_screen.dart';
+import '../../legal/application/legal_terms_loader.dart';
+import '../../legal/domain/legal_terms_models.dart';
 
 class ProfileManagementScreen extends ConsumerStatefulWidget {
   const ProfileManagementScreen({super.key});
@@ -441,12 +444,22 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
                     ),
                   ),
                 ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            sliver: SliverToBoxAdapter(
+              child: _SectionCard(
+                title: 'Legal & compliance',
+                subtitle: 'Surface Fixnado legal documentation on mobile for fast contract acceptance and audit readiness.',
+                child: const _LegalTermsAccessPane(),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-              sliver: SliverToBoxAdapter(
-                child: _SectionCard(
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+            sliver: SliverToBoxAdapter(
+              child: _SectionCard(
                   title: 'Public profile controls',
                   subtitle: 'Choose how buyers can interact with your profile from mobile and web.',
                   child: Column(
@@ -515,6 +528,135 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
       text: value,
       selection: TextSelection.collapsed(offset: value.length),
     );
+  }
+}
+
+class _LegalTermsAccessPane extends StatefulWidget {
+  const _LegalTermsAccessPane();
+
+  @override
+  State<_LegalTermsAccessPane> createState() => _LegalTermsAccessPaneState();
+}
+
+class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
+  late Future<LegalTermsDocument> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = loadLegalTermsDocument();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FutureBuilder<LegalTermsDocument>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: ListTile(
+              leading: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: theme.colorScheme.error.withOpacity(0.08),
+                ),
+                child: Icon(Icons.error_outline, color: theme.colorScheme.error),
+              ),
+              title: Text('Legal pack unavailable',
+                  style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.error)),
+              subtitle: Text(
+                'Tap to retry downloading the Fixnado terms. Access is required before assignments can be accepted.',
+                style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+              ),
+              trailing: const Icon(Icons.refresh_rounded),
+              onTap: () => setState(() => _future = loadLegalTermsDocument()),
+            ),
+          );
+        }
+
+        final document = snapshot.data;
+        final effective = _formatLegalDate(document?.effectiveDate);
+        final updated = _formatLegalDate(document?.lastUpdated);
+        final version = document?.version ?? '1.1.0';
+
+        return Column(
+          children: [
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                leading: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                  ),
+                  child: Icon(Icons.gavel_outlined, color: theme.colorScheme.primary),
+                ),
+                title: Text('Terms and Conditions (UK)',
+                    style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  'Effective $effective • Updated $updated • Version $version',
+                  style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                ),
+                trailing: snapshot.connectionState == ConnectionState.waiting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary)),
+                      )
+                    : const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const LegalTermsScreen(),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.45),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.verified_user_outlined, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Track acknowledgements and ensure every team member reviews the latest contractual posture before accepting work orders.',
+                      style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatLegalDate(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return '01 May 2024';
+    }
+    try {
+      final parsed = DateTime.parse(raw);
+      return DateFormat.yMMMMd().format(parsed);
+    } catch (_) {
+      return raw;
+    }
   }
 }
 
