@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { buildExportUrl, fetchDashboard } from '../api/analyticsDashboardClient.js';
@@ -13,14 +13,16 @@ const RoleDashboard = () => {
   const { roleId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId);
-  const registeredRoles = DASHBOARD_ROLES.filter((role) => role.registered);
+  const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId) || null;
+  const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
+
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [blogPosts, setBlogPosts] = useState([]);
   const [unauthorised, setUnauthorised] = useState(false);
+
   const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
   const controllerRef = useRef(null);
   const requestIdRef = useRef(0);
@@ -69,30 +71,6 @@ const RoleDashboard = () => {
     }
   }, []);
 
-  const loadDashboard = useCallback(async () => {
-    if (!roleMeta?.registered || toggleEnabled === false) {
-      setLoading(false);
-      return;
-    }
-    if (!hasAccess(roleMeta.id)) {
-      setDashboard(null);
-      setLoading(false);
-      setError(null);
-      setUnauthorised(true);
-      setBlogPosts([]);
-      return;
-    }
-    setUnauthorised(false);
-    setLoading(true);
-    try {
-      const data = await fetchDashboard(roleMeta.id, query);
-      setDashboard(data);
-      setError(null);
-      setLastRefreshed(new Date().toISOString());
-      hydrateBlogRail();
-    } catch (caught) {
-      if (caught?.status === 403) {
-        setUnauthorised(true);
   const abortActiveRequest = useCallback(() => {
     if (controllerRef.current) {
       controllerRef.current.abort();
@@ -105,65 +83,35 @@ const RoleDashboard = () => {
       const persona = roleMeta?.id ?? null;
 
       if (!roleMeta?.registered || !persona) {
-        abortActiveRequest();
         setDashboard(null);
         setLastRefreshed(null);
         setError(null);
         setBlogPosts([]);
-      } else {
-        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
-        setDashboard(null);
-        setBlogPosts([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
-
-  useEffect(() => {
-    let active = true;
-    if (!roleMeta?.registered || toggleEnabled === false) {
-      setLoading(false);
-      setDashboard(null);
-      setBlogPosts([]);
-      return () => {
-        active = false;
-      };
-    }
         setUnauthorised(false);
         setLoading(false);
         return { status: 'unavailable' };
       }
 
       if (toggleEnabled === false) {
-        abortActiveRequest();
         setDashboard(null);
         setLastRefreshed(null);
         setError(null);
         setUnauthorised(false);
         setLoading(false);
+        setBlogPosts([]);
         return { status: 'feature-disabled' };
       }
 
       if (!hasAccess(persona)) {
-        abortActiveRequest();
         setDashboard(null);
         setLastRefreshed(null);
         setError(null);
         setUnauthorised(true);
         setLoading(false);
+        setBlogPosts([]);
         return { status: 'unauthorised' };
       }
 
-      setUnauthorised(false);
-      setError(null);
-      setLoading(false);
-      setUnauthorised(true);
-      setBlogPosts([]);
-      return () => {
-        active = false;
-      };
-    }
       if (!silent) {
         setLoading(true);
       }
@@ -179,7 +127,10 @@ const RoleDashboard = () => {
         if (requestIdRef.current !== requestId) {
           return { status: 'stale' };
         }
+
         setDashboard(data);
+        setError(null);
+        setUnauthorised(false);
         setLastRefreshed(new Date().toISOString());
         hydrateBlogRail();
         return { status: 'resolved' };
@@ -208,12 +159,12 @@ const RoleDashboard = () => {
         return { status: 'error', error: caught };
       } finally {
         if (requestIdRef.current === requestId) {
-          setLoading(false);
           controllerRef.current = null;
+          setLoading(false);
         }
       }
     },
-    [abortActiveRequest, hasAccess, query, roleMeta, toggleEnabled]
+    [abortActiveRequest, hasAccess, hydrateBlogRail, query, roleMeta, toggleEnabled]
   );
 
   useEffect(() => {
@@ -221,17 +172,18 @@ const RoleDashboard = () => {
     return () => {
       abortActiveRequest();
     };
-  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
+  }, [runDashboardFetch, abortActiveRequest]);
 
   useEffect(() => {
     if (toggleEnabled === false && !toggleLoading) {
       setDashboard(null);
+      setLastRefreshed(null);
       setError(null);
-      setLoading(false);
       setBlogPosts([]);
+      setUnauthorised(false);
+      setLoading(false);
     }
   }, [toggleEnabled, toggleLoading]);
-  }, [runDashboardFetch, abortActiveRequest]);
 
   const handleRefresh = useCallback(async () => {
     if (toggleEnabled === false) {
@@ -246,13 +198,8 @@ const RoleDashboard = () => {
     const result = await runDashboardFetch({ silent: false });
     if (result.status === 'unauthorised') {
       refreshPersonaAccess();
-      setDashboard(null);
-      setError(null);
-      setUnauthorised(true);
-      setBlogPosts([]);
-      return;
     }
-  }, [toggleEnabled, refreshToggles, runDashboardFetch, refreshPersonaAccess]);
+  }, [refreshPersonaAccess, refreshToggles, runDashboardFetch, toggleEnabled]);
 
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;

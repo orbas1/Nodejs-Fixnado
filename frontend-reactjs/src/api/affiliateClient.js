@@ -63,7 +63,7 @@ async function request(path, { method = 'GET', body, signal, cacheKey, ttl = 100
       let errorBody;
       try {
         errorBody = await response.json();
-      } catch (error) {
+      } catch {
         errorBody = {};
       }
       const error = new Error(errorBody?.message || response.statusText || 'Affiliate request failed');

@@ -76,7 +76,7 @@ function normaliseDecimal(value, precision = 6) {
   return Number(parsed.toFixed(precision));
 }
 
-function calculateSpendTarget({ campaign, flight, metricDate }) {
+function calculateSpendTarget({ campaign, flight, metricDate: _metricDate }) {
   if (flight && flight.dailySpendCap) {
     return Number(flight.dailySpendCap);
   }
@@ -91,11 +91,6 @@ function calculateSpendTarget({ campaign, flight, metricDate }) {
   const durationMs = Math.max(end.getTime() - start.getTime(), 0);
   const dayMs = 24 * 60 * 60 * 1000;
   const totalDays = Math.max(Math.ceil(durationMs / dayMs), 1);
-
-  const scheduleDaysElapsed = Math.max(
-    Math.min(Math.floor((ensureDate(metricDate).getTime() - start.getTime()) / dayMs) + 1, totalDays),
-    1
-  );
 
   return Number(totalBudget / totalDays);
 }

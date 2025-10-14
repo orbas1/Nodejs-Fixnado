@@ -234,12 +234,7 @@ export async function recordAnalyticsEvents(events, options = {}) {
     throw new Error('recordAnalyticsEvents expects an array of events.');
   }
 
-  const results = [];
-  for (const event of events) {
-    // eslint-disable-next-line no-await-in-loop
-    results.push(await recordAnalyticsEvent(event, options));
-  }
-  return results;
+  return Promise.all(events.map((event) => recordAnalyticsEvent(event, options)));
 }
 
 export function getAnalyticsEventDefinition(name) {

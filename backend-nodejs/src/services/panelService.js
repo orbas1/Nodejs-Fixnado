@@ -32,7 +32,41 @@ async function resolveCompany(companyId) {
     throw buildHttpError(404, 'company_not_found');
   }
 
-  return company;
+  const totals = reviews.reduce(
+    (acc, review) => {
+      const bucket = Math.round(review.rating ?? 0);
+      if (bucket >= 1 && bucket <= 5) {
+        acc.buckets[bucket] = (acc.buckets[bucket] ?? 0) + 1;
+      }
+      if (Number.isFinite(review.rating)) {
+        acc.sum += review.rating;
+        acc.count += 1;
+      }
+      if (review.verified) {
+        acc.verified += 1;
+      }
+      if (review.submittedAt) {
+        const submitted = DateTime.fromISO(review.submittedAt);
+        if (!acc.lastReviewAt || submitted > acc.lastReviewAt) {
+          acc.lastReviewAt = submitted;
+        }
+      }
+      if (Number.isFinite(review.responseTimeMinutes)) {
+        acc.responded += 1;
+      }
+      return acc;
+    },
+    { sum: 0, count: 0, verified: 0, responded: 0, lastReviewAt: null, buckets: {} }
+  );
+
+  return {
+    averageRating: totals.count ? Number((totals.sum / totals.count).toFixed(2)) : null,
+    totalReviews: reviews.length,
+    verifiedShare: reviews.length ? totals.verified / reviews.length : 0,
+    ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: totals.buckets[score] ?? 0 })),
+    lastReviewAt: totals.lastReviewAt ? totals.lastReviewAt.toISO() : null,
+    responseRate: reviews.length ? totals.responded / reviews.length : 0
+  };
 }
 
 export async function resolveCompanyId(companyId) {
@@ -65,9 +99,14 @@ function ensureActorCanManageCompany(company, actor) {
   if (actor.type === 'admin') {
     return;
   }
+  return 'attention';
+}
 
-  if (actor.type === 'company' && actor.id === company.userId) {
-    return;
+function inventoryAvailability(item) {
+  const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+  const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+  if (!Number.isFinite(onHand) || !Number.isFinite(reserved)) {
+    return 0;
   }
 
   throw buildHttpError(403, 'forbidden');
@@ -115,13 +154,52 @@ export async function buildProviderDashboard({ companyId, actor } = {}) {
   const now = DateTime.now().setZone('UTC');
   const windowStart = now.minus({ days: 30 });
 
-  const [bookings, alerts, inventory, zones, listings] = await Promise.all([
-    Booking.findAll({
-      where: {
-        companyId: company.id,
-        createdAt: { [Op.gte]: windowStart.toJSDate() }
-      }
-    }),
+  if (companyId) {
+    const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
+    if (exists) {
+      const error = new Error('forbidden');
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  const error = new Error('company_not_found');
+  error.statusCode = 404;
+  throw error;
+}
+
+export async function resolveCompanyId(companyId) {
+  if (companyId) {
+    const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
+    if (exists) {
+      return exists.id;
+    }
+  }
+
+  const firstCompany = await Company.findOne({ attributes: ['id'], order: [['createdAt', 'ASC']], raw: true });
+  if (!firstCompany) {
+    const error = new Error('company_not_found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return firstCompany.id;
+}
+
+export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
+  const company = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const companyId = company.id;
+  const now = DateTime.now();
+  const startOfMonth = now.startOf('month');
+
+  const bookings = await Booking.findAll({
+    where: { companyId },
+    order: [['scheduledStart', 'ASC']]
+  });
+  const bookingIds = bookings.map((booking) => booking.id);
+
+  const [assignments, complianceDocs, inventoryAlerts, zones] = await Promise.all([
+    BookingAssignment.findAll({ where: { bookingId: { [Op.in]: bookingIds } } }),
+    ComplianceDocument.findAll({ where: { companyId } }),
     InventoryAlert.findAll({
       where: {
         status: { [Op.not]: 'resolved' }
@@ -194,12 +272,57 @@ export async function buildProviderDashboard({ companyId, actor } = {}) {
     }
   };
 
-  const meta = {
-    companyId: company.id,
-    generatedAt: now.toISO({ suppressMilliseconds: true }),
-    window: {
-      start: windowStart.toISO({ suppressMilliseconds: true }),
-      end: now.toISO({ suppressMilliseconds: true })
+  const [bookings, serviceZones, services, campaignMetrics, campaignInvoices, fraudSignals, participants, rentals] =
+    await Promise.all([
+      Booking.findAll({ where: { companyId } }),
+      ServiceZone.findAll({ where: { companyId }, attributes: ['name'], raw: true }),
+      Service.findAll({ where: { companyId } }),
+      CampaignDailyMetric.findAll({
+        include: [
+          {
+            model: AdCampaign,
+            attributes: ['name', 'currency', 'companyId'],
+            required: true,
+            where: { companyId }
+          }
+        ],
+        order: [['metricDate', 'DESC']],
+        limit: 30
+      }),
+      CampaignInvoice.findAll({
+        include: [
+          {
+            model: AdCampaign,
+            attributes: ['name', 'companyId'],
+            required: true,
+            where: { companyId }
+          }
+        ],
+        where: { status: { [Op.in]: ['issued', 'overdue'] } },
+        order: [['dueDate', 'ASC']]
+      }),
+      CampaignFraudSignal.findAll({
+        include: [
+          {
+            model: AdCampaign,
+            attributes: ['name', 'companyId'],
+            required: true,
+            where: { companyId }
+          }
+        ],
+        order: [['detectedAt', 'DESC']],
+        limit: 5
+      }),
+      ConversationParticipant.findAll({
+        where: { participantType: 'enterprise', participantReferenceId: companyId }
+      }),
+      RentalAgreement.findAll({ where: { companyId } })
+    ]);
+
+  const completedBookings = bookings.filter((booking) => SLA_EVALUATION_STATUSES.includes(booking.status));
+  const slaHits = completedBookings.filter((booking) => {
+    if (!booking.lastStatusTransitionAt || !booking.slaExpiresAt) {
+      return false;
     }
   };
 
@@ -282,9 +405,145 @@ export async function buildBusinessFront({ slug = 'featured', viewerType } = {})
     });
   }
 
-  if (!company) {
-    throw buildHttpError(404, 'company_not_found');
-  }
+  const orderedReviews = publishableReviews.sort((a, b) => {
+    if (a.submittedAt && b.submittedAt) {
+      return DateTime.fromISO(b.submittedAt).toMillis() - DateTime.fromISO(a.submittedAt).toMillis();
+    }
+    if (a.submittedAt) return -1;
+    if (b.submittedAt) return 1;
+    return b.rating - a.rating;
+  });
+
+  const reviewSummary = {
+    ...summariseReviews(orderedReviews),
+    highlightedReviewId: orderedReviews[0]?.id ?? null,
+    latestReviewId: orderedReviews.find((review) => review.submittedAt)?.id ?? null,
+    excerpt: orderedReviews[0]?.comment ? `${orderedReviews[0].comment.slice(0, 200)}${orderedReviews[0].comment.length > 200 ? '…' : ''}` : null
+  };
+
+  const allowedReviewRoles = ['enterprise', 'customer'];
+  const reviewAccessGranted = viewerType ? allowedReviewRoles.includes(viewerType) : false;
+  const responseReviews = reviewAccessGranted ? orderedReviews : [];
+  const responseSummary = reviewAccessGranted
+    ? reviewSummary
+    : {
+        ...reviewSummary,
+        highlightedReviewId: null,
+        latestReviewId: null,
+        excerpt: null
+      };
+
+  const bookingCount = bookings.length;
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const reliabilityRatio = bookingCount === 0 ? 0.92 : clamp(completedBookingsCount / bookingCount, 0, 1);
+
+  const slaEligible = bookings.filter((booking) => booking.slaExpiresAt && booking.lastStatusTransitionAt);
+  const slaOnTime = slaEligible.filter((booking) => {
+    const completedAt = DateTime.fromJSDate(booking.lastStatusTransitionAt);
+    const sla = DateTime.fromJSDate(booking.slaExpiresAt);
+    return completedAt <= sla;
+  }).length;
+  const punctualityRatio = slaEligible.length === 0 ? 0.9 : clamp(slaOnTime / Math.max(slaEligible.length, 1), 0, 1);
+
+  const cancellationCount = bookings.filter((booking) => ['cancelled', 'disputed', 'failed'].includes(booking.status)).length;
+  const cancellationScore = clamp(1 - (bookingCount === 0 ? 0 : cancellationCount / bookingCount), 0, 1);
+
+  const complianceCoverage = complianceDocs.length > 0 ? clamp(complianceDocs.length / 8, 0, 1) : 0;
+  const complianceScore = complianceDocs.length > 0 ? 0.6 + 0.4 * complianceCoverage : 0.45;
+
+  const coverageScore = serviceZones.length > 0 ? clamp(serviceZones.length / 12, 0, 1) : 0.5;
+
+  const reviewRatings = orderedReviews
+    .map((review) => (Number.isFinite(review.rating) ? Number(review.rating) : null))
+    .filter((value) => value != null);
+  const sentimentScore = reviewRatings.length > 0 ? clamp(average(reviewRatings) / 5, 0, 1) : 0.86;
+
+  const trustConfidence = resolveConfidenceLabel(bookingCount);
+  const confidenceMultiplier =
+    trustConfidence === 'high' ? 1 : trustConfidence === 'medium' ? 0.97 : trustConfidence === 'low' ? 0.92 : 0.88;
+
+  const trustComposite =
+    (0.3 * reliabilityRatio +
+      0.22 * punctualityRatio +
+      0.18 * complianceScore +
+      0.15 * sentimentScore +
+      0.1 * cancellationScore +
+      0.05 * coverageScore) *
+    100 *
+    confidenceMultiplier;
+
+  const trustValue = Math.round(clamp(trustComposite, 0, 100));
+  const trustBand = resolveTrustBand(trustValue);
+
+  const trustScore = {
+    value: trustValue,
+    band: trustBand,
+    confidence: trustConfidence,
+    sampleSize: bookingCount,
+    caption: `${completedBookingsCount} of ${Math.max(bookingCount, 1)} jobs completed with ${Math.round(
+      punctualityRatio * 100
+    )}% on-time sign-off`,
+    breakdown: {
+      reliability: Number((reliabilityRatio * 100).toFixed(1)),
+      punctuality: Number((punctualityRatio * 100).toFixed(1)),
+      compliance: Number((complianceScore * 100).toFixed(1)),
+      sentiment: Number((sentimentScore * 100).toFixed(1)),
+      cancellations: Number((cancellationScore * 100).toFixed(1)),
+      coverage: Number((coverageScore * 100).toFixed(1))
+    }
+  };
+
+  const reviewAverage = reviewRatings.length > 0 ? average(reviewRatings) : 4.6;
+  const reviewValue = Number(reviewAverage.toFixed(2));
+  const reviewBand = resolveReviewBand(reviewValue);
+  const reviewConfidence = resolveConfidenceLabel(reviewRatings.length);
+  const reviewDistribution = {
+    promoters: reviewRatings.filter((rating) => rating >= 4.5).length,
+    positive: reviewRatings.filter((rating) => rating >= 4 && rating < 4.5).length,
+    neutral: reviewRatings.filter((rating) => rating >= 3 && rating < 4).length,
+    detractors: reviewRatings.filter((rating) => rating < 3).length
+  };
+
+  const reviewScore = {
+    value: reviewValue,
+    band: reviewBand,
+    confidence: reviewConfidence,
+    sampleSize: reviewRatings.length,
+    caption: `${reviewRatings.length} verified review${reviewRatings.length === 1 ? '' : 's'}`,
+    distribution: reviewDistribution
+  };
+
+  stats.unshift({
+    id: 'trust-score',
+    label: 'Trust score',
+    value: trustScore.value,
+    format: 'number',
+    caption: trustScore.caption
+  });
+  stats.splice(1, 0, {
+    id: 'review-score',
+    label: 'Review score',
+    value: reviewScore.value,
+    format: 'number',
+    caption: reviewScore.caption
+  });
+
+  const deals = serviceCatalogue
+    .filter((service) => Number.isFinite(service.price))
+    .slice(0, 3)
+    .map((service, index) => ({
+      id: `deal-${service.id || index}`,
+      title: `${service.name} bundle`,
+      description: `Escrow-backed ${service.type.toLowerCase()} package covering ${
+        service.coverage.slice(0, 2).join(', ') || 'priority zones'
+      }.`,
+      savings: Number((service.price * 0.12).toFixed(2)),
+      currency: service.currency,
+      validUntil: now.plus({ days: (index + 1) * 7 }).toISODate(),
+      tags: service.tags.slice(0, 2)
+    }));
+
+  const inventorySummary = buildInventorySummary(inventoryItems);
 
   const windowEnd = DateTime.now().setZone('UTC');
   const windowStart = windowEnd.minus({ days: 90 });

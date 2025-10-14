@@ -266,7 +266,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 }
 
-export async function down({ context: queryInterface, Sequelize }) {
+export async function down({ context: queryInterface }) {
   await queryInterface.removeColumn('Company', 'compliance_score');
   await queryInterface.removeColumn('Company', 'insured_seller_badge_visible');
   await queryInterface.removeColumn('Company', 'insured_seller_expires_at');

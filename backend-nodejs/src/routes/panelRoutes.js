@@ -8,24 +8,8 @@ import { authenticate, authorize, requireStorefrontRole } from '../middleware/au
 
 const router = Router();
 
-router.get(
-  '/provider/dashboard',
-  authenticate,
-  authorize(['company', 'admin']),
-  getProviderDashboardHandler
-);
-
-router.get(
-  '/provider/storefront',
-  requireStorefrontRole,
-  getProviderStorefrontHandler
-);
-
-router.get(
-  '/enterprise/overview',
-  authenticate,
-  authorize(['company', 'admin']),
-  getEnterprisePanelHandler
-);
+router.get('/provider/dashboard', authenticate, authorize(['company']), getProviderDashboardHandler);
+router.get('/enterprise/overview', authenticate, authorize(['company']), getEnterprisePanelHandler);
+router.get('/provider/storefront', authenticate, requireStorefrontRole, getProviderStorefrontHandler);
 
 export default router;

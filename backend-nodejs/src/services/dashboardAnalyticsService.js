@@ -1259,7 +1259,8 @@ async function loadProviderData(context) {
           where: { status: { [Op.in]: ['active', 'acknowledged'] } }
         }
       ],
-      order: [['updatedAt', 'DESC']]
+      order: [['updatedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
     }),
     AdCampaign.findAll({
       where: campaignFilter,

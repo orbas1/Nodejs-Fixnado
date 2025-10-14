@@ -43,7 +43,7 @@ export async function matchGeoServices(payload, { signal } = {}) {
       let errorBody = null;
       try {
         errorBody = await response.json();
-      } catch (error) {
+      } catch {
         // ignore JSON parse failures
       }
       const message = errorBody?.message || response.statusText || 'Unable to match services';

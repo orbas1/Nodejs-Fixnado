@@ -295,7 +295,23 @@ async function createCompanyWithFixtures() {
     timezone: TZ
   });
 
-  return { company, owner };
+  await RentalAgreement.create({
+    rentalNumber: 'RA-1002',
+    itemId: inventoryItem.id,
+    marketplaceItemId: approvedListing.id,
+    companyId: company.id,
+    renterId: IDS.renter,
+    status: 'settled',
+    depositStatus: 'released',
+    quantity: 1,
+    rentalStartAt: now.minus({ days: 45 }).toJSDate(),
+    returnDueAt: now.minus({ days: 40 }).toJSDate(),
+    dailyRate: 390,
+    rateCurrency: 'GBP',
+    meta: { project: 'Completed works' }
+  });
+
+  return { company, owner: user };
 }
 
 beforeAll(async () => {
@@ -407,6 +423,23 @@ describe('Panel routes', () => {
     expect(response.body.data.hero.name).toContain('Metro');
     expect(response.body.data.packages.length).toBeGreaterThan(0);
     expect(response.body.data.stats[0].value).toBeGreaterThanOrEqual(0);
+  });
+  it('rejects provider dashboard requests without authentication', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: company.id })
+      .expect(401);
+  });
+
+  it('rejects provider dashboard requests from non-company roles', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await withAuth(
+      request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
+      IDS.provider
+    ).expect(403);
   });
 
   it('returns a storefront management snapshot with listing intelligence for provider roles', async () => {

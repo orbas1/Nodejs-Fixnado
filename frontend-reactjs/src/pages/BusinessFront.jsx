@@ -18,7 +18,6 @@ import {
   SparklesIcon,
   ShieldCheckIcon,
   StarIcon,
-  SwatchIcon,
   TagIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon
@@ -194,7 +193,7 @@ TestimonialCard.propTypes = {
   }).isRequired
 };
 
-function Chip({ icon: Icon, children }) {
+function Chip({ icon: Icon = null, children }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600">
       {Icon ? <Icon className="h-3.5 w-3.5 text-primary" aria-hidden="true" /> : null}
@@ -206,10 +205,6 @@ function Chip({ icon: Icon, children }) {
 Chip.propTypes = {
   icon: PropTypes.elementType,
   children: PropTypes.node.isRequired
-};
-
-Chip.defaultProps = {
-  icon: null
 };
 
 function PaletteSwatch({ label, value }) {
@@ -910,7 +905,8 @@ export default function BusinessFront() {
   const tools = state.data?.tools ?? [];
   const servicemen = state.data?.servicemen ?? [];
   const serviceZones = state.data?.serviceZones ?? [];
-  const styleGuide = state.data?.styleGuide ?? {};
+  const rawStyleGuide = state.data?.styleGuide;
+  const styleGuide = useMemo(() => rawStyleGuide ?? {}, [rawStyleGuide]);
   const styleGuidePaletteEntries = useMemo(
     () =>
       Object.entries(styleGuide?.palette ?? {})
@@ -1067,7 +1063,7 @@ export default function BusinessFront() {
                   {reviewScore ? (
                     <ScoreBadge
                       icon={StarIcon}
-                      label={t('businessFront.reviewScoreLabel')}
+                      label={t('businessFront.reviewScoreTitle')}
                       value={reviewScore.value}
                       precision={1}
                       caption={reviewCaption}

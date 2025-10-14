@@ -117,7 +117,6 @@ async function deliverBatch(events, settings, logger) {
 
 async function handleSuccess(events, retentionDays) {
   for (const event of events) {
-    // eslint-disable-next-line no-await-in-loop
     await markEventIngestionSuccess(event, { retentionDays });
   }
 }
@@ -128,7 +127,6 @@ async function handleFailure(events, settings, logger, error) {
   for (const event of events) {
     const attemptsAfterFailure = (event.ingestionAttempts ?? 0) + 1;
     const retryAt = computeRetryTimestamp(attemptsAfterFailure, schedule, now);
-    // eslint-disable-next-line no-await-in-loop
     await markEventIngestionFailure(event, { error, retryAt });
     logger.error?.('analytics-event-ingest-error', {
       eventId: event.id,

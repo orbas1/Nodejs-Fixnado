@@ -12,7 +12,7 @@ function formatCurrency(value, currency = 'USD') {
 
   try {
     return new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(Number(value));
-  } catch (error) {
+  } catch {
     return `${value} ${currency}`;
   }
 }

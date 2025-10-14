@@ -54,7 +54,7 @@ const toRoleList = (roles) => {
   return [roles];
 };
 
-function legacyUseRoleAccess(requiredRoles, { allowFallbackRoles = [] } = {}) {
+function useLegacyRoleAccess(requiredRoles, { allowFallbackRoles = [] } = {}) {
   const [role, setRole] = useState(() => readSessionRole());
 
   useEffect(() => {
@@ -281,4 +281,4 @@ export function useRoleAccess({ allowedRoles = [], defaultRole = null, allowFall
   };
 }
 
-export default legacyUseRoleAccess;
+export default useLegacyRoleAccess;
