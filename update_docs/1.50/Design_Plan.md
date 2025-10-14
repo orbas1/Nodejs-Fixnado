@@ -34,6 +34,7 @@ Primary objectives:
 - Maintain unified iconography, illustration, and photography guidelines with emo-themed overlays and cultural localisation tips.
 - Create token export pipelines (Style Dictionary or similar) that deliver JSON/Sass/Flutter formats.
 - Document animation easing curves, durations, and motion safety preferences.
+- Extend the status messaging component library to cover rate-limit, CORS, and consent prompts so visual treatments mirror the hardened backend responses.
 
 ## Page & Flow Redesign Scope
 | Area | Key Enhancements | Notes |

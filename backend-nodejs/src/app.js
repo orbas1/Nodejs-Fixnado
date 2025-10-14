@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import routes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -10,15 +11,111 @@ import config from './config/index.js';
 const app = express();
 
 app.disable('x-powered-by');
+
+const trustProxyValue = config.security?.trustProxy;
+if (trustProxyValue !== false && trustProxyValue?.toLowerCase?.() !== 'false') {
+  app.set('trust proxy', trustProxyValue);
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: 'cross-origin' }
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    hidePoweredBy: true
   })
 );
-app.use(cors());
-app.use(express.json());
+
+const allowedOrigins = config.security?.cors?.allowOrigins ?? [];
+const allowAllOrigins =
+  allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes('all');
+
+function isOriginAllowed(origin) {
+  if (!origin || allowAllOrigins) {
+    return true;
+  }
+
+  const normalisedOrigin = origin.toLowerCase();
+
+  return allowedOrigins.some((allowed) => {
+    const normalisedAllowed = allowed.toLowerCase();
+
+    if (normalisedAllowed === normalisedOrigin) {
+      return true;
+    }
+
+    if (normalisedAllowed.startsWith('*.')) {
+      const domain = normalisedAllowed.slice(2);
+      return normalisedOrigin.endsWith(domain);
+    }
+
+    return false;
+  });
+}
+
+const baseCorsOptions = {
+  methods: config.security?.cors?.allowMethods?.length ? config.security.cors.allowMethods : undefined,
+  allowedHeaders: config.security?.cors?.allowHeaders?.length ? config.security.cors.allowHeaders : undefined,
+  exposedHeaders: config.security?.cors?.exposedHeaders?.length ? config.security.cors.exposedHeaders : undefined,
+  credentials: config.security?.cors?.allowCredentials ?? true,
+  maxAge: 600
+};
+
+const corsMiddleware = cors((req, callback) => {
+  const requestOrigin = req.header('Origin');
+
+  if (isOriginAllowed(requestOrigin)) {
+    callback(null, { ...baseCorsOptions, origin: true });
+    return;
+  }
+
+  const error = new Error('Origin not allowed by CORS policy');
+  error.status = 403;
+  callback(error, { ...baseCorsOptions, origin: false });
+});
+
+app.use(corsMiddleware);
+app.options('*', corsMiddleware);
+
+app.use(
+  express.json({
+    limit: config.security?.bodyParser?.jsonLimit ?? '1mb'
+  })
+);
+app.use(
+  express.urlencoded({
+    limit: config.security?.bodyParser?.urlencodedLimit ?? '1mb',
+    extended: true
+  })
+);
+
+const rateLimiter = rateLimit({
+  windowMs: (config.security?.rateLimiting?.windowMinutes ?? 1) * 60 * 1000,
+  max: config.security?.rateLimiting?.maxRequests ?? 120,
+  standardHeaders: config.security?.rateLimiting?.standardHeaders ?? true,
+  legacyHeaders: config.security?.rateLimiting?.legacyHeaders ?? false,
+  skipSuccessfulRequests: config.security?.rateLimiting?.skipSuccessfulRequests ?? false,
+  skip: (req) => req.path === '/healthz' || req.path === '/',
+  keyGenerator: (req) => {
+    const forwarded = req.headers?.[config.security?.clientIpHeader];
+    if (typeof forwarded === 'string' && forwarded.trim().length > 0) {
+      return forwarded.split(',')[0].trim();
+    }
+    if (Array.isArray(forwarded) && forwarded.length > 0) {
+      return forwarded[0];
+    }
+    return req.ip;
+  },
+  handler: (req, res, next, options) => {
+    res.status(429).json({
+      message: 'Too many requests, please slow down.',
+      retryAfterSeconds: Math.ceil(options.windowMs / 1000)
+    });
+  }
+});
+
+app.use(rateLimiter);
+
 app.use(morgan('tiny'));
 
 app.set('dashboards:exportRowLimit', config.dashboards?.exportRowLimit ?? 5000);
@@ -26,6 +123,60 @@ app.set('dashboards:defaultTimezone', config.dashboards?.defaultTimezone ?? 'Eur
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'Fixnado API' });
+});
+
+async function measureDatabaseHealth(timeoutMs) {
+  const startedAt = process.hrtime.bigint();
+  let timeoutId;
+
+  try {
+    await Promise.race([
+      sequelize.query('SELECT 1'),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          const timeoutError = new Error('Database ping timed out');
+          timeoutError.status = 503;
+          reject(timeoutError);
+        }, timeoutMs);
+      })
+    ]);
+
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+
+    return {
+      status: 'pass',
+      latencyMs: Number(durationMs.toFixed(2))
+    };
+  } catch (error) {
+    return {
+      status: 'fail',
+      message: error.message
+    };
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+app.get('/healthz', async (req, res, next) => {
+  try {
+    const databaseHealth = await measureDatabaseHealth(config.security?.health?.databaseTimeoutMs ?? 2000);
+    const healthy = databaseHealth.status === 'pass';
+
+    const response = {
+      status: healthy ? 'pass' : 'fail',
+      uptimeSeconds: Math.round(process.uptime()),
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: databaseHealth
+      }
+    };
+
+    res.status(healthy ? 200 : 503).json(response);
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use('/api', routes);

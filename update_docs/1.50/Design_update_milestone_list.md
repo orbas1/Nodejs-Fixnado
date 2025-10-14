@@ -9,6 +9,7 @@
 3. Component baseline specs for cards, buttons, forms, chips, and alert banners.
 4. Token export pipeline prototype (JSON/Sass/Flutter) connected to design tooling.
 5. Accessibility checklist for foundational components including focus states and keyboard interactions.
+6. Status and alert token expansions covering rate limiting, CORS denial, and consent prompts aligned with backend copy.
 
 ## Milestone D2 – Navigation & Information Architecture Alignment (Target Week 2–4)
 **Goals:** Harmonise navigation, menu structures, and logic flows while incorporating compliance and security cues.
