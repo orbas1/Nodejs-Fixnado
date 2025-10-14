@@ -49,6 +49,8 @@ export default function Footer() {
               ? '/services#rentals'
               : itemKey === 'footer.materials'
               ? '/materials'
+              : itemKey === 'footer.terms'
+              ? '/legal/terms'
               : '#'
         }))
       })),
@@ -88,6 +90,8 @@ export default function Footer() {
         <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-3">
           <span>{t('footer.copyright', { year: new Date().getFullYear() })}</span>
           <div className="flex gap-4">
+            <Link to="#" className="hover:text-accent">{t('footer.privacy')}</Link>
+            <Link to="/legal/terms" className="hover:text-accent">{t('footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-accent">{t('footer.privacy')}</Link>
             <Link to="#" className="hover:text-accent">{t('footer.terms')}</Link>
             <Link to="#" className="hover:text-accent">{t('footer.cookies')}</Link>

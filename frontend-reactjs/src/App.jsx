@@ -33,6 +33,7 @@ const Blog = lazy(() => import('./pages/Blog.jsx'));
 const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const Terms = lazy(() => import('./pages/Terms.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 
@@ -132,6 +133,7 @@ function App() {
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+            <Route path="/legal/terms" element={<Terms />} />
           </Routes>
         </Suspense>
       </main>
