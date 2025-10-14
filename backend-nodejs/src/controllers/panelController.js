@@ -1,13 +1,20 @@
 import { buildBusinessFront, buildProviderDashboard } from '../services/panelService.js';
+import { buildProviderStorefront } from '../services/storefrontService.js';
 import { getEnterprisePanelOverview } from '../services/enterprisePanelService.js';
 
 export async function getProviderDashboardHandler(req, res, next) {
   try {
-    const { data, meta } = await buildProviderDashboard({ companyId: req.query.companyId });
+    const { data, meta } = await buildProviderDashboard({
+      companyId: req.query.companyId,
+      actor: req.user
+    });
     res.json({ data, meta });
   } catch (error) {
     if (error.statusCode === 404) {
       return res.status(404).json({ message: error.message || 'company_not_found' });
+    }
+    if (error.statusCode === 403) {
+      return res.status(403).json({ message: error.message || 'forbidden' });
     }
     next(error);
   }
@@ -33,6 +40,18 @@ export async function getBusinessFrontHandler(req, res, next) {
     const slug = req.params.slug || 'featured';
     const viewerType = req.user?.type || null;
     const { data, meta } = await buildBusinessFront({ slug, viewerType });
+    res.json({ data, meta });
+  } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({ message: error.message || 'company_not_found' });
+    }
+    next(error);
+  }
+}
+
+export async function getProviderStorefrontHandler(req, res, next) {
+  try {
+    const { data, meta } = await buildProviderStorefront({ companyId: req.query.companyId });
     res.json({ data, meta });
   } catch (error) {
     if (error.statusCode === 404) {

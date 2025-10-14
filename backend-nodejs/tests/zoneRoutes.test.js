@@ -2,7 +2,16 @@ import request from 'supertest';
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
-const { sequelize, Company, User, ServiceZone, ZoneAnalyticsSnapshot, AnalyticsEvent } = await import('../src/models/index.js');
+const {
+  sequelize,
+  Company,
+  User,
+  ServiceZone,
+  ZoneAnalyticsSnapshot,
+  AnalyticsEvent,
+  Service,
+  ServiceZoneCoverage
+} = await import('../src/models/index.js');
 
 async function bootstrapCompany() {
   const owner = await User.create({
@@ -102,6 +111,44 @@ describe('Zone routes', () => {
     expect(Number(events[0].metadata.areaSqMeters)).toBeGreaterThan(0);
   });
 
+  it('prevents overlapping zones for the same company', async () => {
+    const company = await bootstrapCompany();
+
+    await request(app)
+      .post('/api/zones')
+      .send({
+        companyId: company.id,
+        name: 'Core Zone',
+        geometry: polygon
+      })
+      .expect(201);
+
+    const overlappingPolygon = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.14, 51.505],
+          [-0.09, 51.505],
+          [-0.09, 51.525],
+          [-0.14, 51.525],
+          [-0.14, 51.505]
+        ]
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/zones')
+      .send({
+        companyId: company.id,
+        name: 'Overlap Attempt',
+        geometry: overlappingPolygon
+      })
+      .expect(409);
+
+    expect(response.body.message).toMatch(/overlap|conflict/i);
+    expect(await ServiceZone.count()).toBe(1);
+  });
+
   it('exposes analytics snapshots via the API', async () => {
     const company = await bootstrapCompany();
 
@@ -125,5 +172,66 @@ describe('Zone routes', () => {
     expect(entry.analytics.bookingTotals).toMatchObject({});
 
     expect(await ZoneAnalyticsSnapshot.count()).toBeGreaterThan(0);
+  });
+
+  it('manages service coverage assignments for zones', async () => {
+    const company = await bootstrapCompany();
+    const service = await Service.create({
+      companyId: company.id,
+      title: 'Emergency Plumbing',
+      price: 120,
+      currency: 'GBP'
+    });
+
+    const zoneResponse = await request(app)
+      .post('/api/zones')
+      .send({ companyId: company.id, name: 'Coverage Zone', geometry: polygon })
+      .expect(201);
+
+    const zoneId = zoneResponse.body.id;
+
+    const syncResponse = await request(app)
+      .post(`/api/zones/${zoneId}/services`)
+      .send({
+        actor: { id: 'admin-1', type: 'user' },
+        coverages: [
+          {
+            serviceId: service.id,
+            coverageType: 'primary',
+            priority: 2,
+            effectiveFrom: new Date().toISOString(),
+            metadata: { slaMinutes: 90 }
+          }
+        ]
+      })
+      .expect(200);
+
+    expect(syncResponse.body).toHaveLength(1);
+    expect(syncResponse.body[0]).toMatchObject({
+      zoneId,
+      serviceId: service.id,
+      coverageType: 'primary',
+      priority: 2
+    });
+    expect(syncResponse.body[0].service.id).toEqual(service.id);
+
+    const listResponse = await request(app)
+      .get(`/api/zones/${zoneId}/services`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(1);
+    expect(listResponse.body[0].service.id).toEqual(service.id);
+
+    await request(app)
+      .delete(`/api/zones/${zoneId}/services/${syncResponse.body[0].id}`)
+      .send({ actor: { id: 'admin-1', type: 'user' } })
+      .expect(204);
+
+    expect(await ServiceZoneCoverage.count()).toBe(0);
+
+    const events = await AnalyticsEvent.findAll({ order: [['createdAt', 'ASC']] });
+    const eventNames = events.map((event) => event.eventName);
+    expect(eventNames).toContain('zone.service.attached');
+    expect(eventNames).toContain('zone.service.detached');
   });
 });
