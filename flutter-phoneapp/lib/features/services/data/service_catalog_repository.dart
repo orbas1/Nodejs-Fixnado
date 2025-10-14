@@ -39,6 +39,10 @@ class ServiceCatalogRepository {
 
       final serviceById = {for (final service in catalogue) service.id: service};
 
+      final bannerStyles = (data['bannerStyles'] as List<dynamic>? ?? const [])
+          .map((item) => BannerStyleOption.fromJson(_asMap(item)))
+          .toList();
+
       final packages = (data['packages'] as List<dynamic>? ?? const [])
           .map((item) {
             final json = _asMap(item);
@@ -84,6 +88,7 @@ class ServiceCatalogRepository {
         healthMetrics: healthMetrics,
         deliveryBoard: deliveryBoard,
         reviews: reviews,
+        bannerStyles: bannerStyles,
         reviewSummary: reviewSummary,
         reviewAccess: reviewAccess,
         generatedAt: DateTime.tryParse(meta['generatedAt']?.toString() ?? '') ?? DateTime.now(),

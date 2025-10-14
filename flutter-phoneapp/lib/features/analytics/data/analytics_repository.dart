@@ -418,6 +418,10 @@ class AnalyticsRepository {
         return 'serviceman';
       case UserRole.enterprise:
         return 'enterprise';
+      case UserRole.support:
+        return 'support';
+      case UserRole.operations:
+        return 'operations';
       case UserRole.admin:
         return 'admin';
     }

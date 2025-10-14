@@ -156,6 +156,118 @@ class ReviewAccessControl {
   final String? reason;
 }
 
+class BannerPalette {
+  const BannerPalette({
+    required this.background,
+    required this.accent,
+    required this.highlight,
+    required this.text,
+  });
+
+  factory BannerPalette.fromJson(Map<String, dynamic> json) {
+    String _normalise(String? value, String fallback) {
+      if (value == null) return fallback;
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? fallback : trimmed;
+    }
+
+    return BannerPalette(
+      background: _normalise(json['background']?.toString(), '#0B1D3A'),
+      accent: _normalise(json['accent']?.toString(), '#1F4ED8'),
+      highlight: _normalise(json['highlight']?.toString(), '#00BFA6'),
+      text: _normalise(json['text']?.toString(), '#FFFFFF'),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'background': background,
+      'accent': accent,
+      'highlight': highlight,
+      'text': text,
+    };
+  }
+
+  final String background;
+  final String accent;
+  final String highlight;
+  final String text;
+}
+
+class BannerStyleOption {
+  BannerStyleOption({
+    required this.id,
+    required this.name,
+    required this.palette,
+    this.description,
+    this.layout,
+    this.recommendedUse,
+    this.preview,
+    this.supportsVideo = true,
+    this.supportsCarousel = true,
+    this.textTone = 'light',
+    this.badges = const [],
+  });
+
+  factory BannerStyleOption.fromJson(Map<String, dynamic> json) {
+    final paletteSource = json['palette'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['palette'] as Map)
+        : const <String, dynamic>{};
+
+    List<String> _badges(dynamic value) {
+      if (value is List) {
+        return value.map((entry) => entry?.toString() ?? '').where((entry) => entry.isNotEmpty).toList();
+      }
+      if (value is String && value.isNotEmpty) {
+        return [value];
+      }
+      return const [];
+    }
+
+    return BannerStyleOption(
+      id: json['id']?.toString() ?? json['slug']?.toString() ?? 'banner-style',
+      name: json['name']?.toString() ?? 'Banner style',
+      description: json['description']?.toString(),
+      layout: json['layout']?.toString(),
+      recommendedUse: json['recommendedUse']?.toString(),
+      preview: json['preview']?.toString() ?? json['previewImage']?.toString(),
+      palette: BannerPalette.fromJson(paletteSource),
+      supportsVideo: json['supportsVideo'] is bool ? json['supportsVideo'] as bool : true,
+      supportsCarousel: json['supportsCarousel'] is bool ? json['supportsCarousel'] as bool : true,
+      textTone: json['textTone']?.toString() ?? 'light',
+      badges: _badges(json['badges'] ?? json['tags']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'layout': layout,
+      'recommendedUse': recommendedUse,
+      'preview': preview,
+      'supportsVideo': supportsVideo,
+      'supportsCarousel': supportsCarousel,
+      'textTone': textTone,
+      'badges': badges,
+      'palette': palette.toJson(),
+    };
+  }
+
+  final String id;
+  final String name;
+  final String? description;
+  final String? layout;
+  final String? recommendedUse;
+  final String? preview;
+  final BannerPalette palette;
+  final bool supportsVideo;
+  final bool supportsCarousel;
+  final String textTone;
+  final List<String> badges;
+}
+
 class ServiceCatalogueEntry {
   ServiceCatalogueEntry({
     required this.id,
@@ -512,6 +624,7 @@ class ServiceCatalogSnapshot {
     required this.healthMetrics,
     required this.deliveryBoard,
     required this.reviews,
+    required this.bannerStyles,
     this.reviewSummary,
     this.reviewAccess,
     required this.generatedAt,
@@ -525,6 +638,7 @@ class ServiceCatalogSnapshot {
   final List<ServiceHealthMetric> healthMetrics;
   final List<ServiceDeliveryColumn> deliveryBoard;
   final List<BusinessReview> reviews;
+  final List<BannerStyleOption> bannerStyles;
   final BusinessReviewSummary? reviewSummary;
   final ReviewAccessControl? reviewAccess;
   final DateTime generatedAt;
@@ -539,6 +653,7 @@ class ServiceCatalogSnapshot {
       'healthMetrics': healthMetrics.map((value) => value.toJson()).toList(),
       'deliveryBoard': deliveryBoard.map((value) => value.toJson()).toList(),
       'reviews': reviews.map((value) => value.toJson()).toList(),
+      'bannerStyles': bannerStyles.map((value) => value.toJson()).toList(),
       'reviewSummary': reviewSummary?.toJson(),
       'reviewAccess': reviewAccess?.toJson(),
       'generatedAt': generatedAt.toIso8601String(),
@@ -569,6 +684,9 @@ class ServiceCatalogSnapshot {
       reviews: (json['reviews'] as List<dynamic>? ?? const [])
           .map((item) => BusinessReview.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList(),
+      bannerStyles: (json['bannerStyles'] as List<dynamic>? ?? const [])
+          .map((item) => BannerStyleOption.fromJson(_asMap(item)))
+          .toList(),
       reviewSummary: json['reviewSummary'] is Map<String, dynamic>
           ? BusinessReviewSummary.fromJson(Map<String, dynamic>.from(json['reviewSummary'] as Map))
           : null,
@@ -588,6 +706,7 @@ class ServiceCatalogSnapshot {
     List<ServiceHealthMetric>? healthMetrics,
     List<ServiceDeliveryColumn>? deliveryBoard,
     List<BusinessReview>? reviews,
+    List<BannerStyleOption>? bannerStyles,
     BusinessReviewSummary? reviewSummary,
     ReviewAccessControl? reviewAccess,
     DateTime? generatedAt,
@@ -601,6 +720,7 @@ class ServiceCatalogSnapshot {
       healthMetrics: healthMetrics ?? this.healthMetrics,
       deliveryBoard: deliveryBoard ?? this.deliveryBoard,
       reviews: reviews ?? this.reviews,
+      bannerStyles: bannerStyles ?? this.bannerStyles,
       reviewSummary: reviewSummary ?? this.reviewSummary,
       reviewAccess: reviewAccess ?? this.reviewAccess,
       generatedAt: generatedAt ?? this.generatedAt,

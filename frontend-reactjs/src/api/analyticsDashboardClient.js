@@ -48,11 +48,14 @@ const shouldUseFallback = () => {
 
 export const buildExportUrl = (persona, params = {}) => `${API_BASE}/${persona}/export${toQueryString(params)}`;
 
-export const fetchDashboard = async (persona, params = {}) => {
+export const fetchDashboard = async (persona, params = {}, options = {}) => {
+  const { signal, headers: _headers, credentials: _credentials, ...restOptions } = options ?? {};
   try {
     const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
       headers: createHeaders('application/json', persona),
-      credentials: 'include'
+      credentials: 'include',
+      signal,
+      ...restOptions
     });
 
     if (!response.ok) {

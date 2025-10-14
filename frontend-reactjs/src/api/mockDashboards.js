@@ -25,6 +25,14 @@ const mockDashboards = {
         rentals: 6,
         disputes: 1,
         conversations: 15
+      },
+      features: {
+        ads: {
+          available: false,
+          level: 'view',
+          label: 'Unavailable',
+          features: []
+        }
       }
     },
     navigation: [
@@ -342,47 +350,55 @@ const mockDashboards = {
     name: 'Crew Performance Cockpit',
     headline: 'Stay ahead of assignments, travel buffers, availability, and compliance.',
     window: createWindow(),
-    metadata: {
-      crewMember: {
-        id: 'SRV-2210',
-        name: 'Jordan Miles',
-        role: 'Lead field technician',
-        region: 'Metro North'
+      metadata: {
+        crewMember: {
+          id: 'SRV-2210',
+          name: 'Jordan Miles',
+          role: 'Lead field technician',
+          region: 'Metro North'
+        },
+        crewLead: {
+          id: 'SRV-2210',
+          name: 'Jordan Miles',
+          role: 'Lead technician',
+          assignments: 28,
+          completed: 21,
+          active: 7
+        },
+        crew: [
+          { id: 'SRV-2210', name: 'Jordan Miles', role: 'Lead technician', assignments: 28, completed: 21, active: 7 },
+          { id: 'SRV-1984', name: 'Eden Clarke', role: 'Field technician', assignments: 19, completed: 14, active: 5 },
+          { id: 'SRV-1776', name: 'Kai Edwards', role: 'Field technician', assignments: 17, completed: 12, active: 5 },
+          { id: 'SRV-1630', name: 'Morgan Shaw', role: 'Field technician', assignments: 15, completed: 10, active: 5 }
+        ],
+        region: 'Metro North',
+        velocity: {
+          travelMinutes: 26,
+          previousTravelMinutes: 29,
+          weekly: [
+            { label: 'Week 1', accepted: 7, autoMatches: 3 },
+            { label: 'Week 2', accepted: 6, autoMatches: 2 },
+            { label: 'Week 3', accepted: 8, autoMatches: 4 },
+            { label: 'Week 4', accepted: 7, autoMatches: 3 }
+          ]
+        },
+        totals: {
+          completed: 21,
+          inProgress: 5,
+          scheduled: 7,
+          revenue: 18450,
+          autoMatched: 9,
+          adsSourced: 4
+        },
+        features: {
+          ads: {
+            available: true,
+            level: 'view',
+            label: 'Crew Ads Insights',
+            features: ['campaigns', 'guardrails']
+          }
+        }
       },
-      crewLead: {
-        id: 'SRV-2210',
-        name: 'Jordan Miles',
-        role: 'Lead technician',
-        assignments: 28,
-        completed: 21,
-        active: 7
-      },
-      crew: [
-        { id: 'SRV-2210', name: 'Jordan Miles', role: 'Lead technician', assignments: 28, completed: 21, active: 7 },
-        { id: 'SRV-1984', name: 'Eden Clarke', role: 'Field technician', assignments: 19, completed: 14, active: 5 },
-        { id: 'SRV-1776', name: 'Kai Edwards', role: 'Field technician', assignments: 17, completed: 12, active: 5 },
-        { id: 'SRV-1630', name: 'Morgan Shaw', role: 'Field technician', assignments: 15, completed: 10, active: 5 }
-      ],
-      region: 'Metro North',
-      velocity: {
-        travelMinutes: 26,
-        previousTravelMinutes: 29,
-        weekly: [
-          { label: 'Week 1', accepted: 7, autoMatches: 3 },
-          { label: 'Week 2', accepted: 6, autoMatches: 2 },
-          { label: 'Week 3', accepted: 8, autoMatches: 4 },
-          { label: 'Week 4', accepted: 7, autoMatches: 3 }
-        ]
-      },
-      totals: {
-        completed: 21,
-        inProgress: 5,
-        scheduled: 7,
-        revenue: 18450,
-        autoMatched: 9,
-        adsSourced: 4
-      }
-    },
     navigation: [
       {
         id: 'overview',
@@ -654,24 +670,32 @@ const mockDashboards = {
     name: 'Provider Operations Studio',
     headline: 'Monitor revenue, crew utilisation, availability, assets, and automation in one studio.',
     window: createWindow(),
-    metadata: {
-      provider: {
-        id: 'PRV-1108',
-        name: 'Metro Ops Collective',
-        tradingName: 'Metro Ops Collective',
-        slug: 'metro-ops',
-        supportEmail: 'support@metro-ops.co.uk',
-        supportPhone: '+44 20 7123 4567',
-        region: 'Greater London'
+      metadata: {
+        provider: {
+          id: 'PRV-1108',
+          name: 'Metro Ops Collective',
+          tradingName: 'Metro Ops Collective',
+          slug: 'metro-ops',
+          supportEmail: 'support@metro-ops.co.uk',
+          supportPhone: '+44 20 7123 4567',
+          region: 'Greater London'
+        },
+        totals: {
+          crews: 7,
+          utilisation: '78%',
+          revenueMonthToDate: '£312k',
+          outstandingBalance: '£28k',
+          satisfaction: '4.6★'
+        },
+        features: {
+          ads: {
+            available: true,
+            level: 'manage',
+            label: 'Provider Ads Manager',
+            features: ['campaigns', 'billing', 'guardrails', 'targeting']
+          }
+        }
       },
-      totals: {
-        crews: 7,
-        utilisation: '78%',
-        revenueMonthToDate: '£312k',
-        outstandingBalance: '£28k',
-        satisfaction: '4.6★'
-      }
-    },
     navigation: [
       {
         id: 'overview',
@@ -1034,13 +1058,18 @@ const mockDashboards = {
           ]
         }
       },
-      {
-        id: 'fixnado-ads',
-        icon: 'analytics',
-        label: 'Fixnado Ads',
-        description: 'Campaign pacing, spend, guardrails, and billing.',
-        type: 'ads',
-        data: {
+        {
+          id: 'fixnado-ads',
+          icon: 'analytics',
+          label: 'Fixnado Ads',
+          description: 'Campaign pacing, spend, guardrails, and billing.',
+          type: 'ads',
+          access: {
+            level: 'manage',
+            label: 'Provider Ads Manager',
+            features: ['campaigns', 'billing', 'guardrails', 'targeting']
+          },
+          data: {
           summaryCards: [
             { title: 'Managed spend', value: '£48.2k', change: '+£6.4k vs prior', trend: 'up', helper: '3 active campaigns' },
             { title: 'Attributed revenue', value: '£102k', change: '+£14k vs prior', trend: 'up', helper: 'ROAS 212%' },
@@ -1180,6 +1209,121 @@ const mockDashboards = {
               end: '2025-03-19',
               budget: '£9k'
             }
+          ],
+          pricingModels: [
+            {
+              id: 'ppc',
+              label: 'Pay-per-click (PPC)',
+              spend: '£48.2k',
+              unitCost: '£0.86',
+              unitLabel: 'Cost per click',
+              performance: '3.1% CTR',
+              status: 'Scaling'
+            },
+            {
+              id: 'pp-conversion',
+              label: 'Pay-per-conversion',
+              spend: '£48.2k',
+              unitCost: '£137',
+              unitLabel: 'Cost per conversion',
+              performance: '62 jobs attributed',
+              status: 'Scaling'
+            },
+            {
+              id: 'ppi',
+              label: 'Pay-per-impression (PPI)',
+              spend: '£48.2k',
+              unitCost: '£26',
+              unitLabel: 'CPM',
+              performance: '1.8M impressions',
+              status: 'Steady'
+            }
+          ],
+          channelMix: [
+            {
+              id: 'marketplace_search',
+              label: 'Marketplace & Search',
+              spend: '£26.4k',
+              share: '55%',
+              performance: '6.4% CVR',
+              status: 'Scaling',
+              campaigns: 2
+            },
+            {
+              id: 'conversion',
+              label: 'Conversion & Remarketing',
+              spend: '£14.6k',
+              share: '30%',
+              performance: '5.9% CVR',
+              status: 'Steady',
+              campaigns: 1
+            },
+            {
+              id: 'awareness_display',
+              label: 'Awareness & Display',
+              spend: '£7.2k',
+              share: '15%',
+              performance: '1.8% CVR',
+              status: 'Test',
+              campaigns: 1
+            }
+          ],
+          targeting: [
+            {
+              id: 'region-0',
+              label: 'Greater London',
+              metric: '28 jobs',
+              share: '45%',
+              status: 'Primary',
+              helper: 'Regional reach from Fixnado Ads'
+            },
+            {
+              id: 'region-1',
+              label: 'Midlands corridor',
+              metric: '14 jobs',
+              share: '23%',
+              status: 'Scaling',
+              helper: 'Regional reach from Fixnado Ads'
+            },
+            {
+              id: 'property-0',
+              label: 'Commercial offices',
+              metric: '18 jobs',
+              share: '29%',
+              status: 'High intent',
+              helper: 'Property segment performance'
+            },
+            {
+              id: 'automation',
+              label: 'Auto-matched routing',
+              metric: '42% of ads jobs',
+              share: '42%',
+              status: 'Steady',
+              helper: 'Automation coverage for ad-sourced jobs'
+            }
+          ],
+          creativeInsights: [
+            {
+              id: 'signal-overspend',
+              label: 'Overspend signal',
+              severity: 'Warning',
+              message: 'Retail Surge Q2 pacing +12% vs target in weekend flights.',
+              detectedAt: '2025-03-15'
+            },
+            {
+              id: 'ctr-health',
+              label: 'Click-through rate',
+              severity: 'Healthy',
+              message: 'CTR 3.1% across Fixnado marketplace placements.',
+              detectedAt: '2025-03-16'
+            },
+            {
+              id: 'cvr-health',
+              label: 'Conversion rate',
+              severity: 'Warning',
+              message: 'CVR 6.2% with 62 bookings attributed this window.',
+              detectedAt: '2025-03-16'
+            }
           ]
         }
       },
@@ -1245,20 +1389,28 @@ const mockDashboards = {
     name: 'Enterprise Performance Suite',
     headline: 'Track spend, campaigns, automations, and risk signals across every facility.',
     window: createWindow(),
-    metadata: {
-      enterprise: {
-        id: 'ENT-4401',
-        name: 'United Municipal Group',
-        portfolio: 38,
-        automationSavings: '£420k'
+      metadata: {
+        enterprise: {
+          id: 'ENT-4401',
+          name: 'United Municipal Group',
+          portfolio: 38,
+          automationSavings: '£420k'
+        },
+        totals: {
+          facilities: 112,
+          activePrograms: 14,
+          savings: '£420k',
+          satisfaction: '4.7★'
+        },
+        features: {
+          ads: {
+            available: true,
+            level: 'view',
+            label: 'Enterprise Ads Performance',
+            features: ['campaigns', 'billing', 'guardrails']
+          }
+        }
       },
-      totals: {
-        facilities: 112,
-        activePrograms: 14,
-        savings: '£420k',
-        satisfaction: '4.7★'
-      }
-    },
     navigation: [
       {
         id: 'overview',
@@ -1519,19 +1671,27 @@ const mockDashboards = {
     name: 'Admin Control Tower',
     headline: 'Command multi-tenant operations, compliance, zones, and assets in real time.',
     window: createWindow(),
-    metadata: {
-      organisation: {
-        tenants: 128,
-        activeZones: 18,
-        platformStatus: 'Green'
+      metadata: {
+        organisation: {
+          tenants: 128,
+          activeZones: 18,
+          platformStatus: 'Green'
+        },
+        totals: {
+          bookings: 486,
+          escalations: 9,
+          servicedRegions: 42,
+          assetsInField: 176
+        },
+        features: {
+          ads: {
+            available: true,
+            level: 'view',
+            label: 'Control Tower Read-only',
+            features: ['campaigns', 'billing']
+          }
+        }
       },
-      totals: {
-        bookings: 486,
-        escalations: 9,
-        servicedRegions: 42,
-        assetsInField: 176
-      }
-    },
     navigation: [
       {
         id: 'overview',

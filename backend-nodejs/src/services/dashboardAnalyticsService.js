@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
+import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
 import {
   AdCampaign,
   Booking,
@@ -130,6 +131,68 @@ function formatPercent(part, total) {
   return PERCENT_FORMATTER.format(part / total);
 }
 
+function safeAverage(total, count) {
+  const numericTotal = Number.parseFloat(total ?? 0);
+  const numericCount = Number.parseFloat(count ?? 0);
+  if (!Number.isFinite(numericTotal) || !Number.isFinite(numericCount) || numericCount <= 0) {
+    return 0;
+  }
+  return numericTotal / numericCount;
+}
+
+function safeShare(value, total) {
+  const numericValue = Number.parseFloat(value ?? 0);
+  const numericTotal = Number.parseFloat(total ?? 0);
+  if (!Number.isFinite(numericValue) || !Number.isFinite(numericTotal) || numericTotal <= 0) {
+    return 0;
+  }
+  return numericValue / numericTotal;
+}
+
+function normaliseChannel(campaign) {
+  const candidates = [
+    campaign.primaryChannel,
+    campaign.channel,
+    campaign.channels?.[0],
+    campaign.placementType,
+    campaign.objective
+  ]
+    .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : null))
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (candidate.includes('search') || candidate.includes('marketplace')) {
+      return 'marketplace_search';
+    }
+    if (candidate.includes('display') || candidate.includes('awareness') || candidate.includes('reach')) {
+      return 'awareness_display';
+    }
+    if (candidate.includes('retarget') || candidate.includes('conversion') || candidate.includes('lead')) {
+      return 'conversion';
+    }
+    if (candidate.includes('video')) {
+      return 'video';
+    }
+  }
+
+  return 'omnichannel';
+}
+
+function channelLabel(channel) {
+  switch (channel) {
+    case 'marketplace_search':
+      return 'Marketplace & Search';
+    case 'awareness_display':
+      return 'Awareness & Display';
+    case 'conversion':
+      return 'Conversion & Remarketing';
+    case 'video':
+      return 'Video Placements';
+    default:
+      return 'Omnichannel Mix';
+  }
+}
+
 function parseDecimal(value) {
   const parsed = Number.parseFloat(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -154,6 +217,16 @@ function computeTrend(current, previous, formatter = formatNumber, suffix = '') 
   const formattedDelta = delta === 0 ? '0' : formatter(Math.abs(delta));
   const change = `${trend === 'down' ? '-' : '+'}${formattedDelta}${suffix}`;
   return { value: formatter(current), change, trend };
+}
+
+function trendStatus(trend) {
+  if (trend === 'up') {
+    return 'Scaling';
+  }
+  if (trend === 'down') {
+    return 'Monitor';
+  }
+  return 'Steady';
 }
 
 function groupByWeek(records, accessor, window) {
@@ -761,25 +834,28 @@ async function loadUserData(context) {
     name: PERSONA_METADATA.user.name,
     headline: PERSONA_METADATA.user.headline,
     window,
-    metadata: {
-      userId: userId ?? null,
-      companyId: companyId ?? null,
-      user: user
-        ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`.trim(),
-            email: user.email
-          }
-        : null,
-      totals: {
-        bookings: totalBookings,
-        activeBookings: activeBookings.length,
-        spend,
-        rentals: rentals.length,
-        disputes: disputes.length,
-        conversations: conversations.length
-      }
-    },
+      metadata: {
+        userId: userId ?? null,
+        companyId: companyId ?? null,
+        user: user
+          ? {
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`.trim(),
+              email: user.email
+            }
+          : null,
+        totals: {
+          bookings: totalBookings,
+          activeBookings: activeBookings.length,
+          spend,
+          rentals: rentals.length,
+          disputes: disputes.length,
+          conversations: conversations.length
+        },
+        features: {
+          ads: buildAdsFeatureMetadata('user')
+        }
+      },
     navigation: [
       {
         id: 'overview',
@@ -1061,6 +1137,9 @@ async function loadAdminData(context) {
         revenue: totalRevenue,
         completionRate,
         disputed
+      },
+      features: {
+        ads: buildAdsFeatureMetadata('admin')
       }
     },
     navigation: [
@@ -1571,6 +1650,16 @@ async function loadProviderData(context) {
     previousCampaignTotals.revenue,
     (value) => formatCurrency(value, currency)
   );
+  const impressionsTrend = computeTrend(
+    currentCampaignTotals.impressions,
+    previousCampaignTotals.impressions,
+    formatNumber
+  );
+  const clicksTrend = computeTrend(
+    currentCampaignTotals.clicks,
+    previousCampaignTotals.clicks,
+    formatNumber
+  );
   const conversionsTrend = computeTrend(
     currentCampaignTotals.conversions,
     previousCampaignTotals.conversions,
@@ -1786,6 +1875,269 @@ async function loadProviderData(context) {
     });
   }
 
+  const costPerClick = safeAverage(currentCampaignTotals.spend, currentCampaignTotals.clicks);
+  const costPerConversion = safeAverage(currentCampaignTotals.spend, currentCampaignTotals.conversions);
+  const costPerMille = safeAverage(currentCampaignTotals.spend, currentCampaignTotals.impressions) * 1000;
+  const ctrValue = safeShare(currentCampaignTotals.clicks, currentCampaignTotals.impressions);
+  const cvrValue = safeShare(currentCampaignTotals.conversions, currentCampaignTotals.clicks);
+
+  const pricingModels = [
+    {
+      id: 'ppc',
+      label: 'Pay-per-click (PPC)',
+      spend: spendTrend.value,
+      unitCost: formatCurrency(costPerClick, currency),
+      unitLabel: 'Cost per click',
+      performance: `${formatPercent(
+        currentCampaignTotals.clicks,
+        currentCampaignTotals.impressions || currentCampaignTotals.clicks || 1
+      )} CTR`,
+      status: trendStatus(clicksTrend.trend)
+    },
+    {
+      id: 'pp-conversion',
+      label: 'Pay-per-conversion',
+      spend: formatCurrency(currentCampaignTotals.spend, currency),
+      unitCost: formatCurrency(costPerConversion, currency),
+      unitLabel: 'Cost per conversion',
+      performance: `${formatPercent(adsSourcedCount, currentCampaignTotals.conversions || adsSourcedCount || 1)} attributed`,
+      status: trendStatus(conversionsTrend.trend)
+    },
+    {
+      id: 'ppi',
+      label: 'Pay-per-impression (PPI)',
+      spend: formatCurrency(currentCampaignTotals.spend, currency),
+      unitCost: formatCurrency(costPerMille, currency),
+      unitLabel: 'CPM',
+      performance: `${formatNumber(currentCampaignTotals.impressions)} impressions`,
+      status: trendStatus(impressionsTrend.trend)
+    }
+  ];
+
+  const channelAggregates = new Map();
+  for (const campaign of campaigns) {
+    const channel = normaliseChannel(campaign);
+    const metrics = metricsByCampaign.get(campaign.id) ?? {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0
+    };
+    const aggregate = channelAggregates.get(channel) ?? {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      campaigns: 0
+    };
+
+    aggregate.spend += metrics.spend;
+    aggregate.impressions += metrics.impressions;
+    aggregate.clicks += metrics.clicks;
+    aggregate.conversions += metrics.conversions;
+    aggregate.campaigns += 1;
+
+    channelAggregates.set(channel, aggregate);
+  }
+
+  const channelBreakdown = Array.from(channelAggregates.entries())
+    .map(([channel, values]) => {
+      const conversionShare = safeShare(values.conversions, currentCampaignTotals.conversions || values.conversions || 1);
+      let status = 'Test';
+      if (conversionShare >= 0.4) {
+        status = 'Scaling';
+      } else if (conversionShare >= 0.2) {
+        status = 'Steady';
+      }
+      return {
+        id: channel,
+        label: channelLabel(channel),
+        spend: formatCurrency(values.spend, currency),
+        share: formatPercent(values.spend, currentCampaignTotals.spend || values.spend || 1),
+        performance:
+          values.clicks > 0 ? `${formatPercent(values.conversions, values.clicks)} CVR` : '0.0% CVR',
+        status,
+        campaigns: values.campaigns,
+        _sort: values.spend
+      };
+    })
+    .sort((a, b) => b._sort - a._sort)
+    .map(({ _sort, ...rest }) => rest);
+
+  if (channelBreakdown.length === 0) {
+    channelBreakdown.push({
+      id: 'omnichannel',
+      label: 'Omnichannel Mix',
+      spend: formatCurrency(currentCampaignTotals.spend, currency),
+      share: formatPercent(currentCampaignTotals.spend, currentCampaignTotals.spend || 1),
+      performance: `${formatPercent(currentCampaignTotals.conversions, currentCampaignTotals.clicks || 1)} CVR`,
+      status: trendStatus(conversionsTrend.trend),
+      campaigns: campaigns.length
+    });
+  }
+
+  const adsAttributedAssignments = assignments.filter(
+    (assignment) => assignment.Booking?.meta?.source === 'fixnado_ads'
+  );
+  const regionBreakdown = new Map();
+  const propertyBreakdown = new Map();
+
+  for (const assignment of adsAttributedAssignments) {
+    const region = assignment.Booking?.meta?.region;
+    if (typeof region === 'string' && region.trim()) {
+      const key = region.trim();
+      regionBreakdown.set(key, (regionBreakdown.get(key) ?? 0) + 1);
+    }
+
+    const propertyType = assignment.Booking?.meta?.propertyType;
+    if (typeof propertyType === 'string' && propertyType.trim()) {
+      const key = propertyType.trim();
+      propertyBreakdown.set(key, (propertyBreakdown.get(key) ?? 0) + 1);
+    }
+  }
+
+  const totalAdsAssignments = adsAttributedAssignments.length;
+  const autoMatchedAds = adsAttributedAssignments.filter((assignment) => assignment.Booking?.meta?.autoMatched);
+  const automationShare = safeShare(autoMatchedAds.length, totalAdsAssignments || 1);
+
+  const regionSegments = Array.from(regionBreakdown.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([region, count], index) => {
+      const share = safeShare(count, totalAdsAssignments || count || 1);
+      const status = share >= 0.4 ? 'Primary' : share >= 0.2 ? 'Scaling' : 'Explore';
+      return {
+        id: `region-${index}`,
+        label: region,
+        metric: `${formatNumber(count)} jobs`,
+        share: formatPercent(count, totalAdsAssignments || count || 1),
+        status,
+        helper: 'Regional reach from Fixnado Ads'
+      };
+    });
+
+  const propertySegments = Array.from(propertyBreakdown.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([property, count], index) => {
+      const share = safeShare(count, totalAdsAssignments || count || 1);
+      const status = share >= 0.3 ? 'High intent' : share >= 0.15 ? 'Growing' : 'Niche';
+      return {
+        id: `property-${index}`,
+        label: `${property} properties`,
+        metric: `${formatNumber(count)} jobs`,
+        share: formatPercent(count, totalAdsAssignments || count || 1),
+        status,
+        helper: 'Property segment performance'
+      };
+    });
+
+  const targetingSegments = [...regionSegments, ...propertySegments];
+
+  if (totalAdsAssignments > 0) {
+    targetingSegments.push({
+      id: 'automation',
+      label: 'Auto-matched routing',
+      metric: `${formatPercent(autoMatchedAds.length, totalAdsAssignments || 1)} of ads jobs`,
+      share: formatPercent(autoMatchedAds.length, totalAdsAssignments || autoMatchedAds.length || 1),
+      status: automationShare >= 0.4 ? 'Scaling' : automationShare >= 0.2 ? 'Steady' : 'Enable',
+      helper: 'Automation coverage for ad-sourced jobs'
+    });
+  }
+
+  if (targetingSegments.length === 0) {
+    targetingSegments.push({
+      id: 'coverage',
+      label: 'Campaign coverage',
+      metric: `${formatNumber(adsSourcedCount)} attributed jobs`,
+      share: formatPercent(adsSourcedCount, totalAssignments || adsSourcedCount || 1),
+      status: adsSourcedCount > 0 ? 'Scaling' : 'Pending',
+      helper: 'Attribution from Fixnado Ads'
+    });
+  }
+
+  const severityOrder = { critical: 4, high: 3, warning: 2, info: 1 };
+  const signalSummaries = new Map();
+  for (const signal of campaignSignals) {
+    const type = typeof signal.signalType === 'string' ? signal.signalType.toLowerCase() : 'performance';
+    const severity = typeof signal.severity === 'string' ? signal.severity.toLowerCase() : 'info';
+    const rank = severityOrder[severity] ?? 1;
+    const existing = signalSummaries.get(type);
+    if (!existing || rank > existing.rank) {
+      signalSummaries.set(type, {
+        label: humanise(signal.signalType) || 'Campaign signal',
+        severity,
+        description: signal.resolutionNote || 'Guardrail triggered',
+        detectedAt: DateTime.fromJSDate(signal.detectedAt).setZone(window.timezone).toISODate(),
+        rank
+      });
+    }
+  }
+
+  const contentInsights = Array.from(signalSummaries.values()).map((summary, index) => ({
+    id: `signal-${index}`,
+    label: summary.label,
+    severity: humanise(summary.severity),
+    message: summary.description,
+    detectedAt: summary.detectedAt
+  }));
+
+  const insightNow = DateTime.now().setZone(window.timezone).toISODate();
+  let ctrSeverity = 'Healthy';
+  if (ctrValue < 0.015) {
+    ctrSeverity = 'Critical';
+  } else if (ctrValue < 0.025) {
+    ctrSeverity = 'Warning';
+  }
+  contentInsights.push({
+    id: 'ctr-health',
+    label: 'Click-through rate',
+    severity: ctrSeverity,
+    message: `CTR ${formatPercent(
+      currentCampaignTotals.clicks,
+      currentCampaignTotals.impressions || currentCampaignTotals.clicks || 1
+    )} across placements.`,
+    detectedAt: insightNow
+  });
+
+  let cvrSeverity = 'Healthy';
+  if (cvrValue < 0.04) {
+    cvrSeverity = 'Monitor';
+  } else if (cvrValue < 0.06) {
+    cvrSeverity = 'Warning';
+  }
+  contentInsights.push({
+    id: 'cvr-health',
+    label: 'Conversion rate',
+    severity: cvrSeverity,
+    message: `CVR ${formatPercent(
+      currentCampaignTotals.conversions,
+      currentCampaignTotals.clicks || currentCampaignTotals.conversions || 1
+    )} with ${formatNumber(adsSourcedCount)} bookings.`,
+    detectedAt: insightNow
+  });
+
+  const seenInsights = new Set();
+  const uniqueContentInsights = [];
+  for (const insight of contentInsights) {
+    const key = `${insight.label}-${insight.severity}`;
+    if (seenInsights.has(key)) {
+      continue;
+    }
+    seenInsights.add(key);
+    uniqueContentInsights.push(insight);
+  }
+
+  if (uniqueContentInsights.length === 0) {
+    uniqueContentInsights.push({
+      id: 'creative-health',
+      label: 'Creative health',
+      severity: 'Healthy',
+      message: 'No guardrail breaches detected in the current window.',
+      detectedAt: insightNow
+    });
+  }
+
   const adsData = {
     summaryCards,
     funnel: funnelStages,
@@ -1793,8 +2145,95 @@ async function loadProviderData(context) {
     invoices: invoiceRows.slice(0, 8),
     alerts: adsAlerts.slice(0, 6),
     recommendations,
-    timeline
+    timeline,
+    pricingModels,
+    channelMix: channelBreakdown,
+    targeting: targetingSegments,
+    creativeInsights: uniqueContentInsights
   };
+
+  const navigation = [
+    {
+      id: 'overview',
+      label: 'Provider Overview',
+      description: 'Bookings, acceptance, and crew utilisation trends.',
+      type: 'overview',
+      analytics: overview
+    },
+    {
+      id: 'workboard',
+      label: 'Workboard',
+      description: 'Track assignments through confirmation and follow-up.',
+      type: 'board',
+      data: { columns: boardColumns }
+    },
+    {
+      id: 'rentals',
+      label: 'Rental Lifecycle',
+      description: 'Monitor rental fulfilment and deposit status.',
+      type: 'table',
+      data: {
+        headers: ['Rental', 'Status', 'Pickup', 'Return Due', 'Deposit'],
+        rows: rentalRows
+      }
+    },
+    {
+      id: 'inventory',
+      label: 'Tools & Materials',
+      description: 'Inventory availability, low-stock signals, and maintenance cadence.',
+      type: 'inventory',
+      data: {
+        summary: [
+          {
+            id: 'available',
+            label: 'Available units',
+            value: inventorySummary.available,
+            helper: `${formatNumber(inventoryItems.length)} SKUs tracked`,
+            tone: 'info'
+          },
+          {
+            id: 'reserved',
+            label: 'Reserved',
+            value: inventorySummary.reserved,
+            helper: `${formatNumber(inventorySummary.onHand)} on hand`,
+            tone: 'accent'
+          },
+          {
+            id: 'alerts',
+            label: 'Alerts',
+            value: inventorySummary.alerts,
+            helper: inventorySummary.alerts > 0 ? 'Action required' : 'All healthy',
+            tone: inventorySummary.alerts > 0 ? 'warning' : 'positive'
+          }
+        ],
+        groups: [
+          { id: 'materials', label: 'Materials', items: materialsInventory },
+          { id: 'tools', label: 'Tools', items: toolsInventory }
+        ]
+      }
+    }
+  ];
+
+  const adsSection = annotateAdsSection('provider', {
+    id: 'fixnado-ads',
+    label: 'Fixnado Ads',
+    description: 'Campaign pacing, spend, guardrails, and billing.',
+    icon: 'analytics',
+    type: 'ads',
+    data: adsData
+  });
+
+  if (adsSection) {
+    navigation.push(adsSection);
+  }
+
+  navigation.push({
+    id: 'asset-alerts',
+    label: 'Asset Alerts',
+    description: 'Active inventory notifications requiring action.',
+    type: 'list',
+    data: { items: alertItems }
+  });
 
   return {
     persona: 'provider',
@@ -1815,6 +2254,7 @@ async function loadProviderData(context) {
           available: inventorySummary.available,
           skuCount: inventoryItems.length,
           alerts: inventorySummary.alerts
+        },
         ads: {
           spend: currentCampaignTotals.spend,
           revenue: currentCampaignTotals.revenue,
@@ -1822,82 +2262,12 @@ async function loadProviderData(context) {
           share: adsShare,
           jobs: adsSourcedCount
         }
+      },
+      features: {
+        ads: buildAdsFeatureMetadata('provider')
       }
     },
-    navigation: [
-      {
-        id: 'overview',
-        label: 'Provider Overview',
-        description: 'Bookings, acceptance, and crew utilisation trends.',
-        type: 'overview',
-        analytics: overview
-      },
-      {
-        id: 'workboard',
-        label: 'Workboard',
-        description: 'Track assignments through confirmation and follow-up.',
-        type: 'board',
-        data: { columns: boardColumns }
-      },
-      {
-        id: 'rentals',
-        label: 'Rental Lifecycle',
-        description: 'Monitor rental fulfilment and deposit status.',
-        type: 'table',
-        data: {
-          headers: ['Rental', 'Status', 'Pickup', 'Return Due', 'Deposit'],
-          rows: rentalRows
-        }
-      },
-      {
-        id: 'inventory',
-        label: 'Tools & Materials',
-        description: 'Inventory availability, low-stock signals, and maintenance cadence.',
-        type: 'inventory',
-        data: {
-          summary: [
-            {
-              id: 'available',
-              label: 'Available units',
-              value: inventorySummary.available,
-              helper: `${formatNumber(inventoryItems.length)} SKUs tracked`,
-              tone: 'info'
-            },
-            {
-              id: 'reserved',
-              label: 'Reserved',
-              value: inventorySummary.reserved,
-              helper: `${formatNumber(inventorySummary.onHand)} on hand`,
-              tone: 'accent'
-            },
-            {
-              id: 'alerts',
-              label: 'Alerts',
-              value: inventorySummary.alerts,
-              helper: inventorySummary.alerts > 0 ? 'Action required' : 'All healthy',
-              tone: inventorySummary.alerts > 0 ? 'warning' : 'positive'
-            }
-          ],
-          groups: [
-            { id: 'materials', label: 'Materials', items: materialsInventory },
-            { id: 'tools', label: 'Tools', items: toolsInventory }
-          ]
-        }
-        id: 'fixnado-ads',
-        label: 'Fixnado Ads',
-        description: 'Campaign pacing, spend, guardrails, and billing.',
-        icon: 'analytics',
-        type: 'ads',
-        data: adsData
-      },
-      {
-        id: 'asset-alerts',
-        label: 'Asset Alerts',
-        description: 'Active inventory notifications requiring action.',
-        type: 'list',
-        data: { items: alertItems }
-      }
-    ]
+    navigation
   };
 }
 
@@ -2331,6 +2701,9 @@ async function loadServicemanData(context) {
         revenue,
         autoMatched: autoMatchedCount,
         adsSourced: adsSourcedCount
+      },
+      features: {
+        ads: buildAdsFeatureMetadata('serviceman')
       }
     },
     navigation: [
@@ -2476,6 +2849,9 @@ async function loadEnterpriseData(context) {
         revenue,
         activeContracts,
         communications: participants.length
+      },
+      features: {
+        ads: buildAdsFeatureMetadata('enterprise')
       }
     },
     navigation: [
