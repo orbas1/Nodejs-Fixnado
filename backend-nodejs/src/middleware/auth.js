@@ -56,12 +56,11 @@ export function requireStorefrontRole(req, res, next) {
 
   if (
     STORE_FRONT_ALLOWED_ROLES.has(headerRole) &&
-    personaProvided &&
-    personaAllowed
+    (!personaProvided || personaAllowed)
   ) {
     return next();
   }
 
   const status = req.user ? 403 : 401;
-  return res.status(status).json({ message: 'Storefront access restricted to providers or admins' });
+  return res.status(status).json({ message: 'Storefront access restricted to providers' });
 }

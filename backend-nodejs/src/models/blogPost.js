@@ -69,7 +69,7 @@ BlogPost.init(
     indexes: [
       { fields: ['slug'], unique: true },
       { fields: ['status'] },
-      { fields: ['publishedAt'] }
+      { fields: ['published_at'] }
     ]
   }
 );
