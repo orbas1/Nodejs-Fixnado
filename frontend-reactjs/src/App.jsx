@@ -29,6 +29,9 @@ const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
+const Blog = lazy(() => import('./pages/Blog.jsx'));
+const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
+const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -68,12 +71,22 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/materials" element={<Materials />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/dashboard"
               element={
                 <AdminProtectedRoute>
                   <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/blog"
+              element={
+                <AdminProtectedRoute>
+                  <AdminBlog />
                 </AdminProtectedRoute>
               }
             />

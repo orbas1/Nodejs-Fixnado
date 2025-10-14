@@ -40,6 +40,12 @@ import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
 import PlatformSetting from './platformSetting.js';
+import BlogPost from './blogPost.js';
+import BlogCategory from './blogCategory.js';
+import BlogTag from './blogTag.js';
+import BlogMedia from './blogMedia.js';
+import BlogPostCategory from './blogPostCategory.js';
+import BlogPostTag from './blogPostTag.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -213,6 +219,38 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
 
+BlogPost.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(BlogPost, { foreignKey: 'authorId', as: 'blogPosts' });
+
+BlogPost.belongsToMany(BlogCategory, {
+  through: BlogPostCategory,
+  foreignKey: 'postId',
+  otherKey: 'categoryId',
+  as: 'categories'
+});
+BlogCategory.belongsToMany(BlogPost, {
+  through: BlogPostCategory,
+  foreignKey: 'categoryId',
+  otherKey: 'postId',
+  as: 'posts'
+});
+
+BlogPost.belongsToMany(BlogTag, {
+  through: BlogPostTag,
+  foreignKey: 'postId',
+  otherKey: 'tagId',
+  as: 'tags'
+});
+BlogTag.belongsToMany(BlogPost, {
+  through: BlogPostTag,
+  foreignKey: 'tagId',
+  otherKey: 'postId',
+  as: 'posts'
+});
+
+BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
+BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
+
 export {
   sequelize,
   User,
@@ -255,5 +293,11 @@ export {
   ConversationParticipant,
   ConversationMessage,
   MessageDelivery,
-  PlatformSetting
+  PlatformSetting,
+  BlogPost,
+  BlogCategory,
+  BlogTag,
+  BlogMedia,
+  BlogPostCategory,
+  BlogPostTag
 };

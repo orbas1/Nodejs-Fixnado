@@ -16,6 +16,7 @@ const navigationConfig = [
   { key: 'industries', nameKey: 'nav.industries', href: '/#home-marketing' },
   { key: 'platform', nameKey: 'nav.platform', href: '/#home-operations' },
   { key: 'materials', nameKey: 'nav.materials', href: '/materials' },
+  { key: 'blog', nameKey: 'nav.blog', href: '/blog' },
   { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
   {
     key: 'dashboards',

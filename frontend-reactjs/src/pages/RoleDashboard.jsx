@@ -3,6 +3,7 @@ import { Navigate, useParams, useSearchParams, useNavigate } from 'react-router-
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { buildExportUrl, fetchDashboard } from '../api/analyticsDashboardClient.js';
+import { fetchDashboardBlogPosts } from '../api/blogClient.js';
 import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx';
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
 import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
@@ -19,6 +20,7 @@ const RoleDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [blogPosts, setBlogPosts] = useState([]);
   const [unauthorised, setUnauthorised] = useState(false);
   const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
 
@@ -56,6 +58,16 @@ const RoleDashboard = () => {
     return params;
   }, [searchParams]);
 
+  const hydrateBlogRail = useCallback(async () => {
+    try {
+      const posts = await fetchDashboardBlogPosts({ limit: 6 });
+      setBlogPosts(Array.isArray(posts) ? posts : []);
+    } catch (caught) {
+      console.warn('Failed to load dashboard blog posts', caught);
+      setBlogPosts([]);
+    }
+  }, []);
+
   const loadDashboard = useCallback(async () => {
     if (!roleMeta?.registered || toggleEnabled === false) {
       setLoading(false);
@@ -66,6 +78,7 @@ const RoleDashboard = () => {
       setLoading(false);
       setError(null);
       setUnauthorised(true);
+      setBlogPosts([]);
       return;
     }
     setUnauthorised(false);
@@ -75,25 +88,29 @@ const RoleDashboard = () => {
       setDashboard(data);
       setError(null);
       setLastRefreshed(new Date().toISOString());
+      hydrateBlogRail();
     } catch (caught) {
       if (caught?.status === 403) {
         setUnauthorised(true);
         setDashboard(null);
         setError(null);
+        setBlogPosts([]);
       } else {
         setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
         setDashboard(null);
+        setBlogPosts([]);
       }
     } finally {
       setLoading(false);
     }
-  }, [roleMeta, query, toggleEnabled, hasAccess]);
+  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
 
   useEffect(() => {
     let active = true;
     if (!roleMeta?.registered || toggleEnabled === false) {
       setLoading(false);
       setDashboard(null);
+      setBlogPosts([]);
       return () => {
         active = false;
       };
@@ -104,6 +121,7 @@ const RoleDashboard = () => {
       setError(null);
       setLoading(false);
       setUnauthorised(true);
+      setBlogPosts([]);
       return () => {
         active = false;
       };
@@ -118,10 +136,12 @@ const RoleDashboard = () => {
         setDashboard(data);
         setError(null);
         setLastRefreshed(new Date().toISOString());
+        hydrateBlogRail();
       } catch (caught) {
         if (!active) return;
         setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
         setDashboard(null);
+        setBlogPosts([]);
       } finally {
         if (active) setLoading(false);
       }
@@ -130,13 +150,14 @@ const RoleDashboard = () => {
     return () => {
       active = false;
     };
-  }, [roleMeta, query, toggleEnabled, hasAccess]);
+  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
 
   useEffect(() => {
     if (toggleEnabled === false && !toggleLoading) {
       setDashboard(null);
       setError(null);
       setLoading(false);
+      setBlogPosts([]);
     }
   }, [toggleEnabled, toggleLoading]);
 
@@ -159,6 +180,7 @@ const RoleDashboard = () => {
       setDashboard(null);
       setError(null);
       setUnauthorised(true);
+      setBlogPosts([]);
       return;
     }
 
@@ -216,6 +238,7 @@ const RoleDashboard = () => {
       exportHref={buildExportUrl(roleMeta.id, query)}
       toggleMeta={toggle}
       toggleReason={toggleReason}
+      blogPosts={blogPosts}
     />
   );
 };
