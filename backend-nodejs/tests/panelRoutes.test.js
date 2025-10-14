@@ -2,6 +2,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
+import { withAuth } from './helpers/auth.js';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -361,6 +362,7 @@ async function createCompanyWithFixtures() {
     meta: { project: 'Completed works' }
   });
 
+  return { company, user };
   return { company, owner: user };
 }
 
@@ -378,6 +380,12 @@ beforeEach(async () => {
 
 describe('Panel routes', () => {
   it('returns provider dashboard data with operational metrics', async () => {
+    const { company, user } = await createCompanyWithFixtures();
+
+    const response = await withAuth(
+      request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
+      user.id
+    ).expect(200);
     const { company, owner } = await createCompanyWithFixtures();
 
     const response = await request(app)
@@ -456,12 +464,13 @@ describe('Panel routes', () => {
   });
 
   it('returns enterprise panel aggregates including spend and programmes', async () => {
+    const { company, user } = await createCompanyWithFixtures();
     const { company } = await createCompanyWithFixtures();
 
-    const response = await request(app)
-      .get('/api/panel/enterprise/overview')
-      .query({ companyId: company.id })
-      .expect(200);
+    const response = await withAuth(
+      request(app).get('/api/panel/enterprise/overview').query({ companyId: company.id }),
+      user.id
+    ).expect(200);
 
     expect(response.body.data.enterprise.activeSites).toBe(1);
     expect(response.body.data.spend.monthToDate).toBeGreaterThan(0);
@@ -478,6 +487,22 @@ describe('Panel routes', () => {
     expect(response.body.data.packages.length).toBeGreaterThan(0);
     expect(response.body.data.stats[0].value).toBeGreaterThanOrEqual(0);
   });
+  it('rejects provider dashboard requests without authentication', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: company.id })
+      .expect(401);
+  });
+
+  it('rejects provider dashboard requests from non-company roles', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await withAuth(
+      request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
+      IDS.provider
+    ).expect(403);
 
   it('returns a storefront management snapshot with listing intelligence for provider roles', async () => {
     const company = await createCompanyWithFixtures();

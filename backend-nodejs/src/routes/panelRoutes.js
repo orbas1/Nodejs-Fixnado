@@ -5,6 +5,11 @@ import { authenticate, authorize } from '../middleware/auth.js';
 const router = Router();
 
 router.get('/provider/dashboard', authenticate, authorize(['company']), getProviderDashboardHandler);
+router.get('/enterprise/overview', authenticate, authorize(['company']), getEnterprisePanelHandler);
+
+const router = Router();
+
+router.get('/provider/dashboard', authenticate, authorize(['company']), getProviderDashboardHandler);
 import {
   getEnterprisePanelHandler,
   getProviderDashboardHandler,
