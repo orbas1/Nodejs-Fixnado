@@ -17,6 +17,7 @@ import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
 import '../features/materials/presentation/materials_screen.dart';
+import '../features/enterprise/presentation/enterprise_dashboard_screen.dart';
 import '../shared/localization/language_controller.dart';
 import '../shared/localization/language_options.dart';
 import '../shared/localization/language_switcher.dart';
@@ -122,20 +123,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: destinations
             .map((destination) => _buildScreenForDestination(destination, role))
             .toList(growable: false),
-        index: _index,
-        children: [
-          const ExplorerScreen(),
-          const LiveFeedScreen(),
-          const BookingScreen(),
-          const RentalScreen(),
-          const MaterialsScreen(),
-          const BlogScreen(),
-          const CommunicationsScreen(),
-          const ProfileManagementScreen(),
-          role == UserRole.provider
-              ? const ServiceManagementScreen()
-              : const AnalyticsDashboardScreen(),
-        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
@@ -197,9 +184,13 @@ class _AppShellState extends ConsumerState<AppShell> {
       case _NavigationDestination.profile:
         return const ProfileManagementScreen();
       case _NavigationDestination.operations:
-        return role == UserRole.provider
-            ? const ServiceManagementScreen()
-            : const AnalyticsDashboardScreen();
+        if (role == UserRole.provider) {
+          return const ServiceManagementScreen();
+        }
+        if (role == UserRole.enterprise) {
+          return const EnterpriseDashboardScreen();
+        }
+        return const AnalyticsDashboardScreen();
     }
   }
 }
