@@ -44,6 +44,24 @@ function jsonFromEnv(key, defaultValue) {
   return defaultValue;
 }
 
+function boolFromEnv(key, defaultValue = false) {
+  const raw = process.env[key];
+  if (typeof raw !== 'string') {
+    return defaultValue;
+  }
+
+  const normalised = raw.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'y', 'on'].includes(normalised)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'n', 'off'].includes(normalised)) {
+    return false;
+  }
+
+  return defaultValue;
+}
+
 function listFromEnv(key) {
   const raw = process.env[key];
   if (typeof raw !== 'string' || raw.trim() === '') {
@@ -85,6 +103,40 @@ function normaliseThresholds(source, fallback) {
 const config = {
   env,
   port: intFromEnv('PORT', 4000),
+  security: {
+    trustProxy:
+      typeof process.env.SECURITY_TRUST_PROXY === 'string'
+        ? process.env.SECURITY_TRUST_PROXY.trim()
+        : 'loopback',
+    clientIpHeader: (process.env.SECURITY_CLIENT_IP_HEADER || 'x-forwarded-for').toLowerCase(),
+    cors: {
+      allowOrigins: listFromEnv('CORS_ALLOWLIST'),
+      allowMethods: listFromEnv('CORS_ALLOW_METHODS'),
+      allowHeaders: listFromEnv('CORS_ALLOW_HEADERS'),
+      exposedHeaders: listFromEnv('CORS_EXPOSE_HEADERS'),
+      allowCredentials: boolFromEnv('CORS_ALLOW_CREDENTIALS', true)
+    },
+    bodyParser: {
+      jsonLimit: process.env.REQUEST_JSON_LIMIT || '1mb',
+      urlencodedLimit: process.env.REQUEST_URLENCODED_LIMIT || '1mb'
+    },
+    rateLimiting: {
+      windowMinutes: Math.max(intFromEnv('RATE_LIMIT_WINDOW_MINUTES', 1), 1),
+      maxRequests: Math.max(intFromEnv('RATE_LIMIT_MAX_REQUESTS', 120), 1),
+      skipSuccessfulRequests: boolFromEnv('RATE_LIMIT_SKIP_SUCCESS', false),
+      standardHeaders: boolFromEnv('RATE_LIMIT_STANDARD_HEADERS', true),
+      legacyHeaders: boolFromEnv('RATE_LIMIT_LEGACY_HEADERS', false)
+    },
+    health: {
+      databaseTimeoutMs: Math.max(intFromEnv('HEALTHCHECK_DB_TIMEOUT_MS', 2000), 100)
+    },
+    pii: {
+      encryptionKeySet: Boolean(process.env.PII_ENCRYPTION_KEY),
+      hashKeySet: Boolean(process.env.PII_HASH_KEY),
+      rotationKeyId: process.env.PII_ENCRYPTION_KEY_ID || null,
+      rotationFallbackSet: Boolean(process.env.PII_ENCRYPTION_KEY_PREVIOUS)
+    }
+  },
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: intFromEnv('DB_PORT', 5432),

@@ -2,7 +2,7 @@
 
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
-| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 5% |
+| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 18% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 0% |
 | D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 0% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
@@ -11,7 +11,7 @@
 
 ---
 
-## Task D1 – Token & System Foundation (5%)
+## Task D1 – Token & System Foundation (8%)
 **Objective:** Create a unified token library, baseline components, and accessibility guardrails.
 
 **Subtasks (10):**
@@ -25,6 +25,7 @@
 8. Validate tokens against WCAG AA/AAA thresholds and annotate failures.
 9. Create sample component usage pages demonstrating token application across themes.
 10. Socialise token documentation with engineering teams for early feedback.
+11. ✅ Extend semantic token catalogue with rate-limit, CORS, consent, and PII incident alert states aligned to backend messaging.
 
 ## Task D2 – Navigation & IA Harmonisation (0%)
 **Objective:** Align navigation patterns, menus, and information architecture for web and Flutter clients.

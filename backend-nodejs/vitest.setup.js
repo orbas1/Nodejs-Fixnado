@@ -10,6 +10,10 @@ process.env.DB_STORAGE = process.env.DB_STORAGE || ':memory:';
 process.env.NODE_ENV = 'test';
 process.env.AGORA_APP_ID = process.env.AGORA_APP_ID || 'test-app-id';
 process.env.AGORA_APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE || 'test-app-cert';
+process.env.PII_ENCRYPTION_KEY =
+  process.env.PII_ENCRYPTION_KEY || 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=';
+process.env.PII_HASH_KEY =
+  process.env.PII_HASH_KEY || 'ZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTA=';
 
 vi.mock('@aws-sdk/client-secrets-manager', () => {
   class SecretsManagerClient {

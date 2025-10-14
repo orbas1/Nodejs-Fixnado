@@ -64,6 +64,15 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Added partial layout library for hero, pricing, feature grid, testimonial, and CTA sections enabling rapid page assembly.
    - Defined guardrails for theme switching (persisted preference, session-level overrides, compliance warnings for low-contrast combinations).
 
+10. **Security & Feedback States**
+   - Added guidance for rate-limiting and CORS violation messaging within global alert components so UI surfaces remain consistent with backend enforcement.
+   - Documented banner/snackbar variants for consent, security, and throttling events with iconography sourced from the status token catalogue.
+   - Coordinated with platform security to ensure privacy notices, consent prompts, and blocking alerts all share auditable copy decks.
+11. **Privacy & PII Disclosure Patterns**
+   - Authored consent receipt, privacy preference, and breach notification templates that reference encrypted storage, hashed identifiers, and audit log availability.
+   - Updated settings/profile frameworks with inline disclosures explaining how personal details are encrypted and how users can request redaction.
+   - Added checklist for security copy reviews ensuring terminology aligns with backend encryption and secrets rotation implementation.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

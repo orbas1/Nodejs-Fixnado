@@ -2,7 +2,7 @@
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 42 | 48 | 40 | 46 | 55 | 38 | 52 | 40 | 45 | 35 | 46 | 50 | 30 | 32 | 44 | 42 |
+| D1 | Token & System Foundation | 48 | 54 | 45 | 52 | 60 | 44 | 62 | 64 | 52 | 38 | 52 | 54 | 36 | 38 | 50 | 49 |
 | D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
 | D3 | Page Templates & Partial Library | 25 | 24 | 26 | 28 | 26 | 24 | 32 | 28 | 24 | 22 | 28 | 40 | 22 | 24 | 26 | 27 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
@@ -14,6 +14,8 @@
 > - **Design Position %** evaluates layout fidelity versus planned IA placements; low scores indicate outstanding navigation harmonisation work.
 > - **Design Render Grade %** measures prototype maturity (motion, transitions, high-fidelity states). Most tasks remain in wireframe or specification stages.
 > - **Compliance & Security Grades** track integration of privacy prompts, consent cues, and security messaging within the design artefacts.
+> - Task D1 security score increased after documenting rate-limit and CORS alert tokens that align with the hardened backend behaviours.
+> - Privacy banner, consent receipt, and PII breach notification patterns were added to the token catalogue, lifting D1 security, compliance, and QA readiness scores.
 > - **Overall Grade %** is an average of all recorded metrics, rounded to the nearest whole number.
 
 ## Action Items to Improve Scores
