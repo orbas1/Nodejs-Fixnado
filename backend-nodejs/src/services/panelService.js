@@ -12,6 +12,16 @@ import {
   ServiceZone,
   User
 } from '../models/index.js';
+import { getCachedPlatformSettings } from './platformSettingsService.js';
+
+function resolvePlatformCommissionRate() {
+  const settings = getCachedPlatformSettings();
+  const candidate = Number.parseFloat(settings?.commissions?.baseRate);
+  if (Number.isFinite(candidate) && candidate >= 0 && candidate <= 1) {
+    return Number.parseFloat(candidate.toFixed(4));
+  }
+  return 0.025;
+}
 
 function buildHttpError(statusCode, message) {
   const error = new Error(message);
@@ -528,6 +538,8 @@ export async function buildBusinessFront({ slug = 'featured', viewerType } = {})
     caption: reviewScore.caption
   });
 
+  const platformCommissionRate = resolvePlatformCommissionRate();
+
   const deals = serviceCatalogue
     .filter((service) => Number.isFinite(service.price))
     .slice(0, 3)
@@ -537,7 +549,7 @@ export async function buildBusinessFront({ slug = 'featured', viewerType } = {})
       description: `Escrow-backed ${service.type.toLowerCase()} package covering ${
         service.coverage.slice(0, 2).join(', ') || 'priority zones'
       }.`,
-      savings: Number((service.price * 0.12).toFixed(2)),
+      savings: Number((service.price * platformCommissionRate).toFixed(2)),
       currency: service.currency,
       validUntil: now.plus({ days: (index + 1) * 7 }).toISODate(),
       tags: service.tags.slice(0, 2)
