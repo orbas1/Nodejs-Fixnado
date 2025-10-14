@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'auth_token_controller.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/auth_models.dart';
@@ -92,5 +94,9 @@ class AuthController extends StateNotifier<AuthState> {
   void signOut() {
     state = AuthState.initial();
     _ref.read(currentRoleProvider.notifier).state = UserRole.customer;
+    // Clear any cached API credentials to mirror server-side session revocation.
+    // Intentionally not awaiting to avoid blocking UI transitions.
+    // ignore: discarded_futures
+    _ref.read(authTokenProvider.notifier).setToken(null);
   }
 }

@@ -53,6 +53,44 @@ function toSlug(input, fallback) {
   return fallback;
 }
 
+function sanitiseString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+async function resolveCompanyForActor({ companyId, actor }) {
+  if (!actor?.id) {
+    const error = new Error('forbidden');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const baseWhere = { userId: actor.id };
+  const where = companyId ? { ...baseWhere, id: companyId } : baseWhere;
+
+  const company = await Company.findOne({
+    where,
+    raw: true,
+    order: [['createdAt', 'ASC']]
+  });
+
+  if (company) {
+    return company;
+  }
+
+  if (companyId) {
+    const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
+    if (exists) {
+      const error = new Error('forbidden');
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  const error = new Error('company_not_found');
+  error.statusCode = 404;
+  throw error;
+}
+
 async function resolveCompanyId(companyId) {
   if (companyId) {
     const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
@@ -70,9 +108,9 @@ async function resolveCompanyId(companyId) {
   return firstCompany.id;
 }
 
-export async function buildProviderDashboard({ companyId: inputCompanyId } = {}) {
-  const companyId = await resolveCompanyId(inputCompanyId);
-  const company = await Company.findByPk(companyId, { raw: true });
+export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
+  const company = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const companyId = company.id;
   const now = DateTime.now();
   const startOfMonth = now.startOf('month');
 
@@ -222,6 +260,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
   ].slice(0, 6);
 
   const providerSlug = toSlug(company.contactName, `company-${companyId.slice(0, 8)}`);
+  const supportEmail = sanitiseString(company.contactEmail);
+  const supportPhone = sanitiseString(company.contactPhone);
 
   return {
     data: {
@@ -232,8 +272,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
         region: company.serviceRegions || 'United Kingdom',
         slug: providerSlug,
         onboardingStatus: company.verified ? 'active' : 'pending',
-        supportEmail: company.contactEmail || null,
-        supportPhone: null
+        supportEmail,
+        supportPhone
       },
       metrics: {
         utilisation,
