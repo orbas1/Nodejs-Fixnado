@@ -396,8 +396,6 @@ const DashboardLayout = ({
     return <ErrorState message={error} onRetry={onRefresh} />;
   }
 
-  const sectionContent = renderSection();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
       <Transition.Root show={mobileNavOpen} as={Fragment}>
@@ -689,27 +687,13 @@ const DashboardLayout = ({
         {loading && !dashboard ? (
           <Skeleton />
         ) : (
-          <div className="px-6 py-10 space-y-10">
-            {persona === 'serviceman' ? (
-              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
-            ) : null}
-            {sectionContent}
-            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-          <div className="px-6 py-10 space-y-8">
-            {persona === 'serviceman' ? (
-              <div>
-                <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
-              </div>
-            ) : null}
-            <DashboardBlogRail posts={blogPosts} />
-            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-            <div className="space-y-8">{renderSection()}</div>
           <div className="space-y-8 px-6 py-10">
             {shouldShowServicemanSummary ? (
               <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
             ) : null}
-            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
             {renderSection()}
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+            {blogPosts.length > 0 ? <DashboardBlogRail posts={blogPosts} /> : null}
           </div>
         )}
       </main>
