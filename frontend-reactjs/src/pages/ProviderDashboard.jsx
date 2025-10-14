@@ -10,9 +10,14 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   LifebuoyIcon,
-  UsersIcon
+  LockClosedIcon,
+  MapPinIcon,
+  TagIcon,
+  UsersIcon,
+  CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
+import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
@@ -134,8 +139,259 @@ function BookingRow({ booking }) {
   );
 }
 
+function ServiceHealthCard({ metric }) {
+  const { format } = useLocale();
+
+  let valueLabel;
+  switch (metric.format) {
+    case 'percent':
+    case 'percentage':
+      valueLabel = format.percentage(metric.value ?? 0, { maximumFractionDigits: 0 });
+      break;
+    case 'currency':
+      valueLabel = format.currency(metric.value ?? 0);
+      break;
+    default:
+      valueLabel = format.number(metric.value ?? 0);
+  }
+
+  return (
+    <article className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa={`provider-dashboard-service-metric-${metric.id}`}>
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{metric.label}</p>
+        <p className="mt-2 text-2xl font-semibold text-primary">{valueLabel}</p>
+      </div>
+      {metric.caption ? <p className="mt-4 text-xs text-slate-500">{metric.caption}</p> : null}
+      {metric.target != null ? (
+        <p className="mt-2 text-[0.7rem] uppercase tracking-[0.25em] text-slate-400">Target • {format.number(metric.target)}</p>
+      ) : null}
+    </article>
+  );
+}
+
+function resolveRiskTone(risk) {
+  const value = typeof risk === 'string' ? risk.toLowerCase() : '';
+  if (value.includes('critical') || value.includes('risk')) return 'danger';
+  if (value.includes('warning') || value.includes('watch')) return 'warning';
+  if (value.includes('hold') || value.includes('paused')) return 'info';
+  return 'success';
+}
+
+function ServiceDeliveryColumn({ column }) {
+  const { format, t } = useLocale();
+
+  return (
+    <div className="flex h-full min-h-[18rem] flex-col rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm" data-qa={`provider-dashboard-delivery-column-${column.id}`}>
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{t('providerDashboard.serviceDeliveryStage')}</p>
+          <h3 className="mt-1 text-lg font-semibold text-primary">{column.title}</h3>
+        </div>
+        <StatusPill tone="neutral">{column.items.length}</StatusPill>
+      </header>
+      {column.description ? <p className="mt-2 text-xs text-slate-500">{column.description}</p> : null}
+      <ul className="mt-4 flex-1 space-y-3 overflow-y-auto">
+        {column.items.length === 0 ? (
+          <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-4 text-sm text-slate-500">
+            {t('providerDashboard.serviceDeliveryEmpty')}
+          </li>
+        ) : (
+          column.items.map((item) => {
+            const eta = item.eta ? format.dateTime(item.eta) : t('providerDashboard.serviceDeliveryEtaPending');
+            const valueLabel = item.value != null ? format.currency(item.value, { currency: item.currency || 'GBP' }) : null;
+            const tone = resolveRiskTone(item.risk);
+
+            return (
+              <li
+                key={item.id}
+                className="space-y-2 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+                data-qa={`provider-dashboard-delivery-item-${item.id}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{item.name}</p>
+                    <p className="text-xs text-slate-500">{item.client}</p>
+                  </div>
+                  <StatusPill tone={tone}>{item.risk || t('providerDashboard.serviceDeliveryOnTrack')}</StatusPill>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1">
+                    <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+                    {t('providerDashboard.serviceDeliveryEta', { date: eta })}
+                  </span>
+                  {item.zone ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPinIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+                      {item.zone}
+                    </span>
+                  ) : null}
+                  <span className="inline-flex items-center gap-1">
+                    <UsersIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+                    {item.owner}
+                  </span>
+                  {valueLabel ? <span className="inline-flex items-center gap-1 text-primary font-semibold">{valueLabel}</span> : null}
+                </div>
+                {item.services?.length ? (
+                  <div className="flex flex-wrap gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-primary/60">
+                    {item.services.map((service) => (
+                      <span key={service} className="rounded-full bg-primary/5 px-3 py-1">
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function ServicePackageCard({ pkg }) {
+  const { format, t } = useLocale();
+  const priceLabel = pkg.price != null ? format.currency(pkg.price, { currency: pkg.currency || 'GBP' }) : t('common.notAvailable');
+
+  return (
+    <article className="flex h-full flex-col justify-between rounded-3xl border border-primary/10 bg-primary/5 p-6 shadow-sm" data-qa={`provider-dashboard-package-${pkg.id}`}>
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('providerDashboard.servicePackageLabel')}</p>
+        <h3 className="mt-2 text-lg font-semibold text-primary">{pkg.name}</h3>
+        <p className="mt-2 text-sm text-slate-600">{pkg.description}</p>
+      </div>
+      {pkg.highlights?.length ? (
+        <ul className="mt-4 space-y-2 text-sm text-primary">
+          {pkg.highlights.map((highlight) => (
+            <li key={highlight} className="flex items-start gap-2">
+              <CheckBadgeIcon className="mt-1 h-4 w-4" aria-hidden="true" />
+              <span>{highlight}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="mt-6 text-sm font-semibold text-primary/90">{priceLabel}</div>
+      {pkg.serviceName ? (
+        <p className="mt-2 text-[0.7rem] uppercase tracking-[0.3em] text-slate-400">
+          {t('providerDashboard.servicePackageLinkedService', { name: pkg.serviceName })}
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
+function ServiceCategoryCard({ category }) {
+  const { format, t } = useLocale();
+  const performanceLabel = category.performance != null ? format.percentage(category.performance, { maximumFractionDigits: 0 }) : null;
+
+  return (
+    <article className="space-y-3 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm" data-qa={`provider-dashboard-category-${category.id}`}>
+      <header>
+        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{category.type}</p>
+        <h3 className="mt-1 text-lg font-semibold text-primary">{category.label}</h3>
+      </header>
+      {category.description ? <p className="text-sm text-slate-600">{category.description}</p> : null}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          <TagIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+          {t('providerDashboard.serviceCategoryServices', { count: category.activeServices })}
+        </span>
+        {performanceLabel ? (
+          <span className="inline-flex items-center gap-1 text-primary font-semibold">
+            <ChartBarIcon className="h-4 w-4" aria-hidden="true" />
+            {performanceLabel}
+          </span>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function ServiceCatalogueCard({ service }) {
+  const { format, t } = useLocale();
+  const priceLabel = service.price != null ? format.currency(service.price, { currency: service.currency || 'GBP' }) : t('common.notAvailable');
+  const availabilityLabel = service.availability?.detail
+    ? t('providerDashboard.serviceAvailabilityScheduled', { date: format.dateTime(service.availability.detail) })
+    : service.availability?.label || t('providerDashboard.serviceAvailabilityDefault');
+
+  return (
+    <li className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm" data-qa={`provider-dashboard-catalogue-${service.id}`}>
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{service.type}</p>
+          <h3 className="mt-1 text-lg font-semibold text-primary">{service.name}</h3>
+        </div>
+        <span className="text-sm font-semibold text-primary">{priceLabel}</span>
+      </header>
+      <p className="text-sm text-slate-600">{service.description}</p>
+      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          <TagIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+          {service.category}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+          {availabilityLabel}
+        </span>
+      </div>
+      {service.tags?.length ? (
+        <div className="flex flex-wrap gap-2">
+          {service.tags.slice(0, 4).map((tag) => (
+            <span key={tag} className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-primary/70">
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {service.coverage?.length ? (
+        <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+          {service.coverage.slice(0, 4).map((zone) => (
+            <span key={zone} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1">
+              <MapPinIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+              {zone}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function ProviderAccessGate({ role }) {
+  const { t } = useLocale();
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 py-24 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <LockClosedIcon className="h-8 w-8" aria-hidden="true" />
+        </span>
+        <div className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('providerDashboard.accessDeniedEyebrow')}</p>
+          <h1 className="text-3xl font-semibold text-slate-900">{t('providerDashboard.accessDeniedTitle')}</h1>
+          <p className="text-sm text-slate-600">{t('providerDashboard.accessDeniedBody', { role })}</p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link
+            to="/dashboards"
+            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+          >
+            {t('providerDashboard.accessDeniedCta')}
+          </Link>
+          <a
+            href="mailto:support@fixnado.com?subject=Provider%20workspace%20access"
+            className="rounded-full border border-primary/30 px-5 py-2 text-sm font-semibold text-primary hover:border-primary/60"
+          >
+            {t('providerDashboard.accessDeniedSupport')}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProviderDashboard() {
   const { t, format } = useLocale();
+  const { role, hasAccess } = useRoleAccess(['provider'], { allowFallbackRoles: ['admin'] });
   const session = useSession();
   const providerRoleMeta = useMemo(
     () => DASHBOARD_ROLES.find((role) => role.id === 'provider') || null,
@@ -146,6 +402,8 @@ export default function ProviderDashboard() {
   const allowProviderDashboard = session.isAuthenticated && hasProviderAccess;
 
   const loadDashboard = useCallback(async ({ forceRefresh = false, signal } = {}) => {
+    if (!hasAccess) {
+      setState((current) => ({ ...current, loading: false }));
     if (!allowProviderDashboard) {
       return;
     }
@@ -160,6 +418,10 @@ export default function ProviderDashboard() {
         error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load dashboard', 500, { cause: error })
       }));
     }
+  }, [hasAccess]);
+
+  useEffect(() => {
+    if (!hasAccess) {
   }, [allowProviderDashboard]);
 
   useEffect(() => {
@@ -169,6 +431,11 @@ export default function ProviderDashboard() {
     const controller = new AbortController();
     loadDashboard({ signal: controller.signal });
     return () => controller.abort();
+  }, [loadDashboard, hasAccess]);
+
+  if (!hasAccess) {
+    return <ProviderAccessGate role={role} />;
+  }
   }, [allowProviderDashboard, loadDashboard]);
 
   useEffect(() => {
@@ -184,6 +451,12 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const serviceManagement = state.data?.serviceManagement ?? {};
+  const serviceHealth = serviceManagement.health ?? [];
+  const deliveryBoard = serviceManagement.deliveryBoard ?? [];
+  const servicePackages = serviceManagement.packages ?? [];
+  const serviceCategories = serviceManagement.categories ?? [];
+  const serviceCatalogue = serviceManagement.catalogue ?? [];
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -216,6 +489,41 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.pipelineHeadline'),
         description: t('providerDashboard.nav.pipeline')
       },
+      serviceHealth.length
+        ? {
+            id: 'provider-dashboard-service-health',
+            label: t('providerDashboard.serviceHealthHeadline'),
+            description: t('providerDashboard.nav.serviceHealth')
+          }
+        : null,
+      deliveryBoard.length
+        ? {
+            id: 'provider-dashboard-service-delivery',
+            label: t('providerDashboard.serviceDeliveryHeadline'),
+            description: t('providerDashboard.nav.serviceDelivery')
+          }
+        : null,
+      servicePackages.length
+        ? {
+            id: 'provider-dashboard-service-packages',
+            label: t('providerDashboard.servicePackagesHeadline'),
+            description: t('providerDashboard.nav.servicePackages')
+          }
+        : null,
+      serviceCategories.length
+        ? {
+            id: 'provider-dashboard-service-categories',
+            label: t('providerDashboard.serviceCategoriesHeadline'),
+            description: t('providerDashboard.nav.serviceCategories')
+          }
+        : null,
+      serviceCatalogue.length
+        ? {
+            id: 'provider-dashboard-service-catalogue',
+            label: t('providerDashboard.serviceCatalogueHeadline'),
+            description: t('providerDashboard.nav.serviceCatalogue')
+          }
+        : null,
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -224,7 +532,7 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, t]);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, t]);
 
   const heroBadges = useMemo(
     () => [
@@ -472,6 +780,76 @@ export default function ProviderDashboard() {
             </ul>
           </div>
         </section>
+
+        {serviceHealth.length ? (
+          <section id="provider-dashboard-service-health" aria-labelledby="provider-dashboard-service-health" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <ChartBarIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceHealthHeadline')}</h2>
+            </header>
+            <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-4">
+              {serviceHealth.map((metric) => (
+                <ServiceHealthCard key={metric.id} metric={metric} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {deliveryBoard.length ? (
+          <section id="provider-dashboard-service-delivery" aria-labelledby="provider-dashboard-service-delivery" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceDeliveryHeadline')}</h2>
+            </header>
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+              {deliveryBoard.map((column) => (
+                <ServiceDeliveryColumn key={column.id} column={column} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {servicePackages.length ? (
+          <section id="provider-dashboard-service-packages" aria-labelledby="provider-dashboard-service-packages" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <LifebuoyIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.servicePackagesHeadline')}</h2>
+            </header>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {servicePackages.map((pkg) => (
+                <ServicePackageCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {serviceCategories.length ? (
+          <section id="provider-dashboard-service-categories" aria-labelledby="provider-dashboard-service-categories" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <TagIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceCategoriesHeadline')}</h2>
+            </header>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {serviceCategories.map((category) => (
+                <ServiceCategoryCard key={category.id} category={category} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {serviceCatalogue.length ? (
+          <section id="provider-dashboard-service-catalogue" aria-labelledby="provider-dashboard-service-catalogue" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceCatalogueHeadline')}</h2>
+            </header>
+            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {serviceCatalogue.map((service) => (
+                <ServiceCatalogueCard key={service.id} service={service} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
           <header className="flex items-center gap-3">

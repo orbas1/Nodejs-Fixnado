@@ -253,6 +253,136 @@ class ServiceAvailability {
   }
 }
 
+class ServiceHealthMetric {
+  ServiceHealthMetric({
+    required this.id,
+    required this.label,
+    required this.value,
+    required this.format,
+    this.caption,
+    this.target,
+  });
+
+  final String id;
+  final String label;
+  final double value;
+  final String format;
+  final String? caption;
+  final double? target;
+
+  factory ServiceHealthMetric.fromJson(Map<String, dynamic> json) {
+    return ServiceHealthMetric(
+      id: json['id']?.toString() ?? json['key']?.toString() ?? 'metric',
+      label: json['label']?.toString() ?? 'Metric',
+      value: _toDouble(json['value']) ?? _toDouble(json['score']) ?? 0,
+      format: json['format']?.toString() ?? json['type']?.toString() ?? 'number',
+      caption: json['caption']?.toString(),
+      target: _toDouble(json['target']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'label': label,
+      'value': value,
+      'format': format,
+      'caption': caption,
+      'target': target,
+    };
+  }
+}
+
+class ServiceDeliveryItem {
+  ServiceDeliveryItem({
+    required this.id,
+    required this.name,
+    required this.client,
+    this.zone,
+    this.eta,
+    this.owner,
+    this.risk,
+    this.services = const [],
+    this.value,
+    this.currency,
+  });
+
+  final String id;
+  final String name;
+  final String client;
+  final String? zone;
+  final DateTime? eta;
+  final String? owner;
+  final String? risk;
+  final List<String> services;
+  final double? value;
+  final String? currency;
+
+  factory ServiceDeliveryItem.fromJson(Map<String, dynamic> json) {
+    return ServiceDeliveryItem(
+      id: json['id']?.toString() ?? json['key']?.toString() ?? 'delivery-item',
+      name: json['name']?.toString() ?? json['title']?.toString() ?? 'Engagement',
+      client: json['client']?.toString() ?? json['account']?.toString() ?? 'Client',
+      zone: json['zone']?.toString() ?? json['region']?.toString(),
+      eta: _parseDateTime(json['eta'] ?? json['due'] ?? json['scheduledFor']),
+      owner: json['owner']?.toString() ?? json['manager']?.toString(),
+      risk: json['risk']?.toString() ?? json['status']?.toString(),
+      services: _ensureStringList(json['services'] ?? json['serviceMix']),
+      value: _toDouble(json['value'] ?? json['contractValue']),
+      currency: json['currency']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'client': client,
+      'zone': zone,
+      'eta': eta?.toIso8601String(),
+      'owner': owner,
+      'risk': risk,
+      'services': services,
+      'value': value,
+      'currency': currency,
+    };
+  }
+}
+
+class ServiceDeliveryColumn {
+  ServiceDeliveryColumn({
+    required this.id,
+    required this.title,
+    required this.items,
+    this.description,
+  });
+
+  final String id;
+  final String title;
+  final String? description;
+  final List<ServiceDeliveryItem> items;
+
+  factory ServiceDeliveryColumn.fromJson(Map<String, dynamic> json) {
+    return ServiceDeliveryColumn(
+      id: json['id']?.toString() ?? json['key']?.toString() ?? 'column',
+      title: json['title']?.toString() ?? json['name']?.toString() ?? 'Stage',
+      description: json['description']?.toString(),
+      items: (json['items'] as List<dynamic>? ?? const [])
+          .map((item) => ServiceDeliveryItem.fromJson(_asMap(item)))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'items': items.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
 class ServicePackage {
   ServicePackage({
     required this.id,
@@ -379,6 +509,8 @@ class ServiceCatalogSnapshot {
     required this.categories,
     required this.types,
     required this.catalogue,
+    required this.healthMetrics,
+    required this.deliveryBoard,
     required this.reviews,
     this.reviewSummary,
     this.reviewAccess,
@@ -390,6 +522,8 @@ class ServiceCatalogSnapshot {
   final List<ServiceCategory> categories;
   final List<ServiceTypeDefinition> types;
   final List<ServiceCatalogueEntry> catalogue;
+  final List<ServiceHealthMetric> healthMetrics;
+  final List<ServiceDeliveryColumn> deliveryBoard;
   final List<BusinessReview> reviews;
   final BusinessReviewSummary? reviewSummary;
   final ReviewAccessControl? reviewAccess;
@@ -402,6 +536,8 @@ class ServiceCatalogSnapshot {
       'categories': categories.map((value) => value.toJson()).toList(),
       'types': types.map((value) => value.toJson()).toList(),
       'catalogue': catalogue.map((value) => value.toJson()).toList(),
+      'healthMetrics': healthMetrics.map((value) => value.toJson()).toList(),
+      'deliveryBoard': deliveryBoard.map((value) => value.toJson()).toList(),
       'reviews': reviews.map((value) => value.toJson()).toList(),
       'reviewSummary': reviewSummary?.toJson(),
       'reviewAccess': reviewAccess?.toJson(),
@@ -413,16 +549,22 @@ class ServiceCatalogSnapshot {
   factory ServiceCatalogSnapshot.fromCacheJson(Map<String, dynamic> json) {
     return ServiceCatalogSnapshot(
       packages: (json['packages'] as List<dynamic>? ?? const [])
-          .map((item) => ServicePackage.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServicePackage.fromJson(_asMap(item)))
           .toList(),
       categories: (json['categories'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceCategory.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceCategory.fromJson(_asMap(item)))
           .toList(),
       types: (json['types'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceTypeDefinition.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceTypeDefinition.fromJson(_asMap(item)))
           .toList(),
       catalogue: (json['catalogue'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceCatalogueEntry.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceCatalogueEntry.fromJson(_asMap(item)))
+          .toList(),
+      healthMetrics: (json['healthMetrics'] as List<dynamic>? ?? const [])
+          .map((item) => ServiceHealthMetric.fromJson(_asMap(item)))
+          .toList(),
+      deliveryBoard: (json['deliveryBoard'] as List<dynamic>? ?? const [])
+          .map((item) => ServiceDeliveryColumn.fromJson(_asMap(item)))
           .toList(),
       reviews: (json['reviews'] as List<dynamic>? ?? const [])
           .map((item) => BusinessReview.fromJson(Map<String, dynamic>.from(item as Map)))
@@ -443,6 +585,8 @@ class ServiceCatalogSnapshot {
     List<ServiceCategory>? categories,
     List<ServiceTypeDefinition>? types,
     List<ServiceCatalogueEntry>? catalogue,
+    List<ServiceHealthMetric>? healthMetrics,
+    List<ServiceDeliveryColumn>? deliveryBoard,
     List<BusinessReview>? reviews,
     BusinessReviewSummary? reviewSummary,
     ReviewAccessControl? reviewAccess,
@@ -454,6 +598,8 @@ class ServiceCatalogSnapshot {
       categories: categories ?? this.categories,
       types: types ?? this.types,
       catalogue: catalogue ?? this.catalogue,
+      healthMetrics: healthMetrics ?? this.healthMetrics,
+      deliveryBoard: deliveryBoard ?? this.deliveryBoard,
       reviews: reviews ?? this.reviews,
       reviewSummary: reviewSummary ?? this.reviewSummary,
       reviewAccess: reviewAccess ?? this.reviewAccess,
@@ -473,6 +619,16 @@ List<String> _ensureStringList(dynamic value) {
   return const [];
 }
 
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, dynamic v) => MapEntry(key?.toString() ?? '', v));
+  }
+  return <String, dynamic>{};
+}
+
 double? _toDouble(dynamic value) {
   if (value == null) {
     return null;
@@ -482,6 +638,19 @@ double? _toDouble(dynamic value) {
   }
   if (value is String) {
     return double.tryParse(value);
+  }
+  return null;
+}
+
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is DateTime) {
+    return value;
+  }
+  if (value is String && value.isNotEmpty) {
+    return DateTime.tryParse(value);
   }
   return null;
 }
