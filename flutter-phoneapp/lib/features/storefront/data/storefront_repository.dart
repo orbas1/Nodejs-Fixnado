@@ -6,6 +6,7 @@ import '../../../app/bootstrap.dart';
 import '../../../core/exceptions/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/local_cache.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/storefront_models.dart';
 
 class StorefrontRepository {
@@ -14,12 +15,19 @@ class StorefrontRepository {
   final FixnadoApiClient _client;
   final LocalCache _cache;
 
-  static const _cacheKey = 'storefront:v1';
+  static const _allowedRoles = {UserRole.provider, UserRole.admin};
 
-  Future<StorefrontFetchResult> fetchStorefront({bool bypassCache = false}) async {
+  static String _cacheKeyFor(UserRole role) => 'storefront:v1:${role.name}';
+
+  Future<StorefrontFetchResult> fetchStorefront(UserRole role, {bool bypassCache = false}) async {
+    if (!_allowedRoles.contains(role)) {
+      throw StorefrontAccessDenied('Persona ${role.name} is not authorised to manage the storefront.');
+    }
+
+    final cacheKey = _cacheKeyFor(role);
     StorefrontSnapshot? cachedSnapshot;
     if (!bypassCache) {
-      final cached = _cache.readJson(_cacheKey);
+      final cached = _cache.readJson(cacheKey);
       if (cached != null) {
         final value = Map<String, dynamic>.from(cached['value'] as Map);
         cachedSnapshot = StorefrontSnapshot.fromJson(value);
@@ -31,15 +39,18 @@ class StorefrontRepository {
     }
 
     try {
-      final snapshot = await _loadRemote();
-      await _cache.writeJson(_cacheKey, snapshot.toJson());
+      final snapshot = await _loadRemote(role);
+      await _cache.writeJson(cacheKey, snapshot.toJson());
       return StorefrontFetchResult(snapshot: snapshot, offline: false);
     } on TimeoutException catch (_) {
       if (cachedSnapshot != null) {
         return StorefrontFetchResult(snapshot: cachedSnapshot, offline: true);
       }
       rethrow;
-    } on ApiException catch (_) {
+    } on ApiException catch (error) {
+      if (error.statusCode == 403) {
+        throw StorefrontAccessDenied('This storefront session is restricted. Switch persona and try again.');
+      }
       if (cachedSnapshot != null) {
         return StorefrontFetchResult(snapshot: cachedSnapshot, offline: true);
       }
@@ -47,10 +58,13 @@ class StorefrontRepository {
     }
   }
 
-  Future<StorefrontSnapshot> _loadRemote() async {
+  Future<StorefrontSnapshot> _loadRemote(UserRole role) async {
     final payload = await _client.getJson(
       '/panel/provider/storefront',
-      headers: const {'X-Fixnado-Role': 'company'},
+      headers: {
+        'X-Fixnado-Role': role == UserRole.admin ? 'admin' : 'company',
+        'X-Fixnado-Persona': role.name,
+      },
     );
     final data = Map<String, dynamic>.from(payload['data'] as Map? ?? payload as Map? ?? {});
     final meta = Map<String, dynamic>.from(payload['meta'] as Map? ?? {});

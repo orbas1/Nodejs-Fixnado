@@ -6,6 +6,7 @@ import SkipToContent from './components/accessibility/SkipToContent.jsx';
 import Spinner from './components/ui/Spinner.jsx';
 import { useLocale } from './hooks/useLocale.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
+import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -61,7 +62,14 @@ function App() {
             <Route path="/register/company" element={<CompanyRegister />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/provider/dashboard" element={<ProviderDashboard />} />
-            <Route path="/provider/storefront" element={<ProviderStorefront />} />
+            <Route
+              path="/provider/storefront"
+              element={
+                <ProviderProtectedRoute>
+                  <ProviderStorefront />
+                </ProviderProtectedRoute>
+              }
+            />
             <Route path="/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/providers" element={<BusinessFront />} />
             <Route path="/providers/:slug" element={<BusinessFront />} />

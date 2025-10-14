@@ -169,6 +169,12 @@ export const esES = {
     'providerStorefront.heroConversion': 'Conversión {value}',
     'providerStorefront.heroCta': 'Previsualizar escaparate',
     'providerStorefront.heroSecondaryCta': 'Volver al estudio del proveedor',
+    'providerStorefront.guard.restricted': 'Módulo restringido',
+    'providerStorefront.guard.title': 'El acceso al escaparate es limitado',
+    'providerStorefront.guard.body':
+      'Cambia a una persona de proveedor o administrador autorizada para continuar. Los controles del escaparate están reservados para {roles} y protegen la gobernanza del inventario.',
+    'providerStorefront.guard.help':
+      'Usa el selector de personas en la cabecera o contacta con tu administrador de Fixnado para solicitar acceso.',
     'providerStorefront.sidebar.eyebrow': 'Inteligencia de escaparate',
     'providerStorefront.sidebar.title': 'Preparación en marketplace',
     'providerStorefront.sidebar.description':
@@ -189,11 +195,19 @@ export const esES = {
     'providerStorefront.metrics.holdExpiring': 'Retenciones por caducar',
     'providerStorefront.metrics.insuredOnly': 'Solo asegurados',
     'providerStorefront.metrics.avgDailyRate': 'Tarifa diaria media',
+    'providerStorefront.metrics.pill.danger': 'Acción requerida',
+    'providerStorefront.metrics.pill.warning': 'Vigilar de cerca',
+    'providerStorefront.metrics.pill.success': 'En buen camino',
+    'providerStorefront.metrics.pill.info': 'Señal positiva',
+    'providerStorefront.metrics.pill.neutral': 'Actualización de estado',
     'providerStorefront.refresh': 'Actualizar datos',
     'providerStorefront.offlineNotice':
       'Mostramos la instantánea en caché del escaparate mientras se restablece la conexión.',
     'providerStorefront.errorLoading':
       'No se pudieron actualizar las métricas del escaparate. Vuelve a intentarlo cuando la conexión sea estable.',
+    'providerStorefront.overview.heading': 'Instantánea de rendimiento',
+    'providerStorefront.overview.trustStatement':
+      'Inventario asegurado, telemetría de cumplimiento y SLAs de respuesta activos en cada listado.',
     'providerStorefront.nav.overview': 'Resumen de rendimiento',
     'providerStorefront.nav.overviewDescription': 'Vista de cumplimiento, conversión y salud de listados.',
     'providerStorefront.nav.listings': 'Inteligencia de listados',

@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { LOGO_URL } from '../constants/branding';
-import { BUSINESS_FRONT_ALLOWED_ROLES } from '../constants/accessControl.js';
+import {
+  BUSINESS_FRONT_ALLOWED_ROLES,
+  PROVIDER_EXPERIENCE_ALLOWED_ROLES,
+  PROVIDER_STOREFRONT_ALLOWED_ROLES
+} from '../constants/accessControl.js';
 import { useLocale } from '../hooks/useLocale.js';
 import { hasCommunicationsAccess, normaliseRole } from '../constants/accessControl.js';
 import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
@@ -68,6 +72,8 @@ export default function Header() {
   );
   const { hasRole } = useSession();
   const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
+  const allowProviderConsole = hasRole(PROVIDER_EXPERIENCE_ALLOWED_ROLES);
+  const allowProviderStorefront = hasRole(PROVIDER_STOREFRONT_ALLOWED_ROLES);
 
   const navigation = useMemo(() => {
     const filtered = navigationConfig
@@ -83,7 +89,18 @@ export default function Header() {
         }
 
         const children = item.children
-          .filter((child) => child.key !== 'business-fronts' || allowBusinessFronts)
+          .filter((child) => {
+            if (child.key === 'business-fronts') {
+              return allowBusinessFronts;
+            }
+            if (child.key === 'provider') {
+              return allowProviderConsole;
+            }
+            if (child.key === 'provider-storefront') {
+              return allowProviderStorefront;
+            }
+            return true;
+          })
           .map((child) => ({
             ...child,
             name: t(child.nameKey),
@@ -99,7 +116,7 @@ export default function Header() {
       .filter(Boolean);
 
     return filtered;
-  }, [sessionRole, t, locale, allowBusinessFronts]);
+  }, [sessionRole, t, locale, allowBusinessFronts, allowProviderConsole, allowProviderStorefront]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {

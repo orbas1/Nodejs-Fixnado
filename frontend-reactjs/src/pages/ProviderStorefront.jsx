@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   ArrowPathIcon,
@@ -18,6 +19,8 @@ import Skeleton from '../components/ui/Skeleton.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 import { getProviderStorefront, PanelApiError } from '../api/panelClient.js';
 import { useLocale } from '../hooks/useLocale.js';
+import { useSession } from '../hooks/useSession.js';
+import { formatRoleLabel, PROVIDER_STOREFRONT_ALLOWED_ROLES } from '../constants/accessControl.js';
 
 const actionToneStyles = {
   success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -35,7 +38,7 @@ const iconToneStyles = {
   neutral: 'text-slate-500'
 };
 
-function MetricCard({ icon: Icon, label, value, caption, tone }) {
+function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel }) {
   return (
     <article className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
       <header className="flex items-center gap-3">
@@ -50,12 +53,27 @@ function MetricCard({ icon: Icon, label, value, caption, tone }) {
       {caption ? <p className="mt-4 text-xs text-slate-500">{caption}</p> : null}
       {tone ? (
         <div className="mt-4">
-          <StatusPill tone={tone}>{tone === 'danger' ? 'Action required' : tone === 'warning' ? 'Monitor closely' : 'On track'}</StatusPill>
+          <StatusPill tone={tone}>{toneLabel ?? 'Status update'}</StatusPill>
         </div>
       ) : null}
     </article>
   );
 }
+
+MetricCard.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.node]).isRequired,
+  caption: PropTypes.node,
+  tone: PropTypes.oneOf(['success', 'warning', 'danger', 'info', 'neutral']),
+  toneLabel: PropTypes.string
+};
+
+MetricCard.defaultProps = {
+  caption: null,
+  tone: null,
+  toneLabel: null
+};
 
 function ListingCard({ listing, format, t }) {
   const availabilityKey = `providerStorefront.availability.${listing.availability}`;
@@ -172,6 +190,47 @@ function ListingCard({ listing, format, t }) {
   );
 }
 
+ListingCard.propTypes = {
+  listing: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    availability: PropTypes.string,
+    status: PropTypes.string,
+    tone: PropTypes.string,
+    title: PropTypes.string.isRequired,
+    location: PropTypes.string,
+    requestVolume: PropTypes.number,
+    successfulAgreements: PropTypes.number,
+    averageDurationDays: PropTypes.number,
+    projectedRevenue: PropTypes.number,
+    insuredOnly: PropTypes.bool,
+    complianceHoldUntil: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    lastReviewedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    recommendedActions: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        label: PropTypes.string.isRequired,
+        tone: PropTypes.string
+      })
+    ),
+    agreements: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        renter: PropTypes.string,
+        status: PropTypes.string,
+        pickupAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+        returnDueAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
+      })
+    )
+  }).isRequired,
+  format: PropTypes.shape({
+    number: PropTypes.func.isRequired,
+    currency: PropTypes.func,
+    date: PropTypes.func.isRequired,
+    dateTime: PropTypes.func
+  }).isRequired,
+  t: PropTypes.func.isRequired
+};
+
 function resolveStatusTone(status) {
   if (!status) return 'info';
   if (status === 'settled' || status === 'approved' || status === 'completed') return 'success';
@@ -196,6 +255,16 @@ function PlaybookCard({ playbook, t }) {
   );
 }
 
+PlaybookCard.propTypes = {
+  playbook: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    title: PropTypes.string.isRequired,
+    detail: PropTypes.string.isRequired,
+    tone: PropTypes.string
+  }).isRequired,
+  t: PropTypes.func.isRequired
+};
+
 function TimelineEvent({ event, format, t }) {
   const tone = actionToneStyles[event.tone] ?? actionToneStyles.info;
   const iconTone = iconToneStyles[event.tone] ?? iconToneStyles.info;
@@ -216,16 +285,53 @@ function TimelineEvent({ event, format, t }) {
   );
 }
 
+TimelineEvent.propTypes = {
+  event: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    tone: PropTypes.string,
+    type: PropTypes.string.isRequired,
+    listingTitle: PropTypes.string,
+    actor: PropTypes.string,
+    detail: PropTypes.string,
+    timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]).isRequired
+  }).isRequired,
+  format: PropTypes.shape({
+    dateTime: PropTypes.func.isRequired
+  }).isRequired,
+  t: PropTypes.func.isRequired
+};
+
 export default function ProviderStorefront() {
   const { t, format } = useLocale();
+  const { role } = useSession();
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
 
+  const panelRole = role === 'admin' ? 'admin' : role === 'provider' ? 'company' : null;
+  const panelPersona = role === 'admin' ? 'admin' : role === 'provider' ? 'provider' : null;
+  const allowedRoleLabel = useMemo(
+    () => PROVIDER_STOREFRONT_ALLOWED_ROLES.map((entry) => formatRoleLabel(entry)).join(' or '),
+    []
+  );
+  const accessDenied = state.error?.status === 403;
+
   const loadStorefront = useCallback(async ({ forceRefresh = false, signal } = {}) => {
+    if (!panelRole || !panelPersona) {
+      setState((current) => {
+        if (current.error?.status === 403 && !current.loading) {
+          return current;
+        }
+        return { loading: false, data: null, meta: null, error: new PanelApiError('Access denied', 403) };
+      });
+      return;
+    }
     setState((current) => ({ ...current, loading: true, error: null }));
     try {
-      const result = await getProviderStorefront({ forceRefresh, signal });
+      const result = await getProviderStorefront({ forceRefresh, signal, role: panelRole, persona: panelPersona });
       setState({ loading: false, data: result.data, meta: result.meta, error: null });
     } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
       setState((current) => ({
         ...current,
         loading: false,
@@ -235,13 +341,22 @@ export default function ProviderStorefront() {
             : new PanelApiError('Unable to load storefront', 500, { cause: error })
       }));
     }
-  }, []);
+  }, [panelPersona, panelRole]);
 
   useEffect(() => {
+    if (!panelRole || !panelPersona) {
+      setState((current) => {
+        if (current.error?.status === 403 && !current.loading) {
+          return current;
+        }
+        return { loading: false, data: null, meta: null, error: new PanelApiError('Access denied', 403) };
+      });
+      return undefined;
+    }
     const controller = new AbortController();
     loadStorefront({ signal: controller.signal });
     return () => controller.abort();
-  }, [loadStorefront]);
+  }, [loadStorefront, panelPersona, panelRole]);
 
   const storefront = state.data?.storefront;
   const company = storefront?.company;
@@ -279,6 +394,19 @@ export default function ProviderStorefront() {
     ],
     [t]
   );
+
+  const toneLabels = useMemo(
+    () => ({
+      danger: t('providerStorefront.metrics.pill.danger'),
+      warning: t('providerStorefront.metrics.pill.warning'),
+      success: t('providerStorefront.metrics.pill.success'),
+      info: t('providerStorefront.metrics.pill.info'),
+      neutral: t('providerStorefront.metrics.pill.neutral')
+    }),
+    [t]
+  );
+
+  const getToneLabel = useCallback((tone) => toneLabels[tone] ?? toneLabels.info, [toneLabels]);
 
   const heroBadges = useMemo(() => {
     const complianceTone = company?.complianceScore >= 85 ? 'success' : company?.complianceScore >= 70 ? 'warning' : 'danger';
@@ -352,6 +480,10 @@ export default function ProviderStorefront() {
     loadStorefront({ forceRefresh: true });
   }, [loadStorefront]);
 
+  const pendingTone = metrics?.pendingReview > 0 ? 'warning' : 'info';
+  const flaggedTone = metrics?.flagged > 0 ? 'danger' : 'info';
+  const conversionTone = metrics?.conversionRate >= 0.6 ? 'success' : metrics?.conversionRate >= 0.4 ? 'info' : 'warning';
+
   return (
     <div className="bg-slate-50 text-slate-900">
       <DashboardShell
@@ -363,129 +495,148 @@ export default function ProviderStorefront() {
         navigation={navigation}
         sidebar={sidebar}
       >
-        <section id="provider-storefront-overview" className="space-y-4">
-          <header className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <ShieldCheckIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.overview.heading')}</h2>
-            </div>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20"
-            >
-              <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
-              {t('providerStorefront.refresh')}
-            </button>
-          </header>
-          {state.loading && !state.data ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-40 rounded-3xl" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <MetricCard
-                icon={CheckBadgeIcon}
-                label={t('providerStorefront.metrics.active')}
-                value={format.number(metrics?.activeListings ?? 0)}
-              />
-              <MetricCard
-                icon={ClockIcon}
-                label={t('providerStorefront.metrics.pending')}
-                value={format.number(metrics?.pendingReview ?? 0)}
-                tone={metrics?.pendingReview > 0 ? 'warning' : 'info'}
-              />
-              <MetricCard
-                icon={DocumentTextIcon}
-                label={t('providerStorefront.metrics.flagged')}
-                value={format.number(metrics?.flagged ?? 0)}
-                tone={metrics?.flagged > 0 ? 'danger' : 'info'}
-              />
-              <MetricCard
-                icon={ArrowTrendingUpIcon}
-                label={t('providerStorefront.metrics.conversion')}
-                value={format.percentage(metrics?.conversionRate ?? 0)}
-                caption={t('providerStorefront.metrics.requestsValue', {
-                  value: format.number(metrics?.totalRequests ?? 0)
-                })}
-              />
-            </div>
-          )}
+        {accessDenied ? (
+          <section className="rounded-3xl border border-primary/20 bg-white/95 p-10 text-slate-600 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/60">
+              {t('providerStorefront.guard.restricted')}
+            </p>
+            <h2 className="mt-4 text-xl font-semibold text-primary">{t('providerStorefront.guard.title')}</h2>
+            <p className="mt-4 text-sm text-slate-600">
+              {t('providerStorefront.guard.body', { roles: allowedRoleLabel })}
+            </p>
+            <p className="mt-6 text-sm text-slate-500">{t('providerStorefront.guard.help')}</p>
+          </section>
+        ) : (
+          <>
+            <section id="provider-storefront-overview" className="space-y-4">
+              <header className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <ShieldCheckIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.overview.heading')}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                >
+                  <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
+                  {t('providerStorefront.refresh')}
+                </button>
+              </header>
+              {state.loading && !state.data ? (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <Skeleton key={index} className="h-40 rounded-3xl" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <MetricCard
+                    icon={CheckBadgeIcon}
+                    label={t('providerStorefront.metrics.active')}
+                    value={format.number(metrics?.activeListings ?? 0)}
+                  />
+                  <MetricCard
+                    icon={ClockIcon}
+                    label={t('providerStorefront.metrics.pending')}
+                    value={format.number(metrics?.pendingReview ?? 0)}
+                    tone={pendingTone}
+                    toneLabel={getToneLabel(pendingTone)}
+                  />
+                  <MetricCard
+                    icon={DocumentTextIcon}
+                    label={t('providerStorefront.metrics.flagged')}
+                    value={format.number(metrics?.flagged ?? 0)}
+                    tone={flaggedTone}
+                    toneLabel={getToneLabel(flaggedTone)}
+                  />
+                  <MetricCard
+                    icon={ArrowTrendingUpIcon}
+                    label={t('providerStorefront.metrics.conversion')}
+                    value={format.percentage(metrics?.conversionRate ?? 0)}
+                    caption={t('providerStorefront.metrics.requestsValue', {
+                      value: format.number(metrics?.totalRequests ?? 0)
+                    })}
+                    tone={conversionTone}
+                    toneLabel={getToneLabel(conversionTone)}
+                  />
+                </div>
+              )}
 
-          {state.meta?.fallback ? (
-            <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-700">
-              {t('providerStorefront.offlineNotice')}
-            </div>
-          ) : null}
+              {state.meta?.fallback ? (
+                <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-700">
+                  {t('providerStorefront.offlineNotice')}
+                </div>
+              ) : null}
 
-          {state.error ? (
-            <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-600">
-              {t('providerStorefront.errorLoading')}
-            </div>
-          ) : null}
-        </section>
+              {state.error && state.error.status !== 403 ? (
+                <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-600">
+                  {t('providerStorefront.errorLoading')}
+                </div>
+              ) : null}
+            </section>
 
-        <section id="provider-storefront-listings" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <BuildingStorefrontIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.listings.heading')}</h2>
-          </header>
-          {state.loading && !state.data ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {Array.from({ length: 2 }).map((_, index) => (
-                <Skeleton key={index} className="h-72 rounded-3xl" />
-              ))}
-            </div>
-          ) : listings.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
-              {t('providerStorefront.listings.empty')}
-            </div>
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
-              {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} format={format} t={t} />
-              ))}
-            </div>
-          )}
-        </section>
+            <section id="provider-storefront-listings" className="space-y-4">
+              <header className="flex items-center gap-3">
+                <BuildingStorefrontIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.listings.heading')}</h2>
+              </header>
+              {state.loading && !state.data ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <Skeleton key={index} className="h-72 rounded-3xl" />
+                  ))}
+                </div>
+              ) : listings.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
+                  {t('providerStorefront.listings.empty')}
+                </div>
+              ) : (
+                <div className="grid gap-4 xl:grid-cols-2">
+                  {listings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} format={format} t={t} />
+                  ))}
+                </div>
+              )}
+            </section>
 
-        <section id="provider-storefront-playbooks" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <BoltIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.playbooks.heading')}</h2>
-          </header>
-          {playbooks.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
-              {t('providerStorefront.playbooks.empty')}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {playbooks.map((playbook) => (
-                <PlaybookCard key={playbook.id} playbook={playbook} t={t} />
-              ))}
-            </div>
-          )}
-        </section>
+            <section id="provider-storefront-playbooks" className="space-y-4">
+              <header className="flex items-center gap-3">
+                <BoltIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.playbooks.heading')}</h2>
+              </header>
+              {playbooks.length === 0 ? (
+                <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
+                  {t('providerStorefront.playbooks.empty')}
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {playbooks.map((playbook) => (
+                    <PlaybookCard key={playbook.id} playbook={playbook} t={t} />
+                  ))}
+                </div>
+              )}
+            </section>
 
-        <section id="provider-storefront-timeline" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.timeline.heading')}</h2>
-          </header>
-          {timeline.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
-              {t('providerStorefront.timeline.empty')}
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {timeline.map((event) => (
-                <TimelineEvent key={event.id} event={event} format={format} t={t} />
-              ))}
-            </ul>
-          )}
-        </section>
+            <section id="provider-storefront-timeline" className="space-y-4">
+              <header className="flex items-center gap-3">
+                <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <h2 className="text-lg font-semibold text-primary">{t('providerStorefront.timeline.heading')}</h2>
+              </header>
+              {timeline.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-sm text-slate-500">
+                  {t('providerStorefront.timeline.empty')}
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {timeline.map((event) => (
+                    <TimelineEvent key={event.id} event={event} format={format} t={t} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
       </DashboardShell>
 
       {state.loading && state.data ? (
