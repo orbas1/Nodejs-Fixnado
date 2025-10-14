@@ -469,7 +469,6 @@ export async function down({ context: queryInterface }) {
   ];
 
   for (const enumName of enumNames) {
-    // eslint-disable-next-line no-await-in-loop
     await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "${enumName}" CASCADE;`);
   }
 }

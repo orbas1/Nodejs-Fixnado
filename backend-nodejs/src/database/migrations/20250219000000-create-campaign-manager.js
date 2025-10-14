@@ -490,7 +490,7 @@ export async function up({ context: queryInterface, Sequelize }) {
   });
 }
 
-export async function down({ context: queryInterface, Sequelize }) {
+export async function down({ context: queryInterface }) {
   await queryInterface.dropTable('CampaignAnalyticsExport');
   await queryInterface.dropTable('CampaignFraudSignal');
   await queryInterface.dropTable('CampaignDailyMetric');

@@ -362,7 +362,6 @@ async function createCompanyWithFixtures() {
     meta: { project: 'Completed works' }
   });
 
-  return { company, user };
   return { company, owner: user };
 }
 
@@ -380,19 +379,12 @@ beforeEach(async () => {
 
 describe('Panel routes', () => {
   it('returns provider dashboard data with operational metrics', async () => {
-    const { company, user } = await createCompanyWithFixtures();
+    const { company, owner } = await createCompanyWithFixtures();
 
     const response = await withAuth(
       request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
-      user.id
+      owner.id
     ).expect(200);
-    const { company, owner } = await createCompanyWithFixtures();
-
-    const response = await request(app)
-      .get('/api/panel/provider/dashboard')
-      .query({ companyId: company.id })
-      .set('Authorization', `Bearer ${createToken(owner.id)}`)
-      .expect(200);
 
     expect(response.body.data.provider.tradingName).toContain('Metro');
     expect(response.body.data.metrics.activeBookings).toBeGreaterThanOrEqual(1);
@@ -464,12 +456,11 @@ describe('Panel routes', () => {
   });
 
   it('returns enterprise panel aggregates including spend and programmes', async () => {
-    const { company, user } = await createCompanyWithFixtures();
-    const { company } = await createCompanyWithFixtures();
+    const { company, owner } = await createCompanyWithFixtures();
 
     const response = await withAuth(
       request(app).get('/api/panel/enterprise/overview').query({ companyId: company.id }),
-      user.id
+      owner.id
     ).expect(200);
 
     expect(response.body.data.enterprise.activeSites).toBe(1);
@@ -503,9 +494,10 @@ describe('Panel routes', () => {
       request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
       IDS.provider
     ).expect(403);
+  });
 
   it('returns a storefront management snapshot with listing intelligence for provider roles', async () => {
-    const company = await createCompanyWithFixtures();
+    const { company } = await createCompanyWithFixtures();
 
     const response = await request(app)
       .get('/api/panel/provider/storefront')

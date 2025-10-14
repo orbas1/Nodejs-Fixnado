@@ -1,4 +1,8 @@
-import { vi } from 'vitest';
+const { vi } = globalThis;
+
+if (!vi) {
+  throw new Error('Vitest globals are not initialised.');
+}
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key';
 process.env.DB_DIALECT = process.env.DB_DIALECT || 'sqlite';

@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon';
 import { Op } from 'sequelize';
 import {
-  sequelize,
   Escrow,
   Dispute,
   Order,
@@ -289,7 +288,6 @@ async function computeDisputeMedianResponse(range) {
 async function computeEscrowSeries(buckets) {
   const results = [];
   for (const bucket of buckets) {
-    // eslint-disable-next-line no-await-in-loop
     const data = await sumEscrow(bucket);
     results.push({
       label: bucket.label,
@@ -303,9 +301,7 @@ async function computeEscrowSeries(buckets) {
 async function computeDisputeSeries(buckets) {
   const results = [];
   for (const bucket of buckets) {
-    // eslint-disable-next-line no-await-in-loop
     const resolved = await countDisputeUpdates(bucket, ['resolved', 'closed']);
-    // eslint-disable-next-line no-await-in-loop
     const escalated = await countDisputeUpdates(bucket, ['under_review']);
     results.push({ label: bucket.label, resolved, escalated });
   }

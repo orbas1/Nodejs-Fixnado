@@ -94,11 +94,7 @@ function summariseReviews(reviews = []) {
     ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: totals.buckets[score] ?? 0 })),
     lastReviewAt: totals.lastReviewAt ? totals.lastReviewAt.toISO() : null,
     responseRate: reviews.length ? totals.responded / reviews.length : 0
-function clamp(value, minimum, maximum) {
-  if (!Number.isFinite(value)) {
-    return minimum;
-  }
-  return Math.max(minimum, Math.min(maximum, value));
+  };
 }
 
 function resolveConfidenceLabel(sampleSize) {
@@ -144,6 +140,8 @@ function resolveReviewBand(score) {
     return 'emerging';
   }
   return 'attention';
+}
+
 function inventoryAvailability(item) {
   const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
   const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
@@ -237,7 +235,6 @@ async function resolveCompanyForActor({ companyId, actor }) {
   throw error;
 }
 
-async function resolveCompanyId(companyId) {
 export async function resolveCompanyId(companyId) {
   if (companyId) {
     const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
@@ -469,10 +466,9 @@ export async function buildEnterprisePanel({ companyId: inputCompanyId } = {}) {
   const now = DateTime.now();
   const startOfMonth = now.startOf('month');
 
-  const [bookings, complianceDocs, serviceZones, services, campaignMetrics, campaignInvoices, fraudSignals, participants, rentals] =
+  const [bookings, serviceZones, services, campaignMetrics, campaignInvoices, fraudSignals, participants, rentals] =
     await Promise.all([
       Booking.findAll({ where: { companyId } }),
-      ComplianceDocument.findAll({ where: { companyId } }),
       ServiceZone.findAll({ where: { companyId }, attributes: ['name'], raw: true }),
       Service.findAll({ where: { companyId } }),
       CampaignDailyMetric.findAll({
@@ -892,15 +888,6 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
         latestReviewId: null,
         excerpt: null
       };
-      rating: Number.isFinite(booking.meta?.csat) ? Number(booking.meta.csat) : 4.8,
-      comment: booking.meta.feedback,
-      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement',
-      createdAt: booking.meta?.reviewedAt
-        ? DateTime.fromISO(booking.meta.reviewedAt).toISO()
-        : booking.lastStatusTransitionAt
-          ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISO()
-          : null
-    }));
 
   const bookingCount = bookings.length;
   const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
@@ -922,7 +909,7 @@ export async function buildBusinessFront({ slug, viewerType } = {}) {
 
   const coverageScore = serviceZones.length > 0 ? clamp(serviceZones.length / 12, 0, 1) : 0.5;
 
-  const reviewRatings = reviews
+  const reviewRatings = orderedReviews
     .map((review) => (Number.isFinite(review.rating) ? Number(review.rating) : null))
     .filter((value) => value != null);
   const sentimentScore = reviewRatings.length > 0 ? clamp(average(reviewRatings) / 5, 0, 1) : 0.86;

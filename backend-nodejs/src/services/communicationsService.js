@@ -25,7 +25,7 @@ function normaliseQuietHour(value) {
   const trimmed = value.trim();
   const match = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
   if (!match) {
-    throw communicationsError(`Quiet hour value \"${value}\" must follow HH:mm format`);
+    throw communicationsError(`Quiet hour value "${value}" must follow HH:mm format`);
   }
 
   const [, hours, minutes] = match;
@@ -707,14 +707,8 @@ export async function getConversation(conversationId, { limit = 50 } = {}) {
     limit: Math.min(Math.max(limit, 1), 100)
   });
 
-  return serialiseConversation(
-    conversation,
-    conversation.participants,
-    messages.reverse().map((message) => {
-      message.deliveries = message.deliveries;
-      return message;
-    })
-  );
+  const orderedMessages = [...messages].reverse();
+  return serialiseConversation(conversation, conversation.participants, orderedMessages);
 }
 
 export async function sendMessage(conversationId, {
