@@ -56,9 +56,9 @@ function parseRate(value, fallback) {
 
 const defaultCommissionRates = (() => {
   const { commissionRates = {} } = config.finance ?? {};
-  const { default: defaultRate = 0.12, ...custom } = commissionRates;
+  const { default: defaultRate = 0.025, ...custom } = commissionRates;
   return {
-    defaultRate: parseRate(defaultRate, 0.12),
+    defaultRate: parseRate(defaultRate, 0.025),
     custom
   };
 })();

@@ -1,4 +1,4 @@
-const { vi } = globalThis;
+import { vi } from 'vitest';
 
 if (!vi) {
   throw new Error('Vitest globals are not initialised.');

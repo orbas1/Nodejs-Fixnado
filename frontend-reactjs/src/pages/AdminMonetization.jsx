@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  BanknotesIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  PlusIcon,
+  ScaleIcon,
+  ShieldCheckIcon,
+  TrashIcon
+} from '@heroicons/react/24/outline';
 import PageHeader from '../components/blueprints/PageHeader.jsx';
 import { Button, Card, Checkbox, SegmentedControl, Spinner, StatusPill, TextInput } from '../components/ui/index.js';
 import { fetchPlatformSettings, persistPlatformSettings } from '../api/platformSettingsClient.js';
@@ -52,7 +61,10 @@ function buildFormState(settings) {
   return {
     commissions: {
       enabled: settings.commissions?.enabled !== false,
-      baseRatePercent: percentFromRate(settings.commissions?.baseRate),
+      baseRatePercent:
+        settings.commissions?.baseRate !== undefined
+          ? percentFromRate(settings.commissions.baseRate)
+          : 2.5,
       customRates: Object.entries(settings.commissions?.customRates ?? {}).map(([key, value]) => ({
         key,
         ratePercent: percentFromRate(value)
@@ -93,7 +105,11 @@ function tierOptions(tiers) {
 
 function buildMetaSnapshot(settings) {
   const commissionState = settings.commissions?.enabled === false ? 'Disabled' : 'Enabled';
-  const commissionRate = percentFromRate(settings.commissions?.baseRate).toLocaleString(undefined, {
+  const commissionRate = (
+    settings.commissions?.baseRate !== undefined
+      ? percentFromRate(settings.commissions.baseRate)
+      : 2.5
+  ).toLocaleString(undefined, {
     maximumFractionDigits: 2
   });
   const subscriptionState = settings.subscriptions?.enabled === false ? 'Subscriptions disabled' : 'Subscriptions active';
@@ -358,7 +374,7 @@ export default function AdminMonetization() {
       <PageHeader
         eyebrow="Revenue operations"
         title="Monetisation controls"
-        description="Govern platform commissions, subscription gating, and integration credentials from a single command surface."
+        description="Govern cross-marketplace commissions, provider payout guardrails, and integration credentials from a single command surface."
         breadcrumbs={[
           { label: 'Operations', to: '/' },
           { label: 'Admin dashboard', to: '/admin/dashboard' },
@@ -395,7 +411,7 @@ export default function AdminMonetization() {
           <header className="space-y-2">
             <h2 className="text-2xl font-semibold text-primary">Commission management</h2>
             <p className="text-sm text-slate-600">
-              Define platform earnings from escrow transactions and staged releases.
+              Define cross-marketplace commission earnings from escrow transactions and staged releases.
             </p>
           </header>
 
@@ -416,7 +432,8 @@ export default function AdminMonetization() {
               suffix="%"
               value={form.commissions.baseRatePercent}
               onChange={handleCommissionRateChange}
-              hint="Applies when no demand-specific override is matched."
+              placeholder="2.5"
+              hint="Applies when no demand-specific override is matched. Default platform share is 2.5%."
             />
           </div>
 
@@ -476,6 +493,32 @@ export default function AdminMonetization() {
                 ))
               )}
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              Platform policy highlights
+            </h3>
+            <ul className="space-y-3 text-sm text-primary">
+              <li className="flex items-start gap-3">
+                <ShieldCheckIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
+                <div>
+                  Default owner commission is fixed at <strong>2.5%</strong> of every booking unless you explicitly override the rate for specific demand bands.
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <BanknotesIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
+                <div>
+                  Providers retain full control over how much they pay their servicemen. The platform only records ledger references and does not intermediate crew wages.
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <ScaleIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
+                <div>
+                  Wallet and ledger operations operate as pass-through accounting so Fixnado is not holding client funds—keeping us outside FCA regulated activities and aligned with Apple App Store rules that exempt real-world services from in-app purchase flows.
+                </div>
+              </li>
+            </ul>
           </div>
         </Card>
 
