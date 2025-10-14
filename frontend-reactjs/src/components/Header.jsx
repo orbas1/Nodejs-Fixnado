@@ -18,6 +18,30 @@ const navigationConfig = [
   { key: 'materials', nameKey: 'nav.materials', href: '/materials' },
   { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
   {
+    key: 'company',
+    nameKey: 'nav.company',
+    children: [
+      {
+        key: 'about',
+        nameKey: 'nav.about',
+        descriptionKey: 'nav.aboutDescription',
+        href: '/about'
+      },
+      {
+        key: 'trust',
+        nameKey: 'nav.trustCentre',
+        descriptionKey: 'nav.trustCentreDescription',
+        href: '/about#trust'
+      },
+      {
+        key: 'careers',
+        nameKey: 'nav.careers',
+        descriptionKey: 'nav.careersDescription',
+        href: '/about#careers'
+      }
+    ]
+  },
+  {
     key: 'dashboards',
     nameKey: 'nav.dashboards',
     children: [

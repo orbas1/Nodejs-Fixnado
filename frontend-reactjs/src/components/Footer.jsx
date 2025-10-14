@@ -33,7 +33,15 @@ export default function Footer() {
           key: itemKey,
           label: t(itemKey),
           href:
-            itemKey === 'footer.services'
+            itemKey === 'footer.about'
+              ? '/about'
+              : itemKey === 'footer.careers'
+              ? '/about#careers'
+              : itemKey === 'footer.press'
+              ? '/communications'
+              : itemKey === 'footer.contact'
+              ? '/communications'
+              : itemKey === 'footer.services'
               ? '/services'
               : itemKey === 'footer.liveFeed'
               ? '/feed'
