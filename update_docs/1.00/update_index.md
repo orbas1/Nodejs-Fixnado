@@ -1,5 +1,12 @@
 # Version 1.00 Update Index
 
+## Newly Updated Artefacts (2025-11-07)
+- [`update_progress_tracker.md`](update_progress_tracker.md) — Raised Tasks 3–6 to 100% with launch rehearsal evidence (OpsGenie incidents, k6 baseline drill, compliance/legal sign-off) and outlined maintenance cadence for post-launch governance.
+- [`Design_update_progress_tracker.md`](Design_update_progress_tracker.md) — Added launch sign-off snapshot summarising accessibility/localisation completion, Stark/Chromatic approvals, and post-launch optimisation focus.
+- [`end_of_update_report.md`](end_of_update_report.md) — Extended rollout summary with OpsGenie monitoring, load drill execution, refreshed compliance artefacts, and knowledge-base coordination.
+- [`test_plan.md`](test_plan.md) — Documented executed load drill, CI junit exports, compliance evidence updates, and ongoing maintenance/testing cadence.
+- [`change_log.md`](change_log.md) — Logged Version 1.00 launch readiness closure and linked refreshed artefacts for stakeholders preparing Version 1.10 roadmap.
+
 ## Newly Updated Artefacts (2025-01-28)
 - [`change_log.md`](change_log.md) — Release-wide summary of design foundations consolidation.
 - [`Design_Plan.md`](Design_Plan.md) — Added Task DT1 outcome referencing canonical tokens and governance.

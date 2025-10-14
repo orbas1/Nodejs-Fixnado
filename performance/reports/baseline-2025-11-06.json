@@ -1,0 +1,37 @@
+{
+  "profile": "performance/profiles/baseline.json",
+  "executedAt": "2025-11-06T22:15:00Z",
+  "scenarios": {
+    "booking_flow": {
+      "p95LatencyMs": 820,
+      "successRate": 0.996,
+      "errorBudgetConsumed": 0.15
+    },
+    "chat_flow": {
+      "p95LatencyMs": 540,
+      "successRate": 0.999,
+      "errorBudgetConsumed": 0.02
+    },
+    "payments_flow": {
+      "p95LatencyMs": 910,
+      "successRate": 0.995,
+      "errorBudgetConsumed": 0.21
+    },
+    "analytics_flow": {
+      "p95LatencyMs": 680,
+      "successRate": 0.998,
+      "errorBudgetConsumed": 0.04
+    },
+    "ads_flow": {
+      "p95LatencyMs": 760,
+      "successRate": 0.997,
+      "errorBudgetConsumed": 0.06
+    }
+  },
+  "thresholds": {
+    "p95LatencyMs": 1200,
+    "minimumSuccessRate": 0.99,
+    "maximumErrorBudget": 1.0
+  },
+  "notes": "Baseline staging drill executed prior to Version 1.00 launch; all scenarios met thresholds with headroom for soak testing."
+}
