@@ -3,6 +3,7 @@ import { Navigate, useParams, useSearchParams, useNavigate } from 'react-router-
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { buildExportUrl, fetchDashboard } from '../api/analyticsDashboardClient.js';
+import { fetchDashboardBlogPosts } from '../api/blogClient.js';
 import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx';
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
 import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
@@ -18,6 +19,7 @@ const RoleDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [blogPosts, setBlogPosts] = useState([]);
   const [unauthorised, setUnauthorised] = useState(false);
   const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
   const controllerRef = useRef(null);
@@ -57,6 +59,40 @@ const RoleDashboard = () => {
     return params;
   }, [searchParams]);
 
+  const hydrateBlogRail = useCallback(async () => {
+    try {
+      const posts = await fetchDashboardBlogPosts({ limit: 6 });
+      setBlogPosts(Array.isArray(posts) ? posts : []);
+    } catch (caught) {
+      console.warn('Failed to load dashboard blog posts', caught);
+      setBlogPosts([]);
+    }
+  }, []);
+
+  const loadDashboard = useCallback(async () => {
+    if (!roleMeta?.registered || toggleEnabled === false) {
+      setLoading(false);
+      return;
+    }
+    if (!hasAccess(roleMeta.id)) {
+      setDashboard(null);
+      setLoading(false);
+      setError(null);
+      setUnauthorised(true);
+      setBlogPosts([]);
+      return;
+    }
+    setUnauthorised(false);
+    setLoading(true);
+    try {
+      const data = await fetchDashboard(roleMeta.id, query);
+      setDashboard(data);
+      setError(null);
+      setLastRefreshed(new Date().toISOString());
+      hydrateBlogRail();
+    } catch (caught) {
+      if (caught?.status === 403) {
+        setUnauthorised(true);
   const abortActiveRequest = useCallback(() => {
     if (controllerRef.current) {
       controllerRef.current.abort();
@@ -73,6 +109,27 @@ const RoleDashboard = () => {
         setDashboard(null);
         setLastRefreshed(null);
         setError(null);
+        setBlogPosts([]);
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
+        setDashboard(null);
+        setBlogPosts([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
+
+  useEffect(() => {
+    let active = true;
+    if (!roleMeta?.registered || toggleEnabled === false) {
+      setLoading(false);
+      setDashboard(null);
+      setBlogPosts([]);
+      return () => {
+        active = false;
+      };
+    }
         setUnauthorised(false);
         setLoading(false);
         return { status: 'unavailable' };
@@ -100,6 +157,13 @@ const RoleDashboard = () => {
 
       setUnauthorised(false);
       setError(null);
+      setLoading(false);
+      setUnauthorised(true);
+      setBlogPosts([]);
+      return () => {
+        active = false;
+      };
+    }
       if (!silent) {
         setLoading(true);
       }
@@ -117,6 +181,7 @@ const RoleDashboard = () => {
         }
         setDashboard(data);
         setLastRefreshed(new Date().toISOString());
+        hydrateBlogRail();
         return { status: 'resolved' };
       } catch (caught) {
         if (controller.signal.aborted || caught?.name === 'AbortError') {
@@ -136,6 +201,7 @@ const RoleDashboard = () => {
         }
 
         setDashboard(null);
+        setBlogPosts([]);
         setLastRefreshed(null);
         setUnauthorised(false);
         setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
@@ -155,6 +221,16 @@ const RoleDashboard = () => {
     return () => {
       abortActiveRequest();
     };
+  }, [roleMeta, query, toggleEnabled, hasAccess, hydrateBlogRail]);
+
+  useEffect(() => {
+    if (toggleEnabled === false && !toggleLoading) {
+      setDashboard(null);
+      setError(null);
+      setLoading(false);
+      setBlogPosts([]);
+    }
+  }, [toggleEnabled, toggleLoading]);
   }, [runDashboardFetch, abortActiveRequest]);
 
   const handleRefresh = useCallback(async () => {
@@ -170,6 +246,11 @@ const RoleDashboard = () => {
     const result = await runDashboardFetch({ silent: false });
     if (result.status === 'unauthorised') {
       refreshPersonaAccess();
+      setDashboard(null);
+      setError(null);
+      setUnauthorised(true);
+      setBlogPosts([]);
+      return;
     }
   }, [toggleEnabled, refreshToggles, runDashboardFetch, refreshPersonaAccess]);
 
@@ -222,6 +303,7 @@ const RoleDashboard = () => {
       exportHref={buildExportUrl(roleMeta.id, query)}
       toggleMeta={toggle}
       toggleReason={toggleReason}
+      blogPosts={blogPosts}
     />
   );
 };
