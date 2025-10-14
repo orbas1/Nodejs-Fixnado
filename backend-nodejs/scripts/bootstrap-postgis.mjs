@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global process, console */
 import { config as loadEnv } from 'dotenv';
 import { Client } from 'pg';
 

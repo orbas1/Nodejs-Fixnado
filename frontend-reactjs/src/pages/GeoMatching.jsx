@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
@@ -51,6 +52,15 @@ function DemandToggle({ option, checked, onChange }) {
     </label>
   );
 }
+
+DemandToggle.propTypes = {
+  option: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired
+  }).isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired
+};
 
 function MatchResultCard({ match, formats }) {
   const demandTone = {
@@ -118,6 +128,37 @@ function MatchResultCard({ match, formats }) {
   );
 }
 
+MatchResultCard.propTypes = {
+  match: PropTypes.shape({
+    zone: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      demandLevel: PropTypes.string,
+      company: PropTypes.shape({
+        contactName: PropTypes.string
+      })
+    }).isRequired,
+    reason: PropTypes.string,
+    score: PropTypes.number.isRequired,
+    distanceKm: PropTypes.number,
+    services: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+        description: PropTypes.string,
+        category: PropTypes.string,
+        price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        currency: PropTypes.string,
+        provider: PropTypes.shape({
+          name: PropTypes.string
+        })
+      })
+    ).isRequired
+  }).isRequired,
+  formats: PropTypes.shape({
+    currency: PropTypes.func.isRequired
+  }).isRequired
+};
+
 function AccessGate({ status, copy, badge, retryLabel, loginLabel, onRetry }) {
   const isChecking = status === 'checking';
   const showRetry = status === 'error' || status === 'forbidden';
@@ -171,6 +212,22 @@ function AccessGate({ status, copy, badge, retryLabel, loginLabel, onRetry }) {
     </div>
   );
 }
+
+AccessGate.propTypes = {
+  status: PropTypes.oneOf(['checking', 'unauthenticated', 'forbidden', 'error', 'granted']).isRequired,
+  copy: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    message: PropTypes.string.isRequired
+  }).isRequired,
+  badge: PropTypes.string.isRequired,
+  retryLabel: PropTypes.string.isRequired,
+  loginLabel: PropTypes.string.isRequired,
+  onRetry: PropTypes.func
+};
+
+AccessGate.defaultProps = {
+  onRetry: undefined
+};
 
 export default function GeoMatching() {
   const { t, format } = useLocale();

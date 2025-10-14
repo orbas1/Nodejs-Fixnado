@@ -1199,7 +1199,6 @@ async function loadAdminData(context) {
 async function loadProviderData(context) {
   const { providerId, companyId, window } = context;
 
-  const [assignments, previousAssignments, rentals, inventoryAlerts, inventoryItems] = await Promise.all([
   const campaignFilter = companyId ? { companyId } : undefined;
 
   const [
@@ -1207,6 +1206,7 @@ async function loadProviderData(context) {
     previousAssignments,
     rentals,
     inventoryAlerts,
+    inventoryItems,
     campaigns,
     campaignMetrics,
     previousCampaignMetrics,
@@ -1260,6 +1260,8 @@ async function loadProviderData(context) {
         }
       ],
       order: [['updatedAt', 'DESC']],
+      limit: EXPORT_ROW_LIMIT
+    }),
     AdCampaign.findAll({
       where: campaignFilter,
       include: [{ model: CampaignFlight, as: 'flights' }],

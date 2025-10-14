@@ -3,57 +3,45 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Header from '../Header.jsx';
 
-const allowedRoles = new Set();
-const mockHasRole = vi.fn();
+const mockUseSession = vi.fn();
 
 vi.mock('../../hooks/useSession.js', () => ({
-  useSession: () => ({
-    hasRole: mockHasRole
-  })
+  useSession: () => mockUseSession()
 }));
 
 const translations = {
-  'nav.home': 'Home',
-  'nav.solutions': 'Solutions',
-  'nav.tools': 'Tools',
-  'nav.industries': 'Industries',
-  'nav.platform': 'Platform',
-  'nav.materials': 'Materials',
-  'nav.blog': 'Blog',
-  'nav.resources': 'Resources',
-  'nav.company': 'Company',
-  'nav.about': 'About',
-  'nav.trustCentre': 'Trust centre',
-  'nav.careers': 'Careers',
-  'nav.dashboards': 'Dashboards',
-  'nav.providerConsole': 'Provider console',
-  'nav.providerStorefront': 'Storefront & listings',
-  'nav.enterpriseAnalytics': 'Enterprise analytics',
-  'nav.enterpriseAnalyticsDescription': 'Multi-site SLA monitoring, spend visibility, and upcoming visit planning.',
-  'nav.businessFronts': 'Business fronts',
-  'nav.businessFrontsDescription': 'Curated storefronts showcasing credentials, testimonials, and service packages.',
-  'nav.geoMatching': 'Geo matching',
-  'nav.geoMatchingDescription': 'Enterprise-grade geo-zonal matching workspace for operations administrators.',
-  'nav.communications': 'Communications',
   'nav.login': 'Log in',
-  'nav.getStarted': 'Get started'
+  'nav.getStarted': 'Get started',
+  'nav.feed': 'Feed',
+  'nav.explorer': 'Explorer',
+  'nav.explorerSearchServices': 'Search services',
+  'nav.explorerSearchServicesDescription': 'Find work',
+  'nav.marketplace': 'Marketplace',
+  'nav.notifications': 'Notifications',
+  'nav.notificationsEmpty': 'You are all caught up.',
+  'nav.notificationsAgo': 'ago',
+  'nav.inbox': 'Inbox',
+  'nav.inboxEmpty': 'No new messages right now.',
+  'nav.messagesOpenThread': 'Open chat',
+  'nav.messagesViewMore': 'View full inbox',
+  'nav.accountMenu': 'Account menu',
+  'nav.statusLabel': '{status} status',
+  'nav.viewDashboard': 'Go to dashboard',
+  'nav.manageAccountHint': 'Manage account controls from your dashboard profile.',
+  'nav.toggleMenu': 'Toggle navigation menu'
 };
 
 vi.mock('../../hooks/useLocale.js', () => ({
   useLocale: () => ({
-    t: (key) => translations[key] ?? key,
+    t: (key, values) => {
+      const template = translations[key] ?? key;
+      if (!values) {
+        return template;
+      }
+      return template.replace(/\{([^}]+)\}/g, (match, token) => values[token.trim()] ?? '');
+    },
     locale: 'en-GB'
   })
-}));
-
-vi.mock('../../utils/telemetry.js', () => ({
-  resolveSessionTelemetryContext: () => ({
-    role: 'guest'
-  })
-}));
-
-vi.mock('../PersonaSwitcher.jsx', () => ({
-  default: () => <div data-testid="persona-switcher" />
 }));
 
 vi.mock('../LanguageSelector.jsx', () => ({
@@ -61,39 +49,57 @@ vi.mock('../LanguageSelector.jsx', () => ({
 }));
 
 beforeEach(() => {
-  allowedRoles.clear();
-  mockHasRole.mockImplementation((roles) => {
-    if (!roles || (Array.isArray(roles) && roles.length === 0)) {
-      return true;
-    }
-    const list = Array.isArray(roles) ? roles : [roles];
-    return list.some((role) => allowedRoles.has(role));
+  mockUseSession.mockReturnValue({
+    isAuthenticated: true,
+    role: 'provider',
+    userId: 'alex.rivera',
+    dashboards: ['provider']
   });
 });
 
-describe('Header navigation access control', () => {
-  it('hides enterprise analytics link when user role lacks access', () => {
+describe('Header navigation layout', () => {
+  it('renders login and register buttons for guests', () => {
+    mockUseSession.mockReturnValue({
+      isAuthenticated: false,
+      role: 'guest',
+      userId: null,
+      dashboards: []
+    });
+
     render(
       <MemoryRouter>
         <Header />
       </MemoryRouter>
     );
 
-    expect(screen.queryByText('Enterprise analytics')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Log in/i })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /Get started/i })).toHaveLength(2);
+    expect(screen.queryByRole('link', { name: /Feed/i })).not.toBeInTheDocument();
   });
 
-  it('shows enterprise analytics link when enterprise role is permitted', () => {
-    allowedRoles.add('enterprise');
-
+  it('shows consolidated navigation when authenticated', () => {
     render(
       <MemoryRouter>
         <Header />
       </MemoryRouter>
     );
 
-    const dashboardsButton = screen.getByRole('button', { name: /Dashboards/i });
-    fireEvent.click(dashboardsButton);
+    expect(screen.getByRole('link', { name: /Feed/i })).toBeInTheDocument();
+    const explorerButton = screen.getByRole('button', { name: /Explorer/i });
+    fireEvent.click(explorerButton);
+    expect(screen.getByRole('link', { name: /Search services/i })).toBeInTheDocument();
+  });
 
-    expect(screen.getByRole('link', { name: /Enterprise analytics/i })).toBeInTheDocument();
+  it('opens the account menu from the avatar control', () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    const accountButton = screen.getByLabelText(/Account menu/i);
+    fireEvent.click(accountButton);
+    expect(screen.getByRole('link', { name: /Go to dashboard/i })).toBeInTheDocument();
+    expect(screen.getByText(/provider status/i)).toBeInTheDocument();
   });
 });

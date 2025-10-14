@@ -81,7 +81,7 @@ export function filterZonesByDemand(zones, filters) {
   return zones.filter((zone) => matchesZoneDemand(zone, filters));
 }
 
-function filterServicesByZone(services, zone, zonesByCompany) {
+function filterServicesByZone(services, zone) {
   if (!zone) {
     return services;
   }
@@ -112,7 +112,7 @@ export function applyExplorerFilters({ services, items }, filters, zones) {
   const zonesById = new Map((zones || []).map((zone) => [zone.id, zone]));
   const selectedZone = filters.zoneId && filters.zoneId !== 'all' ? zonesById.get(filters.zoneId) : null;
 
-  const filteredServices = filterServicesByZone(services, selectedZone, zonesById);
+  const filteredServices = filterServicesByZone(services, selectedZone);
   const filteredItems = filterItemsByZone(items, selectedZone);
 
   const typedServices = filters.type === 'marketplace' ? [] : filteredServices;

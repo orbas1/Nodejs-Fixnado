@@ -4,7 +4,9 @@ import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
 import Spinner from './components/ui/Spinner.jsx';
+import FloatingChatLauncher from './components/communications/FloatingChatLauncher.jsx';
 import { useLocale } from './hooks/useLocale.js';
+import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
 
@@ -41,6 +43,7 @@ const About = lazy(() => import('./pages/About.jsx'));
 function App() {
   const { t } = useLocale();
   const location = useLocation();
+  const { isAuthenticated } = useSession();
   const isDashboardExperience = location.pathname.startsWith('/dashboards');
 
   return (
@@ -148,6 +151,9 @@ function App() {
         </Suspense>
       </main>
       {!isDashboardExperience && <Footer />}
+      {!isDashboardExperience && (
+        <FloatingChatLauncher isAuthenticated={isAuthenticated} />
+      )}
     </div>
   );
 }

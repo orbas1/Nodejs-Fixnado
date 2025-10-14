@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link, Navigate } from 'react-router-dom';
 import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
@@ -50,6 +51,23 @@ function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-
   );
 }
 
+MetricCard.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.node]).isRequired,
+  caption: PropTypes.node,
+  tone: PropTypes.string,
+  toneLabel: PropTypes.string,
+  'data-qa': PropTypes.string
+};
+
+MetricCard.defaultProps = {
+  caption: null,
+  tone: undefined,
+  toneLabel: undefined,
+  'data-qa': undefined
+};
+
 function AlertBanner({ alert }) {
   const { t } = useLocale();
 
@@ -75,6 +93,15 @@ function AlertBanner({ alert }) {
     </div>
   );
 }
+
+AlertBanner.propTypes = {
+  alert: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    message: PropTypes.string.isRequired,
+    actionHref: PropTypes.string,
+    actionLabel: PropTypes.string
+  }).isRequired
+};
 
 function ServicemanRow({ member }) {
   const { t, format } = useLocale();
@@ -105,6 +132,16 @@ function ServicemanRow({ member }) {
     </li>
   );
 }
+
+ServicemanRow.propTypes = {
+  member: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    role: PropTypes.string,
+    availability: PropTypes.number,
+    rating: PropTypes.number
+  }).isRequired
+};
 
 function BookingRow({ booking }) {
   const { t, format } = useLocale();
@@ -138,6 +175,17 @@ function BookingRow({ booking }) {
   );
 }
 
+BookingRow.propTypes = {
+  booking: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    client: PropTypes.string.isRequired,
+    service: PropTypes.string,
+    value: PropTypes.number,
+    eta: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    zone: PropTypes.string
+  }).isRequired
+};
+
 function ServiceHealthCard({ metric }) {
   const { format } = useLocale();
 
@@ -167,6 +215,17 @@ function ServiceHealthCard({ metric }) {
     </article>
   );
 }
+
+ServiceHealthCard.propTypes = {
+  metric: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    caption: PropTypes.string,
+    format: PropTypes.string,
+    target: PropTypes.number
+  }).isRequired
+};
 
 function resolveRiskTone(risk) {
   const value = typeof risk === 'string' ? risk.toLowerCase() : '';
@@ -248,6 +307,28 @@ function ServiceDeliveryColumn({ column }) {
   );
 }
 
+ServiceDeliveryColumn.propTypes = {
+  column: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    title: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    items: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        client: PropTypes.string,
+        risk: PropTypes.string,
+        eta: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+        zone: PropTypes.string,
+        owner: PropTypes.string,
+        value: PropTypes.number,
+        currency: PropTypes.string,
+        services: PropTypes.arrayOf(PropTypes.string)
+      })
+    ).isRequired
+  }).isRequired
+};
+
 function ServicePackageCard({ pkg }) {
   const { format, t } = useLocale();
   const priceLabel = pkg.price != null ? format.currency(pkg.price, { currency: pkg.currency || 'GBP' }) : t('common.notAvailable');
@@ -279,6 +360,18 @@ function ServicePackageCard({ pkg }) {
   );
 }
 
+ServicePackageCard.propTypes = {
+  pkg: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    price: PropTypes.number,
+    currency: PropTypes.string,
+    highlights: PropTypes.arrayOf(PropTypes.string),
+    serviceName: PropTypes.string
+  }).isRequired
+};
+
 function ServiceCategoryCard({ category }) {
   const { format, t } = useLocale();
   const performanceLabel = category.performance != null ? format.percentage(category.performance, { maximumFractionDigits: 0 }) : null;
@@ -305,6 +398,17 @@ function ServiceCategoryCard({ category }) {
     </article>
   );
 }
+
+ServiceCategoryCard.propTypes = {
+  category: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    type: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    performance: PropTypes.number,
+    activeServices: PropTypes.number
+  }).isRequired
+};
 
 function ServiceCatalogueCard({ service }) {
   const { format, t } = useLocale();
@@ -355,6 +459,24 @@ function ServiceCatalogueCard({ service }) {
     </li>
   );
 }
+
+ServiceCatalogueCard.propTypes = {
+  service: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    type: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    category: PropTypes.string,
+    price: PropTypes.number,
+    currency: PropTypes.string,
+    availability: PropTypes.shape({
+      detail: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+      label: PropTypes.string
+    }),
+    tags: PropTypes.arrayOf(PropTypes.string),
+    coverage: PropTypes.arrayOf(PropTypes.string)
+  }).isRequired
+};
 
 export default function ProviderDashboard() {
   const { t, format } = useLocale();

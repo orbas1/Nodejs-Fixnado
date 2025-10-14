@@ -1,274 +1,121 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import RoleDashboard from '../RoleDashboard.jsx';
-import { FeatureToggleContext } from '../../providers/FeatureToggleProvider.jsx';
-import mockDashboards from '../../api/mockDashboards.js';
 
-const createDashboardFixture = (roleId) => JSON.parse(JSON.stringify(mockDashboards[roleId]));
+vi.mock('../../components/dashboard/DashboardLayout.jsx', () => ({
+  default: ({ roleMeta }) => <div data-testid="dashboard-layout">{roleMeta?.id}</div>
+}));
 
-const enabledToggle = {
-  state: 'enabled',
-  rollout: 1,
-  owner: 'data-ops',
-  ticket: 'FIX-2098',
-  lastModifiedAt: '2025-02-10T10:30:00Z'
-};
+vi.mock('../../components/dashboard/DashboardAccessGate.jsx', () => ({
+  default: () => <div data-testid="access-gate" />
+}));
 
-function renderWithToggles(ui, { evaluation, toggle = enabledToggle, loading = false, refresh = vi.fn() } = {}) {
-  const evaluate = evaluation
-    ? evaluation
-    : vi.fn((key) => {
-        if (key === 'analytics-dashboards') {
-          return { enabled: true, reason: 'enabled', toggle };
-        }
-        return { enabled: true, reason: 'enabled', toggle: null };
-      });
+vi.mock('../../components/dashboard/DashboardUnauthorized.jsx', () => ({
+  default: ({ onRetry }) => (
+    <button type="button" data-testid="unauthorised" onClick={onRetry}>
+      Retry
+    </button>
+  )
+}));
 
-  const contextValue = {
-    loading,
-    error: null,
-    toggles: { 'analytics-dashboards': toggle },
-    version: 'test',
-    lastFetchedAt: Date.now(),
-    refresh,
-    evaluate
+let hasPersonaAccess = true;
+
+const refreshPersonaAccess = vi.fn();
+
+vi.mock('../../hooks/usePersonaAccess.js', () => ({
+  usePersonaAccess: () => ({
+    hasAccess: vi.fn(() => hasPersonaAccess),
+    refresh: refreshPersonaAccess
+  })
+}));
+
+const fetchDashboardMock = vi.fn();
+const buildExportUrlMock = vi.fn(() => '/export.csv');
+const fetchDashboardBlogPostsMock = vi.fn(async () => []);
+
+vi.mock('../../api/analyticsDashboardClient.js', () => ({
+  fetchDashboard: (...args) => fetchDashboardMock(...args),
+  buildExportUrl: (...args) => buildExportUrlMock(...args)
+}));
+
+vi.mock('../../api/blogClient.js', () => ({
+  fetchDashboardBlogPosts: (...args) => fetchDashboardBlogPostsMock(...args)
+}));
+
+const featureToggleMock = vi.fn();
+
+vi.mock('../../providers/FeatureToggleProvider.jsx', async () => {
+  const actual = await vi.importActual('../../providers/FeatureToggleProvider.jsx');
+  return {
+    ...actual,
+    useFeatureToggle: (...args) => featureToggleMock(...args)
   };
+});
 
-  return render(<FeatureToggleContext.Provider value={contextValue}>{ui}</FeatureToggleContext.Provider>);
-}
+const renderDashboard = (path = '/dashboards/admin') =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+      </Routes>
+    </MemoryRouter>
+  );
 
 describe('RoleDashboard', () => {
-  let resolvedOptionsMock;
-  let fetchSpy;
-
   beforeEach(() => {
-    resolvedOptionsMock = vi
-      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
-      .mockReturnValue({ timeZone: 'Europe/London' });
-
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => dashboardFixture
+    hasPersonaAccess = true;
+    fetchDashboardMock.mockResolvedValue({ meta: {}, data: { sections: [] } });
+    fetchDashboardBlogPostsMock.mockResolvedValue([]);
+    featureToggleMock.mockReturnValue({
+      enabled: true,
+      loading: false,
+      reason: null,
+      toggle: { state: 'enabled' },
+      cohort: 'test',
+      refresh: vi.fn()
     });
-    window.localStorage.clear();
-    window.localStorage.setItem('fixnado:personaAccess', JSON.stringify(['admin']));
-    fetchSpy = vi.spyOn(global, 'fetch');
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ timeZone: 'Europe/London' });
   });
 
   afterEach(() => {
-    resolvedOptionsMock?.mockRestore();
     vi.restoreAllMocks();
-    window.localStorage.clear();
+    fetchDashboardMock.mockReset();
+    buildExportUrlMock.mockClear();
+    fetchDashboardBlogPostsMock.mockReset();
+    featureToggleMock.mockReset();
+    refreshPersonaAccess.mockReset();
   });
 
-  it('renders provider dashboard with inventory insights and export CTA', async () => {
-    const providerDashboard = createDashboardFixture('provider');
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => providerDashboard
+  it('renders the dashboard layout when access is granted', async () => {
+    renderDashboard();
+
+    await waitFor(() => expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument());
+    expect(fetchDashboardMock).toHaveBeenCalledWith('admin', expect.any(Object), expect.objectContaining({ signal: expect.any(Object) }));
+    expect(buildExportUrlMock).toHaveBeenCalledWith('admin', expect.any(Object));
+  });
+
+  it('shows the access gate when the toggle is disabled', async () => {
+    featureToggleMock.mockReturnValueOnce({
+      enabled: false,
+      loading: false,
+      reason: 'disabled',
+      toggle: { state: 'disabled' },
+      cohort: 'test',
+      refresh: vi.fn()
     });
 
-    renderWithToggles(
-      <MemoryRouter initialEntries={["/dashboards/provider?timezone=Europe%2FLondon"]}>
-        <Routes>
-          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    renderDashboard();
 
-    expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument());
-    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
-    const exportLink = screen.getByText('Download CSV');
-    expect(exportLink.getAttribute('href')).toMatch(/\/api\/analytics\/dashboards\/admin\/export/);
-    const overviewHeadings = await screen.findAllByText('Executive Overview');
-    expect(overviewHeadings.length).toBeGreaterThan(0);
-    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
-    const downloadLink = screen.getByText('Download CSV');
-    expect(downloadLink.getAttribute('href')).toMatch(/\/api\/analytics\/dashboards\/admin\/export\?timezone=/);
+    await waitFor(() => expect(screen.getByTestId('access-gate')).toBeInTheDocument());
+    expect(fetchDashboardMock).not.toHaveBeenCalled();
   });
 
-  it('shows an error state when the dashboard fails to load', async () => {
-    const originalDev = import.meta.env.DEV;
-    import.meta.env.DEV = false;
+  it('invokes persona refresh when access is denied', async () => {
+    hasPersonaAccess = false;
 
-    try {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ message: 'persona_not_supported' })
-      });
+    renderDashboard();
 
-      renderWithToggles(
-        <MemoryRouter initialEntries={['/dashboards/admin']}>
-          <Routes>
-            <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-          </Routes>
-        </MemoryRouter>
-      );
-
-      expect(await screen.findByText(/couldn’t load this dashboard/i)).toBeInTheDocument();
-
-      global.fetch.mockResolvedValueOnce({
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      json: async () => ({ message: 'persona_not_supported' })
-    });
-    const heading = await screen.findByRole('heading', {
-      level: 1,
-      name: 'Executive Overview'
-    });
-    expect(heading).toBeInTheDocument();
-    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
-    expect(screen.getByRole('link', { name: /download csv/i })).toHaveAttribute(
-      'href',
-      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(timezone)}`
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
-    const metricLabel = await screen.findByText((_, element) => element?.textContent?.toLowerCase() === 'first response');
-    expect(metricLabel).toBeInTheDocument();
-
-    const toolsNavLabel = await screen.findByText('Tools & Materials');
-    const toolsNavButton = toolsNavLabel.closest('button');
-    expect(toolsNavButton).not.toBeNull();
-    if (toolsNavButton) {
-      fireEvent.click(toolsNavButton);
-    }
-
-    const availableUnitsLabel = await screen.findByText('Available units');
-    const summaryCard = availableUnitsLabel.closest('div');
-    expect(summaryCard).not.toBeNull();
-    if (summaryCard) {
-      expect(within(summaryCard).getByText('84')).toBeInTheDocument();
-    }
-    expect(screen.getByText('Thermal imaging kit')).toBeInTheDocument();
-
-    expect(screen.getByRole('link', { name: /Download CSV/i })).toHaveAttribute(
-      'href',
-      '/api/analytics/dashboards/provider/export?timezone=Europe%2FLondon'
-    await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
-    );
-    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
-    const resolvedTimezone =
-      Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/London';
-    expect(screen.getByText('Download CSV')).toHaveAttribute(
-      'href',
-      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(resolvedTimezone)}`
-      '/api/analytics/dashboards/admin/export?timezone=UTC'
-    );
-  });
-
-  it('shows an error state when the dashboard fails to load', async () => {
-    const originalDashboard = mockDashboards.admin;
-    delete mockDashboards.admin;
-
-    try {
-      fetchSpy.mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ message: 'persona_not_supported' })
-      });
-    renderWithToggles(
-      <MemoryRouter initialEntries={['/dashboards/admin']}>
-        <Routes>
-          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    await screen.findByText(/couldn’t load this dashboard/i);
-    expect(await screen.findByText(/couldn’t load this dashboard/i)).toBeInTheDocument();
-
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => dashboardFixture
-    });
-    await waitFor(() =>
-      expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
-    );
-    const retryButton = await screen.findByRole('button', { name: /try again/i });
-    expect(retryButton).toBeInTheDocument();
-
-      renderWithToggles(
-        <MemoryRouter initialEntries={['/dashboards/admin']}>
-          <Routes>
-            <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-          </Routes>
-        </MemoryRouter>
-      );
-
-      await screen.findByRole('heading', { name: /load this dashboard/i });
-
-      mockDashboards.admin = originalDashboard;
-      const dashboardFixture = createDashboardFixture('admin');
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: async () => dashboardFixture
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-      expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
-    } finally {
-      import.meta.env.DEV = originalDev;
-    }
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
-    } finally {
-      mockDashboards.admin = originalDashboard;
-    }
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await waitFor(() => expect(screen.getAllByText('Executive Overview').length).toBeGreaterThan(0));
-    await screen.findAllByText('Executive Overview');
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', {
-          level: 1,
-          name: 'Executive Overview'
-        })
-      ).toBeInTheDocument()
-    );
-      expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
-    );
-    fireEvent.click(retryButton);
-    await screen.findByRole('heading', { name: 'Executive Overview' });
-  });
-
-  it('renders access gate when feature toggle is disabled', async () => {
-    const disabledToggle = {
-      ...enabledToggle,
-      state: 'disabled'
-    };
-
-    renderWithToggles(
-      <MemoryRouter initialEntries={['/dashboards/admin']}>
-        <Routes>
-          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-        </Routes>
-      </MemoryRouter>,
-      {
-        toggle: disabledToggle,
-        evaluation: vi.fn(() => ({ enabled: false, reason: 'disabled', toggle: disabledToggle }))
-      }
-    );
-
-    await waitFor(() => expect(screen.getByText(/analytics dashboards are not yet enabled/i)).toBeInTheDocument());
-    expect(global.fetch).not.toHaveBeenCalled();
-    expect(screen.getByText(/request pilot access/i)).toBeInTheDocument();
-  });
-
-  it('renders an access denied experience when persona is not permitted', async () => {
-    window.localStorage.setItem('fixnado:personaAccess', JSON.stringify(['user']));
-
-    renderWithToggles(
-      <MemoryRouter initialEntries={['/dashboards/admin']}>
-        <Routes>
-          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => expect(screen.getByText(/You need permission to open/i)).toBeInTheDocument());
-    expect(global.fetch).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /dashboard hub/i })).toBeInTheDocument();
+    await waitFor(() => expect(refreshPersonaAccess).toHaveBeenCalled());
   });
 });

@@ -15,7 +15,7 @@ describe('communications API', () => {
     vi.useRealTimers();
     try {
       await sequelize.close();
-    } catch (error) {
+    } catch {
       // ignore double close when watch mode restarts tests
     }
   });

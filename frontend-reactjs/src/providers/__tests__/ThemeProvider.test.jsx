@@ -28,7 +28,7 @@ describe('ThemeProvider telemetry + persistence', () => {
     document.documentElement.dataset.contrast = '';
     document.documentElement.dataset.density = '';
     window.dataLayer = [];
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true });
     Object.defineProperty(window.navigator, 'sendBeacon', {
       value: undefined,
       configurable: true,
@@ -67,7 +67,7 @@ describe('ThemeProvider telemetry + persistence', () => {
     expect(window.dataLayer.some((event) => event.event === 'theme_change')).toBe(true);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         '/api/telemetry/ui-preferences',
         expect.objectContaining({ method: 'POST' })
       );

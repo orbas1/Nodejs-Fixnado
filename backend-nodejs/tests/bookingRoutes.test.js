@@ -59,7 +59,7 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     await sequelize.close();
-  } catch (error) {
+  } catch {
     // ignore double close in watch mode
   }
 });

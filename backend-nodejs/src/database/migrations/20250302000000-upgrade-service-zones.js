@@ -9,7 +9,7 @@ function normaliseGeometry(raw) {
   if (typeof geometry === 'string') {
     try {
       geometry = JSON.parse(geometry);
-    } catch (error) {
+    } catch {
       return null;
     }
   }

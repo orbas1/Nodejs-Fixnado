@@ -1,179 +1,130 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Bars3Icon } from '@heroicons/react/24/outline';
-import { LOGO_URL } from '../constants/branding';
 import {
-  BUSINESS_FRONT_ALLOWED_ROLES,
-  PROVIDER_EXPERIENCE_ALLOWED_ROLES,
-  PROVIDER_STOREFRONT_ALLOWED_ROLES
-} from '../constants/accessControl.js';
+  Bars3Icon,
+  BellIcon,
+  ChatBubbleLeftRightIcon,
+  ChevronDownIcon,
+  UserCircleIcon
+} from '@heroicons/react/24/outline';
+import { LOGO_URL } from '../constants/branding';
 import { useLocale } from '../hooks/useLocale.js';
-import { hasCommunicationsAccess, normaliseRole } from '../constants/accessControl.js';
-import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
-import PersonaSwitcher from './PersonaSwitcher.jsx';
-import LanguageSelector from './LanguageSelector.jsx';
 import { useSession } from '../hooks/useSession.js';
+import LanguageSelector from './LanguageSelector.jsx';
 
-const navigationConfig = [
-  { key: 'home', nameKey: 'nav.home', href: '/' },
-  { key: 'solutions', nameKey: 'nav.solutions', href: '/services#solution-streams' },
-  { key: 'tools', nameKey: 'nav.tools', href: '/tools' },
-  { key: 'industries', nameKey: 'nav.industries', href: '/#home-marketing' },
-  { key: 'platform', nameKey: 'nav.platform', href: '/#home-operations' },
-  { key: 'materials', nameKey: 'nav.materials', href: '/materials' },
-  { key: 'blog', nameKey: 'nav.blog', href: '/blog' },
-  { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
+const explorerLinks = (t) => [
   {
-    key: 'company',
-    nameKey: 'nav.company',
-    children: [
-      {
-        key: 'about',
-        nameKey: 'nav.about',
-        descriptionKey: 'nav.aboutDescription',
-        href: '/about'
-      },
-      {
-        key: 'trust',
-        nameKey: 'nav.trustCentre',
-        descriptionKey: 'nav.trustCentreDescription',
-        href: '/about#trust'
-      },
-      {
-        key: 'careers',
-        nameKey: 'nav.careers',
-        descriptionKey: 'nav.careersDescription',
-        href: '/about#careers'
-      }
-    ]
+    key: 'search-services',
+    name: t('nav.explorerSearchServices'),
+    description: t('nav.explorerSearchServicesDescription'),
+    href: '/search'
   },
   {
-    key: 'dashboards',
-    nameKey: 'nav.dashboards',
-    children: [
-      {
-        key: 'provider',
-        nameKey: 'nav.providerConsole',
-        descriptionKey: 'nav.providerConsoleDescription',
-        href: '/provider/dashboard'
-      },
-      {
-        key: 'provider-storefront',
-        nameKey: 'nav.providerStorefront',
-        descriptionKey: 'nav.providerStorefrontDescription',
-        href: '/provider/storefront'
-      },
-      {
-        key: 'enterprise',
-        nameKey: 'nav.enterpriseAnalytics',
-        descriptionKey: 'nav.enterpriseAnalyticsDescription',
-        href: '/dashboards/enterprise/panel'
-      },
-      {
-        key: 'business-fronts',
-        nameKey: 'nav.businessFronts',
-        descriptionKey: 'nav.businessFrontsDescription',
-        href: '/providers/metro-power-services'
-      },
-      {
-        key: 'geo-matching',
-        nameKey: 'nav.geoMatching',
-        descriptionKey: 'nav.geoMatchingDescription',
-        href: '/operations/geo-matching'
-      }
-    ]
+    key: 'providers',
+    name: t('nav.explorerProviders'),
+    description: t('nav.explorerProvidersDescription'),
+    href: '/providers'
   },
-  { key: 'communications', nameKey: 'nav.communications', href: '/communications' }
+  {
+    key: 'servicemen',
+    name: t('nav.explorerServicemen'),
+    description: t('nav.explorerServicemenDescription'),
+    href: '/services#field-teams'
+  },
+  {
+    key: 'materials',
+    name: t('nav.explorerMaterials'),
+    description: t('nav.explorerMaterialsDescription'),
+    href: '/materials'
+  }
 ];
+
+const marketplaceLinks = (t) => [
+  {
+    key: 'tools',
+    name: t('nav.marketplaceTools'),
+    description: t('nav.marketplaceToolsDescription'),
+    href: '/tools'
+  },
+  {
+    key: 'materials',
+    name: t('nav.marketplaceMaterials'),
+    description: t('nav.marketplaceMaterialsDescription'),
+    href: '/materials'
+  }
+];
+
+const notificationPreview = [
+  {
+    id: 'n1',
+    title: 'Marketplace scheduling',
+    body: 'Tower crane inspection confirmed for Thursday 08:00.',
+    time: '2h'
+  },
+  {
+    id: 'n2',
+    title: 'Compliance reminder',
+    body: 'Upload updated insurance paperwork before 31 May.',
+    time: '1d'
+  }
+];
+
+const inboxPreview = [
+  {
+    id: 'c1',
+    sender: 'Dispatch desk',
+    snippet: 'We have a crew available to cover your shift tomorrow.',
+    href: '/communications?thread=dispatch'
+  },
+  {
+    id: 'c2',
+    sender: 'Operations HQ',
+    snippet: 'Thanks for confirming the preventative maintenance window.',
+    href: '/communications?thread=operations'
+  }
+];
+
+const capitalise = (value, fallback = 'Guest') => {
+  if (!value || typeof value !== 'string') {
+    return fallback;
+  }
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const resolveAvatarInitial = (userId, role) => {
+  if (userId && typeof userId === 'string') {
+    const trimmed = userId.trim();
+    if (trimmed.length > 0) {
+      return trimmed.charAt(0).toUpperCase();
+    }
+  }
+  if (role && typeof role === 'string') {
+    return role.charAt(0).toUpperCase();
+  }
+  return 'F';
+};
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [desktopMenu, setDesktopMenu] = useState(null);
   const [mobileMenu, setMobileMenu] = useState(null);
+  const [tray, setTray] = useState(null);
   const menuRefs = useRef({});
   const location = useLocation();
-  const { t, locale } = useLocale();
-  const [sessionRole, setSessionRole] = useState(() =>
-    normaliseRole(resolveSessionTelemetryContext().role)
-  );
-  const { hasRole } = useSession();
-  const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
-  const allowProviderConsole = hasRole(PROVIDER_EXPERIENCE_ALLOWED_ROLES);
-  const allowProviderStorefront = hasRole(PROVIDER_STOREFRONT_ALLOWED_ROLES);
-  const allowEnterprisePanel = hasRole(['enterprise']);
+  const { t } = useLocale();
+  const { isAuthenticated, role, userId } = useSession();
 
   const navigation = useMemo(() => {
-    const filtered = navigationConfig
-      .filter((item) => item.key !== 'communications' || hasCommunicationsAccess(sessionRole))
-      .map((item) => {
-        const base = {
-          ...item,
-          name: t(item.nameKey)
-        };
-
-        if (!item.children) {
-          return base;
-        }
-
-        const children = item.children
-          .filter((child) => {
-            if (child.key === 'business-fronts') {
-              return allowBusinessFronts;
-            }
-            if (child.key === 'provider') {
-              return allowProviderConsole;
-            }
-            if (child.key === 'provider-storefront') {
-              return allowProviderStorefront;
-            }
-            if (child.key === 'enterprise') {
-              return allowEnterprisePanel;
-            }
-            return true;
-          })
-          .map((child) => ({
-            ...child,
-            name: t(child.nameKey),
-            description: child.descriptionKey ? t(child.descriptionKey) : undefined
-          }));
-
-        if (children.length === 0) {
-          return null;
-        }
-
-        return { ...base, children };
-      })
-      .filter(Boolean);
-
-    return filtered;
-  }, [
-    sessionRole,
-    t,
-    locale,
-    allowBusinessFronts,
-    allowProviderConsole,
-    allowProviderStorefront,
-    allowEnterprisePanel
-  ]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
+    if (!isAuthenticated) {
+      return [];
     }
 
-    const syncRole = () => {
-      setSessionRole(normaliseRole(resolveSessionTelemetryContext().role));
-    };
-
-    syncRole();
-    window.addEventListener('storage', syncRole);
-    window.addEventListener('focus', syncRole);
-
-    return () => {
-      window.removeEventListener('storage', syncRole);
-      window.removeEventListener('focus', syncRole);
-    };
-  }, []);
+    return [
+      { key: 'feed', name: t('nav.feed'), href: '/feed' },
+      { key: 'explorer', name: t('nav.explorer'), children: explorerLinks(t) },
+      { key: 'marketplace', name: t('nav.marketplace'), children: marketplaceLinks(t) }
+    ];
+  }, [isAuthenticated, t]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -184,6 +135,7 @@ export default function Header() {
       const clickedInside = containers.some((node) => node && node.contains(event.target));
       if (!clickedInside) {
         setDesktopMenu(null);
+        setTray(null);
       }
     };
 
@@ -191,6 +143,7 @@ export default function Header() {
       if (event.key === 'Escape') {
         setDesktopMenu(null);
         setMobileMenu(null);
+        setTray(null);
       }
     };
 
@@ -207,6 +160,7 @@ export default function Header() {
     setOpen(false);
     setDesktopMenu(null);
     setMobileMenu(null);
+    setTray(null);
   }, [location.pathname]);
 
   const setMenuRef = (id) => (node) => {
@@ -257,96 +211,237 @@ export default function Header() {
             loading="lazy"
           />
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium" aria-label="Primary">
-          {navigation.map((item) => (
-            item.children ? (
-              <div
-                key={item.key}
-                className="relative"
-                ref={setMenuRef(item.key)}
-                onMouseEnter={() => setDesktopMenu(item.key)}
-                onFocus={() => setDesktopMenu(item.key)}
-                onMouseLeave={() => setDesktopMenu(null)}
-                onBlur={(event) => handleMenuBlur(item.key, event)}
-              >
+        {isAuthenticated ? (
+          <>
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium" aria-label="Primary">
+              {navigation.map((item) => (
+                item.children ? (
+                  <div
+                    key={item.key}
+                    className="relative"
+                    ref={setMenuRef(item.key)}
+                    onMouseEnter={() => setDesktopMenu(item.key)}
+                    onFocus={() => setDesktopMenu(item.key)}
+                    onMouseLeave={() => setDesktopMenu(null)}
+                    onBlur={(event) => handleMenuBlur(item.key, event)}
+                  >
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 rounded-full px-4 py-2 transition-colors ${
+                        isNavItemActive(item) ? 'text-primary' : 'text-slate-600 hover:text-accent'
+                      }`}
+                      aria-expanded={desktopMenu === item.key}
+                      aria-haspopup="true"
+                      onClick={() =>
+                        setDesktopMenu((current) => (current === item.key ? null : item.key))
+                      }
+                    >
+                      {item.name}
+                      <ChevronDownIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                    </button>
+                    {desktopMenu === item.key ? (
+                      <div
+                        role="menu"
+                        aria-label={`${item.name} menu`}
+                        className="absolute left-1/2 z-50 mt-3 w-80 -translate-x-1/2 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur"
+                      >
+                        <ul className="space-y-2">
+                          {item.children.map((child) => (
+                            <li key={child.key}>
+                              <NavLink
+                                to={child.href}
+                                className="block rounded-2xl p-3 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                onClick={() => setDesktopMenu(null)}
+                              >
+                                <p className="text-sm font-semibold text-primary">{child.name}</p>
+                                {child.description ? (
+                                  <p className="mt-1 text-xs text-slate-500">{child.description}</p>
+                                ) : null}
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <NavLink
+                    key={item.key}
+                    to={item.href}
+                    className={({ isActive }) =>
+                      `transition-colors ${isActive || isNavItemActive(item) ? 'text-primary' : 'text-slate-600 hover:text-accent'}`
+                    }
+                  >
+                    {item.name}
+                  </NavLink>
+                )
+              ))}
+            </nav>
+            <div className="hidden md:flex items-center gap-3">
+              <LanguageSelector variant="header" />
+              <div className="relative" ref={setMenuRef('tray:notifications')}>
                 <button
                   type="button"
-                  className={`flex items-center gap-1 rounded-full px-4 py-2 transition-colors ${
-                    isNavItemActive(item) ? 'text-primary' : 'text-slate-600 hover:text-accent'
-                  }`}
-                  aria-expanded={desktopMenu === item.key}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:text-primary"
+                  onClick={() => setTray((current) => (current === 'notifications' ? null : 'notifications'))}
                   aria-haspopup="true"
-                  onClick={() =>
-                    setDesktopMenu((current) => (current === item.key ? null : item.key))
-                  }
+                  aria-expanded={tray === 'notifications'}
+                  aria-label={t('nav.notifications')}
                 >
-                  {item.name}
-                  <span aria-hidden="true" className="text-xs text-slate-400">
-                    ▾
-                  </span>
+                  <BellIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="absolute top-2 right-2 inline-flex h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
                 </button>
-                {desktopMenu === item.key ? (
-                  <div
-                    role="menu"
-                    aria-label={`${item.name} menu`}
-                    className="absolute left-1/2 z-50 mt-3 w-80 -translate-x-1/2 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur"
-                  >
-                    <ul className="space-y-2">
-                      {item.children.map((child) => (
-                        <li key={child.key}>
-                          <NavLink
-                            to={child.href}
-                            className="block rounded-2xl p-3 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                            onClick={() => setDesktopMenu(null)}
-                          >
-                            <p className="text-sm font-semibold text-primary">{child.name}</p>
-                            {child.description ? (
-                              <p className="mt-1 text-xs text-slate-500">{child.description}</p>
-                            ) : null}
-                          </NavLink>
+                {tray === 'notifications' ? (
+                  <div className="absolute right-0 z-50 mt-3 w-80 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+                    <h3 className="text-sm font-semibold text-primary">{t('nav.notifications')}</h3>
+                    <ul className="mt-3 space-y-3">
+                      {notificationPreview.length === 0 ? (
+                        <li className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-500">
+                          {t('nav.notificationsEmpty')}
                         </li>
-                      ))}
+                      ) : (
+                        notificationPreview.map((item) => (
+                          <li key={item.id} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                            <p className="text-sm font-semibold text-primary">{item.title}</p>
+                            <p className="mt-1 text-xs text-slate-500">{item.body}</p>
+                            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">{item.time} {t('nav.notificationsAgo')}</p>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </div>
                 ) : null}
               </div>
-            ) : (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                className={({ isActive }) =>
-                  `transition-colors ${isActive || isNavItemActive(item) ? 'text-primary' : 'text-slate-600 hover:text-accent'}`
-                }
-              >
-                {item.name}
-              </NavLink>
-            )
-          ))}
-        </nav>
-        <div className="hidden md:flex items-center gap-3">
-          <PersonaSwitcher variant="desktop" />
-          <LanguageSelector variant="header" />
-          <Link
-            to="/login"
-            className="px-4 py-2 rounded-full border border-accent text-accent font-semibold hover:bg-accent/10"
+              <div className="relative" ref={setMenuRef('tray:inbox')}>
+                <button
+                  type="button"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:text-primary"
+                  onClick={() => setTray((current) => (current === 'inbox' ? null : 'inbox'))}
+                  aria-haspopup="true"
+                  aria-expanded={tray === 'inbox'}
+                  aria-label={t('nav.inbox')}
+                >
+                  <ChatBubbleLeftRightIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="absolute top-2 right-2 inline-flex h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                </button>
+                {tray === 'inbox' ? (
+                  <div className="absolute right-0 z-50 mt-3 w-80 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+                    <h3 className="text-sm font-semibold text-primary">{t('nav.inbox')}</h3>
+                    <ul className="mt-3 space-y-3">
+                      {inboxPreview.length === 0 ? (
+                        <li className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-500">
+                          {t('nav.inboxEmpty')}
+                        </li>
+                      ) : (
+                        inboxPreview.map((item) => (
+                          <li key={item.id} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                            <p className="text-sm font-semibold text-primary">{item.sender}</p>
+                            <p className="mt-1 text-xs text-slate-500">{item.snippet}</p>
+                            <Link
+                              to={item.href}
+                              className="mt-2 inline-flex items-center text-xs font-semibold text-accent hover:text-primary"
+                              onClick={() => setTray(null)}
+                            >
+                              {t('nav.messagesOpenThread')}
+                            </Link>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                    <Link
+                      to="/communications"
+                      className="mt-4 inline-flex w-full justify-center rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
+                      onClick={() => setTray(null)}
+                    >
+                      {t('nav.messagesViewMore')}
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+              <div className="relative" ref={setMenuRef('tray:avatar')}>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"
+                  onClick={() => setTray((current) => (current === 'avatar' ? null : 'avatar'))}
+                  aria-haspopup="true"
+                  aria-expanded={tray === 'avatar'}
+                  aria-label={t('nav.accountMenu')}
+                >
+                  <span className="text-sm font-semibold">
+                    {resolveAvatarInitial(userId, role)}
+                  </span>
+                </button>
+                {tray === 'avatar' ? (
+                  <div className="absolute right-0 z-50 mt-3 w-72 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <UserCircleIcon className="h-7 w-7" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-primary">{capitalise(userId, 'Fixnado member')}</p>
+                        <p className="text-xs text-slate-500">{t('nav.statusLabel', { status: capitalise(role, 'guest') })}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <Link
+                        to="/dashboards"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+                        onClick={() => setTray(null)}
+                      >
+                        {t('nav.viewDashboard')}
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                      <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
+                        {t('nav.manageAccountHint')}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-full border border-accent text-accent font-semibold hover:bg-accent/10"
+            >
+              {t('nav.login')}
+            </Link>
+            <Link
+              to="/register"
+              className="px-4 py-2 rounded-full bg-accent text-white font-semibold shadow-lg shadow-accent/30 hover:bg-accent/90"
+            >
+              {t('nav.getStarted')}
+            </Link>
+          </div>
+        )}
+        {isAuthenticated ? (
+          <button
+            className="md:hidden inline-flex items-center justify-center rounded-full border border-slate-200 p-2"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label={t('nav.toggleMenu')}
           >
-            {t('nav.login')}
-          </Link>
-          <Link
-            to="/register"
-            className="px-4 py-2 rounded-full bg-accent text-white font-semibold shadow-lg shadow-accent/30 hover:bg-accent/90"
-          >
-            {t('nav.getStarted')}
-          </Link>
-        </div>
-        <button
-          className="md:hidden inline-flex items-center justify-center rounded-full border border-slate-200 p-2"
-          onClick={() => setOpen((prev) => !prev)}
-        >
-          <Bars3Icon className="h-6 w-6 text-primary" />
-        </button>
+            <Bars3Icon className="h-6 w-6 text-primary" />
+          </button>
+        ) : (
+          <div className="md:hidden flex items-center gap-3">
+            <Link
+              to="/login"
+              className="rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent"
+            >
+              {t('nav.login')}
+            </Link>
+            <Link
+              to="/register"
+              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white"
+            >
+              {t('nav.getStarted')}
+            </Link>
+          </div>
+        )}
       </div>
-      {open && (
+      {isAuthenticated && open ? (
         <div className="md:hidden px-6 pb-6 space-y-4">
           {navigation.map((item) => (
             item.children ? (
@@ -399,28 +494,27 @@ export default function Header() {
               </NavLink>
             )
           ))}
-          <div className="flex flex-col gap-3 pt-4">
-            <PersonaSwitcher variant="mobile" />
+          <div className="flex flex-col gap-3 pt-2">
             <LanguageSelector variant="mobile" />
-          </div>
-          <div className="flex gap-3">
             <Link
-              to="/login"
-              className="flex-1 px-4 py-2 rounded-full border border-accent text-center text-accent font-semibold hover:bg-accent/10"
+              to="/communications"
+              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-primary"
               onClick={() => setOpen(false)}
             >
-              {t('nav.login')}
+              {t('nav.inbox')}
+              <span aria-hidden="true">→</span>
             </Link>
             <Link
-              to="/register"
-              className="flex-1 px-4 py-2 rounded-full bg-accent text-center text-white font-semibold shadow-lg shadow-accent/30 hover:bg-accent/90"
+              to="/dashboards"
+              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-primary"
               onClick={() => setOpen(false)}
             >
-              {t('nav.getStarted')}
+              {t('nav.viewDashboard')}
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
-      )}
+      ) : null}
     </header>
   );
 }
