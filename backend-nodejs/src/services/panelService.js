@@ -41,6 +41,58 @@ function average(values, fallback = 0) {
   return valid.reduce((sum, value) => sum + value, 0) / valid.length;
 }
 
+function clamp(value, minimum, maximum) {
+  if (!Number.isFinite(value)) {
+    return minimum;
+  }
+  return Math.max(minimum, Math.min(maximum, value));
+}
+
+function resolveConfidenceLabel(sampleSize) {
+  if (sampleSize >= 50) {
+    return 'high';
+  }
+  if (sampleSize >= 15) {
+    return 'medium';
+  }
+  if (sampleSize > 0) {
+    return 'low';
+  }
+  return 'insufficient';
+}
+
+function resolveTrustBand(score) {
+  if (score >= 90) {
+    return 'platinum';
+  }
+  if (score >= 80) {
+    return 'gold';
+  }
+  if (score >= 70) {
+    return 'silver';
+  }
+  if (score >= 60) {
+    return 'bronze';
+  }
+  return 'monitor';
+}
+
+function resolveReviewBand(score) {
+  if (score >= 4.7) {
+    return 'worldClass';
+  }
+  if (score >= 4.3) {
+    return 'excellent';
+  }
+  if (score >= 4) {
+    return 'reliable';
+  }
+  if (score >= 3.5) {
+    return 'emerging';
+  }
+  return 'attention';
+}
+
 function toSlug(input, fallback) {
   if (typeof input === 'string' && input.trim()) {
     return input
@@ -625,8 +677,108 @@ export async function buildBusinessFront({ slug }) {
       reviewer: booking.meta?.requester || 'Client stakeholder',
       rating: Number.isFinite(booking.meta?.csat) ? Number(booking.meta.csat) : 4.8,
       comment: booking.meta.feedback,
-      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement'
+      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement',
+      createdAt: booking.meta?.reviewedAt
+        ? DateTime.fromISO(booking.meta.reviewedAt).toISO()
+        : booking.lastStatusTransitionAt
+          ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISO()
+          : null
     }));
+
+  const bookingCount = bookings.length;
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const reliabilityRatio = bookingCount === 0 ? 0.92 : clamp(completedBookingsCount / bookingCount, 0, 1);
+
+  const slaEligible = bookings.filter((booking) => booking.slaExpiresAt && booking.lastStatusTransitionAt);
+  const slaOnTime = slaEligible.filter((booking) => {
+    const completedAt = DateTime.fromJSDate(booking.lastStatusTransitionAt);
+    const sla = DateTime.fromJSDate(booking.slaExpiresAt);
+    return completedAt <= sla;
+  }).length;
+  const punctualityRatio = slaEligible.length === 0 ? 0.9 : clamp(slaOnTime / Math.max(slaEligible.length, 1), 0, 1);
+
+  const cancellationCount = bookings.filter((booking) => ['cancelled', 'disputed', 'failed'].includes(booking.status)).length;
+  const cancellationScore = clamp(1 - (bookingCount === 0 ? 0 : cancellationCount / bookingCount), 0, 1);
+
+  const complianceCoverage = complianceDocs.length > 0 ? clamp(complianceDocs.length / 8, 0, 1) : 0;
+  const complianceScore = complianceDocs.length > 0 ? 0.6 + 0.4 * complianceCoverage : 0.45;
+
+  const coverageScore = serviceZones.length > 0 ? clamp(serviceZones.length / 12, 0, 1) : 0.5;
+
+  const reviewRatings = reviews
+    .map((review) => (Number.isFinite(review.rating) ? Number(review.rating) : null))
+    .filter((value) => value != null);
+  const sentimentScore = reviewRatings.length > 0 ? clamp(average(reviewRatings) / 5, 0, 1) : 0.86;
+
+  const trustConfidence = resolveConfidenceLabel(bookingCount);
+  const confidenceMultiplier =
+    trustConfidence === 'high' ? 1 : trustConfidence === 'medium' ? 0.97 : trustConfidence === 'low' ? 0.92 : 0.88;
+
+  const trustComposite =
+    (0.3 * reliabilityRatio +
+      0.22 * punctualityRatio +
+      0.18 * complianceScore +
+      0.15 * sentimentScore +
+      0.1 * cancellationScore +
+      0.05 * coverageScore) *
+    100 *
+    confidenceMultiplier;
+
+  const trustValue = Math.round(clamp(trustComposite, 0, 100));
+  const trustBand = resolveTrustBand(trustValue);
+
+  const trustScore = {
+    value: trustValue,
+    band: trustBand,
+    confidence: trustConfidence,
+    sampleSize: bookingCount,
+    caption: `${completedBookingsCount} of ${Math.max(bookingCount, 1)} jobs completed with ${Math.round(
+      punctualityRatio * 100
+    )}% on-time sign-off`,
+    breakdown: {
+      reliability: Number((reliabilityRatio * 100).toFixed(1)),
+      punctuality: Number((punctualityRatio * 100).toFixed(1)),
+      compliance: Number((complianceScore * 100).toFixed(1)),
+      sentiment: Number((sentimentScore * 100).toFixed(1)),
+      cancellations: Number((cancellationScore * 100).toFixed(1)),
+      coverage: Number((coverageScore * 100).toFixed(1))
+    }
+  };
+
+  const reviewAverage = reviewRatings.length > 0 ? average(reviewRatings) : 4.6;
+  const reviewValue = Number(reviewAverage.toFixed(2));
+  const reviewBand = resolveReviewBand(reviewValue);
+  const reviewConfidence = resolveConfidenceLabel(reviewRatings.length);
+  const reviewDistribution = {
+    promoters: reviewRatings.filter((rating) => rating >= 4.5).length,
+    positive: reviewRatings.filter((rating) => rating >= 4 && rating < 4.5).length,
+    neutral: reviewRatings.filter((rating) => rating >= 3 && rating < 4).length,
+    detractors: reviewRatings.filter((rating) => rating < 3).length
+  };
+
+  const reviewScore = {
+    value: reviewValue,
+    band: reviewBand,
+    confidence: reviewConfidence,
+    sampleSize: reviewRatings.length,
+    caption: `${reviewRatings.length} verified review${reviewRatings.length === 1 ? '' : 's'}`,
+    distribution: reviewDistribution
+  };
+
+  stats.unshift({
+    id: 'trust-score',
+    label: 'Trust score',
+    value: trustScore.value,
+    format: 'number',
+    caption: trustScore.caption
+  });
+  stats.splice(1, 0, {
+    id: 'review-score',
+    label: 'Review score',
+    value: reviewScore.value,
+    format: 'number',
+    caption: reviewScore.caption
+  });
 
   const deals = serviceCatalogue
     .filter((service) => Number.isFinite(service.price))
@@ -756,6 +908,10 @@ export async function buildBusinessFront({ slug }) {
       tools,
       servicemen,
       serviceZones,
+      scores: {
+        trust: trustScore,
+        review: reviewScore
+      },
       taxonomy: {
         categories: listServiceCategories(),
         types: listServiceTypes()
