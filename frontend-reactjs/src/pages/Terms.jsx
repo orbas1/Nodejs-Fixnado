@@ -26,9 +26,8 @@ function Terms() {
             {termsDocument.documentTitle}
           </h1>
           <p className="mt-4 max-w-3xl text-base text-white/80 md:text-lg">
-            A comprehensive legal framework governing the Fixnado marketplace, operated by Blackwellen Ltd. These
-            Terms are tailored to the regulatory landscape of England and Wales and are designed to give Providers and
-            clients enterprise-grade clarity, accountability, and protection.
+            The Fixnado marketplace terms for England and Wales covering how clients and providers work with
+            Blackwellen Ltd.
           </p>
           <dl className="mt-8 grid gap-6 text-sm text-white/80 md:grid-cols-3">
             <div>
@@ -51,7 +50,7 @@ function Terms() {
               className="inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <span aria-hidden="true" className="text-lg">🖨️</span>
-              Download / Print copy
+              Download PDF
             </button>
             <a
               href={`mailto:${contactDetails.email}`}
@@ -68,10 +67,7 @@ function Terms() {
         <aside className="lg:w-72">
           <div className="sticky top-28 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
             <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Contents</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Jump to the clause you need or browse sequentially for a holistic understanding of your contractual
-              obligations.
-            </p>
+            <p className="mt-2 text-sm text-slate-600">Jump straight to any clause.</p>
             <nav aria-label="Terms of service sections" className="mt-4 space-y-2 text-sm text-slate-700">
               {sections.map((section) => (
                 <a
@@ -80,9 +76,8 @@ function Terms() {
                   className="group flex items-start gap-3 rounded-2xl px-3 py-2 transition hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60 transition group-hover:bg-primary" />
-                  <span className="leading-snug">
-                    <span className="block font-medium text-slate-900 group-hover:text-primary">{section.title}</span>
-                    <span className="mt-0.5 block text-xs text-slate-500">{section.summary}</span>
+                  <span className="leading-snug font-medium text-slate-900 group-hover:text-primary">
+                    {section.title}
                   </span>
                 </a>
               ))}

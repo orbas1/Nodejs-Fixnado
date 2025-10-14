@@ -5,22 +5,21 @@ const solutionStreams = [
   {
     id: 'enterprise',
     name: 'Enterprise programmes',
-    description:
-      'Multi-site rollouts, compliance-driven projects, and embedded field teams orchestrated through Fixnado governance.',
+    description: 'Multi-site rollouts with governance and command support built in.',
     services: ['Critical facility retrofits', 'Corporate IT dispatch pods', 'Campaign logistics'],
     kpi: 'Avg. CSAT 97%'
   },
   {
     id: 'smb',
     name: 'SMB & residential',
-    description: 'Rapid-response trades, smart home upgrades, and emergency mitigation with escrow-backed payments.',
+    description: 'Fast trades, smart upgrades, and emergency cover backed by escrow.',
     services: ['Rapid electrical response', 'Smart home installs', 'Disaster clean-up squads'],
     kpi: 'Median arrival 42m'
   },
   {
     id: 'marketplace',
     name: 'Marketplace & rentals',
-    description: 'Tools, consumables, and insured rentals available to book alongside service engagements.',
+    description: 'Tools and consumables ready to bundle with any booking.',
     services: ['High-demand tool rentals', 'Material replenishment', 'Certified consumable packs'],
     kpi: 'On-time delivery 98%'
   }
@@ -29,15 +28,15 @@ const solutionStreams = [
 const complianceBadges = [
   {
     title: 'Escrow-first purchasing',
-    detail: 'Every package includes milestone-based releases, dual authorisation, and dispute concierge coverage.'
+    detail: 'Milestone releases use dual approval and concierge support.'
   },
   {
     title: 'Industry-specific credentials',
-    detail: 'Healthcare, utilities, and BFSI modules surface compliance prerequisites and renewal reminders automatically.'
+    detail: 'Sector packs surface required certificates and renewal reminders.'
   },
   {
     title: 'GDPR & consent ready',
-    detail: 'Copy variants and consent prompts align with locale-specific privacy regulation, logged for audit.'
+    detail: 'Locale-aware consent prompts and audit logging are standard.'
   }
 ];
 
@@ -50,72 +49,66 @@ const marketingMetrics = [
 const funnelEnhancements = [
   {
     name: 'Industry landing modules',
-    detail: 'Sector-specific hero bands, case studies, and compliance highlights swapped via Contentful locales (web_marketing.home.*).'
+    detail: 'Swap sector copy, case studies, and compliance callouts per locale.'
   },
   {
     name: 'Service comparison rail',
-    detail: 'Visitors can contrast SLA levels, credentials, and marketplace add-ons without leaving the funnel.'
+    detail: 'Compare SLAs, credentials, and add-ons without leaving the page.'
   },
   {
     name: 'Proof & assurance ribbon',
-    detail: 'ISO, insurance, and SOC attestation badges pinned beneath CTAs with renewal automation metadata.'
+    detail: 'Show ISO, insurance, and SOC badges with live renewal status.'
   }
 ];
 
 const activationSteps = [
   {
     title: 'Scope & configure',
-    detail:
-      'Select standard packages or configure custom programmes. Pricing calculators respect zone, compliance, and travel modifiers.'
+    detail: 'Pick a package or tailor milestones with pricing controls per zone.'
   },
   {
     title: 'Secure & govern',
-    detail:
-      'Escrow funding captured with milestone schedules, insurance riders, and access controls defined per site.'
+    detail: 'Capture escrow, insurance, and role access before dispatch.'
   },
   {
     title: 'Launch & optimise',
-    detail:
-      'Telemetry, satisfaction surveys, and Finova campaign metrics feed dashboards for ongoing optimisation.'
+    detail: 'Use telemetry and feedback to refine every engagement.'
   }
 ];
 
 const localisationPlan = [
-  { locale: 'English (UK)', status: 'Live', notes: 'Default locale with compliance copy and FCA wording.' },
-  { locale: 'English (US)', status: 'Live', notes: 'IRS tax guidance + OSHA references updated.' },
-  { locale: 'Español (MX)', status: 'Sprint 4', notes: 'Marketing hero, proof modules, and checkout copy localised.' }
+  { locale: 'English (UK)', status: 'Live', notes: 'Baseline copy and FCA language.' },
+  { locale: 'English (US)', status: 'Live', notes: 'IRS and OSHA references aligned.' },
+  { locale: 'Español (MX)', status: 'Sprint 4', notes: 'Hero, proof, and checkout copy in progress.' }
 ];
 
 const escrowMilestones = [
   {
     title: 'Milestone funded',
-    caption: 'Dual approval captures escrow before dispatch with ISO-compliant audit trails.'
+    caption: 'Escrow locks in before teams roll out.'
   },
   {
     title: 'Field telemetry sync',
-    caption: 'Technician apps feed arrival, photo proof, and punch list completion in real time.'
+    caption: 'Mobile apps stream proof of arrival and completion.'
   },
   {
     title: 'Finance release',
-    caption: 'Payment release waits for customer sign-off, compliance docs, and safety checks.'
+    caption: 'Funds move after sign-off and compliance checks.'
   }
 ];
 
 const assuranceRails = [
   {
     name: 'Role-based orchestration',
-    detail:
-      'Enterprise RBAC ensures procurement leaders, site managers, and finance controllers only see the controls they need.'
+    detail: 'RBAC keeps procurement, site, and finance teams in their lanes.'
   },
   {
     name: 'Escrow dispute concierge',
-    detail:
-      'Dedicated dispute specialists mediate escalations, holding funds securely until verified remediation is delivered.'
+    detail: 'Specialists mediate escalations while funds stay protected.'
   },
   {
     name: 'Mobile parity',
-    detail:
-      'Flutter and web experiences mirror each workflow with responsive layouts, offline resilience, and biometrics.'
+    detail: 'Web and Flutter deliver the same guarded workflows.'
   }
 ];
 
@@ -125,10 +118,10 @@ export default function Services() {
       <PageHeader
         eyebrow="Solutions & marketplace"
         title="Fixnado service programmes and inventory"
-        description="Browse enterprise programmes, rapid response services, and curated marketplace bundles — all orchestrated with escrow protection and compliance governance."
+        description="Explore Fixnado programmes, rapid response services, and marketplace inventory with escrow protection."
         breadcrumbs={[
-          { label: 'Experience', to: '/' },
-          { label: 'Services & marketplace' }
+          { label: 'Home', to: '/' },
+          { label: 'Services' }
         ]}
         actions={[
           { label: 'Talk to sales', to: '/register', variant: 'primary' },
@@ -146,7 +139,7 @@ export default function Services() {
           id="solution-streams"
           eyebrow="Solution streams"
           title="Packages designed for every operational cadence"
-          description="Each solution stream is backed by pricing guardrails, compliance requirements, and marketing collateral so sales and operations stay aligned."
+          description="Each stream ships with pricing guardrails, compliance notes, and ready collateral."
           aside={
             <div className="space-y-5">
               <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">

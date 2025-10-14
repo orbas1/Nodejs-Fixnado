@@ -289,12 +289,12 @@ final List<LanguageCapability> _defaultLanguages = const [
   LanguageCapability(
     locale: 'English (US)',
     proficiency: 'Native',
-    coverage: 'All copy + field documentation',
+    coverage: 'All copy and job notes',
   ),
   LanguageCapability(
     locale: 'Spanish (MX)',
     proficiency: 'Professional working',
-    coverage: 'Safety briefings + SMS updates',
+    coverage: 'Safety briefings and SMS updates',
   ),
   LanguageCapability(
     locale: 'French (FR)',
@@ -304,7 +304,7 @@ final List<LanguageCapability> _defaultLanguages = const [
   LanguageCapability(
     locale: 'German (DE)',
     proficiency: 'Professional working',
-    coverage: 'Compliance artefacts & technical diagrams',
+    coverage: 'Compliance artefacts and technical diagrams',
   ),
 ];
 
@@ -335,43 +335,39 @@ final List<AvailabilityWindow> _defaultAvailability = const [
   AvailabilityWindow(
     window: 'Mon – Fri',
     time: '07:00 – 19:00',
-    notes: 'Emergency response available across core service zones.',
+    notes: 'Emergency response across core zones.',
   ),
   AvailabilityWindow(
     window: 'Sat',
     time: '08:00 – 14:00',
-    notes: 'Premium callout applies; remote diagnostics available.',
+    notes: 'Premium callout applies; remote diagnostics offered.',
   ),
   AvailabilityWindow(
     window: 'Sun',
     time: 'On-call',
-    notes: 'Escalation only — concierge to triage inbound requests.',
+    notes: 'Escalation only; concierge triages inbound requests.',
   ),
 ];
 
 final List<EngagementStep> _defaultWorkflow = const [
   EngagementStep(
     stage: 'Discovery',
-    detail:
-        'Video walk-through or on-site survey scheduled within 24 hours. Intake form captures compliance artefacts and access constraints.',
+    detail: 'Survey the site within 24 hours and capture permits or access notes.',
   ),
   EngagementStep(
     stage: 'Execution',
-    detail:
-        'Milestones tracked in Fixnado portal with geo-tagged media, meter readings, and live SLA telemetry. Escrow release tied to safety checklists.',
+    detail: 'Track milestones with geo-tagged proof before escrow releases.',
   ),
   EngagementStep(
     stage: 'Post-job',
-    detail:
-        'Documentation, preventive recommendations, and invoicing exported to client systems. Follow-up audit automatically scheduled for regulated industries.',
+    detail: 'Send documentation and schedule follow-up reviews automatically.',
   ),
 ];
 
 final List<ToolingItem> _defaultTooling = const [
   ToolingItem(
     name: 'Marketplace storefront',
-    description:
-        'Rental thermal cameras, calibrated torque tools, and surge analyzers with insured delivery. Inventory synced nightly to avoid double bookings.',
+    description: 'Thermal cameras, torque tools, and surge analyzers with insured delivery.',
     status: 'healthy',
     available: 12,
     onHand: 18,
@@ -384,8 +380,7 @@ final List<ToolingItem> _defaultTooling = const [
   ),
   ToolingItem(
     name: 'Service zone coverage',
-    description:
-        'Downtown core, mission-critical campuses, and logistics hubs with live dispatch telemetry and ETA automation.',
+    description: 'Downtown core, campuses, and logistics hubs with live ETAs.',
     status: 'low_stock',
     available: 5,
     onHand: 12,
@@ -397,7 +392,7 @@ final List<ToolingItem> _defaultTooling = const [
   ),
   ToolingItem(
     name: 'Knowledge base references',
-    description: 'KB-FIELD-104 (Permit checklist), KB-SAFETY-021 (Lockout/tagout), KB-COMMS-014 (Escalation script).',
+    description: 'Permit checklist, lockout/tagout, and escalation scripts ready.',
     status: 'healthy',
     notes: 'Digital SOP repository linked to crew tablets.'
   ),
