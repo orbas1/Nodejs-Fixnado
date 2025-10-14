@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import { getEnterprisePanel, PanelApiError } from '../api/panelClient.js';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
@@ -12,13 +14,96 @@ import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
 import {
   ArrowPathIcon,
   BanknotesIcon,
+  BoltIcon,
   ChartBarIcon,
+  CheckCircleIcon,
   ClipboardDocumentCheckIcon,
   ExclamationTriangleIcon,
+  FlagIcon,
+  GlobeAltIcon,
   InformationCircleIcon,
-  MapPinIcon
+  MapPinIcon,
+  ShieldCheckIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
+
+function ProgressBar({ value = 0, tone = 'primary' }) {
+  const percentage = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  const toneClass = {
+    primary: 'bg-primary',
+    info: 'bg-sky-500',
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-400',
+    danger: 'bg-rose-500'
+  }[tone] || 'bg-primary';
+
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200" role="presentation">
+      <div
+        className={clsx('h-2 rounded-full transition-all duration-500 ease-out', toneClass)}
+        style={{ width: `${Math.round(percentage * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+ProgressBar.propTypes = {
+  value: PropTypes.number,
+  tone: PropTypes.oneOf(['primary', 'info', 'success', 'warning', 'danger'])
+};
+
+const resolveSeverityKey = (value) => {
+  if (!value || typeof value !== 'string') {
+    return 'medium';
+  }
+  const key = value.toLowerCase();
+  if (key.includes('critical') || key.includes('high')) {
+    return 'high';
+  }
+  if (key.includes('low')) {
+    return 'low';
+  }
+  return 'medium';
+};
+
+const resolveSeverityTone = (value) => {
+  const key = resolveSeverityKey(value);
+  if (key === 'high') return 'danger';
+  if (key === 'low') return 'info';
+  return 'warning';
+};
+
+const resolvePostureTone = (value) => {
+  if (!value || typeof value !== 'string') {
+    return 'info';
+  }
+  const lower = value.toLowerCase();
+  if (lower.includes('proactive') || lower.includes('strong')) {
+    return 'success';
+  }
+  if (lower.includes('watch') || lower.includes('attention')) {
+    return 'warning';
+  }
+  if (lower.includes('critical') || lower.includes('elevated')) {
+    return 'danger';
+  }
+  return 'info';
+};
+
+const resolveTrendKey = (value) => {
+  if (!value || typeof value !== 'string') {
+    return 'steady';
+  }
+  const lower = value.toLowerCase();
+  if (lower.includes('up') || lower.includes('rise')) {
+    return 'up';
+  }
+  if (lower.includes('down') || lower.includes('fall')) {
+    return 'down';
+  }
+  return 'steady';
+};
 
 function MetricTile({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -45,6 +130,16 @@ function MetricTile({ icon: Icon, label, value, caption, tone, toneLabel, 'data-
   );
 }
 
+MetricTile.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  caption: PropTypes.string,
+  tone: PropTypes.oneOf(['primary', 'info', 'success', 'warning', 'danger']),
+  toneLabel: PropTypes.string,
+  'data-qa': PropTypes.string
+};
+
 function InvoiceRow({ invoice }) {
   const { t, format } = useLocale();
   const dueLabel = invoice.dueDate
@@ -69,6 +164,16 @@ function InvoiceRow({ invoice }) {
     </li>
   );
 }
+
+InvoiceRow.propTypes = {
+  invoice: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    vendor: PropTypes.string.isRequired,
+    amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    dueDate: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    status: PropTypes.string.isRequired
+  }).isRequired
+};
 
 function ProgrammeRow({ programme }) {
   const { t, format } = useLocale();
@@ -100,6 +205,17 @@ function ProgrammeRow({ programme }) {
     </li>
   );
 }
+
+ProgrammeRow.propTypes = {
+  programme: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    phase: PropTypes.string,
+    status: PropTypes.string,
+    health: PropTypes.string,
+    lastUpdated: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
+  }).isRequired
+};
 
 export default function EnterprisePanel() {
   const { t, format } = useLocale();
@@ -166,18 +282,26 @@ export default function EnterprisePanel() {
     }
   }, [isProvisioned]);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
-  }
-
   const delivery = state.data?.delivery;
   const spend = state.data?.spend;
   const enterprise = state.data?.enterprise;
+  const operations = state.data?.operations ?? {};
+  const governance = state.data?.governance ?? {};
+  const roadmap = state.data?.roadmap ?? [];
   const programmes = state.data?.programmes ?? [];
   const escalations = state.data?.escalations ?? [];
   const invoices = spend?.invoicesAwaitingApproval ?? [];
+  const coverage = Array.isArray(operations.coverage) ? operations.coverage : [];
+  const automation = operations.automation ?? {};
+  const sustainability = operations.sustainability ?? {};
+  const actionCentre = Array.isArray(operations.actionCentre) ? operations.actionCentre : [];
+  const audits = Array.isArray(governance.audits) ? governance.audits : [];
+  const riskRegister = Array.isArray(governance.riskRegister) ? governance.riskRegister : [];
   const fallbackMeta = state.meta?.payload ?? {};
-  const fallbackSections = Array.isArray(fallbackMeta.sections) ? fallbackMeta.sections : [];
+  const fallbackSections = useMemo(
+    () => (Array.isArray(fallbackMeta.sections) ? fallbackMeta.sections : []),
+    [fallbackMeta.sections]
+  );
   const fallbackSectionLabels = useMemo(
     () => ({
       delivery: t('enterprisePanel.metricsHeadline'),
@@ -216,6 +340,20 @@ export default function EnterprisePanel() {
     return 'success';
   }, [delivery]);
 
+  const hasOperationsContent =
+    coverage.length > 0 ||
+    actionCentre.length > 0 ||
+    Number.isFinite(Number(automation.orchestrationRate)) ||
+    Number.isFinite(Number(automation.runbookCoverage)) ||
+    Number.isFinite(Number(sustainability.carbonYtd)) ||
+    Number.isFinite(Number(sustainability.renewableCoverage));
+  const hasGovernanceContent =
+    riskRegister.length > 0 ||
+    audits.length > 0 ||
+    Number.isFinite(Number(governance.complianceScore)) ||
+    (typeof governance.dataResidency === 'string' && governance.dataResidency.trim().length > 0);
+  const hasRoadmapContent = roadmap.length > 0;
+
   const navigation = useMemo(() => {
     const items = [
       {
@@ -228,6 +366,13 @@ export default function EnterprisePanel() {
         label: t('enterprisePanel.spendHeadline'),
         description: t('enterprisePanel.nav.spend')
       },
+      hasOperationsContent
+        ? {
+            id: 'enterprise-panel-operations',
+            label: t('enterprisePanel.operationsHeadline'),
+            description: t('enterprisePanel.nav.operations')
+          }
+        : null,
       {
         id: 'enterprise-panel-programmes',
         label: t('enterprisePanel.programmeHeadline'),
@@ -239,14 +384,34 @@ export default function EnterprisePanel() {
             label: t('enterprisePanel.escalationsHeadline'),
             description: t('enterprisePanel.nav.escalations')
           }
+        : null,
+      hasGovernanceContent
+        ? {
+            id: 'enterprise-panel-governance',
+            label: t('enterprisePanel.governanceHeadline'),
+            description: t('enterprisePanel.nav.governance')
+          }
+        : null,
+      hasRoadmapContent
+        ? {
+            id: 'enterprise-panel-roadmap',
+            label: t('enterprisePanel.roadmapHeadline'),
+            description: t('enterprisePanel.nav.roadmap')
+          }
         : null
     ];
 
     return items.filter(Boolean);
-  }, [escalations.length, t]);
+  }, [
+    escalations.length,
+    hasGovernanceContent,
+    hasOperationsContent,
+    hasRoadmapContent,
+    t
+  ]);
 
-  const heroBadges = useMemo(
-    () => [
+  const heroBadges = useMemo(() => {
+    const items = [
       {
         tone: deliveryTone,
         label: t('common.slaStatus', { value: format.percentage(delivery?.slaCompliance ?? 0) })
@@ -255,9 +420,32 @@ export default function EnterprisePanel() {
         tone: 'info',
         label: t('common.activeSites', { count: format.number(enterprise?.activeSites ?? 0) })
       }
-    ],
-    [delivery?.slaCompliance, deliveryTone, enterprise?.activeSites, format, t]
-  );
+    ];
+
+    if (Number.isFinite(Number(automation.orchestrationRate))) {
+      items.push({
+        tone: 'success',
+        label: t('enterprisePanel.heroBadgeAutomation', {
+          value: format.percentage(automation.orchestrationRate ?? 0)
+        })
+      });
+    }
+
+    if (Number.isFinite(Number(governance.complianceScore))) {
+      items.push({
+        tone: 'info',
+        label: t('enterprisePanel.heroBadgeCompliance', {
+          value: format.percentage(governance.complianceScore ?? 0)
+        })
+      });
+    }
+
+    return items;
+  }, [automation.orchestrationRate, delivery?.slaCompliance, deliveryTone, enterprise?.activeSites, format, governance.complianceScore, t]);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
   const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
 
@@ -460,6 +648,191 @@ export default function EnterprisePanel() {
           </div>
         </section>
 
+        {hasOperationsContent ? (
+          <section id="enterprise-panel-operations" aria-labelledby="enterprise-panel-operations" className="space-y-6">
+            <header className="flex items-center gap-3">
+              <GlobeAltIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 id="enterprise-panel-operations" className="text-lg font-semibold text-primary">
+                {t('enterprisePanel.operationsHeadline')}
+              </h2>
+            </header>
+
+            {coverage.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3" data-qa="enterprise-panel-coverage">
+                {coverage.map((region) => (
+                  <article
+                    key={region.id}
+                    className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-primary/80 p-6 text-white shadow-lg"
+                    data-qa={`enterprise-panel-coverage-${region.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{region.region}</p>
+                        {region.primaryService ? (
+                          <p className="mt-1 text-xs text-slate-200">
+                            {t('enterprisePanel.coverageService')}: {region.primaryService}
+                          </p>
+                        ) : null}
+                      </div>
+                      <StatusPill tone={region.incidents > 1 ? 'warning' : 'success'}>
+                        {t('enterprisePanel.coverageUptime')}: {format.percentage(region.uptime ?? 0)}
+                      </StatusPill>
+                    </div>
+                    <dl className="mt-5 grid gap-4 text-xs uppercase tracking-[0.25em] text-slate-200">
+                      <div>
+                        <dt>{t('enterprisePanel.coverageSites')}</dt>
+                        <dd className="mt-1 text-lg font-semibold tracking-normal text-white">
+                          {format.number(region.activeSites ?? 0)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t('enterprisePanel.coverageAutomation')}</dt>
+                        <dd className="mt-1 text-lg font-semibold tracking-normal text-white">
+                          {format.percentage(region.automationScore ?? 0)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t('enterprisePanel.coverageIncidents')}</dt>
+                        <dd className="mt-1 text-lg font-semibold tracking-normal text-white">
+                          {format.number(region.incidents ?? 0)}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm" data-qa="enterprise-panel-automation">
+                <header className="flex items-center gap-3">
+                  <BoltIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{t('enterprisePanel.automationOrchestration')}</p>
+                    {automation.nextReview ? (
+                      <p className="text-xs text-slate-500">
+                        {t('enterprisePanel.automationNextReview')}: {format.date(automation.nextReview)}
+                      </p>
+                    ) : null}
+                  </div>
+                </header>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                      <span>{t('enterprisePanel.automationOrchestration')}</span>
+                      <span className="text-primary">{format.percentage(automation.orchestrationRate ?? 0)}</span>
+                    </div>
+                    <ProgressBar value={automation.orchestrationRate ?? 0} tone="primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                      <span>{t('enterprisePanel.automationRunbookCoverage')}</span>
+                      <span className="text-primary">{format.percentage(automation.runbookCoverage ?? 0)}</span>
+                    </div>
+                    <ProgressBar value={automation.runbookCoverage ?? 0} tone="info" />
+                  </div>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    {t('enterprisePanel.automationRunbooks')}
+                  </p>
+                  {Array.isArray(automation.runbooks) && automation.runbooks.length > 0 ? (
+                    <ul className="space-y-2">
+                      {automation.runbooks.map((runbook) => {
+                        const adoptionPercent = Math.round((runbook.adoption ?? 0) * 100);
+                        return (
+                          <li key={runbook.id} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                            <p className="text-sm font-semibold text-primary">{runbook.name}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                              <span>{t('enterprisePanel.automationRunbookAdoption', { value: adoptionPercent })}</span>
+                              {runbook.owner ? <span>{t('enterprisePanel.automationRunbookOwner', { name: runbook.owner })}</span> : null}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500">{t('enterprisePanel.automationRunbooksEmpty')}</p>
+                  )}
+                </div>
+              </article>
+
+              <article className="rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/5 via-sky-50 to-emerald-50 p-6 shadow-inner" data-qa="enterprise-panel-sustainability">
+                <header className="flex items-center gap-3">
+                  <SparklesIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-primary">{t('enterprisePanel.sustainabilityHeadline')}</h3>
+                </header>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('enterprisePanel.sustainabilityCarbonYtd')}</p>
+                    <p className="mt-2 text-xl font-semibold text-primary">
+                      {format.number(sustainability.carbonYtd ?? 0)} tCO₂e
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('enterprisePanel.sustainabilityTarget')}</p>
+                    <p className="mt-2 text-xl font-semibold text-primary">
+                      {format.number(sustainability.carbonTarget ?? 0)} tCO₂e
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                      <span>{t('enterprisePanel.sustainabilityRenewable')}</span>
+                      <span className="text-primary">{format.percentage(sustainability.renewableCoverage ?? 0)}</span>
+                    </div>
+                    <ProgressBar value={sustainability.renewableCoverage ?? 0} tone="success" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                      <CheckCircleIcon className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+                      <span>{t('enterprisePanel.sustainabilityTrend')}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-600">
+                      {t(`enterprisePanel.sustainabilityTrend.${resolveTrendKey(sustainability.emissionTrend)}`)}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{t('enterprisePanel.actionCentreHeadline')}</h3>
+              <ul className="space-y-3">
+                {actionCentre.length === 0 ? (
+                  <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
+                    {t('enterprisePanel.actionEmpty')}
+                  </li>
+                ) : (
+                  actionCentre.map((action) => {
+                    const severityKey = resolveSeverityKey(action.severity);
+                    return (
+                      <li
+                        key={action.id}
+                        className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+                        data-qa={`enterprise-panel-action-${action.id}`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-primary">{action.title}</p>
+                            {action.detail ? <p className="mt-1 text-xs text-slate-500">{action.detail}</p> : null}
+                          </div>
+                          <StatusPill tone={resolveSeverityTone(action.severity)}>
+                            {t(`enterprisePanel.actionSeverity.${severityKey}`)}
+                          </StatusPill>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                          {action.due ? <span>{t('enterprisePanel.actionDue')}: {format.date(action.due)}</span> : null}
+                          {action.owner ? <span>{t('enterprisePanel.actionOwner')}: {action.owner}</span> : null}
+                        </div>
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+            </div>
+          </section>
+        ) : null}
+
         <section id="enterprise-panel-programmes" aria-labelledby="enterprise-panel-programmes" className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <header className="flex items-center gap-3">
@@ -512,6 +885,159 @@ export default function EnterprisePanel() {
             </ul>
           </div>
         </section>
+
+        {hasGovernanceContent ? (
+          <section id="enterprise-panel-governance" aria-labelledby="enterprise-panel-governance" className="space-y-6">
+            <header className="flex items-center gap-3">
+              <ShieldCheckIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 id="enterprise-panel-governance" className="text-lg font-semibold text-primary">
+                {t('enterprisePanel.governanceHeadline')}
+              </h2>
+            </header>
+            <div className="grid gap-6 lg:grid-cols-3">
+              <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm" data-qa="enterprise-panel-compliance">
+                <header className="flex items-center gap-3">
+                  <ShieldCheckIcon className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-primary">{t('enterprisePanel.governanceCompliance')}</h3>
+                </header>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('enterprisePanel.governanceCompliance')}</p>
+                    <p className="mt-2 text-2xl font-semibold text-primary">
+                      {format.percentage(governance.complianceScore ?? 0)}
+                    </p>
+                  </div>
+                  <StatusPill tone={resolvePostureTone(governance.posture)}>
+                    {governance.posture || t('common.onTrack')}
+                  </StatusPill>
+                  <p className="text-sm text-slate-500">
+                    {t('enterprisePanel.governanceDataResidency')}: {governance.dataResidency || t('common.notAvailable')}
+                  </p>
+                </div>
+              </article>
+
+              <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm" data-qa="enterprise-panel-risk">
+                <header className="flex items-center gap-3">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-primary">{t('enterprisePanel.governanceRiskRegister')}</h3>
+                </header>
+                <ul className="mt-4 space-y-3">
+                  {riskRegister.length === 0 ? (
+                    <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-4 text-sm text-slate-500">
+                      {t('enterprisePanel.riskEmpty')}
+                    </li>
+                  ) : (
+                    riskRegister.map((risk) => {
+                      const severityKey = resolveSeverityKey(risk.severity);
+                      return (
+                        <li
+                          key={risk.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
+                          data-qa={`enterprise-panel-risk-${risk.id}`}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-primary">{risk.label}</p>
+                              {risk.mitigation ? <p className="mt-1 text-xs text-slate-500">{risk.mitigation}</p> : null}
+                            </div>
+                            <StatusPill tone={resolveSeverityTone(risk.severity)}>
+                              {t(`enterprisePanel.riskSeverity.${severityKey}`)}
+                            </StatusPill>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                            {risk.owner ? <span>{t('enterprisePanel.riskOwner', { name: risk.owner })}</span> : null}
+                            {risk.due ? <span>{t('enterprisePanel.riskDue', { date: format.date(risk.due) })}</span> : null}
+                          </div>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+              </article>
+
+              <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm" data-qa="enterprise-panel-audits">
+                <header className="flex items-center gap-3">
+                  <FlagIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-primary">{t('enterprisePanel.governanceAudits')}</h3>
+                </header>
+                <ul className="mt-4 space-y-3">
+                  {audits.length === 0 ? (
+                    <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-4 text-sm text-slate-500">
+                      {t('enterprisePanel.auditsEmpty')}
+                    </li>
+                  ) : (
+                    audits.map((audit) => (
+                      <li
+                        key={audit.id}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
+                        data-qa={`enterprise-panel-audit-${audit.id}`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-primary">{audit.name}</p>
+                          {audit.owner ? <p className="text-xs text-slate-500">{audit.owner}</p> : null}
+                        </div>
+                        <div className="text-right text-xs text-slate-500">
+                          <p className="font-semibold text-primary">{t('enterprisePanel.auditStatus', { status: audit.status })}</p>
+                          {audit.due ? <p>{t('enterprisePanel.auditDue', { date: format.date(audit.due) })}</p> : null}
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </article>
+            </div>
+          </section>
+        ) : null}
+
+        {hasRoadmapContent ? (
+          <section id="enterprise-panel-roadmap" aria-labelledby="enterprise-panel-roadmap" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <FlagIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 id="enterprise-panel-roadmap" className="text-lg font-semibold text-primary">
+                {t('enterprisePanel.roadmapHeadline')}
+              </h2>
+            </header>
+            <ul className="space-y-3">
+              {roadmap.length === 0 ? (
+                <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
+                  {t('enterprisePanel.roadmapEmpty')}
+                </li>
+              ) : (
+                roadmap.map((milestone) => {
+                  const statusLabel =
+                    typeof milestone.status === 'string'
+                      ? milestone.status.replace(/[-_]/g, ' ')
+                      : t('common.onTrack');
+                  const tone = (() => {
+                    const status = (milestone.status || '').toLowerCase();
+                    if (status.includes('risk') || status.includes('blocked')) return 'danger';
+                    if (status.includes('delay') || status.includes('hold')) return 'warning';
+                    return 'success';
+                  })();
+                  return (
+                    <li
+                      key={milestone.id}
+                      className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm"
+                      data-qa={`enterprise-panel-roadmap-${milestone.id}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-primary">{milestone.milestone}</p>
+                          {milestone.detail ? <p className="mt-1 text-xs text-slate-500">{milestone.detail}</p> : null}
+                        </div>
+                        <StatusPill tone={tone}>{statusLabel}</StatusPill>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                        {milestone.quarter ? <span>{milestone.quarter}</span> : null}
+                        {milestone.owner ? <span>{t('enterprisePanel.actionOwner')}: {milestone.owner}</span> : null}
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </section>
+        ) : null}
       </DashboardShell>
 
       {state.loading && !state.data ? (

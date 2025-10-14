@@ -526,6 +526,14 @@ function normaliseEnterprisePanel(payload = {}) {
   const enterprise = root.enterprise || root.account || {};
   const metrics = root.metrics || {};
   const spend = root.spend || root.finance || {};
+  const operations = root.operations || root.operationsCentre || {};
+  const risk = root.risk || root.riskRegister || {};
+  const governance = root.governance || root.compliance || {};
+  const sustainability = operations.sustainability || root.sustainability || root.esg || {};
+  const automation = operations.automation || root.automation || {};
+  const commandCentre = root.actionCentre || operations.commandCentre || operations.actionCentre;
+  const roadmapSource = root.roadmap || root.timeline || operations.roadmap;
+  const auditSource = governance.audits || governance.auditSchedule || risk.audits;
 
   return {
     enterprise: {
@@ -569,6 +577,71 @@ function normaliseEnterprisePanel(payload = {}) {
       owner: escalation.owner || escalation.assignee || 'Operations',
       openedAt: escalation.openedAt || escalation.createdAt || null,
       severity: escalation.severity || 'medium'
+    })),
+    operations: {
+      coverage: ensureArray(operations.coverage || operations.regions).map((region, index) => ({
+        id: region.id || `coverage-${index}`,
+        region: region.region || region.label || 'Region',
+        uptime: region.uptime ?? region.availability ?? 0.98,
+        activeSites: region.activeSites ?? region.sites ?? 0,
+        automationScore: region.automationScore ?? region.automation ?? 0.75,
+        incidents: region.incidents ?? region.alerts ?? 0,
+        primaryService: region.primaryService || region.focus || null
+      })),
+      automation: {
+        orchestrationRate: automation.orchestrationRate ?? automation.successRate ?? 0.82,
+        runbookCoverage: automation.runbookCoverage ?? automation.coverage ?? 0.68,
+        automationsLive: automation.automationsLive ?? automation.playbooks ?? 18,
+        nextReview: automation.nextReview || automation.reviewAt || null,
+        runbooks: ensureArray(automation.runbooks).map((runbook, index) => ({
+          id: runbook.id || `runbook-${index}`,
+          name: runbook.name || runbook.title || 'Automation runbook',
+          adoption: runbook.adoption ?? runbook.coverage ?? 0.5,
+          owner: runbook.owner || runbook.steward || null
+        }))
+      },
+      sustainability: {
+        carbonYtd: sustainability.carbonYtd ?? sustainability.emissionsYtd ?? 0,
+        carbonTarget: sustainability.carbonTarget ?? sustainability.target ?? 0,
+        renewableCoverage: sustainability.renewableCoverage ?? sustainability.renewables ?? 0,
+        emissionTrend: sustainability.emissionTrend ?? sustainability.trend ?? 'steady'
+      },
+      actionCentre: ensureArray(commandCentre).map((item, index) => ({
+        id: item.id || `action-${index}`,
+        title: item.title || item.name || 'Action',
+        detail: item.detail || item.description || '',
+        due: item.due || item.dueDate || null,
+        owner: item.owner || item.assignee || null,
+        severity: item.severity || item.tone || 'medium'
+      }))
+    },
+    governance: {
+      complianceScore: governance.complianceScore ?? governance.score ?? 0.9,
+      posture: governance.posture || governance.status || 'steady',
+      dataResidency: governance.dataResidency || governance.residency || 'UK & EU',
+      audits: ensureArray(auditSource).map((audit, index) => ({
+        id: audit.id || `audit-${index}`,
+        name: audit.name || audit.title || 'Audit',
+        due: audit.due || audit.dueDate || null,
+        status: audit.status || audit.state || 'scheduled',
+        owner: audit.owner || audit.lead || null
+      })),
+      riskRegister: ensureArray(risk.items || risk.entries || risk.register).map((entry, index) => ({
+        id: entry.id || `risk-${index}`,
+        label: entry.label || entry.title || 'Risk',
+        severity: entry.severity || entry.level || 'medium',
+        owner: entry.owner || entry.assignee || null,
+        due: entry.due || entry.dueDate || null,
+        mitigation: entry.mitigation || entry.plan || null
+      }))
+    },
+    roadmap: ensureArray(roadmapSource).map((item, index) => ({
+      id: item.id || `milestone-${index}`,
+      milestone: item.milestone || item.title || 'Milestone',
+      quarter: item.quarter || item.timeline || null,
+      status: item.status || item.state || 'on-track',
+      owner: item.owner || item.lead || null,
+      detail: item.detail || item.description || null
     }))
   };
 }
@@ -2143,6 +2216,145 @@ const enterpriseFallback = normaliseEnterprisePanel({
       owner: 'Incident response',
       openedAt: new Date(Date.now() - 86400000).toISOString(),
       severity: 'high'
+    }
+  ],
+  operations: {
+    coverage: [
+      {
+        id: 'london-core',
+        region: 'London core',
+        uptime: 0.982,
+        activeSites: 18,
+        automationScore: 0.78,
+        incidents: 1,
+        primaryService: 'Critical power'
+      },
+      {
+        id: 'northern-hub',
+        region: 'Northern hub',
+        uptime: 0.976,
+        activeSites: 11,
+        automationScore: 0.71,
+        incidents: 0,
+        primaryService: 'Smart HVAC'
+      },
+      {
+        id: 'southern-campus',
+        region: 'Southern campus',
+        uptime: 0.988,
+        activeSites: 9,
+        automationScore: 0.69,
+        incidents: 2,
+        primaryService: 'Retrofit'
+      }
+    ],
+    automation: {
+      orchestrationRate: 0.84,
+      runbookCoverage: 0.72,
+      automationsLive: 26,
+      nextReview: new Date(Date.now() + 1209600000).toISOString(),
+      runbooks: [
+        { id: 'dispatch', name: 'Dispatch orchestration', adoption: 0.86, owner: 'Ops automation' },
+        { id: 'escalations', name: 'Incident escalation', adoption: 0.74, owner: 'Security' },
+        { id: 'vendor-onboarding', name: 'Vendor onboarding', adoption: 0.63, owner: 'Supply chain' }
+      ]
+    },
+    sustainability: {
+      carbonYtd: 1180,
+      carbonTarget: 1620,
+      renewableCoverage: 0.64,
+      emissionTrend: 'down'
+    },
+    actionCentre: [
+      {
+        id: 'ops-1',
+        title: 'Confirm generator load tests',
+        detail: 'Share telemetry artefacts before the risk council meets on Friday.',
+        due: new Date(Date.now() + 172800000).toISOString(),
+        owner: 'Operations',
+        severity: 'high'
+      },
+      {
+        id: 'ops-2',
+        title: 'Approve automation pilot scope',
+        detail: 'Automation guild awaiting sign-off for robotics cleaning rollout.',
+        due: new Date(Date.now() + 345600000).toISOString(),
+        owner: 'Automation PMO',
+        severity: 'medium'
+      },
+      {
+        id: 'ops-3',
+        title: 'Upload safety certificates',
+        detail: 'Final two southern campus certificates pending upload to governance vault.',
+        due: null,
+        owner: 'Facilities',
+        severity: 'medium'
+      }
+    ]
+  },
+  governance: {
+    complianceScore: 0.93,
+    posture: 'proactive',
+    dataResidency: 'UK & EU primary, NA secondary',
+    audits: [
+      {
+        id: 'audit-1',
+        name: 'ISO 27001 surveillance',
+        due: new Date(Date.now() + 2419200000).toISOString(),
+        status: 'scheduled',
+        owner: 'Security assurance'
+      },
+      {
+        id: 'audit-2',
+        name: 'Fire safety portfolio review',
+        due: new Date(Date.now() + 1296000000).toISOString(),
+        status: 'preparation',
+        owner: 'Facilities risk'
+      }
+    ],
+    riskRegister: [
+      {
+        id: 'risk-1',
+        label: 'Cooling redundancy at Canary Wharf',
+        severity: 'high',
+        owner: 'Engineering',
+        due: new Date(Date.now() + 604800000).toISOString(),
+        mitigation: 'Install temporary chiller and reroute load.'
+      },
+      {
+        id: 'risk-2',
+        label: 'Vendor onboarding backlog',
+        severity: 'medium',
+        owner: 'Supply chain',
+        due: null,
+        mitigation: 'Deploy automation runbook for document collection.'
+      }
+    ]
+  },
+  roadmap: [
+    {
+      id: 'milestone-1',
+      milestone: 'Complete robotics cleaning expansion',
+      quarter: 'Q2 2025',
+      status: 'in-flight',
+      owner: 'Automation guild',
+      detail: 'Deploy robotics pilots to 12 additional facilities.'
+    },
+    {
+      id: 'milestone-2',
+      milestone: 'Launch sustainability command centre',
+      quarter: 'Q3 2025',
+      status: 'planned',
+      owner: 'Sustainability office',
+      detail: 'Real-time carbon dashboards and supplier scoring.'
+    },
+    {
+      id: 'milestone-3',
+      milestone: 'Board readiness for NA expansion',
+      quarter: 'Q4 2025',
+      status: 'planned',
+      owner: 'Executive office',
+      detail: 'Investment memo, staffing model, and compliance posture.'
     }
   ]
 });
