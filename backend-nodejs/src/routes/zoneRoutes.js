@@ -9,7 +9,7 @@ import {
   importZonesHandler,
   listZoneServicesHandler,
   syncZoneServicesHandler,
-  removeZoneServiceHandler
+  removeZoneServiceHandler,
   matchGeoZoneHandler,
   previewCoverageHandler
 } from '../controllers/zoneController.js';

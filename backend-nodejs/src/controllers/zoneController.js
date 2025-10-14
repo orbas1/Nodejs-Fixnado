@@ -103,6 +103,11 @@ export async function listZoneServicesHandler(req, res, next) {
   try {
     const coverages = await listZoneServices(req.params.zoneId);
     res.json(coverages);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
 export async function matchGeoZoneHandler(req, res, next) {
   try {
     const result = await matchServicesToCoordinate(req.body);
@@ -134,6 +139,11 @@ export async function removeZoneServiceHandler(req, res, next) {
       actor: req.body?.actor ?? null
     });
     res.status(204).send();
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
 export async function previewCoverageHandler(req, res, next) {
   try {
     const geometry = await previewCoverageWindow(req.query);
