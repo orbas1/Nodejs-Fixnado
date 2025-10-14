@@ -95,3 +95,9 @@ The UI preference telemetry service captures every theme, density, contrast, and
 - Monitor API health via `/api/telemetry/ui-preferences/summary?range=1d`. A zero `events` count across working hours indicates instrumentation failure.
 - Roll new telemetry schema versions by bumping `dataVersion` from the client; backend accepts semantic versions up to 16 characters.
 - Coordinate schema changes with data engineering – update `fx-theme-preferences.json` `payloadSchema` and notify analytics via the #design-telemetry channel.
+- **OpsGenie Escalation (2025-11-02):**
+  1. Warehouse freshness monitor (`backend-nodejs/src/jobs/warehouseFreshnessJob.js`) runs every 5 minutes. When staleness, backlog, or failure streak thresholds breach, it opens an OpsGenie alert with alias `analytics-freshness-${domain}` and priority from `config.monitoring.warehouseFreshness.opsgenie.priority`.
+  2. Dashboard pollers include alert metadata; verify the admin banner and Flutter parity banner appear with incident alias, stale minutes, backlog count, and failure streak chips.
+  3. Confirm alert payload on OpsGenie lists responder team, tags (`analytics`,`freshness`), and note referencing this runbook. Use OpsGenie sandbox for rehearsals when possible.
+  4. Incident response: acknowledge alert, review backlog via `/api/analytics/pipeline`, and check pending counts. Once ingestion recovers, ensure alert auto-closes and dashboard banner clears within the next polling window.
+  5. Record rehearsal outcomes (date, participants, findings) in `docs/design/handoff/ui-qa-scenarios.csv` and log follow-up actions in update trackers.

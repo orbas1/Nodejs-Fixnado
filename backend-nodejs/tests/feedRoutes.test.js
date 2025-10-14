@@ -1,4 +1,5 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
@@ -11,6 +12,10 @@ const {
   CustomJobBid,
   CustomJobBidMessage
 } = await import('../src/models/index.js');
+
+function createToken(user) {
+  return jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
@@ -138,11 +143,14 @@ describe('GET /api/feed/live', () => {
       authorId: provider.id,
       authorRole: 'provider',
       body: 'Includes scaffolding, waste removal and compliance certificates.',
-      attachments: ['https://example.com/proposal.pdf']
+      attachments: [{ url: 'https://example.com/proposal.pdf', label: 'Proposal pack' }]
     });
+
+    const authHeader = `Bearer ${createToken(customer)}`;
 
     const scopedResponse = await request(app)
       .get(`/api/feed/live?zoneId=${zone.id}`)
+      .set('Authorization', authHeader)
       .expect(200);
 
     expect(Array.isArray(scopedResponse.body)).toBe(true);
@@ -157,10 +165,13 @@ describe('GET /api/feed/live', () => {
     expect(job.bids).toHaveLength(1);
     expect(job.bids[0].messages).toHaveLength(1);
     expect(job.bids[0].messages[0].body).toContain('Includes scaffolding');
-    expect(job.bids[0].messages[0].attachments).toContain('https://example.com/proposal.pdf');
+    expect(job.bids[0].messages[0].attachments).toEqual([
+      expect.objectContaining({ url: 'https://example.com/proposal.pdf' })
+    ]);
 
     const expandedResponse = await request(app)
       .get(`/api/feed/live?zoneId=${zone.id}&includeOutOfZone=true`)
+      .set('Authorization', authHeader)
       .expect(200);
 
     const jobIds = expandedResponse.body.map((item) => item.id);
@@ -169,6 +180,7 @@ describe('GET /api/feed/live', () => {
 
     const onlyOutOfZoneResponse = await request(app)
       .get('/api/feed/live?outOfZoneOnly=true')
+      .set('Authorization', authHeader)
       .expect(200);
 
     expect(onlyOutOfZoneResponse.body).toHaveLength(1);

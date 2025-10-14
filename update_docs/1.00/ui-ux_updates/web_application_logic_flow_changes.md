@@ -53,6 +53,7 @@
 - **Availability Editor**
   - Zone polygons edited via map library; changes saved to `/api/provider/zones` with validation for overlaps.
   - Calendar integrates with ICS export; updates propagate to mobile via shared backend.
+  - Service coverage sync posts to `/api/zones/:zoneId/services` with optimistic UI reordering, emitting analytics events for attach/update/detach actions; rollback messaging surfaces when conflicts returned with `409` status.
 - **Marketplace Management**
   - Inventory updates trigger server-side validation for stock conflicts; UI displays conflict resolution modal.
 - **Compliance Lifecycle**

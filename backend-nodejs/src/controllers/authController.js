@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { User, Company } from '../models/index.js';
@@ -55,6 +56,37 @@ export async function register(req, res, next) {
   }
 }
 
+function secureCompare(expected, received) {
+  if (typeof expected !== 'string' || typeof received !== 'string') {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  if (expectedBuffer.length !== receivedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function isEmailAllowed(email, allowedEmails = [], allowedDomains = []) {
+  if (allowedEmails.length === 0 && allowedDomains.length === 0) {
+    return true;
+  }
+
+  if (allowedEmails.includes(email)) {
+    return true;
+  }
+
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain) {
+    return false;
+  }
+
+  return allowedDomains.includes(domain);
+}
+
 export async function login(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -62,7 +94,7 @@ export async function login(req, res, next) {
       return res.status(422).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, password, securityToken } = req.body;
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -73,8 +105,23 @@ export async function login(req, res, next) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    if (user.type === 'admin') {
+      const { securityToken: expectedToken, allowedEmails, allowedDomains, sessionTtlHours } = config.auth.admin;
+      if (!expectedToken || !securityToken || !secureCompare(expectedToken, securityToken)) {
+        return res.status(401).json({ message: 'Admin security token required' });
+      }
+
+      if (!isEmailAllowed(user.email, allowedEmails, allowedDomains)) {
+        return res.status(403).json({ message: 'Admin access restricted' });
+      }
+
+      const expiresIn = `${sessionTtlHours}h`;
+      const token = jwt.sign({ sub: user.id, type: user.type }, config.jwt.secret, { expiresIn });
+      return res.json({ token, user: { id: user.id, email: user.email, type: user.type }, expiresIn });
+    }
+
     const token = jwt.sign({ sub: user.id, type: user.type }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
-    return res.json({ token, user: { id: user.id, email: user.email, type: user.type } });
+    return res.json({ token, user: { id: user.id, email: user.email, type: user.type }, expiresIn: config.jwt.expiresIn });
   } catch (error) {
     next(error);
   }

@@ -250,6 +250,50 @@ class ExplorerBusinessFrontMetric {
   }
 }
 
+class ExplorerBusinessFrontScore {
+  ExplorerBusinessFrontScore({
+    required this.value,
+    this.band,
+    this.confidence,
+    this.sampleSize,
+    this.caption,
+  });
+
+  final double value;
+  final String? band;
+  final String? confidence;
+  final int? sampleSize;
+  final String? caption;
+
+  factory ExplorerBusinessFrontScore.fromJson(Map<String, dynamic> json) {
+    final parsedValue = _toDouble(json['value'] ?? json['score']);
+    if (parsedValue == null) {
+      throw const FormatException('Score value is required');
+    }
+    final sample = json['sampleSize'] is int
+        ? json['sampleSize'] as int
+        : int.tryParse(json['sampleSize']?.toString() ?? '') ??
+            (json['count'] is int ? json['count'] as int : int.tryParse(json['count']?.toString() ?? ''));
+    return ExplorerBusinessFrontScore(
+      value: parsedValue,
+      band: json['band']?.toString(),
+      confidence: json['confidence']?.toString(),
+      sampleSize: sample,
+      caption: json['caption']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'band': band,
+      'confidence': confidence,
+      'sampleSize': sampleSize,
+      'caption': caption,
+    };
+  }
+}
+
 class ExplorerBusinessFront {
   ExplorerBusinessFront({
     required this.id,
@@ -262,6 +306,8 @@ class ExplorerBusinessFront {
     this.coverageAreas = const [],
     this.metrics = const [],
     this.score,
+    this.trustScore,
+    this.reviewScore,
   });
 
   final String id;
@@ -274,6 +320,8 @@ class ExplorerBusinessFront {
   final List<String> coverageAreas;
   final List<ExplorerBusinessFrontMetric> metrics;
   final double? score;
+  final ExplorerBusinessFrontScore? trustScore;
+  final ExplorerBusinessFrontScore? reviewScore;
 
   factory ExplorerBusinessFront.fromJson(Map<String, dynamic> json) {
     final hero = json['hero'];
@@ -317,6 +365,44 @@ class ExplorerBusinessFront {
       }
     }
 
+    ExplorerBusinessFrontScore? resolveScore(dynamic source) {
+      if (source == null) {
+        return null;
+      }
+      if (source is ExplorerBusinessFrontScore) {
+        return source;
+      }
+      if (source is Map<String, dynamic>) {
+        try {
+          return ExplorerBusinessFrontScore.fromJson(source);
+        } catch (_) {
+          return null;
+        }
+      }
+      final parsed = _toDouble(source);
+      if (parsed == null) {
+        return null;
+      }
+      return ExplorerBusinessFrontScore(value: parsed);
+    }
+
+    ExplorerBusinessFrontScore? trustScore;
+    ExplorerBusinessFrontScore? reviewScore;
+    if (json['scores'] is Map<String, dynamic>) {
+      final scoresJson = Map<String, dynamic>.from(json['scores'] as Map);
+      trustScore = resolveScore(scoresJson['trust']);
+      reviewScore = resolveScore(scoresJson['review']);
+    }
+
+    trustScore ??=
+        resolveScore(json['trustScore'] ?? (metadata is Map<String, dynamic> ? metadata['trustScore'] : null));
+    reviewScore ??= resolveScore(
+      json['reviewScore'] ??
+          json['rating'] ??
+          json['score'] ??
+          (metadata is Map<String, dynamic> ? metadata['reviewScore'] ?? metadata['score'] : null),
+    );
+
     return ExplorerBusinessFront(
       id: id.toString(),
       name: (json['name'] ?? (hero is Map<String, dynamic> ? hero['name'] : null) ?? 'Business front').toString(),
@@ -327,7 +413,10 @@ class ExplorerBusinessFront {
       categories: _toStringList(categorySources.firstWhere((value) => value != null, orElse: () => null)),
       coverageAreas: _toStringList(coverageSources.firstWhere((value) => value != null, orElse: () => null)),
       metrics: List.unmodifiable(metricEntries),
-      score: _toDouble(json['score'] ?? json['rating'] ?? (metadata is Map<String, dynamic> ? metadata['score'] : null)),
+      score: reviewScore?.value ??
+          _toDouble(json['score'] ?? json['rating'] ?? (metadata is Map<String, dynamic> ? metadata['score'] : null)),
+      trustScore: trustScore,
+      reviewScore: reviewScore,
     );
   }
 
@@ -343,6 +432,8 @@ class ExplorerBusinessFront {
       'coverageAreas': coverageAreas,
       'metrics': metrics.map((metric) => metric.toJson()).toList(),
       'score': score,
+      'trustScore': trustScore?.toJson(),
+      'reviewScore': reviewScore?.toJson(),
     };
   }
 }
@@ -562,6 +653,106 @@ class ExplorerFilters {
 
 enum ExplorerResultType { services, marketplace, tools, all }
 enum ExplorerResultType { services, marketplace, storefronts, businessFronts, all }
+
+class GeoMatchService {
+  GeoMatchService({
+    required this.id,
+    required this.title,
+    this.description,
+    this.category,
+    this.price,
+    this.currency,
+    this.providerName,
+  });
+
+  final String id;
+  final String title;
+  final String? description;
+  final String? category;
+  final double? price;
+  final String? currency;
+  final String? providerName;
+
+  factory GeoMatchService.fromJson(Map<String, dynamic> json) {
+    return GeoMatchService(
+      id: json['id'] as String,
+      title: json['title'] as String? ?? 'Service',
+      description: json['description'] as String?,
+      category: json['category'] as String?,
+      price: _toDouble(json['price']),
+      currency: json['currency'] as String?,
+      providerName: (json['provider'] is Map<String, dynamic>)
+          ? (json['provider'] as Map<String, dynamic>)['name'] as String?
+          : null,
+    );
+  }
+}
+
+class GeoMatchZoneResult {
+  GeoMatchZoneResult({
+    required this.zoneId,
+    required this.zoneName,
+    required this.demandLevel,
+    required this.reason,
+    required this.distanceKm,
+    required this.score,
+    required this.services,
+  });
+
+  final String zoneId;
+  final String zoneName;
+  final String demandLevel;
+  final String reason;
+  final double? distanceKm;
+  final double score;
+  final List<GeoMatchService> services;
+
+  factory GeoMatchZoneResult.fromJson(Map<String, dynamic> json) {
+    final zone = json['zone'] as Map<String, dynamic>? ?? const {};
+    final services = (json['services'] as List<dynamic>? ?? [])
+        .map((item) => GeoMatchService.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return GeoMatchZoneResult(
+      zoneId: (zone['id'] ?? json['zoneId'] ?? 'zone').toString(),
+      zoneName: (zone['name'] ?? 'Zone').toString(),
+      demandLevel: zone['demandLevel'] as String? ?? 'medium',
+      reason: json['reason'] as String? ?? 'Match candidate',
+      distanceKm: _toDouble(json['distanceKm']),
+      score: _toDouble(json['score']) ?? 0,
+      services: List.unmodifiable(services),
+    );
+  }
+}
+
+class GeoMatchResult {
+  GeoMatchResult({
+    required this.matches,
+    required this.totalServices,
+    this.fallbackReason,
+    this.fallbackDistanceKm,
+    this.auditedAt,
+  });
+
+  final List<GeoMatchZoneResult> matches;
+  final int totalServices;
+  final String? fallbackReason;
+  final double? fallbackDistanceKm;
+  final DateTime? auditedAt;
+
+  factory GeoMatchResult.fromJson(Map<String, dynamic> json) {
+    final matches = (json['matches'] as List<dynamic>? ?? [])
+        .map((item) => GeoMatchZoneResult.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    final fallback = json['fallback'] as Map<String, dynamic>?;
+    return GeoMatchResult(
+      matches: List.unmodifiable(matches),
+      totalServices: json['totalServices'] as int? ?? 0,
+      fallbackReason: fallback?['reason'] as String?,
+      fallbackDistanceKm: _toDouble(fallback?['distanceKm']),
+      auditedAt: json['auditedAt'] is String ? DateTime.tryParse(json['auditedAt'] as String) : null,
+    );
+  }
+}
 
 double? _toDouble(dynamic value) {
   if (value == null) {

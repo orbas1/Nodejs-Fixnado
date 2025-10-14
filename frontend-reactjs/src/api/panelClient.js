@@ -186,7 +186,7 @@ async function request(path, {
       let errorBody = null;
       try {
         errorBody = await response.json();
-      } catch (error) {
+      } catch {
         // ignore JSON parsing failure — keep body as null
       }
 
@@ -248,6 +248,16 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function toNumber(value, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toNullableNumber(value) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 const percentageFormatter = new Intl.NumberFormat('en-GB', {
   style: 'percent',
   maximumFractionDigits: 1
@@ -268,6 +278,8 @@ function normaliseProviderDashboard(payload = {}) {
   const provider = root.provider || root.profile || {};
   const metrics = root.metrics || {};
   const finances = root.finances || root.finance || {};
+  const serviceDelivery = root.serviceDelivery || root.delivery || {};
+  const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
 
   return {
     provider: {
@@ -321,7 +333,191 @@ function normaliseProviderDashboard(payload = {}) {
       role: member.role || member.specialism || 'Engineer',
       availability: member.availability ?? member.utilisation ?? 0.8,
       rating: member.rating ?? member.csat ?? 0.95
-    }))
+    })),
+    serviceManagement: {
+      health: ensureArray(serviceDelivery.health || root.serviceHealth).map((metric, index) => ({
+        id: metric.id || metric.key || `metric-${index}`,
+        label: metric.label || metric.name || 'Service metric',
+        value: metric.value ?? metric.score ?? 0,
+        format: metric.format || metric.type || 'number',
+        caption: metric.caption || metric.description || '',
+        target: metric.target ?? null
+      })),
+      deliveryBoard: ensureArray(serviceDelivery.board || root.serviceDeliveryBoard).map((column, index) => ({
+        id: column.id || column.key || `column-${index}`,
+        title: column.title || column.name || `Stage ${index + 1}`,
+        description: column.description || '',
+        items: ensureArray(column.items).map((item, itemIndex) => ({
+          id: item.id || `delivery-${index}-${itemIndex}`,
+          name: item.name || item.title || 'Engagement',
+          client: item.client || item.account || 'Client partner',
+          zone: item.zone || item.region || null,
+          eta: item.eta || item.due || item.scheduledFor || null,
+          owner: item.owner || item.manager || 'Operations',
+          risk: item.risk || item.status || 'on-track',
+          stage: item.stage || column.title || 'Stage',
+          value: item.value ?? item.contractValue ?? null,
+          currency: item.currency || 'GBP',
+          services: ensureArray(item.services || item.serviceMix)
+        }))
+      })),
+      packages: ensureArray(root.servicePackages || root.packages).map((pkg, index) => ({
+        id: pkg.id || `package-${index}`,
+        name: pkg.name || pkg.title || 'Service package',
+        description: pkg.description || pkg.summary || 'Comprehensive field services bundle.',
+        price: pkg.price ?? pkg.monthly ?? null,
+        currency: pkg.currency || 'GBP',
+        highlights: ensureArray(pkg.highlights || pkg.features),
+        serviceId: pkg.serviceId || pkg.service || null,
+        serviceName: pkg.serviceName || null
+      })),
+      categories: ensureArray(root.serviceCategories || taxonomy.categories).map((category, index) => ({
+        id: category.id || category.slug || `category-${index}`,
+        label: category.label || category.name || 'Service category',
+        type: category.type || category.segment || 'general-services',
+        description: category.description || '',
+        activeServices: category.activeServices ?? category.count ?? 0,
+        performance: category.performance ?? category.performanceScore ?? null
+      })),
+      catalogue: ensureArray(root.serviceCatalogue || root.services).map((service, index) => ({
+        id: service.id || `catalogue-${index}`,
+        name: service.name || service.title || 'Service',
+        description: service.description || '',
+        category: service.category || service.categoryLabel || 'General services',
+        type: service.type || service.typeLabel || 'General services',
+        price: service.price ?? null,
+        currency: service.currency || 'GBP',
+        availability: service.availability
+          ? {
+              status: service.availability.status || 'open',
+              label: service.availability.label || 'Availability',
+              detail: service.availability.detail || ''
+            }
+          : {
+              status: 'open',
+              label: 'Availability',
+              detail: ''
+            },
+        tags: ensureArray(service.tags),
+        coverage: ensureArray(service.coverage)
+      }))
+    }
+  };
+}
+
+function resolveListingTone(status) {
+  switch (status) {
+    case 'approved':
+      return 'success';
+    case 'pending_review':
+      return 'warning';
+    case 'rejected':
+    case 'suspended':
+      return 'danger';
+    default:
+      return 'info';
+  }
+}
+
+function normaliseProviderStorefront(payload = {}) {
+  const root = payload?.data ?? payload;
+  const storefront = root.storefront || {};
+  const company = storefront.company || {};
+  const metrics = storefront.metrics || {};
+  const health = storefront.health || {};
+
+  const listings = ensureArray(root.listings).map((listing, index) => {
+    const tone = resolveListingTone(listing.status);
+    return {
+      id: listing.id || `storefront-listing-${index}`,
+      title: listing.title || 'Marketplace listing',
+      status: listing.status || 'draft',
+      tone,
+      availability: listing.availability || 'rent',
+      pricePerDay: listing.pricePerDay != null ? Number(listing.pricePerDay) : null,
+      purchasePrice: listing.purchasePrice != null ? Number(listing.purchasePrice) : null,
+      location: listing.location || 'Unknown location',
+      insuredOnly: Boolean(listing.insuredOnly),
+      complianceHoldUntil: listing.complianceHoldUntil || null,
+      lastReviewedAt: listing.lastReviewedAt || null,
+      moderationNotes: listing.moderationNotes || null,
+      requestVolume: listing.requestVolume ?? 0,
+      activeAgreements: listing.activeAgreements ?? 0,
+      successfulAgreements: listing.successfulAgreements ?? listing.conversions ?? 0,
+      projectedRevenue: listing.projectedRevenue != null ? Number(listing.projectedRevenue) : null,
+      averageDurationDays: listing.averageDurationDays ?? 0,
+      recommendedActions: ensureArray(listing.recommendedActions).map((action, actionIndex) => ({
+        id: action.id || `listing-${index}-action-${actionIndex}`,
+        label: action.label || action.description || 'Review next best action.',
+        tone: action.tone || tone
+      })),
+      agreements: ensureArray(listing.agreements).map((agreement, agreementIndex) => ({
+        id: agreement.id || `listing-${index}-agreement-${agreementIndex}`,
+        status: agreement.status || 'requested',
+        renter: agreement.renter || agreement.customer || null,
+        pickupAt: agreement.pickupAt || agreement.rentalStartAt || null,
+        returnDueAt: agreement.returnDueAt || agreement.rentalEndAt || null,
+        lastStatusTransitionAt: agreement.lastStatusTransitionAt || null,
+        depositStatus: agreement.depositStatus || null,
+        dailyRate: agreement.dailyRate != null ? Number(agreement.dailyRate) : null,
+        meta: agreement.meta || {}
+      }))
+    };
+  });
+
+  const playbooks = ensureArray(root.playbooks).map((playbook, index) => ({
+    id: playbook.id || `playbook-${index}`,
+    title: playbook.title || 'Operational playbook',
+    detail: playbook.detail || playbook.description || 'Prioritise this workflow to unlock marketplace growth.',
+    tone: playbook.tone || 'info'
+  }));
+
+  const timeline = ensureArray(root.timeline).map((event, index) => ({
+    id: event.id || `timeline-${index}`,
+    timestamp: event.timestamp || event.createdAt || new Date().toISOString(),
+    type: event.type || event.action || 'update',
+    listingId: event.listingId || null,
+    listingTitle: event.listingTitle || event.listing || 'Listing',
+    actor: event.actor || event.user || null,
+    tone: event.tone || resolveListingTone(event.metadata?.status || event.type),
+    detail: event.detail || event.description || 'Activity logged with marketplace operations.',
+    metadata: event.metadata || {}
+  }));
+
+  return {
+    storefront: {
+      company: {
+        id: company.id || 'company',
+        name: company.name || 'Provider storefront',
+        complianceScore: company.complianceScore != null ? Number(company.complianceScore) : 0,
+        insuredSellerStatus: company.insuredSellerStatus || 'approved',
+        insuredSellerExpiresAt: company.insuredSellerExpiresAt || null,
+        badgeVisible: Boolean(company.badgeVisible ?? company.insuredSellerBadgeVisible),
+        applicationId: company.applicationId || company.application_id || null
+      },
+      metrics: {
+        activeListings: metrics.activeListings ?? metrics.active ?? listings.filter((item) => item.status === 'approved').length,
+        pendingReview: metrics.pendingReview ?? metrics.pending ?? 0,
+        flagged: metrics.flagged ?? metrics.suspended ?? 0,
+        insuredOnly: metrics.insuredOnly ?? metrics.insured ?? 0,
+        holdExpiring: metrics.holdExpiring ?? metrics.expiring ?? 0,
+        avgDailyRate: metrics.avgDailyRate != null ? Number(metrics.avgDailyRate) : null,
+        conversionRate: metrics.conversionRate != null ? Number(metrics.conversionRate) : 0,
+        totalRequests: metrics.totalRequests ?? metrics.requests ?? 0,
+        totalRevenue: metrics.totalRevenue != null ? Number(metrics.totalRevenue) : 0
+      },
+      health: {
+        badgeVisible: Boolean(health.badgeVisible ?? company.badgeVisible),
+        complianceScore: health.complianceScore != null ? Number(health.complianceScore) : Number(company.complianceScore || 0),
+        expiresAt: health.expiresAt || company.insuredSellerExpiresAt || null,
+        pendingReviewCount: health.pendingReviewCount ?? metrics.pendingReview ?? 0,
+        flaggedCount: health.flaggedCount ?? metrics.flagged ?? 0,
+        holdExpiringCount: health.holdExpiringCount ?? metrics.holdExpiring ?? 0
+      }
+    },
+    listings,
+    playbooks,
+    timeline
   };
 }
 
@@ -380,6 +576,32 @@ function normaliseEnterprisePanel(payload = {}) {
 function normaliseBusinessFront(payload = {}) {
   const root = payload?.data ?? payload;
   const profile = root.profile || root.provider || {};
+  const normaliseScore = (input, fallbackValue) => {
+    if (input == null && fallbackValue == null) {
+      return null;
+    }
+
+    const source = input && typeof input === 'object' ? input : {};
+    const resolvedValue = Number.parseFloat(source.value ?? fallbackValue);
+    if (!Number.isFinite(resolvedValue)) {
+      return null;
+    }
+
+    const sampleRaw = source.sampleSize ?? source.sample ?? source.count;
+    const sampleSize = Number.isFinite(Number.parseInt(sampleRaw, 10)) ? Number.parseInt(sampleRaw, 10) : null;
+
+    return {
+      value: Number(resolvedValue.toFixed(source.precision ?? (resolvedValue % 1 === 0 ? 0 : 2))),
+      band: source.band || source.tier || null,
+      confidence: source.confidence || null,
+      sampleSize,
+      caption: source.caption || null,
+      breakdown: source.breakdown && typeof source.breakdown === 'object' ? { ...source.breakdown } : null,
+      distribution: source.distribution && typeof source.distribution === 'object' ? { ...source.distribution } : null,
+      updatedAt: source.updatedAt || source.calculatedAt || source.generatedAt || null
+    };
+  };
+
   const stats = ensureArray(root.stats || root.metrics).map((metric, index) => ({
     id: metric.id || `metric-${index}`,
     label: metric.label || metric.name || 'Metric',
@@ -450,10 +672,56 @@ function normaliseBusinessFront(payload = {}) {
   const reviews = ensureArray(root.reviews).map((review, index) => ({
     id: review.id || `review-${index}`,
     reviewer: review.reviewer || review.client || 'Client partner',
-    rating: Number.parseFloat(review.rating ?? review.score ?? 0) || 0,
+    rating: Number.isFinite(Number.parseFloat(review.rating ?? review.score))
+      ? Number.parseFloat(review.rating ?? review.score)
+      : 0,
     comment: review.comment || review.quote || '',
-    job: review.job || review.project || null
+    job: review.job || review.project || null,
+    submittedAt: review.submittedAt || review.createdAt || review.updatedAt || null,
+    verified: review.verified !== false,
+    response: review.response || review.reply || null,
+    responseTimeMinutes: Number.isFinite(Number(review.responseTimeMinutes))
+      ? Number(review.responseTimeMinutes)
+      : null,
+    visibility: review.visibility || 'public'
   }));
+
+  const reviewSummaryRaw = root.reviewSummary || {};
+  const reviewSummary = {
+    averageRating: Number.isFinite(Number(reviewSummaryRaw.averageRating))
+      ? Number(reviewSummaryRaw.averageRating)
+      : (reviews.length ? reviews.reduce((total, entry) => total + (entry.rating ?? 0), 0) / reviews.length : null),
+    totalReviews: Number.isFinite(Number(reviewSummaryRaw.totalReviews))
+      ? Number(reviewSummaryRaw.totalReviews)
+      : reviews.length,
+    verifiedShare: Number.isFinite(Number(reviewSummaryRaw.verifiedShare))
+      ? Number(reviewSummaryRaw.verifiedShare)
+      : (reviews.length ? reviews.filter((review) => review.verified).length / reviews.length : 0),
+    ratingBuckets: ensureArray(reviewSummaryRaw.ratingBuckets).length
+      ? ensureArray(reviewSummaryRaw.ratingBuckets).map((bucket, index) => ({
+          score: Number.isFinite(Number(bucket.score)) ? Number(bucket.score) : index + 1,
+          count: Number.isFinite(Number(bucket.count)) ? Number(bucket.count) : 0
+        }))
+      : [1, 2, 3, 4, 5].map((score) => ({
+          score,
+          count: reviews.filter((review) => Math.round(review.rating ?? 0) === score).length
+        })),
+    lastReviewAt: reviewSummaryRaw.lastReviewAt || null,
+    responseRate: Number.isFinite(Number(reviewSummaryRaw.responseRate))
+      ? Number(reviewSummaryRaw.responseRate)
+      : (reviews.length
+          ? reviews.filter((review) => Number.isFinite(review.responseTimeMinutes)).length / reviews.length
+          : 0),
+    highlightedReviewId: reviewSummaryRaw.highlightedReviewId || reviews[0]?.id || null,
+    latestReviewId: reviewSummaryRaw.latestReviewId || reviews.find((review) => review.submittedAt)?.id || null,
+    excerpt: reviewSummaryRaw.excerpt || (reviews[0]?.comment ? `${reviews[0].comment.slice(0, 200)}${reviews[0].comment.length > 200 ? '…' : ''}` : null)
+  };
+    createdAt: review.createdAt || review.created_at || null
+  }));
+
+  const rawScores = root.scores || {};
+  const trustScore = normaliseScore(rawScores.trust, root.trustScore ?? root.trust?.value);
+  const reviewScore = normaliseScore(rawScores.review, root.reviewScore ?? root.review?.value ?? root.rating ?? root.score);
 
   const deals = ensureArray(root.deals).map((deal, index) => ({
     id: deal.id || `deal-${index}`,
@@ -470,8 +738,19 @@ function normaliseBusinessFront(payload = {}) {
     name: item.name || `Material ${index + 1}`,
     category: item.category || 'Materials',
     sku: item.sku || null,
-    quantityOnHand: item.quantityOnHand ?? null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
     unitType: item.unitType || null,
+    status: item.status || 'healthy',
+    condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
     image: item.image || null
   }));
 
@@ -479,9 +758,24 @@ function normaliseBusinessFront(payload = {}) {
     id: item.id || `tool-${index}`,
     name: item.name || `Tool ${index + 1}`,
     category: item.category || 'Tools',
-    rentalRate: item.rentalRate ?? null,
-    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    sku: item.sku || null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
+    unitType: item.unitType || null,
+    status: item.status || 'healthy',
     condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
+    rentalRate: toNullableNumber(item.rentalRate),
+    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    depositAmount: toNullableNumber(item.depositAmount),
+    depositCurrency: item.depositCurrency || item.rentalRateCurrency || item.currency || 'GBP',
     image: item.image || null
   }));
 
@@ -562,14 +856,492 @@ function normaliseBusinessFront(payload = {}) {
     serviceCatalogue,
     previousJobs,
     reviews,
+    reviewSummary,
     deals,
     materials,
     tools,
+    inventorySummary: (() => {
+      const raw = {
+        skuCount: toNullableNumber(root.inventorySummary?.skuCount),
+        onHand: toNullableNumber(root.inventorySummary?.onHand),
+        reserved: toNullableNumber(root.inventorySummary?.reserved),
+        available: toNullableNumber(root.inventorySummary?.available),
+        alerts: toNullableNumber(root.inventorySummary?.alerts)
+      };
+      const fallbackOnHand =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0);
+      const fallbackReserved =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0);
+      const fallbackAvailable =
+        materials.reduce((sum, item) => sum + toNumber(item.availability, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.availability, 0), 0);
+      const fallbackAlerts =
+        materials.filter((item) => item.status !== 'healthy').length +
+        tools.filter((item) => item.status !== 'healthy').length;
+
+      return {
+        skuCount: raw.skuCount ?? materials.length + tools.length,
+        onHand: raw.onHand ?? fallbackOnHand,
+        reserved: raw.reserved ?? fallbackReserved,
+        available: raw.available ?? fallbackAvailable,
+        alerts: raw.alerts ?? fallbackAlerts
+      };
+    })(),
     servicemen,
     serviceZones,
+    scores: {
+      trust: trustScore,
+      review: reviewScore
+    },
     taxonomy
   };
 }
+
+function normaliseMaterialsShowcase(payload = {}) {
+  const root = payload?.data ?? payload;
+  const heroMetrics = ensureArray(root.hero?.metrics).map((metric, index) => ({
+    id: metric.id || metric.key || metric.label || `metric-${index}`,
+    label: metric.label || metric.name || `Metric ${index + 1}`,
+    value: Number.isFinite(Number.parseFloat(metric.value))
+      ? Number.parseFloat(metric.value)
+      : Number.isFinite(Number.parseFloat(metric.percentage))
+      ? Number.parseFloat(metric.percentage)
+      : metric.value ?? metric.percentage ?? null,
+    unit: metric.unit || metric.suffix || null
+  }));
+  const heroActions = ensureArray(root.hero?.actions).map((action, index) => ({
+    id: action.id || action.key || action.label || `action-${index}`,
+    label: action.label || action.title || 'Action',
+    href: action.href || action.url || '#',
+    target: action.target || '_self'
+  }));
+  const hero = {
+    title: root.hero?.title || 'Materials control tower',
+    subtitle:
+      root.hero?.subtitle ||
+      root.hero?.description ||
+      'Govern consumables, replenishment cadences, and supplier risk from one command surface.',
+    metrics: heroMetrics,
+    actions: heroActions
+  };
+
+  const statsRaw = root.stats || {};
+  const stats = {
+    totalSkus: Number.parseInt(statsRaw.totalSkus ?? statsRaw.total_skus ?? 0, 10) || 0,
+    totalOnHand: Number.parseInt(statsRaw.totalOnHand ?? statsRaw.total_on_hand ?? 0, 10) || 0,
+    valueOnHand: Number.parseFloat(statsRaw.valueOnHand ?? statsRaw.value_on_hand ?? 0) || 0,
+    alerts: Number.parseInt(statsRaw.alerts ?? statsRaw.activeAlerts ?? 0, 10) || 0,
+    fillRate: (() => {
+      const raw = Number.parseFloat(statsRaw.fillRate ?? statsRaw.fill_rate ?? statsRaw.serviceLevel ?? 1);
+      if (Number.isNaN(raw)) return 1;
+      if (raw > 1 && raw <= 100) {
+        return Math.max(0, Math.min(1, raw / 100));
+      }
+      return Math.max(0, Math.min(1, raw));
+    })(),
+    replenishmentEta: statsRaw.replenishmentEta || statsRaw.replenishment_eta || null
+  };
+
+  const categories = ensureArray(root.categories).map((category, index) => ({
+    id: category.id || category.slug || `category-${index}`,
+    name: category.name || category.label || 'Category',
+    share: Number.parseFloat(category.share ?? category.percentage ?? 0) || 0,
+    safetyStockBreaches:
+      Number.parseInt(category.safetyStockBreaches ?? category.breaches ?? 0, 10) || 0,
+    availability: (() => {
+      const raw = Number.parseFloat(category.availability ?? category.fillRate ?? 1);
+      if (Number.isNaN(raw)) return 1;
+      if (raw > 1 && raw <= 100) {
+        return Math.max(0, Math.min(1, raw / 100));
+      }
+      return Math.max(0, Math.min(1, raw));
+    })()
+  }));
+
+  const inventory = ensureArray(root.inventory || root.materials || root.featured).map((item, index) => {
+    const quantityOnHand = Number.parseFloat(item.quantityOnHand ?? item.onHand ?? 0) || 0;
+    const quantityReserved = Number.parseFloat(item.quantityReserved ?? item.reserved ?? 0) || 0;
+    const explicitAvailable = Number.parseFloat(item.available ?? item.onHandAvailable ?? NaN);
+    const available = Number.isFinite(explicitAvailable)
+      ? explicitAvailable
+      : Math.max(quantityOnHand - quantityReserved, 0);
+    const alerts = ensureArray(item.alerts).map((alert, alertIndex) => ({
+      id: alert.id || alert.key || `alert-${alertIndex}`,
+      type: alert.type || alert.category || 'alert',
+      severity: alert.severity || alert.level || 'info',
+      status: alert.status || 'active',
+      triggeredAt: alert.triggeredAt || alert.createdAt || alert.updatedAt || null
+    }));
+    return {
+      id: item.id || `material-${index}`,
+      sku: item.sku || item.code || null,
+      name: item.name || item.title || `Material ${index + 1}`,
+      category: item.category || item.categoryName || 'Materials',
+      unitType: item.unitType || item.unit || 'unit',
+      quantityOnHand,
+      quantityReserved,
+      safetyStock: Number.parseFloat(item.safetyStock ?? item.safety_stock ?? 0) || 0,
+      available,
+      unitCost: Number.parseFloat(item.unitCost ?? item.unit_cost ?? item.cost ?? 0) || 0,
+      supplier: item.supplier?.name || item.supplier || null,
+      leadTimeDays: (() => {
+        const raw =
+          item.leadTimeDays ?? item.lead_time_days ?? item.leadTime ?? item.lead_time ?? null;
+        if (raw == null) return null;
+        const parsed = Number.parseFloat(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+      })(),
+      compliance: ensureArray(item.compliance).map((entry) => String(entry)),
+      nextArrival: item.nextArrival || item.next_arrival || null,
+      alerts
+    };
+  });
+
+  const inventoryById = new Map(inventory.map((item) => [item.id, item]));
+  const featured = ensureArray(root.featured).map((item, index) => {
+    const material = inventoryById.get(item.id);
+    if (material) {
+      return material;
+    }
+    const fallback = inventory[index];
+    return {
+      ...(fallback || {}),
+      id: item.id || fallback?.id || `material-featured-${index}`,
+      name: item.name || item.title || fallback?.name || `Material ${index + 1}`
+    };
+  });
+
+  const collections = ensureArray(root.collections).map((collection, index) => ({
+    id: collection.id || collection.slug || `collection-${index}`,
+    name: collection.name || collection.title || 'Collection',
+    description: collection.description || collection.summary || '',
+    composition: ensureArray(collection.composition || collection.items).map((entry) =>
+      typeof entry === 'string' ? entry : entry?.name || entry?.title || ''
+    ),
+    slaHours: (() => {
+      const raw = collection.slaHours ?? collection.sla_hours ?? collection.sla;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    })(),
+    coverageZones: ensureArray(collection.coverageZones || collection.zones || collection.regions).map(
+      (zone) => (typeof zone === 'string' ? zone : zone?.name || '')
+    ),
+    automation: ensureArray(collection.automation || collection.automations || collection.workflows).map((entry) =>
+      typeof entry === 'string' ? entry : entry?.title || ''
+    )
+  }));
+
+  const suppliers = ensureArray(root.suppliers).map((supplier, index) => ({
+    id: supplier.id || supplier.slug || `supplier-${index}`,
+    name: supplier.name || supplier.vendor || 'Supplier',
+    tier: supplier.tier || supplier.segment || 'Partner',
+    leadTimeDays: (() => {
+      const raw = supplier.leadTimeDays ?? supplier.lead_time_days ?? supplier.leadTime;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    })(),
+    reliability: (() => {
+      const raw = supplier.reliability ?? supplier.performance;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      if (Number.isNaN(parsed)) return null;
+      if (parsed > 1 && parsed <= 100) {
+        return Math.max(0, Math.min(1, parsed / 100));
+      }
+      return Math.max(0, Math.min(1, parsed));
+    })(),
+    annualSpend: Number.parseFloat(supplier.annualSpend ?? supplier.annual_spend ?? 0) || 0,
+    carbonScore: Number.parseFloat(supplier.carbonScore ?? supplier.carbon_score ?? 0) || null
+  }));
+
+  const logistics = ensureArray(root.logistics).map((step, index) => ({
+    id: step.id || step.key || `logistics-${index}`,
+    label: step.label || step.name || 'Milestone',
+    status: step.status || step.state || 'scheduled',
+    eta: step.eta || step.expectedAt || step.dueAt || null,
+    detail: step.detail || step.description || ''
+  }));
+
+  const complianceInsights = root.insights?.compliance || {};
+  const sustainabilityInsights = root.insights?.sustainability || {};
+
+  const insights = {
+    compliance: {
+      passingRate: (() => {
+        const raw = complianceInsights.passingRate ?? complianceInsights.passRate;
+        if (raw == null) return 1;
+        const parsed = Number.parseFloat(raw);
+        if (Number.isNaN(parsed)) return 1;
+        if (parsed > 1 && parsed <= 100) {
+          return Math.max(0, Math.min(1, parsed / 100));
+        }
+        return Math.max(0, Math.min(1, parsed));
+      })(),
+      upcomingAudits: Number.parseInt(
+        complianceInsights.upcomingAudits ?? complianceInsights.audits ?? 0,
+        10
+      ) || 0,
+      expiringCertifications: ensureArray(
+        complianceInsights.expiringCertifications || complianceInsights.expiring
+      ).map((entry, index) => ({
+        id: entry.id || entry.key || `cert-${index}`,
+        name: entry.name || entry.title || 'Certification',
+        expiresAt: entry.expiresAt || entry.expiry || entry.dueAt || null
+      }))
+    },
+    sustainability: {
+      recycledShare: (() => {
+        const raw = sustainabilityInsights.recycledShare ?? sustainabilityInsights.recycled;
+        if (raw == null) return 0;
+        const parsed = Number.parseFloat(raw);
+        if (Number.isNaN(parsed)) return 0;
+        if (parsed > 1 && parsed <= 100) {
+          return Math.max(0, Math.min(1, parsed / 100));
+        }
+        return Math.max(0, Math.min(1, parsed));
+      })(),
+      co2SavingsTons:
+        Number.parseFloat(sustainabilityInsights.co2SavingsTons ?? sustainabilityInsights.co2 ?? 0) || 0,
+      initiatives: ensureArray(sustainabilityInsights.initiatives).map((entry) =>
+        typeof entry === 'string' ? entry : entry?.title || ''
+      )
+    }
+  };
+
+  const sortedCategories = categories.slice().sort((a, b) => b.share - a.share);
+
+  return {
+    generatedAt: root.generatedAt || payload.generatedAt || new Date().toISOString(),
+    hero,
+    stats,
+    categories: sortedCategories,
+    featured,
+    inventory,
+    collections,
+    suppliers,
+    logistics,
+    insights
+  };
+}
+
+const materialsFallback = normaliseMaterialsShowcase({
+  generatedAt: '2025-02-10T08:00:00.000Z',
+  hero: {
+    title: 'Materials control tower',
+    subtitle:
+      'Govern consumables, replenishment cadences, and supplier risk from one command surface.',
+    metrics: [
+      { label: 'Fill rate', value: 97 },
+      { label: 'Stockouts this quarter', value: 1 },
+      { label: 'Average lead time (days)', value: 4 }
+    ],
+    actions: [
+      { label: 'Launch replenishment planner', href: '/materials/planner' },
+      { label: 'Download compliance pack', href: '/materials/compliance-pack.pdf' }
+    ]
+  },
+  stats: {
+    totalSkus: 24,
+    totalOnHand: 1820,
+    valueOnHand: 28640,
+    alerts: 3,
+    fillRate: 0.97,
+    replenishmentEta: '2025-02-18T08:00:00.000Z'
+  },
+  categories: [
+    { id: 'cabling', name: 'Structured cabling', share: 0.34, safetyStockBreaches: 0, availability: 0.92 },
+    { id: 'fire-safety', name: 'Fire safety', share: 0.27, safetyStockBreaches: 1, availability: 0.88 },
+    { id: 'mechanical', name: 'Mechanical consumables', share: 0.21, safetyStockBreaches: 1, availability: 0.9 },
+    { id: 'ppe', name: 'PPE & welfare', share: 0.18, safetyStockBreaches: 1, availability: 0.99 }
+  ],
+  inventory: [
+    {
+      id: 'material-1',
+      sku: 'CAB-6A-500',
+      name: 'Cat6A bulk cable drums',
+      category: 'Structured cabling',
+      unitType: 'drum',
+      quantityOnHand: 24,
+      quantityReserved: 6,
+      safetyStock: 12,
+      unitCost: 240,
+      supplier: { name: 'Metro Cabling Co' },
+      leadTimeDays: 3,
+      compliance: ['CE', 'RoHS'],
+      nextArrival: '2025-02-15T09:00:00.000Z',
+      alerts: []
+    },
+    {
+      id: 'material-2',
+      sku: 'FS-CO2-60',
+      name: '6kg CO2 extinguishers',
+      category: 'Fire safety',
+      unitType: 'unit',
+      quantityOnHand: 56,
+      quantityReserved: 12,
+      safetyStock: 48,
+      unitCost: 68,
+      supplier: 'Civic Compliance',
+      leadTimeDays: 5,
+      compliance: ['BS EN3'],
+      nextArrival: '2025-02-21T10:00:00.000Z',
+      alerts: [
+        {
+          id: 'alert-1',
+          type: 'low_stock',
+          severity: 'warning',
+          status: 'active',
+          triggeredAt: '2025-02-05T08:30:00.000Z'
+        }
+      ]
+    }
+  ],
+  featured: [
+    {
+      id: 'material-1',
+      sku: 'CAB-6A-500',
+      name: 'Cat6A bulk cable drums',
+      category: 'Structured cabling',
+      unitType: 'drum',
+      quantityOnHand: 24,
+      quantityReserved: 6,
+      safetyStock: 12,
+      unitCost: 240,
+      supplier: { name: 'Metro Cabling Co' },
+      leadTimeDays: 3,
+      compliance: ['CE', 'RoHS'],
+      nextArrival: '2025-02-15T09:00:00.000Z',
+      alerts: []
+    },
+    {
+      id: 'material-2',
+      sku: 'FS-CO2-60',
+      name: '6kg CO2 extinguishers',
+      category: 'Fire safety',
+      unitType: 'unit',
+      quantityOnHand: 56,
+      quantityReserved: 12,
+      safetyStock: 48,
+      unitCost: 68,
+      supplier: 'Civic Compliance',
+      leadTimeDays: 5,
+      compliance: ['BS EN3'],
+      nextArrival: '2025-02-21T10:00:00.000Z',
+      alerts: [
+        {
+          id: 'alert-1',
+          type: 'low_stock',
+          severity: 'warning',
+          status: 'active',
+          triggeredAt: '2025-02-05T08:30:00.000Z'
+        }
+      ]
+    }
+  ],
+  collections: [
+    {
+      id: 'rapid-response',
+      name: 'Rapid response outage kit',
+      description:
+        'Pre-packed assemblies for campus outages including switchgear spares, fuses, PPE, and thermal paste.',
+      composition: [
+        '4 × Cat6A cable drums',
+        '12 × MCCB kits',
+        'Thermal imaging consumables',
+        'Arc-flash PPE rotation pack'
+      ],
+      slaHours: 4,
+      coverageZones: ['London Docklands', 'Canary Wharf'],
+      automation: ['Auto-replenish to 2 kits per zone', 'Escrow-backed courier dispatch']
+    },
+    {
+      id: 'planned-maintenance',
+      name: 'Planned maintenance stack',
+      description: '90-day rolling consumables aligned with monthly PPM schedules and vendor compliance expiries.',
+      composition: [
+        'Filter and belt assortment',
+        'Sealant & lubrication caddies',
+        'PAT testing consumables',
+        'Permit documentation packs'
+      ],
+      slaHours: 24,
+      coverageZones: ['Manchester Science Park', 'Birmingham Innovation Hub'],
+      automation: ['Lead time buffers by supplier tier', 'Compliance auto-escalations']
+    }
+  ],
+  suppliers: [
+    {
+      id: 'metro',
+      name: 'Metro Cabling Co',
+      tier: 'Preferred',
+      leadTimeDays: 3,
+      reliability: 0.98,
+      annualSpend: 82000,
+      carbonScore: 72
+    },
+    {
+      id: 'civic',
+      name: 'Civic Compliance',
+      tier: 'Strategic',
+      leadTimeDays: 5,
+      reliability: 0.95,
+      annualSpend: 61000,
+      carbonScore: 66
+    },
+    {
+      id: 'northern',
+      name: 'Northern Plant Logistics',
+      tier: 'Regional',
+      leadTimeDays: 2,
+      reliability: 0.91,
+      annualSpend: 38000,
+      carbonScore: 59
+    }
+  ],
+  logistics: [
+    {
+      id: 'inbound',
+      label: 'Inbound consolidation',
+      status: 'on_track',
+      eta: '2025-02-15T08:00:00.000Z',
+      detail:
+        'Consolidated supplier shipments staged at Milton Keynes hub with telemetry seal checks complete.'
+    },
+    {
+      id: 'quality',
+      label: 'Quality assurance',
+      status: 'attention',
+      eta: '2025-02-16T12:00:00.000Z',
+      detail: 'Fire safety lot pending QA retest following revised BS EN3 documentation release.'
+    },
+    {
+      id: 'last-mile',
+      label: 'Last-mile dispatch',
+      status: 'scheduled',
+      eta: '2025-02-17T06:00:00.000Z',
+      detail: 'Dedicated EV couriers aligned with SLAs and geofenced drop windows for Docklands campus.'
+    }
+  ],
+  insights: {
+    compliance: {
+      passingRate: 0.94,
+      upcomingAudits: 3,
+      expiringCertifications: [
+        { name: 'Fire suppression media', expiresAt: '2025-03-01T00:00:00.000Z' },
+        { name: 'Lifting accessories', expiresAt: '2025-03-12T00:00:00.000Z' }
+      ]
+    },
+    sustainability: {
+      recycledShare: 0.32,
+      co2SavingsTons: 18.4,
+      initiatives: ['Closed-loop cable drum programme', 'EV last-mile fleet fully deployed']
+    }
+  }
+});
 
 function normaliseAdminDashboard(payload = {}) {
   const timeframe = typeof payload.timeframe === 'string' ? payload.timeframe : '7d';
@@ -926,6 +1698,348 @@ const providerFallback = normaliseProviderDashboard({
     { name: 'Amina Khan', role: 'Lead Electrical Engineer', availability: 0.68, rating: 0.99 },
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
     { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
+  ],
+  serviceDelivery: {
+    health: [
+      { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
+      { id: 'utilisation', label: 'Crew utilisation', value: 0.82, format: 'percent', caption: 'Live schedule coverage' },
+      { id: 'incidents', label: 'Open incidents', value: 2, format: 'number', caption: 'Requires triage review' }
+    ],
+    board: [
+      {
+        id: 'intake',
+        title: 'Intake & triage',
+        items: [
+          {
+            id: 'triage-1',
+            name: 'Riverside Campus UPS review',
+            client: 'Finova HQ',
+            zone: 'City of London',
+            eta: new Date(Date.now() + 5400000).toISOString(),
+            owner: 'Service desk',
+            risk: 'on-track',
+            services: ['Electrical'],
+            value: 3200
+          }
+        ]
+      },
+      {
+        id: 'scheduled',
+        title: 'Scheduled',
+        items: [
+          {
+            id: 'scheduled-1',
+            name: 'Smart IoT retrofit pilot',
+            client: 'Northbank Serviced Offices',
+            zone: 'Westminster',
+            eta: new Date(Date.now() + 86400000).toISOString(),
+            owner: 'Programme PMO',
+            risk: 'on-track',
+            services: ['IoT', 'Electrical'],
+            value: 14800
+          },
+          {
+            id: 'scheduled-2',
+            name: 'Emergency HVAC replacement',
+            client: 'Thames Court',
+            zone: 'City of London',
+            eta: new Date(Date.now() + 172800000).toISOString(),
+            owner: 'HVAC crew',
+            risk: 'warning',
+            services: ['HVAC'],
+            value: 9200
+          }
+        ]
+      },
+      {
+        id: 'in-flight',
+        title: 'In delivery',
+        items: [
+          {
+            id: 'delivery-1',
+            name: 'Battery string modernisation',
+            client: 'Albion Workspace Group',
+            zone: 'Docklands',
+            eta: new Date(Date.now() + 21600000).toISOString(),
+            owner: 'Critical power crew',
+            risk: 'on-track',
+            services: ['Electrical'],
+            value: 18600
+          }
+        ]
+      },
+      {
+        id: 'qa',
+        title: 'Verification',
+        items: [
+          {
+            id: 'qa-1',
+            name: 'Sustainable retrofit programme',
+            client: 'Canary Wharf Holdings',
+            zone: 'Canary Wharf',
+            eta: new Date(Date.now() + 259200000).toISOString(),
+            owner: 'Quality & compliance',
+            risk: 'on-track',
+            services: ['Electrical', 'HVAC'],
+            value: 24800
+          }
+        ]
+      }
+    ]
+  },
+  servicePackages: [
+    {
+      id: 'critical-response',
+      name: 'Critical response retainer',
+      description: '24/7 dispatch with under-45 minute arrival SLA, telemetry reporting, and quarterly compliance reviews.',
+      price: 5400,
+      currency: 'GBP',
+      highlights: ['45-minute urban SLA', 'Escrow-backed milestone billing', 'Telemetry dashboard access'],
+      serviceId: 'critical-power-maintenance',
+      serviceName: 'Critical power maintenance'
+    },
+    {
+      id: 'retrofit',
+      name: 'Sustainable retrofit programme',
+      description: 'Energy optimisation with IoT sensor network, HVAC upgrades, and capital project governance.',
+      price: 12400,
+      currency: 'GBP',
+      highlights: ['IoT monitoring stack', 'Dedicated programme manager', 'Regulatory submission support'],
+      serviceId: 'iot-retrofit',
+      serviceName: 'IoT retrofit & analytics'
+    }
+  ],
+  serviceCategories: [
+    {
+      slug: 'critical-power',
+      label: 'Critical power',
+      type: 'trade-services',
+      description: 'High-availability electrical services for trading floors and data centres.',
+      activeServices: 4,
+      performance: 0.98
+    },
+    {
+      slug: 'hvac-emergency',
+      label: 'HVAC emergency response',
+      type: 'trade-services',
+      description: 'Rapid deployment HVAC crews with telemetry-backed reporting.',
+      activeServices: 3,
+      performance: 0.95
+    },
+    {
+      slug: 'smart-retrofit',
+      label: 'Smart retrofit',
+      type: 'professional-services',
+      description: 'IoT, analytics, and sustainability programmes for enterprise estates.',
+      activeServices: 5,
+      performance: 0.92
+    }
+  ],
+  serviceCatalogue: [
+    {
+      id: 'critical-power-maintenance',
+      name: 'Critical power maintenance',
+      description: 'Preventative UPS servicing, battery refresh programmes, and load testing.',
+      category: 'Critical power',
+      type: 'Trade services',
+      price: 4200,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Available now', detail: '' },
+      tags: ['UPS', 'Battery testing', '24/7 dispatch'],
+      coverage: ['London', 'Essex', 'Kent']
+    },
+    {
+      id: 'hvac-emergency',
+      name: 'HVAC emergency call-out',
+      description: 'Rapid-response HVAC crew with telemetry logging and compliance reporting.',
+      category: 'HVAC emergency response',
+      type: 'Trade services',
+      price: 1850,
+      currency: 'GBP',
+      availability: { status: 'scheduled', label: 'Scheduled', detail: new Date(Date.now() + 86400000).toISOString() },
+      tags: ['Emergency', '24/7'],
+      coverage: ['City of London', 'Westminster']
+    },
+    {
+      id: 'iot-retrofit',
+      name: 'IoT retrofit & analytics',
+      description: 'End-to-end smart building retrofit programme with analytics and governance.',
+      category: 'Smart retrofit',
+      type: 'Professional services',
+      price: 14800,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Availability on request', detail: '' },
+      tags: ['IoT', 'Analytics', 'Sustainability'],
+      coverage: ['Docklands', 'Canary Wharf']
+    }
+  ]
+});
+
+const storefrontFallback = normaliseProviderStorefront({
+  storefront: {
+    company: {
+      id: 'metro-power-services',
+      name: 'Metro Power Services Storefront',
+      complianceScore: 92,
+      insuredSellerStatus: 'approved',
+      insuredSellerExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString(),
+      badgeVisible: true
+    },
+    metrics: {
+      activeListings: 3,
+      pendingReview: 1,
+      flagged: 1,
+      insuredOnly: 2,
+      holdExpiring: 1,
+      avgDailyRate: 415,
+      conversionRate: 0.62,
+      totalRequests: 28,
+      totalRevenue: 18400
+    }
+  },
+  listings: [
+    {
+      id: 'generator-kit',
+      title: '13kVA generator kit',
+      status: 'approved',
+      availability: 'both',
+      pricePerDay: 420,
+      purchasePrice: 68000,
+      location: 'London Docklands',
+      insuredOnly: true,
+      complianceHoldUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21).toISOString(),
+      lastReviewedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+      requestVolume: 18,
+      activeAgreements: 2,
+      successfulAgreements: 12,
+      projectedRevenue: 12600,
+      averageDurationDays: 6,
+      recommendedActions: [
+        {
+          id: 'generator-promote',
+          label: 'Bundle logistics concierge for enterprise deals to lift conversions.',
+          tone: 'info'
+        }
+      ],
+      agreements: [
+        {
+          id: 'ra-901',
+          status: 'in_use',
+          renter: 'Finova HQ',
+          pickupAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+          returnDueAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+          lastStatusTransitionAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+          depositStatus: 'held',
+          dailyRate: 420,
+          meta: { project: 'Emergency backup' }
+        },
+        {
+          id: 'ra-812',
+          status: 'settled',
+          renter: 'Northbank Campus',
+          pickupAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+          returnDueAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
+          lastStatusTransitionAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 34).toISOString(),
+          depositStatus: 'released',
+          dailyRate: 390,
+          meta: { project: 'Refit programme' }
+        }
+      ]
+    },
+    {
+      id: 'hvac-diagnostics',
+      title: 'HVAC telemetry deployment',
+      status: 'pending_review',
+      availability: 'rent',
+      pricePerDay: 260,
+      location: 'Canary Wharf',
+      insuredOnly: false,
+      requestVolume: 6,
+      activeAgreements: 0,
+      successfulAgreements: 2,
+      projectedRevenue: 3100,
+      averageDurationDays: 4,
+      recommendedActions: [
+        {
+          id: 'hvac-review',
+          label: 'Attach telemetry calibration certificates to unlock moderation.',
+          tone: 'warning'
+        }
+      ],
+      agreements: []
+    },
+    {
+      id: 'roof-access',
+      title: 'Roof access safety kit',
+      status: 'suspended',
+      availability: 'rent',
+      pricePerDay: 120,
+      location: 'Stratford',
+      insuredOnly: false,
+      requestVolume: 4,
+      activeAgreements: 0,
+      successfulAgreements: 0,
+      projectedRevenue: 0,
+      averageDurationDays: 0,
+      moderationNotes: 'Missing inspection evidence for harness lifelines.',
+      recommendedActions: [
+        {
+          id: 'roof-inspection',
+          label: 'Upload harness inspection results to reinstate the listing.',
+          tone: 'danger'
+        }
+      ],
+      agreements: []
+    }
+  ],
+  playbooks: [
+    {
+      id: 'playbook-review',
+      title: 'Accelerate moderation',
+      detail: 'Supply supporting documents for HVAC telemetry deployment to clear review backlog.',
+      tone: 'warning'
+    },
+    {
+      id: 'playbook-suspension',
+      title: 'Resolve suspension',
+      detail: 'Close out safety findings for the roof access kit to restore search placement.',
+      tone: 'danger'
+    },
+    {
+      id: 'playbook-growth',
+      title: 'Promote insured bundles',
+      detail: 'Enable concierge packages for insured-only listings to increase conversion velocity.',
+      tone: 'info'
+    }
+  ],
+  timeline: [
+    {
+      id: 'timeline-1',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      type: 'suspended',
+      listingTitle: 'Roof access safety kit',
+      actor: 'Trust & Safety',
+      tone: 'danger',
+      detail: 'Suspended pending submission of harness inspection evidence.'
+    },
+    {
+      id: 'timeline-2',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+      type: 'submitted_for_review',
+      listingTitle: 'HVAC telemetry deployment',
+      actor: 'Metro Power Services',
+      tone: 'warning',
+      detail: 'Submitted listing for moderation with preliminary telemetry schematics.'
+    },
+    {
+      id: 'timeline-3',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+      type: 'approved',
+      listingTitle: '13kVA generator kit',
+      actor: 'Marketplace Ops',
+      tone: 'success',
+      detail: 'Approved listing following compliance refresh and updated imagery.'
+    }
   ]
 });
 
@@ -1017,6 +2131,8 @@ const businessFrontFallback = normaliseBusinessFront({
     }
   },
   stats: [
+    { label: 'Trust score', value: 93, format: 'number', caption: 'Escrow-governed programmes with telemetry oversight' },
+    { label: 'Review score', value: 4.8, format: 'number', caption: 'Based on 128 verified enterprise reviews' },
     { label: 'SLA hit rate', value: 0.98, format: 'percent', caption: 'Tracked weekly with telemetry exports' },
     { label: 'Avg. response', value: 38, format: 'minutes', caption: 'Engineer dispatch, Q3 rolling' },
     { label: 'Projects delivered', value: 164, format: 'number', caption: 'Enterprise programmes completed' },
@@ -1028,6 +2144,36 @@ const businessFrontFallback = normaliseBusinessFront({
       client: 'Finova Facilities Director'
     }
   ],
+  scores: {
+    trust: {
+      value: 93,
+      band: 'gold',
+      confidence: 'high',
+      sampleSize: 212,
+      caption: 'Telemetry-governed execution across 212 orchestrated jobs',
+      breakdown: {
+        reliability: 95,
+        punctuality: 97,
+        compliance: 88,
+        sentiment: 94,
+        cancellations: 96,
+        coverage: 82
+      }
+    },
+    review: {
+      value: 4.8,
+      band: 'worldClass',
+      confidence: 'high',
+      sampleSize: 128,
+      caption: '128 verified client reviews',
+      distribution: {
+        promoters: 92,
+        positive: 26,
+        neutral: 8,
+        detractors: 2
+      }
+    }
+  },
   packages: [
     {
       name: 'Critical response retainer',
@@ -1106,6 +2252,23 @@ const businessFrontFallback = normaliseBusinessFront({
       job: 'Campus SLA Programme'
     }
   ],
+  reviewSummary: {
+    averageRating: 4.9,
+    totalReviews: 1,
+    verifiedShare: 1,
+    responseRate: 0.92,
+    ratingBuckets: [
+      { score: 5, count: 1 },
+      { score: 4, count: 0 },
+      { score: 3, count: 0 },
+      { score: 2, count: 0 },
+      { score: 1, count: 0 }
+    ],
+    lastReviewAt: new Date().toISOString(),
+    highlightedReviewId: 'review-0',
+    latestReviewId: 'review-0',
+    excerpt: 'Engineers arrive on time, telemetry updates are constant, and escrow settlements are seamless.'
+  },
   deals: [
     {
       title: 'Multi-site electrical cover',
@@ -1225,6 +2388,22 @@ export const getProviderDashboard = withFallback(
     })
 );
 
+export const getProviderStorefront = withFallback(
+  normaliseProviderStorefront,
+  storefrontFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/provider/storefront${query}`, {
+      cacheKey: `provider-storefront${cacheKeySuffix}`,
+      ttl: 20000,
+      headers: { 'X-Fixnado-Role': options?.role ?? 'company' },
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
 export const getEnterprisePanel = withFallback(
   normaliseEnterprisePanel,
   enterpriseFallback,
@@ -1237,6 +2416,21 @@ export const getEnterprisePanel = withFallback(
     return request(`/panel/enterprise/overview${query}`, {
       cacheKey: `enterprise-panel${cacheKeySuffix}`,
       ttl: 30000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
+export const getMaterialsShowcase = withFallback(
+  normaliseMaterialsShowcase,
+  materialsFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/materials/showcase${query}`, {
+      cacheKey: `materials-showcase${cacheKeySuffix}`,
+      ttl: 45000,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
     });

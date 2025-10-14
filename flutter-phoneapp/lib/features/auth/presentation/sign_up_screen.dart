@@ -130,6 +130,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             value: _selectedRole,
                             decoration: const InputDecoration(labelText: 'Joining as'),
                             items: UserRole.values
+                                .where((role) => !role.isInternal)
                                 .map(
                                   (role) => DropdownMenuItem(
                                     value: role,
