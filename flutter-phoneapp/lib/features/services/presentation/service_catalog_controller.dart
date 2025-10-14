@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/service_catalog_repository.dart';
 import '../domain/service_catalog_models.dart';
+import '../../../core/exceptions/api_exception.dart';
 
 final serviceCatalogControllerProvider =
     StateNotifierProvider<ServiceCatalogController, ServiceCatalogState>((ref) {
@@ -22,6 +25,13 @@ class ServiceCatalogController extends StateNotifier<ServiceCatalogState> {
         snapshot: snapshot,
         isLoading: false,
         clearError: true,
+      );
+    } on ApiException catch (error) {
+      state = state.copyWith(isLoading: false, errorMessage: error.message);
+    } on TimeoutException {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'The service workspace took too long to refresh. Please try again shortly.',
       );
     } on Exception catch (error) {
       state = state.copyWith(isLoading: false, errorMessage: error.toString());

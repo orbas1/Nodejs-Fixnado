@@ -21,7 +21,7 @@ class ServiceCatalogRepository {
       final cached = _cache.readJson(_cacheKey(slug));
       if (cached != null) {
         try {
-          return ServiceCatalogSnapshot.fromCacheJson(Map<String, dynamic>.from(cached['value'] as Map));
+          return ServiceCatalogSnapshot.fromCacheJson(_asMap(cached['value']));
         } catch (_) {
           // ignore corrupt cache
         }
@@ -30,29 +30,37 @@ class ServiceCatalogRepository {
 
     try {
       final payload = await _client.getJson('/business-fronts/$slug');
-      final data = Map<String, dynamic>.from(payload['data'] as Map? ?? {});
-      final meta = Map<String, dynamic>.from(payload['meta'] as Map? ?? {});
+      final data = _asMap(payload['data']);
+      final meta = _asMap(payload['meta']);
 
       final catalogue = (data['serviceCatalogue'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceCatalogueEntry.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceCatalogueEntry.fromJson(_asMap(item)))
           .toList();
 
       final serviceById = {for (final service in catalogue) service.id: service};
 
       final packages = (data['packages'] as List<dynamic>? ?? const [])
           .map((item) {
-            final json = Map<String, dynamic>.from(item as Map);
+            final json = _asMap(item);
             final reference = serviceById[json['id']?.toString() ?? json['serviceId']?.toString() ?? ''];
             return ServicePackage.fromJson(json, serviceReference: reference);
           })
           .toList();
 
-      final taxonomy = Map<String, dynamic>.from(data['taxonomy'] as Map? ?? {});
+      final taxonomy = _asMap(data['taxonomy']);
       final categories = (taxonomy['categories'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceCategory.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceCategory.fromJson(_asMap(item)))
           .toList();
       final types = (taxonomy['types'] as List<dynamic>? ?? const [])
-          .map((item) => ServiceTypeDefinition.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map((item) => ServiceTypeDefinition.fromJson(_asMap(item)))
+          .toList();
+
+      final delivery = _asMap(data['serviceDelivery']);
+      final healthMetrics = (delivery['health'] as List<dynamic>? ?? data['serviceHealth'] as List<dynamic>? ?? const [])
+          .map((item) => ServiceHealthMetric.fromJson(_asMap(item)))
+          .toList();
+      final deliveryBoard = (delivery['board'] as List<dynamic>? ?? data['serviceDeliveryBoard'] as List<dynamic>? ?? const [])
+          .map((item) => ServiceDeliveryColumn.fromJson(_asMap(item)))
           .toList();
 
       final snapshot = ServiceCatalogSnapshot(
@@ -60,6 +68,8 @@ class ServiceCatalogRepository {
         categories: categories,
         types: types,
         catalogue: catalogue,
+        healthMetrics: healthMetrics,
+        deliveryBoard: deliveryBoard,
         generatedAt: DateTime.tryParse(meta['generatedAt']?.toString() ?? '') ?? DateTime.now(),
         offline: false,
       );
@@ -69,13 +79,13 @@ class ServiceCatalogRepository {
     } on ApiException {
       final cached = _cache.readJson(_cacheKey(slug));
       if (cached != null) {
-        return ServiceCatalogSnapshot.fromCacheJson(Map<String, dynamic>.from(cached['value'] as Map)).copyWith(offline: true);
+        return ServiceCatalogSnapshot.fromCacheJson(_asMap(cached['value'])).copyWith(offline: true);
       }
       rethrow;
     } on TimeoutException {
       final cached = _cache.readJson(_cacheKey(slug));
       if (cached != null) {
-        return ServiceCatalogSnapshot.fromCacheJson(Map<String, dynamic>.from(cached['value'] as Map)).copyWith(offline: true);
+        return ServiceCatalogSnapshot.fromCacheJson(_asMap(cached['value'])).copyWith(offline: true);
       }
       rethrow;
     }
@@ -87,3 +97,13 @@ final serviceCatalogRepositoryProvider = Provider<ServiceCatalogRepository>((ref
   final cache = ref.watch(localCacheProvider);
   return ServiceCatalogRepository(client, cache);
 });
+
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, dynamic v) => MapEntry(key?.toString() ?? '', v));
+  }
+  return <String, dynamic>{};
+}

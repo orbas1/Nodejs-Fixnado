@@ -268,6 +268,8 @@ function normaliseProviderDashboard(payload = {}) {
   const provider = root.provider || root.profile || {};
   const metrics = root.metrics || {};
   const finances = root.finances || root.finance || {};
+  const serviceDelivery = root.serviceDelivery || root.delivery || {};
+  const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
 
   return {
     provider: {
@@ -321,7 +323,75 @@ function normaliseProviderDashboard(payload = {}) {
       role: member.role || member.specialism || 'Engineer',
       availability: member.availability ?? member.utilisation ?? 0.8,
       rating: member.rating ?? member.csat ?? 0.95
-    }))
+    })),
+    serviceManagement: {
+      health: ensureArray(serviceDelivery.health || root.serviceHealth).map((metric, index) => ({
+        id: metric.id || metric.key || `metric-${index}`,
+        label: metric.label || metric.name || 'Service metric',
+        value: metric.value ?? metric.score ?? 0,
+        format: metric.format || metric.type || 'number',
+        caption: metric.caption || metric.description || '',
+        target: metric.target ?? null
+      })),
+      deliveryBoard: ensureArray(serviceDelivery.board || root.serviceDeliveryBoard).map((column, index) => ({
+        id: column.id || column.key || `column-${index}`,
+        title: column.title || column.name || `Stage ${index + 1}`,
+        description: column.description || '',
+        items: ensureArray(column.items).map((item, itemIndex) => ({
+          id: item.id || `delivery-${index}-${itemIndex}`,
+          name: item.name || item.title || 'Engagement',
+          client: item.client || item.account || 'Client partner',
+          zone: item.zone || item.region || null,
+          eta: item.eta || item.due || item.scheduledFor || null,
+          owner: item.owner || item.manager || 'Operations',
+          risk: item.risk || item.status || 'on-track',
+          stage: item.stage || column.title || 'Stage',
+          value: item.value ?? item.contractValue ?? null,
+          currency: item.currency || 'GBP',
+          services: ensureArray(item.services || item.serviceMix)
+        }))
+      })),
+      packages: ensureArray(root.servicePackages || root.packages).map((pkg, index) => ({
+        id: pkg.id || `package-${index}`,
+        name: pkg.name || pkg.title || 'Service package',
+        description: pkg.description || pkg.summary || 'Comprehensive field services bundle.',
+        price: pkg.price ?? pkg.monthly ?? null,
+        currency: pkg.currency || 'GBP',
+        highlights: ensureArray(pkg.highlights || pkg.features),
+        serviceId: pkg.serviceId || pkg.service || null,
+        serviceName: pkg.serviceName || null
+      })),
+      categories: ensureArray(root.serviceCategories || taxonomy.categories).map((category, index) => ({
+        id: category.id || category.slug || `category-${index}`,
+        label: category.label || category.name || 'Service category',
+        type: category.type || category.segment || 'general-services',
+        description: category.description || '',
+        activeServices: category.activeServices ?? category.count ?? 0,
+        performance: category.performance ?? category.performanceScore ?? null
+      })),
+      catalogue: ensureArray(root.serviceCatalogue || root.services).map((service, index) => ({
+        id: service.id || `catalogue-${index}`,
+        name: service.name || service.title || 'Service',
+        description: service.description || '',
+        category: service.category || service.categoryLabel || 'General services',
+        type: service.type || service.typeLabel || 'General services',
+        price: service.price ?? null,
+        currency: service.currency || 'GBP',
+        availability: service.availability
+          ? {
+              status: service.availability.status || 'open',
+              label: service.availability.label || 'Availability',
+              detail: service.availability.detail || ''
+            }
+          : {
+              status: 'open',
+              label: 'Availability',
+              detail: ''
+            },
+        tags: ensureArray(service.tags),
+        coverage: ensureArray(service.coverage)
+      }))
+    }
   };
 }
 
@@ -926,6 +996,180 @@ const providerFallback = normaliseProviderDashboard({
     { name: 'Amina Khan', role: 'Lead Electrical Engineer', availability: 0.68, rating: 0.99 },
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
     { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
+  ],
+  serviceDelivery: {
+    health: [
+      { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
+      { id: 'utilisation', label: 'Crew utilisation', value: 0.82, format: 'percent', caption: 'Live schedule coverage' },
+      { id: 'incidents', label: 'Open incidents', value: 2, format: 'number', caption: 'Requires triage review' }
+    ],
+    board: [
+      {
+        id: 'intake',
+        title: 'Intake & triage',
+        items: [
+          {
+            id: 'triage-1',
+            name: 'Riverside Campus UPS review',
+            client: 'Finova HQ',
+            zone: 'City of London',
+            eta: new Date(Date.now() + 5400000).toISOString(),
+            owner: 'Service desk',
+            risk: 'on-track',
+            services: ['Electrical'],
+            value: 3200
+          }
+        ]
+      },
+      {
+        id: 'scheduled',
+        title: 'Scheduled',
+        items: [
+          {
+            id: 'scheduled-1',
+            name: 'Smart IoT retrofit pilot',
+            client: 'Northbank Serviced Offices',
+            zone: 'Westminster',
+            eta: new Date(Date.now() + 86400000).toISOString(),
+            owner: 'Programme PMO',
+            risk: 'on-track',
+            services: ['IoT', 'Electrical'],
+            value: 14800
+          },
+          {
+            id: 'scheduled-2',
+            name: 'Emergency HVAC replacement',
+            client: 'Thames Court',
+            zone: 'City of London',
+            eta: new Date(Date.now() + 172800000).toISOString(),
+            owner: 'HVAC crew',
+            risk: 'warning',
+            services: ['HVAC'],
+            value: 9200
+          }
+        ]
+      },
+      {
+        id: 'in-flight',
+        title: 'In delivery',
+        items: [
+          {
+            id: 'delivery-1',
+            name: 'Battery string modernisation',
+            client: 'Albion Workspace Group',
+            zone: 'Docklands',
+            eta: new Date(Date.now() + 21600000).toISOString(),
+            owner: 'Critical power crew',
+            risk: 'on-track',
+            services: ['Electrical'],
+            value: 18600
+          }
+        ]
+      },
+      {
+        id: 'qa',
+        title: 'Verification',
+        items: [
+          {
+            id: 'qa-1',
+            name: 'Sustainable retrofit programme',
+            client: 'Canary Wharf Holdings',
+            zone: 'Canary Wharf',
+            eta: new Date(Date.now() + 259200000).toISOString(),
+            owner: 'Quality & compliance',
+            risk: 'on-track',
+            services: ['Electrical', 'HVAC'],
+            value: 24800
+          }
+        ]
+      }
+    ]
+  },
+  servicePackages: [
+    {
+      id: 'critical-response',
+      name: 'Critical response retainer',
+      description: '24/7 dispatch with under-45 minute arrival SLA, telemetry reporting, and quarterly compliance reviews.',
+      price: 5400,
+      currency: 'GBP',
+      highlights: ['45-minute urban SLA', 'Escrow-backed milestone billing', 'Telemetry dashboard access'],
+      serviceId: 'critical-power-maintenance',
+      serviceName: 'Critical power maintenance'
+    },
+    {
+      id: 'retrofit',
+      name: 'Sustainable retrofit programme',
+      description: 'Energy optimisation with IoT sensor network, HVAC upgrades, and capital project governance.',
+      price: 12400,
+      currency: 'GBP',
+      highlights: ['IoT monitoring stack', 'Dedicated programme manager', 'Regulatory submission support'],
+      serviceId: 'iot-retrofit',
+      serviceName: 'IoT retrofit & analytics'
+    }
+  ],
+  serviceCategories: [
+    {
+      slug: 'critical-power',
+      label: 'Critical power',
+      type: 'trade-services',
+      description: 'High-availability electrical services for trading floors and data centres.',
+      activeServices: 4,
+      performance: 0.98
+    },
+    {
+      slug: 'hvac-emergency',
+      label: 'HVAC emergency response',
+      type: 'trade-services',
+      description: 'Rapid deployment HVAC crews with telemetry-backed reporting.',
+      activeServices: 3,
+      performance: 0.95
+    },
+    {
+      slug: 'smart-retrofit',
+      label: 'Smart retrofit',
+      type: 'professional-services',
+      description: 'IoT, analytics, and sustainability programmes for enterprise estates.',
+      activeServices: 5,
+      performance: 0.92
+    }
+  ],
+  serviceCatalogue: [
+    {
+      id: 'critical-power-maintenance',
+      name: 'Critical power maintenance',
+      description: 'Preventative UPS servicing, battery refresh programmes, and load testing.',
+      category: 'Critical power',
+      type: 'Trade services',
+      price: 4200,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Available now', detail: '' },
+      tags: ['UPS', 'Battery testing', '24/7 dispatch'],
+      coverage: ['London', 'Essex', 'Kent']
+    },
+    {
+      id: 'hvac-emergency',
+      name: 'HVAC emergency call-out',
+      description: 'Rapid-response HVAC crew with telemetry logging and compliance reporting.',
+      category: 'HVAC emergency response',
+      type: 'Trade services',
+      price: 1850,
+      currency: 'GBP',
+      availability: { status: 'scheduled', label: 'Scheduled', detail: new Date(Date.now() + 86400000).toISOString() },
+      tags: ['Emergency', '24/7'],
+      coverage: ['City of London', 'Westminster']
+    },
+    {
+      id: 'iot-retrofit',
+      name: 'IoT retrofit & analytics',
+      description: 'End-to-end smart building retrofit programme with analytics and governance.',
+      category: 'Smart retrofit',
+      type: 'Professional services',
+      price: 14800,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Availability on request', detail: '' },
+      tags: ['IoT', 'Analytics', 'Sustainability'],
+      coverage: ['Docklands', 'Canary Wharf']
+    }
   ]
 });
 

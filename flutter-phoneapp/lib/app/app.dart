@@ -6,12 +6,15 @@ import '../features/auth/presentation/auth_gate.dart';
 import 'app_shell.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
+import '../features/auth/domain/role_scope.dart';
+import '../features/auth/domain/user_role.dart';
 import '../features/bookings/presentation/booking_screen.dart';
 import '../features/communications/presentation/communications_screen.dart';
 import '../features/feed/presentation/live_feed_screen.dart';
 import '../features/explorer/presentation/explorer_screen.dart';
 import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
+import '../features/services/presentation/service_management_screen.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -77,12 +80,16 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final role = ref.watch(currentRoleProvider);
     final destinations = _NavigationDestination.values;
     final selected = destinations[_index];
+    final selectedTitle = selected == _NavigationDestination.operations && role == UserRole.provider
+        ? 'Service Ops'
+        : selected.title;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(selected.title, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(selectedTitle, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
         actions: const [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -92,14 +99,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       body: IndexedStack(
         index: _index,
-        children: const [
-          ExplorerScreen(),
-          LiveFeedScreen(),
-          BookingScreen(),
-          RentalScreen(),
-          CommunicationsScreen(),
-          ProfileManagementScreen(),
-          AnalyticsDashboardScreen(),
+        children: [
+          const ExplorerScreen(),
+          const LiveFeedScreen(),
+          const BookingScreen(),
+          const RentalScreen(),
+          const CommunicationsScreen(),
+          const ProfileManagementScreen(),
+          role == UserRole.provider
+              ? const ServiceManagementScreen()
+              : const AnalyticsDashboardScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -109,7 +118,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             .map(
               (destination) => NavigationDestination(
                 icon: Icon(destination.icon),
-                label: destination.title,
+                label: destination == _NavigationDestination.operations && role == UserRole.provider
+                    ? 'Service Ops'
+                    : destination.title,
               ),
             )
             .toList(),
