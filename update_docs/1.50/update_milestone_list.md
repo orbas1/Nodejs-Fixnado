@@ -134,3 +134,16 @@
    - Host stakeholder walkthrough and capture final approvals.
    - Transition monitoring to production support with on-call rotation updates.
    - Schedule post-launch review and feedback loop.
+
+---
+
+## Design Milestone Addendum
+To support the wider Version 1.50 delivery, the design organisation will track the following complementary milestones (see `Design_update_milestone_list.md` for full detail):
+
+1. **Milestone D1 – System Foundations & Tokenisation (Week 1–2):** Finalise cross-platform tokens, typography, and baseline components with accessibility validation.
+2. **Milestone D2 – Navigation & IA Alignment (Week 2–4):** Harmonise navigation artefacts, compliance overlays, and Flutter parity plans.
+3. **Milestone D3 – Page Templates & Partial Library (Week 3–6):** Produce modular templates for marketing, dashboards, creation studio, and finance journeys.
+4. **Milestone D4 – Mobile Parity & Theme Extensions (Week 5–7):** Adapt shared components for Flutter and deliver emo/premium theme executions.
+5. **Milestone D5 – Design QA & Handover (Week 7–9):** Complete design QA, documentation, and cross-functional sign-offs prior to development freeze.
+
+These design milestones integrate with Milestones 1–5 by supplying the visual system, navigation artefacts, and QA gates required for implementation readiness.
