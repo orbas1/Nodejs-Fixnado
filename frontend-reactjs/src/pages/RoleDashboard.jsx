@@ -1,20 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { buildExportUrl, fetchDashboard } from '../api/analyticsDashboardClient.js';
 import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx';
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
+import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
+import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
 
 const RoleDashboard = () => {
   const { roleId } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId);
+  const personaId = roleMeta?.id;
   const registeredRoles = DASHBOARD_ROLES.filter((role) => role.registered);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [unauthorised, setUnauthorised] = useState(false);
+  const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
 
   const toggleOptions = useMemo(
     () => ({
@@ -55,6 +61,14 @@ const RoleDashboard = () => {
       setLoading(false);
       return;
     }
+    if (!hasAccess(roleMeta.id)) {
+      setDashboard(null);
+      setLoading(false);
+      setError(null);
+      setUnauthorised(true);
+      return;
+    }
+    setUnauthorised(false);
     setLoading(true);
     try {
       const data = await fetchDashboard(roleMeta.id, query);
@@ -62,12 +76,18 @@ const RoleDashboard = () => {
       setError(null);
       setLastRefreshed(new Date().toISOString());
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
-      setDashboard(null);
+      if (caught?.status === 403) {
+        setUnauthorised(true);
+        setDashboard(null);
+        setError(null);
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Failed to load dashboard');
+        setDashboard(null);
+      }
     } finally {
       setLoading(false);
     }
-  }, [roleMeta, query, toggleEnabled]);
+  }, [roleMeta, query, toggleEnabled, hasAccess]);
 
   useEffect(() => {
     let active = true;
@@ -79,6 +99,17 @@ const RoleDashboard = () => {
       };
     }
 
+    if (!hasAccess(roleMeta.id)) {
+      setDashboard(null);
+      setError(null);
+      setLoading(false);
+      setUnauthorised(true);
+      return () => {
+        active = false;
+      };
+    }
+
+    setUnauthorised(false);
     (async () => {
       setLoading(true);
       try {
@@ -99,7 +130,7 @@ const RoleDashboard = () => {
     return () => {
       active = false;
     };
-  }, [roleMeta, query, toggleEnabled]);
+  }, [roleMeta, query, toggleEnabled, hasAccess]);
 
   useEffect(() => {
     if (toggleEnabled === false && !toggleLoading) {
@@ -118,8 +149,21 @@ const RoleDashboard = () => {
       }
       return;
     }
+
+    if (!personaId) {
+      return;
+    }
+
+    if (!hasAccess(personaId)) {
+      refreshPersonaAccess();
+      setDashboard(null);
+      setError(null);
+      setUnauthorised(true);
+      return;
+    }
+
     loadDashboard();
-  }, [toggleEnabled, refreshToggles, loadDashboard]);
+  }, [toggleEnabled, refreshToggles, loadDashboard, personaId, hasAccess, refreshPersonaAccess]);
 
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;
@@ -140,6 +184,21 @@ const RoleDashboard = () => {
           refreshToggles({ force: true }).catch((caught) => {
             console.error('Failed to refresh feature toggles', caught);
           });
+        }}
+      />
+    );
+  }
+
+  if (unauthorised && roleMeta) {
+    return (
+      <DashboardUnauthorized
+        roleMeta={roleMeta}
+        onNavigateHome={() => navigate('/dashboards')}
+        onRetry={() => {
+          refreshPersonaAccess();
+          if (personaId && hasAccess(personaId)) {
+            loadDashboard();
+          }
         }}
       />
     );

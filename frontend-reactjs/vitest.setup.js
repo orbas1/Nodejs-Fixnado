@@ -13,6 +13,10 @@ if (typeof window !== 'undefined') {
     });
   }
 
+  if (typeof window.ResizeObserver === 'undefined') {
+    window.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
   if (typeof window.ResizeObserver !== 'function') {
     window.ResizeObserver = class {
       constructor(callback = () => {}) {

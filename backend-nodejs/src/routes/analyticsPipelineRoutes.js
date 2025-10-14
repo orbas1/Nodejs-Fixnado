@@ -9,6 +9,8 @@ import {
   exportPersonaDashboardHandler,
   getPersonaDashboardHandler
 } from '../controllers/analyticsDashboardController.js';
+import { authenticate } from '../middleware/auth.js';
+import { authorizePersonaAccess } from '../middleware/personaAccess.js';
 
 const router = Router();
 
@@ -32,7 +34,7 @@ const personaValidators = () => [
   query('timezone').optional().isString().trim().isLength({ min: 2, max: 64 })
 ];
 
-router.get('/dashboards/:persona/export', personaValidators(), exportPersonaDashboardHandler);
-router.get('/dashboards/:persona', personaValidators(), getPersonaDashboardHandler);
+router.get('/dashboards/:persona/export', authenticate, authorizePersonaAccess, personaValidators(), exportPersonaDashboardHandler);
+router.get('/dashboards/:persona', authenticate, authorizePersonaAccess, personaValidators(), getPersonaDashboardHandler);
 
 export default router;
