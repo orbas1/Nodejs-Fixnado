@@ -6,6 +6,7 @@
    - Implement policy middleware and auditing hooks in backend routes.
    - Replace insecure `.env` defaults and MySQL bootstrap with vault-managed secrets.
    - Configure httpOnly/session storage for web and secure storage for mobile tokens.
+   - Encrypt core PII columns with deterministic hashes, delivering transactional migrations and rollback rehearsals.
 2. **API Gateway Hardening**
    - Introduce versioned `/v1` routing, rate limiting, payload caps, and CORS allowlist.
    - Add `/healthz` and `/readyz` endpoints plus SIGTERM shutdown handling.

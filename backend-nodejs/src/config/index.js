@@ -129,6 +129,12 @@ const config = {
     },
     health: {
       databaseTimeoutMs: Math.max(intFromEnv('HEALTHCHECK_DB_TIMEOUT_MS', 2000), 100)
+    },
+    pii: {
+      encryptionKeySet: Boolean(process.env.PII_ENCRYPTION_KEY),
+      hashKeySet: Boolean(process.env.PII_HASH_KEY),
+      rotationKeyId: process.env.PII_ENCRYPTION_KEY_ID || null,
+      rotationFallbackSet: Boolean(process.env.PII_ENCRYPTION_KEY_PREVIOUS)
     }
   },
   database: {

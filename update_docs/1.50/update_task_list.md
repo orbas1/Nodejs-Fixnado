@@ -2,7 +2,7 @@
 
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
-| 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 12% |
+| 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 26% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 0% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 0% |
 | 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 0% |
@@ -20,8 +20,8 @@
 1. Finalise RBAC matrix for users, servicemen, providers, enterprise, admins (issue list 1, 11).
 2. Implement policy middleware, per-route permission guards, and audit logging pipeline.
 3. Migrate `.env` secrets into secrets manager, replace MySQL bootstrap with Postgres secure scripts.
-4. Configure API gateway protections (rate limiting, payload size, CORS allowlist, `/healthz`).
-5. Encrypt/Hash PII columns, update Sequelize models, and validate migrations.
+4. ✅ Configure API gateway protections (rate limiting, payload size, CORS allowlist, `/healthz`).
+5. ✅ Encrypt/Hash PII columns, update Sequelize models, and validate migrations with AES-256-GCM + hashing.
 6. Redesign session/token handling for web (httpOnly cookies) and Flutter (secure storage, biometrics).
 7. Implement consent banner, privacy/terms pages, and consent log storage.
 8. Build scam detection heuristics, AI hooks, and notifications.

@@ -35,6 +35,7 @@ Primary objectives:
 - Create token export pipelines (Style Dictionary or similar) that deliver JSON/Sass/Flutter formats.
 - Document animation easing curves, durations, and motion safety preferences.
 - Extend the status messaging component library to cover rate-limit, CORS, and consent prompts so visual treatments mirror the hardened backend responses.
+- Publish privacy surface specifications for consent receipts, encrypted data disclosures, and breach notification banners aligned with new PII storage safeguards.
 
 ## Page & Flow Redesign Scope
 | Area | Key Enhancements | Notes |

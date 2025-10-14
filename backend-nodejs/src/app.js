@@ -8,6 +8,17 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { sequelize } from './models/index.js';
 import config from './config/index.js';
 
+function assertPiiConfiguration() {
+  const piiConfig = config.security?.pii;
+  if (!piiConfig?.encryptionKeySet || !piiConfig?.hashKeySet) {
+    throw new Error(
+      'PII encryption cannot be initialised because PII_ENCRYPTION_KEY and PII_HASH_KEY are not configured.'
+    );
+  }
+}
+
+assertPiiConfiguration();
+
 const app = express();
 
 app.disable('x-powered-by');
