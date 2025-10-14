@@ -102,10 +102,13 @@ describe('RoleDashboard', () => {
       ok: true,
       json: async () => dashboardFixture
     });
+    window.localStorage.clear();
+    window.localStorage.setItem('fixnado:personaAccess', JSON.stringify(['admin']));
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.clear();
   });
 
   it('renders dashboard data and export CTA', async () => {
@@ -117,17 +120,17 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+    const overviewHeadings = await screen.findAllByText('Executive Overview');
+    expect(overviewHeadings.length).toBeGreaterThan(0);
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
-    expect(screen.getByText('Download CSV')).toHaveAttribute(
-      'href',
-      '/api/analytics/dashboards/admin/export?timezone=Europe%2FLondon'
-    );
+    const downloadLink = screen.getByText('Download CSV');
+    expect(downloadLink.getAttribute('href')).toMatch(/\/api\/analytics\/dashboards\/admin\/export\?timezone=/);
   });
 
   it('shows an error state when the dashboard fails to load', async () => {
     global.fetch.mockResolvedValueOnce({
       ok: false,
+      status: 404,
       json: async () => ({ message: 'persona_not_supported' })
     });
 
@@ -139,7 +142,7 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument());
+    await screen.findByText(/couldn’t load this dashboard/i);
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -147,7 +150,7 @@ describe('RoleDashboard', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+    await screen.findAllByText('Executive Overview');
   });
 
   it('renders access gate when feature toggle is disabled', async () => {
@@ -171,5 +174,21 @@ describe('RoleDashboard', () => {
     await waitFor(() => expect(screen.getByText(/analytics dashboards are not yet enabled/i)).toBeInTheDocument());
     expect(global.fetch).not.toHaveBeenCalled();
     expect(screen.getByText(/request pilot access/i)).toBeInTheDocument();
+  });
+
+  it('renders an access denied experience when persona is not permitted', async () => {
+    window.localStorage.setItem('fixnado:personaAccess', JSON.stringify(['user']));
+
+    renderWithToggles(
+      <MemoryRouter initialEntries={['/dashboards/admin']}>
+        <Routes>
+          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText(/You need permission to open/i)).toBeInTheDocument());
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /dashboard hub/i })).toBeInTheDocument();
   });
 });

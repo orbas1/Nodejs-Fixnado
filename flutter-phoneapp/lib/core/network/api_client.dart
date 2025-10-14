@@ -12,13 +12,16 @@ class FixnadoApiClient {
     required this.defaultHeaders,
     required this.requestTimeout,
     Logger? logger,
-  }) : _logger = logger ?? Logger('FixnadoApiClient');
+    String? Function()? authTokenResolver,
+  })  : _logger = logger ?? Logger('FixnadoApiClient'),
+        _authTokenResolver = authTokenResolver;
 
   final Uri baseUrl;
   final http.Client client;
   final Map<String, String> defaultHeaders;
   final Duration requestTimeout;
   final Logger _logger;
+  final String? Function()? _authTokenResolver;
 
   Uri _buildUri(String path, [Map<String, dynamic>? query]) {
     final base = baseUrl.resolve(path.startsWith('/') ? path.substring(1) : path);
@@ -32,10 +35,20 @@ class FixnadoApiClient {
     });
   }
 
-  Map<String, String> _headers([Map<String, String>? headers]) => {
-        ...defaultHeaders,
-        if (headers != null) ...headers,
-      };
+  Map<String, String> _headers([Map<String, String>? headers]) {
+    final resolved = {
+      ...defaultHeaders,
+      if (headers != null) ...headers,
+    };
+    final hasAuthHeader = resolved.keys.any((key) => key.toLowerCase() == 'authorization');
+    if (!hasAuthHeader) {
+      final token = _authTokenResolver?.call();
+      if (token != null && token.isNotEmpty) {
+        resolved['Authorization'] = 'Bearer $token';
+      }
+    }
+    return resolved;
+  }
 
   Future<Map<String, dynamic>> getJson(String path, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
     final uri = _buildUri(path, query);

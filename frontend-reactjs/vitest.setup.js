@@ -13,6 +13,14 @@ if (typeof window !== 'undefined') {
     });
   }
 
+  if (typeof window.ResizeObserver === 'undefined') {
+    window.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
+
   if (!window.dataLayer) {
     window.dataLayer = [];
   }
