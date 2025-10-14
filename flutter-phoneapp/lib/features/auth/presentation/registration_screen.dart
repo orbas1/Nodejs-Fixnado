@@ -161,6 +161,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                         spacing: 12,
                         runSpacing: 12,
                         children: UserRole.values
+                            .where((role) => !role.isInternal)
                             .map(
                               (role) => FilterChip(
                                 label: Text(role.displayName),

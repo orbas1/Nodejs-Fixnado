@@ -15,6 +15,9 @@ class FixnadoApiClient {
     Logger? logger,
   })  : _accessTokenProvider = accessTokenProvider,
         _logger = logger ?? Logger('FixnadoApiClient');
+    String? Function()? authTokenResolver,
+  })  : _logger = logger ?? Logger('FixnadoApiClient'),
+        _authTokenResolver = authTokenResolver;
 
   final Uri baseUrl;
   final http.Client client;
@@ -22,6 +25,7 @@ class FixnadoApiClient {
   final Duration requestTimeout;
   final Logger _logger;
   final String? Function()? _accessTokenProvider;
+  final String? Function()? _authTokenResolver;
 
   Uri _buildUri(String path, [Map<String, dynamic>? query]) {
     final base = baseUrl.resolve(path.startsWith('/') ? path.substring(1) : path);
@@ -61,6 +65,17 @@ class FixnadoApiClient {
     }
     if (headers != null) {
       resolved.addAll(headers);
+  Map<String, String> _headers([Map<String, String>? headers]) {
+    final resolved = {
+      ...defaultHeaders,
+      if (headers != null) ...headers,
+    };
+    final hasAuthHeader = resolved.keys.any((key) => key.toLowerCase() == 'authorization');
+    if (!hasAuthHeader) {
+      final token = _authTokenResolver?.call();
+      if (token != null && token.isNotEmpty) {
+        resolved['Authorization'] = 'Bearer $token';
+      }
     }
     return resolved;
   }

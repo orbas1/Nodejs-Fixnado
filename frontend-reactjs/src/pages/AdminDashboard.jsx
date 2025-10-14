@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BanknotesIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
+import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 
 const DEFAULT_TIMEFRAME = '7d';
 const FALLBACK_TIMEFRAME_OPTIONS = [
@@ -275,6 +276,8 @@ function buildAdminNavigation(payload) {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const { logout } = useAdminSession();
   const roleMeta = useMemo(() => DASHBOARD_ROLES.find((role) => role.id === 'admin'), []);
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -302,10 +305,18 @@ export default function AdminDashboard() {
           error instanceof PanelApiError
             ? error
             : new PanelApiError('Unable to load admin dashboard', error?.status ?? 500, { cause: error });
+        if (panelError.status === 401 || panelError.status === 403) {
+          await logout();
+          navigate('/admin', {
+            replace: true,
+            state: { reason: 'sessionExpired', from: { pathname: '/admin/dashboard' } }
+          });
+          return;
+        }
         setState((current) => ({ ...current, loading: false, error: panelError }));
       }
     },
-    [timeframe]
+    [timeframe, logout, navigate]
   );
 
   useEffect(() => {
@@ -339,6 +350,11 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(() => {
     loadDashboard({ timeframe, forceRefresh: true });
   }, [loadDashboard, timeframe]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate('/admin', { replace: true, state: { reason: 'signedOut' } });
+  }, [logout, navigate]);
 
   if (!roleMeta) {
     return null;
@@ -382,6 +398,7 @@ export default function AdminDashboard() {
       onRefresh={handleRefresh}
       lastRefreshed={lastRefreshed}
       filters={filters}
+      onLogout={handleLogout}
     />
   );
 }

@@ -86,6 +86,39 @@ const localisationPlan = [
   { locale: 'Español (MX)', status: 'Sprint 4', notes: 'Marketing hero, proof modules, and checkout copy localised.' }
 ];
 
+const escrowMilestones = [
+  {
+    title: 'Milestone funded',
+    caption: 'Dual approval captures escrow before dispatch with ISO-compliant audit trails.'
+  },
+  {
+    title: 'Field telemetry sync',
+    caption: 'Technician apps feed arrival, photo proof, and punch list completion in real time.'
+  },
+  {
+    title: 'Finance release',
+    caption: 'Payment release waits for customer sign-off, compliance docs, and safety checks.'
+  }
+];
+
+const assuranceRails = [
+  {
+    name: 'Role-based orchestration',
+    detail:
+      'Enterprise RBAC ensures procurement leaders, site managers, and finance controllers only see the controls they need.'
+  },
+  {
+    name: 'Escrow dispute concierge',
+    detail:
+      'Dedicated dispute specialists mediate escalations, holding funds securely until verified remediation is delivered.'
+  },
+  {
+    name: 'Mobile parity',
+    detail:
+      'Flutter and web experiences mirror each workflow with responsive layouts, offline resilience, and biometrics.'
+  }
+];
+
 export default function Services() {
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
@@ -220,6 +253,43 @@ export default function Services() {
               </li>
             ))}
           </ol>
+        </BlueprintSection>
+
+        <BlueprintSection
+          id="escrow-governance"
+          eyebrow="Escrow & governance"
+          title="Enterprise booking control with mirrored mobile parity"
+          description="Service bookings automatically lock to the correct zone, enforce escrow milestones, and synchronise with the Fixnado mobile experience for field teams."
+          aside={
+            <div className="space-y-5">
+              <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-primary">Milestone tracker</h3>
+                <ul className="mt-4 space-y-3 text-sm text-slate-600">
+                  {escrowMilestones.map((milestone) => (
+                    <li key={milestone.title} className="rounded-2xl border border-primary/20 bg-white p-4 shadow-sm">
+                      <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{milestone.title}</p>
+                      <p className="mt-2 text-sm text-slate-600">{milestone.caption}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-primary">Security wrap</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  All API calls inherit JWT scopes, hardware-bound device trust, and anomaly detection across purchase, booking, and escrow releases.
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <div className="grid gap-6 md:grid-cols-3">
+            {assuranceRails.map((rail) => (
+              <article key={rail.name} className="h-full rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-primary">{rail.name}</h3>
+                <p className="mt-2 text-sm text-slate-600">{rail.detail}</p>
+              </article>
+            ))}
+          </div>
         </BlueprintSection>
       </div>
     </div>

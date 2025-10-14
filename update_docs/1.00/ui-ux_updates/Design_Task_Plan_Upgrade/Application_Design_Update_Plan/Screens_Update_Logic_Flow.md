@@ -159,6 +159,14 @@
 4. Overdue scenario: scheduler marks invoice overdue; UI displays red badge and prompts escalation. Escalation action triggers POST `/api/campaigns/:id/invoices/:invoiceId/escalate` notifying finance Slack + email with payload containing invoice metadata.
 5. Invoice dispute: button opens modal capturing dispute reason, attachments. POST `/api/campaigns/:id/invoices/:invoiceId/dispute`. Status set to `in_dispute`; UI shows amber badge and logs event.
 
+## 22. Zone Coverage Sync Flow (2025-11-03)
+1. Admin selects `Manage coverage` on zone detail. UI fetches existing attachments via `GET /api/zones/:zoneId/services` and pre-populates drawer list.
+2. User selects services and sets priority/effective windows. Submitting `Attach` posts to `/api/zones/:zoneId/services` with payload `{ coverages: [{ serviceId, coverageType, priority, effectiveFrom, effectiveTo, metadata }], actor }`.
+3. Backend responds with updated coverage array; UI replaces table rows, fires telemetry `zone.coverage.attach`, and updates analytics panel counters. If `replace=true`, UI refreshes attachments and shows confirmation that stale services were detached.
+4. Conflict path: If backend returns 409 (overlap), UI renders warning banner referencing conflicting zone name and locks submit button until geometry adjusted. Telemetry `zone.coverage.conflict` logged for analytics dashboards.
+5. Detach flow: User selects `Remove` on coverage row → confirmation modal summarises impact. DELETE `/api/zones/:zoneId/services/:coverageId` with actor metadata. On success, row removed, toast shown, telemetry `zone.coverage.detach` emitted.
+6. Mobile provider screen caches coverage list offline; on reconnect, sync compares `updatedAt` from response to local store, resolves conflicts by preferring server state. Offline attempts queue patch requests with actor metadata for retry.
+
 ## 22. Campaign Archive & Deletion Flow
 1. User selects `Archive campaign`; modal summarises outstanding invoices and flights. If open invoices exist, disable action with explanation.
 2. When eligible, POST `/api/campaigns/:id/actions/archive` setting status `archived`, closing active flights. UI removes campaign from default list, accessible via status filter.
@@ -255,6 +263,12 @@
 3. **Refresh Cycle:** Refresh button (`Shift+R`) refetches same endpoint with updated timestamp. Loading state swaps cards to skeletons, disables export CTA, and posts telemetry `analytics.dashboard.refresh` with persona/timezone. Error handling surfaces offline banner; repeated failure increments `analytics.dashboard.offline` counter.
 4. **Queue Drill-down:** Selecting CTA on queue widget routes to relevant workspace (bookings, rentals, communications) or opens inline drawer for enterprise summaries. CTA logs `analytics.dashboard.queue.open` with queue type + count snapshot. Drawer view references backend IDs for follow-up.
 5. **CSV Export:** Export button composes query string from current filters and hits `/api/analytics/dashboards/:persona/export`. Request sets `Accept: text/csv`, expects streaming response. During fetch, button shows spinner + tooltip “Generating CSV…”. On success, browser downloads filename `persona-analytics-YYYY-MM-DD.csv`, toast summarises row count. Telemetry `analytics.dashboard.export` captures persona, timezone, row count, duration.
+6. **Warehouse Freshness Alert Loop (2025-11-02):**
+   1. Background job (`warehouseFreshnessJob`) flags stale/backlog/failure streak; OpsGenie alert created with alias `analytics-freshness-${domain}`.
+   2. Admin dashboard poller includes alert metadata in `/api/analytics/dashboards/:persona` payload; UI renders banner with CTA.
+   3. Clicking “View OpsGenie runbook” opens docs anchor; telemetry `analytics.alert.runbook` logs alias, persona, actorId.
+   4. Clicking “Acknowledge in OpsGenie” opens OpsGenie alert URL in new tab; telemetry `analytics.alert.acknowledge` fired.
+   5. When backend marks alert recovered (`closeAlert`), next poll removes banner, triggers toast “Warehouse freshness restored — incident ${incidentId} closed at ${time}” and telemetry `analytics.alert.recovered` capturing elapsedMinutes + backlogCount.
 6. **Failure & Escalation:** If export request returns ≥400, UI surfaces error toast with guidance (check permissions, contact analytics ops). CTA `View runbook` opens relevant Confluence doc. Export button re-enabled; telemetry logs failure reason for monitoring. Offline fallback instructs user to retry after verifying connectivity.
 7. **Localisation:** Locale change triggers re-render and optional refetch if timezone or locale-specific metrics (e.g., currency) require formatting update. CSV header labels pulled from translation tables before streaming to maintain locale-specific names. Live region announces “Dashboard updated for Español (ES)”.
 8. **Verification (2025-10-30):** Staging rehearsal confirmed export toast copy includes filename + row count, toolbar surfaces "Up to 5,000 rows per export" message and last refreshed timestamp, and timezone tag mirrors API response. QA noted Vitest spinner noise during regression run; package scripts will enforce CI reporters before Playwright export smoke test lands.

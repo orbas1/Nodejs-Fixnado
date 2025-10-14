@@ -38,3 +38,7 @@
 - Migration `20250225000000-create-analytics-pipeline-runs.js` introduces `analytics_pipeline_runs` capturing cycle timestamps, batch sizes, purge counts, failure streak metadata, toggle actor/ticket details, and response diagnostics for warehouse monitoring.
 - Added indexes on `(startedAt DESC)` and `(status, startedAt)` to power dashboard lookups while ensuring down migration removes dependent indexes before dropping the table for clean rollback across Postgres/sqlite.
 - Run history is linked to ingestion telemetry via foreign-key friendly correlation IDs so runbooks, dashboards, and compliance exports can evidence pause/resume actions alongside pipeline throughput.
+
+## 2025-10-31 — Service Zone Coverage & Geometry Normalisation
+- Migration `20250302000000-upgrade-service-zones.js` upgrades `ServiceZone` storage to persist MultiPolygon `boundary`, `centroid`, `bounding_box`, and JSON `metadata`, migrating historical `geo_json` payloads into normalised geometries and enforcing unique `(company_id, name)` constraints for overlap-safe governance.【F:backend-nodejs/src/database/migrations/20250302000000-upgrade-service-zones.js†L1-L200】
+- Introduced `ServiceZoneCoverage` table linking services to zones with coverage type enum, priority, effective window columns, and metadata JSON; unique `(zone_id, service_id)` constraint and supporting indexes power explorer/panel queries while cascading deletes clean up attachments on zone/service removal.【F:backend-nodejs/src/database/migrations/20250302000000-upgrade-service-zones.js†L200-L228】
