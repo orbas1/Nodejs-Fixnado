@@ -1,4 +1,5 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const { default: app } = await import('../src/app.js');
@@ -20,6 +21,12 @@ beforeEach(async () => {
   await sequelize.truncate({ cascade: true, restartIdentity: true });
 });
 
+function createToken(userId) {
+  return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
+
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
+
 async function createCompany() {
   const admin = await User.create({
     firstName: 'Provider',
@@ -39,12 +46,14 @@ async function createCompany() {
     verified: true
   });
 
-  return { admin, company };
+  const token = createToken(admin.id);
+
+  return { admin, company, token };
 }
 
 describe('Inventory and rental lifecycle', () => {
   it('reserves inventory, progresses rental lifecycle, and settles charges', async () => {
-    const { admin, company } = await createCompany();
+    const { admin, company, token } = await createCompany();
     const renter = await User.create({
       firstName: 'Customer',
       lastName: 'Jones',
@@ -55,6 +64,7 @@ describe('Inventory and rental lifecycle', () => {
 
     const createItemResponse = await request(app)
       .post('/api/inventory/items')
+      .set('Authorization', `Bearer ${token}`)
       .send({
         companyId: company.id,
         name: 'Heavy Duty Drill',
@@ -157,7 +167,10 @@ describe('Inventory and rental lifecycle', () => {
     expect(rentalDetail.body.timeline).toHaveLength(6);
     expect(rentalDetail.body.timeline[0].type).toBe('status_change');
 
-    const itemHealth = await request(app).get(`/api/inventory/items/${itemId}`).expect(200);
+    const itemHealth = await request(app)
+      .get(`/api/inventory/items/${itemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
     expect(itemHealth.body.health.available).toBe(5);
     expect(itemHealth.body.health.status).toBe('healthy');
 
@@ -172,7 +185,7 @@ describe('Inventory and rental lifecycle', () => {
   });
 
   it('prevents rentals when insufficient stock is available and creates alerts when stockouts occur', async () => {
-    const { admin, company } = await createCompany();
+    const { admin, company, token } = await createCompany();
     const renter = await User.create({
       firstName: 'Eve',
       lastName: 'Smith',
@@ -183,6 +196,7 @@ describe('Inventory and rental lifecycle', () => {
 
     const itemResponse = await request(app)
       .post('/api/inventory/items')
+      .set('Authorization', `Bearer ${token}`)
       .send({
         companyId: company.id,
         name: 'Concrete Mixer',

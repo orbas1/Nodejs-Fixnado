@@ -34,3 +34,7 @@
 ## 2025-10-30 — Persona Route Validation
 - Smoke-tested `/api/analytics/dashboards/:persona` + `/export` under staging credentials to confirm validator middleware, timezone defaults, and export row caps operate as expected prior to release.【F:backend-nodejs/tests/analyticsDashboards.test.js†L1-L200】
 - Verified analytics router continues to co-host pipeline controls and persona dashboards without route conflicts, and recorded backlog item to publish non-interactive Vitest reporters for clearer regression logs when running analytics suites.【3d3b31†L1-L38】
+
+## 2025-10-31 — Zone Service Coverage Routes
+- Updated `zoneRoutes.js` to expose coverage management endpoints (`GET /:zoneId/services`, `POST /:zoneId/services`, `DELETE /:zoneId/services/:coverageId`) that coordinate with the service layer to attach/detach provider offerings, enforcing company ownership and actor metadata requirements.【F:backend-nodejs/src/routes/zoneRoutes.js†L1-L32】
+- API index retains backward-compatible CRUD/analytics endpoints while layering coverage operations so explorer/admin clients can hydrate zone-service relationships without bespoke wiring.【F:backend-nodejs/src/routes/index.js†L1-L34】

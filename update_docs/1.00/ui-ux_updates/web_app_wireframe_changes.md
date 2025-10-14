@@ -59,6 +59,8 @@
   - Job detail panel slides in with tabs: Overview, Timeline, Documents, Financials, Communication.
 - **Availability & Zones**
   - Map editor for polygon drawing, zone metrics, coverage recommendations.
+  - Service coverage drawer lists attached services with priority pills, effective window badges, and overlap warnings sourced from `/api/zones/:id/services`; admins can reorder priorities, toggle coverage types, and view audit metadata before publishing.
+  - Conflict banner surfaces when backend rejects overlaps, linking to analytics drill-down and escalation workflow captured in zone governance specs.
 - **Marketplace Manager**
   - Inventory table, listing cards, rental logistics timeline, analytics charts.
 - **Compliance Centre**

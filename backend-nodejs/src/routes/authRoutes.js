@@ -12,12 +12,16 @@ router.post(
     body('lastName').notEmpty(),
     body('email').isEmail(),
     body('password').isLength({ min: 8 }),
-    body('type').isIn(['user', 'company', 'servicemen'])
+    body('type').isIn(['user', 'company', 'servicemen', 'provider_admin', 'operations_admin'])
   ],
   register
 );
 
-router.post('/login', [body('email').isEmail(), body('password').notEmpty()], login);
+router.post(
+  '/login',
+  [body('email').isEmail(), body('password').notEmpty(), body('securityToken').optional().isString()],
+  login
+);
 router.get('/me', authenticate, profile);
 
 export default router;

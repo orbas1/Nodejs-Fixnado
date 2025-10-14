@@ -1,11 +1,30 @@
 import { Op } from 'sequelize';
-import { area as turfArea, bbox as turfBbox, centroid as turfCentroid, booleanValid } from '@turf/turf';
-import { ServiceZone, ZoneAnalyticsSnapshot, Booking } from '../models/index.js';
-import { recordAnalyticsEvent } from './analyticsEventService.js';
+import {
+  area as turfArea,
+  bbox as turfBbox,
+  centroid as turfCentroid,
+  booleanValid,
+  intersect
+} from '@turf/turf';
+import {
+  ServiceZone,
+  ZoneAnalyticsSnapshot,
+  Booking,
+  ServiceZoneCoverage,
+  Service,
+  sequelize
+} from '../models/index.js';
+import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 
 function validationError(message) {
   const error = new Error(message);
   error.statusCode = 400;
+  return error;
+}
+
+function conflictError(message) {
+  const error = new Error(message);
+  error.statusCode = 409;
   return error;
 }
 
@@ -101,9 +120,78 @@ function diffMetadata(previous = {}, next = {}) {
   return Object.keys(changes).length > 0 ? changes : null;
 }
 
+function getFeatureFromGeometry(geometry) {
+  if (!geometry) {
+    return null;
+  }
+
+  const source = geometry.type ? geometry : geometry.geometry || geometry.boundary || geometry;
+  if (!source || (source.type !== 'Polygon' && source.type !== 'MultiPolygon')) {
+    return null;
+  }
+
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: source.type === 'Polygon'
+      ? {
+          type: 'MultiPolygon',
+          coordinates: [source.coordinates]
+        }
+      : source
+  };
+}
+
+async function ensureNoZoneOverlap(companyId, multiPoly, { ignoreZoneId = null } = {}) {
+  const candidate = {
+    type: 'Feature',
+    properties: {},
+    geometry: multiPoly
+  };
+
+  const zones = await ServiceZone.findAll({
+    where: {
+      companyId,
+      ...(ignoreZoneId ? { id: { [Op.ne]: ignoreZoneId } } : {})
+    },
+    attributes: ['id', 'name', 'boundary']
+  });
+
+  for (const zone of zones) {
+    const feature = getFeatureFromGeometry(zone.boundary);
+    if (!feature) {
+      continue;
+    }
+
+    try {
+      const overlapping = intersect(candidate, feature);
+      if (!overlapping) {
+        continue;
+      }
+
+      const overlapArea = turfArea(overlapping);
+      if (Number.isFinite(overlapArea) && overlapArea > 1) {
+        throw conflictError(
+          `Zone geometry overlaps existing zone “${zone.name}” (${zone.id}). Adjust the polygon before saving.`
+        );
+      }
+    } catch (error) {
+      if (error?.statusCode === 409) {
+        throw error;
+      }
+
+      // Turf throws when polygons share borders; treat as overlap if intersection exists
+      throw conflictError(
+        `Zone geometry conflicts with existing zone “${zone.name}” (${zone.id}). Adjust the polygon before saving.`
+      );
+    }
+  }
+}
+
 export async function createZone({ companyId, name, geometry, demandLevel = 'medium', metadata = {}, actor = null }) {
   const multiPoly = normalisePolygon(geometry);
   validateGeometry(multiPoly);
+  await ensureNoZoneOverlap(companyId, multiPoly);
   const attributes = computeAttributes(multiPoly);
   const areaSqMeters = calculateAreaSqMeters(multiPoly);
 
@@ -150,6 +238,7 @@ export async function updateZone(id, updates) {
   if (updates?.geometry) {
     const multiPoly = normalisePolygon(updates.geometry);
     validateGeometry(multiPoly);
+    await ensureNoZoneOverlap(zone.companyId, multiPoly, { ignoreZoneId: zone.id });
     Object.assign(payload, computeAttributes(multiPoly));
     areaSqMeters = calculateAreaSqMeters(payload.boundary);
   }
@@ -396,4 +485,244 @@ export async function getZoneWithAnalytics(zoneId) {
     zone,
     analytics
   };
+}
+
+function parseDate(value, field) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw validationError(`Invalid date provided for ${field}`);
+  }
+
+  return parsed;
+}
+
+export async function listZoneServices(zoneId) {
+  const zone = await ServiceZone.findByPk(zoneId);
+  if (!zone) {
+    const error = new Error('Zone not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const coverages = await ServiceZoneCoverage.findAll({
+    where: { zoneId },
+    include: [{ model: Service, as: 'service' }],
+    order: [
+      ['priority', 'ASC'],
+      ['createdAt', 'ASC']
+    ]
+  });
+
+  return coverages;
+}
+
+export async function syncZoneServices({
+  zoneId,
+  coverages,
+  actor = null,
+  replace = false
+}) {
+  if (!Array.isArray(coverages) || coverages.length === 0) {
+    throw validationError('At least one coverage entry is required');
+  }
+
+  const zone = await ServiceZone.findByPk(zoneId);
+  if (!zone) {
+    const error = new Error('Zone not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const now = new Date();
+    const retainedIds = [];
+    const analyticsEvents = [];
+
+    for (const entry of coverages) {
+      const { serviceId, coverageType = 'primary', priority = 1, effectiveFrom, effectiveTo, metadata = {} } = entry || {};
+
+      if (!serviceId) {
+        throw validationError('Each coverage requires a serviceId');
+      }
+
+      const service = await Service.findByPk(serviceId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!service) {
+        throw validationError(`Service ${serviceId} was not found`);
+      }
+
+      if (service.companyId && service.companyId !== zone.companyId) {
+        throw validationError('Service does not belong to the same company as the zone');
+      }
+
+      const startAt = parseDate(effectiveFrom, 'effectiveFrom');
+      const endAt = parseDate(effectiveTo, 'effectiveTo');
+
+      if (startAt && endAt && endAt.getTime() <= startAt.getTime()) {
+        throw validationError('effectiveTo must be later than effectiveFrom');
+      }
+
+      const existing = await ServiceZoneCoverage.findOne({
+        where: { zoneId, serviceId },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (existing) {
+        await existing.update(
+          {
+            coverageType,
+            priority: Number.isInteger(priority) ? priority : 1,
+            effectiveFrom: startAt,
+            effectiveTo: endAt,
+            metadata: metadata || {}
+          },
+          { transaction }
+        );
+        retainedIds.push(existing.id);
+
+        analyticsEvents.push({
+          name: 'zone.service.updated',
+          entityId: existing.id,
+          actor,
+          tenantId: zone.companyId,
+          occurredAt: now,
+          metadata: {
+            coverageId: existing.id,
+            zoneId,
+            serviceId,
+            coverageType,
+            priority,
+            companyId: zone.companyId,
+            effectiveFrom: startAt ? startAt.toISOString() : null,
+            effectiveTo: endAt ? endAt.toISOString() : null
+          }
+        });
+      } else {
+        const created = await ServiceZoneCoverage.create(
+          {
+            zoneId,
+            serviceId,
+            coverageType,
+            priority: Number.isInteger(priority) ? priority : 1,
+            effectiveFrom: startAt,
+            effectiveTo: endAt,
+            metadata: metadata || {}
+          },
+          { transaction }
+        );
+
+        retainedIds.push(created.id);
+
+        analyticsEvents.push({
+          name: 'zone.service.attached',
+          entityId: created.id,
+          actor,
+          tenantId: zone.companyId,
+          occurredAt: now,
+          metadata: {
+            coverageId: created.id,
+            zoneId,
+            serviceId,
+            coverageType,
+            priority,
+            companyId: zone.companyId,
+            effectiveFrom: startAt ? startAt.toISOString() : null,
+            effectiveTo: endAt ? endAt.toISOString() : null
+          }
+        });
+      }
+    }
+
+    if (replace) {
+      const removals = await ServiceZoneCoverage.findAll({
+        where: {
+          zoneId,
+          id: {
+            [Op.notIn]: retainedIds
+          }
+        },
+        include: [{ model: Service, as: 'service', attributes: ['id', 'companyId'] }],
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (removals.length > 0) {
+        for (const removal of removals) {
+          analyticsEvents.push({
+            name: 'zone.service.detached',
+            entityId: removal.id,
+            actor,
+            tenantId: zone.companyId,
+            occurredAt: now,
+            metadata: {
+              coverageId: removal.id,
+              zoneId,
+              serviceId: removal.serviceId,
+              companyId: zone.companyId
+            }
+          });
+        }
+
+        await ServiceZoneCoverage.destroy({
+          where: {
+            id: {
+              [Op.in]: removals.map((removal) => removal.id)
+            }
+          },
+          transaction
+        });
+      }
+    }
+
+    if (analyticsEvents.length > 0) {
+      await recordAnalyticsEvents(analyticsEvents, { transaction });
+    }
+
+    return ServiceZoneCoverage.findAll({
+      where: { zoneId },
+      include: [{ model: Service, as: 'service' }],
+      order: [
+        ['priority', 'ASC'],
+        ['createdAt', 'ASC']
+      ],
+      transaction
+    });
+  });
+}
+
+export async function removeZoneService({ zoneId, coverageId, actor = null }) {
+  const coverage = await ServiceZoneCoverage.findOne({
+    where: { id: coverageId, zoneId },
+    include: [
+      { model: Service, as: 'service', attributes: ['id', 'companyId'] },
+      { model: ServiceZone, as: 'zone', attributes: ['companyId'] }
+    ]
+  });
+
+  if (!coverage) {
+    const error = new Error('Coverage not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await coverage.destroy();
+
+  await recordAnalyticsEvent({
+    name: 'zone.service.detached',
+    entityId: coverageId,
+    actor,
+    tenantId: coverage.zone?.companyId || coverage.service?.companyId || null,
+    metadata: {
+      zoneId,
+      serviceId: coverage.serviceId,
+      coverageId,
+      companyId: coverage.zone?.companyId || coverage.service?.companyId || null
+    }
+  });
+
+  return true;
 }

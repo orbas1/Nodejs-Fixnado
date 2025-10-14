@@ -230,6 +230,12 @@ export default function ProviderDashboard() {
   const heroAside = (
     <>
       <Link
+        to="/provider/storefront"
+        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
+      >
+        {t('providerDashboard.storefrontCta')}
+      </Link>
+      <Link
         to={`/providers/${provider?.slug ?? 'featured'}`}
         className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
       >

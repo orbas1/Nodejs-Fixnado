@@ -11,7 +11,12 @@ router.post(
   '/',
   authenticate,
   authorize(['servicemen', 'company']),
-  [body('title').notEmpty(), body('price').isNumeric()],
+  [
+    body('title').isString().isLength({ min: 3 }),
+    body('price').isFloat({ gt: 0 }),
+    body('currency').optional().isString().isLength({ min: 3, max: 3 }),
+    body('companyId').optional().isUUID()
+  ],
   createService
 );
 
@@ -19,7 +24,17 @@ router.post(
   '/:serviceId/purchase',
   authenticate,
   authorize(['user', 'company']),
-  [body('totalAmount').optional().isNumeric()],
+  [
+    body('zoneId').isUUID(),
+    body('bookingType').optional().isIn(['on_demand', 'scheduled']),
+    body('scheduledStart').optional().isISO8601(),
+    body('scheduledEnd').optional().isISO8601(),
+    body('baseAmount').optional().isFloat({ gt: 0 }),
+    body('totalAmount').optional().isFloat({ gt: 0 }),
+    body('currency').optional().isString().isLength({ min: 3, max: 3 }),
+    body('demandLevel').optional().isIn(['low', 'medium', 'high']),
+    body('metadata').optional().isObject()
+  ],
   purchaseService
 );
 

@@ -9,3 +9,7 @@
 - Analytics events now persist ingestion governance metadata (`ingestedAt`, `ingestionAttempts`, `lastIngestionError`, `nextIngestAttemptAt`, `retentionExpiresAt`) to support retry cadence, retention policies, and warehouse reconciliation.
 - Background ingestion job batches pending events by `nextIngestAttemptAt`, POSTs to configurable warehouse endpoints, records success/failure state via `markEventIngestionSuccess/Failure`, accelerates backfill windows, and purges expired rows to honour GDPR retention.
 - Quiet-hour suppression analytics capture `deliveryId` alongside reason metadata and are buffered until the surrounding transaction commits; post-commit promises ensure API responses only return once suppression telemetry has been enqueued for ingestion.
+
+## 2025-10-31 — Zone Service Coverage Events
+- Added `zone.service.attached`, `zone.service.updated`, and `zone.service.detached` catalogue entries with required metadata (coverageId, zoneId, serviceId, companyId, coverageType) so coverage lifecycle is captured alongside core zone events.【F:backend-nodejs/src/services/analyticsEventService.js†L1-L120】
+- Zone service synchronisation now emits the new events when providers attach/update/detach coverage, propagating actor metadata and replace deletions via batch analytics emission helpers.【F:backend-nodejs/src/services/zoneService.js†L321-L515】

@@ -213,6 +213,25 @@ class ProfileRepository {
             description: item['description']?.toString() ??
                 item['category']?.toString() ??
                 'Operational tooling surfaced from Fixnado inventory.',
+            category: item['category']?.toString(),
+            sku: item['sku']?.toString(),
+            status: item['status']?.toString(),
+            available: (item['availability'] as num?)?.toInt(),
+            reserved: (item['quantityReserved'] as num?)?.toInt(),
+            onHand: (item['quantityOnHand'] as num?)?.toInt(),
+            safetyStock: (item['safetyStock'] as num?)?.toInt(),
+            unitType: item['unitType']?.toString(),
+            location: item['location']?.toString(),
+            nextMaintenanceDue: item['nextMaintenanceDue'] != null
+                ? DateTime.tryParse(item['nextMaintenanceDue'].toString())
+                : null,
+            activeAlerts: (item['activeAlerts'] as num?)?.toInt(),
+            activeRentals: (item['activeRentals'] as num?)?.toInt(),
+            rentalRate: (item['rentalRate'] as num?)?.toDouble(),
+            rentalRateCurrency: item['rentalRateCurrency']?.toString(),
+            depositAmount: (item['depositAmount'] as num?)?.toDouble(),
+            depositCurrency: item['depositCurrency']?.toString(),
+            notes: item['notes']?.toString(),
           ),
         )
         .toList();
@@ -343,14 +362,33 @@ final List<ToolingItem> _defaultTooling = const [
     name: 'Marketplace storefront',
     description:
         'Rental thermal cameras, calibrated torque tools, and surge analyzers with insured delivery. Inventory synced nightly to avoid double bookings.',
+    status: 'healthy',
+    available: 12,
+    onHand: 18,
+    reserved: 6,
+    safetyStock: 4,
+    unitType: 'kits',
+    rentalRate: 180,
+    rentalRateCurrency: 'GBP',
+    notes: 'Calibrated weekly; RFID tracked logistics.'
   ),
   ToolingItem(
     name: 'Service zone coverage',
     description:
         'Downtown core, mission-critical campuses, and logistics hubs with live dispatch telemetry and ETA automation.',
+    status: 'low_stock',
+    available: 5,
+    onHand: 12,
+    reserved: 7,
+    safetyStock: 5,
+    unitType: 'zones',
+    location: 'Metro & suburban depots',
+    notes: 'Geo-fenced pods maintained with IoT sensors.'
   ),
   ToolingItem(
     name: 'Knowledge base references',
     description: 'KB-FIELD-104 (Permit checklist), KB-SAFETY-021 (Lockout/tagout), KB-COMMS-014 (Escalation script).',
+    status: 'healthy',
+    notes: 'Digital SOP repository linked to crew tablets.'
   ),
 ];
