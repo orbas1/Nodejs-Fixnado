@@ -40,7 +40,7 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 border-t border-slate-200 bg-slate-50/60 p-5 shadow-inner shadow-slate-200/60"
+      className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm"
     >
       <textarea
         value={message}
@@ -50,11 +50,11 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
         }}
         placeholder="Type your response…"
         rows={3}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
+        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
         disabled={disabled || isSending}
       />
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-xs text-slate-600">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <label className="flex items-center gap-2 text-xs text-slate-500">
           <input
             type="checkbox"
             className="h-3 w-3 accent-sky-500"
@@ -62,12 +62,12 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
             onChange={() => setRequestAiAssist((current) => !current)}
             disabled={!aiAssistAvailable || disabled || isSending}
           />
-          Request AI assist follow-up
+          Loop in AI follow-up
         </label>
         <button
           type="submit"
           disabled={disabled || isSending}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSending ? 'Sending…' : 'Send message'}
         </button>

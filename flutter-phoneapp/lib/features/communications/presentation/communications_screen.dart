@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/datetime_formatter.dart';
+import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/role_scope.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/communication_models.dart';
 import 'communications_controller.dart';
 
@@ -84,10 +87,98 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
     final viewerParticipant = state.activeConversation?.participantById(participantId ?? '');
     final aiAssistAvailable = viewerParticipant?.aiAssistEnabled == true && (state.activeConversation?.aiAssistDefault ?? false);
     final conversations = state.conversations;
+    final currentRole = ref.watch(currentRoleProvider);
+    final hasAccess = currentRole == UserRole.provider || currentRole == UserRole.enterprise;
 
     if (_lastConversationId != state.activeConversationId) {
       _syncAiAssistPreference(state);
       _lastConversationId = state.activeConversationId;
+    }
+
+    if (!hasAccess) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.amber.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amber.shade100.withOpacity(0.6),
+                    blurRadius: 20,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Access restricted',
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      letterSpacing: 4,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.amber.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Messaging workspace is limited to provider and enterprise roles.',
+                    style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Switch to an authorised role in your profile to coordinate customer conversations, or request enablement support to join the rollout cohort.',
+                    style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton(
+                        onPressed: () => ref.read(authControllerProvider.notifier).setActiveRole(UserRole.provider),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          backgroundColor: const Color(0xFF1F4ED8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        ),
+                        child: Text('Switch to provider', style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+                      ),
+                      OutlinedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Email enablement@fixnado.com to request access.',
+                                style: GoogleFonts.inter(),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          side: BorderSide(color: Colors.amber.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        ),
+                        child: Text('Contact enablement', style: GoogleFonts.manrope(fontWeight: FontWeight.w600, color: Colors.amber.shade700)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return SafeArea(
@@ -560,15 +651,20 @@ class _MessageBubble extends StatelessWidget {
             ? 'muted (${delivery.suppressedReason ?? 'quiet hours'})'
             : delivery.status;
     final isAssistant = message.messageType == 'assistant';
-    final backgroundColor = isSelf
-        ? theme.colorScheme.primary.withOpacity(0.12)
-        : isAssistant
-            ? Colors.indigo.shade900.withOpacity(0.8)
+    final backgroundColor = isAssistant
+        ? const Color(0xFF0B1D3A)
+        : isSelf
+            ? const Color(0xFF1F4ED8).withOpacity(0.12)
             : theme.colorScheme.surfaceVariant;
-    final foregroundColor = isSelf
-        ? theme.colorScheme.onPrimaryContainer
-        : isAssistant
-            ? Colors.indigo.shade50
+    final borderColor = isAssistant
+        ? const Color(0xFF0B1D3A).withOpacity(0.55)
+        : isSelf
+            ? const Color(0xFF1F4ED8).withOpacity(0.4)
+            : theme.colorScheme.outlineVariant;
+    final foregroundColor = isAssistant
+        ? Colors.white
+        : isSelf
+            ? const Color(0xFF0B1D3A)
             : theme.colorScheme.onSurface;
 
     final alignment = isSelf ? Alignment.centerRight : Alignment.centerLeft;
@@ -576,28 +672,37 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: alignment,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
-        padding: const EdgeInsets.all(16),
+        constraints: const BoxConstraints(maxWidth: 480),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isAssistant
-                ? Colors.indigo.shade400.withOpacity(0.6)
-                : theme.colorScheme.outlineVariant,
-          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: borderColor, width: 1.2),
+          boxShadow: [
+            if (isAssistant)
+              BoxShadow(
+                color: const Color(0xFF0B1D3A).withOpacity(0.18),
+                blurRadius: 22,
+                offset: const Offset(0, 14),
+              ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               message.body,
-              style: GoogleFonts.inter(fontSize: 14, color: foregroundColor, height: 1.4),
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                color: foregroundColor,
+                height: 1.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
-              spacing: 12,
-              runSpacing: 4,
+              spacing: 10,
+              runSpacing: 6,
               children: [
                 Text(
                   isAssistant
@@ -605,21 +710,38 @@ class _MessageBubble extends StatelessWidget {
                       : isSelf
                           ? 'You'
                           : 'Participant',
-                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: foregroundColor.withOpacity(0.8)),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: foregroundColor.withOpacity(0.85),
+                    letterSpacing: 1.6,
+                  ),
                 ),
                 Text(
                   DateFormat.jm().format(message.createdAt.toLocal()),
-                  style: GoogleFonts.inter(fontSize: 11, color: foregroundColor.withOpacity(0.7)),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: foregroundColor.withOpacity(0.7),
+                    letterSpacing: 1.6,
+                  ),
                 ),
                 if (statusLabel != null)
                   Text(
                     statusLabel,
-                    style: GoogleFonts.inter(fontSize: 11, color: foregroundColor.withOpacity(0.7)),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: foregroundColor.withOpacity(0.7),
+                      letterSpacing: 1.6,
+                    ),
                   ),
                 if (message.aiConfidenceScore != null)
                   Text(
                     'Confidence ${(message.aiConfidenceScore! * 100).round()}%',
-                    style: GoogleFonts.inter(fontSize: 11, color: foregroundColor.withOpacity(0.7)),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: foregroundColor.withOpacity(0.7),
+                      letterSpacing: 1.6,
+                    ),
                   ),
               ],
             ),

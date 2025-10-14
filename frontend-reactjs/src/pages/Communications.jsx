@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import clsx from 'clsx';
 import { useSearchParams } from 'react-router-dom';
 import ConversationList from '../components/communications/ConversationList.jsx';
 import MessageComposer from '../components/communications/MessageComposer.jsx';
@@ -11,34 +12,89 @@ import {
   createVideoSession,
   CommunicationsApiError
 } from '../api/communicationsClient.js';
+import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
+import {
+  COMMUNICATIONS_ALLOWED_ROLES,
+  hasCommunicationsAccess,
+  normaliseRole,
+  formatRoleLabel
+} from '../constants/accessControl.js';
 
 function MessageBubble({ message, isSelf, viewerParticipantId }) {
-  const delivery = message.deliveries?.find((item) => item.participantId === viewerParticipantId) ?? message.deliveries?.[0];
-  const statusLabel = delivery?.status === 'suppressed' ? `muted (${delivery.suppressedReason || 'quiet hours'})` : delivery?.status;
+  const delivery =
+    message.deliveries?.find((item) => item.participantId === viewerParticipantId) ??
+    message.deliveries?.[0];
+  const rawStatus = delivery?.status === 'suppressed'
+    ? `Muted (${delivery.suppressedReason || 'quiet hours'})`
+    : delivery?.status;
+  const statusLabel = rawStatus && rawStatus.toLowerCase() !== 'delivered' ? rawStatus : null;
+  const roleLabel = message.messageType === 'assistant' ? 'AI Assist' : isSelf ? 'You' : 'Participant';
+  const timeLabel = useMemo(() => {
+    try {
+      const created = new Date(message.createdAt);
+      if (Number.isNaN(created.getTime())) {
+        return 'Pending timestamp';
+      }
+      return new Intl.DateTimeFormat(undefined, {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(created);
+    } catch {
+      return 'Pending timestamp';
+    }
+  }, [message.createdAt]);
+
+  const tone = message.messageType === 'assistant' ? 'assistant' : isSelf ? 'self' : 'participant';
+  const wrapperClasses = clsx('flex w-full items-end gap-3', isSelf ? 'justify-end' : 'justify-start');
+  const bubbleClasses = clsx(
+    'relative max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm',
+    {
+      'bg-sky-500 text-white shadow-sky-200/50': tone === 'self',
+      'bg-indigo-500 text-white shadow-indigo-200/50': tone === 'assistant',
+      'bg-slate-100 text-slate-900 shadow-slate-200/60': tone === 'participant'
+    }
+  );
+  const metaTextClasses = clsx(
+    'mt-2 text-[11px] font-semibold uppercase tracking-[0.25em]',
+    tone === 'assistant' || tone === 'self' ? 'text-white/70' : 'text-slate-500'
+  );
+  const avatarClasses = clsx(
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase',
+    tone === 'assistant' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-600'
+  );
+  const initials = useMemo(() => roleLabel.slice(0, 2).toUpperCase(), [roleLabel]);
+
+  const confidenceLabel =
+    message.aiConfidenceScore != null
+      ? `Confidence ${Math.round(Number(message.aiConfidenceScore) * 100)}%`
+      : null;
+
   return (
-    <div
-      className={`max-w-xl rounded-2xl border px-4 py-3 text-sm shadow-sm ${
-        isSelf
-          ? 'ml-auto border-sky-200 bg-sky-50 text-slate-900'
-          : message.messageType === 'assistant'
-            ? 'border-indigo-200 bg-indigo-50 text-indigo-900'
-            : 'border-slate-200 bg-white text-slate-900'
-      }`}
+    <article
+      className={wrapperClasses}
+      data-qa="communications-message"
+      role="group"
+      aria-label={`${roleLabel} message sent ${timeLabel}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <p className="whitespace-pre-wrap font-medium leading-relaxed">{message.body}</p>
-        <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+      {!isSelf ? <span className={avatarClasses} aria-hidden="true">{initials}</span> : null}
+      <div className={clsx('flex max-w-full flex-col', isSelf ? 'items-end' : 'items-start')}>
+        <div className="mb-1 flex items-baseline gap-2 text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">{roleLabel}</span>
+          <time dateTime={message.createdAt}>{timeLabel}</time>
+        </div>
+        <div className={bubbleClasses}>
+          <p className="whitespace-pre-wrap break-words" data-qa="communications-message-body">
+            {message.body}
+          </p>
+          {statusLabel || confidenceLabel ? (
+            <div className={metaTextClasses}>
+              {[statusLabel, confidenceLabel].filter(Boolean).join(' • ')}
+            </div>
+          ) : null}
+        </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-3 text-[10px] uppercase tracking-[0.3em] text-slate-500">
-        <span>
-          {message.messageType === 'assistant' ? 'AI Assist' : isSelf ? 'You' : 'Participant'}
-        </span>
-        {statusLabel ? <span>{statusLabel}</span> : null}
-        {message.aiConfidenceScore ? <span>Confidence {Math.round(message.aiConfidenceScore * 100)}%</span> : null}
-      </div>
-    </div>
+      {isSelf ? <span className={avatarClasses} aria-hidden="true">{initials}</span> : null}
+    </article>
   );
 }
 
@@ -48,43 +104,46 @@ function ParticipantControls({ participant, onPreferencesChange, disabled }) {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 shadow-inner shadow-slate-100">
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Notification preferences</h3>
-        <label className="mt-2 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 text-sm text-slate-700 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Participant settings</h3>
+        <span className="text-xs text-slate-400">{participant.displayName || 'Participant'}</span>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
+          <span className="text-slate-700">Alerts</span>
           <input
             type="checkbox"
-            className="h-3 w-3 accent-sky-500"
+            className="h-4 w-4 accent-sky-500"
             checked={participant.notificationsEnabled}
             onChange={(event) => onPreferencesChange({ notificationsEnabled: event.target.checked })}
             disabled={disabled}
           />
-          Enable real-time alerts outside quiet hours
         </label>
-        <label className="mt-2 flex items-center gap-2">
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
+          <span className="text-slate-700">AI assist</span>
           <input
             type="checkbox"
-            className="h-3 w-3 accent-sky-500"
+            className="h-4 w-4 accent-sky-500"
             checked={participant.aiAssistEnabled}
             onChange={(event) => onPreferencesChange({ aiAssistEnabled: event.target.checked })}
             disabled={disabled}
           />
-          Allow AI follow-ups on your behalf
         </label>
-        <label className="mt-2 flex items-center gap-2">
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
+          <span className="text-slate-700">Video</span>
           <input
             type="checkbox"
-            className="h-3 w-3 accent-sky-500"
+            className="h-4 w-4 accent-sky-500"
             checked={participant.videoEnabled}
             onChange={(event) => onPreferencesChange({ videoEnabled: event.target.checked })}
             disabled={disabled}
           />
-          Permit instant video escalation
         </label>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-600">
-        <label className="flex flex-col gap-1">
-          Quiet hours start
+      <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-600">
+        <label className="flex flex-col gap-1 rounded-xl bg-slate-100 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Quiet hours start</span>
           <input
             type="time"
             value={participant.quietHoursStart || ''}
@@ -93,8 +152,8 @@ function ParticipantControls({ participant, onPreferencesChange, disabled }) {
             disabled={disabled}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          Quiet hours end
+        <label className="flex flex-col gap-1 rounded-xl bg-slate-100 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Quiet hours end</span>
           <input
             type="time"
             value={participant.quietHoursEnd || ''}
@@ -104,9 +163,6 @@ function ParticipantControls({ participant, onPreferencesChange, disabled }) {
           />
         </label>
       </div>
-      <p className="mt-3 text-[11px] text-slate-500">
-        Quiet hour suppressions retain audit metadata so compliance can evidence consented contact rules during regulator reviews.
-      </p>
     </div>
   );
 }
@@ -137,6 +193,7 @@ MessageBubble.defaultProps = {
 
 ParticipantControls.propTypes = {
   participant: PropTypes.shape({
+    displayName: PropTypes.string,
     notificationsEnabled: PropTypes.bool,
     aiAssistEnabled: PropTypes.bool,
     videoEnabled: PropTypes.bool,
@@ -153,6 +210,10 @@ ParticipantControls.defaultProps = {
 };
 
 function Communications() {
+  const [sessionRole, setSessionRole] = useState(() =>
+    normaliseRole(resolveSessionTelemetryContext().role)
+  );
+  const hasAccess = useMemo(() => hasCommunicationsAccess(sessionRole), [sessionRole]);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialParticipant = searchParams.get('participantId') || '';
   const [participantInput, setParticipantInput] = useState(initialParticipant);
@@ -174,6 +235,26 @@ function Communications() {
     bookingFlow: true,
     purchaseFlow: true
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const syncRole = () => {
+      const resolvedRole = normaliseRole(resolveSessionTelemetryContext().role);
+      setSessionRole(resolvedRole);
+    };
+
+    syncRole();
+    window.addEventListener('storage', syncRole);
+    window.addEventListener('focus', syncRole);
+
+    return () => {
+      window.removeEventListener('storage', syncRole);
+      window.removeEventListener('focus', syncRole);
+    };
+  }, []);
 
   useEffect(() => {
     if (initialParticipant) {
@@ -359,40 +440,46 @@ function Communications() {
       {
         key: 'serviceLaunch',
         title: 'Service launch',
-        description: 'Drop customers a note the moment a service kicks off so everyone stays aligned on arrivals and crew status.',
+        tagline: 'Kickoff updates when crews roll out.',
+        emoji: '🚚',
         template: 'Hi there! Your Fixnado service has just launched. Let us know if anything on-site needs attention.'
       },
       {
         key: 'toolsMaterials',
-        title: 'Tools & materials displays',
-        description: 'Let specialists answer questions directly from equipment and material detail pages without leaving the catalog.',
+        title: 'Tools & materials',
+        tagline: 'Assist shoppers reviewing equipment.',
+        emoji: '🛠️',
         template:
           'Hello! I noticed you are reviewing our tools and material display. I am here to help with specs, availability, or bundle suggestions.'
       },
       {
         key: 'shopFronts',
         title: 'Shop fronts',
-        description: 'Keep storefront visitors in touch with your team through the floating speech bubble on every listing.',
+        tagline: 'Chat from every storefront card.',
+        emoji: '🛍️',
         template: 'Welcome to our Fixnado shop front! How can we help you find the right service or product today?'
       },
       {
         key: 'businessFronts',
         title: 'Business fronts',
-        description: 'Route inquiries from your business profile straight into this inbox to speed up introductions.',
+        tagline: 'Keep profile visitors engaged.',
+        emoji: '🏢',
         template:
           'Thanks for visiting our Fixnado business front. I am on hand if you need recommendations or want to schedule a consult.'
       },
       {
         key: 'bookingFlow',
-        title: 'During booking',
-        description: 'Offer reassurance while customers schedule services so questions are handled before confirmation.',
+        title: 'Booking flow',
+        tagline: 'Guide customers as they schedule.',
+        emoji: '📅',
         template:
           'I am here while you complete your booking. Let me know if you need help picking a time or clarifying what is included.'
       },
       {
         key: 'purchaseFlow',
-        title: 'During purchase',
-        description: 'Answer last-minute questions during checkout to reduce drop-off and keep purchases moving.',
+        title: 'Checkout',
+        tagline: 'Answer questions before payment.',
+        emoji: '🧾',
         template:
           'I can help as you finalize your purchase. If anything looks unclear, send a quick note and I will respond right away.'
       }
@@ -424,77 +511,102 @@ function Communications() {
     [activeConversationId, conversations]
   );
 
+  if (!hasAccess) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-4xl flex-col items-center justify-center px-4 py-12 text-center">
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-10 shadow-lg shadow-amber-100">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-600">Access restricted</p>
+          <h1 className="mt-4 text-2xl font-semibold text-slate-900">Communications workspace is limited</h1>
+          <p className="mt-3 text-sm text-slate-600">
+            Messaging is reserved for Fixnado provider, enterprise, and operations cohorts. Switch to an authorised
+            workspace role or request access from operations enablement so conversations remain governed.
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:text-amber-600"
+              href="mailto:enablement@fixnado.com?subject=Communications%20workspace%20access"
+            >
+              Request enablement review
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                const resolvedRole = normaliseRole(resolveSessionTelemetryContext().role);
+                setSessionRole(resolvedRole);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-5 py-2 text-sm font-semibold text-amber-950 shadow hover:bg-amber-400"
+            >
+              Retry role detection
+            </button>
+          </div>
+          <dl className="mt-8 grid gap-4 text-left text-xs text-slate-600 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+              <dt className="font-semibold uppercase tracking-[0.25em] text-slate-500">Current role</dt>
+              <dd className="mt-2 text-sm font-semibold text-slate-900">{formatRoleLabel(sessionRole)}</dd>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+              <dt className="font-semibold uppercase tracking-[0.25em] text-slate-500">Authorised cohorts</dt>
+              <dd className="mt-2 text-sm font-semibold text-slate-900">
+                {COMMUNICATIONS_ALLOWED_ROLES.map((role) => formatRoleLabel(role)).join(', ')}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative mx-auto w-full max-w-6xl px-4 py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-xl shadow-slate-200/80">
-        <div className="speech-bubble pointer-events-none" aria-hidden="true">
-          <span className="text-xs uppercase tracking-[0.35em] text-white/80">Fixnado chat</span>
-          <p className="mt-1 text-sm font-semibold leading-relaxed text-white">
-            The light bubble now floats wherever customers need a hand.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <header className="max-w-2xl space-y-3">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Messaging workspace</p>
-            <h1 className="text-3xl font-semibold text-slate-900">Conversations stay connected to your profile</h1>
-            <p className="text-sm text-slate-600">
-              You are already signed in with your Fixnado profile. Launch chats from services, tools, shop fronts, and every checkout without another login screen.
-            </p>
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-10 shadow-xl shadow-slate-200/80">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <header className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Inbox</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Messaging &amp; AI assist</h1>
+            <p className="text-sm text-slate-500">A clean, social-style space for every conversation.</p>
           </header>
-          <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 shadow-sm">
-            <span className="text-xl" aria-hidden="true">
-              💬
-            </span>
-            <div>
-              <p className="font-semibold text-slate-900">Speech bubble launcher</p>
-              <p>The refreshed bubble mirrors the entry points you enable below.</p>
-            </div>
+          <div className="flex items-center gap-2 rounded-full bg-slate-900/90 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/20">
+            <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" aria-hidden="true" />
+            Live routing enabled
           </div>
         </div>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/70 p-6 shadow-inner shadow-slate-200">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Messaging entry points</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Choose where the speech bubble appears so customers can message the right individual while launching services, browsing tools and materials, shopping storefronts, or checking out.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {entryPointDefinitions.map(({ key, title, description, template }) => (
-              <div
-                key={key}
-                className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/70"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
+        <section className="mt-6">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Entry points</h2>
+          <p className="mt-2 text-xs text-slate-500">Switch on the surfaces you want to cover and send a quick hello.</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {entryPointDefinitions.map(({ key, title, tagline, emoji, template }) => (
+              <div key={key} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 text-left">
+                    <span className="text-lg" aria-hidden="true">
+                      {emoji}
+                    </span>
                     <div>
-                      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-                      <p className="text-sm text-slate-600">{description}</p>
+                      <p className="text-sm font-semibold text-slate-900">{title}</p>
+                      <p className="text-xs text-slate-500">{tagline}</p>
                     </div>
-                    <label className="flex items-center gap-2 text-xs text-slate-600">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-sky-500"
-                        checked={entryPointSettings[key]}
-                        onChange={() => handleEntryPointToggle(key)}
-                      />
-                      Active
-                    </label>
                   </div>
-                  <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                    Bubble message preview: “{template}”
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleEntryPointToggle(key)}
+                    aria-pressed={entryPointSettings[key]}
+                    className={clsx(
+                      'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                      entryPointSettings[key]
+                        ? 'border-sky-300 bg-sky-50 text-sky-600'
+                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                    )}
+                  >
+                    {entryPointSettings[key] ? 'On' : 'Off'}
+                  </button>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleEntryPointMessage(template)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-slate-900"
+                  className="self-start rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                 >
-                  <span aria-hidden="true">💬</span>
-                  Open message composer
+                  Use template
                 </button>
               </div>
             ))}
@@ -508,45 +620,46 @@ function Communications() {
             setParticipantId(trimmed);
             setSearchParams(trimmed ? { participantId: trimmed } : {});
           }}
-          className="mt-8 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/70"
+          className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
         >
-          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">Participant routing</span>
-          <p className="text-xs text-slate-600">
-            Your Fixnado profile is already linked. Adjust the participant ID if you need to inspect another customer or teammate thread.
-          </p>
+          <label
+            htmlFor="communications-participant"
+            className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500"
+          >
+            Participant
+          </label>
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
+              id="communications-participant"
               type="text"
               value={participantInput}
               onChange={(event) => setParticipantInput(event.target.value)}
-              placeholder="Conversation participant ID"
+              placeholder="Participant ID"
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
             />
             <button
               type="submit"
               className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400"
             >
-              Load participant
+              Load
             </button>
           </div>
         </form>
 
         {!hasParticipant ? (
-          <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-700 shadow-sm">
-            Provide a participant ID to pull live threads from bookings, services, storefronts, or business fronts.
+          <p className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600 shadow-sm">
+            Add a participant ID to open the inbox.
           </p>
         ) : null}
         {error ? (
-          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">
-            {error}
-          </p>
+          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">{error}</p>
         ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/80">
+          <aside className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-600">Conversations</h2>
-              {listLoading ? <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Loading…</span> : null}
+              <h2 className="text-sm font-semibold text-slate-600">Inbox</h2>
+              {listLoading ? <span className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Loading…</span> : null}
             </div>
             <ConversationList
               conversations={conversations}
@@ -555,33 +668,39 @@ function Communications() {
             />
           </aside>
 
-          <section className="flex min-h-[480px] flex-col rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/80">
+          <section className="flex min-h-[520px] flex-col rounded-3xl border border-slate-200 bg-slate-50/80">
             {!activeConversation ? (
-              <div className="m-auto max-w-md px-6 text-center text-sm text-slate-600">
+              <div className="m-auto max-w-sm px-6 text-center text-sm text-slate-500">
                 {hasParticipant
-                  ? 'Select a conversation from the left panel to review transcripts, toggle AI assists, and share quick updates.'
-                  : 'Enter a participant identifier to retrieve communications threads across Fixnado channels.'}
+                  ? 'Pick a thread from the inbox to jump into the chat.'
+                  : 'Load a participant to see their messages here.'}
               </div>
             ) : (
               <>
-                <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
-                  <h2 className="text-lg font-semibold text-slate-900">{activeConversation.subject}</h2>
-                  <p className="mt-2 text-xs text-slate-600">
-                    {activeConversation.participants
-                      .filter((participant) => participant.role !== 'ai_assistant')
-                      .map((participant) => `${participant.displayName} (${participant.role})`)
-                      .join(' • ')}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-3 text-[11px] uppercase tracking-[0.3em] text-sky-600">
-                    <span>AI Assist {activeConversation.aiAssistDefault ? 'enabled' : 'disabled'}</span>
-                    <span>Retention {activeConversation.retentionDays} days</span>
-                    {activeConversation.metadata?.bookingId ? <span>Booking #{activeConversation.metadata.bookingId}</span> : null}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 py-5">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">{activeConversation.subject}</h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {activeConversation.participants
+                        .filter((participant) => participant.role !== 'ai_assistant')
+                        .map((participant) => `${participant.displayName} (${participant.role})`)
+                        .join(' • ')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                    <span className="rounded-full bg-slate-100 px-3 py-1">
+                      AI {activeConversation.aiAssistDefault ? 'On' : 'Off'}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">{activeConversation.retentionDays}d retention</span>
+                    {activeConversation.metadata?.bookingId ? (
+                      <span className="rounded-full bg-slate-100 px-3 py-1">Booking #{activeConversation.metadata.bookingId}</span>
+                    ) : null}
                   </div>
                 </div>
 
                 <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6">
                   {messagesLoading ? (
-                    <p className="text-sm text-slate-600">Loading conversation…</p>
+                    <p className="text-sm text-slate-500">Loading conversation…</p>
                   ) : (
                     <div className="space-y-4">
                       {conversationMessages.map((message) => (
@@ -593,9 +712,7 @@ function Communications() {
                         />
                       ))}
                       {conversationMessages.length === 0 ? (
-                        <p className="text-sm text-slate-500">
-                          No messages yet. Start the thread with context so AI assist can apply response guardrails.
-                        </p>
+                        <p className="text-sm text-slate-500">No messages yet. Be the first to say hello.</p>
                       ) : null}
                     </div>
                   )}
@@ -606,13 +723,11 @@ function Communications() {
                     disabled={preferencesSaving}
                   />
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 shadow-sm">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="rounded-2xl bg-white/90 p-4 text-sm text-slate-600 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">Need to escalate to video?</p>
-                        <p className="text-xs text-slate-600">
-                          Generate an Agora session link when customers want to walk through issues live.
-                        </p>
+                        <p className="text-sm font-semibold text-slate-900">Need a live walkthrough?</p>
+                        <p className="text-xs text-slate-500">Spin up an Agora video session without leaving the chat.</p>
                       </div>
                       <button
                         type="button"
@@ -623,17 +738,17 @@ function Communications() {
                       </button>
                     </div>
                     {videoSession ? (
-                      <dl className="mt-4 grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
+                      <dl className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
                         <div>
-                          <dt className="uppercase tracking-[0.3em] text-slate-500">Channel</dt>
+                          <dt className="uppercase tracking-[0.3em] text-slate-400">Channel</dt>
                           <dd className="font-mono text-sm text-slate-900">{videoSession.channelName}</dd>
                         </div>
                         <div>
-                          <dt className="uppercase tracking-[0.3em] text-slate-500">Expires</dt>
+                          <dt className="uppercase tracking-[0.3em] text-slate-400">Expires</dt>
                           <dd>{new Date(videoSession.expiresAt).toLocaleString()}</dd>
                         </div>
                         <div className="sm:col-span-2">
-                          <dt className="uppercase tracking-[0.3em] text-slate-500">Token</dt>
+                          <dt className="uppercase tracking-[0.3em] text-slate-400">Token</dt>
                           <dd className="break-all font-mono text-[10px] text-slate-900">{videoSession.token}</dd>
                         </div>
                       </dl>

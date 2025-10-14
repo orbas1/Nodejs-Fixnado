@@ -4,6 +4,8 @@ import { Bars3Icon } from '@heroicons/react/24/outline';
 import { LOGO_URL } from '../constants/branding';
 import { BUSINESS_FRONT_ALLOWED_ROLES } from '../constants/accessControl.js';
 import { useLocale } from '../hooks/useLocale.js';
+import { hasCommunicationsAccess, normaliseRole } from '../constants/accessControl.js';
+import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
 import PersonaSwitcher from './PersonaSwitcher.jsx';
 import { useSession } from '../hooks/useSession.js';
 
@@ -61,6 +63,8 @@ export default function Header() {
   const menuRefs = useRef({});
   const location = useLocation();
   const { t, locale, setLocale, availableLocales } = useLocale();
+  const [sessionRole, setSessionRole] = useState(() =>
+    normaliseRole(resolveSessionTelemetryContext().role)
   const { hasRole } = useSession();
   const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
 
@@ -94,6 +98,41 @@ export default function Header() {
         .filter(Boolean),
     [t, locale, allowBusinessFronts]
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const syncRole = () => {
+      setSessionRole(normaliseRole(resolveSessionTelemetryContext().role));
+    };
+
+    syncRole();
+    window.addEventListener('storage', syncRole);
+    window.addEventListener('focus', syncRole);
+
+    return () => {
+      window.removeEventListener('storage', syncRole);
+      window.removeEventListener('focus', syncRole);
+    };
+  }, []);
+
+  const navigation = useMemo(() => {
+    const filtered = navigationConfig.filter((item) =>
+      item.key !== 'communications' || hasCommunicationsAccess(sessionRole)
+    );
+
+    return filtered.map((item) => ({
+      ...item,
+      name: t(item.nameKey),
+      children: item.children?.map((child) => ({
+        ...child,
+        name: t(child.nameKey),
+        description: child.descriptionKey ? t(child.descriptionKey) : undefined
+      }))
+    }));
+  }, [sessionRole, t, locale]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
