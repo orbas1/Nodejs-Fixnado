@@ -16,4 +16,21 @@ if (typeof window !== 'undefined') {
   if (!window.dataLayer) {
     window.dataLayer = [];
   }
+
+  if (typeof window.ResizeObserver !== 'function') {
+    class ResizeObserverMock {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {}
+
+      unobserve() {}
+
+      disconnect() {}
+    }
+
+    window.ResizeObserver = ResizeObserverMock;
+    global.ResizeObserver = ResizeObserverMock;
+  }
 }

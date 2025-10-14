@@ -7,6 +7,7 @@ import '../../../shared/widgets/metric_card.dart';
 import '../domain/analytics_models.dart';
 import 'analytics_controller.dart';
 import 'widgets/analytics_chart.dart';
+import 'widgets/serviceman_summary.dart';
 
 class AnalyticsDashboardScreen extends ConsumerWidget {
   const AnalyticsDashboardScreen({super.key});
@@ -48,6 +49,16 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                 sliver: SliverToBoxAdapter(
                   child: _ErrorBanner(message: state.errorMessage!, offline: state.offline),
+                ),
+              ),
+            if (dashboard.persona == 'serviceman')
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                sliver: SliverToBoxAdapter(
+                  child: ServicemanSummaryCard(
+                    metadata: dashboard.metadata,
+                    windowLabel: dashboard.window.label,
+                  ),
                 ),
               ),
             SliverPadding(

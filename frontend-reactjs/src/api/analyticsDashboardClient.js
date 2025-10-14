@@ -18,9 +18,11 @@ export function buildExportUrl(persona, params = {}) {
 
 export async function fetchDashboard(persona, params = {}) {
   try {
+    const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
     const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
       headers: {
-        Accept: 'application/json'
+        Accept: 'application/json',
+        ...personaHeader
       }
     });
 
@@ -33,7 +35,8 @@ export async function fetchDashboard(persona, params = {}) {
     return response.json();
   } catch (error) {
     const fallback = mockDashboards?.[persona];
-    if (import.meta.env.DEV && fallback) {
+    const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+    if (import.meta.env.DEV && fallback && !isTestEnv) {
       console.warn(`Falling back to mock ${persona} dashboard`, error);
       return fallback;
     }
@@ -43,9 +46,11 @@ export async function fetchDashboard(persona, params = {}) {
 }
 
 export async function downloadDashboardCsv(persona, params = {}) {
+  const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
   const response = await fetch(`${API_BASE}/${persona}/export${toQueryString(params)}`, {
     headers: {
-      Accept: 'text/csv'
+      Accept: 'text/csv',
+      ...personaHeader
     }
   });
 

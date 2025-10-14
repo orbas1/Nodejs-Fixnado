@@ -46,6 +46,9 @@ class AnalyticsRepository {
         query: {
           'timezone': timezone,
         },
+        headers: {
+          'X-Fixnado-Persona': persona,
+        },
       );
 
       final dashboard = AnalyticsDashboard.fromJson(payload);
@@ -81,7 +84,13 @@ class AnalyticsRepository {
     }
 
     final timezone = await _timeZoneResolver.resolve();
-    final response = await _client.getText(exportPath, query: {'timezone': timezone});
+    final response = await _client.getText(
+      exportPath,
+      query: {'timezone': timezone},
+      headers: {
+        'X-Fixnado-Persona': persona,
+      },
+    );
     final exportRecord = AnalyticsExportRecord(
       persona: persona,
       generatedAt: DateTime.now(),
