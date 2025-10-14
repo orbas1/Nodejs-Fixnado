@@ -6,14 +6,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/config/app_config.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/local_cache.dart';
+import '../features/auth/domain/auth_token_store.dart';
 
 final appConfigProvider = Provider<AppConfig>((ref) => throw UnimplementedError('AppConfig not loaded'));
 final httpClientProvider = Provider<http.Client>((ref) => http.Client());
 final localCacheProvider = Provider<LocalCache>((ref) => throw UnimplementedError('Local cache not initialised'));
+final authTokenStoreProvider = Provider<AuthTokenStore>((ref) {
+  final cache = ref.watch(localCacheProvider);
+  return AuthTokenStore(cache);
+});
 
 final apiClientProvider = Provider<FixnadoApiClient>((ref) {
   final client = ref.watch(httpClientProvider);
   final config = ref.watch(appConfigProvider);
+  final tokenStore = ref.watch(authTokenStoreProvider);
   final logger = Logger('FixnadoApiClient');
   return FixnadoApiClient(
     baseUrl: config.apiBaseUrl,
@@ -21,6 +27,7 @@ final apiClientProvider = Provider<FixnadoApiClient>((ref) {
     defaultHeaders: config.defaultHeaders,
     requestTimeout: config.requestTimeout,
     logger: logger,
+    authTokenResolver: tokenStore.read,
   );
 });
 

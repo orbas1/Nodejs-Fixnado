@@ -28,6 +28,7 @@ import {
 } from '@heroicons/react/24/outline';
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
+import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -52,7 +53,7 @@ const formatToggleDate = (iso) => {
   });
 };
 
-const ToggleSummary = ({ toggle, reason }) => {
+const ToggleSummary = ({ toggle = null, reason = null }) => {
   if (!toggle) {
     return null;
   }
@@ -105,11 +106,6 @@ ToggleSummary.propTypes = {
     lastModifiedAt: PropTypes.string
   }),
   reason: PropTypes.string
-};
-
-ToggleSummary.defaultProps = {
-  toggle: null,
-  reason: null
 };
 
 const resultBadge = {
@@ -303,14 +299,14 @@ ErrorState.propTypes = {
 const DashboardLayout = ({
   roleMeta,
   registeredRoles,
-  dashboard,
-  loading,
-  error,
+  dashboard = null,
+  loading = false,
+  error = null,
   onRefresh,
-  lastRefreshed,
-  exportHref,
-  toggleMeta,
-  toggleReason
+  lastRefreshed = null,
+  exportHref = null,
+  toggleMeta = null,
+  toggleReason = null,
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -339,6 +335,7 @@ const DashboardLayout = ({
   }, [searchQuery, searchIndex]);
 
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -521,7 +518,10 @@ const DashboardLayout = ({
           <Skeleton />
         ) : (
           <div className="px-6 py-10">
-            <div className="space-y-8">{renderSection()}</div>
+            <div className="space-y-8">
+              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+              {renderSection()}
+            </div>
           </div>
         )}
       </main>
@@ -560,16 +560,6 @@ DashboardLayout.propTypes = {
     lastModifiedAt: PropTypes.string
   }),
   toggleReason: PropTypes.string
-};
-
-DashboardLayout.defaultProps = {
-  dashboard: null,
-  loading: false,
-  error: null,
-  lastRefreshed: null,
-  exportHref: null,
-  toggleMeta: null,
-  toggleReason: null
 };
 
 export default DashboardLayout;
