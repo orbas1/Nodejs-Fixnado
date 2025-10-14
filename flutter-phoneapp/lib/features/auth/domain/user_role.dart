@@ -2,9 +2,13 @@ enum UserRole {
   customer('Customer'),
   serviceman('Serviceman'),
   provider('Provider'),
-  enterprise('Enterprise');
+  enterprise('Enterprise'),
+  admin('Administrator', internal: true);
 
-  const UserRole(this.displayName);
+  const UserRole(this.displayName, {this.internal = false});
 
   final String displayName;
+  final bool internal;
+
+  bool get isInternal => internal;
 }

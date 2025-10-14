@@ -27,3 +27,7 @@
 ## 2025-10-28 — Analytics Pipeline Run Auditing
 - Added `models/analyticsPipelineRun.js` capturing per-cycle metrics (batch counts, purge totals, duration, failure streak metadata, toggle actor/ticket, warehouse endpoint) so runbooks and dashboards can evidence ingestion governance.
 - Registered the model inside `models/index.js`, wiring associations and default scopes that expose recent history queries consumed by pipeline status endpoints and Looker exports.
+
+## 2025-10-31 — Zone Coverage Associations
+- Added `models/serviceZoneCoverage.js` representing service-to-zone attachments with coverage type enum, priority ordering, effective windows, and metadata JSON for explorer/panel presentation.【F:backend-nodejs/src/models/serviceZoneCoverage.js†L1-L69】
+- Updated `models/index.js` to associate coverage records with `ServiceZone` (`coverages` relation) and `Service` (`zoneCoverage` relation) while preserving booking/analytics links and ensuring cascade rules clean up coverage rows on zone or service removal.【F:backend-nodejs/src/models/index.js†L1-L210】
