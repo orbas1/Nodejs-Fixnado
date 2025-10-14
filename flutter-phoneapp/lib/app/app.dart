@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -16,12 +17,17 @@ import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
 import '../features/materials/presentation/materials_screen.dart';
+import '../shared/localization/language_controller.dart';
+import '../shared/localization/language_options.dart';
+import '../shared/localization/language_switcher.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(languageControllerProvider);
+    final locales = supportedLocales();
     final baseTheme = ThemeData(
       useMaterial3: true,
       colorSchemeSeed: const Color(0xFF0E1C36),
@@ -64,6 +70,13 @@ class FixnadoApp extends ConsumerWidget {
       title: 'Fixnado Mobile',
       debugShowCheckedModeBanner: false,
       theme: theme,
+      locale: locale,
+      supportedLocales: locales,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const AuthGate(),
     );
   }
@@ -93,8 +106,12 @@ class _AppShellState extends ConsumerState<AppShell> {
         title: Text(selectedTitle, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
         actions: const [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 8),
             child: RoleSelector(),
+          ),
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: LanguageSwitcher(compact: true),
           ),
         ],
       ),
@@ -105,20 +122,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           const LiveFeedScreen(),
           const BookingScreen(),
           const RentalScreen(),
+          const MaterialsScreen(),
           const CommunicationsScreen(),
           const ProfileManagementScreen(),
           role == UserRole.provider
               ? const ServiceManagementScreen()
               : const AnalyticsDashboardScreen(),
-        children: const [
-          ExplorerScreen(),
-          LiveFeedScreen(),
-          BookingScreen(),
-          RentalScreen(),
-          MaterialsScreen(),
-          CommunicationsScreen(),
-          ProfileManagementScreen(),
-          AnalyticsDashboardScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(

@@ -173,15 +173,15 @@ export function LocaleProvider({ children, initialLocale }) {
     };
   }, [dictionary.metadata, dictionary.messages]);
 
-  const availableLocales = useMemo(
-    () =>
-      Object.values(dictionaries).map((entry) => ({
-        id: entry.metadata.id,
-        name: entry.metadata.name,
-        direction: entry.metadata.direction
-      })),
-    []
-  );
+  const availableLocales = useMemo(() => {
+    const locales = Object.values(dictionaries).map((entry) => ({
+      id: entry.metadata.id,
+      name: entry.metadata.name,
+      direction: entry.metadata.direction
+    }));
+
+    return locales.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  }, []);
 
   const value = useMemo(
     () => ({

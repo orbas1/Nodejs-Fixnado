@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../application/auth_controller.dart';
 import '../domain/auth_models.dart';
 import '../domain/user_role.dart';
+import '../../../shared/localization/language_switcher.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key, this.initialData});
@@ -90,6 +91,56 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 12,
+                    spacing: 12,
+                    children: [
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FilledButton(
+                            onPressed: () {
+                              final targetContext = _formKey.currentContext;
+                              if (targetContext != null) {
+                                Scrollable.ensureVisible(
+                                  targetContext,
+                                  duration: const Duration(milliseconds: 250),
+                                  alignment: 0.1,
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              textStyle: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
+                            child: const Text('Register'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Sign-in for existing accounts is coming soon.')),
+                              );
+                            },
+                            icon: const Icon(Icons.login, size: 18),
+                            label: const Text('Log in'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const LanguageSwitcher(),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   Text('Create your Fixnado account', style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   Text(
@@ -160,17 +211,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sign-in for existing accounts is coming soon.')),
-                      );
-                    },
-                    icon: const Icon(Icons.login),
-                    label: const Text('Already have an account? Sign in'),
-                    style: TextButton.styleFrom(foregroundColor: theme.colorScheme.primary),
                   ),
                   const SizedBox(height: 8),
                   Text(
