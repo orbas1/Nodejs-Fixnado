@@ -112,7 +112,9 @@ export default function Header() {
   const menuRefs = useRef({});
   const location = useLocation();
   const { t } = useLocale();
-  const { isAuthenticated, role, userId } = useSession();
+  const { isAuthenticated, role, userId, dashboards } = useSession();
+  const defaultDashboard = dashboards?.[0] ?? null;
+  const dashboardLink = defaultDashboard ? `/dashboards/${defaultDashboard}` : '/dashboards';
 
   const navigation = useMemo(() => {
     if (!isAuthenticated) {
@@ -390,11 +392,19 @@ export default function Header() {
                     </div>
                     <div className="mt-4 space-y-2">
                       <Link
-                        to="/dashboards"
+                        to={dashboardLink}
                         className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-sky-50"
                         onClick={() => setTray(null)}
                       >
                         {t('nav.viewDashboard')}
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                      <Link
+                        to="/settings/security"
+                        className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-sky-50"
+                        onClick={() => setTray(null)}
+                      >
+                        Security settings
                         <span aria-hidden="true">→</span>
                       </Link>
                       <p className="rounded-2xl border border-dashed border-sky-100 bg-sky-50/80 px-4 py-3 text-xs text-slate-500">
@@ -520,7 +530,7 @@ export default function Header() {
               <span aria-hidden="true">→</span>
             </Link>
             <Link
-              to="/dashboards"
+              to={dashboardLink}
               className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-3 text-sm text-primary"
               onClick={() => setOpen(false)}
             >

@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -1461,6 +1462,14 @@ const SettingsSection = ({ section }) => {
                         <span className={`h-2 w-2 rounded-full ${item.enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                         {item.enabled ? 'Enabled' : 'Disabled'}
                       </span>
+                    ) : item.type === 'action' ? (
+                      <Link
+                        to={item.href ?? '#'}
+                        className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-xs font-semibold text-accent transition-colors hover:border-accent hover:text-primary"
+                      >
+                        {item.cta ?? 'Manage'}
+                        <span aria-hidden="true">→</span>
+                      </Link>
                     ) : (
                       <span className="text-sm text-slate-600 sm:text-base">{String(item.value ?? '—')}</span>
                     )}
@@ -1492,10 +1501,12 @@ SettingsSection.propTypes = {
               id: PropTypes.string,
               label: PropTypes.string.isRequired,
               helper: PropTypes.string,
-              type: PropTypes.oneOf(['toggle', 'value']).isRequired,
+              type: PropTypes.oneOf(['toggle', 'value', 'action']).isRequired,
               enabled: PropTypes.bool,
               value: PropTypes.string,
-              meta: PropTypes.string
+              meta: PropTypes.string,
+              cta: PropTypes.string,
+              href: PropTypes.string
             })
           ).isRequired
         })

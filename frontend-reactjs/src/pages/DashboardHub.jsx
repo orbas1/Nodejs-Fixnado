@@ -12,6 +12,7 @@ const featureCopy = {
 const DashboardHub = () => {
   const { allowed } = usePersonaAccess();
   const registered = DASHBOARD_ROLES.filter((role) => role.registered);
+  const visibleRegistered = registered.filter((role) => role.id !== 'admin' || allowed.includes('admin'));
   const pending = DASHBOARD_ROLES.filter((role) => !role.registered);
 
   return (
@@ -27,7 +28,7 @@ const DashboardHub = () => {
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">
-          {registered.map((role) => {
+          {visibleRegistered.map((role) => {
             const navigationPreview = role.navigation?.slice?.(0, 4) ?? [];
             const isAllowed = allowed.includes(role.id);
             return (
@@ -71,12 +72,21 @@ const DashboardHub = () => {
                       Provisioning required
                     </span>
                   )}
-                  <Link
-                    to={`/dashboards/${role.id}`}
-                    className="rounded-full border border-accent/20 px-5 py-2 text-sm font-semibold text-accent hover:border-accent"
-                  >
-                    View capabilities
-                  </Link>
+                  {isAllowed ? (
+                    <Link
+                      to={`/dashboards/${role.id}`}
+                      className="rounded-full border border-accent/20 px-5 py-2 text-sm font-semibold text-accent hover:border-accent"
+                    >
+                      View capabilities
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-full border border-accent/20 px-5 py-2 text-sm font-semibold text-accent/60"
+                      aria-disabled="true"
+                    >
+                      View capabilities
+                    </span>
+                  )}
                   {!isAllowed && (
                     <span className="text-xs font-medium uppercase tracking-wide text-rose-500">
                       Awaiting workspace approval

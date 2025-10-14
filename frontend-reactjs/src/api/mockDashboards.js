@@ -1,3 +1,5 @@
+import { readSecurityPreferences } from '../utils/securityPreferences.js';
+
 const createWindow = () => ({
   label: 'Next 30 days',
   start: '2025-03-01T00:00:00Z',
@@ -326,7 +328,20 @@ const mockDashboards = {
               title: 'Security & Access',
               description: 'SAML, MFA, and delegated access controls.',
               items: [
-                { id: 'security-mfa', label: 'Multi-factor authentication', type: 'toggle', enabled: true },
+                {
+                  id: 'security-mfa',
+                  label: 'Multi-factor authentication',
+                  type: 'toggle',
+                  enabled: readSecurityPreferences().twoFactorEnabled
+                },
+                {
+                  id: 'security-manage',
+                  label: 'Two-factor methods',
+                  helper: 'Update authenticator apps and backup codes from the dedicated security centre.',
+                  type: 'action',
+                  cta: 'Open security settings',
+                  href: '/settings/security'
+                },
                 { id: 'security-sso', label: 'SAML single sign-on', type: 'toggle', enabled: false, helper: 'Available on enterprise plan' }
               ]
             },

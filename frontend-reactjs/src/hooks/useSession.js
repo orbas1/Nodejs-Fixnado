@@ -18,12 +18,12 @@ const FALLBACK_SESSION = Object.freeze({
 });
 
 const ROLE_DASHBOARD_MAP = {
-  admin: ['admin'],
-  company: ['provider', 'enterprise'],
-  enterprise: ['enterprise'],
-  provider: ['provider'],
-  servicemen: ['serviceman'],
-  serviceman: ['serviceman'],
+  admin: ['admin', 'user'],
+  company: ['provider', 'enterprise', 'user'],
+  enterprise: ['enterprise', 'user'],
+  provider: ['provider', 'user'],
+  servicemen: ['serviceman', 'user'],
+  serviceman: ['serviceman', 'user'],
   user: ['user']
 };
 
