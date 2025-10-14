@@ -3,6 +3,8 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { LOGO_URL } from '../constants/branding';
 import { useLocale } from '../hooks/useLocale.js';
+import { hasCommunicationsAccess, normaliseRole } from '../constants/accessControl.js';
+import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
 
 const navigationConfig = [
   { key: 'home', nameKey: 'nav.home', href: '/' },
@@ -44,20 +46,44 @@ export default function Header() {
   const menuRefs = useRef({});
   const location = useLocation();
   const { t, locale, setLocale, availableLocales } = useLocale();
-
-  const navigation = useMemo(
-    () =>
-      navigationConfig.map((item) => ({
-        ...item,
-        name: t(item.nameKey),
-        children: item.children?.map((child) => ({
-          ...child,
-          name: t(child.nameKey),
-          description: child.descriptionKey ? t(child.descriptionKey) : undefined
-        }))
-      })),
-    [t, locale]
+  const [sessionRole, setSessionRole] = useState(() =>
+    normaliseRole(resolveSessionTelemetryContext().role)
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const syncRole = () => {
+      setSessionRole(normaliseRole(resolveSessionTelemetryContext().role));
+    };
+
+    syncRole();
+    window.addEventListener('storage', syncRole);
+    window.addEventListener('focus', syncRole);
+
+    return () => {
+      window.removeEventListener('storage', syncRole);
+      window.removeEventListener('focus', syncRole);
+    };
+  }, []);
+
+  const navigation = useMemo(() => {
+    const filtered = navigationConfig.filter((item) =>
+      item.key !== 'communications' || hasCommunicationsAccess(sessionRole)
+    );
+
+    return filtered.map((item) => ({
+      ...item,
+      name: t(item.nameKey),
+      children: item.children?.map((child) => ({
+        ...child,
+        name: t(child.nameKey),
+        description: child.descriptionKey ? t(child.descriptionKey) : undefined
+      }))
+    }));
+  }, [sessionRole, t, locale]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
