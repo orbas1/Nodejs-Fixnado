@@ -124,6 +124,13 @@ class LiveFeedPostCard extends StatelessWidget {
                   color: theme.colorScheme.surfaceVariant,
                   foreground: theme.colorScheme.onSurface,
                 ),
+                if (post.bidDeadline != null)
+                  _InfoChip(
+                    icon: Icons.timer_outlined,
+                    label: 'Bids close ${DateTimeFormatter.relative(post.bidDeadline!)}',
+                    color: theme.colorScheme.surfaceVariant,
+                    foreground: theme.colorScheme.primary,
+                  ),
               ],
             ),
           ],
