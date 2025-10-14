@@ -196,3 +196,19 @@
 - **API:** OpenAPI/GraphQL updates, SDK refresh, integration onboarding kits.
 - **Logic:** Business rule documentation, toggle behaviour, AI fallback notes.
 - **Design:** Design system handbook, asset catalogue, storytelling guidelines.
+
+---
+
+## Design Task Addendum
+The design stream introduces the following tasks to complement the existing engineering plan. Refer to `Design_update_task_list.md` for comprehensive subtasks and ownership.
+
+| # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
+|---|------|-------------|-----------------|--------------|------------|
+| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 5% |
+| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 0% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 0% |
+| D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 0% |
+| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 0% |
+
+These tasks ensure the engineering squads receive production-ready design artefacts, theme assets, and QA support aligned with Version 1.50 release criteria.

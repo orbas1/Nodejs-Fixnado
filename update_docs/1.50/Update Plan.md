@@ -183,3 +183,26 @@
 - **API:** Update OpenAPI/GraphQL specs, SDK docs, integration onboarding kits.
 - **Logic:** Describe business process changes, feature toggle behaviours, AI fallback logic.
 - **Design:** Deliver design system documentation, asset libraries, and storytelling guidelines.
+
+## Design Programme Extras
+**Objective:** Supplement the core update plan with a dedicated design workstream that operationalises the specifications inside `ui-ux_updates/Design_Task_Plan_Upgrade` and the new Version 1.50 design artefacts.
+
+**Scope Highlights:**
+- Establish cross-platform design tokens, typography scales, spacing rules, and accessibility guardrails as described in `Design_Plan.md`.
+- Harmonise navigation, logic flows, and compliance messaging across marketing pages, dashboards, and Flutter shells.
+- Deliver modular page templates and partial layouts supporting campaign-driven hero swaps, emo-theme overlays, and role-based dashboards.
+- Produce theme variants (default, industrial, premium, emo) with imagery, motion, and microcopy guidance that comply with security and legal requirements.
+- Coordinate design QA, documentation, and developer handover to ensure parity with backend, frontend, and mobile implementation tracks.
+
+**Key Artefacts:**
+- `Design_Change_log.md`
+- `Design_Plan.md`
+- `Design_update_milestone_list.md`
+- `Design_update_task_list.md`
+- `Design_update_progress_tracker.md`
+
+**Success Criteria:**
+- Approved design tokens integrated into frontend and Flutter repositories.
+- Navigation prototypes validated via usability testing across desktop, tablet, and mobile contexts.
+- Theme variants cleared by compliance, security, and marketing stakeholders.
+- Design QA reports demonstrating WCAG AA adherence and cross-platform parity.

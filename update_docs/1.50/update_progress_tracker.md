@@ -15,3 +15,22 @@
 > - Baseline percentages reflect current readiness before new execution; security work has marginal progress from prior audits, but major remediations remain open.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
+
+---
+
+## Design Progress Addendum
+The design workstream tracks readiness using the detailed metrics captured in `Design_update_progress_tracker.md`. Current baseline scores are summarised below to align cross-functional expectations.
+
+| Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
+|--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
+| D1 | Token & System Foundation | 42 | 48 | 40 | 46 | 55 | 38 | 52 | 40 | 45 | 35 | 46 | 50 | 30 | 32 | 44 | 42 |
+| D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
+| D3 | Page Templates & Partial Library | 25 | 24 | 26 | 28 | 26 | 24 | 32 | 28 | 24 | 22 | 28 | 40 | 22 | 24 | 26 | 27 |
+| D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
+| D5 | Mobile Parity & Component Adaptation | 18 | 20 | 18 | 20 | 18 | 18 | 24 | 24 | 20 | 18 | 24 | 34 | 18 | 18 | 20 | 20 |
+| D6 | Design QA, Documentation & Handover | 15 | 18 | 16 | 18 | 16 | 16 | 20 | 20 | 18 | 16 | 20 | 32 | 16 | 16 | 18 | 18 |
+
+**Interpretation:**
+- Progress remains early-stage; token work shows the highest traction due to preliminary palette consolidation and accessibility research.
+- Navigation and template efforts will raise organisational and usability scores once usability testing and partial builds commence.
+- Security and compliance grades will improve as privacy prompts, consent UX, and secure messaging components are incorporated into final artefacts.
