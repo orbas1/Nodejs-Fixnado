@@ -24,7 +24,7 @@ async function requestJson(path, { method = 'GET', body, signal } = {}) {
     try {
       const payload = await response.json();
       message = payload?.message || message;
-    } catch (error) {
+    } catch {
       // ignore json parse errors
     }
     throw new CommunicationsApiError(message, { status: response.status });

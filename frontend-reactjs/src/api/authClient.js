@@ -31,7 +31,7 @@ export async function fetchCurrentUser({ signal } = {}) {
       let errorBody = null;
       try {
         errorBody = await response.json();
-      } catch (error) {
+      } catch {
         // ignore JSON parsing issues
       }
       const message = errorBody?.message || response.statusText || 'Unable to verify session';

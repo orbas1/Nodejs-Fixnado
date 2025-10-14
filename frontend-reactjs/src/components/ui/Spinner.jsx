@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import './ui.css';
 
-export default function Spinner({ size, className, 'aria-label': ariaLabel }) {
+export default function Spinner({ size = '1.25rem', className, 'aria-label': ariaLabel = 'Loading' }) {
   return (
     <span
       role="status"
@@ -53,8 +53,3 @@ Spinner.propTypes = {
   'aria-label': PropTypes.string
 };
 
-Spinner.defaultProps = {
-  size: '1.25rem',
-  className: undefined,
-  'aria-label': 'Loading'
-};

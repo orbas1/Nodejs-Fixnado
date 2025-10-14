@@ -538,7 +538,7 @@ async function seedUserFixtures(company) {
 }
 
 async function seedEnterpriseFixtures(company) {
-  const conversation = await Conversation.create({
+  await Conversation.create({
     id: IDS.conversation,
     subject: 'Enterprise Ops',
     createdById: company.userId,

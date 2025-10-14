@@ -11,7 +11,7 @@ function formatDate(value) {
       month: 'short',
       day: 'numeric'
     });
-  } catch (error) {
+  } catch {
     return value;
   }
 }

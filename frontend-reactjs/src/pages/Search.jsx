@@ -133,7 +133,8 @@ export default function Search() {
   const handleFiltersChange = useCallback((nextFilters) => {
     if (Object.prototype.hasOwnProperty.call(nextFilters, 'refreshToken')) {
       setManualRefreshToken(nextFilters.refreshToken);
-      const { refreshToken, ...rest } = nextFilters;
+      const rest = { ...nextFilters };
+      delete rest.refreshToken;
       setFilters(normaliseFilters(rest));
     } else {
       setFilters(normaliseFilters(nextFilters));

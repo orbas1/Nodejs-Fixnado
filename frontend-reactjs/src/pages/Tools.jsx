@@ -130,7 +130,6 @@ export default function Tools() {
     enabled: toolsEnabled,
     loading: toggleLoading,
     reason: toggleReason,
-    toggle,
     refresh: refreshToggle
   } = useFeatureToggle('tools-workbench', {
     scope: persona ?? 'provider',

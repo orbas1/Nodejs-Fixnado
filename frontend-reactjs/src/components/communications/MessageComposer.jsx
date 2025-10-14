@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
-function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist, prefill, onPrefillConsumed }) {
+function MessageComposer({
+  onSend,
+  disabled = false,
+  aiAssistAvailable = false,
+  defaultAiAssist = true,
+  prefill = '',
+  onPrefillConsumed
+}) {
   const [message, setMessage] = useState('');
   const [requestAiAssist, setRequestAiAssist] = useState(Boolean(defaultAiAssist));
   const [isSending, setIsSending] = useState(false);
@@ -75,8 +82,10 @@ function MessageComposer({ onSend, disabled, aiAssistAvailable, defaultAiAssist,
             checked={requestAiAssist && aiAssistAvailable}
             onChange={() => setRequestAiAssist((current) => !current)}
             disabled={!aiAssistAvailable || disabled || isSending}
+            aria-label="Request AI assist"
           />
-          Loop in AI follow-up
+          <span className="sr-only">Request AI assist</span>
+          <span aria-hidden="true">Loop in AI follow-up</span>
         </label>
         <button
           type="submit"
@@ -102,14 +111,6 @@ MessageComposer.propTypes = {
   defaultAiAssist: PropTypes.bool,
   prefill: PropTypes.string,
   onPrefillConsumed: PropTypes.func
-};
-
-MessageComposer.defaultProps = {
-  disabled: false,
-  aiAssistAvailable: false,
-  defaultAiAssist: true,
-  prefill: '',
-  onPrefillConsumed: undefined
 };
 
 export default MessageComposer;

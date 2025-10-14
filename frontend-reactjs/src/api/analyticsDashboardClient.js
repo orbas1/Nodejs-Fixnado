@@ -49,11 +49,19 @@ const shouldUseFallback = () => {
 export const buildExportUrl = (persona, params = {}) => `${API_BASE}/${persona}/export${toQueryString(params)}`;
 
 export const fetchDashboard = async (persona, params = {}, options = {}) => {
-  const { signal, headers: _headers, credentials: _credentials, ...restOptions } = options ?? {};
+  const { signal, headers: extraHeaders, credentials = 'include', ...restOptions } = options ?? {};
   try {
+    const headers = createHeaders('application/json', persona);
+    if (extraHeaders) {
+      const iterable = extraHeaders instanceof Headers ? extraHeaders.entries() : Object.entries(extraHeaders);
+      for (const [key, value] of iterable) {
+        headers.set(key, value);
+      }
+    }
+
     const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
-      headers: createHeaders('application/json', persona),
-      credentials: 'include',
+      headers,
+      credentials,
       signal,
       ...restOptions
     });
@@ -62,7 +70,7 @@ export const fetchDashboard = async (persona, params = {}, options = {}) => {
       let body = {};
       try {
         body = await response.json();
-      } catch (parseError) {
+      } catch {
         body = {};
       }
 
@@ -105,7 +113,7 @@ export const downloadDashboardCsv = async (persona, params = {}) => {
     let body = {};
     try {
       body = await response.json();
-    } catch (parseError) {
+    } catch {
       body = {};
     }
 

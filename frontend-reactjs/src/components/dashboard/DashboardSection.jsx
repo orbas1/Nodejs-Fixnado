@@ -1399,6 +1399,11 @@ FixnadoAdsSection.propTypes = {
           detectedAt: PropTypes.string
         })
       )
+    }),
+    access: PropTypes.shape({
+      label: PropTypes.string,
+      level: PropTypes.string,
+      features: PropTypes.arrayOf(PropTypes.string)
     })
   }).isRequired,
   features: PropTypes.shape({
@@ -1636,7 +1641,13 @@ const DashboardSection = ({ section, features = {}, persona }) => {
 
 DashboardSection.propTypes = {
   section: PropTypes.shape({
-    type: PropTypes.string.isRequired
+    type: PropTypes.string.isRequired,
+    access: PropTypes.shape({
+      label: PropTypes.string,
+      level: PropTypes.string,
+      features: PropTypes.arrayOf(PropTypes.string)
+    }),
+    data: PropTypes.object
   }).isRequired,
   features: PropTypes.object,
   persona: PropTypes.string

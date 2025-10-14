@@ -39,7 +39,7 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     await sequelize.close();
-  } catch (error) {
+  } catch {
     // ignore double close when watcher restarts tests
   }
 });

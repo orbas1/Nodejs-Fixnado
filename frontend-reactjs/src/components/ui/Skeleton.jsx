@@ -10,6 +10,3 @@ Skeleton.propTypes = {
   className: PropTypes.string
 };
 
-Skeleton.defaultProps = {
-  className: undefined
-};

@@ -389,7 +389,7 @@ export async function importZonesFromGeoJson({ companyId, geojson, demandLevel =
   if (typeof payload === 'string') {
     try {
       payload = JSON.parse(payload);
-    } catch (error) {
+    } catch {
       throw validationError('Unable to parse GeoJSON payload');
     }
   }

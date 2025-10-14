@@ -12,7 +12,7 @@ function formatDate(value) {
       month: 'long',
       day: 'numeric'
     });
-  } catch (error) {
+  } catch {
     return value;
   }
 }
