@@ -54,3 +54,8 @@
 - Reviewed `dashboardAnalyticsService.js` query set to confirm persona-specific scopes join bookings, rentals, campaigns, fraud signals, inventory alerts, compliance documents, and communications participation with timezone-aware windows and weekly buckets before release.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L212-L415】
 - Exercised export helpers to ensure CSV output mirrors UI structure, trims to configured row limits, and formats currency/percentages consistently for downstream finance/analytics consumers.【F:backend-nodejs/src/services/dashboardAnalyticsService.js†L611-L806】
 - Logged QA improvement to convert Vitest spinner output to CI-friendly reporters after regression execution produced noisy logs while validating service behaviour.【3d3b31†L1-L38】
+
+## 2025-10-31 — Zone Service Coverage & Analytics Catalogue Updates
+- Expanded `zoneService.js` with overlap detection (`intersect`-driven validation), MultiPolygon normalisation, centroid/bounding box computation, and transactional coverage sync helpers supporting priorities, effective windows, metadata, replace semantics, and analytics emissions.【F:backend-nodejs/src/services/zoneService.js†L1-L720】
+- Introduced coverage list/sync/remove functions used by controllers while ensuring company ownership, actor propagation, and deterministic ordering for consumer UIs.【F:backend-nodejs/src/services/zoneService.js†L349-L515】
+- Extended `analyticsEventService.js` catalogue to register `zone.service.attached`, `zone.service.updated`, and `zone.service.detached` events with metadata validation so coverage lifecycle telemetry is stored alongside existing zone events.【F:backend-nodejs/src/services/analyticsEventService.js†L1-L120】

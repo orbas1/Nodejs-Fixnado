@@ -31,3 +31,20 @@ export function authorize(types = []) {
     next();
   };
 }
+
+const STORE_FRONT_ALLOWED = new Set(['company', 'provider']);
+
+export function requireStorefrontRole(req, res, next) {
+  const headerRole = `${req.headers['x-fixnado-role'] ?? ''}`.toLowerCase();
+  const userRole = `${req.user?.type ?? ''}`.toLowerCase();
+
+  if (STORE_FRONT_ALLOWED.has(userRole)) {
+    return next();
+  }
+
+  if (STORE_FRONT_ALLOWED.has(headerRole)) {
+    return next();
+  }
+
+  return res.status(req.user ? 403 : 401).json({ message: 'Storefront access restricted to providers' });
+}

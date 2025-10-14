@@ -312,6 +312,7 @@ class _SectionView extends StatelessWidget {
           AnalyticsBoardSection board => _BoardSectionView(section: board),
           AnalyticsListSection list => _ListSectionView(section: list),
           AnalyticsGridSection grid => _GridSectionView(section: grid),
+          AnalyticsAdsSection ads => _AdsSectionView(section: ads),
           AnalyticsSettingsSection settings => _SettingsSectionView(section: settings),
           _ => const SizedBox.shrink(),
         },
@@ -556,6 +557,943 @@ class _GridSectionView extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+
+class _AdsSectionView extends StatelessWidget {
+  const _AdsSectionView({required this.section});
+
+  final AnalyticsAdsSection section;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = section.data;
+    final content = <Widget>[];
+
+    void addSection(Widget widget) {
+      if (content.isNotEmpty) {
+        content.add(const SizedBox(height: 20));
+      }
+      content.add(widget);
+    }
+
+    if (data.summaryCards.isNotEmpty) {
+      addSection(_AdsSummaryCards(cards: data.summaryCards));
+    }
+    if (data.campaigns.isNotEmpty || data.timeline.isNotEmpty) {
+      addSection(_AdsCampaignsAndTimeline(campaigns: data.campaigns, timeline: data.timeline));
+    }
+    if (data.funnel.isNotEmpty || data.recommendations.isNotEmpty) {
+      addSection(_AdsFunnelAndRecommendations(funnel: data.funnel, recommendations: data.recommendations));
+    }
+    if (data.invoices.isNotEmpty || data.alerts.isNotEmpty) {
+      addSection(_AdsInvoicesAndAlerts(invoices: data.invoices, alerts: data.alerts));
+    }
+
+    if (content.isEmpty) {
+      return const _EmptyState(message: 'No Fixnado Ads data available yet.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: content,
+    );
+  }
+}
+
+class _AdsSummaryCards extends StatelessWidget {
+  const _AdsSummaryCards({required this.cards});
+
+  final List<AnalyticsAdsSummaryCard> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        double cardWidth = width;
+        if (width >= 1120) {
+          cardWidth = (width - 48) / 4;
+        } else if (width >= 840) {
+          cardWidth = (width - 32) / 3;
+        } else if (width >= 560) {
+          cardWidth = (width - 16) / 2;
+        }
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: cards
+              .map(
+                (card) => SizedBox(
+                  width: cardWidth,
+                  child: _AdsSummaryCard(card: card, colors: colors),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _AdsSummaryCard extends StatelessWidget {
+  const _AdsSummaryCard({required this.card, required this.colors});
+
+  final AnalyticsAdsSummaryCard card;
+  final ColorScheme colors;
+
+  Color _backgroundForTrend(String? trend) {
+    switch (trend) {
+      case 'up':
+        return const Color(0xFFECFDF5);
+      case 'down':
+        return const Color(0xFFFFF1F2);
+      default:
+        return colors.surfaceVariant.withOpacity(0.6);
+    }
+  }
+
+  Color _foregroundForTrend(String? trend) {
+    switch (trend) {
+      case 'up':
+        return const Color(0xFF047857);
+      case 'down':
+        return const Color(0xFFB91C1C);
+      default:
+        return colors.primary;
+    }
+  }
+
+  IconData _iconForTrend(String? trend) {
+    switch (trend) {
+      case 'up':
+        return Icons.trending_up;
+      case 'down':
+        return Icons.trending_down;
+      default:
+        return Icons.horizontal_rule;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final change = card.change;
+    final helper = card.helper;
+    final trendColor = _foregroundForTrend(card.trend);
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      color: colors.surface,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors.surfaceVariant.withOpacity(0.45),
+              colors.surface,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colors.surfaceVariant),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              card.title,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    card.value,
+                    style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (change != null && change.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _backgroundForTrend(card.trend),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_iconForTrend(card.trend), size: 16, color: trendColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          change,
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: trendColor),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            if (helper != null && helper.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                helper,
+                style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsCampaignsAndTimeline extends StatelessWidget {
+  const _AdsCampaignsAndTimeline({required this.campaigns, required this.timeline});
+
+  final List<AnalyticsAdsCampaign> campaigns;
+  final List<AnalyticsAdsTimelineEntry> timeline;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 880;
+        final campaignCard = _AdsCampaignsCard(campaigns: campaigns);
+        final timelineCard = _AdsTimelineCard(timeline: timeline);
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: campaignCard),
+              const SizedBox(width: 16),
+              Expanded(flex: 2, child: timelineCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            campaignCard,
+            const SizedBox(height: 16),
+            timelineCard,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AdsCampaignsCard extends StatelessWidget {
+  const _AdsCampaignsCard({required this.campaigns});
+
+  final List<AnalyticsAdsCampaign> campaigns;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Active campaigns', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${campaigns.length} in view',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (campaigns.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No Fixnado Ads campaigns in this window.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 24,
+                  headingTextStyle: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600),
+                  dataTextStyle: GoogleFonts.inter(fontSize: 13, color: colors.onSurface),
+                  columns: [
+                    DataColumn(label: Text('Campaign', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Spend', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Conversions', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('ROAS', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Pacing', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Window', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                  ],
+                  rows: campaigns
+                      .map(
+                        (campaign) => DataRow(
+                          cells: [
+                            DataCell(
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(minWidth: 180),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      campaign.name,
+                                      style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600),
+                                    ),
+                                    if (campaign.objective != null && campaign.objective!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          campaign.objective!,
+                                          style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant),
+                                        ),
+                                      ),
+                                    if (campaign.lastMetricDate != null && campaign.lastMetricDate!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          'Last metric ${campaign.lastMetricDate}',
+                                          style: GoogleFonts.inter(fontSize: 11, color: colors.onSurfaceVariant),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DataCell(_AdsMetricCell(primary: campaign.spend, secondary: campaign.spendChange)),
+                            DataCell(_AdsMetricCell(primary: campaign.conversions, secondary: campaign.conversionsChange)),
+                            DataCell(_AdsMetricCell(primary: campaign.roas, secondary: campaign.roasChange)),
+                            DataCell(Text(campaign.pacing ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                            DataCell(Text(campaign.window ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                          ],
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsMetricCell extends StatelessWidget {
+  const _AdsMetricCell({required this.primary, this.secondary});
+
+  final String? primary;
+  final String? secondary;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          (primary != null && primary!.isNotEmpty) ? primary! : '—',
+          style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        if (secondary != null && secondary!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              secondary!,
+              style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AdsTimelineCard extends StatelessWidget {
+  const _AdsTimelineCard({required this.timeline});
+
+  final List<AnalyticsAdsTimelineEntry> timeline;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Upcoming flights', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${timeline.length} scheduled',
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: colors.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (timeline.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No upcoming flights scheduled.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              Column(
+                children: timeline
+                    .map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: colors.secondaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(entry.title, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600)),
+                              if (entry.status != null && entry.status!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    entry.status!,
+                                    style: GoogleFonts.inter(fontSize: 12, color: colors.onSecondaryContainer),
+                                  ),
+                                ),
+                              if ((entry.start != null && entry.start!.isNotEmpty) || (entry.end != null && entry.end!.isNotEmpty))
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    '${entry.start ?? '—'} → ${entry.end ?? '—'}',
+                                    style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant),
+                                  ),
+                                ),
+                              if (entry.budget != null && entry.budget!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    'Budget ${entry.budget}',
+                                    style: GoogleFonts.inter(fontSize: 12, color: colors.primary),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsFunnelAndRecommendations extends StatelessWidget {
+  const _AdsFunnelAndRecommendations({required this.funnel, required this.recommendations});
+
+  final List<AnalyticsAdsFunnelStage> funnel;
+  final List<AnalyticsAdsRecommendation> recommendations;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 720;
+        final funnelCard = _AdsFunnelCard(funnel: funnel);
+        final recCard = _AdsRecommendationsCard(recommendations: recommendations);
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: funnelCard),
+              const SizedBox(width: 16),
+              Expanded(child: recCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            funnelCard,
+            const SizedBox(height: 16),
+            recCard,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AdsFunnelCard extends StatelessWidget {
+  const _AdsFunnelCard({required this.funnel});
+
+  final List<AnalyticsAdsFunnelStage> funnel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Acquisition funnel', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (funnel.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'No delivery data yet.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              Column(
+                children: funnel
+                    .map(
+                      (stage) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: colors.surfaceVariant.withOpacity(0.6),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(stage.title, style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600)),
+                                  if (stage.helper != null && stage.helper!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        stage.helper!,
+                                        style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Text(stage.value, style: GoogleFonts.ibmPlexMono(fontSize: 14, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsRecommendationsCard extends StatelessWidget {
+  const _AdsRecommendationsCard({required this.recommendations});
+
+  final List<AnalyticsAdsRecommendation> recommendations;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recommendations', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (recommendations.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'No recommendations at the moment.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              Column(
+                children: recommendations
+                    .map(
+                      (recommendation) => ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                        leading: Icon(Icons.check_circle_rounded, color: colors.primary),
+                        title: Text(
+                          recommendation.title,
+                          style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(recommendation.description, style: GoogleFonts.inter(fontSize: 13)),
+                            if (recommendation.action != null && recommendation.action!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: colors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    recommendation.action!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      letterSpacing: 0.6,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsInvoicesAndAlerts extends StatelessWidget {
+  const _AdsInvoicesAndAlerts({required this.invoices, required this.alerts});
+
+  final List<AnalyticsAdsInvoice> invoices;
+  final List<AnalyticsAdsAlert> alerts;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 720;
+        final invoicesCard = _AdsInvoicesCard(invoices: invoices);
+        final alertsCard = _AdsAlertsCard(alerts: alerts);
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: invoicesCard),
+              const SizedBox(width: 16),
+              Expanded(child: alertsCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            invoicesCard,
+            const SizedBox(height: 16),
+            alertsCard,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AdsInvoicesCard extends StatelessWidget {
+  const _AdsInvoicesCard({required this.invoices});
+
+  final List<AnalyticsAdsInvoice> invoices;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Billing cadence', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${invoices.length} invoices',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (invoices.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No invoices issued this window.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 24,
+                  headingTextStyle: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600),
+                  dataTextStyle: GoogleFonts.inter(fontSize: 13, color: colors.onSurface),
+                  columns: [
+                    DataColumn(label: Text('Invoice', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Campaign', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Amount', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Status', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Due', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600))),
+                  ],
+                  rows: invoices
+                      .map(
+                        (invoice) => DataRow(
+                          cells: [
+                            DataCell(Text(
+                              invoice.invoiceNumber ?? '—',
+                              style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600),
+                            )),
+                            DataCell(Text(invoice.campaign ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                            DataCell(Text(invoice.amountDue ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                            DataCell(Text(invoice.status ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                            DataCell(Text(invoice.dueDate ?? '—', style: GoogleFonts.inter(fontSize: 13))),
+                          ],
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsAlertsCard extends StatelessWidget {
+  const _AdsAlertsCard({required this.alerts});
+
+  final List<AnalyticsAdsAlert> alerts;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Guardrails & alerts', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${alerts.length} alerts',
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: colors.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (alerts.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No alerts raised. Guardrails are steady.',
+                  style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                ),
+              )
+            else
+              Column(
+                children: alerts
+                    .map(
+                      (alert) {
+                        final palette = _AlertPalette.forSeverity(alert.severity, colors);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: palette.background,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: palette.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.warning_amber_rounded, size: 20, color: palette.foreground),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(alert.title ?? 'Alert', style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600)),
+                                        if (alert.description != null && alert.description!.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Text(alert.description!, style: GoogleFonts.inter(fontSize: 12, color: colors.onSurface)),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: palette.foreground.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      alert.severity ?? 'Info',
+                                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: palette.foreground),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: [
+                                  if (alert.flight != null && alert.flight!.isNotEmpty)
+                                    Chip(
+                                      label: Text(alert.flight!, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600)),
+                                      visualDensity: VisualDensity.compact,
+                                      backgroundColor: colors.surface.withOpacity(0.6),
+                                    ),
+                                  if (alert.detectedAt != null && alert.detectedAt!.isNotEmpty)
+                                    Chip(
+                                      label: Text(alert.detectedAt!, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600)),
+                                      visualDensity: VisualDensity.compact,
+                                      backgroundColor: colors.surface.withOpacity(0.6),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AlertPalette {
+  const _AlertPalette({required this.background, required this.foreground, required this.border});
+
+  final Color background;
+  final Color foreground;
+  final Color border;
+
+  factory _AlertPalette.forSeverity(String? severity, ColorScheme colors) {
+    switch (severity) {
+      case 'Critical':
+        return const _AlertPalette(
+          background: Color(0xFFFFF1F2),
+          foreground: Color(0xFFB91C1C),
+          border: Color(0xFFFECACA),
+        );
+      case 'Warning':
+        return const _AlertPalette(
+          background: Color(0xFFFFF7ED),
+          foreground: Color(0xFFB45309),
+          border: Color(0xFFFDE68A),
+        );
+      case 'Info':
+        return const _AlertPalette(
+          background: Color(0xFFECFEFF),
+          foreground: Color(0xFF0369A1),
+          border: Color(0xFFBAE6FD),
+        );
+      default:
+        return _AlertPalette(
+          background: colors.surfaceVariant.withOpacity(0.5),
+          foreground: colors.onSurfaceVariant,
+          border: colors.surfaceVariant,
+        );
+    }
   }
 }
 

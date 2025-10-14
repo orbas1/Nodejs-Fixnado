@@ -909,6 +909,116 @@ const mockDashboards = {
         }
       },
       {
+        id: 'inventory',
+        icon: 'assets',
+        label: 'Tools & Materials',
+        description: 'Inventory availability, utilisation, and alert posture.',
+        type: 'inventory',
+        data: {
+          summary: [
+            { id: 'available', label: 'Available units', value: 84, helper: '12 SKUs tracked', tone: 'info' },
+            { id: 'reserved', label: 'Reserved', value: 18, helper: '102 on hand', tone: 'accent' },
+            { id: 'alerts', label: 'Alerts', value: 2, helper: 'Action required', tone: 'warning' }
+          ],
+          groups: [
+            {
+              id: 'materials',
+              label: 'Materials',
+              items: [
+                {
+                  id: 'mat-1',
+                  name: 'Bio-cleanse concentrate',
+                  sku: 'MAT-BC-01',
+                  category: 'Sanitation',
+                  status: 'healthy',
+                  available: 36,
+                  onHand: 48,
+                  reserved: 12,
+                  safetyStock: 8,
+                  unitType: 'litres',
+                  condition: 'excellent',
+                  location: 'Docklands depot',
+                  nextMaintenanceDue: '2025-04-12',
+                  notes: 'Lot #221-B stable. Auto-reorder enabled.',
+                  activeAlerts: 0,
+                  activeRentals: 0
+                },
+                {
+                  id: 'mat-2',
+                  name: 'HVAC filter packs',
+                  sku: 'MAT-HVAC-07',
+                  category: 'HVAC',
+                  status: 'low_stock',
+                  available: 8,
+                  onHand: 24,
+                  reserved: 16,
+                  safetyStock: 6,
+                  unitType: 'packs',
+                  condition: 'good',
+                  location: 'North hub',
+                  nextMaintenanceDue: '2025-03-28',
+                  notes: 'Vendor replenishment ETA 3 days.',
+                  activeAlerts: 1,
+                  alertSeverity: 'warning',
+                  activeRentals: 0
+                }
+              ]
+            },
+            {
+              id: 'tools',
+              label: 'Tools',
+              items: [
+                {
+                  id: 'tool-1',
+                  name: 'Thermal imaging kit',
+                  sku: 'TL-THERM-04',
+                  category: 'Diagnostics',
+                  status: 'healthy',
+                  available: 6,
+                  onHand: 10,
+                  reserved: 4,
+                  safetyStock: 3,
+                  unitType: 'kits',
+                  condition: 'excellent',
+                  location: 'Fleet workshop',
+                  nextMaintenanceDue: '2025-05-02',
+                  rentalRate: 180,
+                  rentalRateCurrency: 'GBP',
+                  depositAmount: 450,
+                  depositCurrency: 'GBP',
+                  notes: 'Calibration synced weekly.',
+                  activeAlerts: 0,
+                  activeRentals: 2
+                },
+                {
+                  id: 'tool-2',
+                  name: 'Tower lighting rig',
+                  sku: 'TL-LIGHT-12',
+                  category: 'Access',
+                  status: 'stockout',
+                  available: 0,
+                  onHand: 4,
+                  reserved: 4,
+                  safetyStock: 2,
+                  unitType: 'units',
+                  condition: 'needs_service',
+                  location: 'Logistics yard',
+                  nextMaintenanceDue: '2025-03-22',
+                  rentalRate: 260,
+                  rentalRateCurrency: 'GBP',
+                  depositAmount: 600,
+                  depositCurrency: 'GBP',
+                  notes: 'Inspection overdue • awaiting parts.',
+                  activeAlerts: 2,
+                  alertSeverity: 'critical',
+                  activeRentals: 3
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
         id: 'servicemen',
         icon: 'crew',
         label: 'Serviceman Directory',
@@ -921,6 +1031,155 @@ const mockDashboards = {
             ['Priya Desai', 'Crew lead', 'Standby Tue', 'IPAF, NICEIC', '18 Apr 2025'],
             ['Malik Ward', 'Apprentice', 'Shadowing', 'PPE, Ladder safety', 'Weekly toolbox'],
             ['Ana Rodrigues', 'Specialist', 'Booked', 'Cleanroom, Hazardous waste', '30 Mar 2025']
+          ]
+        }
+      },
+      {
+        id: 'fixnado-ads',
+        icon: 'analytics',
+        label: 'Fixnado Ads',
+        description: 'Campaign pacing, spend, guardrails, and billing.',
+        type: 'ads',
+        data: {
+          summaryCards: [
+            { title: 'Managed spend', value: '£48.2k', change: '+£6.4k vs prior', trend: 'up', helper: '3 active campaigns' },
+            { title: 'Attributed revenue', value: '£102k', change: '+£14k vs prior', trend: 'up', helper: 'ROAS 212%' },
+            { title: 'Conversions', value: '352', change: '+42 vs prior', trend: 'up', helper: 'CPA £137' },
+            { title: 'Fixnado Ads share', value: '38%', change: '+4pts vs prior', trend: 'up', helper: '62 jobs attributed' }
+          ],
+          funnel: [
+            { title: 'Impressions', value: '1.8M', helper: 'CTR 3.1%' },
+            { title: 'Clicks', value: '56.4k', helper: 'CVR 6.2%' },
+            { title: 'Conversions', value: '352', helper: 'Spend £48.2k' },
+            { title: 'Jobs won', value: '62', helper: '18% of conversions' }
+          ],
+          campaigns: [
+            {
+              id: 'camp-retail-q2',
+              name: 'Retail Surge Q2',
+              status: 'Active',
+              objective: 'Awareness to bookings',
+              spend: '£21.4k',
+              spendChange: '+£3.2k',
+              conversions: '184',
+              conversionsChange: '+27',
+              cpa: '£116',
+              roas: '218%',
+              roasChange: '+12%',
+              pacing: '68% of target',
+              lastMetricDate: '2025-03-16',
+              flights: 2,
+              window: '2025-03-01 → 2025-03-31'
+            },
+            {
+              id: 'camp-health',
+              name: 'Healthcare Response',
+              status: 'Scheduled',
+              objective: 'Lead generation',
+              spend: '£12.7k',
+              spendChange: '+£1.9k',
+              conversions: '96',
+              conversionsChange: '+11',
+              cpa: '£132',
+              roas: '184%',
+              roasChange: '+6%',
+              pacing: '54% of target',
+              lastMetricDate: '2025-03-15',
+              flights: 1,
+              window: '2025-03-05 → 2025-04-04'
+            },
+            {
+              id: 'camp-highrise',
+              name: 'Highrise Concierge',
+              status: 'Paused',
+              objective: 'Sustainability upsell',
+              spend: '£8.1k',
+              spendChange: '-£0.4k',
+              conversions: '72',
+              conversionsChange: '+4',
+              cpa: '£113',
+              roas: '196%',
+              roasChange: '-3%',
+              pacing: 'Paused for creative refresh',
+              lastMetricDate: '2025-03-12',
+              flights: 1,
+              window: '2025-02-20 → 2025-03-22'
+            }
+          ],
+          invoices: [
+            { invoiceNumber: 'INV-9021', campaign: 'Retail Surge Q2', amountDue: '£7,800', status: 'Issued', dueDate: '2025-03-28' },
+            { invoiceNumber: 'INV-9017', campaign: 'Healthcare Response', amountDue: '£6,200', status: 'Paid', dueDate: '2025-03-12' },
+            { invoiceNumber: 'INV-9009', campaign: 'Highrise Concierge', amountDue: '£5,400', status: 'Overdue', dueDate: '2025-03-10' }
+          ],
+          alerts: [
+            {
+              title: 'Overspend signal • Retail Surge Q2',
+              severity: 'Warning',
+              description: 'Flight A tracking 12% above pacing. Review bid caps for weekend slots.',
+              detectedAt: '2025-03-15',
+              flight: 'Flight A'
+            },
+            {
+              title: 'No-spend • Healthcare Response',
+              severity: 'Info',
+              description: 'Morning window under-delivered impressions. Check placement availability.',
+              detectedAt: '2025-03-16',
+              flight: 'Launch window'
+            },
+            {
+              title: 'Invoice INV-9009 overdue',
+              severity: 'Warning',
+              description: '£1,200 outstanding. Payment required to resume paused creatives.',
+              detectedAt: '2025-03-14',
+              flight: 'Billing'
+            }
+          ],
+          recommendations: [
+            {
+              title: 'Extend weekend bids',
+              description: 'Weekend conversion rate +18% vs weekday. Increase caps Friday-Sunday.',
+              action: 'Optimise pacing'
+            },
+            {
+              title: 'Refresh paused creative',
+              description: 'Highrise Concierge creative fatigue detected. Rotate new asset pack.',
+              action: 'Launch creative update'
+            },
+            {
+              title: 'Resolve outstanding invoice',
+              description: 'Clear overdue balance to unlock concierge remarketing flight.',
+              action: 'Open billing hub'
+            }
+          ],
+          timeline: [
+            {
+              title: 'Flight A • Retail Surge Q2',
+              status: 'Active',
+              start: '2025-03-01',
+              end: '2025-03-21',
+              budget: '£24k'
+            },
+            {
+              title: 'Flight B • Retail Surge Q2',
+              status: 'Scheduled',
+              start: '2025-03-22',
+              end: '2025-04-05',
+              budget: '£18k'
+            },
+            {
+              title: 'Healthcare Response Launch',
+              status: 'Active',
+              start: '2025-03-05',
+              end: '2025-04-04',
+              budget: '£22k'
+            },
+            {
+              title: 'Highrise Concierge Creative QA',
+              status: 'Paused',
+              start: '2025-03-12',
+              end: '2025-03-19',
+              budget: '£9k'
+            }
           ]
         }
       },

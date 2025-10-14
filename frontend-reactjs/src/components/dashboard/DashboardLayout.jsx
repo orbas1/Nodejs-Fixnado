@@ -29,6 +29,7 @@ import {
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
+import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -53,7 +54,7 @@ const formatToggleDate = (iso) => {
   });
 };
 
-const ToggleSummary = ({ toggle, reason }) => {
+const ToggleSummary = ({ toggle = null, reason = null }) => {
   if (!toggle) {
     return null;
   }
@@ -106,11 +107,6 @@ ToggleSummary.propTypes = {
     lastModifiedAt: PropTypes.string
   }),
   reason: PropTypes.string
-};
-
-ToggleSummary.defaultProps = {
-  toggle: null,
-  reason: null
 };
 
 const resultBadge = {
@@ -232,6 +228,32 @@ const buildSearchIndex = (navigation) =>
       );
     }
 
+    if (section.type === 'ads') {
+      entries.push(
+        ...(section.data?.summaryCards ?? []).map((card) => ({
+          id: `${section.id}-${card.title}`,
+          type: 'card',
+          label: `${card.title} • ${card.value}`,
+          description: card.helper ?? card.change ?? '',
+          targetSection: section.id
+        })),
+        ...(section.data?.campaigns ?? []).map((campaign) => ({
+          id: `${section.id}-${campaign.id ?? campaign.name}`,
+          type: 'record',
+          label: `${campaign.name} • ${campaign.status ?? ''}`.trim(),
+          description: [`ROAS ${campaign.roas ?? '—'}`, campaign.pacing].filter(Boolean).join(' · '),
+          targetSection: section.id
+        })),
+        ...(section.data?.alerts ?? []).map((alert) => ({
+          id: `${section.id}-alert-${alert.title ?? alert.detectedAt}`,
+          type: 'record',
+          label: alert.title ?? 'Alert',
+          description: [`${alert.severity ?? ''}`.trim(), alert.description ?? ''].filter(Boolean).join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
     if (section.type === 'settings' && Array.isArray(section.data?.panels)) {
       section.data.panels.forEach((panel) => {
         const panelId = panel.id ?? panel.title ?? 'panel';
@@ -304,14 +326,19 @@ ErrorState.propTypes = {
 const DashboardLayout = ({
   roleMeta,
   registeredRoles,
-  dashboard,
-  loading,
-  error,
+  dashboard = null,
+  loading = false,
+  error = null,
   onRefresh,
+  lastRefreshed = null,
+  exportHref = null,
+  toggleMeta = null,
+  toggleReason = null,
   lastRefreshed,
   exportHref,
   toggleMeta,
-  toggleReason
+  toggleReason,
+  onLogout
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -341,6 +368,7 @@ const DashboardLayout = ({
 
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
+  const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -496,8 +524,17 @@ const DashboardLayout = ({
                   to="/"
                   className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
                 >
-                  <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Public site
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
                 </Link>
+                {onLogout ? (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+                  >
+                    <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={onRefresh}
@@ -529,6 +566,10 @@ const DashboardLayout = ({
               </div>
             ) : null}
             <div className="space-y-8">{renderSection()}</div>
+            <div className="space-y-8">
+              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+              {renderSection()}
+            </div>
           </div>
         )}
       </main>
@@ -566,7 +607,8 @@ DashboardLayout.propTypes = {
     ticket: PropTypes.string,
     lastModifiedAt: PropTypes.string
   }),
-  toggleReason: PropTypes.string
+  toggleReason: PropTypes.string,
+  onLogout: PropTypes.func
 };
 
 DashboardLayout.defaultProps = {
@@ -576,7 +618,8 @@ DashboardLayout.defaultProps = {
   lastRefreshed: null,
   exportHref: null,
   toggleMeta: null,
-  toggleReason: null
+  toggleReason: null,
+  onLogout: null
 };
 
 export default DashboardLayout;

@@ -1,4 +1,5 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
 
@@ -42,6 +43,10 @@ const IDS = {
   zoneSouth: '99999999-9999-4999-8999-999999999999',
   conversation: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 };
+
+function createToken(userId) {
+  return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
 
 async function createUser(id, overrides = {}) {
   return User.create({
@@ -573,6 +578,7 @@ describe('Persona analytics dashboards', () => {
     const response = await request(app)
       .get(`/api/analytics/dashboards/admin`)
       .set('X-Fixnado-Persona', 'admin')
+      .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
 
@@ -590,12 +596,17 @@ describe('Persona analytics dashboards', () => {
     const response = await request(app)
       .get('/api/analytics/dashboards/provider')
       .set('X-Fixnado-Persona', 'provider')
+      .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, providerId, timezone: 'Europe/London' })
       .expect(200);
 
     expect(response.body.persona).toBe('provider');
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Assignments Received');
     expect(response.body.navigation[2].data.rows[0][0]).toBe('RA-001');
+    const inventorySection = response.body.navigation.find((section) => section.id === 'inventory');
+    expect(inventorySection).toBeTruthy();
+    expect(inventorySection.data.summary[0].label).toBe('Available units');
+    expect(inventorySection.data.groups[0].items.length).toBeGreaterThan(0);
   });
 
   it('delivers a user command center with orders, rentals, and support signals', async () => {
@@ -606,6 +617,7 @@ describe('Persona analytics dashboards', () => {
     const response = await request(app)
       .get('/api/analytics/dashboards/user')
       .set('X-Fixnado-Persona', 'user')
+      .set('Authorization', `Bearer ${createToken(userId)}`)
       .query({ userId, timezone: 'Europe/London' })
       .expect(200);
 
@@ -626,6 +638,7 @@ describe('Persona analytics dashboards', () => {
     const exportResponse = await request(app)
       .get(`/api/analytics/dashboards/admin/export`)
       .set('X-Fixnado-Persona', 'admin')
+      .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
 
@@ -642,6 +655,7 @@ describe('Persona analytics dashboards', () => {
     const response = await request(app)
       .get('/api/analytics/dashboards/enterprise')
       .set('X-Fixnado-Persona', 'enterprise')
+      .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
 
@@ -649,8 +663,31 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.navigation[1].data.headers[0]).toBe('Document');
   });
 
+  it('rejects persona access when actor lacks role alignment', async () => {
+    const company = await seedCompany();
+    await seedAdminFixtures(company);
+    const { userId } = await seedUserFixtures(company);
+    const serviceman = await createUser('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', {
+      email: 'crew@example.com',
+      type: 'servicemen'
+    });
+
+    const response = await request(app)
+      .get('/api/analytics/dashboards/user')
+      .set('Authorization', `Bearer ${createToken(serviceman.id)}`)
+      .query({ userId, timezone: 'Europe/London' })
+      .expect(403);
+
+    expect(response.body).toMatchObject({ message: 'persona_forbidden' });
+  });
+
   it('rejects unsupported personas', async () => {
-    const response = await request(app).get('/api/analytics/dashboards/unknown').expect(404);
+    await createUser(IDS.companyUser, { type: 'company' });
+    const token = createToken(IDS.companyUser);
+    const response = await request(app)
+      .get('/api/analytics/dashboards/unknown')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
     expect(response.body.message).toBe('persona_not_supported');
   });
 });

@@ -248,6 +248,16 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function toNumber(value, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toNullableNumber(value) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 const percentageFormatter = new Intl.NumberFormat('en-GB', {
   style: 'percent',
   maximumFractionDigits: 1
@@ -322,6 +332,122 @@ function normaliseProviderDashboard(payload = {}) {
       availability: member.availability ?? member.utilisation ?? 0.8,
       rating: member.rating ?? member.csat ?? 0.95
     }))
+  };
+}
+
+function resolveListingTone(status) {
+  switch (status) {
+    case 'approved':
+      return 'success';
+    case 'pending_review':
+      return 'warning';
+    case 'rejected':
+    case 'suspended':
+      return 'danger';
+    default:
+      return 'info';
+  }
+}
+
+function normaliseProviderStorefront(payload = {}) {
+  const root = payload?.data ?? payload;
+  const storefront = root.storefront || {};
+  const company = storefront.company || {};
+  const metrics = storefront.metrics || {};
+  const health = storefront.health || {};
+
+  const listings = ensureArray(root.listings).map((listing, index) => {
+    const tone = resolveListingTone(listing.status);
+    return {
+      id: listing.id || `storefront-listing-${index}`,
+      title: listing.title || 'Marketplace listing',
+      status: listing.status || 'draft',
+      tone,
+      availability: listing.availability || 'rent',
+      pricePerDay: listing.pricePerDay != null ? Number(listing.pricePerDay) : null,
+      purchasePrice: listing.purchasePrice != null ? Number(listing.purchasePrice) : null,
+      location: listing.location || 'Unknown location',
+      insuredOnly: Boolean(listing.insuredOnly),
+      complianceHoldUntil: listing.complianceHoldUntil || null,
+      lastReviewedAt: listing.lastReviewedAt || null,
+      moderationNotes: listing.moderationNotes || null,
+      requestVolume: listing.requestVolume ?? 0,
+      activeAgreements: listing.activeAgreements ?? 0,
+      successfulAgreements: listing.successfulAgreements ?? listing.conversions ?? 0,
+      projectedRevenue: listing.projectedRevenue != null ? Number(listing.projectedRevenue) : null,
+      averageDurationDays: listing.averageDurationDays ?? 0,
+      recommendedActions: ensureArray(listing.recommendedActions).map((action, actionIndex) => ({
+        id: action.id || `listing-${index}-action-${actionIndex}`,
+        label: action.label || action.description || 'Review next best action.',
+        tone: action.tone || tone
+      })),
+      agreements: ensureArray(listing.agreements).map((agreement, agreementIndex) => ({
+        id: agreement.id || `listing-${index}-agreement-${agreementIndex}`,
+        status: agreement.status || 'requested',
+        renter: agreement.renter || agreement.customer || null,
+        pickupAt: agreement.pickupAt || agreement.rentalStartAt || null,
+        returnDueAt: agreement.returnDueAt || agreement.rentalEndAt || null,
+        lastStatusTransitionAt: agreement.lastStatusTransitionAt || null,
+        depositStatus: agreement.depositStatus || null,
+        dailyRate: agreement.dailyRate != null ? Number(agreement.dailyRate) : null,
+        meta: agreement.meta || {}
+      }))
+    };
+  });
+
+  const playbooks = ensureArray(root.playbooks).map((playbook, index) => ({
+    id: playbook.id || `playbook-${index}`,
+    title: playbook.title || 'Operational playbook',
+    detail: playbook.detail || playbook.description || 'Prioritise this workflow to unlock marketplace growth.',
+    tone: playbook.tone || 'info'
+  }));
+
+  const timeline = ensureArray(root.timeline).map((event, index) => ({
+    id: event.id || `timeline-${index}`,
+    timestamp: event.timestamp || event.createdAt || new Date().toISOString(),
+    type: event.type || event.action || 'update',
+    listingId: event.listingId || null,
+    listingTitle: event.listingTitle || event.listing || 'Listing',
+    actor: event.actor || event.user || null,
+    tone: event.tone || resolveListingTone(event.metadata?.status || event.type),
+    detail: event.detail || event.description || 'Activity logged with marketplace operations.',
+    metadata: event.metadata || {}
+  }));
+
+  return {
+    storefront: {
+      company: {
+        id: company.id || 'company',
+        name: company.name || 'Provider storefront',
+        complianceScore: company.complianceScore != null ? Number(company.complianceScore) : 0,
+        insuredSellerStatus: company.insuredSellerStatus || 'approved',
+        insuredSellerExpiresAt: company.insuredSellerExpiresAt || null,
+        badgeVisible: Boolean(company.badgeVisible ?? company.insuredSellerBadgeVisible),
+        applicationId: company.applicationId || company.application_id || null
+      },
+      metrics: {
+        activeListings: metrics.activeListings ?? metrics.active ?? listings.filter((item) => item.status === 'approved').length,
+        pendingReview: metrics.pendingReview ?? metrics.pending ?? 0,
+        flagged: metrics.flagged ?? metrics.suspended ?? 0,
+        insuredOnly: metrics.insuredOnly ?? metrics.insured ?? 0,
+        holdExpiring: metrics.holdExpiring ?? metrics.expiring ?? 0,
+        avgDailyRate: metrics.avgDailyRate != null ? Number(metrics.avgDailyRate) : null,
+        conversionRate: metrics.conversionRate != null ? Number(metrics.conversionRate) : 0,
+        totalRequests: metrics.totalRequests ?? metrics.requests ?? 0,
+        totalRevenue: metrics.totalRevenue != null ? Number(metrics.totalRevenue) : 0
+      },
+      health: {
+        badgeVisible: Boolean(health.badgeVisible ?? company.badgeVisible),
+        complianceScore: health.complianceScore != null ? Number(health.complianceScore) : Number(company.complianceScore || 0),
+        expiresAt: health.expiresAt || company.insuredSellerExpiresAt || null,
+        pendingReviewCount: health.pendingReviewCount ?? metrics.pendingReview ?? 0,
+        flaggedCount: health.flaggedCount ?? metrics.flagged ?? 0,
+        holdExpiringCount: health.holdExpiringCount ?? metrics.holdExpiring ?? 0
+      }
+    },
+    listings,
+    playbooks,
+    timeline
   };
 }
 
@@ -470,8 +596,19 @@ function normaliseBusinessFront(payload = {}) {
     name: item.name || `Material ${index + 1}`,
     category: item.category || 'Materials',
     sku: item.sku || null,
-    quantityOnHand: item.quantityOnHand ?? null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
     unitType: item.unitType || null,
+    status: item.status || 'healthy',
+    condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
     image: item.image || null
   }));
 
@@ -479,9 +616,24 @@ function normaliseBusinessFront(payload = {}) {
     id: item.id || `tool-${index}`,
     name: item.name || `Tool ${index + 1}`,
     category: item.category || 'Tools',
-    rentalRate: item.rentalRate ?? null,
-    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    sku: item.sku || null,
+    quantityOnHand: toNullableNumber(item.quantityOnHand),
+    quantityReserved: toNullableNumber(item.quantityReserved),
+    availability: toNullableNumber(item.availability ?? item.quantityOnHand),
+    safetyStock: toNullableNumber(item.safetyStock),
+    unitType: item.unitType || null,
+    status: item.status || 'healthy',
     condition: item.condition || item.conditionRating || null,
+    location: item.location || null,
+    nextMaintenanceDue: item.nextMaintenanceDue || null,
+    notes: item.notes || null,
+    activeAlerts: toNumber(item.activeAlerts, 0),
+    alertSeverity: item.alertSeverity || null,
+    activeRentals: toNumber(item.activeRentals, 0),
+    rentalRate: toNullableNumber(item.rentalRate),
+    rentalRateCurrency: item.rentalRateCurrency || item.currency || 'GBP',
+    depositAmount: toNullableNumber(item.depositAmount),
+    depositCurrency: item.depositCurrency || item.rentalRateCurrency || item.currency || 'GBP',
     image: item.image || null
   }));
 
@@ -565,6 +717,35 @@ function normaliseBusinessFront(payload = {}) {
     deals,
     materials,
     tools,
+    inventorySummary: (() => {
+      const raw = {
+        skuCount: toNullableNumber(root.inventorySummary?.skuCount),
+        onHand: toNullableNumber(root.inventorySummary?.onHand),
+        reserved: toNullableNumber(root.inventorySummary?.reserved),
+        available: toNullableNumber(root.inventorySummary?.available),
+        alerts: toNullableNumber(root.inventorySummary?.alerts)
+      };
+      const fallbackOnHand =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityOnHand, 0), 0);
+      const fallbackReserved =
+        materials.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.quantityReserved, 0), 0);
+      const fallbackAvailable =
+        materials.reduce((sum, item) => sum + toNumber(item.availability, 0), 0) +
+        tools.reduce((sum, item) => sum + toNumber(item.availability, 0), 0);
+      const fallbackAlerts =
+        materials.filter((item) => item.status !== 'healthy').length +
+        tools.filter((item) => item.status !== 'healthy').length;
+
+      return {
+        skuCount: raw.skuCount ?? materials.length + tools.length,
+        onHand: raw.onHand ?? fallbackOnHand,
+        reserved: raw.reserved ?? fallbackReserved,
+        available: raw.available ?? fallbackAvailable,
+        alerts: raw.alerts ?? fallbackAlerts
+      };
+    })(),
     servicemen,
     serviceZones,
     taxonomy
@@ -929,6 +1110,174 @@ const providerFallback = normaliseProviderDashboard({
   ]
 });
 
+const storefrontFallback = normaliseProviderStorefront({
+  storefront: {
+    company: {
+      id: 'metro-power-services',
+      name: 'Metro Power Services Storefront',
+      complianceScore: 92,
+      insuredSellerStatus: 'approved',
+      insuredSellerExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString(),
+      badgeVisible: true
+    },
+    metrics: {
+      activeListings: 3,
+      pendingReview: 1,
+      flagged: 1,
+      insuredOnly: 2,
+      holdExpiring: 1,
+      avgDailyRate: 415,
+      conversionRate: 0.62,
+      totalRequests: 28,
+      totalRevenue: 18400
+    }
+  },
+  listings: [
+    {
+      id: 'generator-kit',
+      title: '13kVA generator kit',
+      status: 'approved',
+      availability: 'both',
+      pricePerDay: 420,
+      purchasePrice: 68000,
+      location: 'London Docklands',
+      insuredOnly: true,
+      complianceHoldUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21).toISOString(),
+      lastReviewedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+      requestVolume: 18,
+      activeAgreements: 2,
+      successfulAgreements: 12,
+      projectedRevenue: 12600,
+      averageDurationDays: 6,
+      recommendedActions: [
+        {
+          id: 'generator-promote',
+          label: 'Bundle logistics concierge for enterprise deals to lift conversions.',
+          tone: 'info'
+        }
+      ],
+      agreements: [
+        {
+          id: 'ra-901',
+          status: 'in_use',
+          renter: 'Finova HQ',
+          pickupAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+          returnDueAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+          lastStatusTransitionAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+          depositStatus: 'held',
+          dailyRate: 420,
+          meta: { project: 'Emergency backup' }
+        },
+        {
+          id: 'ra-812',
+          status: 'settled',
+          renter: 'Northbank Campus',
+          pickupAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+          returnDueAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
+          lastStatusTransitionAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 34).toISOString(),
+          depositStatus: 'released',
+          dailyRate: 390,
+          meta: { project: 'Refit programme' }
+        }
+      ]
+    },
+    {
+      id: 'hvac-diagnostics',
+      title: 'HVAC telemetry deployment',
+      status: 'pending_review',
+      availability: 'rent',
+      pricePerDay: 260,
+      location: 'Canary Wharf',
+      insuredOnly: false,
+      requestVolume: 6,
+      activeAgreements: 0,
+      successfulAgreements: 2,
+      projectedRevenue: 3100,
+      averageDurationDays: 4,
+      recommendedActions: [
+        {
+          id: 'hvac-review',
+          label: 'Attach telemetry calibration certificates to unlock moderation.',
+          tone: 'warning'
+        }
+      ],
+      agreements: []
+    },
+    {
+      id: 'roof-access',
+      title: 'Roof access safety kit',
+      status: 'suspended',
+      availability: 'rent',
+      pricePerDay: 120,
+      location: 'Stratford',
+      insuredOnly: false,
+      requestVolume: 4,
+      activeAgreements: 0,
+      successfulAgreements: 0,
+      projectedRevenue: 0,
+      averageDurationDays: 0,
+      moderationNotes: 'Missing inspection evidence for harness lifelines.',
+      recommendedActions: [
+        {
+          id: 'roof-inspection',
+          label: 'Upload harness inspection results to reinstate the listing.',
+          tone: 'danger'
+        }
+      ],
+      agreements: []
+    }
+  ],
+  playbooks: [
+    {
+      id: 'playbook-review',
+      title: 'Accelerate moderation',
+      detail: 'Supply supporting documents for HVAC telemetry deployment to clear review backlog.',
+      tone: 'warning'
+    },
+    {
+      id: 'playbook-suspension',
+      title: 'Resolve suspension',
+      detail: 'Close out safety findings for the roof access kit to restore search placement.',
+      tone: 'danger'
+    },
+    {
+      id: 'playbook-growth',
+      title: 'Promote insured bundles',
+      detail: 'Enable concierge packages for insured-only listings to increase conversion velocity.',
+      tone: 'info'
+    }
+  ],
+  timeline: [
+    {
+      id: 'timeline-1',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      type: 'suspended',
+      listingTitle: 'Roof access safety kit',
+      actor: 'Trust & Safety',
+      tone: 'danger',
+      detail: 'Suspended pending submission of harness inspection evidence.'
+    },
+    {
+      id: 'timeline-2',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+      type: 'submitted_for_review',
+      listingTitle: 'HVAC telemetry deployment',
+      actor: 'Metro Power Services',
+      tone: 'warning',
+      detail: 'Submitted listing for moderation with preliminary telemetry schematics.'
+    },
+    {
+      id: 'timeline-3',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+      type: 'approved',
+      listingTitle: '13kVA generator kit',
+      actor: 'Marketplace Ops',
+      tone: 'success',
+      detail: 'Approved listing following compliance refresh and updated imagery.'
+    }
+  ]
+});
+
 const enterpriseFallback = normaliseEnterprisePanel({
   enterprise: {
     name: 'Albion Workspace Group',
@@ -1223,6 +1572,22 @@ export const getProviderDashboard = withFallback(
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
     })
+);
+
+export const getProviderStorefront = withFallback(
+  normaliseProviderStorefront,
+  storefrontFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/provider/storefront${query}`, {
+      cacheKey: `provider-storefront${cacheKeySuffix}`,
+      ttl: 20000,
+      headers: { 'X-Fixnado-Role': options?.role ?? 'company' },
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
 );
 
 export const getEnterprisePanel = withFallback(
