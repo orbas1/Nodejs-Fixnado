@@ -27,6 +27,7 @@ export const esES = {
     'nav.skip': 'Saltar al contenido principal',
     'nav.home': 'Inicio',
     'nav.solutions': 'Soluciones',
+    'nav.tools': 'Herramientas',
     'nav.industries': 'Sectores',
     'nav.platform': 'Plataforma',
     'nav.materials': 'Materiales',

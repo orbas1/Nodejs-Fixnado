@@ -18,6 +18,7 @@ const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
+const Tools = lazy(() => import('./pages/Tools.jsx'));
 const Materials = lazy(() => import('./pages/Materials.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
@@ -65,6 +66,7 @@ function App() {
             <Route path="/providers/:slug" element={<BusinessFront />} />
             <Route path="/search" element={<Search />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/tools" element={<Tools />} />
             <Route path="/materials" element={<Materials />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route

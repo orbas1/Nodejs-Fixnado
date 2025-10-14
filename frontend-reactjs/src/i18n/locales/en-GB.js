@@ -27,6 +27,7 @@ export const enGB = {
     'nav.skip': 'Skip to main content',
     'nav.home': 'Home',
     'nav.solutions': 'Solutions',
+    'nav.tools': 'Tools hub',
     'nav.industries': 'Industries',
     'nav.platform': 'Platform',
     'nav.materials': 'Materials',

@@ -5,6 +5,7 @@ import App from './App.jsx';
 import { ThemeProvider } from './providers/ThemeProvider.jsx';
 import { LocaleProvider } from './providers/LocaleProvider.jsx';
 import { FeatureToggleProvider } from './providers/FeatureToggleProvider.jsx';
+import { PersonaProvider } from './providers/PersonaProvider.jsx';
 import { AdminSessionProvider } from './providers/AdminSessionProvider.jsx';
 import './styles.css';
 
@@ -13,6 +14,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <LocaleProvider>
         <FeatureToggleProvider>
+          <PersonaProvider>
+            <ThemeProvider>
+              <App />
+            </ThemeProvider>
+          </PersonaProvider>
           <ThemeProvider>
             <AdminSessionProvider>
               <App />
