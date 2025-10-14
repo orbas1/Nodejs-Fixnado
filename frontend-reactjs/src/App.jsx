@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
@@ -62,7 +62,7 @@ function App() {
             <Route path="/feed" element={<Feed />} />
             <Route path="/provider/dashboard" element={<ProviderDashboard />} />
             <Route path="/provider/storefront" element={<ProviderStorefront />} />
-            <Route path="/enterprise/panel" element={<EnterprisePanel />} />
+            <Route path="/enterprise/panel" element={<Navigate to="/dashboards/enterprise/panel" replace />} />
             <Route path="/providers" element={<BusinessFront />} />
             <Route path="/providers/:slug" element={<BusinessFront />} />
             <Route path="/search" element={<Search />} />
@@ -113,6 +113,7 @@ function App() {
             <Route path="/communications" element={<Communications />} />
             <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
+            <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
           </Routes>
         </Suspense>
