@@ -71,6 +71,10 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument());
+    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
+    const exportLink = screen.getByText('Download CSV');
+    expect(exportLink.getAttribute('href')).toMatch(/\/api\/analytics\/dashboards\/admin\/export/);
     const overviewHeadings = await screen.findAllByText('Executive Overview');
     expect(overviewHeadings.length).toBeGreaterThan(0);
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
@@ -182,6 +186,7 @@ describe('RoleDashboard', () => {
       mockDashboards.admin = originalDashboard;
     }
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.getAllByText('Executive Overview').length).toBeGreaterThan(0));
     await screen.findAllByText('Executive Overview');
     await waitFor(() =>
       expect(

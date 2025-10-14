@@ -28,6 +28,7 @@ import {
 } from '@heroicons/react/24/outline';
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
+import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 
 const stateBadgeMap = {
@@ -366,6 +367,7 @@ const DashboardLayout = ({
   }, [searchQuery, searchIndex]);
 
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
 
   const renderSection = () => {
@@ -558,6 +560,12 @@ const DashboardLayout = ({
           <Skeleton />
         ) : (
           <div className="px-6 py-10">
+            {persona === 'serviceman' ? (
+              <div className="mb-8">
+                <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+              </div>
+            ) : null}
+            <div className="space-y-8">{renderSection()}</div>
             <div className="space-y-8">
               {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
               {renderSection()}

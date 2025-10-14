@@ -30,6 +30,12 @@ export function buildExportUrl(persona, params = {}) {
 
 export async function fetchDashboard(persona, params = {}) {
   try {
+    const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
+    const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
+      headers: {
+        Accept: 'application/json',
+        ...personaHeader
+      }
     const headers = new Headers({ Accept: 'application/json' });
     const token = getAuthToken();
     if (token) {
@@ -68,6 +74,8 @@ export async function fetchDashboard(persona, params = {}) {
       throw error;
     }
     const fallback = mockDashboards?.[persona];
+    const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+    if (import.meta.env.DEV && fallback && !isTestEnv) {
     const { DEV = false, MODE } = import.meta.env ?? {};
     const isDevEnvironment = Boolean(DEV);
     const isTestEnvironment = MODE === 'test';
@@ -86,6 +94,12 @@ export async function fetchDashboard(persona, params = {}) {
 }
 
 export async function downloadDashboardCsv(persona, params = {}) {
+  const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
+  const response = await fetch(`${API_BASE}/${persona}/export${toQueryString(params)}`, {
+    headers: {
+      Accept: 'text/csv',
+      ...personaHeader
+    }
   const headers = new Headers({ Accept: 'text/csv' });
   const token = getAuthToken();
   if (token) {

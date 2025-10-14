@@ -577,6 +577,7 @@ describe('Persona analytics dashboards', () => {
 
     const response = await request(app)
       .get(`/api/analytics/dashboards/admin`)
+      .set('X-Fixnado-Persona', 'admin')
       .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
@@ -594,6 +595,7 @@ describe('Persona analytics dashboards', () => {
 
     const response = await request(app)
       .get('/api/analytics/dashboards/provider')
+      .set('X-Fixnado-Persona', 'provider')
       .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, providerId, timezone: 'Europe/London' })
       .expect(200);
@@ -614,6 +616,7 @@ describe('Persona analytics dashboards', () => {
 
     const response = await request(app)
       .get('/api/analytics/dashboards/user')
+      .set('X-Fixnado-Persona', 'user')
       .set('Authorization', `Bearer ${createToken(userId)}`)
       .query({ userId, timezone: 'Europe/London' })
       .expect(200);
@@ -634,6 +637,7 @@ describe('Persona analytics dashboards', () => {
 
     const exportResponse = await request(app)
       .get(`/api/analytics/dashboards/admin/export`)
+      .set('X-Fixnado-Persona', 'admin')
       .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
@@ -650,6 +654,7 @@ describe('Persona analytics dashboards', () => {
 
     const response = await request(app)
       .get('/api/analytics/dashboards/enterprise')
+      .set('X-Fixnado-Persona', 'enterprise')
       .set('Authorization', `Bearer ${createToken(IDS.companyUser)}`)
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);

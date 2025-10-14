@@ -1936,6 +1936,17 @@ async function loadServicemanData(context) {
     })
   ]);
 
+  const providerIds = Array.from(
+    new Set(assignments.map((assignment) => assignment.providerId).filter(Boolean))
+  );
+
+  const crewRecords = providerIds.length
+    ? await User.findAll({
+        where: { id: { [Op.in]: providerIds } },
+        attributes: ['id', 'firstName', 'lastName', 'type', 'createdAt']
+      })
+    : [];
+
   const completed = assignments.filter((assignment) => assignment.Booking?.status === 'completed').length;
   const inProgress = assignments.filter((assignment) => assignment.Booking?.status === 'in_progress').length;
   const scheduled = assignments.filter((assignment) => assignment.Booking?.status === 'scheduled').length;
@@ -1948,6 +1959,34 @@ async function loadServicemanData(context) {
     (sum, assignment) => sum + parseDecimal(assignment.Booking?.commissionAmount),
     0
   );
+
+  const crewSummaries = crewRecords.map((record) => {
+    const crewAssignments = assignments.filter((assignment) => assignment.providerId === record.id);
+    const completedAssignments = crewAssignments.filter((assignment) => assignment.Booking?.status === 'completed').length;
+    const activeAssignments = crewAssignments.filter((assignment) =>
+      ['scheduled', 'in_progress'].includes(assignment.Booking?.status)
+    ).length;
+    const leadAssignments = crewAssignments.filter((assignment) => assignment.role === 'lead').length;
+
+    return {
+      id: record.id,
+      name: [record.firstName, record.lastName].filter(Boolean).join(' ') || 'Crew member',
+      role: leadAssignments > 0 ? 'Lead technician' : 'Field technician',
+      assignments: crewAssignments.length,
+      completed: completedAssignments,
+      active: activeAssignments
+    };
+  });
+
+  crewSummaries.sort((a, b) => b.assignments - a.assignments || a.name.localeCompare(b.name));
+
+  const crewLead = crewSummaries.find((member) => member.role === 'Lead technician') ?? crewSummaries[0] ?? null;
+
+  const coverageRegions = assignments
+    .map((assignment) => assignment.Booking?.meta?.region)
+    .filter((region) => typeof region === 'string' && region.trim().length > 0);
+
+  const primaryRegion = coverageRegions[0] ?? 'Multi-zone coverage';
 
   const travelBufferMinutes = assignments.reduce((sum, assignment) => {
     const metaMinutes = Number.parseInt(assignment.Booking?.meta?.travelMinutes ?? 0, 10);
@@ -2273,6 +2312,18 @@ async function loadServicemanData(context) {
     window,
     metadata: {
       providerId: providerId ?? null,
+      region: primaryRegion,
+      crewLead,
+      crew: crewSummaries,
+      velocity: {
+        travelMinutes: avgTravelMinutes,
+        previousTravelMinutes: previousAvgTravelMinutes,
+        weekly: weeklyVelocityBuckets.map((bucket) => ({
+          label: bucket.label,
+          accepted: bucket.accepted,
+          autoMatches: bucket.autoMatches
+        }))
+      },
       totals: {
         completed,
         inProgress,

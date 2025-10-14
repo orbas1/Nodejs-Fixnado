@@ -34,6 +34,37 @@ const personaValidators = () => [
   query('timezone').optional().isString().trim().isLength({ min: 2, max: 64 })
 ];
 
+const personaAccessControl = () => (req, res, next) => {
+  const persona = req.params.persona?.toLowerCase();
+  if (!persona) {
+    return res.status(403).json({ message: 'persona_forbidden' });
+  }
+
+  const header = req.headers['x-fixnado-persona'];
+  const claimed = typeof header === 'string' ? header.toLowerCase() : null;
+
+  const accessMatrix = {
+    user: ['user'],
+    admin: ['admin'],
+    provider: ['provider'],
+    serviceman: ['serviceman', 'servicemen'],
+    enterprise: ['enterprise']
+  };
+
+  const allowed = accessMatrix[persona];
+  if (!allowed) {
+    return res.status(404).json({ message: 'persona_not_supported' });
+  }
+
+  if (!claimed || !allowed.includes(claimed)) {
+    return res.status(403).json({ message: 'persona_forbidden' });
+  }
+
+  next();
+};
+
+router.get('/dashboards/:persona/export', personaValidators(), personaAccessControl(), exportPersonaDashboardHandler);
+router.get('/dashboards/:persona', personaValidators(), personaAccessControl(), getPersonaDashboardHandler);
 router.get('/dashboards/:persona/export', authenticate, authorizePersonaAccess, personaValidators(), exportPersonaDashboardHandler);
 router.get('/dashboards/:persona', authenticate, authorizePersonaAccess, personaValidators(), getPersonaDashboardHandler);
 

@@ -35,6 +35,9 @@ if (typeof window !== 'undefined') {
     window.dataLayer = [];
   }
 
+  if (typeof window.ResizeObserver !== 'function') {
+    class ResizeObserverMock {
+      constructor(callback) {
   if (typeof window.ResizeObserver === 'undefined') {
     const createRect = (target) => {
       if (target && typeof target.getBoundingClientRect === 'function') {
@@ -89,6 +92,8 @@ if (typeof window !== 'undefined') {
       disconnect() {}
     }
 
+    window.ResizeObserver = ResizeObserverMock;
+    global.ResizeObserver = ResizeObserverMock;
     window.ResizeObserver = ResizeObserver;
     globalThis.ResizeObserver = ResizeObserver;
   }
