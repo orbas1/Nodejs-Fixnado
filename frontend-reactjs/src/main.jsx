@@ -16,14 +16,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <FeatureToggleProvider>
           <PersonaProvider>
             <ThemeProvider>
-              <App />
+              <AdminSessionProvider>
+                <App />
+              </AdminSessionProvider>
             </ThemeProvider>
           </PersonaProvider>
-          <ThemeProvider>
-            <AdminSessionProvider>
-              <App />
-            </AdminSessionProvider>
-          </ThemeProvider>
         </FeatureToggleProvider>
       </LocaleProvider>
     </BrowserRouter>

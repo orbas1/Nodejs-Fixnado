@@ -54,6 +54,8 @@ function listFromEnv(key) {
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
 const DEFAULT_WAREHOUSE_THRESHOLDS = {
   default: 120,
   bookings: 30,
