@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
@@ -30,7 +30,13 @@ const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
+const Blog = lazy(() => import('./pages/Blog.jsx'));
+const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
+const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const Terms = lazy(() => import('./pages/Terms.jsx'));
+const Privacy = lazy(() => import('./pages/Privacy.jsx'));
+const About = lazy(() => import('./pages/About.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -71,18 +77,32 @@ function App() {
               }
             />
             <Route path="/enterprise/panel" element={<EnterprisePanel />} />
+            <Route path="/provider/storefront" element={<ProviderStorefront />} />
+            <Route path="/enterprise/panel" element={<Navigate to="/dashboards/enterprise/panel" replace />} />
             <Route path="/providers" element={<BusinessFront />} />
             <Route path="/providers/:slug" element={<BusinessFront />} />
             <Route path="/search" element={<Search />} />
             <Route path="/services" element={<Services />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/materials" element={<Materials />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/dashboard"
               element={
                 <AdminProtectedRoute>
                   <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/blog"
+              element={
+                <AdminProtectedRoute>
+                  <AdminBlog />
                 </AdminProtectedRoute>
               }
             />
@@ -121,7 +141,9 @@ function App() {
             <Route path="/communications" element={<Communications />} />
             <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
+            <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+            <Route path="/legal/terms" element={<Terms />} />
           </Routes>
         </Suspense>
       </main>

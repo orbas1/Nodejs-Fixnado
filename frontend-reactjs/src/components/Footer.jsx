@@ -33,7 +33,15 @@ export default function Footer() {
           key: itemKey,
           label: t(itemKey),
           href:
-            itemKey === 'footer.services'
+            itemKey === 'footer.about'
+              ? '/about'
+              : itemKey === 'footer.careers'
+              ? '/about#careers'
+              : itemKey === 'footer.press'
+              ? '/communications'
+              : itemKey === 'footer.contact'
+              ? '/communications'
+              : itemKey === 'footer.services'
               ? '/services'
               : itemKey === 'footer.liveFeed'
               ? '/feed'
@@ -41,6 +49,8 @@ export default function Footer() {
               ? '/services#rentals'
               : itemKey === 'footer.materials'
               ? '/materials'
+              : itemKey === 'footer.terms'
+              ? '/legal/terms'
               : '#'
         }))
       })),
@@ -81,6 +91,8 @@ export default function Footer() {
           <span>{t('footer.copyright', { year: new Date().getFullYear() })}</span>
           <div className="flex gap-4">
             <Link to="#" className="hover:text-accent">{t('footer.privacy')}</Link>
+            <Link to="/legal/terms" className="hover:text-accent">{t('footer.terms')}</Link>
+            <Link to="/privacy" className="hover:text-accent">{t('footer.privacy')}</Link>
             <Link to="#" className="hover:text-accent">{t('footer.terms')}</Link>
             <Link to="#" className="hover:text-accent">{t('footer.cookies')}</Link>
           </div>

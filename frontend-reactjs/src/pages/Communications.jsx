@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { useSearchParams } from 'react-router-dom';
@@ -46,21 +46,29 @@ function MessageBubble({ message, isSelf, viewerParticipantId }) {
 
   const tone = message.messageType === 'assistant' ? 'assistant' : isSelf ? 'self' : 'participant';
   const wrapperClasses = clsx('flex w-full items-end gap-3', isSelf ? 'justify-end' : 'justify-start');
+  const toneStyles = {
+    self:
+      'bg-white text-slate-900 shadow-[0_20px_45px_-24px_rgba(12,74,110,0.55)] border border-sky-100/80 ring-1 ring-sky-50/80',
+    assistant:
+      'bg-white text-indigo-900 shadow-[0_20px_45px_-24px_rgba(67,56,202,0.55)] border border-indigo-100/70 ring-1 ring-indigo-50/80',
+    participant:
+      'bg-white text-slate-900 shadow-[0_24px_40px_-32px_rgba(15,23,42,0.45)] border border-slate-100/80'
+  };
   const bubbleClasses = clsx(
-    'relative max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm',
-    {
-      'bg-sky-500 text-white shadow-sky-200/50': tone === 'self',
-      'bg-indigo-500 text-white shadow-indigo-200/50': tone === 'assistant',
-      'bg-slate-100 text-slate-900 shadow-slate-200/60': tone === 'participant'
-    }
+    'relative max-w-[75%] rounded-2xl px-5 py-4 text-sm leading-relaxed transition-shadow',
+    toneStyles[tone]
   );
   const metaTextClasses = clsx(
-    'mt-2 text-[11px] font-semibold uppercase tracking-[0.25em]',
-    tone === 'assistant' || tone === 'self' ? 'text-white/70' : 'text-slate-500'
+    'mt-3 flex flex-wrap gap-3 text-[11px] font-semibold uppercase tracking-[0.3em]',
+    tone === 'assistant' ? 'text-indigo-400' : tone === 'self' ? 'text-sky-400' : 'text-slate-400'
   );
   const avatarClasses = clsx(
-    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase',
-    tone === 'assistant' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-600'
+    'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase shadow-sm',
+    tone === 'assistant'
+      ? 'border-indigo-100 bg-indigo-50 text-indigo-600'
+      : tone === 'self'
+      ? 'border-sky-100 bg-sky-50 text-sky-600'
+      : 'border-slate-100 bg-slate-50 text-slate-500'
   );
   const initials = useMemo(() => roleLabel.slice(0, 2).toUpperCase(), [roleLabel]);
 
@@ -88,7 +96,10 @@ function MessageBubble({ message, isSelf, viewerParticipantId }) {
           </p>
           {statusLabel || confidenceLabel ? (
             <div className={metaTextClasses}>
-              {[statusLabel, confidenceLabel].filter(Boolean).join(' • ')}
+              {[statusLabel, confidenceLabel]
+                .filter(Boolean)
+                .map((item) => item.replace(/\s+/g, ' ').trim())
+                .join(' • ')}
             </div>
           ) : null}
         </div>
@@ -235,6 +246,8 @@ function Communications() {
     bookingFlow: true,
     purchaseFlow: true
   });
+  const messagesViewportRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -354,6 +367,15 @@ function Communications() {
   );
 
   const conversationMessages = activeConversation?.messages ?? [];
+
+  useEffect(() => {
+    if (!messagesEndRef.current) {
+      return;
+    }
+    const prefersReducedMotion =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    messagesEndRef.current.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'end' });
+  }, [activeConversationId, conversationMessages.length]);
 
   const handleSendMessage = useCallback(
     async ({ body, requestAiAssist }) => {
@@ -698,7 +720,10 @@ function Communications() {
                   </div>
                 </div>
 
-                <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6">
+                <div
+                  ref={messagesViewportRef}
+                  className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
+                >
                   {messagesLoading ? (
                     <p className="text-sm text-slate-500">Loading conversation…</p>
                   ) : (
@@ -714,6 +739,7 @@ function Communications() {
                       {conversationMessages.length === 0 ? (
                         <p className="text-sm text-slate-500">No messages yet. Be the first to say hello.</p>
                       ) : null}
+                      <span ref={messagesEndRef} aria-hidden="true" />
                     </div>
                   )}
 

@@ -11,6 +11,7 @@ import { useLocale } from '../hooks/useLocale.js';
 import { hasCommunicationsAccess, normaliseRole } from '../constants/accessControl.js';
 import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
 import PersonaSwitcher from './PersonaSwitcher.jsx';
+import LanguageSelector from './LanguageSelector.jsx';
 import { useSession } from '../hooks/useSession.js';
 
 const navigationConfig = [
@@ -20,7 +21,32 @@ const navigationConfig = [
   { key: 'industries', nameKey: 'nav.industries', href: '/#home-marketing' },
   { key: 'platform', nameKey: 'nav.platform', href: '/#home-operations' },
   { key: 'materials', nameKey: 'nav.materials', href: '/materials' },
+  { key: 'blog', nameKey: 'nav.blog', href: '/blog' },
   { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
+  {
+    key: 'company',
+    nameKey: 'nav.company',
+    children: [
+      {
+        key: 'about',
+        nameKey: 'nav.about',
+        descriptionKey: 'nav.aboutDescription',
+        href: '/about'
+      },
+      {
+        key: 'trust',
+        nameKey: 'nav.trustCentre',
+        descriptionKey: 'nav.trustCentreDescription',
+        href: '/about#trust'
+      },
+      {
+        key: 'careers',
+        nameKey: 'nav.careers',
+        descriptionKey: 'nav.careersDescription',
+        href: '/about#careers'
+      }
+    ]
+  },
   {
     key: 'dashboards',
     nameKey: 'nav.dashboards',
@@ -41,7 +67,7 @@ const navigationConfig = [
         key: 'enterprise',
         nameKey: 'nav.enterpriseAnalytics',
         descriptionKey: 'nav.enterpriseAnalyticsDescription',
-        href: '/enterprise/panel'
+        href: '/dashboards/enterprise/panel'
       },
       {
         key: 'business-fronts',
@@ -66,7 +92,7 @@ export default function Header() {
   const [mobileMenu, setMobileMenu] = useState(null);
   const menuRefs = useRef({});
   const location = useLocation();
-  const { t, locale, setLocale, availableLocales } = useLocale();
+  const { t, locale } = useLocale();
   const [sessionRole, setSessionRole] = useState(() =>
     normaliseRole(resolveSessionTelemetryContext().role)
   );
@@ -74,6 +100,7 @@ export default function Header() {
   const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
   const allowProviderConsole = hasRole(PROVIDER_EXPERIENCE_ALLOWED_ROLES);
   const allowProviderStorefront = hasRole(PROVIDER_STOREFRONT_ALLOWED_ROLES);
+  const allowEnterprisePanel = hasRole(['enterprise']);
 
   const navigation = useMemo(() => {
     const filtered = navigationConfig
@@ -98,6 +125,8 @@ export default function Header() {
             }
             if (child.key === 'provider-storefront') {
               return allowProviderStorefront;
+            if (child.key === 'enterprise') {
+              return allowEnterprisePanel;
             }
             return true;
           })
@@ -117,6 +146,7 @@ export default function Header() {
 
     return filtered;
   }, [sessionRole, t, locale, allowBusinessFronts, allowProviderConsole, allowProviderStorefront]);
+  }, [sessionRole, t, locale, allowBusinessFronts, allowEnterprisePanel]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -287,21 +317,7 @@ export default function Header() {
         </nav>
         <div className="hidden md:flex items-center gap-3">
           <PersonaSwitcher variant="desktop" />
-          <label htmlFor="desktop-language-selector" className="sr-only">
-            {t('nav.languageSelector')}
-          </label>
-          <select
-            id="desktop-language-selector"
-            value={locale}
-            onChange={(event) => setLocale(event.target.value)}
-            className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            {availableLocales.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.name}
-              </option>
-            ))}
-          </select>
+          <LanguageSelector variant="header" />
           <Link
             to="/login"
             className="px-4 py-2 rounded-full border border-accent text-accent font-semibold hover:bg-accent/10"
@@ -377,21 +393,7 @@ export default function Header() {
           ))}
           <div className="flex flex-col gap-3 pt-4">
             <PersonaSwitcher variant="mobile" />
-            <label htmlFor="mobile-language-selector" className="sr-only">
-              {t('nav.languageSelector')}
-            </label>
-            <select
-              id="mobile-language-selector"
-              value={locale}
-              onChange={(event) => setLocale(event.target.value)}
-              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              {availableLocales.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
-            </select>
+            <LanguageSelector variant="mobile" />
           </div>
           <div className="flex gap-3">
             <Link

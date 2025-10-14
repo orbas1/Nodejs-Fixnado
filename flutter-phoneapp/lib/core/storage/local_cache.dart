@@ -32,4 +32,10 @@ class LocalCache {
   }
 
   Future<void> remove(String key) => _prefs.remove(key);
+
+  Future<void> writeString(String key, String value) async {
+    await _prefs.setString(key, value);
+  }
+
+  String? readString(String key) => _prefs.getString(key);
 }

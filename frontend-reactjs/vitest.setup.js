@@ -13,32 +13,7 @@ if (typeof window !== 'undefined') {
     });
   }
 
-  if (typeof window.ResizeObserver === 'undefined') {
-    window.ResizeObserver = class {
-      observe() {}
-      unobserve() {}
   if (typeof window.ResizeObserver !== 'function') {
-    window.ResizeObserver = class {
-      constructor(callback = () => {}) {
-        this.callback = callback;
-      }
-
-      observe() {}
-
-      unobserve() {}
-
-      disconnect() {}
-    };
-  }
-
-  if (!window.dataLayer) {
-    window.dataLayer = [];
-  }
-
-  if (typeof window.ResizeObserver !== 'function') {
-    class ResizeObserverMock {
-      constructor(callback) {
-  if (typeof window.ResizeObserver === 'undefined') {
     const createRect = (target) => {
       if (target && typeof target.getBoundingClientRect === 'function') {
         return target.getBoundingClientRect();
@@ -78,23 +53,10 @@ if (typeof window !== 'undefined') {
     }
 
     window.ResizeObserver = ResizeObserverMock;
-    global.ResizeObserver = ResizeObserverMock;
-  if (typeof window.ResizeObserver !== 'function') {
-    class ResizeObserver {
-      constructor(callback = () => {}) {
-        this.callback = callback;
-      }
+    globalThis.ResizeObserver = ResizeObserverMock;
+  }
 
-      observe() {}
-
-      unobserve() {}
-
-      disconnect() {}
-    }
-
-    window.ResizeObserver = ResizeObserverMock;
-    global.ResizeObserver = ResizeObserverMock;
-    window.ResizeObserver = ResizeObserver;
-    globalThis.ResizeObserver = ResizeObserver;
+  if (!window.dataLayer) {
+    window.dataLayer = [];
   }
 }

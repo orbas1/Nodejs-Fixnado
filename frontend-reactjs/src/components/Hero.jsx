@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import LanguageSelector from './LanguageSelector.jsx';
+import { useLocale } from '../hooks/useLocale.js';
 
 const heroMetrics = [
   { label: 'Cities dispatched', value: '320+' },
@@ -15,6 +17,8 @@ const guardrails = [
 ];
 
 export default function Hero() {
+  const { t } = useLocale();
+
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(31,78,216,0.12),transparent_55%)]" aria-hidden="true" />
@@ -32,6 +36,23 @@ export default function Hero() {
           <p className="mt-6 text-lg text-slate-600 max-w-2xl">
             Deploy vetted specialists, coordinate equipment, and manage service zones with real-time visibility. Built with enterprise-grade governance, escrow, and dispute workflows out of the box.
           </p>
+          <div className="mt-8 flex flex-col gap-3 rounded-3xl border border-slate-200/60 bg-white/80 p-4 shadow-sm shadow-primary/5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                {t('nav.login')}
+              </Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-accent/40 transition-colors hover:bg-accent/90"
+              >
+                {t('nav.register')}
+              </Link>
+            </div>
+            <LanguageSelector variant="hero" className="sm:min-w-[14rem]" />
+          </div>
           <div className="mt-10 flex flex-col sm:flex-row gap-4">
             <Link
               to="/register"

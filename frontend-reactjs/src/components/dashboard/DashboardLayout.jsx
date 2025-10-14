@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -26,10 +26,12 @@ import {
   ClipboardDocumentCheckIcon,
   CubeIcon
 } from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
+import DashboardBlogRail from './DashboardBlogRail.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -334,13 +336,15 @@ const DashboardLayout = ({
   exportHref = null,
   toggleMeta = null,
   toggleReason = null,
-  onLogout
+  onLogout,
+  blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -348,6 +352,11 @@ const DashboardLayout = ({
     setSearchQuery('');
     setSearchResults([]);
   }, [navigation]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    setMobileNavOpen(false);
+  }, [selectedSection, mobileNavOpen]);
 
   const searchIndex = useMemo(() => buildSearchIndex(navigation), [navigation]);
 
@@ -365,13 +374,20 @@ const DashboardLayout = ({
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
-    return <DashboardSection section={activeSection} />;
+    return (
+      <DashboardSection
+        section={activeSection}
+        persona={persona}
+        features={dashboard?.metadata?.features ?? {}}
+      />
+    );
   };
 
   const registeredOptions = registeredRoles.filter((role) => role.registered);
@@ -380,8 +396,114 @@ const DashboardLayout = ({
     return <ErrorState message={error} onRetry={onRefresh} />;
   }
 
+  const sectionContent = renderSection();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
+      <Transition.Root show={mobileNavOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-40 lg:hidden" onClose={setMobileNavOpen}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-y-0 left-0 flex max-w-xs w-full">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="-translate-x-full"
+              enterTo="translate-x-0"
+              leave="ease-in duration-150"
+              leaveFrom="translate-x-0"
+              leaveTo="-translate-x-full"
+            >
+              <Dialog.Panel className="relative flex w-full flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/60 to-white p-6 shadow-2xl">
+                <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
+                <div className="flex items-center justify-between gap-3">
+                  <Link to="/dashboards" className="flex items-center gap-2 text-primary" onClick={() => setMobileNavOpen(false)}>
+                    <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
+                    <div className="leading-tight">
+                      <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
+                      <p className="text-lg font-semibold">{roleMeta.name}</p>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
+                    aria-label="Close navigation"
+                  >
+                    <Squares2X2Icon className="h-5 w-5" />
+                  </button>
+                </div>
+                <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
+                  {navigation.map((item) => {
+                    const isActive = item.id === activeSection?.id;
+                    const Icon = getNavIcon(item);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedSection(item.id)}
+                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          isActive
+                            ? 'border-accent bg-accent text-white shadow-glow'
+                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        }`}
+                        aria-pressed={isActive}
+                      >
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold">{item.label}</p>
+                          {item.description ? (
+                            <p className="text-xs text-slate-500">{item.description}</p>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </nav>
+                <div className="mt-6 space-y-3">
+                  <Link
+                    to="/"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
+                  </Link>
+                  {onLogout ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileNavOpen(false);
+                        onLogout();
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+                    >
+                      <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+                    </button>
+                  ) : null}
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
       <aside
         className={`hidden lg:flex ${navCollapsed ? 'w-24' : 'w-80 xl:w-96'} flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white transition-[width] duration-300`}
       >
@@ -447,6 +569,18 @@ const DashboardLayout = ({
       <main className="flex-1 min-h-screen">
         <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-6 py-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex items-center justify-between gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm transition hover:border-accent hover:text-primary"
+              >
+                <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
+              </button>
+              {lastRefreshed && (
+                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
@@ -455,7 +589,7 @@ const DashboardLayout = ({
                 </span>
               </div>
               {lastRefreshed && (
-                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
+                <p className="hidden text-xs text-primary/60 lg:block">Refreshed {formatRelativeTime(lastRefreshed)}</p>
               )}
               <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
             </div>
@@ -555,17 +689,27 @@ const DashboardLayout = ({
         {loading && !dashboard ? (
           <Skeleton />
         ) : (
-          <div className="px-6 py-10">
+          <div className="px-6 py-10 space-y-10">
             {persona === 'serviceman' ? (
-              <div className="mb-8">
+              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+            ) : null}
+            {sectionContent}
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+          <div className="px-6 py-10 space-y-8">
+            {persona === 'serviceman' ? (
+              <div>
                 <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
               </div>
             ) : null}
+            <DashboardBlogRail posts={blogPosts} />
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
             <div className="space-y-8">{renderSection()}</div>
-            <div className="space-y-8">
-              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-              {renderSection()}
-            </div>
+          <div className="space-y-8 px-6 py-10">
+            {shouldShowServicemanSummary ? (
+              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+            ) : null}
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+            {renderSection()}
           </div>
         )}
       </main>
@@ -604,7 +748,12 @@ DashboardLayout.propTypes = {
     lastModifiedAt: PropTypes.string
   }),
   toggleReason: PropTypes.string,
-  onLogout: PropTypes.func
+  onLogout: PropTypes.func,
+  blogPosts: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired
+    })
+  )
 };
 
 DashboardLayout.defaultProps = {
@@ -615,7 +764,8 @@ DashboardLayout.defaultProps = {
   exportHref: null,
   toggleMeta: null,
   toggleReason: null,
-  onLogout: null
+  onLogout: null,
+  blogPosts: []
 };
 
 export default DashboardLayout;
