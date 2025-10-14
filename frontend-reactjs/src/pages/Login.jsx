@@ -1,63 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons.jsx';
-import { useSecurityPreferences } from '../hooks/useSecurityPreferences.js';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { twoFactorEnabled } = useSecurityPreferences();
-  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const controlWidthClass = 'w-full max-w-sm';
-
-  useEffect(() => {
-    if (!twoFactorEnabled && twoFactorRequired) {
-      setTwoFactorRequired(false);
-      setTwoFactorCode('');
-    }
-  }, [twoFactorEnabled, twoFactorRequired]);
 
   const handleCredentialSubmit = (event) => {
     event.preventDefault();
     setStatusMessage('');
 
-    if (twoFactorEnabled) {
-      setTwoFactorRequired(true);
-      setStatusMessage('Enter the 6-digit code from your authenticator to finish signing in.');
-      return;
-    }
-
-    setStatusMessage('Signed in securely. Redirecting to your feed...');
+    setStatusMessage('Signed in securely. Redirecting to your dashboard...');
     window.setTimeout(() => {
-      navigate('/feed', { replace: true });
-    }, 600);
-  };
-
-  const handleTwoFactorSubmit = (event) => {
-    event.preventDefault();
-    if (!twoFactorEnabled) {
-      setStatusMessage('Two-factor authentication is not enabled for this account. Redirecting to your feed...');
-      window.setTimeout(() => {
-        navigate('/feed', { replace: true });
-      }, 600);
-      return;
-    }
-    if (!twoFactorCode.trim()) {
-      setStatusMessage('Please enter the verification code from your authenticator app.');
-      return;
-    }
-
-    setStatusMessage('Two-factor check complete. Redirecting to your feed...');
-    window.setTimeout(() => {
-      setTwoFactorRequired(false);
-      setTwoFactorCode('');
       navigate('/feed', { replace: true });
     }, 600);
   };
 
   const handleSocialSelect = (providerId) => {
-    setStatusMessage(`Launching ${providerId} sign-in...`);
+    const providerNameMap = {
+      google: 'Google',
+      facebook: 'Facebook',
+      linkedin: 'LinkedIn',
+      x: 'X'
+    };
+    const providerName = providerNameMap[providerId] ?? 'social';
+    setStatusMessage(`Launching ${providerName} sign-in...`);
   };
 
   return (
@@ -70,11 +38,7 @@ export default function Login() {
           </p>
         </div>
 
-        <form
-          onSubmit={handleCredentialSubmit}
-          className="mt-10 grid gap-5 justify-items-center"
-          aria-disabled={twoFactorRequired}
-        >
+        <form onSubmit={handleCredentialSubmit} className="mt-10 grid gap-5 justify-items-center">
           <div className={controlWidthClass}>
             <label className="text-sm font-medium text-slate-600" htmlFor="login-email">
               Email
@@ -113,38 +77,6 @@ export default function Login() {
           </button>
         </form>
 
-        {twoFactorRequired && (
-          <form
-            onSubmit={handleTwoFactorSubmit}
-            className="mt-6 grid gap-4 justify-items-center rounded-2xl border border-accent/30 bg-accent/5 p-5"
-          >
-            <div className={controlWidthClass}>
-              <label className="text-sm font-medium text-primary" htmlFor="two-factor-code">
-                Two-factor code
-              </label>
-              <input
-                id="two-factor-code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                value={twoFactorCode}
-                onChange={(event) => setTwoFactorCode(event.target.value)}
-                className="mt-1 w-full rounded-2xl border border-accent/30 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                placeholder="123 456"
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                This step only appears when two-factor authentication is enabled in your security settings.
-              </p>
-            </div>
-            <button
-              type="submit"
-              className={`${controlWidthClass} rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90`}
-            >
-              Verify and continue
-            </button>
-          </form>
-        )}
-
         <SocialAuthButtons className="mt-8" onSelect={handleSocialSelect} />
 
         <div className="mt-6 text-sm text-slate-500">
@@ -154,11 +86,6 @@ export default function Login() {
               Create one
             </Link>
           </p>
-          {!twoFactorEnabled && (
-            <p className="mt-3 text-xs text-slate-500">
-              Want an extra security step? Enable two-factor authentication from Settings → Security to add the code check.
-            </p>
-          )}
           {statusMessage && <p className="mt-4 text-xs text-slate-500">{statusMessage}</p>}
         </div>
       </div>

@@ -61,29 +61,33 @@ const PROVIDERS = [
   {
     id: 'google',
     label: 'Continue with Google',
-    accent: 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50',
-    iconWrapperClass: 'border border-slate-200 bg-white',
+    buttonClass: 'border border-slate-200 bg-white text-slate-900 hover:bg-[#f8f9fa]',
+    focusRingClass: 'focus-visible:ring-[#4285F4]/40',
+    iconWrapperClass: 'bg-white ring-1 ring-slate-200',
     icon: GoogleLogo
   },
   {
     id: 'facebook',
     label: 'Continue with Facebook',
-    accent: 'bg-[#1877F2] text-white hover:bg-[#125bd4]',
-    iconWrapperClass: 'bg-white/15 text-white',
+    buttonClass: 'bg-[#1877F2] text-white hover:bg-[#1464d4]',
+    focusRingClass: 'focus-visible:ring-[#1877F2]/50',
+    iconWrapperClass: 'bg-white text-[#1877F2]',
     icon: FacebookLogo
   },
   {
     id: 'linkedin',
     label: 'Continue with LinkedIn',
-    accent: 'bg-[#0A66C2] text-white hover:bg-[#084d99]',
-    iconWrapperClass: 'bg-white/15 text-white',
+    buttonClass: 'bg-[#0A66C2] text-white hover:bg-[#09539e]',
+    focusRingClass: 'focus-visible:ring-[#0A66C2]/50',
+    iconWrapperClass: 'bg-white text-[#0A66C2]',
     icon: LinkedInLogo
   },
   {
     id: 'x',
     label: 'Continue with X',
-    accent: 'bg-black text-white hover:bg-slate-900',
-    iconWrapperClass: 'bg-white/20 text-white',
+    buttonClass: 'bg-black text-white hover:bg-[#111]',
+    focusRingClass: 'focus-visible:ring-black/50',
+    iconWrapperClass: 'bg-white text-black',
     icon: XLogo
   }
 ];
@@ -99,13 +103,14 @@ function SocialAuthButtons({ onSelect, className }) {
             type="button"
             onClick={() => onSelect(provider.id)}
             className={clsx(
-              'mx-auto flex h-12 w-full max-w-sm items-center justify-center gap-3 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2',
-              provider.accent
+              'mx-auto flex h-12 w-full max-w-sm items-center justify-center gap-3 rounded-full px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+              provider.buttonClass,
+              provider.focusRingClass
             )}
           >
             <span
               className={clsx(
-                'flex h-9 w-9 items-center justify-center rounded-full transition-colors',
+                'flex h-10 w-10 flex-none items-center justify-center rounded-full transition-colors',
                 provider.iconWrapperClass
               )}
             >
