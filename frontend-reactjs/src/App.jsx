@@ -30,6 +30,7 @@ const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -69,6 +70,7 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/materials" element={<Materials />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/dashboard"
