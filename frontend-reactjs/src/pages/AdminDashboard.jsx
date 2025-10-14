@@ -484,6 +484,9 @@ export default function AdminDashboard() {
         setState({ loading: false, data: response.data, meta: response.meta, error: null });
         setLastRefreshed(response.data?.generatedAt ?? new Date().toISOString());
       } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          return;
+        }
         const panelError =
           error instanceof PanelApiError
             ? error
