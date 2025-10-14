@@ -33,6 +33,10 @@ export async function fetchDashboard(persona, params = {}) {
     return response.json();
   } catch (error) {
     const fallback = mockDashboards?.[persona];
+    const { DEV = false, MODE } = import.meta.env ?? {};
+    const isDevEnvironment = Boolean(DEV);
+    const isTestEnvironment = MODE === 'test';
+    if (isDevEnvironment && !isTestEnvironment && fallback) {
     const mode = import.meta.env?.MODE ?? process.env?.NODE_ENV;
     const allowDevFallback = import.meta.env?.DEV && mode !== 'test';
     if (allowDevFallback && fallback) {

@@ -64,6 +64,16 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
+    const heading = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Executive Overview'
+    });
+    expect(heading).toBeInTheDocument();
+    expect(screen.getByText('Jobs Received')).toBeInTheDocument();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
+    expect(screen.getByRole('link', { name: /download csv/i })).toHaveAttribute(
+      'href',
+      `/api/analytics/dashboards/admin/export?timezone=${encodeURIComponent(timezone)}`
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Profile Overview' })).toBeInTheDocument());
     const metricLabel = await screen.findByText((_, element) => element?.textContent?.toLowerCase() === 'first response');
     expect(metricLabel).toBeInTheDocument();
@@ -116,6 +126,12 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
+    expect(await screen.findByText(/couldn’t load this dashboard/i)).toBeInTheDocument();
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => dashboardFixture
+    });
     await waitFor(() =>
       expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument()
     );
@@ -146,6 +162,13 @@ describe('RoleDashboard', () => {
     }
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() =>
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: 'Executive Overview'
+        })
+      ).toBeInTheDocument()
+    );
       expect(screen.getByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument()
     );
     fireEvent.click(retryButton);
