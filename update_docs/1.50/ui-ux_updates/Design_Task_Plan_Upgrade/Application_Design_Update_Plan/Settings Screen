@@ -1,0 +1,28 @@
+# Settings Screen Blueprint
+
+## Screen Goals
+- Provide a centralised hub for account, notification, security, and support preferences.
+- Reduce confusion by grouping related settings and surfacing status indicators.
+
+## Layout
+- Header: Screen title, short description, profile avatar.
+- Sections: Notifications, Security, Payment & Payouts, Accessibility, Support.
+- Each section uses card-like container with list items; essential status info displayed on right (e.g., "MFA Enabled").
+- Persistent footer button for "Export account summary".
+
+## Key Interactions
+- Tapping list item opens detail screen or bottom sheet (e.g., Notification Preferences, Payment Methods).
+- Toggle switches provide immediate feedback with toast confirming update.
+- Security actions (password change, MFA) require re-authentication modal.
+
+## Accessibility
+- Ensure focus order matches visual order; each section header announced to screen readers.
+- Provide descriptive text for toggles ("Push notifications for job updates").
+- Support dynamic type and voice control.
+
+## Empty/Error States
+- If payment info missing, display callout with CTA to add bank details.
+- Error retrieving settings shows inline alert with retry option and link to support.
+
+## Analytics
+- Track interactions per section `settings_section_opened`, `settings_toggle_changed`, `settings_security_action` with metadata.
