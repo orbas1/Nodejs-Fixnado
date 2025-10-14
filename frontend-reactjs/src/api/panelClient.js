@@ -506,6 +506,32 @@ function normaliseEnterprisePanel(payload = {}) {
 function normaliseBusinessFront(payload = {}) {
   const root = payload?.data ?? payload;
   const profile = root.profile || root.provider || {};
+  const normaliseScore = (input, fallbackValue) => {
+    if (input == null && fallbackValue == null) {
+      return null;
+    }
+
+    const source = input && typeof input === 'object' ? input : {};
+    const resolvedValue = Number.parseFloat(source.value ?? fallbackValue);
+    if (!Number.isFinite(resolvedValue)) {
+      return null;
+    }
+
+    const sampleRaw = source.sampleSize ?? source.sample ?? source.count;
+    const sampleSize = Number.isFinite(Number.parseInt(sampleRaw, 10)) ? Number.parseInt(sampleRaw, 10) : null;
+
+    return {
+      value: Number(resolvedValue.toFixed(source.precision ?? (resolvedValue % 1 === 0 ? 0 : 2))),
+      band: source.band || source.tier || null,
+      confidence: source.confidence || null,
+      sampleSize,
+      caption: source.caption || null,
+      breakdown: source.breakdown && typeof source.breakdown === 'object' ? { ...source.breakdown } : null,
+      distribution: source.distribution && typeof source.distribution === 'object' ? { ...source.distribution } : null,
+      updatedAt: source.updatedAt || source.calculatedAt || source.generatedAt || null
+    };
+  };
+
   const stats = ensureArray(root.stats || root.metrics).map((metric, index) => ({
     id: metric.id || `metric-${index}`,
     label: metric.label || metric.name || 'Metric',
@@ -578,8 +604,13 @@ function normaliseBusinessFront(payload = {}) {
     reviewer: review.reviewer || review.client || 'Client partner',
     rating: Number.parseFloat(review.rating ?? review.score ?? 0) || 0,
     comment: review.comment || review.quote || '',
-    job: review.job || review.project || null
+    job: review.job || review.project || null,
+    createdAt: review.createdAt || review.created_at || null
   }));
+
+  const rawScores = root.scores || {};
+  const trustScore = normaliseScore(rawScores.trust, root.trustScore ?? root.trust?.value);
+  const reviewScore = normaliseScore(rawScores.review, root.reviewScore ?? root.review?.value ?? root.rating ?? root.score);
 
   const deals = ensureArray(root.deals).map((deal, index) => ({
     id: deal.id || `deal-${index}`,
@@ -748,6 +779,10 @@ function normaliseBusinessFront(payload = {}) {
     })(),
     servicemen,
     serviceZones,
+    scores: {
+      trust: trustScore,
+      review: reviewScore
+    },
     taxonomy
   };
 }
@@ -1366,6 +1401,8 @@ const businessFrontFallback = normaliseBusinessFront({
     }
   },
   stats: [
+    { label: 'Trust score', value: 93, format: 'number', caption: 'Escrow-governed programmes with telemetry oversight' },
+    { label: 'Review score', value: 4.8, format: 'number', caption: 'Based on 128 verified enterprise reviews' },
     { label: 'SLA hit rate', value: 0.98, format: 'percent', caption: 'Tracked weekly with telemetry exports' },
     { label: 'Avg. response', value: 38, format: 'minutes', caption: 'Engineer dispatch, Q3 rolling' },
     { label: 'Projects delivered', value: 164, format: 'number', caption: 'Enterprise programmes completed' },
@@ -1377,6 +1414,36 @@ const businessFrontFallback = normaliseBusinessFront({
       client: 'Finova Facilities Director'
     }
   ],
+  scores: {
+    trust: {
+      value: 93,
+      band: 'gold',
+      confidence: 'high',
+      sampleSize: 212,
+      caption: 'Telemetry-governed execution across 212 orchestrated jobs',
+      breakdown: {
+        reliability: 95,
+        punctuality: 97,
+        compliance: 88,
+        sentiment: 94,
+        cancellations: 96,
+        coverage: 82
+      }
+    },
+    review: {
+      value: 4.8,
+      band: 'worldClass',
+      confidence: 'high',
+      sampleSize: 128,
+      caption: '128 verified client reviews',
+      distribution: {
+        promoters: 92,
+        positive: 26,
+        neutral: 8,
+        detractors: 2
+      }
+    }
+  },
   packages: [
     {
       name: 'Critical response retainer',

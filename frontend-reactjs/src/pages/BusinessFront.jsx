@@ -14,6 +14,7 @@ import {
   PhoneArrowDownLeftIcon,
   PlayIcon,
   SparklesIcon,
+  ShieldCheckIcon,
   StarIcon,
   TagIcon,
   UserGroupIcon,
@@ -43,6 +44,84 @@ function StatCard({ stat }) {
     </li>
   );
 }
+
+StatCard.propTypes = {
+  stat: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    format: PropTypes.string,
+    caption: PropTypes.string
+  }).isRequired
+};
+
+function ScoreBadge({
+  icon: Icon,
+  label,
+  value,
+  precision,
+  suffix,
+  caption,
+  tone,
+  badge
+}) {
+  const formattedValue = useMemo(() => {
+    if (typeof value !== 'number') {
+      return value ?? '—';
+    }
+    const digits = typeof precision === 'number' ? precision : value % 1 === 0 ? 0 : 1;
+    return value.toFixed(digits);
+  }, [precision, value]);
+
+  const toneClasses =
+    tone === 'warm'
+      ? 'border-amber-200 bg-gradient-to-br from-amber-300 via-amber-200 to-amber-100 text-amber-900 shadow-lg shadow-amber-200/50'
+      : 'border-primary/30 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70 text-white shadow-xl shadow-primary/20';
+  const iconClasses = tone === 'warm' ? 'bg-white/70 text-amber-700' : 'bg-white/20 text-white';
+  const badgeClasses = tone === 'warm' ? 'bg-amber-500/15 text-amber-900' : 'bg-white/20 text-white';
+  const qaLabel = typeof label === 'string'
+    ? label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    : 'score';
+
+  return (
+    <article className={`flex h-full flex-col gap-3 rounded-3xl border p-5 ${toneClasses}`} data-qa={`business-front-score-${qaLabel}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${iconClasses}`} aria-hidden="true">
+          <Icon className="h-5 w-5" />
+        </div>
+        {badge ? <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${badgeClasses}`}>{badge}</span> : null}
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] opacity-80">{label}</p>
+        <p className="mt-2 text-3xl font-semibold">
+          <span>{formattedValue}</span>
+          {suffix ? <span className="ml-1 text-base font-medium opacity-80">{suffix}</span> : null}
+        </p>
+      </div>
+      {caption ? <p className="text-xs opacity-80">{caption}</p> : null}
+    </article>
+  );
+}
+
+ScoreBadge.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  precision: PropTypes.number,
+  suffix: PropTypes.string,
+  caption: PropTypes.string,
+  tone: PropTypes.oneOf(['primary', 'warm']),
+  badge: PropTypes.string
+};
+
+ScoreBadge.defaultProps = {
+  value: '—',
+  precision: undefined,
+  suffix: undefined,
+  caption: undefined,
+  tone: 'primary',
+  badge: undefined
+};
 
 function PackageCard({ pkg }) {
   const { t, format } = useLocale();
@@ -259,7 +338,8 @@ ReviewCard.propTypes = {
     reviewer: PropTypes.string.isRequired,
     rating: PropTypes.number,
     comment: PropTypes.string.isRequired,
-    job: PropTypes.string
+    job: PropTypes.string,
+    createdAt: PropTypes.string
   }).isRequired
 };
 
@@ -542,6 +622,9 @@ export default function BusinessFront() {
   const tools = state.data?.tools ?? [];
   const servicemen = state.data?.servicemen ?? [];
   const serviceZones = state.data?.serviceZones ?? [];
+  const scores = state.data?.scores ?? {};
+  const trustScore = scores?.trust;
+  const reviewScore = scores?.review;
   const inventorySummary = state.data?.inventorySummary ?? null;
   const conciergeHeading = hero?.name
     ? t('businessFront.supportHeadline', { name: hero.name })
@@ -554,6 +637,51 @@ export default function BusinessFront() {
   const showcaseVideo = hero?.media?.showcaseVideo;
   const hasShowcase = Boolean(showcaseVideo || showcaseCarousel.length > 0 || gallery.length > 0);
 
+  const formatCodeLabel = (code) =>
+    typeof code === 'string'
+      ? code
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/[-_]/g, ' ')
+          .replace(/^./, (char) => char.toUpperCase())
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : '';
+
+  const resolveLabel = (prefix, code) => {
+    if (!code) {
+      return '';
+    }
+    const key = `${prefix}.${code}`;
+    const translated = t(key);
+    return translated === key ? formatCodeLabel(code) : translated;
+  };
+
+  const trustConfidenceLabel = trustScore ? resolveLabel('businessFront.confidence', trustScore.confidence) : '';
+  const trustBandLabel = trustScore ? resolveLabel('businessFront.trustBand', trustScore.band) : '';
+  const reviewBandLabel = reviewScore ? resolveLabel('businessFront.reviewBand', reviewScore.band) : '';
+
+  const trustCaption = trustScore
+    ? (() => {
+        const translated = t('businessFront.trustScoreCaption', {
+          confidence: trustConfidenceLabel,
+          sample: format.number(trustScore.sampleSize ?? 0)
+        });
+        return translated === 'businessFront.trustScoreCaption'
+          ? trustScore.caption ?? ''
+          : translated;
+      })()
+    : '';
+
+  const reviewCaption = reviewScore
+    ? (() => {
+        const translated = t('businessFront.reviewScoreCaption', {
+          band: reviewBandLabel,
+          sample: format.number(reviewScore.sampleSize ?? 0)
+        });
+        return translated === 'businessFront.reviewScoreCaption'
+          ? reviewScore.caption ?? ''
+          : translated;
+      })()
+    : '';
   if (!canAccess) {
     return (
       <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">
@@ -624,6 +752,32 @@ export default function BusinessFront() {
               </p>
               {hero?.bio ? (
                 <p className="text-sm text-slate-500">{hero.bio}</p>
+              ) : null}
+              {trustScore || reviewScore ? (
+                <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+                  {trustScore ? (
+                    <ScoreBadge
+                      icon={ShieldCheckIcon}
+                      label={t('businessFront.trustScoreLabel')}
+                      value={trustScore.value}
+                      precision={0}
+                      suffix={t('businessFront.trustScoreSuffix')}
+                      caption={trustCaption}
+                      badge={trustBandLabel || undefined}
+                    />
+                  ) : null}
+                  {reviewScore ? (
+                    <ScoreBadge
+                      icon={StarIcon}
+                      label={t('businessFront.reviewScoreLabel')}
+                      value={reviewScore.value}
+                      precision={1}
+                      caption={reviewCaption}
+                      tone="warm"
+                      badge={reviewBandLabel || undefined}
+                    />
+                  ) : null}
+                </div>
               ) : null}
               {heroCategories.length ? (
                 <div className="flex flex-wrap gap-2">

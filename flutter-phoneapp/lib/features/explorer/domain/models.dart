@@ -250,6 +250,50 @@ class ExplorerBusinessFrontMetric {
   }
 }
 
+class ExplorerBusinessFrontScore {
+  ExplorerBusinessFrontScore({
+    required this.value,
+    this.band,
+    this.confidence,
+    this.sampleSize,
+    this.caption,
+  });
+
+  final double value;
+  final String? band;
+  final String? confidence;
+  final int? sampleSize;
+  final String? caption;
+
+  factory ExplorerBusinessFrontScore.fromJson(Map<String, dynamic> json) {
+    final parsedValue = _toDouble(json['value'] ?? json['score']);
+    if (parsedValue == null) {
+      throw const FormatException('Score value is required');
+    }
+    final sample = json['sampleSize'] is int
+        ? json['sampleSize'] as int
+        : int.tryParse(json['sampleSize']?.toString() ?? '') ??
+            (json['count'] is int ? json['count'] as int : int.tryParse(json['count']?.toString() ?? ''));
+    return ExplorerBusinessFrontScore(
+      value: parsedValue,
+      band: json['band']?.toString(),
+      confidence: json['confidence']?.toString(),
+      sampleSize: sample,
+      caption: json['caption']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'band': band,
+      'confidence': confidence,
+      'sampleSize': sampleSize,
+      'caption': caption,
+    };
+  }
+}
+
 class ExplorerBusinessFront {
   ExplorerBusinessFront({
     required this.id,
@@ -262,6 +306,8 @@ class ExplorerBusinessFront {
     this.coverageAreas = const [],
     this.metrics = const [],
     this.score,
+    this.trustScore,
+    this.reviewScore,
   });
 
   final String id;
@@ -274,6 +320,8 @@ class ExplorerBusinessFront {
   final List<String> coverageAreas;
   final List<ExplorerBusinessFrontMetric> metrics;
   final double? score;
+  final ExplorerBusinessFrontScore? trustScore;
+  final ExplorerBusinessFrontScore? reviewScore;
 
   factory ExplorerBusinessFront.fromJson(Map<String, dynamic> json) {
     final hero = json['hero'];
@@ -317,6 +365,44 @@ class ExplorerBusinessFront {
       }
     }
 
+    ExplorerBusinessFrontScore? resolveScore(dynamic source) {
+      if (source == null) {
+        return null;
+      }
+      if (source is ExplorerBusinessFrontScore) {
+        return source;
+      }
+      if (source is Map<String, dynamic>) {
+        try {
+          return ExplorerBusinessFrontScore.fromJson(source);
+        } catch (_) {
+          return null;
+        }
+      }
+      final parsed = _toDouble(source);
+      if (parsed == null) {
+        return null;
+      }
+      return ExplorerBusinessFrontScore(value: parsed);
+    }
+
+    ExplorerBusinessFrontScore? trustScore;
+    ExplorerBusinessFrontScore? reviewScore;
+    if (json['scores'] is Map<String, dynamic>) {
+      final scoresJson = Map<String, dynamic>.from(json['scores'] as Map);
+      trustScore = resolveScore(scoresJson['trust']);
+      reviewScore = resolveScore(scoresJson['review']);
+    }
+
+    trustScore ??=
+        resolveScore(json['trustScore'] ?? (metadata is Map<String, dynamic> ? metadata['trustScore'] : null));
+    reviewScore ??= resolveScore(
+      json['reviewScore'] ??
+          json['rating'] ??
+          json['score'] ??
+          (metadata is Map<String, dynamic> ? metadata['reviewScore'] ?? metadata['score'] : null),
+    );
+
     return ExplorerBusinessFront(
       id: id.toString(),
       name: (json['name'] ?? (hero is Map<String, dynamic> ? hero['name'] : null) ?? 'Business front').toString(),
@@ -327,7 +413,10 @@ class ExplorerBusinessFront {
       categories: _toStringList(categorySources.firstWhere((value) => value != null, orElse: () => null)),
       coverageAreas: _toStringList(coverageSources.firstWhere((value) => value != null, orElse: () => null)),
       metrics: List.unmodifiable(metricEntries),
-      score: _toDouble(json['score'] ?? json['rating'] ?? (metadata is Map<String, dynamic> ? metadata['score'] : null)),
+      score: reviewScore?.value ??
+          _toDouble(json['score'] ?? json['rating'] ?? (metadata is Map<String, dynamic> ? metadata['score'] : null)),
+      trustScore: trustScore,
+      reviewScore: reviewScore,
     );
   }
 
@@ -343,6 +432,8 @@ class ExplorerBusinessFront {
       'coverageAreas': coverageAreas,
       'metrics': metrics.map((metric) => metric.toJson()).toList(),
       'score': score,
+      'trustScore': trustScore?.toJson(),
+      'reviewScore': reviewScore?.toJson(),
     };
   }
 }
