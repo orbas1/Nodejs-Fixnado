@@ -1,0 +1,22 @@
+# Provider Profile Styling Guidelines
+
+## Colour Usage
+- Hero background gradient from `color.brand.navy.700` to `color.brand.sky.400` with overlay for readability.
+- Section cards use `surface.alt`; badges use semantic colours (certified = teal, warning = amber).
+
+## Typography
+- Provider name uses `display-lg`; metrics use `heading-sm`; body copy `body-md`.
+- Reviews use italic quotes with citation styling.
+
+## Components
+- Tabs highlight active state with underline and background tint.
+- Buttons (Request Quote, Save) follow primary/secondary button styles.
+- Review list includes star rating component and text snippet.
+
+## Responsive Behaviour
+- On tablet/mobile hero condenses to stacked layout, actions become sticky bottom bar.
+- Cards reorder to prioritise contact info and services.
+
+## Accessibility
+- Provide keyboard navigation for tabs, focus states on quick action buttons.
+- Ratings include textual value and total review count.
