@@ -33,6 +33,13 @@ export const esES = {
     'nav.materials': 'Materiales',
     'nav.blog': 'Blog',
     'nav.resources': 'Recursos',
+    'nav.company': 'Compañía',
+    'nav.about': 'Sobre Fixnado',
+    'nav.aboutDescription': 'Misión, liderazgo y principios operativos.',
+    'nav.trustCentre': 'Confianza y cumplimiento',
+    'nav.trustCentreDescription': 'Postura de seguridad, certificaciones y controles.',
+    'nav.careers': 'Carreras',
+    'nav.careersDescription': 'Únete a los equipos regionales que refuerzan el marketplace.',
     'nav.dashboards': 'Paneles',
     'nav.providerConsole': 'Consola de proveedores',
     'nav.providerConsoleDescription':

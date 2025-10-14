@@ -33,6 +33,13 @@ export const enGB = {
     'nav.materials': 'Materials',
     'nav.blog': 'Blog',
     'nav.resources': 'Resources',
+    'nav.company': 'Company',
+    'nav.about': 'About Fixnado',
+    'nav.aboutDescription': 'Mission, leadership, and operating principles.',
+    'nav.trustCentre': 'Trust & compliance',
+    'nav.trustCentreDescription': 'Security posture, certifications, and guardrails.',
+    'nav.careers': 'Careers',
+    'nav.careersDescription': 'Join regional squads building marketplace resilience.',
     'nav.dashboards': 'Dashboards',
     'nav.providerConsole': 'Provider console',
     'nav.providerConsoleDescription':
