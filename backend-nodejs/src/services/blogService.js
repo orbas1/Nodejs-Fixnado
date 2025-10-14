@@ -1,4 +1,3 @@
-import slugify from 'slugify';
 import { Op } from 'sequelize';
 import {
   BlogPost,
@@ -19,7 +18,17 @@ const PUBLIC_INCLUDE = [
 ];
 
 function toSlug(value) {
-  return slugify(value, { lower: true, strict: true });
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
 }
 
 export async function listPublishedPosts({ limit = 12, offset = 0, category, tag, search } = {}) {
