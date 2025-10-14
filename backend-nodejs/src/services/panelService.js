@@ -41,6 +41,62 @@ function average(values, fallback = 0) {
   return valid.reduce((sum, value) => sum + value, 0) / valid.length;
 }
 
+function clamp(value, min, max, fallback = null) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(Math.max(value, min), max);
+}
+
+function summariseReviews(reviews = []) {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
+    return {
+      averageRating: null,
+      totalReviews: 0,
+      verifiedShare: 0,
+      ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: 0 })),
+      lastReviewAt: null,
+      responseRate: 0
+    };
+  }
+
+  const totals = reviews.reduce(
+    (acc, review) => {
+      const bucket = Math.round(review.rating ?? 0);
+      if (bucket >= 1 && bucket <= 5) {
+        acc.buckets[bucket] = (acc.buckets[bucket] ?? 0) + 1;
+      }
+      if (Number.isFinite(review.rating)) {
+        acc.sum += review.rating;
+        acc.count += 1;
+      }
+      if (review.verified) {
+        acc.verified += 1;
+      }
+      if (review.submittedAt) {
+        const submitted = DateTime.fromISO(review.submittedAt);
+        if (!acc.lastReviewAt || submitted > acc.lastReviewAt) {
+          acc.lastReviewAt = submitted;
+        }
+      }
+      if (Number.isFinite(review.responseTimeMinutes)) {
+        acc.responded += 1;
+      }
+      return acc;
+    },
+    { sum: 0, count: 0, verified: 0, responded: 0, lastReviewAt: null, buckets: {} }
+  );
+
+  return {
+    averageRating: totals.count ? Number((totals.sum / totals.count).toFixed(2)) : null,
+    totalReviews: reviews.length,
+    verifiedShare: reviews.length ? totals.verified / reviews.length : 0,
+    ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: totals.buckets[score] ?? 0 })),
+    lastReviewAt: totals.lastReviewAt ? totals.lastReviewAt.toISO() : null,
+    responseRate: reviews.length ? totals.responded / reviews.length : 0
+  };
+}
+
 function toSlug(input, fallback) {
   if (typeof input === 'string' && input.trim()) {
     return input
@@ -416,7 +472,7 @@ export async function buildEnterprisePanel({ companyId: inputCompanyId } = {}) {
   };
 }
 
-export async function buildBusinessFront({ slug }) {
+export async function buildBusinessFront({ slug, viewerType } = {}) {
   const allCompanies = await Company.findAll();
   if (allCompanies.length === 0) {
     const error = new Error('company_not_found');
@@ -617,16 +673,94 @@ export async function buildBusinessFront({ slug }) {
       };
     });
 
-  const reviews = bookings
-    .filter((booking) => booking.meta?.feedback)
-    .slice(0, 6)
-    .map((booking, index) => ({
-      id: booking.id || `review-${index}`,
+  const reviewComments = new Set();
+  const publishableReviews = [];
+  for (const booking of bookings) {
+    const rawComment = booking.meta?.feedback;
+    if (typeof rawComment !== 'string') {
+      continue;
+    }
+
+    const comment = rawComment.replace(/\s+/g, ' ').trim();
+    if (!comment || comment.length < 12) {
+      continue;
+    }
+
+    const visibility = (booking.meta?.reviewVisibility || 'public').toString().toLowerCase();
+    if (['internal', 'private', 'hidden'].includes(visibility)) {
+      continue;
+    }
+    if (booking.meta?.reviewFlagged === true) {
+      continue;
+    }
+
+    const dedupeKey = `${comment.toLowerCase().slice(0, 140)}::${booking.meta?.requester || ''}`;
+    if (reviewComments.has(dedupeKey)) {
+      continue;
+    }
+    reviewComments.add(dedupeKey);
+
+    const submittedAt = booking.lastStatusTransitionAt
+      ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISO()
+      : booking.updatedAt
+        ? DateTime.fromJSDate(booking.updatedAt).toISO()
+        : null;
+
+    let responseTimeMinutes = null;
+    const feedbackCapturedAt = booking.meta?.feedbackCapturedAt;
+    const providerRespondedAt = booking.meta?.providerRespondedAt || booking.meta?.providerResponseAt;
+    if (feedbackCapturedAt && providerRespondedAt) {
+      const captured = DateTime.fromISO(feedbackCapturedAt.toString(), { setZone: true });
+      const responded = DateTime.fromISO(providerRespondedAt.toString(), { setZone: true });
+      if (captured.isValid && responded.isValid) {
+        responseTimeMinutes = Math.max(Math.round(responded.diff(captured, 'minutes').minutes), 0);
+      }
+    }
+
+    const rating = clamp(Number(booking.meta?.csat), 1, 5, null);
+    publishableReviews.push({
+      id: booking.id || `review-${publishableReviews.length}`,
       reviewer: booking.meta?.requester || 'Client stakeholder',
-      rating: Number.isFinite(booking.meta?.csat) ? Number(booking.meta.csat) : 4.8,
-      comment: booking.meta.feedback,
-      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement'
-    }));
+      rating: rating ?? 0,
+      comment,
+      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement',
+      submittedAt,
+      verified: booking.meta?.feedbackVerified !== false,
+      response: typeof booking.meta?.providerResponse === 'string'
+        ? booking.meta.providerResponse.trim() || null
+        : null,
+      responseTimeMinutes,
+      visibility
+    });
+  }
+
+  const orderedReviews = publishableReviews.sort((a, b) => {
+    if (a.submittedAt && b.submittedAt) {
+      return DateTime.fromISO(b.submittedAt).toMillis() - DateTime.fromISO(a.submittedAt).toMillis();
+    }
+    if (a.submittedAt) return -1;
+    if (b.submittedAt) return 1;
+    return b.rating - a.rating;
+  });
+
+  const reviewSummary = {
+    ...summariseReviews(orderedReviews),
+    highlightedReviewId: orderedReviews[0]?.id ?? null,
+    latestReviewId: orderedReviews.find((review) => review.submittedAt)?.id ?? null,
+    excerpt: orderedReviews[0]?.comment ? `${orderedReviews[0].comment.slice(0, 200)}${orderedReviews[0].comment.length > 200 ? '…' : ''}` : null
+  };
+
+  const allowedReviewRoles = ['enterprise', 'customer'];
+  const reviewAccessGranted = viewerType ? allowedReviewRoles.includes(viewerType) : false;
+  const responseReviews = reviewAccessGranted ? orderedReviews : [];
+  const responseSummary = reviewAccessGranted
+    ? reviewSummary
+    : {
+        ...reviewSummary,
+        highlightedReviewId: null,
+        latestReviewId: null,
+        excerpt: null
+      };
 
   const deals = serviceCatalogue
     .filter((service) => Number.isFinite(service.price))
@@ -749,7 +883,8 @@ export async function buildBusinessFront({ slug }) {
       certifications,
       gallery,
       previousJobs,
-      reviews,
+      reviews: responseReviews,
+      reviewSummary: responseSummary,
       deals,
       serviceCatalogue,
       materials,
@@ -769,7 +904,14 @@ export async function buildBusinessFront({ slug }) {
     meta: {
       companyId: resolved.id,
       generatedAt: now.toISO(),
-      source: 'live'
+      source: 'live',
+      reviewAccess: {
+        granted: reviewAccessGranted,
+        visibility: orderedReviews.length ? 'restricted' : 'public',
+        allowedRoles: allowedReviewRoles,
+        reason:
+          'Customer feedback contains contract-governed commentary and is visible to enterprise buyers and purchasing teams.'
+      }
     }
   };
 }

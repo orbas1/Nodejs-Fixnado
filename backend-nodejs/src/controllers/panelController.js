@@ -31,7 +31,8 @@ export async function getEnterprisePanelHandler(req, res, next) {
 export async function getBusinessFrontHandler(req, res, next) {
   try {
     const slug = req.params.slug || 'featured';
-    const { data, meta } = await buildBusinessFront({ slug });
+    const viewerType = req.user?.type || null;
+    const { data, meta } = await buildBusinessFront({ slug, viewerType });
     res.json({ data, meta });
   } catch (error) {
     if (error.statusCode === 404) {
