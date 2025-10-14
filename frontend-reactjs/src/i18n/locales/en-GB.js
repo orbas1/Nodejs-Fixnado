@@ -138,6 +138,10 @@ export const enGB = {
     'providerDashboard.sidebarOnboardingLabel': 'Onboarding status',
     'providerDashboard.sidebarActiveBookingsLabel': 'Active bookings',
     'providerDashboard.sidebarSnapshotLabel': 'Snapshot captured',
+    'providerDashboard.sidebarEyebrow': 'Operations context',
+    'providerDashboard.sidebarTitle': 'Provider command centre',
+    'providerDashboard.sidebarDescription':
+      'Stay audit-ready with compliance posture, live utilisation and leadership contacts in one place.',
     'providerDashboard.onboardingStatus.active': 'Active',
     'providerDashboard.onboardingStatus.pending': 'Pending verification',
     'providerDashboard.onboardingStatus.suspended': 'Suspended',
