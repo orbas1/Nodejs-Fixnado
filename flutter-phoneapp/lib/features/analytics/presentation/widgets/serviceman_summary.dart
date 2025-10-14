@@ -82,275 +82,285 @@ class ServicemanSummaryCard extends StatelessWidget {
         : travelDelta < 0
             ? '${travelDelta.abs().toStringAsFixed(0)}m faster vs prior window'
             : '${travelDelta.toStringAsFixed(0)}m slower vs prior window';
-    final travelColor = travelDelta <= 0 ? const Color(0xFF34D399) : const Color(0xFFFACC15);
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0B1120), Color(0xFF111827)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(28)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 640;
+        final travelColor = travelDelta <= 0 ? const Color(0xFF34D399) : const Color(0xFFF59E0B);
+        final visibleCrew = crew.take(4).toList(growable: false);
+
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0B1D3A), Color(0xFF091226)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        Chip(
-                          label: const Text('Crew performance'),
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.8,
-                          ),
-                          side: const BorderSide(color: Color(0xFF10B981)),
-                          backgroundColor: const Color(0xFF064E3B),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        if (windowLabel != null && windowLabel!.isNotEmpty)
-                          Chip(
-                            label: Text(windowLabel!),
-                            labelStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
-                            backgroundColor: const Color(0xFF1E293B),
-                            side: const BorderSide(color: Color(0xFF334155)),
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                      ],
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  Chip(
+                    label: const Text('Crew performance'),
+                    labelStyle: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.8,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      crewLeadName,
-                      style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$crewLeadRole • $region',
-                      style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.72)),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Maintain on-time arrivals, compliance checks, and automation wins across every dispatch.',
-                      style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.6)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _MetricPill(
-                label: 'Completed assignments',
-                value: numberFormatter.format(completed),
-              ),
-              _MetricPill(
-                label: 'Active window load',
-                value: numberFormatter.format(active),
-                helper: '${numberFormatter.format(scheduled)} scheduled • ${numberFormatter.format(inProgress)} in progress',
-              ),
-              _MetricPill(
-                label: 'Commission earned',
-                value: currencyFormatter.format(revenue),
-                helper: '${numberFormatter.format(autoMatched)} auto-matched • ${numberFormatter.format(adsSourced)} via Fixnado Ads',
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF111827),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFF1E293B)),
+                    side: const BorderSide(color: Color(0xFF1F4ED8)),
+                    backgroundColor: const Color(0x331F4ED8),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  if (windowLabel != null && windowLabel!.isNotEmpty)
+                    Chip(
+                      label: Text(windowLabel!),
+                      labelStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                      backgroundColor: const Color(0x33235abf),
+                      side: const BorderSide(color: Color(0x44235abf)),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                crewLeadName,
+                style: GoogleFonts.manrope(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$crewLeadRole • $region',
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.74)),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Maintain on-time arrivals, compliance checks, and automation wins across every dispatch.',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.62)),
+              ),
+              const SizedBox(height: 28),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _MetricPill(
+                    label: 'Completed assignments',
+                    value: numberFormatter.format(completed),
+                  ),
+                  _MetricPill(
+                    label: 'Active window load',
+                    value: numberFormatter.format(active),
+                    helper: '${numberFormatter.format(scheduled)} scheduled • ${numberFormatter.format(inProgress)} in progress',
+                  ),
+                  _MetricPill(
+                    label: 'Commission earned',
+                    value: currencyFormatter.format(revenue),
+                    helper: '${numberFormatter.format(autoMatched)} auto-matched • ${numberFormatter.format(adsSourced)} via Fixnado Ads',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Flex(
+                direction: isCompact ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Flexible(
+                    flex: isCompact ? 1 : 2,
+                    fit: isCompact ? FlexFit.loose : FlexFit.tight,
+                    child: Container(
+                      margin: EdgeInsets.only(right: isCompact ? 0 : 20, bottom: isCompact ? 20 : 0),
+                      decoration: BoxDecoration(
+                        color: const Color(0x1AF5F5F5),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0x332F4E87)),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Crew roster', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
-                              const SizedBox(height: 6),
-                              Text('Top performers in the current analytics window.',
-                                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.6))),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Crew roster', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                                  const SizedBox(height: 6),
+                                  Text('Top performers in the current analytics window.',
+                                      style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.65))),
+                                ],
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: travelColor.withOpacity(0.4)),
+                                  color: travelColor.withOpacity(0.12),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                child: Text(
+                                  travelCopy,
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: travelColor),
+                                ),
+                              ),
                             ],
                           ),
+                          const SizedBox(height: 20),
+                          if (visibleCrew.isEmpty)
+                            Text('No crew assignments recorded in this window.',
+                                style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.65)))
+                          else
+                            Column(
+                              children: visibleCrew.map((member) {
+                                final record = _mapFrom(member);
+                                final name = record['name'] as String? ?? 'Crew member';
+                                final role = record['role'] as String? ?? 'Field technician';
+                                final completedJobs = numberFormatter.format(_intFrom(record['completed']));
+                                final activeJobs = numberFormatter.format(_intFrom(record['active']));
+                                final totalJobs = numberFormatter.format(_intFrom(record['assignments']));
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(name,
+                                                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                                                const SizedBox(height: 4),
+                                                Text(role.toUpperCase(),
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 11,
+                                                      letterSpacing: 1.8,
+                                                      color: Colors.white.withOpacity(0.55),
+                                                    )),
+                                              ],
+                                            ),
+                                          ),
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: [
+                                              _CrewStatChip(label: '$completedJobs completed', color: const Color(0xFF34D399)),
+                                              _CrewStatChip(label: '$activeJobs active', color: const Color(0xFF1F4ED8)),
+                                              _CrewStatChip(label: '$totalJobs total', color: Colors.white70),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      if (visibleCrew.last != member)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 12),
+                                          child: Container(height: 1, color: Colors.white.withOpacity(0.08)),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    flex: 1,
+                    fit: isCompact ? FlexFit.loose : FlexFit.tight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0x1AF5F5F5),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0x332F4E87)),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Velocity signals',
+                              style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                          const SizedBox(height: 6),
+                          Text('Weekly acceptances and automation wins.',
+                              style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.65))),
+                          const SizedBox(height: 20),
+                          if (weekly.isEmpty)
+                            Text('No velocity telemetry for this window.',
+                                style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.65)))
+                          else
+                            SizedBox(
+                              height: 140,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  for (var i = 0; i < weekly.length; i++)
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 10 + (108 * (weeklyTotals[i] / maxWeekly)),
+                                            decoration: BoxDecoration(
+                                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFF1F4ED8), Color(0xFF34D399)],
+                                                begin: Alignment.bottomCenter,
+                                                end: Alignment.topCenter,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            weekly[i]['label']?.toString().toUpperCase() ?? 'W',
+                                            style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.6), letterSpacing: 1.6),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${weeklyTotals[i]} jobs',
+                                            style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.55)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 16),
                           Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: travelColor.withOpacity(0.4)),
-                              color: travelColor.withOpacity(0.1),
+                              color: const Color(0x331F2A40),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: const Color(0x332F4E87)),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            child: Text(
-                              travelCopy,
-                              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: travelColor),
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Average travel buffer ${travelMinutes.toStringAsFixed(0)} minutes',
+                                    style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.85))),
+                                const SizedBox(height: 6),
+                                Text('$autoMatched auto-matched • $adsSourced via Fixnado Ads',
+                                    style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.65))),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      if (crew.isEmpty)
-                        Text('No crew assignments recorded in this window.',
-                            style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.6)))
-                      else
-                        Column(
-                          children: crew.take(4).map((member) {
-                            final record = _mapFrom(member);
-                            final name = record['name'] as String? ?? 'Crew member';
-                            final role = record['role'] as String? ?? 'Field technician';
-                            final completedJobs = numberFormatter.format(_intFrom(record['completed']));
-                            final activeJobs = numberFormatter.format(_intFrom(record['active']));
-                            final totalJobs = numberFormatter.format(_intFrom(record['assignments']));
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(name,
-                                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
-                                        const SizedBox(height: 4),
-                                        Text(role.toUpperCase(),
-                                            style: GoogleFonts.inter(
-                                              fontSize: 11,
-                                              letterSpacing: 1.8,
-                                              color: Colors.white.withOpacity(0.5),
-                                            )),
-                                      ],
-                                    ),
-                                  ),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      _CrewStatChip(label: '$completedJobs completed', color: const Color(0xFF10B981)),
-                                      _CrewStatChip(label: '$activeJobs active', color: const Color(0xFF22D3EE)),
-                                      _CrewStatChip(label: '$totalJobs total', color: const Color(0xFF64748B)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF111827),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFF1E293B)),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Velocity signals',
-                          style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
-                      const SizedBox(height: 6),
-                      Text('Weekly acceptances and automation wins.',
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.6))),
-                      const SizedBox(height: 20),
-                      if (weekly.isEmpty)
-                        Text('No velocity telemetry for this window.',
-                            style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withOpacity(0.6)))
-                      else
-                        SizedBox(
-                          height: 140,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              for (var i = 0; i < weekly.length; i++)
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Container(
-                                        height: 8 + (112 * (weeklyTotals[i] / maxWeekly)),
-                                        decoration: BoxDecoration(
-                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                          gradient: const LinearGradient(
-                                            colors: [Color(0xFF22D3EE), Color(0xFF3B82F6)],
-                                            begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        weekly[i]['label']?.toString().toUpperCase() ?? 'W',
-                                        style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.6), letterSpacing: 1.6),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${weeklyTotals[i]} jobs',
-                                        style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.5)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFF1E293B)),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Average travel buffer ${travelMinutes.toStringAsFixed(0)} minutes',
-                                style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.85))),
-                            const SizedBox(height: 6),
-                            Text('$autoMatched auto-matched • $adsSourced via Fixnado Ads',
-                                style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.6))),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

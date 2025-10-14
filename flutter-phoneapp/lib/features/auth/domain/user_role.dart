@@ -19,6 +19,7 @@ extension UserRolePolicies on UserRole {
   bool get canAccessBusinessFronts {
     switch (this) {
       case UserRole.enterprise:
+      case UserRole.admin:
         return true;
       case UserRole.support:
       case UserRole.operations:

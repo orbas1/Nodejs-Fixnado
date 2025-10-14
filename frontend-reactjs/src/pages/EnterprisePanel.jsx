@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { getEnterprisePanel, PanelApiError } from '../api/panelClient.js';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
+import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import { useSession } from '../hooks/useSession.js';
+import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -99,6 +103,14 @@ function ProgrammeRow({ programme }) {
 
 export default function EnterprisePanel() {
   const { t, format } = useLocale();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { hasAccess, refresh: refreshPersonaAccess } = usePersonaAccess();
+  const { isAuthenticated, hasRole, dashboards = [] } = useSession();
+  const enterpriseRoleMeta = useMemo(
+    () => DASHBOARD_ROLES.find((role) => role.id === 'enterprise'),
+    []
+  );
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const timezone = useMemo(() => {
     try {
@@ -127,11 +139,36 @@ export default function EnterprisePanel() {
     [timezone]
   );
 
+  const rolePermitted = hasRole(['enterprise']);
+  const personaAllowed = hasAccess('enterprise');
+  const dashboardProvisioned = dashboards.includes('enterprise');
+  const isProvisioned = rolePermitted && personaAllowed && dashboardProvisioned;
+
+  const handleRetryAccess = useCallback(() => {
+    refreshPersonaAccess();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('fixnado:session:update'));
+    }
+  }, [refreshPersonaAccess]);
+
   useEffect(() => {
+    if (!isProvisioned) {
+      return undefined;
+    }
     const controller = new AbortController();
     loadPanel({ signal: controller.signal });
     return () => controller.abort();
-  }, [loadPanel]);
+  }, [loadPanel, isProvisioned]);
+
+  useEffect(() => {
+    if (!isProvisioned) {
+      setState((current) => ({ ...current, loading: false }));
+    }
+  }, [isProvisioned]);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
   const delivery = state.data?.delivery;
   const spend = state.data?.spend;
@@ -272,6 +309,16 @@ export default function EnterprisePanel() {
 
   if (snapshotTime) {
     sidebarMeta.push({ label: t('enterprisePanel.sidebarSnapshotLabel'), value: snapshotTime });
+  }
+
+  if (!isProvisioned) {
+    return (
+      <DashboardUnauthorized
+        roleMeta={enterpriseRoleMeta}
+        onNavigateHome={() => navigate('/dashboards')}
+        onRetry={handleRetryAccess}
+      />
+    );
   }
 
   return (
