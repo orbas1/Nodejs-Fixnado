@@ -125,6 +125,7 @@ export default function Header() {
             }
             if (child.key === 'provider-storefront') {
               return allowProviderStorefront;
+            }
             if (child.key === 'enterprise') {
               return allowEnterprisePanel;
             }
@@ -145,8 +146,15 @@ export default function Header() {
       .filter(Boolean);
 
     return filtered;
-  }, [sessionRole, t, locale, allowBusinessFronts, allowProviderConsole, allowProviderStorefront]);
-  }, [sessionRole, t, locale, allowBusinessFronts, allowEnterprisePanel]);
+  }, [
+    sessionRole,
+    t,
+    locale,
+    allowBusinessFronts,
+    allowProviderConsole,
+    allowProviderStorefront,
+    allowEnterprisePanel
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
