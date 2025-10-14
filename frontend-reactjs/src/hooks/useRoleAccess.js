@@ -1,77 +1,112 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
 
-const normaliseRole = (value) => {
-  if (typeof value !== 'string') return 'guest';
+const SESSION_STORAGE_KEY = 'fx.session';
+const ACTIVE_ROLE_STORAGE_KEY = 'fixnado:activeRole';
+
+const normaliseSessionRole = (value) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return 'guest';
+  }
   return value.trim().toLowerCase();
 };
 
-const readRoleFromWindow = () => {
-  try {
-    if (typeof window === 'undefined') {
-      return 'guest';
-    }
+const readSessionRole = () => {
+  if (typeof window === 'undefined') {
+    return 'guest';
+  }
 
-    if (typeof window.__FIXNADO_SESSION__ === 'object' && window.__FIXNADO_SESSION__ !== null) {
-      const { role } = window.__FIXNADO_SESSION__;
-      if (typeof role === 'string' && role.trim() !== '') {
-        return normaliseRole(role);
+  try {
+    const globalSession = window.__FIXNADO_SESSION__;
+    if (globalSession && typeof globalSession === 'object') {
+      const candidate = normaliseSessionRole(globalSession.role);
+      if (candidate) {
+        return candidate;
       }
     }
 
-    if (typeof window.sessionStorage !== 'undefined') {
-      const stored = window.sessionStorage.getItem('fx.session');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (typeof parsed?.role === 'string' && parsed.role.trim() !== '') {
-          return normaliseRole(parsed.role);
+    const stored = window.sessionStorage?.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed.role === 'string') {
+        const candidate = normaliseSessionRole(parsed.role);
+        if (candidate) {
+          return candidate;
         }
       }
     }
   } catch (error) {
-    console.warn('Failed to read role from session context', error);
+    console.warn('[useRoleAccess] Failed to read session context', error);
   }
 
-  const context = resolveSessionTelemetryContext();
-  return normaliseRole(context.role);
+  const telemetryContext = resolveSessionTelemetryContext();
+  return normaliseSessionRole(telemetryContext.role);
 };
 
-export function useRoleAccess(requiredRoles, { allowFallbackRoles = [] } = {}) {
-  const [role, setRole] = useState(() => readRoleFromWindow());
+const toRoleList = (roles) => {
+  if (!roles) {
+    return [];
+  }
+  if (Array.isArray(roles)) {
+    return roles;
+  }
+  return [roles];
+};
+
+function legacyUseRoleAccess(requiredRoles, { allowFallbackRoles = [] } = {}) {
+  const [role, setRole] = useState(() => readSessionRole());
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return () => {};
     }
 
-    const handler = (event) => {
+    const updateRole = (nextRole) => {
+      setRole(normaliseSessionRole(nextRole));
+    };
+
+    const handleCustomEvent = (event) => {
       if (event?.detail?.role) {
-        setRole(normaliseRole(event.detail.role));
+        updateRole(event.detail.role);
       }
     };
 
-    window.addEventListener('fixnado:session-change', handler);
-    window.addEventListener('fixnado:theme-change', handler);
+    const handleStorage = (event) => {
+      if (event.key !== SESSION_STORAGE_KEY) {
+        return;
+      }
+      try {
+        if (event.newValue) {
+          const parsed = JSON.parse(event.newValue);
+          updateRole(parsed?.role);
+        }
+      } catch (error) {
+        console.warn('[useRoleAccess] Unable to parse session storage payload', error);
+      }
+    };
+
+    window.addEventListener('fixnado:session-change', handleCustomEvent);
+    window.addEventListener('storage', handleStorage);
 
     return () => {
-      window.removeEventListener('fixnado:session-change', handler);
-      window.removeEventListener('fixnado:theme-change', handler);
+      window.removeEventListener('fixnado:session-change', handleCustomEvent);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
-  return useMemo(() => {
-    const required = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    const allowList = new Set(required.map(normaliseRole));
-    allowFallbackRoles.forEach((value) => allowList.add(normaliseRole(value)));
+  const required = useMemo(() => toRoleList(requiredRoles).map(normaliseSessionRole), [requiredRoles]);
+  const fallback = useMemo(() => toRoleList(allowFallbackRoles).map(normaliseSessionRole), [allowFallbackRoles]);
 
-    const hasAccess = allowList.has(role);
+  const allowList = useMemo(() => {
+    const unique = new Set([...required, ...fallback].filter(Boolean));
+    return unique;
+  }, [required, fallback]);
 
-    return { role, hasAccess };
-  }, [role, requiredRoles, allowFallbackRoles]);
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+  const hasAccess = allowList.size === 0 || allowList.has(role);
 
-const STORAGE_KEY = 'fixnado:activeRole';
+  return { role, hasAccess };
+}
 
 const ROLE_ALIASES = {
   provider: 'company',
@@ -89,44 +124,49 @@ const ROLE_ALIASES = {
   administrator: 'admin'
 };
 
-const normaliseRole = (value) => {
-  if (!value) return null;
-  const normalised = String(value).trim().toLowerCase();
-  return ROLE_ALIASES[normalised] ?? normalised;
+const normaliseSelectableRole = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) {
+    return null;
+  }
+  return ROLE_ALIASES[trimmed] ?? trimmed;
 };
 
-function readStoredRole() {
+const readStoredRole = () => {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
-    return normaliseRole(window.localStorage?.getItem(STORAGE_KEY));
+    return normaliseSelectableRole(window.localStorage?.getItem(ACTIVE_ROLE_STORAGE_KEY));
   } catch (error) {
-    console.warn('Unable to read stored role', error);
+    console.warn('[useRoleAccess] Unable to read stored active role', error);
     return null;
   }
-}
+};
 
-function persistRole(role) {
+const persistRole = (role) => {
   if (typeof window === 'undefined') {
     return;
   }
   try {
     if (role) {
-      window.localStorage?.setItem(STORAGE_KEY, role);
+      window.localStorage?.setItem(ACTIVE_ROLE_STORAGE_KEY, role);
     } else {
-      window.localStorage?.removeItem(STORAGE_KEY);
+      window.localStorage?.removeItem(ACTIVE_ROLE_STORAGE_KEY);
     }
   } catch (error) {
-    console.warn('Unable to persist active role', error);
+    console.warn('[useRoleAccess] Unable to persist active role', error);
   }
-}
+};
 
-export function useRoleAccess({ allowedRoles = [], defaultRole = null } = {}) {
+export function useRoleAccess({ allowedRoles = [], defaultRole = null, allowFallbackRoles = [] } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialRole = useMemo(() => {
-    const fromQuery = normaliseRole(searchParams.get('role'));
+  const initial = useMemo(() => {
+    const fromQuery = normaliseSelectableRole(searchParams.get('role'));
     if (fromQuery) {
       persistRole(fromQuery);
       return { role: fromQuery, source: 'query' };
@@ -137,7 +177,7 @@ export function useRoleAccess({ allowedRoles = [], defaultRole = null } = {}) {
       return { role: stored, source: 'storage' };
     }
 
-    const fallback = normaliseRole(defaultRole);
+    const fallback = normaliseSelectableRole(defaultRole);
     if (fallback) {
       persistRole(fallback);
       return { role: fallback, source: 'default' };
@@ -146,19 +186,20 @@ export function useRoleAccess({ allowedRoles = [], defaultRole = null } = {}) {
     return { role: null, source: 'unknown' };
   }, [defaultRole, searchParams]);
 
-  const [role, setRoleState] = useState(initialRole.role);
-  const [source, setSource] = useState(initialRole.source);
+  const [role, setRole] = useState(initial.role);
+  const [source, setSource] = useState(initial.source);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
-      return undefined;
+      return () => {};
     }
+
     const handleStorage = (event) => {
-      if (event.key !== STORAGE_KEY) {
+      if (event.key !== ACTIVE_ROLE_STORAGE_KEY) {
         return;
       }
-      const nextRole = normaliseRole(event.newValue);
-      setRoleState((current) => {
+      const nextRole = normaliseSelectableRole(event.newValue);
+      setRole((current) => {
         if (current === nextRole) {
           return current;
         }
@@ -166,27 +207,29 @@ export function useRoleAccess({ allowedRoles = [], defaultRole = null } = {}) {
         return nextRole;
       });
     };
+
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   useEffect(() => {
-    const paramRole = normaliseRole(searchParams.get('role'));
+    const paramRole = normaliseSelectableRole(searchParams.get('role'));
     if (!paramRole) {
       return;
     }
     if (paramRole === role) {
       return;
     }
-    setRoleState(paramRole);
+    setRole(paramRole);
     setSource('query');
     persistRole(paramRole);
-  }, [searchParams, role]);
+  }, [role, searchParams]);
 
-  const allowedSet = useMemo(
-    () => allowedRoles.map(normaliseRole).filter((value) => value != null),
-    [allowedRoles]
-  );
+  const allowedSet = useMemo(() => {
+    const primary = allowedRoles.map(normaliseSelectableRole).filter((value) => value != null);
+    const fallback = toRoleList(allowFallbackRoles).map(normaliseSelectableRole).filter((value) => value != null);
+    return Array.from(new Set([...primary, ...fallback]));
+  }, [allowFallbackRoles, allowedRoles]);
 
   const allowed = useMemo(() => {
     if (!allowedSet.length) {
@@ -195,60 +238,47 @@ export function useRoleAccess({ allowedRoles = [], defaultRole = null } = {}) {
     if (!role) {
       return false;
     }
-    return allowedSet.includes(normaliseRole(role));
+    return allowedSet.includes(normaliseSelectableRole(role));
   }, [allowedSet, role]);
 
-  const deniedReason = useMemo(() => {
-    if (allowed) {
-      return null;
-    }
-    if (!role) {
-      return 'role-missing';
-    }
-    return 'role-not-permitted';
-  }, [allowed, role]);
-
-  const updateRole = useCallback(
-    (nextRole, { persist = true, updateQuery = false } = {}) => {
-      const normalised = normaliseRole(nextRole);
-      setRoleState(normalised);
-      setSource('manual');
-      if (persist) {
-        persistRole(normalised);
-      }
-      if (updateQuery) {
-        setSearchParams((current) => {
-          const params = new URLSearchParams(current);
-          if (normalised) {
-            params.set('role', normalised);
-          } else {
-            params.delete('role');
-          }
-          return params;
-        });
-      }
-    },
-    [setSearchParams]
-  );
+  const deniedReason = allowed
+    ? null
+    : role
+      ? 'role-not-permitted'
+      : 'role-not-selected';
 
   const refresh = useCallback(() => {
-    const stored = readStoredRole();
-    if (stored && stored !== role) {
-      setRoleState(stored);
-      setSource('storage');
+    const current = normaliseSelectableRole(searchParams.get('role'));
+    if (current) {
+      setSearchParams((params) => {
+        if (params.get('role') === current) {
+          return params;
+        }
+        const next = new URLSearchParams(params);
+        next.set('role', current);
+        return next;
+      });
+    } else if (role) {
+      setSearchParams((params) => {
+        if (!params.has('role')) {
+          return params;
+        }
+        const next = new URLSearchParams(params);
+        next.delete('role');
+        return next;
+      });
     }
-  }, [role]);
+  }, [role, searchParams, setSearchParams]);
 
   return {
     role,
     allowed,
     status: allowed ? 'allowed' : 'denied',
-    source,
-    allowedRoles: allowedSet,
     deniedReason,
-    setRole: updateRole,
-    refresh
+    refresh,
+    source,
+    allowedRoles: allowedSet
   };
 }
 
-export default useRoleAccess;
+export default legacyUseRoleAccess;

@@ -401,48 +401,64 @@ export default function ProviderDashboard() {
   const hasProviderAccess = session.dashboards.includes('provider');
   const allowProviderDashboard = session.isAuthenticated && hasProviderAccess;
 
-  const loadDashboard = useCallback(async ({ forceRefresh = false, signal } = {}) => {
-    if (!hasAccess) {
-      setState((current) => ({ ...current, loading: false }));
-    if (!allowProviderDashboard) {
-      return;
-    }
-    setState((current) => ({ ...current, loading: true, error: null }));
-    try {
-      const result = await getProviderDashboard({ forceRefresh, signal });
-      setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load dashboard', 500, { cause: error })
-      }));
-    }
-  }, [hasAccess]);
+  const loadDashboard = useCallback(
+    async ({ forceRefresh = false, signal } = {}) => {
+      if (!hasAccess || !allowProviderDashboard) {
+        setState((current) => ({ ...current, loading: false }));
+        return;
+      }
 
-  useEffect(() => {
-    if (!hasAccess) {
-  }, [allowProviderDashboard]);
+      setState((current) => ({ ...current, loading: true, error: null }));
 
-  useEffect(() => {
-    if (!allowProviderDashboard) {
-      return undefined;
-    }
-    const controller = new AbortController();
-    loadDashboard({ signal: controller.signal });
-    return () => controller.abort();
-  }, [loadDashboard, hasAccess]);
-
-  if (!hasAccess) {
-    return <ProviderAccessGate role={role} />;
-  }
-  }, [allowProviderDashboard, loadDashboard]);
+      try {
+        const result = await getProviderDashboard({ forceRefresh, signal });
+        setState({
+          loading: false,
+          data: result.data,
+          meta: result.meta,
+          error: result.meta?.error || null
+        });
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof PanelApiError
+              ? error
+              : new PanelApiError('Unable to load dashboard', 500, { cause: error })
+        }));
+      }
+    },
+    [allowProviderDashboard, hasAccess]
+  );
 
   useEffect(() => {
     if (!allowProviderDashboard) {
       setState({ loading: false, data: null, meta: null, error: null });
     }
   }, [allowProviderDashboard]);
+
+  useEffect(() => {
+    if (!hasAccess) {
+      setState((current) => ({ ...current, loading: false }));
+      return;
+    }
+  }, [hasAccess]);
+
+  useEffect(() => {
+    if (!allowProviderDashboard) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    loadDashboard({ signal: controller.signal });
+
+    return () => controller.abort();
+  }, [allowProviderDashboard, loadDashboard]);
+
+  if (!hasAccess) {
+    return <ProviderAccessGate role={role} />;
+  }
 
   const provider = state.data?.provider;
   const metrics = state.data?.metrics;

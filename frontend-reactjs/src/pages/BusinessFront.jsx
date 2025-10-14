@@ -50,7 +50,6 @@ StatCard.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     label: PropTypes.string.isRequired,
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     format: PropTypes.string,
     caption: PropTypes.string
   }).isRequired
@@ -400,6 +399,7 @@ ReviewCard.propTypes = {
     comment: PropTypes.string.isRequired,
     job: PropTypes.string,
     submittedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
     verified: PropTypes.bool,
     response: PropTypes.string,
     responseTimeMinutes: PropTypes.number
@@ -409,8 +409,6 @@ ReviewCard.propTypes = {
 
 ReviewCard.defaultProps = {
   highlighted: false
-    createdAt: PropTypes.string
-  }).isRequired
 };
 
 function ServicemanCard({ member }) {

@@ -1,49 +1,57 @@
 import mockDashboards from './mockDashboards.js';
 
 const API_BASE = '/api/analytics/dashboards';
+const TOKEN_STORAGE_KEY = 'fixnado:accessToken';
 
-function toQueryString(params = {}) {
+const toQueryString = (params = {}) => {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value == null || value === '') return;
+    if (value == null || value === '') {
+      return;
+    }
     searchParams.append(key, value);
   });
   const result = searchParams.toString();
   return result ? `?${result}` : '';
-}
+};
 
-function getAuthToken() {
+const readAuthToken = () => {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
+    return window.localStorage?.getItem(TOKEN_STORAGE_KEY) ?? null;
   } catch (error) {
-    console.warn('[analyticsDashboardClient] unable to read auth token', error);
+    console.warn('[analyticsDashboardClient] Unable to read auth token', error);
     return null;
   }
-}
+};
 
-export function buildExportUrl(persona, params = {}) {
-  return `${API_BASE}/${persona}/export${toQueryString(params)}`;
-}
+const createHeaders = (accept, persona) => {
+  const headers = new Headers({ Accept: accept });
+  if (persona) {
+    headers.set('X-Fixnado-Persona', persona);
+  }
 
-export async function fetchDashboard(persona, params = {}) {
+  const token = readAuthToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  return headers;
+};
+
+const shouldUseFallback = () => {
+  const { DEV = false, MODE } = import.meta.env ?? {};
+  return Boolean(DEV) && MODE !== 'test';
+};
+
+export const buildExportUrl = (persona, params = {}) => `${API_BASE}/${persona}/export${toQueryString(params)}`;
+
+export const fetchDashboard = async (persona, params = {}) => {
   try {
-    const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
     const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
-      headers: {
-        Accept: 'application/json',
-        ...personaHeader
-      }
-    const headers = new Headers({ Accept: 'application/json' });
-    const token = getAuthToken();
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    const response = await fetch(`${API_BASE}/${persona}${toQueryString(params)}`, {
-      headers,
+      headers: createHeaders('application/json', persona),
       credentials: 'include'
     });
 
@@ -73,41 +81,20 @@ export async function fetchDashboard(persona, params = {}) {
     if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
       throw error;
     }
+
     const fallback = mockDashboards?.[persona];
-    const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
-    if (import.meta.env.DEV && fallback && !isTestEnv) {
-    const { DEV = false, MODE } = import.meta.env ?? {};
-    const isDevEnvironment = Boolean(DEV);
-    const isTestEnvironment = MODE === 'test';
-    if (isDevEnvironment && !isTestEnvironment && fallback) {
-    const mode = import.meta.env?.MODE ?? process.env?.NODE_ENV;
-    const allowDevFallback = import.meta.env?.DEV && mode !== 'test';
-    if (allowDevFallback && fallback) {
-    const allowFallback = import.meta.env.DEV && import.meta.env.MODE !== 'test';
-    if (allowFallback && fallback) {
+    if (fallback && shouldUseFallback()) {
       console.warn(`Falling back to mock ${persona} dashboard`, error);
       return fallback;
     }
 
     throw error;
   }
-}
+};
 
-export async function downloadDashboardCsv(persona, params = {}) {
-  const personaHeader = persona ? { 'X-Fixnado-Persona': persona } : {};
+export const downloadDashboardCsv = async (persona, params = {}) => {
   const response = await fetch(`${API_BASE}/${persona}/export${toQueryString(params)}`, {
-    headers: {
-      Accept: 'text/csv',
-      ...personaHeader
-    }
-  const headers = new Headers({ Accept: 'text/csv' });
-  const token = getAuthToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
-  const response = await fetch(`${API_BASE}/${persona}/export${toQueryString(params)}`, {
-    headers,
+    headers: createHeaders('text/csv', persona),
     credentials: 'include'
   });
 
@@ -118,13 +105,19 @@ export async function downloadDashboardCsv(persona, params = {}) {
     } catch (parseError) {
       body = {};
     }
-    const downloadError = new Error(body?.message || 'Failed to download export');
-    downloadError.status = response.status;
-    downloadError.code = body?.code ?? body?.message;
-    throw downloadError;
+
+    const error = new Error(body?.message || `Failed to export ${persona} dashboard`);
+    error.status = response.status;
+    error.code = body?.code ?? body?.message;
+
+    throw error;
   }
 
-  const blob = await response.blob();
-  const filename = response.headers.get('Content-Disposition')?.match(/filename="?([^";]+)"?/i)?.[1] ?? `${persona}-analytics.csv`;
-  return { blob, filename };
-}
+  return response.blob();
+};
+
+export default {
+  buildExportUrl,
+  fetchDashboard,
+  downloadDashboardCsv
+};

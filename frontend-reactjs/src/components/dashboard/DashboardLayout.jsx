@@ -334,10 +334,6 @@ const DashboardLayout = ({
   exportHref = null,
   toggleMeta = null,
   toggleReason = null,
-  lastRefreshed,
-  exportHref,
-  toggleMeta,
-  toggleReason,
   onLogout
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);

@@ -65,39 +65,41 @@ export default function Header() {
   const { t, locale, setLocale, availableLocales } = useLocale();
   const [sessionRole, setSessionRole] = useState(() =>
     normaliseRole(resolveSessionTelemetryContext().role)
+  );
   const { hasRole } = useSession();
   const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
 
-  const navigation = useMemo(
-    () =>
-      navigationConfig
-        .map((item) => {
-          const base = {
-            ...item,
-            name: t(item.nameKey)
-          };
+  const navigation = useMemo(() => {
+    const filtered = navigationConfig
+      .filter((item) => item.key !== 'communications' || hasCommunicationsAccess(sessionRole))
+      .map((item) => {
+        const base = {
+          ...item,
+          name: t(item.nameKey)
+        };
 
-          if (!item.children) {
-            return base;
-          }
+        if (!item.children) {
+          return base;
+        }
 
-          const children = item.children
-            .filter((child) => child.key !== 'business-fronts' || allowBusinessFronts)
-            .map((child) => ({
-              ...child,
-              name: t(child.nameKey),
-              description: child.descriptionKey ? t(child.descriptionKey) : undefined
-            }));
+        const children = item.children
+          .filter((child) => child.key !== 'business-fronts' || allowBusinessFronts)
+          .map((child) => ({
+            ...child,
+            name: t(child.nameKey),
+            description: child.descriptionKey ? t(child.descriptionKey) : undefined
+          }));
 
-          if (children.length === 0) {
-            return null;
-          }
+        if (children.length === 0) {
+          return null;
+        }
 
-          return { ...base, children };
-        })
-        .filter(Boolean),
-    [t, locale, allowBusinessFronts]
-  );
+        return { ...base, children };
+      })
+      .filter(Boolean);
+
+    return filtered;
+  }, [sessionRole, t, locale, allowBusinessFronts]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -117,22 +119,6 @@ export default function Header() {
       window.removeEventListener('focus', syncRole);
     };
   }, []);
-
-  const navigation = useMemo(() => {
-    const filtered = navigationConfig.filter((item) =>
-      item.key !== 'communications' || hasCommunicationsAccess(sessionRole)
-    );
-
-    return filtered.map((item) => ({
-      ...item,
-      name: t(item.nameKey),
-      children: item.children?.map((child) => ({
-        ...child,
-        name: t(child.nameKey),
-        description: child.descriptionKey ? t(child.descriptionKey) : undefined
-      }))
-    }));
-  }, [sessionRole, t, locale]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
