@@ -1,26 +1,28 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons.jsx';
+import { useSecurityPreferences } from '../hooks/useSecurityPreferences.js';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { twoFactorEnabled } = useSecurityPreferences();
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [hasTwoFactorEnabled, setHasTwoFactorEnabled] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const controlWidthClass = 'w-full max-w-sm';
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedPreference = window.localStorage.getItem('fx-two-factor-enabled');
-    setHasTwoFactorEnabled(storedPreference === 'true');
-  }, []);
+    if (!twoFactorEnabled && twoFactorRequired) {
+      setTwoFactorRequired(false);
+      setTwoFactorCode('');
+    }
+  }, [twoFactorEnabled, twoFactorRequired]);
 
   const handleCredentialSubmit = (event) => {
     event.preventDefault();
     setStatusMessage('');
 
-    if (hasTwoFactorEnabled) {
+    if (twoFactorEnabled) {
       setTwoFactorRequired(true);
       setStatusMessage('Enter the 6-digit code from your authenticator to finish signing in.');
       return;
@@ -34,6 +36,13 @@ export default function Login() {
 
   const handleTwoFactorSubmit = (event) => {
     event.preventDefault();
+    if (!twoFactorEnabled) {
+      setStatusMessage('Two-factor authentication is not enabled for this account. Redirecting to your feed...');
+      window.setTimeout(() => {
+        navigate('/feed', { replace: true });
+      }, 600);
+      return;
+    }
     if (!twoFactorCode.trim()) {
       setStatusMessage('Please enter the verification code from your authenticator app.');
       return;
@@ -145,7 +154,7 @@ export default function Login() {
               Create one
             </Link>
           </p>
-          {!hasTwoFactorEnabled && (
+          {!twoFactorEnabled && (
             <p className="mt-3 text-xs text-slate-500">
               Want an extra security step? Enable two-factor authentication from Settings → Security to add the code check.
             </p>
