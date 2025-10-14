@@ -12,6 +12,7 @@ import '../domain/booking_models.dart';
 import 'booking_controller.dart';
 import 'widgets/booking_card.dart';
 import 'widgets/booking_creation_sheet.dart';
+import 'widgets/review_insights_card.dart';
 
 class BookingScreen extends ConsumerWidget {
   const BookingScreen({super.key});
@@ -24,6 +25,11 @@ class BookingScreen extends ConsumerWidget {
 
     final catalogState = ref.watch(serviceCatalogControllerProvider);
     final ServiceCatalogSnapshot? catalog = catalogState.snapshot;
+    final hasReviewInsights =
+        catalog?.reviewSummary != null && (catalog?.reviews.isNotEmpty ?? false);
+    final reviewAccess = catalog?.reviewAccess;
+    final showRestrictedNotice =
+        (reviewAccess != null && reviewAccess.granted == false && (catalog?.reviewSummary != null));
 
     return Scaffold(
       floatingActionButton: state.role == UserRole.customer || state.role == UserRole.enterprise
@@ -122,6 +128,70 @@ class BookingScreen extends ConsumerWidget {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    if (hasReviewInsights)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: ReviewInsightsCard(
+                          summary: catalog!.reviewSummary!,
+                          reviews: catalog.reviews,
+                        ),
+                      ),
+                    if (!hasReviewInsights && showRestrictedNotice)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.primary),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      reviewAccess?.reason ??
+                                          'Sign in with a buyer or enterprise role to view governed reviews.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (reviewAccess!.allowedRoles.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Permitted roles: ${reviewAccess.allowedRoles.join(', ')}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              if (catalog?.reviewSummary != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    '${catalog!.reviewSummary!.totalReviews} verified reviews available for authorised viewers.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),

@@ -9,6 +9,7 @@ import '../features/bookings/presentation/booking_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/tools/presentation/tools_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -46,6 +47,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: const [
           HomeScreen(),
           ExplorerScreen(),
+          ToolsScreen(),
           BookingScreen(),
           RentalScreen(),
           AnalyticsDashboardScreen(),
@@ -71,6 +73,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 enum _NavigationDestination {
   home('Home', Icons.home_outlined),
   explorer('Explorer', Icons.map_outlined),
+  tools('Tools', Icons.handyman_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
   operations('Ops Pulse', Icons.analytics_outlined);

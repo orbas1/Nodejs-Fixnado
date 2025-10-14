@@ -426,4 +426,55 @@ final Map<UserRole, RoleHomeContent> _roleContent = {
       ),
     ],
   ),
+  UserRole.admin: RoleHomeContent(
+    heroTitle: 'Command the entire Fixnado platform',
+    heroSubtitle:
+        'Monitor escrow velocity, dispute posture, feature rollouts, and automation pipelines in one control tower. Decisions land fast, securely, and with full auditability.',
+    highlights: [
+      'Live compliance posture',
+      'Automation health',
+      'Security telemetry',
+    ],
+    metrics: [
+      RoleMetric(
+        label: 'Escrow under management',
+        value: '£248k',
+        change: '+12% vs target',
+        trend: 'up',
+        icon: Icons.account_balance_outlined,
+      ),
+      RoleMetric(
+        label: 'Critical signals',
+        value: '0',
+        change: '-3 day on day',
+        trend: 'down',
+        icon: Icons.shield_outlined,
+      ),
+      RoleMetric(
+        label: 'Automation readiness',
+        value: '94%',
+        change: '+6% rollout',
+        trend: 'up',
+        icon: Icons.auto_graph_outlined,
+      ),
+    ],
+    spotlights: [
+      RoleSpotlight(
+        title: 'Review compliance expiring this week',
+        description:
+            'Escalate attestations with amber status before they impact vendor payouts or insurance coverage.',
+        caption: '8 controls due • Owners briefed',
+        icon: Icons.policy_outlined,
+        badge: 'Risk operations',
+      ),
+      RoleSpotlight(
+        title: 'Audit automation pipeline releases',
+        description:
+            'Check rollout cohorts, telemetry ingestion, and failure alarms before approving the next automation wave.',
+        caption: 'Next deploy window 04:30 UTC',
+        icon: Icons.settings_remote_outlined,
+        badge: 'Automation',
+      ),
+    ],
+  ),
 };

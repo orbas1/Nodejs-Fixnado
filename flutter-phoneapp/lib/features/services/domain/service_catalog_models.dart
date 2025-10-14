@@ -1,3 +1,161 @@
+class BusinessReview {
+  BusinessReview({
+    required this.id,
+    required this.reviewer,
+    required this.comment,
+    this.rating,
+    this.job,
+    this.submittedAt,
+    this.verified = false,
+    this.response,
+    this.responseTimeMinutes,
+  });
+
+  factory BusinessReview.fromJson(Map<String, dynamic> json) {
+    return BusinessReview(
+      id: json['id']?.toString() ?? 'review',
+      reviewer: json['reviewer']?.toString() ?? 'Client stakeholder',
+      rating: _toDouble(json['rating']),
+      comment: json['comment']?.toString() ?? '',
+      job: json['job']?.toString(),
+      submittedAt: DateTime.tryParse(json['submittedAt']?.toString() ?? ''),
+      verified: json['verified'] as bool? ?? false,
+      response: json['response']?.toString(),
+      responseTimeMinutes: _toDouble(json['responseTimeMinutes'])?.round(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'reviewer': reviewer,
+      'rating': rating,
+      'comment': comment,
+      'job': job,
+      'submittedAt': submittedAt?.toIso8601String(),
+      'verified': verified,
+      'response': response,
+      'responseTimeMinutes': responseTimeMinutes,
+    };
+  }
+
+  final String id;
+  final String reviewer;
+  final double? rating;
+  final String comment;
+  final String? job;
+  final DateTime? submittedAt;
+  final bool verified;
+  final String? response;
+  final int? responseTimeMinutes;
+}
+
+class ReviewRatingBucket {
+  ReviewRatingBucket({
+    required this.score,
+    required this.count,
+  });
+
+  factory ReviewRatingBucket.fromJson(Map<String, dynamic> json) {
+    return ReviewRatingBucket(
+      score: json['score'] is num ? (json['score'] as num).round() : int.tryParse(json['score']?.toString() ?? '') ?? 0,
+      count: json['count'] is num ? (json['count'] as num).round() : int.tryParse(json['count']?.toString() ?? '') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'score': score,
+      'count': count,
+    };
+  }
+
+  final int score;
+  final int count;
+}
+
+class BusinessReviewSummary {
+  BusinessReviewSummary({
+    required this.averageRating,
+    required this.totalReviews,
+    required this.verifiedShare,
+    required this.responseRate,
+    required this.ratingBuckets,
+    this.lastReviewAt,
+    this.highlightedReviewId,
+    this.excerpt,
+  });
+
+  factory BusinessReviewSummary.fromJson(Map<String, dynamic> json) {
+    return BusinessReviewSummary(
+      averageRating: _toDouble(json['averageRating']),
+      totalReviews: json['totalReviews'] is num ? (json['totalReviews'] as num).round() : int.tryParse(json['totalReviews']?.toString() ?? '') ?? 0,
+      verifiedShare: _toDouble(json['verifiedShare']) ?? 0,
+      responseRate: _toDouble(json['responseRate']) ?? 0,
+      ratingBuckets: (json['ratingBuckets'] as List<dynamic>? ?? const [])
+          .map((item) => ReviewRatingBucket.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+      lastReviewAt: DateTime.tryParse(json['lastReviewAt']?.toString() ?? ''),
+      highlightedReviewId: json['highlightedReviewId']?.toString(),
+      excerpt: json['excerpt']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'averageRating': averageRating,
+      'totalReviews': totalReviews,
+      'verifiedShare': verifiedShare,
+      'responseRate': responseRate,
+      'ratingBuckets': ratingBuckets.map((bucket) => bucket.toJson()).toList(),
+      'lastReviewAt': lastReviewAt?.toIso8601String(),
+      'highlightedReviewId': highlightedReviewId,
+      'excerpt': excerpt,
+    };
+  }
+
+  final double? averageRating;
+  final int totalReviews;
+  final double verifiedShare;
+  final double responseRate;
+  final List<ReviewRatingBucket> ratingBuckets;
+  final DateTime? lastReviewAt;
+  final String? highlightedReviewId;
+  final String? excerpt;
+}
+
+class ReviewAccessControl {
+  ReviewAccessControl({
+    required this.granted,
+    required this.allowedRoles,
+    required this.visibility,
+    this.reason,
+  });
+
+  factory ReviewAccessControl.fromJson(Map<String, dynamic> json) {
+    return ReviewAccessControl(
+      granted: json['granted'] as bool? ?? false,
+      allowedRoles: _ensureStringList(json['allowedRoles']),
+      visibility: json['visibility']?.toString() ?? 'restricted',
+      reason: json['reason']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'granted': granted,
+      'allowedRoles': allowedRoles,
+      'visibility': visibility,
+      'reason': reason,
+    };
+  }
+
+  final bool granted;
+  final List<String> allowedRoles;
+  final String visibility;
+  final String? reason;
+}
+
 class ServiceCatalogueEntry {
   ServiceCatalogueEntry({
     required this.id,
@@ -353,6 +511,9 @@ class ServiceCatalogSnapshot {
     required this.catalogue,
     required this.healthMetrics,
     required this.deliveryBoard,
+    required this.reviews,
+    this.reviewSummary,
+    this.reviewAccess,
     required this.generatedAt,
     required this.offline,
   });
@@ -363,6 +524,9 @@ class ServiceCatalogSnapshot {
   final List<ServiceCatalogueEntry> catalogue;
   final List<ServiceHealthMetric> healthMetrics;
   final List<ServiceDeliveryColumn> deliveryBoard;
+  final List<BusinessReview> reviews;
+  final BusinessReviewSummary? reviewSummary;
+  final ReviewAccessControl? reviewAccess;
   final DateTime generatedAt;
   final bool offline;
 
@@ -374,6 +538,9 @@ class ServiceCatalogSnapshot {
       'catalogue': catalogue.map((value) => value.toJson()).toList(),
       'healthMetrics': healthMetrics.map((value) => value.toJson()).toList(),
       'deliveryBoard': deliveryBoard.map((value) => value.toJson()).toList(),
+      'reviews': reviews.map((value) => value.toJson()).toList(),
+      'reviewSummary': reviewSummary?.toJson(),
+      'reviewAccess': reviewAccess?.toJson(),
       'generatedAt': generatedAt.toIso8601String(),
       'offline': offline,
     };
@@ -399,6 +566,15 @@ class ServiceCatalogSnapshot {
       deliveryBoard: (json['deliveryBoard'] as List<dynamic>? ?? const [])
           .map((item) => ServiceDeliveryColumn.fromJson(_asMap(item)))
           .toList(),
+      reviews: (json['reviews'] as List<dynamic>? ?? const [])
+          .map((item) => BusinessReview.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+      reviewSummary: json['reviewSummary'] is Map<String, dynamic>
+          ? BusinessReviewSummary.fromJson(Map<String, dynamic>.from(json['reviewSummary'] as Map))
+          : null,
+      reviewAccess: json['reviewAccess'] is Map<String, dynamic>
+          ? ReviewAccessControl.fromJson(Map<String, dynamic>.from(json['reviewAccess'] as Map))
+          : null,
       generatedAt: DateTime.tryParse(json['generatedAt']?.toString() ?? '') ?? DateTime.now(),
       offline: json['offline'] as bool? ?? false,
     );
@@ -411,6 +587,9 @@ class ServiceCatalogSnapshot {
     List<ServiceCatalogueEntry>? catalogue,
     List<ServiceHealthMetric>? healthMetrics,
     List<ServiceDeliveryColumn>? deliveryBoard,
+    List<BusinessReview>? reviews,
+    BusinessReviewSummary? reviewSummary,
+    ReviewAccessControl? reviewAccess,
     DateTime? generatedAt,
     bool? offline,
   }) {
@@ -421,6 +600,9 @@ class ServiceCatalogSnapshot {
       catalogue: catalogue ?? this.catalogue,
       healthMetrics: healthMetrics ?? this.healthMetrics,
       deliveryBoard: deliveryBoard ?? this.deliveryBoard,
+      reviews: reviews ?? this.reviews,
+      reviewSummary: reviewSummary ?? this.reviewSummary,
+      reviewAccess: reviewAccess ?? this.reviewAccess,
       generatedAt: generatedAt ?? this.generatedAt,
       offline: offline ?? this.offline,
     );

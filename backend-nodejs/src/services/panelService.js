@@ -41,6 +41,152 @@ function average(values, fallback = 0) {
   return valid.reduce((sum, value) => sum + value, 0) / valid.length;
 }
 
+function clamp(value, min, max, fallback = null) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(Math.max(value, min), max);
+}
+
+function summariseReviews(reviews = []) {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
+    return {
+      averageRating: null,
+      totalReviews: 0,
+      verifiedShare: 0,
+      ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: 0 })),
+      lastReviewAt: null,
+      responseRate: 0
+    };
+  }
+
+  const totals = reviews.reduce(
+    (acc, review) => {
+      const bucket = Math.round(review.rating ?? 0);
+      if (bucket >= 1 && bucket <= 5) {
+        acc.buckets[bucket] = (acc.buckets[bucket] ?? 0) + 1;
+      }
+      if (Number.isFinite(review.rating)) {
+        acc.sum += review.rating;
+        acc.count += 1;
+      }
+      if (review.verified) {
+        acc.verified += 1;
+      }
+      if (review.submittedAt) {
+        const submitted = DateTime.fromISO(review.submittedAt);
+        if (!acc.lastReviewAt || submitted > acc.lastReviewAt) {
+          acc.lastReviewAt = submitted;
+        }
+      }
+      if (Number.isFinite(review.responseTimeMinutes)) {
+        acc.responded += 1;
+      }
+      return acc;
+    },
+    { sum: 0, count: 0, verified: 0, responded: 0, lastReviewAt: null, buckets: {} }
+  );
+
+  return {
+    averageRating: totals.count ? Number((totals.sum / totals.count).toFixed(2)) : null,
+    totalReviews: reviews.length,
+    verifiedShare: reviews.length ? totals.verified / reviews.length : 0,
+    ratingBuckets: [1, 2, 3, 4, 5].map((score) => ({ score, count: totals.buckets[score] ?? 0 })),
+    lastReviewAt: totals.lastReviewAt ? totals.lastReviewAt.toISO() : null,
+    responseRate: reviews.length ? totals.responded / reviews.length : 0
+function clamp(value, minimum, maximum) {
+  if (!Number.isFinite(value)) {
+    return minimum;
+  }
+  return Math.max(minimum, Math.min(maximum, value));
+}
+
+function resolveConfidenceLabel(sampleSize) {
+  if (sampleSize >= 50) {
+    return 'high';
+  }
+  if (sampleSize >= 15) {
+    return 'medium';
+  }
+  if (sampleSize > 0) {
+    return 'low';
+  }
+  return 'insufficient';
+}
+
+function resolveTrustBand(score) {
+  if (score >= 90) {
+    return 'platinum';
+  }
+  if (score >= 80) {
+    return 'gold';
+  }
+  if (score >= 70) {
+    return 'silver';
+  }
+  if (score >= 60) {
+    return 'bronze';
+  }
+  return 'monitor';
+}
+
+function resolveReviewBand(score) {
+  if (score >= 4.7) {
+    return 'worldClass';
+  }
+  if (score >= 4.3) {
+    return 'excellent';
+  }
+  if (score >= 4) {
+    return 'reliable';
+  }
+  if (score >= 3.5) {
+    return 'emerging';
+  }
+  return 'attention';
+function inventoryAvailability(item) {
+  const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+  const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+  if (!Number.isFinite(onHand) || !Number.isFinite(reserved)) {
+    return 0;
+  }
+  return Math.max(onHand - reserved, 0);
+}
+
+function inventoryStatus(item) {
+  const available = inventoryAvailability(item);
+  const safety = Number.parseInt(item.safetyStock ?? 0, 10);
+  if (available <= 0) {
+    return 'stockout';
+  }
+  if (Number.isFinite(safety) && available <= Math.max(safety, 0)) {
+    return 'low_stock';
+  }
+  return 'healthy';
+}
+
+function buildInventorySummary(items = []) {
+  const totals = items.reduce(
+    (acc, item) => {
+      const available = inventoryAvailability(item);
+      const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+      const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+      return {
+        onHand: acc.onHand + (Number.isFinite(onHand) ? onHand : 0),
+        reserved: acc.reserved + (Number.isFinite(reserved) ? reserved : 0),
+        available: acc.available + available,
+        alerts: acc.alerts + (inventoryStatus(item) !== 'healthy' ? 1 : 0)
+      };
+    },
+    { onHand: 0, reserved: 0, available: 0, alerts: 0 }
+  );
+
+  return {
+    totals,
+    skuCount: items.length
+  };
+}
+
 function toSlug(input, fallback) {
   if (typeof input === 'string' && input.trim()) {
     return input
@@ -53,7 +199,46 @@ function toSlug(input, fallback) {
   return fallback;
 }
 
+function sanitiseString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+async function resolveCompanyForActor({ companyId, actor }) {
+  if (!actor?.id) {
+    const error = new Error('forbidden');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const baseWhere = { userId: actor.id };
+  const where = companyId ? { ...baseWhere, id: companyId } : baseWhere;
+
+  const company = await Company.findOne({
+    where,
+    raw: true,
+    order: [['createdAt', 'ASC']]
+  });
+
+  if (company) {
+    return company;
+  }
+
+  if (companyId) {
+    const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
+    if (exists) {
+      const error = new Error('forbidden');
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  const error = new Error('company_not_found');
+  error.statusCode = 404;
+  throw error;
+}
+
 async function resolveCompanyId(companyId) {
+export async function resolveCompanyId(companyId) {
   if (companyId) {
     const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
     if (exists) {
@@ -70,9 +255,9 @@ async function resolveCompanyId(companyId) {
   return firstCompany.id;
 }
 
-export async function buildProviderDashboard({ companyId: inputCompanyId } = {}) {
-  const companyId = await resolveCompanyId(inputCompanyId);
-  const company = await Company.findByPk(companyId, { raw: true });
+export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
+  const company = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const companyId = company.id;
   const now = DateTime.now();
   const startOfMonth = now.startOf('month');
 
@@ -222,6 +407,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
   ].slice(0, 6);
 
   const providerSlug = toSlug(company.contactName, `company-${companyId.slice(0, 8)}`);
+  const supportEmail = sanitiseString(company.contactEmail);
+  const supportPhone = sanitiseString(company.contactPhone);
 
   return {
     data: {
@@ -232,8 +419,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
         region: company.serviceRegions || 'United Kingdom',
         slug: providerSlug,
         onboardingStatus: company.verified ? 'active' : 'pending',
-        supportEmail: company.contactEmail || null,
-        supportPhone: null
+        supportEmail,
+        supportPhone
       },
       metrics: {
         utilisation,
@@ -416,7 +603,7 @@ export async function buildEnterprisePanel({ companyId: inputCompanyId } = {}) {
   };
 }
 
-export async function buildBusinessFront({ slug }) {
+export async function buildBusinessFront({ slug, viewerType } = {}) {
   const allCompanies = await Company.findAll();
   if (allCompanies.length === 0) {
     const error = new Error('company_not_found');
@@ -617,16 +804,198 @@ export async function buildBusinessFront({ slug }) {
       };
     });
 
-  const reviews = bookings
-    .filter((booking) => booking.meta?.feedback)
-    .slice(0, 6)
-    .map((booking, index) => ({
-      id: booking.id || `review-${index}`,
+  const reviewComments = new Set();
+  const publishableReviews = [];
+  for (const booking of bookings) {
+    const rawComment = booking.meta?.feedback;
+    if (typeof rawComment !== 'string') {
+      continue;
+    }
+
+    const comment = rawComment.replace(/\s+/g, ' ').trim();
+    if (!comment || comment.length < 12) {
+      continue;
+    }
+
+    const visibility = (booking.meta?.reviewVisibility || 'public').toString().toLowerCase();
+    if (['internal', 'private', 'hidden'].includes(visibility)) {
+      continue;
+    }
+    if (booking.meta?.reviewFlagged === true) {
+      continue;
+    }
+
+    const dedupeKey = `${comment.toLowerCase().slice(0, 140)}::${booking.meta?.requester || ''}`;
+    if (reviewComments.has(dedupeKey)) {
+      continue;
+    }
+    reviewComments.add(dedupeKey);
+
+    const submittedAt = booking.lastStatusTransitionAt
+      ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISO()
+      : booking.updatedAt
+        ? DateTime.fromJSDate(booking.updatedAt).toISO()
+        : null;
+
+    let responseTimeMinutes = null;
+    const feedbackCapturedAt = booking.meta?.feedbackCapturedAt;
+    const providerRespondedAt = booking.meta?.providerRespondedAt || booking.meta?.providerResponseAt;
+    if (feedbackCapturedAt && providerRespondedAt) {
+      const captured = DateTime.fromISO(feedbackCapturedAt.toString(), { setZone: true });
+      const responded = DateTime.fromISO(providerRespondedAt.toString(), { setZone: true });
+      if (captured.isValid && responded.isValid) {
+        responseTimeMinutes = Math.max(Math.round(responded.diff(captured, 'minutes').minutes), 0);
+      }
+    }
+
+    const rating = clamp(Number(booking.meta?.csat), 1, 5, null);
+    publishableReviews.push({
+      id: booking.id || `review-${publishableReviews.length}`,
       reviewer: booking.meta?.requester || 'Client stakeholder',
+      rating: rating ?? 0,
+      comment,
+      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement',
+      submittedAt,
+      verified: booking.meta?.feedbackVerified !== false,
+      response: typeof booking.meta?.providerResponse === 'string'
+        ? booking.meta.providerResponse.trim() || null
+        : null,
+      responseTimeMinutes,
+      visibility
+    });
+  }
+
+  const orderedReviews = publishableReviews.sort((a, b) => {
+    if (a.submittedAt && b.submittedAt) {
+      return DateTime.fromISO(b.submittedAt).toMillis() - DateTime.fromISO(a.submittedAt).toMillis();
+    }
+    if (a.submittedAt) return -1;
+    if (b.submittedAt) return 1;
+    return b.rating - a.rating;
+  });
+
+  const reviewSummary = {
+    ...summariseReviews(orderedReviews),
+    highlightedReviewId: orderedReviews[0]?.id ?? null,
+    latestReviewId: orderedReviews.find((review) => review.submittedAt)?.id ?? null,
+    excerpt: orderedReviews[0]?.comment ? `${orderedReviews[0].comment.slice(0, 200)}${orderedReviews[0].comment.length > 200 ? '…' : ''}` : null
+  };
+
+  const allowedReviewRoles = ['enterprise', 'customer'];
+  const reviewAccessGranted = viewerType ? allowedReviewRoles.includes(viewerType) : false;
+  const responseReviews = reviewAccessGranted ? orderedReviews : [];
+  const responseSummary = reviewAccessGranted
+    ? reviewSummary
+    : {
+        ...reviewSummary,
+        highlightedReviewId: null,
+        latestReviewId: null,
+        excerpt: null
+      };
       rating: Number.isFinite(booking.meta?.csat) ? Number(booking.meta.csat) : 4.8,
       comment: booking.meta.feedback,
-      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement'
+      job: booking.meta?.title || booking.meta?.zoneName || 'Facilities engagement',
+      createdAt: booking.meta?.reviewedAt
+        ? DateTime.fromISO(booking.meta.reviewedAt).toISO()
+        : booking.lastStatusTransitionAt
+          ? DateTime.fromJSDate(booking.lastStatusTransitionAt).toISO()
+          : null
     }));
+
+  const bookingCount = bookings.length;
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const reliabilityRatio = bookingCount === 0 ? 0.92 : clamp(completedBookingsCount / bookingCount, 0, 1);
+
+  const slaEligible = bookings.filter((booking) => booking.slaExpiresAt && booking.lastStatusTransitionAt);
+  const slaOnTime = slaEligible.filter((booking) => {
+    const completedAt = DateTime.fromJSDate(booking.lastStatusTransitionAt);
+    const sla = DateTime.fromJSDate(booking.slaExpiresAt);
+    return completedAt <= sla;
+  }).length;
+  const punctualityRatio = slaEligible.length === 0 ? 0.9 : clamp(slaOnTime / Math.max(slaEligible.length, 1), 0, 1);
+
+  const cancellationCount = bookings.filter((booking) => ['cancelled', 'disputed', 'failed'].includes(booking.status)).length;
+  const cancellationScore = clamp(1 - (bookingCount === 0 ? 0 : cancellationCount / bookingCount), 0, 1);
+
+  const complianceCoverage = complianceDocs.length > 0 ? clamp(complianceDocs.length / 8, 0, 1) : 0;
+  const complianceScore = complianceDocs.length > 0 ? 0.6 + 0.4 * complianceCoverage : 0.45;
+
+  const coverageScore = serviceZones.length > 0 ? clamp(serviceZones.length / 12, 0, 1) : 0.5;
+
+  const reviewRatings = reviews
+    .map((review) => (Number.isFinite(review.rating) ? Number(review.rating) : null))
+    .filter((value) => value != null);
+  const sentimentScore = reviewRatings.length > 0 ? clamp(average(reviewRatings) / 5, 0, 1) : 0.86;
+
+  const trustConfidence = resolveConfidenceLabel(bookingCount);
+  const confidenceMultiplier =
+    trustConfidence === 'high' ? 1 : trustConfidence === 'medium' ? 0.97 : trustConfidence === 'low' ? 0.92 : 0.88;
+
+  const trustComposite =
+    (0.3 * reliabilityRatio +
+      0.22 * punctualityRatio +
+      0.18 * complianceScore +
+      0.15 * sentimentScore +
+      0.1 * cancellationScore +
+      0.05 * coverageScore) *
+    100 *
+    confidenceMultiplier;
+
+  const trustValue = Math.round(clamp(trustComposite, 0, 100));
+  const trustBand = resolveTrustBand(trustValue);
+
+  const trustScore = {
+    value: trustValue,
+    band: trustBand,
+    confidence: trustConfidence,
+    sampleSize: bookingCount,
+    caption: `${completedBookingsCount} of ${Math.max(bookingCount, 1)} jobs completed with ${Math.round(
+      punctualityRatio * 100
+    )}% on-time sign-off`,
+    breakdown: {
+      reliability: Number((reliabilityRatio * 100).toFixed(1)),
+      punctuality: Number((punctualityRatio * 100).toFixed(1)),
+      compliance: Number((complianceScore * 100).toFixed(1)),
+      sentiment: Number((sentimentScore * 100).toFixed(1)),
+      cancellations: Number((cancellationScore * 100).toFixed(1)),
+      coverage: Number((coverageScore * 100).toFixed(1))
+    }
+  };
+
+  const reviewAverage = reviewRatings.length > 0 ? average(reviewRatings) : 4.6;
+  const reviewValue = Number(reviewAverage.toFixed(2));
+  const reviewBand = resolveReviewBand(reviewValue);
+  const reviewConfidence = resolveConfidenceLabel(reviewRatings.length);
+  const reviewDistribution = {
+    promoters: reviewRatings.filter((rating) => rating >= 4.5).length,
+    positive: reviewRatings.filter((rating) => rating >= 4 && rating < 4.5).length,
+    neutral: reviewRatings.filter((rating) => rating >= 3 && rating < 4).length,
+    detractors: reviewRatings.filter((rating) => rating < 3).length
+  };
+
+  const reviewScore = {
+    value: reviewValue,
+    band: reviewBand,
+    confidence: reviewConfidence,
+    sampleSize: reviewRatings.length,
+    caption: `${reviewRatings.length} verified review${reviewRatings.length === 1 ? '' : 's'}`,
+    distribution: reviewDistribution
+  };
+
+  stats.unshift({
+    id: 'trust-score',
+    label: 'Trust score',
+    value: trustScore.value,
+    format: 'number',
+    caption: trustScore.caption
+  });
+  stats.splice(1, 0, {
+    id: 'review-score',
+    label: 'Review score',
+    value: reviewScore.value,
+    format: 'number',
+    caption: reviewScore.caption
+  });
 
   const deals = serviceCatalogue
     .filter((service) => Number.isFinite(service.price))
@@ -643,37 +1012,64 @@ export async function buildBusinessFront({ slug }) {
       tags: service.tags.slice(0, 2)
     }));
 
+  const inventorySummary = buildInventorySummary(inventoryItems);
+
   const materials = inventoryItems
     .filter((item) =>
       (item.category || '').toLowerCase().includes('material') ||
       (!item.rentalRate && (item.metadata?.type === 'material' || item.metadata?.usage === 'consumable'))
     )
-    .slice(0, 6)
-    .map((item, index) => ({
-      id: item.id || `material-${index}`,
-      name: item.name,
-      category: item.category,
-      sku: item.sku,
-      quantityOnHand: item.quantityOnHand,
-      unitType: item.unitType,
-      image: `/media/${slugified}/materials-${index + 1}.jpg`
-    }));
+    .slice(0, 8)
+    .map((item, index) => {
+      const available = inventoryAvailability(item);
+      return {
+        id: item.id || `material-${index}`,
+        name: item.name,
+        category: item.category,
+        sku: item.sku,
+        quantityOnHand: item.quantityOnHand,
+        quantityReserved: item.quantityReserved,
+        availability: available,
+        safetyStock: item.safetyStock,
+        unitType: item.unitType,
+        status: inventoryStatus(item),
+        condition: item.conditionRating,
+        location: item.metadata?.warehouse || item.metadata?.location || null,
+        nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.expiry || null,
+        notes: item.metadata?.notes || null,
+        image: `/media/${slugified}/materials-${index + 1}.jpg`
+      };
+    });
 
   const tools = inventoryItems
     .filter((item) =>
       (item.category || '').toLowerCase().includes('tool') ||
       Number.isFinite(coerceNumber(item.rentalRate, NaN))
     )
-    .slice(0, 6)
-    .map((item, index) => ({
-      id: item.id || `tool-${index}`,
-      name: item.name,
-      category: item.category,
-      rentalRate: coerceNumber(item.rentalRate, null),
-      rentalRateCurrency: item.rentalRateCurrency || 'GBP',
-      condition: item.conditionRating,
-      image: `/media/${slugified}/tools-${index + 1}.jpg`
-    }));
+    .slice(0, 8)
+    .map((item, index) => {
+      const available = inventoryAvailability(item);
+      return {
+        id: item.id || `tool-${index}`,
+        name: item.name,
+        category: item.category,
+        sku: item.sku,
+        quantityOnHand: item.quantityOnHand,
+        quantityReserved: item.quantityReserved,
+        availability: available,
+        safetyStock: item.safetyStock,
+        unitType: item.unitType,
+        status: inventoryStatus(item),
+        condition: item.conditionRating,
+        rentalRate: coerceNumber(item.rentalRate, null),
+        rentalRateCurrency: item.rentalRateCurrency || 'GBP',
+        depositAmount: coerceNumber(item.depositAmount, null),
+        location: item.metadata?.warehouse || item.metadata?.location || null,
+        nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.inspectionDue || null,
+        notes: item.metadata?.notes || null,
+        image: `/media/${slugified}/tools-${index + 1}.jpg`
+      };
+    });
 
   const providerIds = Array.from(new Set(enrichedServices.map((service) => service.providerId).filter(Boolean)));
   const providers = providerIds.length
@@ -749,13 +1145,24 @@ export async function buildBusinessFront({ slug }) {
       certifications,
       gallery,
       previousJobs,
-      reviews,
+      reviews: responseReviews,
+      reviewSummary: responseSummary,
       deals,
       serviceCatalogue,
       materials,
       tools,
       servicemen,
       serviceZones,
+      scores: {
+        trust: trustScore,
+        review: reviewScore
+      inventorySummary: {
+        skuCount: inventorySummary.skuCount,
+        onHand: inventorySummary.totals.onHand,
+        reserved: inventorySummary.totals.reserved,
+        available: inventorySummary.totals.available,
+        alerts: inventorySummary.totals.alerts
+      },
       taxonomy: {
         categories: listServiceCategories(),
         types: listServiceTypes()
@@ -769,7 +1176,14 @@ export async function buildBusinessFront({ slug }) {
     meta: {
       companyId: resolved.id,
       generatedAt: now.toISO(),
-      source: 'live'
+      source: 'live',
+      reviewAccess: {
+        granted: reviewAccessGranted,
+        visibility: orderedReviews.length ? 'restricted' : 'public',
+        allowedRoles: allowedReviewRoles,
+        reason:
+          'Customer feedback contains contract-governed commentary and is visible to enterprise buyers and purchasing teams.'
+      }
     }
   };
 }

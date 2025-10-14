@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
@@ -18,6 +18,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
 import useRoleAccess from '../hooks/useRoleAccess.js';
+import useSession from '../hooks/useSession.js';
+import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
+import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -389,11 +392,19 @@ function ProviderAccessGate({ role }) {
 export default function ProviderDashboard() {
   const { t, format } = useLocale();
   const { role, hasAccess } = useRoleAccess(['provider'], { allowFallbackRoles: ['admin'] });
+  const session = useSession();
+  const providerRoleMeta = useMemo(
+    () => DASHBOARD_ROLES.find((role) => role.id === 'provider') || null,
+    []
+  );
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
+  const hasProviderAccess = session.dashboards.includes('provider');
+  const allowProviderDashboard = session.isAuthenticated && hasProviderAccess;
 
   const loadDashboard = useCallback(async ({ forceRefresh = false, signal } = {}) => {
     if (!hasAccess) {
       setState((current) => ({ ...current, loading: false }));
+    if (!allowProviderDashboard) {
       return;
     }
     setState((current) => ({ ...current, loading: true, error: null }));
@@ -411,6 +422,10 @@ export default function ProviderDashboard() {
 
   useEffect(() => {
     if (!hasAccess) {
+  }, [allowProviderDashboard]);
+
+  useEffect(() => {
+    if (!allowProviderDashboard) {
       return undefined;
     }
     const controller = new AbortController();
@@ -421,6 +436,13 @@ export default function ProviderDashboard() {
   if (!hasAccess) {
     return <ProviderAccessGate role={role} />;
   }
+  }, [allowProviderDashboard, loadDashboard]);
+
+  useEffect(() => {
+    if (!allowProviderDashboard) {
+      setState({ loading: false, data: null, meta: null, error: null });
+    }
+  }, [allowProviderDashboard]);
 
   const provider = state.data?.provider;
   const metrics = state.data?.metrics;
@@ -538,6 +560,12 @@ export default function ProviderDashboard() {
   const heroAside = (
     <>
       <Link
+        to="/provider/storefront"
+        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
+      >
+        {t('providerDashboard.storefrontCta')}
+      </Link>
+      <Link
         to={`/providers/${provider?.slug ?? 'featured'}`}
         className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
       >
@@ -575,6 +603,14 @@ export default function ProviderDashboard() {
       label: t('providerDashboard.sidebarSnapshotLabel'),
       value: snapshotTime
     });
+  }
+
+  if (!session.isAuthenticated) {
+    return <Navigate to="/login" replace state={{ redirectTo: '/provider/dashboard' }} />;
+  }
+
+  if (!hasProviderAccess) {
+    return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
 
   return (

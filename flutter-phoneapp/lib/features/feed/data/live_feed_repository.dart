@@ -71,6 +71,28 @@ class LiveFeedRepository {
     }
     return const [];
   }
+
+  Future<LiveFeedPost> publishJob(LiveFeedJobDraft draft) async {
+    final payload = await _client.postJson('/feed/live', body: draft.toJson());
+    return LiveFeedPost.fromJson(Map<String, dynamic>.from(payload));
+  }
+
+  Future<LiveFeedBid> submitBid(String postId, LiveFeedBidRequest request) async {
+    final payload = await _client.postJson('/feed/live/$postId/bids', body: request.toJson());
+    return LiveFeedBid.fromJson(Map<String, dynamic>.from(payload));
+  }
+
+  Future<LiveFeedBidMessage> sendBidMessage(
+    String postId,
+    String bidId,
+    LiveFeedMessageRequest request,
+  ) async {
+    final payload = await _client.postJson(
+      '/feed/live/$postId/bids/$bidId/messages',
+      body: request.toJson(),
+    );
+    return LiveFeedBidMessage.fromJson(Map<String, dynamic>.from(payload));
+  }
 }
 
 final liveFeedRepositoryProvider = Provider<LiveFeedRepository>((ref) {

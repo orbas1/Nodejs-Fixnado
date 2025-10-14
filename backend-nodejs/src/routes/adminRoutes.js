@@ -14,18 +14,18 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/dashboard', authenticate, authorize(['company']), dashboard);
-router.get('/feature-toggles', authenticate, authorize(['company']), getToggles);
-router.get('/feature-toggles/:key', authenticate, authorize(['company']), getToggle);
+router.get('/dashboard', authenticate, authorize(['admin']), dashboard);
+router.get('/feature-toggles', authenticate, authorize(['admin']), getToggles);
+router.get('/feature-toggles/:key', authenticate, authorize(['admin']), getToggle);
 router.patch(
   '/feature-toggles/:key',
   authenticate,
-  authorize(['company']),
+  authorize(['admin']),
   upsertToggleValidators,
   updateToggle
 );
 
-router.get('/platform-settings', authenticate, authorize(['company']), fetchPlatformSettings);
-router.put('/platform-settings', authenticate, authorize(['company']), savePlatformSettings);
+router.get('/platform-settings', authenticate, authorize(['admin']), fetchPlatformSettings);
+router.put('/platform-settings', authenticate, authorize(['admin']), savePlatformSettings);
 
 export default router;

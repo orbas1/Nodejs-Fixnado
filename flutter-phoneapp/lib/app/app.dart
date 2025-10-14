@@ -15,6 +15,7 @@ import '../features/explorer/presentation/explorer_screen.dart';
 import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
+import '../features/materials/presentation/materials_screen.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -109,6 +110,15 @@ class _AppShellState extends ConsumerState<AppShell> {
           role == UserRole.provider
               ? const ServiceManagementScreen()
               : const AnalyticsDashboardScreen(),
+        children: const [
+          ExplorerScreen(),
+          LiveFeedScreen(),
+          BookingScreen(),
+          RentalScreen(),
+          MaterialsScreen(),
+          CommunicationsScreen(),
+          ProfileManagementScreen(),
+          AnalyticsDashboardScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -135,6 +145,7 @@ enum _NavigationDestination {
   feed('Feed', Icons.dynamic_feed_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
+  materials('Materials', Icons.precision_manufacturing_outlined),
   inbox('Inbox', Icons.inbox_outlined),
   profile('Profile', Icons.person_outline),
   operations('Ops Pulse', Icons.analytics_outlined);

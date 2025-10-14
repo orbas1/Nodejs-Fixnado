@@ -5,6 +5,7 @@ import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
 import Spinner from './components/ui/Spinner.jsx';
 import { useLocale } from './hooks/useLocale.js';
+import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -13,9 +14,12 @@ const CompanyRegister = lazy(() => import('./pages/CompanyRegister.jsx'));
 const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
+const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
+const Tools = lazy(() => import('./pages/Tools.jsx'));
+const Materials = lazy(() => import('./pages/Materials.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
@@ -24,6 +28,7 @@ const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
+const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -55,17 +60,49 @@ function App() {
             <Route path="/register/company" element={<CompanyRegister />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+            <Route path="/provider/storefront" element={<ProviderStorefront />} />
             <Route path="/enterprise/panel" element={<EnterprisePanel />} />
             <Route path="/providers" element={<BusinessFront />} />
             <Route path="/providers/:slug" element={<BusinessFront />} />
             <Route path="/search" element={<Search />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/tools" element={<Tools />} />
+            <Route path="/materials" element={<Materials />} />
             <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/monetisation" element={<AdminMonetization />} />
-            <Route path="/admin/theme-studio" element={<ThemeStudio />} />
-            <Route path="/admin/telemetry" element={<TelemetryDashboard />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/monetisation"
+              element={
+                <AdminProtectedRoute>
+                  <AdminMonetization />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/theme-studio"
+              element={
+                <AdminProtectedRoute>
+                  <ThemeStudio />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/telemetry"
+              element={
+                <AdminProtectedRoute>
+                  <TelemetryDashboard />
+                </AdminProtectedRoute>
+              }
+            />
             <Route path="/communications" element={<Communications />} />
+            <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
           </Routes>

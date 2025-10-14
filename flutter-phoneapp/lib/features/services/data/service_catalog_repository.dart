@@ -48,6 +48,19 @@ class ServiceCatalogRepository {
           .toList();
 
       final taxonomy = _asMap(data['taxonomy']);
+      final reviews = (data['reviews'] as List<dynamic>? ?? const [])
+          .map((item) => BusinessReview.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+
+      final reviewSummary = data['reviewSummary'] is Map
+          ? BusinessReviewSummary.fromJson(Map<String, dynamic>.from(data['reviewSummary'] as Map))
+          : null;
+
+      final reviewAccess = meta['reviewAccess'] is Map
+          ? ReviewAccessControl.fromJson(Map<String, dynamic>.from(meta['reviewAccess'] as Map))
+          : null;
+
+      final taxonomy = Map<String, dynamic>.from(data['taxonomy'] as Map? ?? {});
       final categories = (taxonomy['categories'] as List<dynamic>? ?? const [])
           .map((item) => ServiceCategory.fromJson(_asMap(item)))
           .toList();
@@ -70,6 +83,9 @@ class ServiceCatalogRepository {
         catalogue: catalogue,
         healthMetrics: healthMetrics,
         deliveryBoard: deliveryBoard,
+        reviews: reviews,
+        reviewSummary: reviewSummary,
+        reviewAccess: reviewAccess,
         generatedAt: DateTime.tryParse(meta['generatedAt']?.toString() ?? '') ?? DateTime.now(),
         offline: false,
       );

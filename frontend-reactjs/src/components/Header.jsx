@@ -2,13 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { LOGO_URL } from '../constants/branding';
+import { BUSINESS_FRONT_ALLOWED_ROLES } from '../constants/accessControl.js';
 import { useLocale } from '../hooks/useLocale.js';
+import PersonaSwitcher from './PersonaSwitcher.jsx';
+import { useSession } from '../hooks/useSession.js';
 
 const navigationConfig = [
   { key: 'home', nameKey: 'nav.home', href: '/' },
   { key: 'solutions', nameKey: 'nav.solutions', href: '/services#solution-streams' },
+  { key: 'tools', nameKey: 'nav.tools', href: '/tools' },
   { key: 'industries', nameKey: 'nav.industries', href: '/#home-marketing' },
   { key: 'platform', nameKey: 'nav.platform', href: '/#home-operations' },
+  { key: 'materials', nameKey: 'nav.materials', href: '/materials' },
   { key: 'resources', nameKey: 'nav.resources', href: '/services#activation-blueprint' },
   {
     key: 'dashboards',
@@ -21,6 +26,12 @@ const navigationConfig = [
         href: '/provider/dashboard'
       },
       {
+        key: 'provider-storefront',
+        nameKey: 'nav.providerStorefront',
+        descriptionKey: 'nav.providerStorefrontDescription',
+        href: '/provider/storefront'
+      },
+      {
         key: 'enterprise',
         nameKey: 'nav.enterpriseAnalytics',
         descriptionKey: 'nav.enterpriseAnalyticsDescription',
@@ -31,6 +42,12 @@ const navigationConfig = [
         nameKey: 'nav.businessFronts',
         descriptionKey: 'nav.businessFrontsDescription',
         href: '/providers/metro-power-services'
+      },
+      {
+        key: 'geo-matching',
+        nameKey: 'nav.geoMatching',
+        descriptionKey: 'nav.geoMatchingDescription',
+        href: '/operations/geo-matching'
       }
     ]
   },
@@ -44,19 +61,38 @@ export default function Header() {
   const menuRefs = useRef({});
   const location = useLocation();
   const { t, locale, setLocale, availableLocales } = useLocale();
+  const { hasRole } = useSession();
+  const allowBusinessFronts = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
 
   const navigation = useMemo(
     () =>
-      navigationConfig.map((item) => ({
-        ...item,
-        name: t(item.nameKey),
-        children: item.children?.map((child) => ({
-          ...child,
-          name: t(child.nameKey),
-          description: child.descriptionKey ? t(child.descriptionKey) : undefined
-        }))
-      })),
-    [t, locale]
+      navigationConfig
+        .map((item) => {
+          const base = {
+            ...item,
+            name: t(item.nameKey)
+          };
+
+          if (!item.children) {
+            return base;
+          }
+
+          const children = item.children
+            .filter((child) => child.key !== 'business-fronts' || allowBusinessFronts)
+            .map((child) => ({
+              ...child,
+              name: t(child.nameKey),
+              description: child.descriptionKey ? t(child.descriptionKey) : undefined
+            }));
+
+          if (children.length === 0) {
+            return null;
+          }
+
+          return { ...base, children };
+        })
+        .filter(Boolean),
+    [t, locale, allowBusinessFronts]
   );
 
   useEffect(() => {
@@ -208,6 +244,7 @@ export default function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-3">
+          <PersonaSwitcher variant="desktop" />
           <label htmlFor="desktop-language-selector" className="sr-only">
             {t('nav.languageSelector')}
           </label>
@@ -297,6 +334,7 @@ export default function Header() {
             )
           ))}
           <div className="flex flex-col gap-3 pt-4">
+            <PersonaSwitcher variant="mobile" />
             <label htmlFor="mobile-language-selector" className="sr-only">
               {t('nav.languageSelector')}
             </label>
