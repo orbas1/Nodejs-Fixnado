@@ -34,6 +34,26 @@ class AnalyticsDashboard {
   }
 }
 
+class AnalyticsSectionAccess {
+  const AnalyticsSectionAccess({
+    this.label,
+    this.level,
+    this.features = const [],
+  });
+
+  final String? label;
+  final String? level;
+  final List<String> features;
+
+  factory AnalyticsSectionAccess.fromJson(Map<String, dynamic> json) {
+    return AnalyticsSectionAccess(
+      label: json['label'] as String?,
+      level: json['level'] as String?,
+      features: (json['features'] as List<dynamic>? ?? const []).map((value) => value.toString()).toList(),
+    );
+  }
+}
+
 class AnalyticsWindow {
   const AnalyticsWindow({
     this.start,
@@ -97,6 +117,7 @@ abstract class AnalyticsSection {
     required this.description,
     required this.type,
     this.sidebar,
+    this.access,
   });
 
   final String id;
@@ -104,11 +125,15 @@ abstract class AnalyticsSection {
   final String description;
   final String type;
   final AnalyticsSidebar? sidebar;
+  final AnalyticsSectionAccess? access;
 
   factory AnalyticsSection.fromJson(Map<String, dynamic> json) {
     final type = json['type'] as String? ?? 'overview';
     final sidebar = json['sidebar'] is Map
         ? AnalyticsSidebar.fromJson(Map<String, dynamic>.from(json['sidebar'] as Map))
+        : null;
+    final access = json['access'] is Map
+        ? AnalyticsSectionAccess.fromJson(Map<String, dynamic>.from(json['access'] as Map))
         : null;
 
     switch (type) {
@@ -121,6 +146,7 @@ abstract class AnalyticsSection {
             Map<String, dynamic>.from(json['analytics'] as Map? ?? const {}),
           ),
           sidebar: sidebar,
+          access: access,
         );
       case 'table':
         return AnalyticsTableSection(
@@ -131,6 +157,7 @@ abstract class AnalyticsSection {
             Map<String, dynamic>.from(json['data'] as Map? ?? const {}),
           ),
           sidebar: sidebar,
+          access: access,
         );
       case 'board':
         return AnalyticsBoardSection(
@@ -141,6 +168,7 @@ abstract class AnalyticsSection {
             Map<String, dynamic>.from(json['data'] as Map? ?? const {}),
           ),
           sidebar: sidebar,
+          access: access,
         );
       case 'list':
         return AnalyticsListSection(
@@ -149,6 +177,7 @@ abstract class AnalyticsSection {
           description: json['description'] as String? ?? '',
           data: AnalyticsListData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
           sidebar: sidebar,
+          access: access,
         );
       case 'grid':
         return AnalyticsGridSection(
@@ -157,6 +186,7 @@ abstract class AnalyticsSection {
           description: json['description'] as String? ?? '',
           data: AnalyticsGridData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
           sidebar: sidebar,
+          access: access,
         );
       case 'ads':
         return AnalyticsAdsSection(
@@ -165,6 +195,7 @@ abstract class AnalyticsSection {
           description: json['description'] as String? ?? '',
           data: AnalyticsAdsData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
           sidebar: sidebar,
+          access: access,
         );
       case 'settings':
         return AnalyticsSettingsSection(
@@ -173,6 +204,7 @@ abstract class AnalyticsSection {
           description: json['description'] as String? ?? '',
           data: AnalyticsSettingsData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
           sidebar: sidebar,
+          access: access,
         );
       default:
         return AnalyticsOverviewSection(
@@ -183,6 +215,7 @@ abstract class AnalyticsSection {
             Map<String, dynamic>.from(json['analytics'] as Map? ?? const {}),
           ),
           sidebar: sidebar,
+          access: access,
         );
     }
   }
@@ -195,6 +228,7 @@ class AnalyticsOverviewSection extends AnalyticsSection {
     required super.description,
     required this.analytics,
     super.sidebar,
+    super.access,
   }) : super(type: 'overview');
 
   final AnalyticsOverview analytics;
@@ -207,6 +241,7 @@ class AnalyticsTableSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'table');
 
   final AnalyticsTableData data;
@@ -219,6 +254,7 @@ class AnalyticsBoardSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'board');
 
   final AnalyticsBoardData data;
@@ -231,6 +267,7 @@ class AnalyticsListSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'list');
 
   final AnalyticsListData data;
@@ -243,6 +280,7 @@ class AnalyticsGridSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'grid');
 
   final AnalyticsGridData data;
@@ -255,6 +293,7 @@ class AnalyticsAdsSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'ads');
 
   final AnalyticsAdsData data;
@@ -267,6 +306,7 @@ class AnalyticsSettingsSection extends AnalyticsSection {
     required super.description,
     required this.data,
     super.sidebar,
+    super.access,
   }) : super(type: 'settings');
 
   final AnalyticsSettingsData data;
@@ -596,6 +636,10 @@ class AnalyticsAdsData {
     this.alerts = const [],
     this.recommendations = const [],
     this.timeline = const [],
+    this.pricingModels = const [],
+    this.channelMix = const [],
+    this.targeting = const [],
+    this.creativeInsights = const [],
   });
 
   final List<AnalyticsAdsSummaryCard> summaryCards;
@@ -605,6 +649,10 @@ class AnalyticsAdsData {
   final List<AnalyticsAdsAlert> alerts;
   final List<AnalyticsAdsRecommendation> recommendations;
   final List<AnalyticsAdsTimelineEntry> timeline;
+  final List<AnalyticsAdsPricingModel> pricingModels;
+  final List<AnalyticsAdsChannel> channelMix;
+  final List<AnalyticsAdsTargetingSegment> targeting;
+  final List<AnalyticsAdsCreativeInsight> creativeInsights;
 
   factory AnalyticsAdsData.fromJson(Map<String, dynamic> json) {
     return AnalyticsAdsData(
@@ -628,6 +676,18 @@ class AnalyticsAdsData {
           .toList(),
       timeline: (json['timeline'] as List<dynamic>? ?? const [])
           .map((raw) => AnalyticsAdsTimelineEntry.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      pricingModels: (json['pricingModels'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsPricingModel.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      channelMix: (json['channelMix'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsChannel.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      targeting: (json['targeting'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsTargetingSegment.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      creativeInsights: (json['creativeInsights'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsCreativeInsight.fromJson(Map<String, dynamic>.from(raw as Map)))
           .toList(),
     );
   }
@@ -833,7 +893,126 @@ class AnalyticsAdsTimelineEntry {
   }
 }
 
-  class AnalyticsSettingsData {
+class AnalyticsAdsPricingModel {
+  const AnalyticsAdsPricingModel({
+    this.id,
+    required this.label,
+    this.spend,
+    this.unitCost,
+    this.unitLabel,
+    this.performance,
+    this.status,
+  });
+
+  final String? id;
+  final String label;
+  final String? spend;
+  final String? unitCost;
+  final String? unitLabel;
+  final String? performance;
+  final String? status;
+
+  factory AnalyticsAdsPricingModel.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsPricingModel(
+      id: json['id']?.toString(),
+      label: json['label']?.toString() ?? '',
+      spend: json['spend']?.toString(),
+      unitCost: json['unitCost']?.toString(),
+      unitLabel: json['unitLabel']?.toString(),
+      performance: json['performance']?.toString(),
+      status: json['status']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsChannel {
+  const AnalyticsAdsChannel({
+    this.id,
+    required this.label,
+    this.spend,
+    this.share,
+    this.performance,
+    this.status,
+    this.campaigns,
+  });
+
+  final String? id;
+  final String label;
+  final String? spend;
+  final String? share;
+  final String? performance;
+  final String? status;
+  final int? campaigns;
+
+  factory AnalyticsAdsChannel.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsChannel(
+      id: json['id']?.toString(),
+      label: json['label']?.toString() ?? '',
+      spend: json['spend']?.toString(),
+      share: json['share']?.toString(),
+      performance: json['performance']?.toString(),
+      status: json['status']?.toString(),
+      campaigns: (json['campaigns'] as num?)?.toInt(),
+    );
+  }
+}
+
+class AnalyticsAdsTargetingSegment {
+  const AnalyticsAdsTargetingSegment({
+    this.id,
+    required this.label,
+    this.metric,
+    this.share,
+    this.status,
+    this.helper,
+  });
+
+  final String? id;
+  final String label;
+  final String? metric;
+  final String? share;
+  final String? status;
+  final String? helper;
+
+  factory AnalyticsAdsTargetingSegment.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsTargetingSegment(
+      id: json['id']?.toString(),
+      label: json['label']?.toString() ?? '',
+      metric: json['metric']?.toString(),
+      share: json['share']?.toString(),
+      status: json['status']?.toString(),
+      helper: json['helper']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsCreativeInsight {
+  const AnalyticsAdsCreativeInsight({
+    this.id,
+    required this.label,
+    this.severity,
+    this.message,
+    this.detectedAt,
+  });
+
+  final String? id;
+  final String label;
+  final String? severity;
+  final String? message;
+  final String? detectedAt;
+
+  factory AnalyticsAdsCreativeInsight.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsCreativeInsight(
+      id: json['id']?.toString(),
+      label: json['label']?.toString() ?? '',
+      severity: json['severity']?.toString(),
+      message: json['message']?.toString(),
+      detectedAt: json['detectedAt']?.toString(),
+    );
+  }
+}
+
+class AnalyticsSettingsData {
   const AnalyticsSettingsData({
     this.panels = const [],
   });

@@ -371,7 +371,13 @@ const DashboardLayout = ({
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
-    return <DashboardSection section={activeSection} />;
+    return (
+      <DashboardSection
+        section={activeSection}
+        persona={persona}
+        features={dashboard?.metadata?.features ?? {}}
+      />
+    );
   };
 
   const registeredOptions = registeredRoles.filter((role) => role.registered);

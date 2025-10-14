@@ -601,7 +601,324 @@ const severityBadgeClasses = {
   default: 'border-slate-200 bg-slate-100 text-slate-600'
 };
 
-const FixnadoAdsSection = ({ section }) => {
+const adsStatusClass = (status) => {
+  const value = typeof status === 'string' ? status.toLowerCase() : '';
+  if (['scaling', 'primary', 'healthy', 'active', 'high intent'].some((token) => value.includes(token))) {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  }
+  if (['steady', 'view', 'enable', 'growing', 'stable'].some((token) => value.includes(token))) {
+    return 'border-sky-200 bg-sky-50 text-sky-700';
+  }
+  if (['warning', 'monitor', 'niche', 'test', 'pending'].some((token) => value.includes(token))) {
+    return 'border-amber-200 bg-amber-50 text-amber-700';
+  }
+  if (['critical', 'at risk', 'danger'].some((token) => value.includes(token))) {
+    return 'border-rose-200 bg-rose-50 text-rose-700';
+  }
+  return 'border-slate-200 bg-white text-slate-600';
+};
+
+const insightSeverityClass = (severity) => {
+  const value = typeof severity === 'string' ? severity.toLowerCase() : '';
+  if (value.includes('critical')) {
+    return 'border-rose-200 bg-rose-50 text-rose-700';
+  }
+  if (value.includes('warning')) {
+    return 'border-amber-200 bg-amber-50 text-amber-700';
+  }
+  if (value.includes('healthy') || value.includes('success')) {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  }
+  if (value.includes('monitor')) {
+    return 'border-sky-200 bg-sky-50 text-sky-700';
+  }
+  return 'border-slate-200 bg-white text-slate-600';
+};
+
+const parseShareWidth = (share) => {
+  if (typeof share === 'number' && Number.isFinite(share)) {
+    return `${Math.max(0, Math.min(share, 1)) * 100}%`;
+  }
+  if (typeof share === 'string') {
+    const numeric = Number.parseFloat(share.replace('%', '').trim());
+    if (Number.isFinite(numeric)) {
+      const normalised = share.includes('%') ? numeric : numeric * 100;
+      return `${Math.max(0, Math.min(normalised, 100))}%`;
+    }
+  }
+  return '0%';
+};
+
+const AdsAccessSummary = ({ accessLabel, accessLevel, accessFeatures, persona }) => {
+  if (!accessLabel && !accessLevel && (!accessFeatures || accessFeatures.length === 0)) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-3xl border border-accent/20 bg-white/80 px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-primary/70">
+        {accessLabel ? (
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-secondary px-3 py-1 text-primary">
+            {accessLabel}
+          </span>
+        ) : null}
+        {accessLevel ? (
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-primary/80">
+            Access level: {accessLevel}
+          </span>
+        ) : null}
+        {persona ? (
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-secondary px-3 py-1 text-primary/70">
+            Persona: {persona}
+          </span>
+        ) : null}
+      </div>
+      {Array.isArray(accessFeatures) && accessFeatures.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2 text-[0.65rem] uppercase tracking-wide text-primary/60">
+          {accessFeatures.map((feature) => (
+            <span key={feature} className="inline-flex items-center gap-1 rounded-full border border-accent/20 bg-white px-3 py-1">
+              {feature}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+AdsAccessSummary.propTypes = {
+  accessLabel: PropTypes.string,
+  accessLevel: PropTypes.string,
+  accessFeatures: PropTypes.arrayOf(PropTypes.string),
+  persona: PropTypes.string
+};
+
+const AdsPricingModels = ({ models }) => {
+  if (!models.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-primary">Pricing models</h3>
+        <span className="text-xs uppercase tracking-wide text-primary/60">{models.length} active</span>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {models.map((model) => (
+          <div
+            key={model.id ?? model.label}
+            className="rounded-2xl border border-accent/10 bg-secondary px-4 py-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-primary">{model.label}</p>
+                {model.unitLabel ? <p className="text-xs text-primary/60">{model.unitLabel}</p> : null}
+              </div>
+              {model.status ? (
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${adsStatusClass(model.status)}`}>
+                  {model.status}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-primary">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-primary/60">Spend</p>
+                <p className="mt-1 text-lg font-semibold">{model.spend ?? '—'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wide text-primary/60">{model.unitLabel ?? 'Unit cost'}</p>
+                <p className="mt-1 text-lg font-semibold">{model.unitCost ?? '—'}</p>
+              </div>
+            </div>
+            {model.performance ? <p className="mt-3 text-sm text-slate-600">{model.performance}</p> : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+AdsPricingModels.propTypes = {
+  models: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string.isRequired,
+      spend: PropTypes.string,
+      unitCost: PropTypes.string,
+      unitLabel: PropTypes.string,
+      performance: PropTypes.string,
+      status: PropTypes.string
+    })
+  ).isRequired
+};
+
+const AdsChannelMix = ({ channelMix }) => {
+  if (!channelMix.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-primary">Channel mix</h3>
+        <span className="text-xs uppercase tracking-wide text-primary/60">{channelMix.length} channels</span>
+      </div>
+      <ul className="mt-4 space-y-4">
+        {channelMix.map((channel) => (
+          <li
+            key={channel.id ?? channel.label}
+            className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3 text-sm text-slate-600"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-primary">{channel.label}</p>
+                <p className="text-xs text-primary/60">
+                  {channel.campaigns ?? 0} campaign{channel.campaigns === 1 ? '' : 's'}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-semibold text-primary">{channel.share ?? '—'}</p>
+                <p className="text-xs text-primary/60">{channel.performance}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-primary/60">
+              <span>{channel.spend}</span>
+              {channel.status ? (
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold ${adsStatusClass(channel.status)}`}>
+                  {channel.status}
+                </span>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+AdsChannelMix.propTypes = {
+  channelMix: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string.isRequired,
+      spend: PropTypes.string,
+      share: PropTypes.string,
+      performance: PropTypes.string,
+      status: PropTypes.string,
+      campaigns: PropTypes.number
+    })
+  ).isRequired
+};
+
+const AdsTargetingSegments = ({ segments }) => {
+  if (!segments.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-primary">Targeting segments</h3>
+        <span className="text-xs uppercase tracking-wide text-primary/60">{segments.length} segments</span>
+      </div>
+      <ul className="mt-4 space-y-4">
+        {segments.map((segment) => (
+          <li
+            key={segment.id ?? segment.label}
+            className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3 text-sm text-slate-600"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-primary">{segment.label}</p>
+                {segment.helper ? <p className="text-xs text-primary/60">{segment.helper}</p> : null}
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-primary">{segment.share ?? '—'}</p>
+                {segment.metric ? <p className="text-xs text-primary/60">{segment.metric}</p> : null}
+              </div>
+            </div>
+            <div className="mt-3 h-2 w-full rounded-full bg-white/60">
+              <div className="h-2 rounded-full bg-accent" style={{ width: parseShareWidth(segment.share) }} />
+            </div>
+            {segment.status ? (
+              <div className="mt-3">
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${adsStatusClass(segment.status)}`}>
+                  {segment.status}
+                </span>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+AdsTargetingSegments.propTypes = {
+  segments: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string.isRequired,
+      metric: PropTypes.string,
+      share: PropTypes.string,
+      status: PropTypes.string,
+      helper: PropTypes.string
+    })
+  ).isRequired
+};
+
+const AdsCreativeInsights = ({ insights }) => {
+  if (!insights.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-primary">Creative insights &amp; guardrails</h3>
+        <span className="text-xs uppercase tracking-wide text-primary/60">{insights.length} signals</span>
+      </div>
+      <ul className="mt-4 space-y-4">
+        {insights.map((insight) => (
+          <li
+            key={insight.id ?? insight.label}
+            className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3 text-sm text-slate-600"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-primary">{insight.label}</p>
+                {insight.detectedAt ? (
+                  <p className="text-xs text-primary/60">Detected {insight.detectedAt}</p>
+                ) : null}
+              </div>
+              {insight.severity ? (
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${insightSeverityClass(insight.severity)}`}>
+                  {insight.severity}
+                </span>
+              ) : null}
+            </div>
+            {insight.message ? <p className="mt-2 text-sm text-slate-600">{insight.message}</p> : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+AdsCreativeInsights.propTypes = {
+  insights: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string.isRequired,
+      severity: PropTypes.string,
+      message: PropTypes.string,
+      detectedAt: PropTypes.string
+    })
+  ).isRequired
+};
+
+const FixnadoAdsSection = ({ section, features = {}, persona }) => {
   const summaryCards = section.data?.summaryCards ?? [];
   const funnel = section.data?.funnel ?? [];
   const campaigns = section.data?.campaigns ?? [];
@@ -609,35 +926,99 @@ const FixnadoAdsSection = ({ section }) => {
   const alerts = section.data?.alerts ?? [];
   const recommendations = section.data?.recommendations ?? [];
   const timeline = section.data?.timeline ?? [];
+  const pricingModels = section.data?.pricingModels ?? [];
+  const channelMix = section.data?.channelMix ?? [];
+  const targeting = section.data?.targeting ?? [];
+  const creativeInsights = section.data?.creativeInsights ?? [];
+
+  const adsFeature = features.ads ?? {};
+  const accessMeta = section.access ?? null;
+  const isAvailable = adsFeature.available !== false;
+  const accessLabel = accessMeta?.label ?? adsFeature.label ?? 'Fixnado Ads';
+  const accessLevel = accessMeta?.level ?? adsFeature.level ?? 'view';
+  const accessFeatures = accessMeta?.features ?? adsFeature.features ?? [];
+
+  if (!isAvailable) {
+    return (
+      <div className="space-y-6">
+        <SectionHeader section={section} />
+        <div className="rounded-3xl border border-dashed border-accent/30 bg-white p-8 text-center text-sm text-slate-600 shadow-sm">
+          <p className="text-lg font-semibold text-primary">Access restricted</p>
+          <p className="mt-2">
+            {accessLabel} is not enabled for this workspace yet. Please contact your administrator to request {accessLevel}{' '}
+            access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    summaryCards.length === 0 &&
+    funnel.length === 0 &&
+    campaigns.length === 0 &&
+    invoices.length === 0 &&
+    alerts.length === 0 &&
+    recommendations.length === 0 &&
+    timeline.length === 0 &&
+    pricingModels.length === 0 &&
+    channelMix.length === 0 &&
+    targeting.length === 0 &&
+    creativeInsights.length === 0
+  ) {
+    return (
+      <div className="space-y-6">
+        <SectionHeader section={section} />
+        <div className="rounded-3xl border border-dashed border-accent/30 bg-white p-8 text-center text-sm text-slate-600 shadow-sm">
+          No Fixnado Ads data available yet.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       <SectionHeader section={section} />
+      <AdsAccessSummary
+        accessLabel={accessLabel}
+        accessLevel={accessLevel}
+        accessFeatures={accessFeatures}
+        persona={persona}
+      />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => {
-          const TrendIcon = adsTrendIcon[card.trend] ?? MinusSmallIcon;
-          const trendColor =
-            card.trend === 'down' ? 'text-rose-500' : card.trend === 'up' ? 'text-emerald-500' : 'text-primary/60';
-          return (
-            <div key={card.title} className="rounded-2xl border border-accent/10 bg-white/95 p-6 shadow-md">
-              <p className="text-xs uppercase tracking-wide text-primary/60">{card.title}</p>
-              <div className="mt-3 flex items-end justify-between gap-2">
-                <p className="text-2xl font-semibold text-primary">{card.value}</p>
-                {card.change ? (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs font-semibold ${trendColor}`}
-                  >
-                    <TrendIcon className="h-4 w-4" />
-                    {card.change}
-                  </span>
-                ) : null}
+      {summaryCards.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map((card) => {
+            const TrendIcon = adsTrendIcon[card.trend] ?? MinusSmallIcon;
+            const trendColor =
+              card.trend === 'down' ? 'text-rose-500' : card.trend === 'up' ? 'text-emerald-500' : 'text-primary/60';
+            return (
+              <div key={card.title} className="rounded-2xl border border-accent/10 bg-white/95 p-6 shadow-md">
+                <p className="text-xs uppercase tracking-wide text-primary/60">{card.title}</p>
+                <div className="mt-3 flex items-end justify-between gap-2">
+                  <p className="text-2xl font-semibold text-primary">{card.value}</p>
+                  {card.change ? (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs font-semibold ${trendColor}`}
+                    >
+                      <TrendIcon className="h-4 w-4" />
+                      {card.change}
+                    </span>
+                  ) : null}
+                </div>
+                {card.helper ? <p className="mt-3 text-sm text-slate-600">{card.helper}</p> : null}
               </div>
-              {card.helper ? <p className="mt-3 text-sm text-slate-600">{card.helper}</p> : null}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {pricingModels.length > 0 || channelMix.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <AdsPricingModels models={pricingModels} />
+          <AdsChannelMix channelMix={channelMix} />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2 rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
@@ -702,7 +1083,10 @@ const FixnadoAdsSection = ({ section }) => {
           <ul className="mt-4 space-y-4">
             {timeline.length > 0 ? (
               timeline.map((entry) => (
-                <li key={`${entry.title}-${entry.start}`} className="rounded-2xl border border-accent/10 bg-white/80 px-4 py-3 text-sm text-slate-600">
+                <li
+                  key={`${entry.title}-${entry.start}`}
+                  className="rounded-2xl border border-accent/10 bg-white/80 px-4 py-3 text-sm text-slate-600"
+                >
                   <p className="font-semibold text-primary">{entry.title}</p>
                   <p className="text-xs text-primary/60">{entry.status}</p>
                   <p className="mt-1 text-xs text-slate-500">{entry.start} → {entry.end}</p>
@@ -717,6 +1101,13 @@ const FixnadoAdsSection = ({ section }) => {
           </ul>
         </div>
       </div>
+
+      {targeting.length > 0 || creativeInsights.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <AdsTargetingSegments segments={targeting} />
+          <AdsCreativeInsights insights={creativeInsights} />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
@@ -966,9 +1357,59 @@ FixnadoAdsSection.propTypes = {
           end: PropTypes.string,
           budget: PropTypes.string
         })
+      ),
+      pricingModels: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          label: PropTypes.string.isRequired,
+          spend: PropTypes.string,
+          unitCost: PropTypes.string,
+          unitLabel: PropTypes.string,
+          performance: PropTypes.string,
+          status: PropTypes.string
+        })
+      ),
+      channelMix: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          label: PropTypes.string.isRequired,
+          spend: PropTypes.string,
+          share: PropTypes.string,
+          performance: PropTypes.string,
+          status: PropTypes.string,
+          campaigns: PropTypes.number
+        })
+      ),
+      targeting: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          label: PropTypes.string.isRequired,
+          metric: PropTypes.string,
+          share: PropTypes.string,
+          status: PropTypes.string,
+          helper: PropTypes.string
+        })
+      ),
+      creativeInsights: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          label: PropTypes.string.isRequired,
+          severity: PropTypes.string,
+          message: PropTypes.string,
+          detectedAt: PropTypes.string
+        })
       )
     })
-  }).isRequired
+  }).isRequired,
+  features: PropTypes.shape({
+    ads: PropTypes.shape({
+      available: PropTypes.bool,
+      level: PropTypes.string,
+      label: PropTypes.string,
+      features: PropTypes.arrayOf(PropTypes.string)
+    })
+  }),
+  persona: PropTypes.string
 };
 
 const SettingsSection = ({ section }) => {
@@ -1166,7 +1607,7 @@ ZonePlannerSection.propTypes = {
   }).isRequired
 };
 
-const DashboardSection = ({ section }) => {
+const DashboardSection = ({ section, features = {}, persona }) => {
   switch (section.type) {
     case 'grid':
       return <GridSection section={section} />;
@@ -1179,7 +1620,7 @@ const DashboardSection = ({ section }) => {
     case 'inventory':
       return <InventorySection section={section} />;
     case 'ads':
-      return <FixnadoAdsSection section={section} />;
+      return <FixnadoAdsSection section={section} features={features} persona={persona} />;
     case 'settings':
       return <SettingsSection section={section} />;
     case 'calendar':
@@ -1196,7 +1637,9 @@ const DashboardSection = ({ section }) => {
 DashboardSection.propTypes = {
   section: PropTypes.shape({
     type: PropTypes.string.isRequired
-  }).isRequired
+  }).isRequired,
+  features: PropTypes.object,
+  persona: PropTypes.string
 };
 
 export default DashboardSection;
