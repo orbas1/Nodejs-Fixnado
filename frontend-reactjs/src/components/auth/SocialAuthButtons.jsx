@@ -99,7 +99,7 @@ function SocialAuthButtons({ onSelect, className }) {
             type="button"
             onClick={() => onSelect(provider.id)}
             className={clsx(
-              'flex h-12 w-2/3 items-center justify-center gap-3 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2',
+              'mx-auto flex h-12 w-full max-w-sm items-center justify-center gap-3 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2',
               provider.accent
             )}
           >

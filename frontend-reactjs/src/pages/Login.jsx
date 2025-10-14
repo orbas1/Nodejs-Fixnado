@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons.jsx';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [hasTwoFactorEnabled, setHasTwoFactorEnabled] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const controlWidthClass = 'w-full max-w-sm';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -25,6 +27,9 @@ export default function Login() {
     }
 
     setStatusMessage('Signed in securely. Redirecting to your feed...');
+    window.setTimeout(() => {
+      navigate('/feed', { replace: true });
+    }, 600);
   };
 
   const handleTwoFactorSubmit = (event) => {
@@ -35,6 +40,11 @@ export default function Login() {
     }
 
     setStatusMessage('Two-factor check complete. Redirecting to your feed...');
+    window.setTimeout(() => {
+      setTwoFactorRequired(false);
+      setTwoFactorCode('');
+      navigate('/feed', { replace: true });
+    }, 600);
   };
 
   const handleSocialSelect = (providerId) => {
@@ -51,8 +61,12 @@ export default function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleCredentialSubmit} className="mt-10 grid gap-5" aria-disabled={twoFactorRequired}>
-          <div>
+        <form
+          onSubmit={handleCredentialSubmit}
+          className="mt-10 grid gap-5 justify-items-center"
+          aria-disabled={twoFactorRequired}
+        >
+          <div className={controlWidthClass}>
             <label className="text-sm font-medium text-slate-600" htmlFor="login-email">
               Email
             </label>
@@ -64,7 +78,7 @@ export default function Login() {
               placeholder="you@company.com"
             />
           </div>
-          <div>
+          <div className={controlWidthClass}>
             <div className="flex items-center justify-between text-sm">
               <label className="font-medium text-slate-600" htmlFor="login-password">
                 Password
@@ -82,14 +96,20 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary/90">
+          <button
+            type="submit"
+            className={`${controlWidthClass} rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary/90`}
+          >
             Continue
           </button>
         </form>
 
         {twoFactorRequired && (
-          <form onSubmit={handleTwoFactorSubmit} className="mt-6 grid gap-4 rounded-2xl border border-accent/30 bg-accent/5 p-5">
-            <div>
+          <form
+            onSubmit={handleTwoFactorSubmit}
+            className="mt-6 grid gap-4 justify-items-center rounded-2xl border border-accent/30 bg-accent/5 p-5"
+          >
+            <div className={controlWidthClass}>
               <label className="text-sm font-medium text-primary" htmlFor="two-factor-code">
                 Two-factor code
               </label>
@@ -109,7 +129,7 @@ export default function Login() {
             </div>
             <button
               type="submit"
-              className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90"
+              className={`${controlWidthClass} rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90`}
             >
               Verify and continue
             </button>

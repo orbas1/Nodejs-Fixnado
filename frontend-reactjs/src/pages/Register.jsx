@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons.jsx';
 
 export default function Register() {
+  const controlWidthClass = 'w-full max-w-sm';
+  const fieldGroupClass = 'w-full max-w-2xl';
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-5xl flex-col justify-center px-6 py-12">
       <div className="grid gap-10 rounded-3xl border border-slate-200 bg-white/95 p-10 shadow-2xl shadow-accent/10 md:grid-cols-2">
@@ -25,9 +27,9 @@ export default function Register() {
             </li>
           </ul>
         </div>
-        <form className="grid gap-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm font-medium text-slate-600" htmlFor="register-first-name">
+        <form className="grid gap-5 justify-items-center">
+          <div className={`grid ${fieldGroupClass} gap-4 md:grid-cols-2 md:gap-5`}>
+            <label className={`flex w-full max-w-sm flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-first-name">
               First name
               <input
                 id="register-first-name"
@@ -36,7 +38,7 @@ export default function Register() {
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
               />
             </label>
-            <label className="text-sm font-medium text-slate-600" htmlFor="register-last-name">
+            <label className={`flex w-full max-w-sm flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-last-name">
               Last name
               <input
                 id="register-last-name"
@@ -46,7 +48,7 @@ export default function Register() {
               />
             </label>
           </div>
-          <label className="text-sm font-medium text-slate-600" htmlFor="register-email">
+          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-email">
             Email
             <input
               id="register-email"
@@ -55,7 +57,7 @@ export default function Register() {
               className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             />
           </label>
-          <label className="text-sm font-medium text-slate-600" htmlFor="register-password">
+          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-password">
             Password
             <input
               id="register-password"
@@ -64,7 +66,7 @@ export default function Register() {
               className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             />
           </label>
-          <label className="text-sm font-medium text-slate-600" htmlFor="register-address">
+          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-address">
             Address
             <input
               id="register-address"
@@ -72,7 +74,7 @@ export default function Register() {
               className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             />
           </label>
-          <label className="text-sm font-medium text-slate-600" htmlFor="register-age">
+          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-age">
             Age
             <input
               id="register-age"
@@ -81,20 +83,23 @@ export default function Register() {
               className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             />
           </label>
-          <div className="grid gap-3">
+          <div className={`grid ${controlWidthClass} gap-3`}>
             <label className="text-sm font-medium text-slate-600" htmlFor="register-role">
               Joining as
             </label>
             <select
               id="register-role"
-              className="rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             >
               <option value="user">Customer</option>
               <option value="servicemen">Service professional</option>
               <option value="company">Company</option>
             </select>
           </div>
-          <button type="submit" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90">
+          <button
+            type="submit"
+            className={`${controlWidthClass} rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90`}
+          >
             Create account
           </button>
           <SocialAuthButtons className="mt-2" />
