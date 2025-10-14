@@ -317,7 +317,7 @@ export {
   BlogTag,
   BlogMedia,
   BlogPostCategory,
-  BlogPostTag
+  BlogPostTag,
   AffiliateProfile,
   AffiliateCommissionRule,
   AffiliateReferral,

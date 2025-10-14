@@ -10,6 +10,13 @@ export default defineConfig({
         singleThread: true
       }
     },
+    deps: {
+      optimizer: {
+        ssr: {
+          include: ['dotenv']
+        }
+      }
+    },
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
