@@ -98,5 +98,74 @@ vi.mock('@turf/turf', () => {
     return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] } };
   }
 
-  return { area, bbox, centroid, booleanValid };
+  function point(coordinates) {
+    return { type: 'Feature', geometry: { type: 'Point', coordinates } };
+  }
+
+  function toRadians(value) {
+    return (value * Math.PI) / 180;
+  }
+
+  function distance(a, b, options = {}) {
+    const [lon1, lat1] = (a.geometry || a).coordinates;
+    const [lon2, lat2] = (b.geometry || b).coordinates;
+    const earthRadiusKm = 6371;
+
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const rLat1 = toRadians(lat1);
+    const rLat2 = toRadians(lat2);
+
+    const haversine =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+    const distanceKm = earthRadiusKm * c;
+
+    if (options.units === 'kilometers' || !options.units) {
+      return distanceKm;
+    }
+    if (options.units === 'miles') {
+      return distanceKm * 0.621371;
+    }
+    return distanceKm;
+  }
+
+  function booleanPointInPolygon(pointFeature, polygonFeature) {
+    const [x, y] = (pointFeature.geometry || pointFeature).coordinates;
+    const rings = extractRings(polygonFeature);
+    const polygon = rings[0] || [];
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi || 1e-9) + xi;
+      if (intersect) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  function bboxPolygon(extent) {
+    const [minX, minY, maxX, maxY] = extent;
+    return {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [minX, minY],
+            [maxX, minY],
+            [maxX, maxY],
+            [minX, maxY],
+            [minX, minY]
+          ]
+        ]
+      }
+    };
+  }
+
+  return { area, bbox, centroid, booleanValid, point, distance, booleanPointInPolygon, bboxPolygon };
 });

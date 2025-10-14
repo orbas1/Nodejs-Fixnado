@@ -91,6 +91,47 @@ function resolveReviewBand(score) {
     return 'emerging';
   }
   return 'attention';
+function inventoryAvailability(item) {
+  const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+  const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+  if (!Number.isFinite(onHand) || !Number.isFinite(reserved)) {
+    return 0;
+  }
+  return Math.max(onHand - reserved, 0);
+}
+
+function inventoryStatus(item) {
+  const available = inventoryAvailability(item);
+  const safety = Number.parseInt(item.safetyStock ?? 0, 10);
+  if (available <= 0) {
+    return 'stockout';
+  }
+  if (Number.isFinite(safety) && available <= Math.max(safety, 0)) {
+    return 'low_stock';
+  }
+  return 'healthy';
+}
+
+function buildInventorySummary(items = []) {
+  const totals = items.reduce(
+    (acc, item) => {
+      const available = inventoryAvailability(item);
+      const reserved = Number.parseInt(item.quantityReserved ?? 0, 10);
+      const onHand = Number.parseInt(item.quantityOnHand ?? 0, 10);
+      return {
+        onHand: acc.onHand + (Number.isFinite(onHand) ? onHand : 0),
+        reserved: acc.reserved + (Number.isFinite(reserved) ? reserved : 0),
+        available: acc.available + available,
+        alerts: acc.alerts + (inventoryStatus(item) !== 'healthy' ? 1 : 0)
+      };
+    },
+    { onHand: 0, reserved: 0, available: 0, alerts: 0 }
+  );
+
+  return {
+    totals,
+    skuCount: items.length
+  };
 }
 
 function toSlug(input, fallback) {
@@ -105,7 +146,46 @@ function toSlug(input, fallback) {
   return fallback;
 }
 
+function sanitiseString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+async function resolveCompanyForActor({ companyId, actor }) {
+  if (!actor?.id) {
+    const error = new Error('forbidden');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const baseWhere = { userId: actor.id };
+  const where = companyId ? { ...baseWhere, id: companyId } : baseWhere;
+
+  const company = await Company.findOne({
+    where,
+    raw: true,
+    order: [['createdAt', 'ASC']]
+  });
+
+  if (company) {
+    return company;
+  }
+
+  if (companyId) {
+    const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
+    if (exists) {
+      const error = new Error('forbidden');
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  const error = new Error('company_not_found');
+  error.statusCode = 404;
+  throw error;
+}
+
 async function resolveCompanyId(companyId) {
+export async function resolveCompanyId(companyId) {
   if (companyId) {
     const exists = await Company.findByPk(companyId, { attributes: ['id'], raw: true });
     if (exists) {
@@ -122,9 +202,9 @@ async function resolveCompanyId(companyId) {
   return firstCompany.id;
 }
 
-export async function buildProviderDashboard({ companyId: inputCompanyId } = {}) {
-  const companyId = await resolveCompanyId(inputCompanyId);
-  const company = await Company.findByPk(companyId, { raw: true });
+export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
+  const company = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const companyId = company.id;
   const now = DateTime.now();
   const startOfMonth = now.startOf('month');
 
@@ -274,6 +354,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
   ].slice(0, 6);
 
   const providerSlug = toSlug(company.contactName, `company-${companyId.slice(0, 8)}`);
+  const supportEmail = sanitiseString(company.contactEmail);
+  const supportPhone = sanitiseString(company.contactPhone);
 
   return {
     data: {
@@ -284,8 +366,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId } = {})
         region: company.serviceRegions || 'United Kingdom',
         slug: providerSlug,
         onboardingStatus: company.verified ? 'active' : 'pending',
-        supportEmail: company.contactEmail || null,
-        supportPhone: null
+        supportEmail,
+        supportPhone
       },
       metrics: {
         utilisation,
@@ -795,37 +877,64 @@ export async function buildBusinessFront({ slug }) {
       tags: service.tags.slice(0, 2)
     }));
 
+  const inventorySummary = buildInventorySummary(inventoryItems);
+
   const materials = inventoryItems
     .filter((item) =>
       (item.category || '').toLowerCase().includes('material') ||
       (!item.rentalRate && (item.metadata?.type === 'material' || item.metadata?.usage === 'consumable'))
     )
-    .slice(0, 6)
-    .map((item, index) => ({
-      id: item.id || `material-${index}`,
-      name: item.name,
-      category: item.category,
-      sku: item.sku,
-      quantityOnHand: item.quantityOnHand,
-      unitType: item.unitType,
-      image: `/media/${slugified}/materials-${index + 1}.jpg`
-    }));
+    .slice(0, 8)
+    .map((item, index) => {
+      const available = inventoryAvailability(item);
+      return {
+        id: item.id || `material-${index}`,
+        name: item.name,
+        category: item.category,
+        sku: item.sku,
+        quantityOnHand: item.quantityOnHand,
+        quantityReserved: item.quantityReserved,
+        availability: available,
+        safetyStock: item.safetyStock,
+        unitType: item.unitType,
+        status: inventoryStatus(item),
+        condition: item.conditionRating,
+        location: item.metadata?.warehouse || item.metadata?.location || null,
+        nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.expiry || null,
+        notes: item.metadata?.notes || null,
+        image: `/media/${slugified}/materials-${index + 1}.jpg`
+      };
+    });
 
   const tools = inventoryItems
     .filter((item) =>
       (item.category || '').toLowerCase().includes('tool') ||
       Number.isFinite(coerceNumber(item.rentalRate, NaN))
     )
-    .slice(0, 6)
-    .map((item, index) => ({
-      id: item.id || `tool-${index}`,
-      name: item.name,
-      category: item.category,
-      rentalRate: coerceNumber(item.rentalRate, null),
-      rentalRateCurrency: item.rentalRateCurrency || 'GBP',
-      condition: item.conditionRating,
-      image: `/media/${slugified}/tools-${index + 1}.jpg`
-    }));
+    .slice(0, 8)
+    .map((item, index) => {
+      const available = inventoryAvailability(item);
+      return {
+        id: item.id || `tool-${index}`,
+        name: item.name,
+        category: item.category,
+        sku: item.sku,
+        quantityOnHand: item.quantityOnHand,
+        quantityReserved: item.quantityReserved,
+        availability: available,
+        safetyStock: item.safetyStock,
+        unitType: item.unitType,
+        status: inventoryStatus(item),
+        condition: item.conditionRating,
+        rentalRate: coerceNumber(item.rentalRate, null),
+        rentalRateCurrency: item.rentalRateCurrency || 'GBP',
+        depositAmount: coerceNumber(item.depositAmount, null),
+        location: item.metadata?.warehouse || item.metadata?.location || null,
+        nextMaintenanceDue: item.metadata?.nextServiceDue || item.metadata?.inspectionDue || null,
+        notes: item.metadata?.notes || null,
+        image: `/media/${slugified}/tools-${index + 1}.jpg`
+      };
+    });
 
   const providerIds = Array.from(new Set(enrichedServices.map((service) => service.providerId).filter(Boolean)));
   const providers = providerIds.length
@@ -911,6 +1020,12 @@ export async function buildBusinessFront({ slug }) {
       scores: {
         trust: trustScore,
         review: reviewScore
+      inventorySummary: {
+        skuCount: inventorySummary.skuCount,
+        onHand: inventorySummary.totals.onHand,
+        reserved: inventorySummary.totals.reserved,
+        available: inventorySummary.totals.available,
+        alerts: inventorySummary.totals.alerts
       },
       taxonomy: {
         categories: listServiceCategories(),

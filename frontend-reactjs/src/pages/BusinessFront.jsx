@@ -9,6 +9,7 @@ import {
   BuildingStorefrontIcon,
   CheckBadgeIcon,
   EnvelopeIcon,
+  LockClosedIcon,
   MapPinIcon,
   PhoneArrowDownLeftIcon,
   PlayIcon,
@@ -20,6 +21,8 @@ import {
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
+import { useSession } from '../hooks/useSession.js';
+import { BUSINESS_FRONT_ALLOWED_ROLES, ROLE_DISPLAY_NAMES } from '../constants/accessControl.js';
 
 function StatCard({ stat }) {
   const { format, t } = useLocale();
@@ -386,8 +389,24 @@ function InventoryCard({ item, variant }) {
     item.rentalRate != null
       ? format.currency(item.rentalRate, { currency: item.rentalRateCurrency || 'GBP', maximumFractionDigits: 0 })
       : null;
+  const availabilityLabel = Number.isFinite(item.availability) ? format.number(item.availability) : null;
+  const reservedLabel = Number.isFinite(item.quantityReserved) ? format.number(item.quantityReserved) : null;
+  const safetyLabel = Number.isFinite(item.safetyStock) ? format.number(item.safetyStock) : null;
+  const activeAlertsLabel = Number.isFinite(item.activeAlerts) ? format.number(item.activeAlerts) : null;
+  const activeRentalsLabel = Number.isFinite(item.activeRentals) ? format.number(item.activeRentals) : null;
+  const nextMaintenanceLabel = item.nextMaintenanceDue ? format.date(item.nextMaintenanceDue) : null;
+  const statusTone = {
+    healthy: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    low_stock: 'border-amber-200 bg-amber-50 text-amber-700',
+    stockout: 'border-rose-200 bg-rose-50 text-rose-700'
+  };
+  const statusKey = item.status ? `businessFront.inventoryStatus.${item.status}` : null;
+  const statusLabel = statusKey ? t(statusKey) : null;
+  const locationLabel = item.location ? t('businessFront.inventoryLocation', { location: item.location }) : null;
+  const notesLabel = item.notes ?? null;
+
   return (
-    <article className="flex h-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white/85 p-6" data-qa={`business-front-inventory-${variant}-${item.id}`}>
+    <article className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200 bg-white/85 p-6 shadow-sm" data-qa={`business-front-inventory-${variant}-${item.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-primary">{item.name}</h3>
@@ -399,13 +418,61 @@ function InventoryCard({ item, variant }) {
           <WrenchScrewdriverIcon className="h-5 w-5 text-primary" aria-hidden="true" />
         )}
       </div>
+      {statusLabel ? (
+        <span
+          className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+            statusTone[item.status] ?? 'border-slate-200 bg-secondary text-primary'
+          }`}
+        >
+          <span className="h-2 w-2 rounded-full bg-current" />
+          {statusLabel}
+        </span>
+      ) : null}
       {variant === 'materials' ? (
-        <p className="text-xs text-slate-500">{t('businessFront.materialQuantity', { quantity: quantityLabel, unit: item.unitType || 'units' })}</p>
+        <div className="text-xs text-slate-600">
+          <p>{t('businessFront.materialQuantity', { quantity: quantityLabel, unit: item.unitType || 'units' })}</p>
+          {availabilityLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryAvailability', { quantity: availabilityLabel })}</p>
+          ) : null}
+          {reservedLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryReserved', { quantity: reservedLabel })}</p>
+          ) : null}
+          {safetyLabel ? (
+            <p className="mt-1">{t('businessFront.inventorySafetyStock', { quantity: safetyLabel })}</p>
+          ) : null}
+        </div>
       ) : null}
       {variant === 'tools' && rentalLabel ? (
-        <p className="text-xs text-slate-500">{t('businessFront.toolRentalRate', { amount: rentalLabel })}</p>
+        <div className="text-xs text-slate-600">
+          <p>{t('businessFront.toolRentalRate', { amount: rentalLabel })}</p>
+          {availabilityLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryAvailability', { quantity: availabilityLabel })}</p>
+          ) : null}
+          {activeRentalsLabel ? (
+            <p className="mt-1">{t('businessFront.inventoryActiveRentals', { quantity: activeRentalsLabel })}</p>
+          ) : null}
+          {safetyLabel ? (
+            <p className="mt-1">{t('businessFront.inventorySafetyStock', { quantity: safetyLabel })}</p>
+          ) : null}
+          {item.depositAmount != null ? (
+            <p className="mt-1">
+              {t('businessFront.inventoryDeposit', {
+                amount: format.currency(item.depositAmount, {
+                  currency: item.depositCurrency || item.rentalRateCurrency || 'GBP',
+                  maximumFractionDigits: 0
+                })
+              })}
+            </p>
+          ) : null}
+        </div>
       ) : null}
+      <div className="grid gap-1 text-xs text-slate-500">
+        {locationLabel ? <p>{locationLabel}</p> : null}
+        {nextMaintenanceLabel ? <p>{t('businessFront.inventoryNextService', { date: nextMaintenanceLabel })}</p> : null}
+        {activeAlertsLabel ? <p>{t('businessFront.inventoryActiveAlerts', { quantity: activeAlertsLabel })}</p> : null}
+      </div>
       {item.sku ? <p className="text-xs text-slate-400">SKU: {item.sku}</p> : null}
+      {notesLabel ? <p className="text-xs italic text-slate-500">{notesLabel}</p> : null}
     </article>
   );
 }
@@ -416,11 +483,23 @@ InventoryCard.propTypes = {
     name: PropTypes.string.isRequired,
     category: PropTypes.string,
     quantityOnHand: PropTypes.number,
+    quantityReserved: PropTypes.number,
+    availability: PropTypes.number,
+    safetyStock: PropTypes.number,
     unitType: PropTypes.string,
     sku: PropTypes.string,
     image: PropTypes.string,
     rentalRate: PropTypes.number,
-    rentalRateCurrency: PropTypes.string
+    rentalRateCurrency: PropTypes.string,
+    status: PropTypes.string,
+    location: PropTypes.string,
+    nextMaintenanceDue: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    notes: PropTypes.string,
+    activeAlerts: PropTypes.number,
+    alertSeverity: PropTypes.string,
+    activeRentals: PropTypes.number,
+    depositAmount: PropTypes.number,
+    depositCurrency: PropTypes.string
   }).isRequired,
   variant: PropTypes.oneOf(['materials', 'tools']).isRequired
 };
@@ -442,30 +521,91 @@ ZoneBadge.propTypes = {
   }).isRequired
 };
 
+function AccessDenied({ role }) {
+  const { t } = useLocale();
+  const allowedRolesLabel = BUSINESS_FRONT_ALLOWED_ROLES.map((roleKey) => ROLE_DISPLAY_NAMES[roleKey] || roleKey).join(' • ');
+  const roleLabel = ROLE_DISPLAY_NAMES[role] || ROLE_DISPLAY_NAMES.guest;
+
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 text-center shadow-xl">
+        <LockClosedIcon className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
+        <h1 className="mt-6 text-3xl font-semibold text-primary">{t('businessFront.accessDeniedTitle')}</h1>
+        <p className="mt-4 text-sm text-slate-600">{t('businessFront.accessDeniedDescription')}</p>
+        <p className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-400">
+          {t('businessFront.accessDeniedRolesLabel', { roles: allowedRolesLabel })}
+        </p>
+        <p className="mt-4 text-xs text-slate-500">{t('businessFront.accessDeniedCurrentRole', { role: roleLabel })}</p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            to="/register/company"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+          >
+            {t('businessFront.accessDeniedCta')}
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-white/90 px-6 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/50"
+          >
+            {t('businessFront.accessDeniedBack')}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+AccessDenied.propTypes = {
+  role: PropTypes.string
+};
+
+AccessDenied.defaultProps = {
+  role: 'guest'
+};
+
 export default function BusinessFront() {
   const { slug } = useParams();
   const { t, format } = useLocale();
-  const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
+  const { role: sessionRole, hasRole } = useSession();
+  const canAccess = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
+  const [state, setState] = useState(() => ({ loading: canAccess, data: null, meta: null, error: null }));
 
-  const loadFront = useCallback(async ({ forceRefresh = false, signal } = {}) => {
-    setState((current) => ({ ...current, loading: true, error: null }));
-    try {
-      const result = await getBusinessFront(slug, { forceRefresh, signal });
-      setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load business front', 500, { cause: error })
-      }));
-    }
-  }, [slug]);
+  const loadFront = useCallback(
+    async ({ forceRefresh = false, signal } = {}) => {
+      if (!canAccess) {
+        return null;
+      }
+
+      setState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const result = await getBusinessFront(slug, { forceRefresh, signal });
+        setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+        return result;
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof PanelApiError
+              ? error
+              : new PanelApiError('Unable to load business front', 500, { cause: error })
+        }));
+        return null;
+      }
+    },
+    [slug, canAccess]
+  );
 
   useEffect(() => {
+    if (!canAccess) {
+      setState({ loading: false, data: null, meta: null, error: null });
+      return undefined;
+    }
+
     const controller = new AbortController();
-    loadFront({ signal: controller.signal });
+    loadFront({ signal: controller.signal }).catch(() => {});
     return () => controller.abort();
-  }, [loadFront]);
+  }, [loadFront, canAccess]);
 
   const hero = state.data?.hero;
   const packages = state.data?.packages ?? [];
@@ -485,6 +625,7 @@ export default function BusinessFront() {
   const scores = state.data?.scores ?? {};
   const trustScore = scores?.trust;
   const reviewScore = scores?.review;
+  const inventorySummary = state.data?.inventorySummary ?? null;
   const conciergeHeading = hero?.name
     ? t('businessFront.supportHeadline', { name: hero.name })
     : t('businessFront.supportFallbackHeadline');
@@ -541,6 +682,19 @@ export default function BusinessFront() {
           : translated;
       })()
     : '';
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">
+        <header className="border-b border-slate-200 bg-gradient-to-br from-primary/10 via-white to-white">
+          <div className="mx-auto max-w-6xl px-6 py-12">
+            <p className="text-xs uppercase tracking-[0.35em] text-primary/70">{t('businessFront.heroFeatured')}</p>
+            <h1 className="mt-2 text-3xl font-semibold text-primary">{t('businessFront.accessDeniedTitle')}</h1>
+          </div>
+        </header>
+        <AccessDenied role={sessionRole} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">
@@ -892,6 +1046,47 @@ export default function BusinessFront() {
               {t('businessFront.inventoryHeadline')}
             </h2>
           </header>
+          {inventorySummary ? (
+            <dl className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryAvailable')}
+                </dt>
+                <dd className="mt-2 text-xl font-semibold text-primary">
+                  {format.number(inventorySummary.available ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {t('businessFront.inventorySummarySkuCount', { count: format.number(inventorySummary.skuCount ?? 0) })}
+                </dd>
+              </div>
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryReserved')}
+                </dt>
+                <dd className="mt-2 text-xl font-semibold text-primary">
+                  {format.number(inventorySummary.reserved ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {t('businessFront.inventorySummaryOnHand', { count: format.number(inventorySummary.onHand ?? 0) })}
+                </dd>
+              </div>
+              <div className="rounded-3xl border border-primary/10 bg-white/90 p-4 text-sm shadow-sm">
+                <dt className="text-xs uppercase tracking-[0.3em] text-primary/60">
+                  {t('businessFront.inventorySummaryAlerts')}
+                </dt>
+                <dd className={`mt-2 text-xl font-semibold ${
+                  (inventorySummary.alerts ?? 0) > 0 ? 'text-rose-600' : 'text-primary'
+                }`}>
+                  {format.number(inventorySummary.alerts ?? 0)}
+                </dd>
+                <dd className="mt-1 text-xs text-slate-500">
+                  {(inventorySummary.alerts ?? 0) > 0
+                    ? t('businessFront.inventorySummaryAlertsAction')
+                    : t('businessFront.inventorySummaryAlertsClear')}
+                </dd>
+              </div>
+            </dl>
+          ) : null}
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-primary flex items-center gap-2">

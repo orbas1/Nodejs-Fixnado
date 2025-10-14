@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
 
 const featureCopy = {
   user: 'Custom jobs, service and marketplace control built for clients.',
@@ -9,6 +10,7 @@ const featureCopy = {
 };
 
 const DashboardHub = () => {
+  const { allowed } = usePersonaAccess();
   const registered = DASHBOARD_ROLES.filter((role) => role.registered);
   const pending = DASHBOARD_ROLES.filter((role) => !role.registered);
 
@@ -27,13 +29,14 @@ const DashboardHub = () => {
         <div className="grid gap-8 md:grid-cols-2">
           {registered.map((role) => {
             const navigationPreview = role.navigation?.slice?.(0, 4) ?? [];
+            const isAllowed = allowed.includes(role.id);
             return (
               <div
                 key={role.id}
                 className="relative overflow-hidden rounded-3xl border border-accent/10 bg-white p-8 shadow-glow"
               >
                 <div className="absolute inset-x-6 top-6 h-24 rounded-3xl bg-gradient-to-br from-accent/20 via-accent/10 to-transparent blur-3xl" />
-              <div className="relative space-y-5">
+                <div className="relative space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{role.persona}</p>
@@ -53,18 +56,32 @@ const DashboardHub = () => {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-3 pt-4">
-                  <Link
-                    to={`/dashboards/${role.id}`}
-                    className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-accent/90"
-                  >
-                    Enter {role.name}
-                  </Link>
+                  {isAllowed ? (
+                    <Link
+                      to={`/dashboards/${role.id}`}
+                      className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-accent/90"
+                    >
+                      Enter {role.name}
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white/80 px-5 py-2 text-sm font-semibold text-primary/70"
+                      aria-disabled="true"
+                    >
+                      Provisioning required
+                    </span>
+                  )}
                   <Link
                     to={`/dashboards/${role.id}`}
                     className="rounded-full border border-accent/20 px-5 py-2 text-sm font-semibold text-accent hover:border-accent"
                   >
                     View capabilities
                   </Link>
+                  {!isAllowed && (
+                    <span className="text-xs font-medium uppercase tracking-wide text-rose-500">
+                      Awaiting workspace approval
+                    </span>
+                  )}
                 </div>
               </div>
               </div>
