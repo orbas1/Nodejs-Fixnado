@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
+import { withAuth } from './helpers/auth.js';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -246,7 +247,7 @@ async function seedEnterpriseScenario() {
     timezone: TZ
   });
 
-  return { company, completedBooking, disputedBooking };
+  return { company, companyUser, completedBooking, disputedBooking };
 }
 
 beforeAll(async () => {
@@ -263,12 +264,12 @@ beforeEach(async () => {
 
 describe('Enterprise panel overview', () => {
   it('returns enterprise delivery, spend and programme insights', async () => {
-    const { company } = await seedEnterpriseScenario();
+    const { company, companyUser } = await seedEnterpriseScenario();
 
-    const response = await request(app)
-      .get('/api/panel/enterprise/overview')
-      .query({ companyId: company.id, timezone: TZ })
-      .expect(200);
+    const response = await withAuth(
+      request(app).get('/api/panel/enterprise/overview').query({ companyId: company.id, timezone: TZ }),
+      companyUser.id
+    ).expect(200);
 
     expect(response.body.enterprise.id).toBe(company.id);
     expect(response.body.enterprise.activeSites).toBe(2);
@@ -282,15 +283,44 @@ describe('Enterprise panel overview', () => {
   });
 
   it('returns a rich fallback payload when the company cannot be resolved', async () => {
-    const response = await request(app)
-      .get('/api/panel/enterprise/overview')
-      .query({ companyId: '00000000-0000-4000-8000-000000000000', timezone: TZ })
-      .expect(200);
+    const companyUser = await User.create({
+      id: IDS.companyUser,
+      firstName: 'Alex',
+      lastName: 'Fix',
+      email: 'enterprise-ops@example.com',
+      passwordHash: 'hashed',
+      type: 'company'
+    });
+
+    const response = await withAuth(
+      request(app)
+        .get('/api/panel/enterprise/overview')
+        .query({ companyId: '00000000-0000-4000-8000-000000000000', timezone: TZ }),
+      companyUser.id
+    ).expect(200);
 
     expect(response.body.meta).toEqual({ fallback: true, reason: 'enterprise_company_not_found' });
     expect(response.body.enterprise.name).toBe('Albion Workspace Group');
     expect(response.body.programmes).toHaveLength(2);
     expect(response.body.escalations).toHaveLength(1);
     expect(response.body.spend.invoicesAwaitingApproval).toHaveLength(2);
+  });
+  it('rejects requests without authentication', async () => {
+    const { company } = await seedEnterpriseScenario();
+
+    await request(app)
+      .get('/api/panel/enterprise/overview')
+      .query({ companyId: company.id, timezone: TZ })
+      .expect(401);
+  });
+
+  it('rejects users without the company role', async () => {
+    const { company } = await seedEnterpriseScenario();
+    const consumer = await User.findByPk(IDS.customerOne);
+
+    await withAuth(
+      request(app).get('/api/panel/enterprise/overview').query({ companyId: company.id, timezone: TZ }),
+      consumer.id
+    ).expect(403);
   });
 });
