@@ -10,7 +10,6 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   LifebuoyIcon,
-  LockClosedIcon,
   MapPinIcon,
   TagIcon,
   UsersIcon,
@@ -357,38 +356,6 @@ function ServiceCatalogueCard({ service }) {
   );
 }
 
-function ProviderAccessGate({ role }) {
-  const { t } = useLocale();
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 py-24 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <LockClosedIcon className="h-8 w-8" aria-hidden="true" />
-        </span>
-        <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('providerDashboard.accessDeniedEyebrow')}</p>
-          <h1 className="text-3xl font-semibold text-slate-900">{t('providerDashboard.accessDeniedTitle')}</h1>
-          <p className="text-sm text-slate-600">{t('providerDashboard.accessDeniedBody', { role })}</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            to="/dashboards"
-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            {t('providerDashboard.accessDeniedCta')}
-          </Link>
-          <a
-            href="mailto:support@fixnado.com?subject=Provider%20workspace%20access"
-            className="rounded-full border border-primary/30 px-5 py-2 text-sm font-semibold text-primary hover:border-primary/60"
-          >
-            {t('providerDashboard.accessDeniedSupport')}
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ProviderDashboard() {
   const { t, format } = useLocale();
   const { role, hasAccess } = useRoleAccess(['provider'], { allowFallbackRoles: ['admin'] });
@@ -419,6 +386,9 @@ export default function ProviderDashboard() {
           error: result.meta?.error || null
         });
       } catch (error) {
+        if (error instanceof PanelApiError && error.status === 408 && error.cause?.name === 'AbortError') {
+          return;
+        }
         setState((current) => ({
           ...current,
           loading: false,
@@ -455,10 +425,6 @@ export default function ProviderDashboard() {
 
     return () => controller.abort();
   }, [allowProviderDashboard, loadDashboard]);
-
-  if (!hasAccess) {
-    return <ProviderAccessGate role={role} />;
-  }
 
   const provider = state.data?.provider;
   const metrics = state.data?.metrics;
@@ -625,6 +591,10 @@ export default function ProviderDashboard() {
     return <Navigate to="/login" replace state={{ redirectTo: '/provider/dashboard' }} />;
   }
 
+  if (!hasAccess) {
+    return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={role || session.role} />;
+  }
+
   if (!hasProviderAccess) {
     return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
@@ -638,7 +608,12 @@ export default function ProviderDashboard() {
         heroBadges={heroBadges}
         heroAside={heroAside}
         navigation={navigation}
-        sidebar={{ meta: sidebarMeta }}
+        sidebar={{
+          eyebrow: t('providerDashboard.sidebarEyebrow'),
+          title: t('providerDashboard.sidebarTitle'),
+          description: t('providerDashboard.sidebarDescription'),
+          meta: sidebarMeta
+        }}
       >
         {state.loading ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label={t('common.loading')}>

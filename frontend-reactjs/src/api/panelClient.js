@@ -611,12 +611,57 @@ function normaliseBusinessFront(payload = {}) {
   }));
 
   const heroMedia = root.hero?.media || root.media || {};
+  const styleGuide = {
+    palette: {
+      primary: root.styleGuide?.palette?.primary || '#0B1D3A',
+      accent: root.styleGuide?.palette?.accent || '#1F4ED8',
+      highlight: root.styleGuide?.palette?.highlight || '#00BFA6',
+      neutral: root.styleGuide?.palette?.neutral || '#F4F7FA',
+      text: root.styleGuide?.palette?.text || '#FFFFFF'
+    },
+    typography: {
+      heading: root.styleGuide?.typography?.heading || 'Inter',
+      body: root.styleGuide?.typography?.body || 'Inter'
+    }
+  };
+
+  const resolvePaletteValue = (value, fallback) => {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    return fallback;
+  };
+
   const carouselMedia = ensureArray(heroMedia.carousel || root.carousel).map((item, index) => ({
     id: item.id || `carousel-${index}`,
     title: item.title || item.name || `Showcase ${index + 1}`,
     description: item.description || '',
     image: item.image || item.url || null
   }));
+
+  const bannerStyles = ensureArray(root.bannerStyles || root.hero?.bannerStyles).map((style, index) => {
+    const paletteSource = style && typeof style.palette === 'object' ? style.palette : {};
+    return {
+      id: style?.id || `banner-${index}`,
+      name: style?.name || `Banner style ${index + 1}`,
+      description: style?.description || '',
+      layout: style?.layout || 'full-bleed',
+      recommendedUse: style?.recommendedUse || '',
+      preview: style?.preview || style?.previewImage || style?.image || null,
+      palette: {
+        background: resolvePaletteValue(paletteSource.background, styleGuide.palette.primary),
+        accent: resolvePaletteValue(paletteSource.accent, styleGuide.palette.accent),
+        highlight: resolvePaletteValue(paletteSource.highlight, styleGuide.palette.highlight),
+        text: resolvePaletteValue(paletteSource.text, styleGuide.palette.text)
+      },
+      supportsVideo: style?.supportsVideo !== false,
+      supportsCarousel: style?.supportsCarousel !== false,
+      textTone: style?.textTone || (style?.supportsVideo === false ? 'dark' : 'light'),
+      badges: ensureArray(style?.badges || style?.tags).map((badge, badgeIndex) =>
+        typeof badge === 'string' ? badge : `Badge ${badgeIndex + 1}`
+      )
+    };
+  });
 
   const taxonomy = {
     categories: ensureArray(root.taxonomy?.categories).map((category, index) => ({
@@ -841,6 +886,7 @@ function normaliseBusinessFront(payload = {}) {
       issuer: cert.issuer || cert.authority || null,
       expiresOn: cert.expiresOn || cert.expiry || null
     })),
+    bannerStyles,
     support: {
       email: root.support?.email || profile.supportEmail || root.contactEmail || null,
       phone: root.support?.phone || profile.supportPhone || root.contactPhone || null,
@@ -895,7 +941,8 @@ function normaliseBusinessFront(payload = {}) {
       trust: trustScore,
       review: reviewScore
     },
-    taxonomy
+    taxonomy,
+    styleGuide
   };
 }
 
@@ -2130,6 +2177,62 @@ const businessFrontFallback = normaliseBusinessFront({
       ]
     }
   },
+  bannerStyles: [
+    {
+      id: 'impact-gradient',
+      name: 'Impact gradient hero',
+      description: 'Immersive gradient with luminous accent flare designed for enterprise showcases.',
+      layout: 'full-bleed-gradient',
+      recommendedUse: 'Use for flagship campaigns and enterprise onboarding moments.',
+      preview: '/media/metro-power/banner-impact.jpg',
+      palette: {
+        background: '#0B1D3A',
+        accent: '#1F4ED8',
+        highlight: '#00BFA6',
+        text: '#FFFFFF'
+      },
+      supportsVideo: true,
+      supportsCarousel: true,
+      textTone: 'light',
+      badges: ['Escrow-backed CTA', 'Video overlay ready']
+    },
+    {
+      id: 'precision-overlay',
+      name: 'Precision overlay',
+      description: 'Crisp photography treatment with translucent navy overlay and elevated typography lockup.',
+      layout: 'image-overlay',
+      recommendedUse: 'Best for operational updates and photographic storytelling across facilities.',
+      preview: '/media/metro-power/banner-precision.jpg',
+      palette: {
+        background: '#0B1D3A',
+        accent: '#152A52',
+        highlight: '#1F4ED8',
+        text: '#FFFFFF'
+      },
+      supportsVideo: false,
+      supportsCarousel: true,
+      textTone: 'light',
+      badges: ['Photography safe', 'KPI ticker ready']
+    },
+    {
+      id: 'elevated-minimal',
+      name: 'Elevated minimal',
+      description: 'Minimalist split layout with generous whitespace and accent underline for executive briefings.',
+      layout: 'split-minimal',
+      recommendedUse: 'Ideal for executive briefings, compliance renewals, and calm storytelling moments.',
+      preview: '/media/metro-power/banner-minimal.jpg',
+      palette: {
+        background: '#F4F7FA',
+        accent: '#0B1D3A',
+        highlight: '#1F4ED8',
+        text: '#0F172A'
+      },
+      supportsVideo: false,
+      supportsCarousel: false,
+      textTone: 'dark',
+      badges: ['Accessibility AAA', 'Mobile parity certified']
+    }
+  ],
   stats: [
     { label: 'Trust score', value: 93, format: 'number', caption: 'Escrow-governed programmes with telemetry oversight' },
     { label: 'Review score', value: 4.8, format: 'number', caption: 'Based on 128 verified enterprise reviews' },
@@ -2317,6 +2420,19 @@ const businessFrontFallback = normaliseBusinessFront({
     { name: 'London Docklands', demandLevel: 'high', metadata: { client: 'Finova' } },
     { name: 'Canary Wharf', demandLevel: 'high', metadata: { client: 'Finova' } }
   ],
+  styleGuide: {
+    palette: {
+      primary: '#0B1D3A',
+      accent: '#1F4ED8',
+      highlight: '#00BFA6',
+      neutral: '#F4F7FA',
+      text: '#FFFFFF'
+    },
+    typography: {
+      heading: 'Inter SemiBold',
+      body: 'Inter Regular'
+    }
+  },
   taxonomy: {
     categories: [
       { slug: 'carpentry', label: 'Carpentry', type: 'trade-services', defaultTags: ['Fit-outs'] },
