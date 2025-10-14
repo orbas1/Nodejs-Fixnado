@@ -67,9 +67,17 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final section = dashboard.navigation[index];
+                    final featureMetadata = dashboard.metadata['features'];
+                    final features = featureMetadata is Map
+                        ? Map<String, dynamic>.from(featureMetadata as Map)
+                        : <String, dynamic>{};
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 24),
-                      child: _SectionView(section: section),
+                      child: _SectionView(
+                        section: section,
+                        features: features,
+                        persona: dashboard.persona,
+                      ),
                     );
                   },
                   childCount: dashboard.navigation.length,
@@ -272,9 +280,11 @@ class _ErrorBanner extends StatelessWidget {
 }
 
 class _SectionView extends StatelessWidget {
-  const _SectionView({required this.section});
+  const _SectionView({required this.section, required this.features, required this.persona});
 
   final AnalyticsSection section;
+  final Map<String, dynamic> features;
+  final String persona;
 
   @override
   Widget build(BuildContext context) {
@@ -312,7 +322,7 @@ class _SectionView extends StatelessWidget {
           AnalyticsBoardSection board => _BoardSectionView(section: board),
           AnalyticsListSection list => _ListSectionView(section: list),
           AnalyticsGridSection grid => _GridSectionView(section: grid),
-          AnalyticsAdsSection ads => _AdsSectionView(section: ads),
+          AnalyticsAdsSection ads => _AdsSectionView(section: ads, features: features, persona: persona),
           AnalyticsSettingsSection settings => _SettingsSectionView(section: settings),
           _ => const SizedBox.shrink(),
         },
@@ -562,14 +572,85 @@ class _GridSectionView extends StatelessWidget {
 
 
 class _AdsSectionView extends StatelessWidget {
-  const _AdsSectionView({required this.section});
+  const _AdsSectionView({required this.section, required this.features, required this.persona});
 
   final AnalyticsAdsSection section;
+  final Map<String, dynamic> features;
+  final String persona;
+
+  Map<String, dynamic> _adsFeature() {
+    final raw = features['ads'];
+    if (raw is Map<String, dynamic>) {
+      return raw;
+    }
+    if (raw is Map) {
+      return raw.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const <String, dynamic>{};
+  }
+
+  List<String> _featureList(AnalyticsSectionAccess? access, Map<String, dynamic> adsFeature) {
+    final fromAccess = access?.features ?? const <String>[];
+    if (fromAccess.isNotEmpty) {
+      return fromAccess;
+    }
+    final raw = adsFeature['features'];
+    if (raw is List) {
+      return raw.map((value) => value.toString()).where((value) => value.trim().isNotEmpty).toList();
+    }
+    return const <String>[];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final adsFeature = _adsFeature();
+    final isAvailable = adsFeature['available'] != false;
+    final access = section.access;
+    final accessLabel = access?.label ?? adsFeature['label']?.toString() ?? 'Fixnado Ads';
+    final accessLevel = access?.level ?? adsFeature['level']?.toString() ?? 'view';
+    final accessFeatures = _featureList(access, adsFeature);
+
+    if (!isAvailable) {
+      return _AdsAccessRestricted(label: accessLabel, level: accessLevel);
+    }
+
     final data = section.data;
-    final content = <Widget>[];
+    final hasContent = data.summaryCards.isNotEmpty ||
+        data.funnel.isNotEmpty ||
+        data.campaigns.isNotEmpty ||
+        data.invoices.isNotEmpty ||
+        data.alerts.isNotEmpty ||
+        data.recommendations.isNotEmpty ||
+        data.timeline.isNotEmpty ||
+        data.pricingModels.isNotEmpty ||
+        data.channelMix.isNotEmpty ||
+        data.targeting.isNotEmpty ||
+        data.creativeInsights.isNotEmpty;
+
+    if (!hasContent) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AdsAccessSummary(
+            label: accessLabel,
+            level: accessLevel,
+            features: accessFeatures,
+            persona: persona,
+          ),
+          const SizedBox(height: 20),
+          const _EmptyState(message: 'No Fixnado Ads data available yet.'),
+        ],
+      );
+    }
+
+    final content = <Widget>[
+      _AdsAccessSummary(
+        label: accessLabel,
+        level: accessLevel,
+        features: accessFeatures,
+        persona: persona,
+      ),
+    ];
 
     void addSection(Widget widget) {
       if (content.isNotEmpty) {
@@ -581,6 +662,9 @@ class _AdsSectionView extends StatelessWidget {
     if (data.summaryCards.isNotEmpty) {
       addSection(_AdsSummaryCards(cards: data.summaryCards));
     }
+    if (data.pricingModels.isNotEmpty || data.channelMix.isNotEmpty) {
+      addSection(_AdsPricingAndChannel(pricingModels: data.pricingModels, channelMix: data.channelMix));
+    }
     if (data.campaigns.isNotEmpty || data.timeline.isNotEmpty) {
       addSection(_AdsCampaignsAndTimeline(campaigns: data.campaigns, timeline: data.timeline));
     }
@@ -590,14 +674,202 @@ class _AdsSectionView extends StatelessWidget {
     if (data.invoices.isNotEmpty || data.alerts.isNotEmpty) {
       addSection(_AdsInvoicesAndAlerts(invoices: data.invoices, alerts: data.alerts));
     }
-
-    if (content.isEmpty) {
-      return const _EmptyState(message: 'No Fixnado Ads data available yet.');
+    if (data.targeting.isNotEmpty || data.creativeInsights.isNotEmpty) {
+      addSection(_AdsTargetingAndCreatives(targeting: data.targeting, creativeInsights: data.creativeInsights));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: content,
+    );
+  }
+}
+
+class _AdsAccessSummary extends StatelessWidget {
+  const _AdsAccessSummary({required this.label, required this.level, required this.features, required this.persona});
+
+  final String label;
+  final String level;
+  final List<String> features;
+  final String persona;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final featureChips = features.isEmpty
+        ? [
+            Chip(
+              label: const Text('Campaign visibility'),
+              labelStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+              backgroundColor: colors.surfaceVariant.withOpacity(0.5),
+            ),
+          ]
+        : features
+            .map(
+              (feature) => Chip(
+                label: Text(feature, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600)),
+                backgroundColor: colors.secondaryContainer.withOpacity(0.6),
+              ),
+            )
+            .toList();
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Access • $label', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      Text(
+                        'This workspace has $level access to Fixnado Ads controls for the $persona persona.',
+                        style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    level.toUpperCase(),
+                    style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600, color: colors.onPrimaryContainer),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: featureChips,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsAccessRestricted extends StatelessWidget {
+  const _AdsAccessRestricted({required this.label, required this.level});
+
+  final String label;
+  final String level;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colors.primary.withOpacity(0.4), style: BorderStyle.solid, width: 1.2),
+      ),
+      color: colors.surface,
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline_rounded, size: 28, color: colors.primary),
+            const SizedBox(height: 12),
+            Text('Access restricted', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: colors.primary)),
+            const SizedBox(height: 8),
+            Text(
+              '$label is not enabled for this workspace yet. Contact your administrator to request $level access.',
+              style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsPricingAndChannel extends StatelessWidget {
+  const _AdsPricingAndChannel({required this.pricingModels, required this.channelMix});
+
+  final List<AnalyticsAdsPricingModel> pricingModels;
+  final List<AnalyticsAdsChannel> channelMix;
+
+  @override
+  Widget build(BuildContext context) {
+    final pricingCard = _AdsPricingModels(models: pricingModels);
+    final channelCard = _AdsChannelMix(channelMix: channelMix);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 720;
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: pricingCard),
+              const SizedBox(width: 16),
+              Expanded(child: channelCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            pricingCard,
+            const SizedBox(height: 16),
+            channelCard,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AdsTargetingAndCreatives extends StatelessWidget {
+  const _AdsTargetingAndCreatives({required this.targeting, required this.creativeInsights});
+
+  final List<AnalyticsAdsTargetingSegment> targeting;
+  final List<AnalyticsAdsCreativeInsight> creativeInsights;
+
+  @override
+  Widget build(BuildContext context) {
+    final targetingCard = _AdsTargetingSegments(segments: targeting);
+    final creativesCard = _AdsCreativeInsights(insights: creativeInsights);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 720;
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: targetingCard),
+              const SizedBox(width: 16),
+              Expanded(child: creativesCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            targetingCard,
+            const SizedBox(height: 16),
+            creativesCard,
+          ],
+        );
+      },
     );
   }
 }
@@ -752,6 +1024,373 @@ class _AdsSummaryCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AdsPricingModels extends StatelessWidget {
+  const _AdsPricingModels({required this.models});
+
+  final List<AnalyticsAdsPricingModel> models;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pricing models', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (models.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text('No pricing models configured.', style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant)),
+              )
+            else
+              Column(
+                children: models
+                    .map(
+                      (model) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            colors: [
+                              colors.secondaryContainer.withOpacity(0.6),
+                              colors.surface,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          border: Border.all(color: colors.secondaryContainer.withOpacity(0.4)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(model.label, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600)),
+                                ),
+                                if (model.status != null && model.status!.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: colors.primary.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      model.status!,
+                                      style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600, color: colors.primary),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                if (model.spend != null && model.spend!.isNotEmpty)
+                                  _AdsBadge(label: 'Spend', value: model.spend!),
+                                if (model.unitCost != null && model.unitCost!.isNotEmpty && model.unitLabel != null)
+                                  _AdsBadge(label: model.unitLabel!, value: model.unitCost!),
+                                if (model.performance != null && model.performance!.isNotEmpty)
+                                  _AdsBadge(label: 'Performance', value: model.performance!),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsChannelMix extends StatelessWidget {
+  const _AdsChannelMix({required this.channelMix});
+
+  final List<AnalyticsAdsChannel> channelMix;
+
+  double _shareValue(String? share) {
+    if (share == null) {
+      return 0.0;
+    }
+    final cleaned = share.replaceAll(RegExp('[^0-9.]'), '');
+    final value = double.tryParse(cleaned) ?? 0;
+    if (share.contains('%')) {
+      return ((value / 100).clamp(0, 1)).toDouble();
+    }
+    return 0.0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Channel mix', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (channelMix.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text('No channels reporting within this window.', style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant)),
+              )
+            else
+              Column(
+                children: channelMix
+                    .map(
+                      (channel) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: colors.surfaceVariant.withOpacity(0.4),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(channel.label, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600)),
+                                ),
+                                if (channel.status != null && channel.status!.isNotEmpty)
+                                  Text(channel.status!, style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: _shareValue(channel.share),
+                              minHeight: 6,
+                              backgroundColor: colors.surfaceVariant,
+                              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                if (channel.spend != null && channel.spend!.isNotEmpty)
+                                  _AdsBadge(label: 'Spend', value: channel.spend!),
+                                if (channel.share != null && channel.share!.isNotEmpty)
+                                  _AdsBadge(label: 'Share', value: channel.share!),
+                                if (channel.performance != null && channel.performance!.isNotEmpty)
+                                  _AdsBadge(label: 'Performance', value: channel.performance!),
+                                if (channel.campaigns != null)
+                                  _AdsBadge(label: 'Campaigns', value: '${channel.campaigns}'),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsTargetingSegments extends StatelessWidget {
+  const _AdsTargetingSegments({required this.segments});
+
+  final List<AnalyticsAdsTargetingSegment> segments;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Targeting segments', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (segments.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text('No target segments configured for this flight window.', style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant)),
+              )
+            else
+              Column(
+                children: segments
+                    .map(
+                      (segment) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: colors.surfaceVariant),
+                          color: colors.surface,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(segment.label, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600)),
+                                ),
+                                if (segment.status != null && segment.status!.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: colors.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      segment.status!,
+                                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: colors.onSecondaryContainer),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                if (segment.metric != null && segment.metric!.isNotEmpty)
+                                  _AdsBadge(label: 'Metric', value: segment.metric!),
+                                if (segment.share != null && segment.share!.isNotEmpty)
+                                  _AdsBadge(label: 'Share', value: segment.share!),
+                              ],
+                            ),
+                            if (segment.helper != null && segment.helper!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(segment.helper!, style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsCreativeInsights extends StatelessWidget {
+  const _AdsCreativeInsights({required this.insights});
+
+  final List<AnalyticsAdsCreativeInsight> insights;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Creative insights', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            if (insights.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text('No creative signals captured yet.', style: GoogleFonts.inter(fontSize: 13, color: colors.onSurfaceVariant)),
+              )
+            else
+              Column(
+                children: insights
+                    .map(
+                      (insight) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: colors.surfaceVariant.withOpacity(0.5),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(insight.label, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600)),
+                            if (insight.severity != null && insight.severity!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  insight.severity!,
+                                  style: GoogleFonts.inter(fontSize: 12, color: colors.onSurfaceVariant),
+                                ),
+                              ),
+                            if (insight.message != null && insight.message!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(insight.message!, style: GoogleFonts.inter(fontSize: 12, color: colors.onSurface)),
+                              ),
+                            if (insight.detectedAt != null && insight.detectedAt!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text('Detected ${insight.detectedAt}', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: colors.onSurfaceVariant)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdsBadge extends StatelessWidget {
+  const _AdsBadge({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.surfaceVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: colors.onSurfaceVariant)),
+          const SizedBox(height: 2),
+          Text(value, style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

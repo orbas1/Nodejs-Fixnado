@@ -46,6 +46,13 @@ class ServiceManagementScreen extends ConsumerWidget {
               child: Center(child: CircularProgressIndicator()),
             )
           else if (snapshot != null) ...[
+            if (snapshot.bannerStyles.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                sliver: SliverToBoxAdapter(
+                  child: _BannerStylesSection(styles: snapshot.bannerStyles),
+                ),
+              ),
             if (snapshot.healthMetrics.isNotEmpty)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -176,6 +183,329 @@ class _HealthSection extends StatelessWidget {
           children: metrics.map((metric) => _HealthCard(metric: metric)).toList(),
         ),
       ],
+    );
+  }
+}
+
+class _BannerStylesSection extends StatelessWidget {
+  const _BannerStylesSection({required this.styles});
+
+  final List<BannerStyleOption> styles;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(Icons.brush_outlined, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hero banner style guide',
+                    style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Curated hero treatments aligned to the Fixnado palette with responsive parity.',
+                    style: GoogleFonts.inter(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: styles.map((style) => _BannerStyleCard(style: style)).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _BannerStyleCard extends StatelessWidget {
+  const _BannerStyleCard({required this.style});
+
+  final BannerStyleOption style;
+
+  String _formatLabel(String? value) {
+    if (value == null || value.isEmpty) return '';
+    final spaced = value
+        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match.group(1)} ${match.group(2)}')
+        .replaceAll(RegExp(r'[_-]'), ' ')
+        .trim();
+    if (spaced.isEmpty) return '';
+    return spaced.split(' ').map((part) => part[0].toUpperCase() + part.substring(1)).join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background = _hexToColor(style.palette.background);
+    final accent = _hexToColor(style.palette.accent);
+    final highlight = _hexToColor(style.palette.highlight);
+    final textColor = style.textTone.toLowerCase() == 'dark'
+        ? theme.colorScheme.onPrimaryContainer
+        : Colors.white;
+    final toneLabel = _formatLabel(style.textTone).isEmpty
+        ? 'Primary tone'
+        : '${_formatLabel(style.textTone)} tone';
+    final layoutLabel = _formatLabel(style.layout).isEmpty
+        ? 'Showcase layout'
+        : '${_formatLabel(style.layout)} layout';
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: SizedBox(
+                  height: 160,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (style.preview != null)
+                        Image.network(
+                          style.preview!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [background, accent.withOpacity(0.85)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [background, accent.withOpacity(0.85)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.black.withOpacity(0.45), Colors.transparent],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(style.textTone.toLowerCase() == 'dark' ? 0.85 : 0.25),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Banner preview',
+                                style: GoogleFonts.ibmPlexMono(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: style.textTone.toLowerCase() == 'dark'
+                                      ? theme.colorScheme.onSurface
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              toneLabel,
+                              style: GoogleFonts.ibmPlexMono(
+                                fontSize: 11,
+                                color: Colors.white.withOpacity(0.85),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              style.name,
+                              style: GoogleFonts.manrope(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if ((style.description ?? '').isNotEmpty)
+                Text(
+                  style.description!,
+                  style: GoogleFonts.inter(fontSize: 13.5, height: 1.5, color: theme.colorScheme.onSurfaceVariant),
+                ),
+              if ((style.recommendedUse ?? '').isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: highlight.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    'Recommended for ${style.recommendedUse}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: highlight.darken(0.1),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _PaletteChip(label: 'Background', color: background),
+                  _PaletteChip(label: 'Accent', color: accent),
+                  _PaletteChip(label: 'Highlight', color: highlight),
+                  _PaletteChip(label: 'Text', color: _hexToColor(style.palette.text)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(
+                    avatar: const Icon(Icons.layers_outlined, size: 18),
+                    label: Text(layoutLabel),
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
+                    labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.primary),
+                  ),
+                  if (style.supportsVideo)
+                    Chip(
+                      avatar: const Icon(Icons.movie_outlined, size: 18),
+                      label: const Text('Video ready'),
+                      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                      labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  if (style.supportsCarousel)
+                    Chip(
+                      avatar: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Carousel ready'),
+                      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                      labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                ],
+              ),
+              if (style.badges.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: style.badges
+                      .map(
+                        (badge) => Chip(
+                          avatar: const Icon(Icons.auto_awesome_outlined, size: 18),
+                          label: Text(badge),
+                          backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                          labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaletteChip extends StatelessWidget {
+  const _PaletteChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.7), width: 1.5),
+        ),
+      ),
+      label: Text(label),
+      backgroundColor: Colors.white,
+      labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+      shape: const StadiumBorder(side: BorderSide(color: Color(0xFFE2E8F0))),
+    );
+  }
+}
+
+Color _hexToColor(String value) {
+  var hex = value.replaceAll('#', '').trim();
+  if (hex.length == 3) {
+    hex = hex.split('').map((char) => '$char$char').join();
+  }
+  if (hex.length == 6) {
+    hex = 'FF$hex';
+  }
+  final parsed = int.tryParse(hex, radix: 16);
+  return Color(parsed ?? 0xFF0B1D3A);
+}
+
+extension _ColorShade on Color {
+  Color darken(double amount) {
+    final factor = 1 - amount.clamp(0.0, 1.0);
+    return Color.fromARGB(
+      alpha,
+      (red * factor).round(),
+      (green * factor).round(),
+      (blue * factor).round(),
     );
   }
 }

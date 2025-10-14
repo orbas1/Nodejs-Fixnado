@@ -30,6 +30,7 @@ import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
+import DashboardBlogRail from './DashboardBlogRail.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -334,7 +335,8 @@ const DashboardLayout = ({
   exportHref = null,
   toggleMeta = null,
   toggleReason = null,
-  onLogout
+  onLogout,
+  blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
@@ -365,13 +367,20 @@ const DashboardLayout = ({
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
-    return <DashboardSection section={activeSection} />;
+    return (
+      <DashboardSection
+        section={activeSection}
+        persona={persona}
+        features={dashboard?.metadata?.features ?? {}}
+      />
+    );
   };
 
   const registeredOptions = registeredRoles.filter((role) => role.registered);
@@ -555,17 +564,21 @@ const DashboardLayout = ({
         {loading && !dashboard ? (
           <Skeleton />
         ) : (
-          <div className="px-6 py-10">
+          <div className="px-6 py-10 space-y-8">
             {persona === 'serviceman' ? (
-              <div className="mb-8">
+              <div>
                 <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
               </div>
             ) : null}
+            <DashboardBlogRail posts={blogPosts} />
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
             <div className="space-y-8">{renderSection()}</div>
-            <div className="space-y-8">
-              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-              {renderSection()}
-            </div>
+          <div className="space-y-8 px-6 py-10">
+            {shouldShowServicemanSummary ? (
+              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+            ) : null}
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+            {renderSection()}
           </div>
         )}
       </main>
@@ -604,7 +617,12 @@ DashboardLayout.propTypes = {
     lastModifiedAt: PropTypes.string
   }),
   toggleReason: PropTypes.string,
-  onLogout: PropTypes.func
+  onLogout: PropTypes.func,
+  blogPosts: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired
+    })
+  )
 };
 
 DashboardLayout.defaultProps = {
@@ -615,7 +633,8 @@ DashboardLayout.defaultProps = {
   exportHref: null,
   toggleMeta: null,
   toggleReason: null,
-  onLogout: null
+  onLogout: null,
+  blogPosts: []
 };
 
 export default DashboardLayout;

@@ -11,6 +11,79 @@ import '../../auth/domain/user_role.dart';
 import '../domain/communication_models.dart';
 import 'communications_controller.dart';
 
+const _communicationsAllowedRoles = <UserRole>{
+  UserRole.provider,
+  UserRole.enterprise,
+  UserRole.support,
+  UserRole.operations,
+  UserRole.admin,
+};
+
+class _EntryPointDefinition {
+  const _EntryPointDefinition({
+    required this.key,
+    required this.title,
+    required this.tagline,
+    required this.emoji,
+    required this.template,
+  });
+
+  final String key;
+  final String title;
+  final String tagline;
+  final String emoji;
+  final String template;
+}
+
+const _entryPointDefinitions = <_EntryPointDefinition>[
+  _EntryPointDefinition(
+    key: 'serviceLaunch',
+    title: 'Service launch',
+    tagline: 'Kickoff updates when crews roll out.',
+    emoji: '🚚',
+    template: 'Hi there! Your Fixnado service has just launched. Let us know if anything on-site needs attention.',
+  ),
+  _EntryPointDefinition(
+    key: 'toolsMaterials',
+    title: 'Tools & materials',
+    tagline: 'Assist shoppers reviewing equipment.',
+    emoji: '🛠️',
+    template:
+        'Hello! I noticed you are reviewing our tools and material display. I am here to help with specs, availability, or bundle suggestions.',
+  ),
+  _EntryPointDefinition(
+    key: 'shopFronts',
+    title: 'Shop fronts',
+    tagline: 'Chat from every storefront card.',
+    emoji: '🛍️',
+    template: 'Welcome to our Fixnado shop front! How can we help you find the right service or product today?',
+  ),
+  _EntryPointDefinition(
+    key: 'businessFronts',
+    title: 'Business fronts',
+    tagline: 'Keep profile visitors engaged.',
+    emoji: '🏢',
+    template:
+        'Thanks for visiting our Fixnado business front. I am on hand if you need recommendations or want to schedule a consult.',
+  ),
+  _EntryPointDefinition(
+    key: 'bookingFlow',
+    title: 'Booking flow',
+    tagline: 'Guide customers as they schedule.',
+    emoji: '📅',
+    template:
+        'I am here while you complete your booking. Let me know if you need help picking a time or clarifying what is included.',
+  ),
+  _EntryPointDefinition(
+    key: 'purchaseFlow',
+    title: 'Checkout',
+    tagline: 'Answer questions before payment.',
+    emoji: '🧾',
+    template:
+        'I can help as you finalise your purchase. If anything looks unclear, send a quick note and I will respond right away.',
+  ),
+];
+
 class CommunicationsScreen extends ConsumerStatefulWidget {
   const CommunicationsScreen({super.key});
 
@@ -22,7 +95,9 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
   late final TextEditingController _participantController;
   late final FocusNode _participantFocusNode;
   late final TextEditingController _messageController;
+  late final FocusNode _messageFocusNode;
   late final ScrollController _messageScrollController;
+  late final Map<String, bool> _entryPointSettings;
   String? _lastConversationId;
   bool _requestAiAssist = false;
   String? _composerError;
@@ -33,7 +108,11 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
     _participantController = TextEditingController();
     _participantFocusNode = FocusNode();
     _messageController = TextEditingController();
+    _messageFocusNode = FocusNode();
     _messageScrollController = ScrollController();
+    _entryPointSettings = {
+      for (final entry in _entryPointDefinitions) entry.key: true,
+    };
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(communicationsControllerProvider);
@@ -74,6 +153,7 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
     _participantController.dispose();
     _participantFocusNode.dispose();
     _messageController.dispose();
+    _messageFocusNode.dispose();
     _messageScrollController.dispose();
     super.dispose();
   }
@@ -88,7 +168,8 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
     final aiAssistAvailable = viewerParticipant?.aiAssistEnabled == true && (state.activeConversation?.aiAssistDefault ?? false);
     final conversations = state.conversations;
     final currentRole = ref.watch(currentRoleProvider);
-    final hasAccess = currentRole == UserRole.provider || currentRole == UserRole.enterprise;
+    final hasAccess = _communicationsAllowedRoles.contains(currentRole);
+    final allowedRoleNames = _communicationsAllowedRoles.map((role) => role.displayName).join(', ');
 
     if (_lastConversationId != state.activeConversationId) {
       _syncAiAssistPreference(state);
@@ -130,13 +211,30 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Messaging workspace is limited to provider and enterprise roles.',
+                    'Messaging workspace is limited to $allowedRoleNames roles.',
                     style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Switch to an authorised role in your profile to coordinate customer conversations, or request enablement support to join the rollout cohort.',
                     style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _communicationsAllowedRoles
+                        .map(
+                          (role) => Chip(
+                            label: Text(role.displayName, style: GoogleFonts.inter(fontSize: 12)),
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              side: BorderSide(color: Colors.amber.shade100),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                   const SizedBox(height: 18),
                   Wrap(
@@ -228,6 +326,8 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
                 ),
               ),
             const SizedBox(height: 16),
+            _buildEntryPointSection(theme, state, controller),
+            const SizedBox(height: 16),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -245,7 +345,15 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Expanded(child: _buildConversationDetail(state, controller, aiAssistAvailable, viewerParticipant)),
+                        Expanded(
+                          child: _buildConversationDetail(
+                            state,
+                            controller,
+                            aiAssistAvailable,
+                            viewerParticipant,
+                            _messageFocusNode,
+                          ),
+                        ),
                       ],
                     );
                   }
@@ -263,7 +371,15 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
                         ),
                       ),
                       const SizedBox(width: 24),
-                      Expanded(child: _buildConversationDetail(state, controller, aiAssistAvailable, viewerParticipant)),
+                      Expanded(
+                        child: _buildConversationDetail(
+                          state,
+                          controller,
+                          aiAssistAvailable,
+                          viewerParticipant,
+                          _messageFocusNode,
+                        ),
+                      ),
                     ],
                   );
                 },
@@ -273,6 +389,101 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildEntryPointSection(
+    ThemeData theme,
+    CommunicationsViewState state,
+    CommunicationsController controller,
+  ) {
+    return Card(
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Entry points', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text(
+              'Switch on the surfaces you want to cover and send a quick hello.',
+              style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _entryPointDefinitions
+                  .map(
+                    (definition) => _EntryPointCard(
+                      definition: definition,
+                      enabled: _entryPointSettings[definition.key] ?? false,
+                      enableTemplate:
+                          state.participantId != null && (_entryPointSettings[definition.key] ?? false),
+                      onToggle: () => _toggleEntryPoint(definition.key),
+                      onUseTemplate: () => _prepareEntryPointTemplate(state, controller, definition.template),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _toggleEntryPoint(String key) {
+    setState(() {
+      final current = _entryPointSettings[key] ?? false;
+      _entryPointSettings[key] = !current;
+    });
+  }
+
+  void _prepareEntryPointTemplate(
+    CommunicationsViewState state,
+    CommunicationsController controller,
+    String template,
+  ) {
+    if (state.participantId == null) {
+      setState(() {
+        _composerError = 'Enter a participant before using templates.';
+      });
+      return;
+    }
+
+    if (state.activeConversationId == null) {
+      final fallbackConversation = state.conversations.firstOrNull;
+      if (fallbackConversation == null) {
+        setState(() {
+          _composerError = 'Load a participant to sync conversations before messaging.';
+        });
+        return;
+      }
+      controller.loadConversation(fallbackConversation.id);
+    }
+
+    _applyEntryPointTemplate(template);
+  }
+
+  void _applyEntryPointTemplate(String template) {
+    setState(() {
+      _composerError = null;
+      _messageController.text = template;
+      _messageController.selection = TextSelection.collapsed(offset: _messageController.text.length);
+    });
+    _messageFocusNode.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_messageScrollController.hasClients) {
+        _messageScrollController.animateTo(
+          _messageScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Widget _buildParticipantForm(
@@ -338,6 +549,7 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
     CommunicationsController controller,
     bool aiAssistAvailable,
     ConversationParticipantModel? viewerParticipant,
+    FocusNode composerFocusNode,
   ) {
     final activeConversation = state.activeConversation;
     if (state.activeConversationId == null) {
@@ -460,6 +672,7 @@ class _CommunicationsScreenState extends ConsumerState<CommunicationsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: _MessageComposer(
                 controller: _messageController,
+                focusNode: composerFocusNode,
                 errorText: _composerError,
                 onSend: () async {
                   final trimmed = _messageController.text.trim();
@@ -629,6 +842,93 @@ class _ConversationListSection extends StatelessWidget {
   }
 }
 
+class _EntryPointCard extends StatelessWidget {
+  const _EntryPointCard({
+    required this.definition,
+    required this.enabled,
+    required this.enableTemplate,
+    required this.onToggle,
+    required this.onUseTemplate,
+  });
+
+  final _EntryPointDefinition definition;
+  final bool enabled;
+  final bool enableTemplate;
+  final VoidCallback onToggle;
+  final VoidCallback onUseTemplate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = enabled ? const Color(0xFF1F4ED8).withOpacity(0.25) : theme.colorScheme.outlineVariant;
+    final background = enabled ? const Color(0xFFF5F8FF) : Colors.white;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          if (enabled)
+            BoxShadow(
+              color: const Color(0xFF1F4ED8).withOpacity(0.08),
+              blurRadius: 22,
+              offset: const Offset(0, 16),
+            ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(definition.emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(definition.title, style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      definition.tagline,
+                      style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: enabled,
+                onChanged: (_) => onToggle(),
+                activeColor: const Color(0xFF1F4ED8),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: enableTemplate ? onUseTemplate : null,
+            icon: const Icon(Icons.text_snippet_outlined, size: 18),
+            label: const Text('Use template'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: enableTemplate ? const Color(0xFF1F4ED8) : theme.disabledColor,
+              side: BorderSide(
+                color: enableTemplate
+                    ? const Color(0xFF1F4ED8).withOpacity(0.35)
+                    : theme.disabledColor.withOpacity(0.2),
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     required this.message,
@@ -645,46 +945,47 @@ class _MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final delivery = message.deliveries.firstWhereOrNull((item) => item.participantId == viewerParticipantId) ??
         message.deliveries.firstWhereOrNull((item) => item.participantId != null);
-    final statusLabel = delivery == null
+    final normalisedStatus = delivery == null
         ? null
         : delivery.status == 'suppressed'
-            ? 'muted (${delivery.suppressedReason ?? 'quiet hours'})'
-            : delivery.status;
+            ? 'Muted (${(delivery.suppressedReason ?? 'quiet hours').toUpperCase()})'
+            : delivery.status?.toUpperCase();
     final isAssistant = message.messageType == 'assistant';
-    final backgroundColor = isAssistant
-        ? const Color(0xFF0B1D3A)
+    final gradient = isAssistant
+        ? const LinearGradient(colors: [Color(0xFFF6F8FF), Color(0xFFEEF1FF)])
         : isSelf
-            ? const Color(0xFF1F4ED8).withOpacity(0.12)
-            : theme.colorScheme.surfaceVariant;
+            ? const LinearGradient(colors: [Color(0xFFFFFFFF), Color(0xFFE8F2FF)])
+            : null;
+    final baseColor = gradient == null ? Colors.white : null;
     final borderColor = isAssistant
-        ? const Color(0xFF0B1D3A).withOpacity(0.55)
+        ? const Color(0xFF6366F1).withOpacity(0.25)
         : isSelf
-            ? const Color(0xFF1F4ED8).withOpacity(0.4)
+            ? const Color(0xFF38BDF8).withOpacity(0.25)
             : theme.colorScheme.outlineVariant;
     final foregroundColor = isAssistant
-        ? Colors.white
+        ? const Color(0xFF1E1B4B)
         : isSelf
-            ? const Color(0xFF0B1D3A)
+            ? const Color(0xFF082F49)
             : theme.colorScheme.onSurface;
 
-    final alignment = isSelf ? Alignment.centerRight : Alignment.centerLeft;
+    final alignment = isSelf ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart;
 
     return Align(
       alignment: alignment,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 480),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(22),
+          color: baseColor,
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: borderColor, width: 1.2),
           boxShadow: [
-            if (isAssistant)
-              BoxShadow(
-                color: const Color(0xFF0B1D3A).withOpacity(0.18),
-                blurRadius: 22,
-                offset: const Offset(0, 14),
-              ),
+            BoxShadow(
+              color: (isAssistant ? const Color(0xFF312E81) : const Color(0xFF0F172A)).withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 18),
+            ),
           ],
         ),
         child: Column(
@@ -695,13 +996,13 @@ class _MessageBubble extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 15,
                 color: foregroundColor,
-                height: 1.5,
+                height: 1.55,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 12),
             Wrap(
-              spacing: 10,
+              spacing: 12,
               runSpacing: 6,
               children: [
                 Text(
@@ -713,25 +1014,25 @@ class _MessageBubble extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: foregroundColor.withOpacity(0.85),
-                    letterSpacing: 1.6,
+                    color: foregroundColor.withOpacity(0.75),
+                    letterSpacing: 1.8,
                   ),
                 ),
                 Text(
                   DateFormat.jm().format(message.createdAt.toLocal()),
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: foregroundColor.withOpacity(0.7),
-                    letterSpacing: 1.6,
+                    color: foregroundColor.withOpacity(0.6),
+                    letterSpacing: 1.8,
                   ),
                 ),
-                if (statusLabel != null)
+                if (normalisedStatus != null)
                   Text(
-                    statusLabel,
+                    normalisedStatus,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: foregroundColor.withOpacity(0.7),
-                      letterSpacing: 1.6,
+                      color: foregroundColor.withOpacity(0.6),
+                      letterSpacing: 1.8,
                     ),
                   ),
                 if (message.aiConfidenceScore != null)
@@ -739,8 +1040,8 @@ class _MessageBubble extends StatelessWidget {
                     'Confidence ${(message.aiConfidenceScore! * 100).round()}%',
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: foregroundColor.withOpacity(0.7),
-                      letterSpacing: 1.6,
+                      color: foregroundColor.withOpacity(0.6),
+                      letterSpacing: 1.8,
                     ),
                   ),
               ],
@@ -1022,6 +1323,7 @@ class _SessionField extends StatelessWidget {
 class _MessageComposer extends StatelessWidget {
   const _MessageComposer({
     required this.controller,
+    required this.focusNode,
     required this.onSend,
     required this.sending,
     required this.aiAssistAvailable,
@@ -1031,6 +1333,7 @@ class _MessageComposer extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final Future<void> Function() onSend;
   final bool sending;
   final bool aiAssistAvailable;
@@ -1046,6 +1349,7 @@ class _MessageComposer extends StatelessWidget {
       children: [
         TextField(
           controller: controller,
+          focusNode: focusNode,
           maxLines: 5,
           minLines: 3,
           decoration: InputDecoration(

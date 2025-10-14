@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,7 @@ import '../application/auth_controller.dart';
 import '../domain/auth_models.dart';
 import '../domain/user_role.dart';
 import '../../../shared/localization/language_switcher.dart';
+import '../../legal/presentation/legal_terms_screen.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key, this.initialData});
@@ -23,6 +25,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late UserRole _selectedRole;
+  late final TapGestureRecognizer _termsRecognizer;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _selectedRole = UserRole.customer;
+    _termsRecognizer = TapGestureRecognizer()..onTap = _openTerms;
     _syncFromInitial();
   }
 
@@ -49,6 +53,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _termsRecognizer.dispose();
     super.dispose();
   }
 
@@ -76,6 +81,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       role: _selectedRole,
     );
     ref.read(authControllerProvider.notifier).submitSignUp(data);
+  }
+
+  void _openTerms() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const LegalTermsScreen(),
+      ),
+    );
   }
 
   @override
@@ -204,9 +217,26 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            'By continuing, you agree to Fixnado’s terms of service and privacy policy.',
-                            style: GoogleFonts.inter(fontSize: 12, color: Colors.blueGrey.shade500),
+                          RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.inter(fontSize: 12, color: Colors.blueGrey.shade500),
+                              children: [
+                                const TextSpan(text: 'By continuing, you agree to Fixnado’s '),
+                                TextSpan(
+                                  text: 'Terms and Conditions',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  recognizer: _termsRecognizer,
+                                ),
+                                const TextSpan(
+                                  text:
+                                      ' and acknowledge our Privacy Notice available via fixnado.co.uk/legal/privacy.',
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
