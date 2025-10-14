@@ -29,6 +29,7 @@ export const esES = {
     'nav.solutions': 'Soluciones',
     'nav.industries': 'Sectores',
     'nav.platform': 'Plataforma',
+    'nav.materials': 'Materiales',
     'nav.resources': 'Recursos',
     'nav.dashboards': 'Paneles',
     'nav.providerConsole': 'Consola de proveedores',

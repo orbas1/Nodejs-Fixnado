@@ -829,6 +829,450 @@ function normaliseBusinessFront(payload = {}) {
   };
 }
 
+function normaliseMaterialsShowcase(payload = {}) {
+  const root = payload?.data ?? payload;
+  const heroMetrics = ensureArray(root.hero?.metrics).map((metric, index) => ({
+    id: metric.id || metric.key || metric.label || `metric-${index}`,
+    label: metric.label || metric.name || `Metric ${index + 1}`,
+    value: Number.isFinite(Number.parseFloat(metric.value))
+      ? Number.parseFloat(metric.value)
+      : Number.isFinite(Number.parseFloat(metric.percentage))
+      ? Number.parseFloat(metric.percentage)
+      : metric.value ?? metric.percentage ?? null,
+    unit: metric.unit || metric.suffix || null
+  }));
+  const heroActions = ensureArray(root.hero?.actions).map((action, index) => ({
+    id: action.id || action.key || action.label || `action-${index}`,
+    label: action.label || action.title || 'Action',
+    href: action.href || action.url || '#',
+    target: action.target || '_self'
+  }));
+  const hero = {
+    title: root.hero?.title || 'Materials control tower',
+    subtitle:
+      root.hero?.subtitle ||
+      root.hero?.description ||
+      'Govern consumables, replenishment cadences, and supplier risk from one command surface.',
+    metrics: heroMetrics,
+    actions: heroActions
+  };
+
+  const statsRaw = root.stats || {};
+  const stats = {
+    totalSkus: Number.parseInt(statsRaw.totalSkus ?? statsRaw.total_skus ?? 0, 10) || 0,
+    totalOnHand: Number.parseInt(statsRaw.totalOnHand ?? statsRaw.total_on_hand ?? 0, 10) || 0,
+    valueOnHand: Number.parseFloat(statsRaw.valueOnHand ?? statsRaw.value_on_hand ?? 0) || 0,
+    alerts: Number.parseInt(statsRaw.alerts ?? statsRaw.activeAlerts ?? 0, 10) || 0,
+    fillRate: (() => {
+      const raw = Number.parseFloat(statsRaw.fillRate ?? statsRaw.fill_rate ?? statsRaw.serviceLevel ?? 1);
+      if (Number.isNaN(raw)) return 1;
+      if (raw > 1 && raw <= 100) {
+        return Math.max(0, Math.min(1, raw / 100));
+      }
+      return Math.max(0, Math.min(1, raw));
+    })(),
+    replenishmentEta: statsRaw.replenishmentEta || statsRaw.replenishment_eta || null
+  };
+
+  const categories = ensureArray(root.categories).map((category, index) => ({
+    id: category.id || category.slug || `category-${index}`,
+    name: category.name || category.label || 'Category',
+    share: Number.parseFloat(category.share ?? category.percentage ?? 0) || 0,
+    safetyStockBreaches:
+      Number.parseInt(category.safetyStockBreaches ?? category.breaches ?? 0, 10) || 0,
+    availability: (() => {
+      const raw = Number.parseFloat(category.availability ?? category.fillRate ?? 1);
+      if (Number.isNaN(raw)) return 1;
+      if (raw > 1 && raw <= 100) {
+        return Math.max(0, Math.min(1, raw / 100));
+      }
+      return Math.max(0, Math.min(1, raw));
+    })()
+  }));
+
+  const inventory = ensureArray(root.inventory || root.materials || root.featured).map((item, index) => {
+    const quantityOnHand = Number.parseFloat(item.quantityOnHand ?? item.onHand ?? 0) || 0;
+    const quantityReserved = Number.parseFloat(item.quantityReserved ?? item.reserved ?? 0) || 0;
+    const explicitAvailable = Number.parseFloat(item.available ?? item.onHandAvailable ?? NaN);
+    const available = Number.isFinite(explicitAvailable)
+      ? explicitAvailable
+      : Math.max(quantityOnHand - quantityReserved, 0);
+    const alerts = ensureArray(item.alerts).map((alert, alertIndex) => ({
+      id: alert.id || alert.key || `alert-${alertIndex}`,
+      type: alert.type || alert.category || 'alert',
+      severity: alert.severity || alert.level || 'info',
+      status: alert.status || 'active',
+      triggeredAt: alert.triggeredAt || alert.createdAt || alert.updatedAt || null
+    }));
+    return {
+      id: item.id || `material-${index}`,
+      sku: item.sku || item.code || null,
+      name: item.name || item.title || `Material ${index + 1}`,
+      category: item.category || item.categoryName || 'Materials',
+      unitType: item.unitType || item.unit || 'unit',
+      quantityOnHand,
+      quantityReserved,
+      safetyStock: Number.parseFloat(item.safetyStock ?? item.safety_stock ?? 0) || 0,
+      available,
+      unitCost: Number.parseFloat(item.unitCost ?? item.unit_cost ?? item.cost ?? 0) || 0,
+      supplier: item.supplier?.name || item.supplier || null,
+      leadTimeDays: (() => {
+        const raw =
+          item.leadTimeDays ?? item.lead_time_days ?? item.leadTime ?? item.lead_time ?? null;
+        if (raw == null) return null;
+        const parsed = Number.parseFloat(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+      })(),
+      compliance: ensureArray(item.compliance).map((entry) => String(entry)),
+      nextArrival: item.nextArrival || item.next_arrival || null,
+      alerts
+    };
+  });
+
+  const inventoryById = new Map(inventory.map((item) => [item.id, item]));
+  const featured = ensureArray(root.featured).map((item, index) => {
+    const material = inventoryById.get(item.id);
+    if (material) {
+      return material;
+    }
+    const fallback = inventory[index];
+    return {
+      ...(fallback || {}),
+      id: item.id || fallback?.id || `material-featured-${index}`,
+      name: item.name || item.title || fallback?.name || `Material ${index + 1}`
+    };
+  });
+
+  const collections = ensureArray(root.collections).map((collection, index) => ({
+    id: collection.id || collection.slug || `collection-${index}`,
+    name: collection.name || collection.title || 'Collection',
+    description: collection.description || collection.summary || '',
+    composition: ensureArray(collection.composition || collection.items).map((entry) =>
+      typeof entry === 'string' ? entry : entry?.name || entry?.title || ''
+    ),
+    slaHours: (() => {
+      const raw = collection.slaHours ?? collection.sla_hours ?? collection.sla;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    })(),
+    coverageZones: ensureArray(collection.coverageZones || collection.zones || collection.regions).map(
+      (zone) => (typeof zone === 'string' ? zone : zone?.name || '')
+    ),
+    automation: ensureArray(collection.automation || collection.automations || collection.workflows).map((entry) =>
+      typeof entry === 'string' ? entry : entry?.title || ''
+    )
+  }));
+
+  const suppliers = ensureArray(root.suppliers).map((supplier, index) => ({
+    id: supplier.id || supplier.slug || `supplier-${index}`,
+    name: supplier.name || supplier.vendor || 'Supplier',
+    tier: supplier.tier || supplier.segment || 'Partner',
+    leadTimeDays: (() => {
+      const raw = supplier.leadTimeDays ?? supplier.lead_time_days ?? supplier.leadTime;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    })(),
+    reliability: (() => {
+      const raw = supplier.reliability ?? supplier.performance;
+      if (raw == null) return null;
+      const parsed = Number.parseFloat(raw);
+      if (Number.isNaN(parsed)) return null;
+      if (parsed > 1 && parsed <= 100) {
+        return Math.max(0, Math.min(1, parsed / 100));
+      }
+      return Math.max(0, Math.min(1, parsed));
+    })(),
+    annualSpend: Number.parseFloat(supplier.annualSpend ?? supplier.annual_spend ?? 0) || 0,
+    carbonScore: Number.parseFloat(supplier.carbonScore ?? supplier.carbon_score ?? 0) || null
+  }));
+
+  const logistics = ensureArray(root.logistics).map((step, index) => ({
+    id: step.id || step.key || `logistics-${index}`,
+    label: step.label || step.name || 'Milestone',
+    status: step.status || step.state || 'scheduled',
+    eta: step.eta || step.expectedAt || step.dueAt || null,
+    detail: step.detail || step.description || ''
+  }));
+
+  const complianceInsights = root.insights?.compliance || {};
+  const sustainabilityInsights = root.insights?.sustainability || {};
+
+  const insights = {
+    compliance: {
+      passingRate: (() => {
+        const raw = complianceInsights.passingRate ?? complianceInsights.passRate;
+        if (raw == null) return 1;
+        const parsed = Number.parseFloat(raw);
+        if (Number.isNaN(parsed)) return 1;
+        if (parsed > 1 && parsed <= 100) {
+          return Math.max(0, Math.min(1, parsed / 100));
+        }
+        return Math.max(0, Math.min(1, parsed));
+      })(),
+      upcomingAudits: Number.parseInt(
+        complianceInsights.upcomingAudits ?? complianceInsights.audits ?? 0,
+        10
+      ) || 0,
+      expiringCertifications: ensureArray(
+        complianceInsights.expiringCertifications || complianceInsights.expiring
+      ).map((entry, index) => ({
+        id: entry.id || entry.key || `cert-${index}`,
+        name: entry.name || entry.title || 'Certification',
+        expiresAt: entry.expiresAt || entry.expiry || entry.dueAt || null
+      }))
+    },
+    sustainability: {
+      recycledShare: (() => {
+        const raw = sustainabilityInsights.recycledShare ?? sustainabilityInsights.recycled;
+        if (raw == null) return 0;
+        const parsed = Number.parseFloat(raw);
+        if (Number.isNaN(parsed)) return 0;
+        if (parsed > 1 && parsed <= 100) {
+          return Math.max(0, Math.min(1, parsed / 100));
+        }
+        return Math.max(0, Math.min(1, parsed));
+      })(),
+      co2SavingsTons:
+        Number.parseFloat(sustainabilityInsights.co2SavingsTons ?? sustainabilityInsights.co2 ?? 0) || 0,
+      initiatives: ensureArray(sustainabilityInsights.initiatives).map((entry) =>
+        typeof entry === 'string' ? entry : entry?.title || ''
+      )
+    }
+  };
+
+  const sortedCategories = categories.slice().sort((a, b) => b.share - a.share);
+
+  return {
+    generatedAt: root.generatedAt || payload.generatedAt || new Date().toISOString(),
+    hero,
+    stats,
+    categories: sortedCategories,
+    featured,
+    inventory,
+    collections,
+    suppliers,
+    logistics,
+    insights
+  };
+}
+
+const materialsFallback = normaliseMaterialsShowcase({
+  generatedAt: '2025-02-10T08:00:00.000Z',
+  hero: {
+    title: 'Materials control tower',
+    subtitle:
+      'Govern consumables, replenishment cadences, and supplier risk from one command surface.',
+    metrics: [
+      { label: 'Fill rate', value: 97 },
+      { label: 'Stockouts this quarter', value: 1 },
+      { label: 'Average lead time (days)', value: 4 }
+    ],
+    actions: [
+      { label: 'Launch replenishment planner', href: '/materials/planner' },
+      { label: 'Download compliance pack', href: '/materials/compliance-pack.pdf' }
+    ]
+  },
+  stats: {
+    totalSkus: 24,
+    totalOnHand: 1820,
+    valueOnHand: 28640,
+    alerts: 3,
+    fillRate: 0.97,
+    replenishmentEta: '2025-02-18T08:00:00.000Z'
+  },
+  categories: [
+    { id: 'cabling', name: 'Structured cabling', share: 0.34, safetyStockBreaches: 0, availability: 0.92 },
+    { id: 'fire-safety', name: 'Fire safety', share: 0.27, safetyStockBreaches: 1, availability: 0.88 },
+    { id: 'mechanical', name: 'Mechanical consumables', share: 0.21, safetyStockBreaches: 1, availability: 0.9 },
+    { id: 'ppe', name: 'PPE & welfare', share: 0.18, safetyStockBreaches: 1, availability: 0.99 }
+  ],
+  inventory: [
+    {
+      id: 'material-1',
+      sku: 'CAB-6A-500',
+      name: 'Cat6A bulk cable drums',
+      category: 'Structured cabling',
+      unitType: 'drum',
+      quantityOnHand: 24,
+      quantityReserved: 6,
+      safetyStock: 12,
+      unitCost: 240,
+      supplier: { name: 'Metro Cabling Co' },
+      leadTimeDays: 3,
+      compliance: ['CE', 'RoHS'],
+      nextArrival: '2025-02-15T09:00:00.000Z',
+      alerts: []
+    },
+    {
+      id: 'material-2',
+      sku: 'FS-CO2-60',
+      name: '6kg CO2 extinguishers',
+      category: 'Fire safety',
+      unitType: 'unit',
+      quantityOnHand: 56,
+      quantityReserved: 12,
+      safetyStock: 48,
+      unitCost: 68,
+      supplier: 'Civic Compliance',
+      leadTimeDays: 5,
+      compliance: ['BS EN3'],
+      nextArrival: '2025-02-21T10:00:00.000Z',
+      alerts: [
+        {
+          id: 'alert-1',
+          type: 'low_stock',
+          severity: 'warning',
+          status: 'active',
+          triggeredAt: '2025-02-05T08:30:00.000Z'
+        }
+      ]
+    }
+  ],
+  featured: [
+    {
+      id: 'material-1',
+      sku: 'CAB-6A-500',
+      name: 'Cat6A bulk cable drums',
+      category: 'Structured cabling',
+      unitType: 'drum',
+      quantityOnHand: 24,
+      quantityReserved: 6,
+      safetyStock: 12,
+      unitCost: 240,
+      supplier: { name: 'Metro Cabling Co' },
+      leadTimeDays: 3,
+      compliance: ['CE', 'RoHS'],
+      nextArrival: '2025-02-15T09:00:00.000Z',
+      alerts: []
+    },
+    {
+      id: 'material-2',
+      sku: 'FS-CO2-60',
+      name: '6kg CO2 extinguishers',
+      category: 'Fire safety',
+      unitType: 'unit',
+      quantityOnHand: 56,
+      quantityReserved: 12,
+      safetyStock: 48,
+      unitCost: 68,
+      supplier: 'Civic Compliance',
+      leadTimeDays: 5,
+      compliance: ['BS EN3'],
+      nextArrival: '2025-02-21T10:00:00.000Z',
+      alerts: [
+        {
+          id: 'alert-1',
+          type: 'low_stock',
+          severity: 'warning',
+          status: 'active',
+          triggeredAt: '2025-02-05T08:30:00.000Z'
+        }
+      ]
+    }
+  ],
+  collections: [
+    {
+      id: 'rapid-response',
+      name: 'Rapid response outage kit',
+      description:
+        'Pre-packed assemblies for campus outages including switchgear spares, fuses, PPE, and thermal paste.',
+      composition: [
+        '4 × Cat6A cable drums',
+        '12 × MCCB kits',
+        'Thermal imaging consumables',
+        'Arc-flash PPE rotation pack'
+      ],
+      slaHours: 4,
+      coverageZones: ['London Docklands', 'Canary Wharf'],
+      automation: ['Auto-replenish to 2 kits per zone', 'Escrow-backed courier dispatch']
+    },
+    {
+      id: 'planned-maintenance',
+      name: 'Planned maintenance stack',
+      description: '90-day rolling consumables aligned with monthly PPM schedules and vendor compliance expiries.',
+      composition: [
+        'Filter and belt assortment',
+        'Sealant & lubrication caddies',
+        'PAT testing consumables',
+        'Permit documentation packs'
+      ],
+      slaHours: 24,
+      coverageZones: ['Manchester Science Park', 'Birmingham Innovation Hub'],
+      automation: ['Lead time buffers by supplier tier', 'Compliance auto-escalations']
+    }
+  ],
+  suppliers: [
+    {
+      id: 'metro',
+      name: 'Metro Cabling Co',
+      tier: 'Preferred',
+      leadTimeDays: 3,
+      reliability: 0.98,
+      annualSpend: 82000,
+      carbonScore: 72
+    },
+    {
+      id: 'civic',
+      name: 'Civic Compliance',
+      tier: 'Strategic',
+      leadTimeDays: 5,
+      reliability: 0.95,
+      annualSpend: 61000,
+      carbonScore: 66
+    },
+    {
+      id: 'northern',
+      name: 'Northern Plant Logistics',
+      tier: 'Regional',
+      leadTimeDays: 2,
+      reliability: 0.91,
+      annualSpend: 38000,
+      carbonScore: 59
+    }
+  ],
+  logistics: [
+    {
+      id: 'inbound',
+      label: 'Inbound consolidation',
+      status: 'on_track',
+      eta: '2025-02-15T08:00:00.000Z',
+      detail:
+        'Consolidated supplier shipments staged at Milton Keynes hub with telemetry seal checks complete.'
+    },
+    {
+      id: 'quality',
+      label: 'Quality assurance',
+      status: 'attention',
+      eta: '2025-02-16T12:00:00.000Z',
+      detail: 'Fire safety lot pending QA retest following revised BS EN3 documentation release.'
+    },
+    {
+      id: 'last-mile',
+      label: 'Last-mile dispatch',
+      status: 'scheduled',
+      eta: '2025-02-17T06:00:00.000Z',
+      detail: 'Dedicated EV couriers aligned with SLAs and geofenced drop windows for Docklands campus.'
+    }
+  ],
+  insights: {
+    compliance: {
+      passingRate: 0.94,
+      upcomingAudits: 3,
+      expiringCertifications: [
+        { name: 'Fire suppression media', expiresAt: '2025-03-01T00:00:00.000Z' },
+        { name: 'Lifting accessories', expiresAt: '2025-03-12T00:00:00.000Z' }
+      ]
+    },
+    sustainability: {
+      recycledShare: 0.32,
+      co2SavingsTons: 18.4,
+      initiatives: ['Closed-loop cable drum programme', 'EV last-mile fleet fully deployed']
+    }
+  }
+});
+
 function normaliseAdminDashboard(payload = {}) {
   const timeframe = typeof payload.timeframe === 'string' ? payload.timeframe : '7d';
   const generatedAt = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
@@ -1728,6 +2172,21 @@ export const getEnterprisePanel = withFallback(
     return request(`/panel/enterprise/overview${query}`, {
       cacheKey: `enterprise-panel${cacheKeySuffix}`,
       ttl: 30000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
+export const getMaterialsShowcase = withFallback(
+  normaliseMaterialsShowcase,
+  materialsFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/materials/showcase${query}`, {
+      cacheKey: `materials-showcase${cacheKeySuffix}`,
+      ttl: 45000,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
     });

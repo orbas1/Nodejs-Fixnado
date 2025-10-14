@@ -29,6 +29,7 @@ export const enGB = {
     'nav.solutions': 'Solutions',
     'nav.industries': 'Industries',
     'nav.platform': 'Platform',
+    'nav.materials': 'Materials',
     'nav.resources': 'Resources',
     'nav.dashboards': 'Dashboards',
     'nav.providerConsole': 'Provider console',
