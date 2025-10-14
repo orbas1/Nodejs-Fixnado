@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:meta/meta.dart';
 
 import '../features/auth/presentation/auth_gate.dart';
 import 'app_shell.dart';
@@ -100,9 +101,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     final destinations = _visibleDestinationsForRole(role);
     final currentIndex = _index.clamp(0, destinations.length - 1);
     final selected = destinations[currentIndex];
-    final selectedTitle = selected == _NavigationDestination.operations && role == UserRole.provider
-        ? 'Service Ops'
-        : selected.title;
+    final operationsLabel = operationsLabelForRole(role);
+    final selectedTitle =
+        selected == _NavigationDestination.operations ? operationsLabel : selected.title;
 
     return Scaffold(
       appBar: AppBar(
@@ -131,8 +132,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             .map(
               (destination) => NavigationDestination(
                 icon: Icon(destination.icon),
-                label: destination == _NavigationDestination.operations && role == UserRole.provider
-                    ? 'Service Ops'
+                label: destination == _NavigationDestination.operations
+                    ? operationsLabelForRole(role)
                     : destination.title,
               ),
             )
@@ -192,6 +193,18 @@ class _AppShellState extends ConsumerState<AppShell> {
         }
         return const AnalyticsDashboardScreen();
     }
+  }
+}
+
+@visibleForTesting
+String operationsLabelForRole(UserRole role) {
+  switch (role) {
+    case UserRole.provider:
+      return 'Service Ops';
+    case UserRole.enterprise:
+      return 'Enterprise analytics';
+    default:
+      return _NavigationDestination.operations.title;
   }
 }
 
