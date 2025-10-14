@@ -34,6 +34,8 @@ class LiveFeedPost {
     required this.metadata,
     required this.bids,
     required this.customer,
+    required this.images,
+    required this.bidDeadline,
   });
 
   factory LiveFeedPost.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,8 @@ class LiveFeedPost {
       customer: json['User'] is Map<String, dynamic>
           ? LiveFeedActor.fromJson(Map<String, dynamic>.from(json['User'] as Map))
           : null,
+      images: (json['images'] as List<dynamic>? ?? []).map((item) => item.toString()).toList(),
+      bidDeadline: json['bidDeadline'] != null ? _parseDate(json['bidDeadline']) : null,
     );
   }
 
@@ -76,6 +80,8 @@ class LiveFeedPost {
   final Map<String, dynamic> metadata;
   final List<LiveFeedBid> bids;
   final LiveFeedActor? customer;
+  final List<String> images;
+  final DateTime? bidDeadline;
 
   Map<String, dynamic> toJson() {
     return {
@@ -94,6 +100,8 @@ class LiveFeedPost {
       'metadata': metadata,
       'bids': bids.map((bid) => bid.toJson()).toList(),
       'User': customer?.toJson(),
+      'images': images,
+      'bidDeadline': bidDeadline?.toIso8601String(),
     };
   }
 
@@ -108,6 +116,45 @@ class LiveFeedPost {
   }
 
   int get bidCount => bids.length;
+
+  LiveFeedPost copyWith({
+    String? title,
+    String? description,
+    String? location,
+    String? budgetLabel,
+    double? budgetAmount,
+    String? budgetCurrency,
+    String? category,
+    bool? allowOutOfZone,
+    String? status,
+    DateTime? createdAt,
+    LiveFeedZone? zone,
+    Map<String, dynamic>? metadata,
+    List<LiveFeedBid>? bids,
+    LiveFeedActor? customer,
+    List<String>? images,
+    DateTime? bidDeadline,
+  }) {
+    return LiveFeedPost(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      location: location ?? this.location,
+      budgetLabel: budgetLabel ?? this.budgetLabel,
+      budgetAmount: budgetAmount ?? this.budgetAmount,
+      budgetCurrency: budgetCurrency ?? this.budgetCurrency,
+      category: category ?? this.category,
+      allowOutOfZone: allowOutOfZone ?? this.allowOutOfZone,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      zone: zone ?? this.zone,
+      metadata: metadata ?? this.metadata,
+      bids: bids ?? this.bids,
+      customer: customer ?? this.customer,
+      images: images ?? this.images,
+      bidDeadline: bidDeadline ?? this.bidDeadline,
+    );
+  }
 }
 
 class LiveFeedZone {
@@ -212,6 +259,25 @@ class LiveFeedBid {
         'provider': provider?.toJson(),
         'messages': messages.map((message) => message.toJson()).toList(),
       };
+
+  LiveFeedBid copyWith({
+    double? amount,
+    String? currency,
+    String? status,
+    DateTime? submittedAt,
+    LiveFeedActor? provider,
+    List<LiveFeedBidMessage>? messages,
+  }) {
+    return LiveFeedBid(
+      id: id,
+      amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
+      status: status ?? this.status,
+      submittedAt: submittedAt ?? this.submittedAt,
+      provider: provider ?? this.provider,
+      messages: messages ?? this.messages,
+    );
+  }
 }
 
 class LiveFeedBidMessage {
@@ -220,6 +286,7 @@ class LiveFeedBidMessage {
     required this.body,
     required this.createdAt,
     required this.author,
+    required this.attachments,
   });
 
   factory LiveFeedBidMessage.fromJson(Map<String, dynamic> json) {
@@ -230,6 +297,9 @@ class LiveFeedBidMessage {
       author: json['author'] is Map<String, dynamic>
           ? LiveFeedActor.fromJson(Map<String, dynamic>.from(json['author'] as Map))
           : null,
+      attachments: (json['attachments'] as List<dynamic>? ?? [])
+          .map((item) => LiveFeedAttachment.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
     );
   }
 
@@ -237,12 +307,14 @@ class LiveFeedBidMessage {
   final String body;
   final DateTime createdAt;
   final LiveFeedActor? author;
+  final List<LiveFeedAttachment> attachments;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'body': body,
         'createdAt': createdAt.toIso8601String(),
         'author': author?.toJson(),
+        'attachments': attachments.map((attachment) => attachment.toJson()).toList(),
       };
 }
 
@@ -254,4 +326,151 @@ class LiveFeedFetchResult {
 
   final List<LiveFeedPost> posts;
   final bool offline;
+}
+
+class LiveFeedAttachment {
+  LiveFeedAttachment({
+    required this.url,
+    this.label,
+  });
+
+  factory LiveFeedAttachment.fromJson(Map<String, dynamic> json) {
+    return LiveFeedAttachment(
+      url: json['url'] as String,
+      label: json['label'] as String?,
+    );
+  }
+
+  final String url;
+  final String? label;
+
+  Map<String, dynamic> toJson() => {
+        'url': url,
+        if (label != null && label!.isNotEmpty) 'label': label,
+      };
+}
+
+class LiveFeedJobDraft {
+  LiveFeedJobDraft({
+    required this.title,
+    required this.description,
+    this.budgetAmount,
+    this.budgetCurrency,
+    this.budgetLabel,
+    this.category,
+    this.location,
+    this.zoneId,
+    this.allowOutOfZone = false,
+    this.bidDeadline,
+  });
+
+  final String title;
+  final String description;
+  final double? budgetAmount;
+  final String? budgetCurrency;
+  final String? budgetLabel;
+  final String? category;
+  final String? location;
+  final String? zoneId;
+  final bool allowOutOfZone;
+  final DateTime? bidDeadline;
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        if (description.isNotEmpty) 'description': description,
+        if (budgetAmount != null) 'budgetAmount': budgetAmount,
+        if (budgetCurrency != null && budgetCurrency!.isNotEmpty) 'budgetCurrency': budgetCurrency,
+        if (budgetLabel != null && budgetLabel!.isNotEmpty) 'budgetLabel': budgetLabel,
+        if (category != null && category!.isNotEmpty) 'category': category,
+        if (location != null && location!.isNotEmpty) 'location': location,
+        if (zoneId != null && zoneId!.isNotEmpty) 'zoneId': zoneId,
+        'allowOutOfZone': allowOutOfZone,
+        if (bidDeadline != null) 'bidDeadline': bidDeadline!.toIso8601String(),
+      };
+}
+
+class LiveFeedBidRequest {
+  LiveFeedBidRequest({
+    this.amount,
+    this.currency,
+    required this.message,
+    this.attachments = const [],
+  });
+
+  final double? amount;
+  final String? currency;
+  final String message;
+  final List<LiveFeedAttachment> attachments;
+
+  Map<String, dynamic> toJson() => {
+        if (amount != null) 'amount': amount,
+        if (currency != null && currency!.isNotEmpty) 'currency': currency,
+        'message': message,
+        if (attachments.isNotEmpty) 'attachments': attachments.map((attachment) => attachment.toJson()).toList(),
+      };
+}
+
+class LiveFeedMessageRequest {
+  LiveFeedMessageRequest({
+    required this.body,
+    this.attachments = const [],
+  });
+
+  final String body;
+  final List<LiveFeedAttachment> attachments;
+
+  Map<String, dynamic> toJson() => {
+        'body': body,
+        if (attachments.isNotEmpty) 'attachments': attachments.map((attachment) => attachment.toJson()).toList(),
+      };
+}
+
+class LiveFeedBidStatus {
+  const LiveFeedBidStatus({
+    this.loading = false,
+    this.error,
+    this.success = false,
+  });
+
+  final bool loading;
+  final String? error;
+  final bool success;
+
+  LiveFeedBidStatus copyWith({
+    bool? loading,
+    String? error,
+    bool clearError = false,
+    bool? success,
+  }) {
+    return LiveFeedBidStatus(
+      loading: loading ?? this.loading,
+      error: clearError ? null : (error ?? this.error),
+      success: success ?? this.success,
+    );
+  }
+}
+
+class LiveFeedMessageStatus {
+  const LiveFeedMessageStatus({
+    this.loading = false,
+    this.error,
+    this.success = false,
+  });
+
+  final bool loading;
+  final String? error;
+  final bool success;
+
+  LiveFeedMessageStatus copyWith({
+    bool? loading,
+    String? error,
+    bool clearError = false,
+    bool? success,
+  }) {
+    return LiveFeedMessageStatus(
+      loading: loading ?? this.loading,
+      error: clearError ? null : (error ?? this.error),
+      success: success ?? this.success,
+    );
+  }
 }
