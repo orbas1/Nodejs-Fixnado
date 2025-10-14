@@ -231,6 +231,32 @@ const buildSearchIndex = (navigation) =>
       );
     }
 
+    if (section.type === 'ads') {
+      entries.push(
+        ...(section.data?.summaryCards ?? []).map((card) => ({
+          id: `${section.id}-${card.title}`,
+          type: 'card',
+          label: `${card.title} • ${card.value}`,
+          description: card.helper ?? card.change ?? '',
+          targetSection: section.id
+        })),
+        ...(section.data?.campaigns ?? []).map((campaign) => ({
+          id: `${section.id}-${campaign.id ?? campaign.name}`,
+          type: 'record',
+          label: `${campaign.name} • ${campaign.status ?? ''}`.trim(),
+          description: [`ROAS ${campaign.roas ?? '—'}`, campaign.pacing].filter(Boolean).join(' · '),
+          targetSection: section.id
+        })),
+        ...(section.data?.alerts ?? []).map((alert) => ({
+          id: `${section.id}-alert-${alert.title ?? alert.detectedAt}`,
+          type: 'record',
+          label: alert.title ?? 'Alert',
+          description: [`${alert.severity ?? ''}`.trim(), alert.description ?? ''].filter(Boolean).join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
     if (section.type === 'settings' && Array.isArray(section.data?.panels)) {
       section.data.panels.forEach((panel) => {
         const panelId = panel.id ?? panel.title ?? 'panel';
