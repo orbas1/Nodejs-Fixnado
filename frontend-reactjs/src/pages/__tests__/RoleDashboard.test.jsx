@@ -97,7 +97,13 @@ function renderWithToggles(ui, { evaluation, toggle = enabledToggle, loading = f
 }
 
 describe('RoleDashboard', () => {
+  let resolvedOptionsMock;
+
   beforeEach(() => {
+    resolvedOptionsMock = vi
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockReturnValue({ timeZone: 'Europe/London' });
+
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => dashboardFixture
@@ -105,6 +111,7 @@ describe('RoleDashboard', () => {
   });
 
   afterEach(() => {
+    resolvedOptionsMock?.mockRestore();
     vi.restoreAllMocks();
   });
 
@@ -117,7 +124,7 @@ describe('RoleDashboard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+    expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
     expect(screen.getByText('Jobs Received')).toBeInTheDocument();
     expect(screen.getByText('Download CSV')).toHaveAttribute(
       'href',
@@ -126,28 +133,35 @@ describe('RoleDashboard', () => {
   });
 
   it('shows an error state when the dashboard fails to load', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'persona_not_supported' })
-    });
+    const originalDev = import.meta.env.DEV;
+    import.meta.env.DEV = false;
 
-    renderWithToggles(
-      <MemoryRouter initialEntries={['/dashboards/admin']}>
-        <Routes>
-          <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    try {
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: 'persona_not_supported' })
+      });
 
-    await waitFor(() => expect(screen.getByText(/couldn’t load this dashboard/i)).toBeInTheDocument());
+      renderWithToggles(
+        <MemoryRouter initialEntries={['/dashboards/admin']}>
+          <Routes>
+            <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
+          </Routes>
+        </MemoryRouter>
+      );
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => dashboardFixture
-    });
+      expect(await screen.findByText(/couldn’t load this dashboard/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await waitFor(() => expect(screen.getByText('Executive Overview')).toBeInTheDocument());
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => dashboardFixture
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+      expect(await screen.findByRole('heading', { name: 'Executive Overview' })).toBeInTheDocument();
+    } finally {
+      import.meta.env.DEV = originalDev;
+    }
   });
 
   it('renders access gate when feature toggle is disabled', async () => {

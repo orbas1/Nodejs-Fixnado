@@ -9,6 +9,7 @@ import {
   BuildingStorefrontIcon,
   CheckBadgeIcon,
   EnvelopeIcon,
+  LockClosedIcon,
   MapPinIcon,
   PhoneArrowDownLeftIcon,
   PlayIcon,
@@ -19,6 +20,8 @@ import {
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { useLocale } from '../hooks/useLocale.js';
+import { useSession } from '../hooks/useSession.js';
+import { BUSINESS_FRONT_ALLOWED_ROLES, ROLE_DISPLAY_NAMES } from '../constants/accessControl.js';
 
 function StatCard({ stat }) {
   const { format, t } = useLocale();
@@ -362,30 +365,91 @@ ZoneBadge.propTypes = {
   }).isRequired
 };
 
+function AccessDenied({ role }) {
+  const { t } = useLocale();
+  const allowedRolesLabel = BUSINESS_FRONT_ALLOWED_ROLES.map((roleKey) => ROLE_DISPLAY_NAMES[roleKey] || roleKey).join(' • ');
+  const roleLabel = ROLE_DISPLAY_NAMES[role] || ROLE_DISPLAY_NAMES.guest;
+
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 text-center shadow-xl">
+        <LockClosedIcon className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
+        <h1 className="mt-6 text-3xl font-semibold text-primary">{t('businessFront.accessDeniedTitle')}</h1>
+        <p className="mt-4 text-sm text-slate-600">{t('businessFront.accessDeniedDescription')}</p>
+        <p className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-400">
+          {t('businessFront.accessDeniedRolesLabel', { roles: allowedRolesLabel })}
+        </p>
+        <p className="mt-4 text-xs text-slate-500">{t('businessFront.accessDeniedCurrentRole', { role: roleLabel })}</p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            to="/register/company"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+          >
+            {t('businessFront.accessDeniedCta')}
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-white/90 px-6 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/50"
+          >
+            {t('businessFront.accessDeniedBack')}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+AccessDenied.propTypes = {
+  role: PropTypes.string
+};
+
+AccessDenied.defaultProps = {
+  role: 'guest'
+};
+
 export default function BusinessFront() {
   const { slug } = useParams();
   const { t, format } = useLocale();
-  const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
+  const { role: sessionRole, hasRole } = useSession();
+  const canAccess = hasRole(BUSINESS_FRONT_ALLOWED_ROLES);
+  const [state, setState] = useState(() => ({ loading: canAccess, data: null, meta: null, error: null }));
 
-  const loadFront = useCallback(async ({ forceRefresh = false, signal } = {}) => {
-    setState((current) => ({ ...current, loading: true, error: null }));
-    try {
-      const result = await getBusinessFront(slug, { forceRefresh, signal });
-      setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof PanelApiError ? error : new PanelApiError('Unable to load business front', 500, { cause: error })
-      }));
-    }
-  }, [slug]);
+  const loadFront = useCallback(
+    async ({ forceRefresh = false, signal } = {}) => {
+      if (!canAccess) {
+        return null;
+      }
+
+      setState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const result = await getBusinessFront(slug, { forceRefresh, signal });
+        setState({ loading: false, data: result.data, meta: result.meta, error: result.meta?.error || null });
+        return result;
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof PanelApiError
+              ? error
+              : new PanelApiError('Unable to load business front', 500, { cause: error })
+        }));
+        return null;
+      }
+    },
+    [slug, canAccess]
+  );
 
   useEffect(() => {
+    if (!canAccess) {
+      setState({ loading: false, data: null, meta: null, error: null });
+      return undefined;
+    }
+
     const controller = new AbortController();
-    loadFront({ signal: controller.signal });
+    loadFront({ signal: controller.signal }).catch(() => {});
     return () => controller.abort();
-  }, [loadFront]);
+  }, [loadFront, canAccess]);
 
   const hero = state.data?.hero;
   const packages = state.data?.packages ?? [];
@@ -412,6 +476,20 @@ export default function BusinessFront() {
   const showcaseCarousel = hero?.media?.carousel ?? [];
   const showcaseVideo = hero?.media?.showcaseVideo;
   const hasShowcase = Boolean(showcaseVideo || showcaseCarousel.length > 0 || gallery.length > 0);
+
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">
+        <header className="border-b border-slate-200 bg-gradient-to-br from-primary/10 via-white to-white">
+          <div className="mx-auto max-w-6xl px-6 py-12">
+            <p className="text-xs uppercase tracking-[0.35em] text-primary/70">{t('businessFront.heroFeatured')}</p>
+            <h1 className="mt-2 text-3xl font-semibold text-primary">{t('businessFront.accessDeniedTitle')}</h1>
+          </div>
+        </header>
+        <AccessDenied role={sessionRole} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24" data-qa="business-front">

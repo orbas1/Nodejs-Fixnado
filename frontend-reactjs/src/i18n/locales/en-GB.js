@@ -200,6 +200,13 @@ export const enGB = {
     'businessFront.heroStraplineFallback': 'Escrow-backed field services delivered by certified teams across the UK.',
     'businessFront.bookProgramme': 'Book a programme',
     'businessFront.chatOperations': 'Chat with operations',
+    'businessFront.accessDeniedTitle': 'Request access to business fronts',
+    'businessFront.accessDeniedDescription':
+      'Business fronts are restricted to provisioned enterprise and platform control roles. Ask your Fixnado administrator to enable access or begin the enterprise onboarding journey.',
+    'businessFront.accessDeniedRolesLabel': 'Available to: {roles}',
+    'businessFront.accessDeniedCurrentRole': 'Signed in as {role}',
+    'businessFront.accessDeniedCta': 'Request enterprise access',
+    'businessFront.accessDeniedBack': 'Return to home',
     'businessFront.errorSummary': 'We were unable to refresh this business front.',
     'businessFront.errorFallbackHint': 'You are seeing cached content captured earlier.',
     'businessFront.packagesHeadline': 'Curated service packages',
