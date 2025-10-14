@@ -11,8 +11,8 @@ const services = [
 ];
 
 const languages = [
-  { locale: 'English (US)', proficiency: 'Native', coverage: 'All copy + field documentation' },
-  { locale: 'Spanish (MX)', proficiency: 'Professional working', coverage: 'Safety briefings + SMS updates' }
+  { locale: 'English (US)', proficiency: 'Native', coverage: 'All copy and job notes' },
+  { locale: 'Spanish (MX)', proficiency: 'Professional working', coverage: 'Safety briefings and SMS updates' }
 ];
 
 const complianceDocs = [
@@ -22,43 +22,37 @@ const complianceDocs = [
 ];
 
 const availability = [
-  { window: 'Mon – Fri', time: '07:00 – 19:00', notes: 'Emergency response available across all service zones.' },
-  { window: 'Sat', time: '08:00 – 14:00', notes: 'Premium callout +£45 applies; remote diagnostics offered.' }
+  { window: 'Mon – Fri', time: '07:00 – 19:00', notes: 'Emergency response across all zones.' },
+  { window: 'Sat', time: '08:00 – 14:00', notes: 'Premium callout applies; remote diagnostics offered.' }
 ];
 
 const engagementWorkflow = [
   {
     stage: 'Discovery',
-    detail:
-      'Video walk-through or on-site survey scheduled within 24 hours. Intake form captures compliance data including permits and site access restrictions.'
+    detail: 'Survey the site within 24 hours and log permits or access notes.'
   },
   {
     stage: 'Execution',
-    detail:
-      'Milestones tracked in Fixnado portal with geo-tagged photos, meter readings, and client approvals. Escrow release tied to safety checklist completion.'
+    detail: 'Track milestones with geo-tagged proof before escrow releases.'
   },
   {
     stage: 'Post-job',
-    detail:
-      'Documentation, preventive recommendations, and invoice exported to client systems. Follow-up audit scheduled automatically for regulated industries.'
+    detail: 'Send documentation and schedule follow-up checks automatically.'
   }
 ];
 
 const toolingAndShop = [
   {
     name: 'Marketplace storefront',
-    description:
-      'Rental thermal cameras, calibrated torque tools, and surge analyzers with insured delivery. Inventory synced nightly to avoid double bookings.'
+    description: 'Thermal cameras, torque tools, and surge analyzers with insured delivery.'
   },
   {
     name: 'Service zone coverage',
-    description:
-      'Downtown San Diego, La Jolla, Pacific Beach, and Chula Vista. Live dispatch integrates with Fixnado geo-tracking for ETA accuracy.'
+    description: 'Downtown San Diego, La Jolla, Pacific Beach, and Chula Vista with live ETAs.'
   },
   {
     name: 'Knowledge base references',
-    description:
-      'KB-FIELD-104 (Permit checklist), KB-SAFETY-021 (Lockout/tagout), KB-COMMS-014 (Client escalation script).'
+    description: 'Permit checklist, lockout/tagout, and escalation scripts on hand.'
   }
 ];
 
@@ -68,7 +62,7 @@ export default function Profile() {
       <PageHeader
         eyebrow="Provider profile"
         title="Jordan Miles — Master electrician"
-        description="Enterprise-certified electrician delivering mission-critical infrastructure support across San Diego service zones."
+        description="Enterprise-certified electrician covering San Diego service zones."
         breadcrumbs={[
           { label: 'Providers', to: '/services' },
           { label: 'Jordan Miles' }
@@ -90,7 +84,7 @@ export default function Profile() {
         <BlueprintSection
           eyebrow="Service catalogue"
           title="High-availability electrical services"
-          description="Packages leverage Fixnado’s escrow-backed workflows, ensuring compliance, traceability, and rapid deployment for enterprise sites."
+          description="Escrow-backed packages tailored for regulated sites."
           aside={
             <div className="space-y-5">
               <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
@@ -155,7 +149,7 @@ export default function Profile() {
         <BlueprintSection
           eyebrow="Operations"
           title="Coverage, scheduling, and tooling visibility"
-          description="Clients can validate coverage, understand scheduling windows, and review the equipment catalogue before confirming a booking."
+          description="Coverage, scheduling, and tooling at a glance before booking."
           aside={
             <div className="space-y-5">
               <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
@@ -164,8 +158,8 @@ export default function Profile() {
                   {availability.map((slot) => (
                     <li key={slot.window} className="rounded-2xl border border-slate-100 bg-white p-4">
                       <p className="font-semibold text-primary">{slot.window}</p>
-                      <p className="text-xs text-slate-500">{slot.time}</p>
-                      <p className="mt-2 text-xs text-slate-500">{slot.notes}</p>
+                    <p className="text-xs text-slate-500">{slot.time}</p>
+                    <p className="mt-2 text-xs text-slate-500">{slot.notes}</p>
                     </li>
                   ))}
                 </ul>
@@ -186,7 +180,7 @@ export default function Profile() {
         <BlueprintSection
           eyebrow="Engagement blueprint"
           title="How Jordan delivers regulated projects"
-          description="Workflow transparency ensures procurement, compliance, and operations teams trust the engagement from kickoff to closeout."
+          description="A three-step playbook from kickoff to closeout."
         >
           <ol className="space-y-4 text-sm text-slate-600">
             {engagementWorkflow.map((step) => (

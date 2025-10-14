@@ -232,7 +232,7 @@ class _LegalHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Enterprise-grade legal framework covering the Fixnado marketplace, workflow automation, and compliance services across the United Kingdom.',
+            'Fixnado marketplace terms for England and Wales.',
             style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: Colors.white.withOpacity(0.84)),
           ),
           const SizedBox(height: 16),

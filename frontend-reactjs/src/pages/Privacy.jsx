@@ -38,7 +38,7 @@ function TableOfContents({ items }) {
       <div className="mt-6 rounded-2xl border border-primary/10 bg-primary/5 p-4 text-xs text-primary">
         <p className="font-semibold">Need a signed copy?</p>
         <p className="mt-1 text-primary/80">
-          Email <a className="underline decoration-dotted underline-offset-2" href="mailto:privacy@fixnado.com">privacy@fixnado.com</a> for a countersigned PDF or data processing addendum reference.
+          Email <a className="underline decoration-dotted underline-offset-2" href="mailto:privacy@fixnado.com">privacy@fixnado.com</a> for a signed PDF or DPA reference.
         </p>
       </div>
     </nav>
@@ -69,7 +69,7 @@ export default function Privacy() {
         description={meta.summary}
         breadcrumbs={[
           { label: 'Home', to: '/' },
-          { label: 'Privacy policy' }
+          { label: 'Privacy' }
         ]}
         actions={[
           {
@@ -139,10 +139,10 @@ export default function Privacy() {
           <div className="rounded-3xl border border-emerald-200 bg-emerald-50/80 p-6 shadow-inner">
             <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700">Security posture</h2>
             <p className="mt-3 text-sm text-emerald-900">
-              Web and mobile experiences share a unified privacy control plane. Role-based policies, encryption standards, and incident workflows operate consistently across both channels to provide enterprise-grade assurance.
+              Web and mobile use the same privacy controls, RBAC, and incident playbooks.
             </p>
             <p className="mt-3 text-xs text-emerald-800/80">
-              Looking for SOC 2, ISO, or DPIA artefacts? Visit the Enterprise Trust Center from your dashboard to request signed documentation.
+              Need SOC 2, ISO, or DPIA packs? Request them from the Enterprise Trust Center.
             </p>
           </div>
         </aside>

@@ -424,7 +424,7 @@ class _SecurityBanner extends StatelessWidget {
                 Text('Unified security posture', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.teal.shade900)),
                 const SizedBox(height: 6),
                 Text(
-                  'Fixnado web and mobile run on the same privacy control plane with mirrored RBAC rules, encryption policies, and incident playbooks. Request SOC 2, ISO 27001, and DPIA artefacts from the Trust Center.',
+                  'Fixnado web and mobile share the same privacy controls, RBAC rules, and incident playbooks. Request SOC 2, ISO 27001, or DPIA packs from the Trust Center.',
                   style: GoogleFonts.inter(fontSize: 13, height: 1.6, color: Colors.teal.shade900),
                 ),
               ],

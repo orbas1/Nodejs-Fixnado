@@ -126,7 +126,7 @@ class _Header extends StatelessWidget {
         Text('Service delivery studio', style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text(
-          'Orchestrate packages, catalogue inventory, and live delivery coverage with confidence.',
+          'Manage packages, inventory, and delivery coverage in one place.',
           style: GoogleFonts.inter(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
@@ -222,7 +222,7 @@ class _BannerStylesSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Curated hero treatments aligned to the Fixnado palette with responsive parity.',
+                    'Ready-to-use hero treatments in the Fixnado palette.',
                     style: GoogleFonts.inter(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ],
