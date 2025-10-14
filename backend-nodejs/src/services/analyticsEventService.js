@@ -20,6 +20,27 @@ const EVENT_DEFINITIONS = Object.freeze({
     requiredMetadata: ['zoneId', 'companyId'],
     tenantKey: 'companyId'
   },
+  'zone.service.attached': {
+    domain: 'zones',
+    entityType: 'zone_service_coverage',
+    entityIdKey: 'coverageId',
+    requiredMetadata: ['coverageId', 'zoneId', 'serviceId', 'companyId', 'coverageType'],
+    tenantKey: 'companyId'
+  },
+  'zone.service.updated': {
+    domain: 'zones',
+    entityType: 'zone_service_coverage',
+    entityIdKey: 'coverageId',
+    requiredMetadata: ['coverageId', 'zoneId', 'serviceId', 'companyId', 'coverageType'],
+    tenantKey: 'companyId'
+  },
+  'zone.service.detached': {
+    domain: 'zones',
+    entityType: 'zone_service_coverage',
+    entityIdKey: 'coverageId',
+    requiredMetadata: ['coverageId', 'zoneId', 'serviceId', 'companyId'],
+    tenantKey: 'companyId'
+  },
   'booking.created': {
     domain: 'bookings',
     entityType: 'booking',

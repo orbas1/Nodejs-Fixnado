@@ -12,7 +12,7 @@ router.post(
     body('lastName').notEmpty(),
     body('email').isEmail(),
     body('password').isLength({ min: 8 }),
-    body('type').isIn(['user', 'company', 'servicemen'])
+    body('type').isIn(['user', 'company', 'servicemen', 'provider_admin', 'operations_admin'])
   ],
   register
 );

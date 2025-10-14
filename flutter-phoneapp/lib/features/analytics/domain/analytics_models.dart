@@ -158,6 +158,14 @@ abstract class AnalyticsSection {
           data: AnalyticsGridData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
           sidebar: sidebar,
         );
+      case 'ads':
+        return AnalyticsAdsSection(
+          id: json['id'] as String? ?? 'ads',
+          label: json['label'] as String? ?? 'Fixnado Ads',
+          description: json['description'] as String? ?? '',
+          data: AnalyticsAdsData.fromJson(Map<String, dynamic>.from(json['data'] as Map? ?? const {})),
+          sidebar: sidebar,
+        );
       case 'settings':
         return AnalyticsSettingsSection(
           id: json['id'] as String? ?? 'settings',
@@ -238,6 +246,18 @@ class AnalyticsGridSection extends AnalyticsSection {
   }) : super(type: 'grid');
 
   final AnalyticsGridData data;
+}
+
+class AnalyticsAdsSection extends AnalyticsSection {
+  AnalyticsAdsSection({
+    required super.id,
+    required super.label,
+    required super.description,
+    required this.data,
+    super.sidebar,
+  }) : super(type: 'ads');
+
+  final AnalyticsAdsData data;
 }
 
 class AnalyticsSettingsSection extends AnalyticsSection {
@@ -567,7 +587,253 @@ class AnalyticsGridCard {
   }
 }
 
-class AnalyticsSettingsData {
+class AnalyticsAdsData {
+  const AnalyticsAdsData({
+    this.summaryCards = const [],
+    this.funnel = const [],
+    this.campaigns = const [],
+    this.invoices = const [],
+    this.alerts = const [],
+    this.recommendations = const [],
+    this.timeline = const [],
+  });
+
+  final List<AnalyticsAdsSummaryCard> summaryCards;
+  final List<AnalyticsAdsFunnelStage> funnel;
+  final List<AnalyticsAdsCampaign> campaigns;
+  final List<AnalyticsAdsInvoice> invoices;
+  final List<AnalyticsAdsAlert> alerts;
+  final List<AnalyticsAdsRecommendation> recommendations;
+  final List<AnalyticsAdsTimelineEntry> timeline;
+
+  factory AnalyticsAdsData.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsData(
+      summaryCards: (json['summaryCards'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsSummaryCard.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      funnel: (json['funnel'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsFunnelStage.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      campaigns: (json['campaigns'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsCampaign.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      invoices: (json['invoices'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsInvoice.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      alerts: (json['alerts'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsAlert.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      recommendations: (json['recommendations'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsRecommendation.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+      timeline: (json['timeline'] as List<dynamic>? ?? const [])
+          .map((raw) => AnalyticsAdsTimelineEntry.fromJson(Map<String, dynamic>.from(raw as Map)))
+          .toList(),
+    );
+  }
+}
+
+class AnalyticsAdsSummaryCard {
+  const AnalyticsAdsSummaryCard({
+    required this.title,
+    required this.value,
+    this.change,
+    this.trend,
+    this.helper,
+  });
+
+  final String title;
+  final String value;
+  final String? change;
+  final String? trend;
+  final String? helper;
+
+  factory AnalyticsAdsSummaryCard.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsSummaryCard(
+      title: json['title'] as String? ?? '',
+      value: json['value']?.toString() ?? '0',
+      change: json['change']?.toString(),
+      trend: json['trend']?.toString(),
+      helper: json['helper']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsFunnelStage {
+  const AnalyticsAdsFunnelStage({
+    required this.title,
+    required this.value,
+    this.helper,
+  });
+
+  final String title;
+  final String value;
+  final String? helper;
+
+  factory AnalyticsAdsFunnelStage.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsFunnelStage(
+      title: json['title'] as String? ?? '',
+      value: json['value']?.toString() ?? '0',
+      helper: json['helper']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsCampaign {
+  const AnalyticsAdsCampaign({
+    this.id,
+    required this.name,
+    this.status,
+    this.objective,
+    this.spend,
+    this.spendChange,
+    this.conversions,
+    this.conversionsChange,
+    this.cpa,
+    this.roas,
+    this.roasChange,
+    this.pacing,
+    this.lastMetricDate,
+    this.flights,
+    this.window,
+  });
+
+  final String? id;
+  final String name;
+  final String? status;
+  final String? objective;
+  final String? spend;
+  final String? spendChange;
+  final String? conversions;
+  final String? conversionsChange;
+  final String? cpa;
+  final String? roas;
+  final String? roasChange;
+  final String? pacing;
+  final String? lastMetricDate;
+  final int? flights;
+  final String? window;
+
+  factory AnalyticsAdsCampaign.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsCampaign(
+      id: json['id']?.toString(),
+      name: json['name'] as String? ?? '',
+      status: json['status']?.toString(),
+      objective: json['objective']?.toString(),
+      spend: json['spend']?.toString(),
+      spendChange: json['spendChange']?.toString(),
+      conversions: json['conversions']?.toString(),
+      conversionsChange: json['conversionsChange']?.toString(),
+      cpa: json['cpa']?.toString(),
+      roas: json['roas']?.toString(),
+      roasChange: json['roasChange']?.toString(),
+      pacing: json['pacing']?.toString(),
+      lastMetricDate: json['lastMetricDate']?.toString(),
+      flights: (json['flights'] as num?)?.toInt(),
+      window: json['window']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsInvoice {
+  const AnalyticsAdsInvoice({
+    this.invoiceNumber,
+    this.campaign,
+    this.amountDue,
+    this.status,
+    this.dueDate,
+  });
+
+  final String? invoiceNumber;
+  final String? campaign;
+  final String? amountDue;
+  final String? status;
+  final String? dueDate;
+
+  factory AnalyticsAdsInvoice.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsInvoice(
+      invoiceNumber: json['invoiceNumber']?.toString(),
+      campaign: json['campaign']?.toString(),
+      amountDue: json['amountDue']?.toString(),
+      status: json['status']?.toString(),
+      dueDate: json['dueDate']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsAlert {
+  const AnalyticsAdsAlert({
+    this.title,
+    this.severity,
+    this.description,
+    this.detectedAt,
+    this.flight,
+  });
+
+  final String? title;
+  final String? severity;
+  final String? description;
+  final String? detectedAt;
+  final String? flight;
+
+  factory AnalyticsAdsAlert.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsAlert(
+      title: json['title']?.toString(),
+      severity: json['severity']?.toString(),
+      description: json['description']?.toString(),
+      detectedAt: json['detectedAt']?.toString(),
+      flight: json['flight']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsRecommendation {
+  const AnalyticsAdsRecommendation({
+    required this.title,
+    required this.description,
+    this.action,
+  });
+
+  final String title;
+  final String description;
+  final String? action;
+
+  factory AnalyticsAdsRecommendation.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsRecommendation(
+      title: json['title'] as String? ?? '',
+      description: json['description']?.toString() ?? '',
+      action: json['action']?.toString(),
+    );
+  }
+}
+
+class AnalyticsAdsTimelineEntry {
+  const AnalyticsAdsTimelineEntry({
+    required this.title,
+    this.status,
+    this.start,
+    this.end,
+    this.budget,
+  });
+
+  final String title;
+  final String? status;
+  final String? start;
+  final String? end;
+  final String? budget;
+
+  factory AnalyticsAdsTimelineEntry.fromJson(Map<String, dynamic> json) {
+    return AnalyticsAdsTimelineEntry(
+      title: json['title'] as String? ?? '',
+      status: json['status']?.toString(),
+      start: json['start']?.toString(),
+      end: json['end']?.toString(),
+      budget: json['budget']?.toString(),
+    );
+  }
+}
+
+  class AnalyticsSettingsData {
   const AnalyticsSettingsData({
     this.panels = const [],
   });

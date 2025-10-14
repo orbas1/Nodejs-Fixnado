@@ -55,7 +55,7 @@ export async function createBooking({
   scheduledEnd,
   metadata = {},
   actor = null
-}) {
+}, { transaction: externalTransaction } = {}) {
   if (!customerId || !companyId || !zoneId) {
     throw invalidBooking('customerId, companyId, and zoneId are required');
   }
@@ -83,7 +83,7 @@ export async function createBooking({
     throw invalidBooking('On-demand bookings cannot provide schedule windows');
   }
 
-  return sequelize.transaction(async (transaction) => {
+  const execute = async (transaction) => {
     const booking = await Booking.create(
       {
         customerId,
@@ -138,7 +138,13 @@ export async function createBooking({
     );
 
     return booking;
-  });
+  };
+
+  if (externalTransaction) {
+    return execute(externalTransaction);
+  }
+
+  return sequelize.transaction(execute);
 }
 
 export async function updateBookingStatus(bookingId, nextStatus, context = {}) {
