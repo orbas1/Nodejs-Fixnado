@@ -66,42 +66,107 @@ export default function Register() {
               className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
             />
           </label>
-          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-address">
-            Address
-            <input
-              id="register-address"
-              type="text"
-              className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-age">
-            Age
-            <input
-              id="register-age"
-              type="number"
-              min="18"
-              className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-          <div className={`grid ${controlWidthClass} gap-3`}>
-            <label className="text-sm font-medium text-slate-600" htmlFor="register-role">
-              Joining as
-            </label>
-            <select
-              id="register-role"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+          <div className={`grid ${fieldGroupClass} gap-4`}>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-street"
             >
-              <option value="user">Customer</option>
-              <option value="servicemen">Service professional</option>
-              <option value="company">Company</option>
-            </select>
+              Street address
+              <input
+                id="register-street"
+                type="text"
+                autoComplete="address-line1"
+                required
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-address-line2"
+            >
+              Address line 2 (optional)
+              <input
+                id="register-address-line2"
+                type="text"
+                autoComplete="address-line2"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
           </div>
+          <div className={`grid ${fieldGroupClass} gap-4 md:grid-cols-2`}>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-town"
+            >
+              Town / district
+              <input
+                id="register-town"
+                type="text"
+                autoComplete="address-level3"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-city"
+            >
+              City
+              <input
+                id="register-city"
+                type="text"
+                autoComplete="address-level2"
+                required
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
+          </div>
+          <div className={`grid ${fieldGroupClass} gap-4 md:grid-cols-2`}>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-country"
+            >
+              Country
+              <input
+                id="register-country"
+                type="text"
+                autoComplete="country-name"
+                required
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
+            <label
+              className={`flex w-full flex-col text-left text-sm font-medium text-slate-600`}
+              htmlFor="register-postcode"
+            >
+              Postcode
+              <input
+                id="register-postcode"
+                type="text"
+                autoComplete="postal-code"
+                required
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </label>
+          </div>
+          <label className={`flex ${controlWidthClass} flex-col text-left text-sm font-medium text-slate-600`} htmlFor="register-dob">
+            Date of birth
+            <input
+              id="register-dob"
+              type="date"
+              required
+              className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+            />
+          </label>
           <button
             type="submit"
             className={`${controlWidthClass} rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90`}
           >
             Create account
           </button>
+          <p className="w-full max-w-sm text-xs text-slate-500">
+            Start as a customer profile today—once you are in the dashboard you can register as a service professional,
+            upgrade to SME/enterprise access, or onboard your business from the dedicated flows.
+          </p>
           <SocialAuthButtons className="mt-2" />
           <p className="text-xs text-slate-500">
             By continuing you agree to our terms of service and privacy policy.
@@ -113,9 +178,9 @@ export default function Register() {
             </Link>
           </p>
           <p className="text-sm text-slate-500">
-            Registering a company?{' '}
+            Ready to bring your business onboard right away?{' '}
             <Link to="/register/company" className="font-semibold text-accent">
-              Complete company onboarding
+              Start the SME/company sign-up
             </Link>
           </p>
         </form>
