@@ -1,6 +1,8 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
+import { withAuth } from './helpers/auth.js';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -17,6 +19,8 @@ const {
   InventoryAlert,
   InventoryItem,
   RentalAgreement,
+  MarketplaceItem,
+  MarketplaceModerationAction,
   Service,
   ServiceZone,
   User,
@@ -31,6 +35,10 @@ const IDS = {
   campaign: '55555555-5555-4555-8555-eeeeeeeeeeee',
   conversation: '66666666-6666-4666-8666-ffffffffffff'
 };
+
+function createToken(userId) {
+  return jwt.sign({ sub: userId }, process.env.JWT_SECRET ?? 'change_this_secret', { expiresIn: '1h' });
+}
 
 async function createCompanyWithFixtures() {
   const user = await User.create({
@@ -269,20 +277,93 @@ async function createCompanyWithFixtures() {
     timezone: 'Europe/London'
   });
 
+  const approvedListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: '13kVA generator with ATS',
+    description: 'Escrow-backed rental with telemetry sensors and concierge logistics.',
+    pricePerDay: 420,
+    purchasePrice: 68000,
+    location: 'London Docklands',
+    availability: 'both',
+    status: 'approved',
+    insuredOnly: true,
+    complianceHoldUntil: now.plus({ days: 21 }).toJSDate(),
+    lastReviewedAt: now.minus({ days: 5 }).toJSDate(),
+    complianceSnapshot: { status: 'approved', complianceScore: 92 }
+  });
+
+  const pendingListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: 'HVAC telemetry deployment',
+    description: 'IoT sensors, dashboards and commissioning labour.',
+    pricePerDay: 260,
+    availability: 'rent',
+    location: 'Canary Wharf',
+    status: 'pending_review',
+    insuredOnly: false
+  });
+
+  const suspendedListing = await MarketplaceItem.create({
+    companyId: company.id,
+    title: 'Roof access safety kit',
+    description: 'Includes edge protection and harness bundle.',
+    pricePerDay: 120,
+    availability: 'rent',
+    location: 'Stratford',
+    status: 'suspended',
+    insuredOnly: false,
+    moderationNotes: 'Missing inspection evidence for harness lifelines.'
+  });
+
+  await MarketplaceModerationAction.create({
+    entityType: 'marketplace_item',
+    entityId: suspendedListing.id,
+    action: 'suspended',
+    reason: 'Expired inspection certificate',
+    metadata: { status: 'suspended' }
+  });
+
+  await MarketplaceModerationAction.create({
+    entityType: 'marketplace_item',
+    entityId: pendingListing.id,
+    action: 'submitted_for_review',
+    metadata: { status: 'pending_review' }
+  });
+
   await RentalAgreement.create({
     rentalNumber: 'RA-1001',
     itemId: inventoryItem.id,
+    marketplaceItemId: approvedListing.id,
     companyId: company.id,
     renterId: IDS.renter,
-    status: 'inspection_pending',
+    status: 'in_use',
     depositStatus: 'held',
-    quantity: 1,
-    pickupAt: now.minus({ days: 3 }).toJSDate(),
+    quantity: 2,
+    rentalStartAt: now.minus({ days: 3 }).toJSDate(),
     returnDueAt: now.plus({ days: 4 }).toJSDate(),
-    meta: {}
+    dailyRate: 420,
+    rateCurrency: 'GBP',
+    meta: { project: 'Generator swap' }
   });
 
-  return company;
+  await RentalAgreement.create({
+    rentalNumber: 'RA-1002',
+    itemId: inventoryItem.id,
+    marketplaceItemId: approvedListing.id,
+    companyId: company.id,
+    renterId: IDS.renter,
+    status: 'settled',
+    depositStatus: 'released',
+    quantity: 1,
+    rentalStartAt: now.minus({ days: 45 }).toJSDate(),
+    returnDueAt: now.minus({ days: 40 }).toJSDate(),
+    dailyRate: 390,
+    rateCurrency: 'GBP',
+    meta: { project: 'Completed works' }
+  });
+
+  return { company, user };
+  return { company, owner: user };
 }
 
 beforeAll(async () => {
@@ -299,11 +380,18 @@ beforeEach(async () => {
 
 describe('Panel routes', () => {
   it('returns provider dashboard data with operational metrics', async () => {
-    const company = await createCompanyWithFixtures();
+    const { company, user } = await createCompanyWithFixtures();
+
+    const response = await withAuth(
+      request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
+      user.id
+    ).expect(200);
+    const { company, owner } = await createCompanyWithFixtures();
 
     const response = await request(app)
       .get('/api/panel/provider/dashboard')
       .query({ companyId: company.id })
+      .set('Authorization', `Bearer ${createToken(owner.id)}`)
       .expect(200);
 
     expect(response.body.data.provider.tradingName).toContain('Metro');
@@ -312,13 +400,77 @@ describe('Panel routes', () => {
     expect(response.body.meta.companyId).toBe(company.id);
   });
 
-  it('returns enterprise panel aggregates including spend and programmes', async () => {
-    const company = await createCompanyWithFixtures();
+  it('requires authentication for provider dashboards', async () => {
+    const { company } = await createCompanyWithFixtures();
 
     const response = await request(app)
-      .get('/api/panel/enterprise/overview')
+      .get('/api/panel/provider/dashboard')
       .query({ companyId: company.id })
-      .expect(200);
+      .expect(401);
+
+    expect(response.body).toMatchObject({ message: 'Missing authorization header' });
+  });
+
+  it('rejects access for users without company permissions', async () => {
+    await createCompanyWithFixtures();
+
+    const user = await User.create({
+      firstName: 'Jamie',
+      lastName: 'Cole',
+      email: `user-${Date.now()}@example.com`,
+      passwordHash: 'hash',
+      type: 'user'
+    });
+
+    const response = await request(app)
+      .get('/api/panel/provider/dashboard')
+      .set('Authorization', `Bearer ${createToken(user.id)}`)
+      .expect(403);
+
+    expect(response.body).toMatchObject({ message: 'Forbidden' });
+  });
+
+  it('prevents company owners from querying other organisations', async () => {
+    const { owner } = await createCompanyWithFixtures();
+
+    const outsiderOwner = await User.create({
+      firstName: 'River',
+      lastName: 'Lang',
+      email: `outsider-${Date.now()}@example.com`,
+      passwordHash: 'hash',
+      type: 'company'
+    });
+
+    const outsiderCompany = await Company.create({
+      userId: outsiderOwner.id,
+      legalStructure: 'limited',
+      contactName: 'Outsider Ops',
+      contactEmail: 'ops@outsider.example',
+      serviceRegions: 'North',
+      marketplaceIntent: 'External',
+      verified: false,
+      insuredSellerStatus: 'pending_documents',
+      complianceScore: 80
+    });
+
+    const response = await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: outsiderCompany.id })
+      .set('Authorization', `Bearer ${createToken(owner.id)}`)
+      .expect(403);
+
+    expect(response.body).toMatchObject({ message: 'forbidden' });
+    expect(response.headers['www-authenticate']).toBeUndefined();
+  });
+
+  it('returns enterprise panel aggregates including spend and programmes', async () => {
+    const { company, user } = await createCompanyWithFixtures();
+    const { company } = await createCompanyWithFixtures();
+
+    const response = await withAuth(
+      request(app).get('/api/panel/enterprise/overview').query({ companyId: company.id }),
+      user.id
+    ).expect(200);
 
     expect(response.body.data.enterprise.activeSites).toBe(1);
     expect(response.body.data.spend.monthToDate).toBeGreaterThan(0);
@@ -334,6 +486,47 @@ describe('Panel routes', () => {
     expect(response.body.data.hero.name).toContain('Metro');
     expect(response.body.data.packages.length).toBeGreaterThan(0);
     expect(response.body.data.stats[0].value).toBeGreaterThanOrEqual(0);
+  });
+  it('rejects provider dashboard requests without authentication', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await request(app)
+      .get('/api/panel/provider/dashboard')
+      .query({ companyId: company.id })
+      .expect(401);
+  });
+
+  it('rejects provider dashboard requests from non-company roles', async () => {
+    const { company } = await createCompanyWithFixtures();
+
+    await withAuth(
+      request(app).get('/api/panel/provider/dashboard').query({ companyId: company.id }),
+      IDS.provider
+    ).expect(403);
+
+  it('returns a storefront management snapshot with listing intelligence for provider roles', async () => {
+    const company = await createCompanyWithFixtures();
+
+    const response = await request(app)
+      .get('/api/panel/provider/storefront')
+      .set('X-Fixnado-Role', 'company')
+      .query({ companyId: company.id })
+      .expect(200);
+
+    expect(response.body.meta.companyId).toBe(company.id);
+    expect(response.body.data.storefront.metrics.activeListings).toBeGreaterThan(0);
+    expect(response.body.data.storefront.metrics.pendingReview).toBeGreaterThanOrEqual(0);
+    expect(response.body.data.listings.length).toBeGreaterThan(0);
+    expect(response.body.data.playbooks.length).toBeGreaterThan(0);
+    expect(response.body.data.timeline[0].listingTitle).toBeDefined();
+  });
+
+  it('rejects storefront access without provider context', async () => {
+    await createCompanyWithFixtures();
+
+    const response = await request(app).get('/api/panel/provider/storefront').expect(401);
+
+    expect(response.body).toMatchObject({ message: 'Storefront access restricted to providers' });
   });
 });
 

@@ -38,7 +38,13 @@ const formatDate = (iso) => {
   });
 };
 
-const DashboardAccessGate = ({ roleMeta, toggle, reason, cohort, onRetry }) => {
+const DashboardAccessGate = ({
+  roleMeta = null,
+  toggle = null,
+  reason = null,
+  cohort = null,
+  onRetry = () => {},
+}) => {
   const copy = stateCopy[toggle?.state] ?? stateCopy.disabled;
   const rollout = toggle?.rollout != null ? Math.round(Number(toggle.rollout) * 100) : 0;
 
@@ -143,14 +149,6 @@ DashboardAccessGate.propTypes = {
   reason: PropTypes.string,
   cohort: PropTypes.number,
   onRetry: PropTypes.func
-};
-
-DashboardAccessGate.defaultProps = {
-  roleMeta: null,
-  toggle: null,
-  reason: null,
-  cohort: null,
-  onRetry: () => {}
 };
 
 export default DashboardAccessGate;

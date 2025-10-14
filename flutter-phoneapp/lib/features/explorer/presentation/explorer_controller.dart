@@ -167,7 +167,7 @@ class ExplorerViewState {
   }
 
   List<ExplorerBusinessFront> get businessFronts {
-    if (snapshot == null) return const [];
+    if (snapshot == null || !role.canAccessBusinessFronts) return const [];
     final data = snapshot!.businessFronts;
     switch (filters.type) {
       case ExplorerResultType.businessFronts:
@@ -193,6 +193,8 @@ class ExplorerViewState {
   }
 
   DateTime? get lastUpdated => snapshot?.generatedAt;
+
+  bool get canAccessBusinessFronts => role.canAccessBusinessFronts;
 
   ExplorerViewState copyWith({
     UserRole? role,

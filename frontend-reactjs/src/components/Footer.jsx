@@ -31,7 +31,17 @@ export default function Footer() {
         title: t(column.titleKey),
         items: column.items.map((itemKey) => ({
           key: itemKey,
-          label: t(itemKey)
+          label: t(itemKey),
+          href:
+            itemKey === 'footer.services'
+              ? '/services'
+              : itemKey === 'footer.liveFeed'
+              ? '/feed'
+              : itemKey === 'footer.toolRentals'
+              ? '/services#rentals'
+              : itemKey === 'footer.materials'
+              ? '/materials'
+              : '#'
         }))
       })),
     [t]
@@ -57,7 +67,7 @@ export default function Footer() {
             <ul className="mt-3 space-y-2 text-sm text-slate-500">
               {column.items.map((item) => (
                 <li key={item.key}>
-                  <Link to="#" className="hover:text-accent">
+                  <Link to={item.href} className="hover:text-accent">
                     {item.label}
                   </Link>
                 </li>

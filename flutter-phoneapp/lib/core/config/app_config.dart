@@ -5,6 +5,7 @@ class AppConfig {
     required this.enableNetworkLogging,
     required this.enableProviderLogging,
     required this.defaultHeaders,
+    this.demoAccessToken,
   });
 
   final Uri apiBaseUrl;
@@ -12,6 +13,7 @@ class AppConfig {
   final bool enableNetworkLogging;
   final bool enableProviderLogging;
   final Map<String, String> defaultHeaders;
+  final String? demoAccessToken;
 
   factory AppConfig.fromEnvironment() {
     final baseUrl = const String.fromEnvironment(
@@ -24,6 +26,7 @@ class AppConfig {
 
     final networkLogging = const bool.fromEnvironment('FIXNADO_ENABLE_NETWORK_LOGGING', defaultValue: false);
     final providerLogging = const bool.fromEnvironment('FIXNADO_ENABLE_PROVIDER_LOGGING', defaultValue: false);
+    final demoAccessToken = const String.fromEnvironment('FIXNADO_DEMO_ACCESS_TOKEN', defaultValue: '');
 
     final defaultHeaders = <String, String>{
       'Accept': 'application/json',
@@ -36,6 +39,7 @@ class AppConfig {
       enableNetworkLogging: networkLogging,
       enableProviderLogging: providerLogging,
       defaultHeaders: defaultHeaders,
+      demoAccessToken: demoAccessToken.isEmpty ? null : demoAccessToken,
     );
   }
 
@@ -45,6 +49,7 @@ class AppConfig {
     bool? enableNetworkLogging,
     bool? enableProviderLogging,
     Map<String, String>? defaultHeaders,
+    String? demoAccessToken,
   }) {
     return AppConfig(
       apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
@@ -52,6 +57,7 @@ class AppConfig {
       enableNetworkLogging: enableNetworkLogging ?? this.enableNetworkLogging,
       enableProviderLogging: enableProviderLogging ?? this.enableProviderLogging,
       defaultHeaders: defaultHeaders ?? this.defaultHeaders,
+      demoAccessToken: demoAccessToken ?? this.demoAccessToken,
     );
   }
 }
