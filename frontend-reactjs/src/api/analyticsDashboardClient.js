@@ -33,7 +33,10 @@ export async function fetchDashboard(persona, params = {}) {
     return response.json();
   } catch (error) {
     const fallback = mockDashboards?.[persona];
-    if (import.meta.env.DEV && fallback) {
+    const { DEV = false, MODE } = import.meta.env ?? {};
+    const isDevEnvironment = Boolean(DEV);
+    const isTestEnvironment = MODE === 'test';
+    if (isDevEnvironment && !isTestEnvironment && fallback) {
       console.warn(`Falling back to mock ${persona} dashboard`, error);
       return fallback;
     }
