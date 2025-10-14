@@ -365,6 +365,7 @@ const DashboardLayout = ({
   const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -555,17 +556,12 @@ const DashboardLayout = ({
         {loading && !dashboard ? (
           <Skeleton />
         ) : (
-          <div className="px-6 py-10">
-            {persona === 'serviceman' ? (
-              <div className="mb-8">
-                <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
-              </div>
+          <div className="space-y-8 px-6 py-10">
+            {shouldShowServicemanSummary ? (
+              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
             ) : null}
-            <div className="space-y-8">{renderSection()}</div>
-            <div className="space-y-8">
-              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-              {renderSection()}
-            </div>
+            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+            {renderSection()}
           </div>
         )}
       </main>
