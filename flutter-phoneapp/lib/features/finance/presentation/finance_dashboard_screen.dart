@@ -13,6 +13,16 @@ final financeOverviewProvider = FutureProvider<FinanceOverview>((ref) async {
   return repository.fetchOverview();
 });
 
+final financeReportProvider = FutureProvider<FinanceReport>((ref) async {
+  final repository = ref.watch(financeRepositoryProvider);
+  return repository.fetchReport();
+});
+
+final financeAlertSummaryProvider = FutureProvider<FinanceAlertSummary>((ref) async {
+  final repository = ref.watch(financeRepositoryProvider);
+  return repository.fetchAlerts();
+});
+
 final selectedOrderIdProvider = StateProvider<String?>((ref) => null);
 
 final financeTimelineProvider = FutureProvider.autoDispose<FinanceTimeline?>((ref) async {
@@ -42,6 +52,8 @@ class FinanceDashboardScreen extends ConsumerWidget {
     }
 
     final overviewAsync = ref.watch(financeOverviewProvider);
+    final reportAsync = ref.watch(financeReportProvider);
+    final alertsAsync = ref.watch(financeAlertSummaryProvider);
     final selectedOrderId = ref.watch(selectedOrderIdProvider);
     final timelineAsync = ref.watch(financeTimelineProvider);
 
@@ -49,7 +61,13 @@ class FinanceDashboardScreen extends ConsumerWidget {
       color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
         ref.invalidate(financeOverviewProvider);
-        await ref.read(financeOverviewProvider.future);
+        ref.invalidate(financeReportProvider);
+        ref.invalidate(financeAlertSummaryProvider);
+        await Future.wait([
+          ref.read(financeOverviewProvider.future),
+          ref.read(financeReportProvider.future),
+          ref.read(financeAlertSummaryProvider.future),
+        ]);
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -75,6 +93,21 @@ class FinanceDashboardScreen extends ConsumerWidget {
               delegate: SliverChildListDelegate([
                 const SizedBox(height: 24),
                 _SummaryRow(totals: overview.totals),
+                const SizedBox(height: 24),
+                reportAsync.when(
+                  data: (report) => _ReportAndAlertsSection(
+                    report: report,
+                    alertsAsync: alertsAsync,
+                  ),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, _) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: _ErrorBanner(message: error.toString()),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 _SectionHeading(title: 'Recent payments'),
                 _PaymentList(payments: overview.payments, selectedOrderId: selectedOrderId, onSelect: (orderId) {
@@ -122,6 +155,303 @@ class FinanceDashboardScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ReportAndAlertsSection extends StatelessWidget {
+  const _ReportAndAlertsSection({required this.report, required this.alertsAsync});
+
+  final FinanceReport report;
+  final AsyncValue<FinanceAlertSummary> alertsAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Daily performance & alerts',
+            style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700, color: theme.colorScheme.onBackground),
+          ),
+          const SizedBox(height: 12),
+          _CurrencyGrid(buckets: report.currencyTotals),
+          const SizedBox(height: 12),
+          _TimelinePreview(points: report.timeline),
+          const SizedBox(height: 12),
+          alertsAsync.when(
+            data: (summary) => _AlertsList(summary: summary),
+            loading: () => const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+            error: (error, _) => _ErrorBanner(message: error.toString()),
+          ),
+          const SizedBox(height: 12),
+          _PayoutBacklogCard(backlog: report.payoutBacklog),
+          const SizedBox(height: 12),
+          _TopServicesCard(services: report.topServices),
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrencyGrid extends StatelessWidget {
+  const _CurrencyGrid({required this.buckets});
+
+  final List<FinanceReportCurrencyBucket> buckets;
+
+  @override
+  Widget build(BuildContext context) {
+    if (buckets.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No captured transactions in the reporting window.'),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaWidth = MediaQuery.of(context).size.width;
+        final availableWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : mediaWidth;
+        final int perRow = availableWidth >= 720
+            ? 3
+            : availableWidth >= 480
+                ? 2
+                : 1;
+        final double spacing = 12;
+        final double candidateWidth =
+            (availableWidth - (spacing * (perRow - 1))).clamp(180, availableWidth).toDouble();
+        final double cardWidth = perRow == 1 ? availableWidth : candidateWidth;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: buckets.map((bucket) {
+            final currencyFormat = NumberFormat.simpleCurrency(name: bucket.currency);
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: perRow == 1 ? availableWidth : 180,
+                maxWidth: cardWidth,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(bucket.currency, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Captured ${currencyFormat.format(bucket.captured)}',
+                      style: GoogleFonts.inter(fontSize: 12),
+                    ),
+                    Text(
+                      'Disputed ${currencyFormat.format(bucket.disputedVolume)}',
+                      style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.error),
+                    ),
+                    Text(
+                      'Pending ${currencyFormat.format(bucket.pending)}',
+                      style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.primary),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _TimelinePreview extends StatelessWidget {
+  const _TimelinePreview({required this.points});
+
+  final List<FinanceReportTimelinePoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No daily performance history yet.'),
+        ),
+      );
+    }
+
+    final recent = points.reversed.take(5).toList();
+    return Card(
+      child: Column(
+        children: recent
+            .map(
+              (point) => ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                title: Text('${point.date} · ${point.currency}', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  'Captured ${NumberFormat.simpleCurrency(name: point.currency).format(point.captured)} · Payouts ${NumberFormat.simpleCurrency(name: point.currency).format(point.payouts)}',
+                  style: GoogleFonts.inter(fontSize: 12),
+                ),
+                trailing: Text(
+                  'Disputes ${NumberFormat.simpleCurrency(name: point.currency).format(point.disputes)}',
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.redAccent),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _AlertsList extends StatelessWidget {
+  const _AlertsList({required this.summary});
+
+  final FinanceAlertSummary summary;
+
+  Color _severityColor(String severity) {
+    switch (severity) {
+      case 'critical':
+        return Colors.redAccent;
+      case 'high':
+        return Colors.orangeAccent;
+      case 'medium':
+        return Colors.amber;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (summary.alerts.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No regulatory alerts triggered.'),
+        ),
+      );
+    }
+
+    final generatedAt = summary.generatedAt.isEmpty ? null : DateTime.tryParse(summary.generatedAt);
+    final generatedLabel = generatedAt != null
+        ? DateFormat.yMMMd().add_jm().format(generatedAt)
+        : 'recently';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Alerts generated $generatedLabel',
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.blueGrey),
+        ),
+        const SizedBox(height: 8),
+        ...summary.alerts.map(
+          (alert) => Card(
+            color: _severityColor(alert.severity).withOpacity(0.1),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(alert.message, style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+                  if (alert.recommendedAction != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(alert.recommendedAction!, style: GoogleFonts.inter(fontSize: 12)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PayoutBacklogCard extends StatelessWidget {
+  const _PayoutBacklogCard({required this.backlog});
+
+  final FinancePayoutBacklog backlog;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Payout backlog', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text('Pending requests: ${backlog.totalRequests}', style: GoogleFonts.inter(fontSize: 12)),
+            Text('Providers impacted: ${backlog.providersImpacted}', style: GoogleFonts.inter(fontSize: 12)),
+            Text('Oldest pending: ${backlog.oldestPendingDays} days', style: GoogleFonts.inter(fontSize: 12)),
+            Text(
+              'Pending amount: ${NumberFormat.simpleCurrency().format(backlog.totalAmount)}',
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopServicesCard extends StatelessWidget {
+  const _TopServicesCard({required this.services});
+
+  final List<FinanceReportService> services;
+
+  @override
+  Widget build(BuildContext context) {
+    if (services.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No services captured revenue in this window.'),
+        ),
+      );
+    }
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: services.take(3).map((service) {
+          final currencyFormat = NumberFormat.simpleCurrency(name: service.currency);
+          return ListTile(
+            title: Text(service.serviceTitle, style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              'Captured ${currencyFormat.format(service.capturedAmount)} · Dispute rate ${(service.disputeRate * 100).toStringAsFixed(1)}%',
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+            trailing: Text('Orders ${service.successfulOrders}', style: GoogleFonts.inter(fontSize: 12)),
+          );
+        }).toList(),
       ),
     );
   }

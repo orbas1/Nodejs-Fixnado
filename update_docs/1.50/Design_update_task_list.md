@@ -6,7 +6,7 @@
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 56% |
 | D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 28% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 68% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 72% |
 | D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 8% |
 
 ---
@@ -94,7 +94,7 @@
 10. Coordinate with engineering on component feasibility and edge cases.
 11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
 
-**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, and regulatory alert cards, while Riverpod interaction notes guide orchestration telemetry states (webhook retry, manual payout review). Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
+**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, and regulatory alert cards, while Riverpod interaction notes guide orchestration telemetry states (webhook retry, manual payout review). Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
 
 ## Task D6 – Design QA, Documentation & Handover (8%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.

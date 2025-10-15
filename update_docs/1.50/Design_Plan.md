@@ -61,6 +61,8 @@ Primary objectives:
 - Defined cross-platform timeline visualisations with status chips, SLA breach badges, and retry annotations so React and Flutter clients stay visually aligned with the orchestration service telemetry.
 - Added invoice health widgets, pending payout drawers, and compliance copy patterns referencing FCA wallet guidance, enabling the product teams to surface actionable finance insights while meeting regulatory tone requirements.
 - Documented empty, loading, and error states for finance data sources, including webhook replay notifications and manual reconciliation prompts, to ensure resilient UX under degraded conditions.
+- Expanded the finance reporting specification with currency performance tiles, regulatory alert cards, CSV export affordances, and payout backlog summaries, codifying responsive behaviours for both web dashboards and Flutter cards.
+- Introduced responsive card treatments for currency exposure, memoisation guidance for large data tables, and compact timeline densities for Flutter to prevent overflow on 360–414px devices while keeping alert readability intact.
 
 ## Theme Strategy
 1. **Default Theme:** Neutral blue/teal palette for enterprise operations with muted gradients, standard imagery.

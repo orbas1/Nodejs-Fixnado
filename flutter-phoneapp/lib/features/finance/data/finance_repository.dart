@@ -18,6 +18,16 @@ class FinanceRepository {
     final payload = await _client.getJson('/finance/orders/$orderId/timeline');
     return FinanceTimeline.fromJson(Map<String, dynamic>.from(payload));
   }
+
+  Future<FinanceReport> fetchReport({Map<String, dynamic>? query}) async {
+    final payload = await _client.getJson('/finance/reports/daily', query: query);
+    return FinanceReport.fromJson(Map<String, dynamic>.from(payload));
+  }
+
+  Future<FinanceAlertSummary> fetchAlerts() async {
+    final payload = await _client.getJson('/finance/alerts');
+    return FinanceAlertSummary.fromJson(Map<String, dynamic>.from(payload));
+  }
 }
 
 final financeRepositoryProvider = Provider<FinanceRepository>((ref) {

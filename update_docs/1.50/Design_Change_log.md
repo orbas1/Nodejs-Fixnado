@@ -111,6 +111,16 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Authored shared timeline patterns with SLA breach, retry, and manual intervention cues ensuring React and Flutter finance experiences communicate webhook/job state consistently.
    - Expanded invoice and payout card templates with FCA wallet guidance copy, empty/error placeholders, and compliance footers so future exports/reporting screens align with regulatory expectations.
 
+21. **Finance Reporting & Alert Visuals (2025-04-04)**
+   - Added currency performance tiles, regulatory alert cards, and payout backlog modules to the finance design system with responsive breakpoints covering desktop dashboards and mobile cards.
+   - Documented CSV export interactions, loading states, and error messaging for the React finance overview plus mirrored Riverpod-driven tiles for the Flutter dashboard parity checklist.
+   - Updated design QA matrices and imagery catalogues with alert severity palettes, metric badges, and timeline preview components to ensure reporting insights remain consistent across web and mobile.
+
+22. **Finance Reporting Performance Polish (2025-04-05)**
+   - Refined currency exposure specs with responsive cards replacing compact chips, adding pending balance callouts and shadow treatments to prevent overflow on 360px handsets.
+   - Captured memoisation guidance and row caps for finance tables within the React design tokens so component libraries reinforce performant rendering on long timelines.
+   - Refreshed Flutter parity notes with condensed timeline list density, updated typography ramps, and accessibility cues to keep regulatory alerts legible on compact viewports.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

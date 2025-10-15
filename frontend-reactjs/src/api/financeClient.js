@@ -99,8 +99,70 @@ export async function createCheckoutSession(payload, options = {}) {
   return handleResponse(response, 'Failed to initiate checkout session');
 }
 
+export async function fetchFinanceReport(params = {}, options = {}) {
+  const format = params?.format ?? 'json';
+  const { signal, headers: extraHeaders, credentials = 'include' } = options;
+  const headers = new Headers({
+    Accept: format === 'csv' ? 'text/csv' : 'application/json'
+  });
+
+  if (extraHeaders) {
+    for (const [key, value] of new Headers(extraHeaders).entries()) {
+      headers.set(key, value);
+    }
+  }
+
+  const response = await fetch(`${API_ROOT}/reports/daily${buildQuery(params)}`, {
+    method: 'GET',
+    headers,
+    credentials,
+    signal
+  });
+
+  if (format === 'csv') {
+    if (!response.ok) {
+      let message = 'Unable to download finance report';
+      try {
+        const body = await response.json();
+        message = body?.message || message;
+      } catch {
+        // ignore JSON parsing failure
+      }
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+
+    return response.text();
+  }
+
+  return handleResponse(response, 'Unable to load finance report');
+}
+
+export async function fetchFinanceAlerts(params = {}, options = {}) {
+  const { signal, headers: extraHeaders, credentials = 'include' } = options;
+  const headers = new Headers({ Accept: 'application/json' });
+
+  if (extraHeaders) {
+    for (const [key, value] of new Headers(extraHeaders).entries()) {
+      headers.set(key, value);
+    }
+  }
+
+  const response = await fetch(`${API_ROOT}/alerts${buildQuery(params)}`, {
+    method: 'GET',
+    headers,
+    credentials,
+    signal
+  });
+
+  return handleResponse(response, 'Unable to load finance alerts');
+}
+
 export default {
   fetchFinanceOverview,
   fetchOrderFinanceTimeline,
-  createCheckoutSession
+  createCheckoutSession,
+  fetchFinanceReport,
+  fetchFinanceAlerts
 };

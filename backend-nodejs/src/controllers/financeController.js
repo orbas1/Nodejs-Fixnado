@@ -3,13 +3,16 @@ import {
   createCheckoutSession,
   enqueueFinanceWebhook,
   getFinanceOverview,
-  getOrderFinanceTimeline
+  getOrderFinanceTimeline,
+  generateFinanceReport,
+  getRegulatoryAlertsSummary
 } from '../services/paymentOrchestrationService.js';
 
 function handleServiceError(next, error) {
   if (error && error.statusCode) {
     const responseError = new Error(error.message);
     responseError.statusCode = error.statusCode;
+    responseError.status = error.statusCode;
     return next(responseError);
   }
 
@@ -72,6 +75,40 @@ export async function getFinanceTimelineHandler(req, res, next) {
   try {
     const timeline = await getOrderFinanceTimeline(req.params.orderId);
     res.json(timeline);
+  } catch (error) {
+    handleServiceError(next, error);
+  }
+}
+
+export async function getFinanceReportHandler(req, res, next) {
+  try {
+    const { startDate, endDate, regionId, providerId, format } = req.query;
+    const result = await generateFinanceReport({
+      startDate,
+      endDate,
+      regionId,
+      providerId,
+      format
+    });
+
+    if (result.format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.status(200).send(result.content);
+      return;
+    }
+
+    res.json(result.report);
+  } catch (error) {
+    handleServiceError(next, error);
+  }
+}
+
+export async function getFinanceAlertsHandler(req, res, next) {
+  try {
+    const { regionId, providerId } = req.query;
+    const payload = await getRegulatoryAlertsSummary({ regionId, providerId });
+    res.json(payload);
   } catch (error) {
     handleServiceError(next, error);
   }

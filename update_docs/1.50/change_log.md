@@ -63,5 +63,16 @@
 - Documented finance platform progress inside the Update Plan, Features Update Plan, and milestone/task trackers so downstream squads have accurate references for export/report automation, negative-path testing, and regulatory alert work.
 - Captured outstanding deliverables—finance exports, SLA alert fan-out, failure-mode regression suites—in tracker notes to guide the remaining Payments Tiger Team scope.
 
+## 2025-04-04 – Finance Reporting & Alert Automation
+- Added finance reporting APIs delivering JSON and CSV exports with currency breakdowns, payout backlog telemetry, top service analytics, and dispute ratios while extending policy enforcement, audit trail coverage, and Vitest suites for the `/api/finance/reports/daily` and `/api/finance/alerts` endpoints.
+- Upgraded the React finance control centre with regulatory alert cards, currency performance tiles, CSV export tooling, and payout backlog insights plus refactored the finance client to support streaming CSV downloads and alert retrieval.
+- Extended the Flutter finance dashboard with Riverpod providers for reports and alerts, new mobile cards visualising currency exposure, timeline trends, backlog metrics, and regulatory warnings so operations roles maintain parity on mobile.
+- Updated change, task, and progress trackers to capture the new reporting deliverables and raised Task 3 readiness scores to reflect end-to-end finance observability now exercised through automated backend tests and frontend/mobile integrations.
+
+## 2025-04-05 – Finance Reporting Hardening & UI Performance
+- Enforced dashboard export ceilings inside `generateFinanceReport` and expanded Vitest coverage to include invalid date-range handling plus zero-data alert responses, ensuring CSV/JSON outputs gracefully respect configuration limits.
+- Added jsdom tests for the React finance timeline and regulatory alert cards while memoising heavy render paths and constraining list sizes to keep the reporting hub responsive for large datasets.
+- Refactored the Flutter finance dashboard currency grid with responsive cards, pending-balance insights, and denser timeline previews so handset screens render without chip overflow while preserving parity with web reporting widgets.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

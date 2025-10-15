@@ -213,6 +213,35 @@ const ROUTE_POLICIES = {
       orderId: req.params?.orderId || null
     })
   },
+  'finance.reports.read': {
+    id: 'finance.reports.read',
+    version: '1.0.0',
+    resource: 'finance.reports',
+    action: 'finance.reports:read',
+    description: 'Allow authorised finance roles to generate settlement and reconciliation reports.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'reporting', 'export'],
+    severity: 'high',
+    metadata: (req) => ({
+      format: req.query?.format || 'json',
+      regionId: req.query?.regionId || null,
+      providerId: req.query?.providerId || null
+    })
+  },
+  'finance.alerts.read': {
+    id: 'finance.alerts.read',
+    version: '1.0.0',
+    resource: 'finance.alerts',
+    action: 'finance.alerts:read',
+    description: 'Allow finance control tower roles to review regulatory alert queues.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'risk', 'compliance'],
+    severity: 'high',
+    metadata: (req) => ({
+      regionId: req.query?.regionId || null,
+      providerId: req.query?.providerId || null
+    })
+  },
   'compliance.data-requests.create': {
     id: 'compliance.data-requests.create',
     version: '1.0.0',

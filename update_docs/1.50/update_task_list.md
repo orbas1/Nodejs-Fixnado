@@ -4,7 +4,7 @@
 |---|------|-------------|-----------------|--------------|------------|
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 92% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 82% |
-| 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 68% |
+| 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 83% |
 | 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 0% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
 | 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 0% |
@@ -86,7 +86,7 @@
 - **Logic:** Assignment algorithms, dispute flows, notification triggers.
 - **Design:** Checkout UI, finance visuals, compliance copy.
 
-**Progress Notes:** Delivered the finance orchestration service, Sequelize models, and queue-backed webhook processor with retry telemetry, unlocking guarded `/api/finance` endpoints for checkout, payouts, invoices, and dispute timelines. React and Flutter finance dashboards now surface revenue, payout readiness, dispute volumes, and cash-flow alerts using the shared finance client, while backend integration tests validate happy-path settlement, webhook retries, and invoice snapshots. Remaining work covers export/report automation, negative-path service tests (retry exhaustion, duplicate events), and SLA alert fan-out before Task 3 can close.
+**Progress Notes:** Delivered the finance orchestration service, Sequelize models, and queue-backed webhook processor with retry telemetry, unlocking guarded `/api/finance` endpoints for checkout, payouts, invoices, and dispute timelines. React and Flutter finance dashboards now surface revenue, payout readiness, dispute volumes, and cash-flow alerts using the shared finance client, while backend integration tests validate happy-path settlement, webhook retries, and invoice snapshots. Reporting exports now enforce configurable ceilings with Vitest coverage for invalid ranges and empty-alert responses, React jsdom suites harden timeline widgets, and Flutter currency grids are handset-ready. Remaining work covers negative-path service tests (retry exhaustion, duplicate events) and SLA alert fan-out before Task 3 can close.
 
 ## Task 4 – Experience & Navigation Overhaul (0%)
 **Objective:** Complete web UX redesign, role dashboards, creation studio, and navigation parity with mobile.
