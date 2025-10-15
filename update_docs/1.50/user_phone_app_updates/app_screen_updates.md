@@ -3,3 +3,7 @@
 - Session bootstrap now includes a silent hydration step that determines whether biometrics are required before enabling authenticated navigation; UI will prompt via the forthcoming security modal when the biometric gate is triggered.
 - Added a full-screen consent overlay that blocks navigation until required policies are accepted, including ledger-backed timestamps, policy version chips, and scroll-aware acceptance controls.
 - Updated legal screens to render the refreshed privacy/terms content with shared typography tokens; staleness badges prompt users when re-acceptance is required.
+- Introduced `DataRequestsScreen` providing GDPR request submission, filtering, export triggers, and retention-aware messaging backed by the new repository/controller stack.
+- Surfaced the compliance entry card inside `ProfileManagementScreen`’s legal section with live counts, latest submission timestamps, and retry affordances.
+- Extended `DataRequestsScreen` with a Warehouse tab presenting dataset/region segmentation, run history timeline cards, retention countdown chips, and action buttons to re-trigger exports or copy secure download URLs.
+- Added inline error/success snackbars plus "view DPIA guidance" deep links anchored to the new operations documentation so mobile operators receive just-in-time support when managing exports.

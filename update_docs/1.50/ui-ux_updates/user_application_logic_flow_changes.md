@@ -25,3 +25,8 @@
 ## Analytics & Measurement
 - Added events: `user_booking_step_view`, `user_booking_exit`, `user_issue_report_submitted`, `user_payment_method_update`, and `user_support_article_viewed` with metadata for industry, booking value, and session length.
 - Funnel dashboards monitor drop-off per step, highlight response times for issue resolution, and track adoption of add-on bundles to inform future pricing experiments.
+
+## Compliance Operations
+- Warehouse export tab follows a review → trigger → monitor sequence: users first review latest run summaries, then optionally trigger a new export after confirming dataset scope and retention notices, and finally monitor progress via streamed status updates.
+- Manual triggers require biometric confirmation when enabled and log `compliance_export_trigger` analytics events with dataset, region, and justification metadata to maintain DPIA evidence.
+- Completed runs surface actionable buttons (`Download`, `Copy secure link`, `View DPIA guidance`) with guardrails preventing downloads on expired retention windows; errors route operators into troubleshooting checklists referencing backend status codes.

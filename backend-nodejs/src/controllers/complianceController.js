@@ -6,6 +6,13 @@ import {
   suspendInsuredSeller,
   toggleInsuredSellerBadge
 } from '../services/complianceService.js';
+import {
+  submitDataSubjectRequest,
+  listDataSubjectRequests,
+  generateDataSubjectExport,
+  updateDataSubjectRequestStatus
+} from '../services/dataGovernanceService.js';
+import { listWarehouseExportRuns, triggerWarehouseExport } from '../services/dataWarehouseExportService.js';
 
 export async function createComplianceDocument(req, res, next) {
   try {
@@ -62,6 +69,71 @@ export async function suspendCompany(req, res, next) {
     const { companyId } = req.params;
     const application = await suspendInsuredSeller(companyId, req.body);
     res.json(application);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createDataSubjectRequest(req, res, next) {
+  try {
+    const request = await submitDataSubjectRequest(req.body);
+    res.status(201).json(request);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDataSubjectRequests(req, res, next) {
+  try {
+    const requests = await listDataSubjectRequests({
+      status: req.query.status,
+      limit: req.query.limit ? Number(req.query.limit) : 50
+    });
+    res.json(requests);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function generateDataSubjectRequestExport(req, res, next) {
+  try {
+    const { requestId } = req.params;
+    const { filePath, request } = await generateDataSubjectExport(requestId, req.body.actorId);
+    res.json({ filePath, request });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateDataSubjectRequest(req, res, next) {
+  try {
+    const { requestId } = req.params;
+    const { status, note, actorId } = req.body;
+    const request = await updateDataSubjectRequestStatus(requestId, status, actorId, note);
+    res.json(request);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getWarehouseExportRuns(req, res, next) {
+  try {
+    const runs = await listWarehouseExportRuns({
+      dataset: req.query.dataset,
+      regionCode: req.query.regionCode,
+      limit: req.query.limit
+    });
+    res.json(runs);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createWarehouseExportRun(req, res, next) {
+  try {
+    const { dataset, regionCode, since, force = false, actorId = null } = req.body || {};
+    const run = await triggerWarehouseExport({ dataset, regionCode, since, force, actorId, source: 'api' });
+    res.status(201).json(run);
   } catch (error) {
     next(error);
   }

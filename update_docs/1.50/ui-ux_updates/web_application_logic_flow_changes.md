@@ -29,6 +29,11 @@
 - Report builder ensures filter selections stored in draft state; saving as template shares with org or personal scope based on permission selection.
 - Export scheduler validates cron-like recurrence inputs; generating export triggers background job and notifies subscribers via email with download link.
 
+## Compliance Operations Console
+- Warehouse export panel queries latest runs on load, presenting dataset cards with run summaries; selecting a dataset filters the run table and reveals manual trigger CTA with dataset-specific prerequisites.
+- Manual trigger flow enforces justification entry, dataset validation, and retention acknowledgement before calling the backend; progress indicator polls run status every 15 seconds with exponential backoff when idle.
+- Error states provide remediation actions (retry export, view troubleshooting doc, contact security) while success surfaces download and DPIA documentation buttons alongside retention countdown chips synced from run metadata.
+
 ## Error Handling & Observability
 - Global error boundary captures unexpected issues and displays recovery modal with support link; errors tagged with correlation ID for diagnostics.
 - Telemetry events instrumented for navigation search usage, widget refresh, quote submissions, resource feedback, settings saves, and export completions with timestamps and actor metadata.

@@ -50,6 +50,11 @@ ConversationMessage.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: {}
+    },
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
     }
   },
   {

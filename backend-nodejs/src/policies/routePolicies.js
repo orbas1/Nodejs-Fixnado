@@ -169,6 +169,75 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'compliance.data-requests.create': {
+    id: 'compliance.data-requests.create',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:create',
+    description: 'Allow compliance operators to log GDPR data subject requests.',
+    requirements: [Permissions.COMPLIANCE_PORTAL],
+    tags: ['compliance', 'privacy'],
+    severity: 'high',
+    metadata: (req) => ({
+      requestType: req.body?.requestType || null,
+      region: req.body?.regionCode || null
+    })
+  },
+  'compliance.data-requests.list': {
+    id: 'compliance.data-requests.list',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:list',
+    description: 'Allow compliance operators to review and triage GDPR requests.',
+    requirements: [Permissions.COMPLIANCE_PORTAL],
+    tags: ['compliance', 'privacy'],
+    severity: 'medium',
+    metadata: (req) => ({ status: req.query?.status || null })
+  },
+  'compliance.data-requests.export': {
+    id: 'compliance.data-requests.export',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:export',
+    description: 'Allow compliance officers to generate GDPR data export bundles.',
+    requirements: [Permissions.COMPLIANCE_EXPORT],
+    tags: ['compliance', 'privacy', 'export'],
+    severity: 'critical',
+    metadata: (req) => ({ requestId: req.params.requestId })
+  },
+  'compliance.data-requests.update': {
+    id: 'compliance.data-requests.update',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:update',
+    description: 'Allow compliance officers to update GDPR request status and audit notes.',
+    requirements: [Permissions.COMPLIANCE_EXPORT],
+    tags: ['compliance', 'privacy'],
+    severity: 'high',
+    metadata: (req) => ({ requestId: req.params.requestId, nextStatus: req.body?.status || null })
+  },
+  'compliance.data-warehouse.list': {
+    id: 'compliance.data-warehouse.list',
+    version: '1.0.0',
+    resource: 'compliance.data-warehouse',
+    action: 'compliance.data-warehouse:list',
+    description: 'Allow compliance and data teams to review warehouse export runs.',
+    requirements: [Permissions.COMPLIANCE_WAREHOUSE_VIEW],
+    tags: ['compliance', 'privacy', 'data-platform'],
+    severity: 'medium',
+    metadata: (req) => ({ dataset: req.query?.dataset || null, region: req.query?.regionCode || null })
+  },
+  'compliance.data-warehouse.export': {
+    id: 'compliance.data-warehouse.export',
+    version: '1.0.0',
+    resource: 'compliance.data-warehouse',
+    action: 'compliance.data-warehouse:export',
+    description: 'Allow privileged operators to trigger warehouse CDC exports with audit logging.',
+    requirements: [Permissions.COMPLIANCE_WAREHOUSE_EXPORT],
+    tags: ['compliance', 'privacy', 'data-platform'],
+    severity: 'critical',
+    metadata: (req) => ({ dataset: req.body?.dataset || req.query?.dataset || null, region: req.body?.regionCode || null })
+  },
   'zones.match': {
     id: 'zones.match',
     version: '1.0.0',

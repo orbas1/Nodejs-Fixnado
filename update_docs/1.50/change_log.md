@@ -42,5 +42,15 @@
 - Updated runtime configuration to depend on vault-sourced credentials (JWT secret, database password) while surfacing sync telemetry during server initialisation and exposing metadata to downstream diagnostics.
 - Replaced the legacy MySQL bootstrap file with a Postgres provisioning script that prompts for strong credentials, revokes default privileges, grants least-privilege access to the application role, and installs required extensions (pgcrypto, uuid-ossp, PostGIS).
 
+## 2025-03-28 – Compliance & Data Governance Portal Launch
+- Executed the compliance migration introducing the `regions` catalogue, GDPR request ledger, finance/message/storefront history tables, and automated retention scheduler alongside updated Sequelize models and associations.
+- Delivered guarded `/api/compliance/data-requests` endpoints, orchestration service, and export/delete automation with RBAC coverage, sanitised audit payloads, and retention-aware storage paths.
+- Shipped the React compliance portal experience with submission, filter, export, and status workflows plus Riverpod-powered Flutter Data Requests screen and profile navigation card built on shared compliance tokens and copy.
+
+## 2025-03-30 – Warehouse CDC Exports & Credential Rotation
+- Added a production-grade `WarehouseExportRun` schema, Sequelize model, and scheduler-backed service that stream data subject, finance, and communications datasets to compressed NDJSON bundles under role-scoped directories.
+- Introduced `/api/compliance/data-warehouse/runs` endpoints, RBAC policies, and React/Flutter operator consoles that allow dataset/region filtering, manual triggers, and audit visibility for warehouse jobs.
+- Enabled automated database credential rotation via AWS Secrets Manager with TLS enforcement, post-rotation pool refresh, and Secrets Manager metadata updates, increasing compliance task readiness and security posture.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

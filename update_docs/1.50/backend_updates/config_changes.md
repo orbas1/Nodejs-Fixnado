@@ -13,3 +13,18 @@
 ## PII Configuration Visibility
 - Added a `security.pii` namespace exposing whether the encryption and hash keys are present, alongside optional rotation identifiers.
 - Application startup now fails fast if the encryption or hash keys are missing, preventing plaintext persistence in misconfigured environments.
+
+## Data Governance Retention Controls
+- Introduced a `dataGovernance` configuration branch exposing retention windows for exports, message history, and finance events plus the scheduler cadence (`DATA_GOVERNANCE_SWEEP_MINUTES`).
+- Defaults retain access exports for two years, message histories for one year, and finance transactions for seven years, aligning with GDPR and accounting obligations while remaining overrideable per environment.
+- Retention values are validated for sensible minimums to avoid accidental short-lived purges during configuration mistakes.
+
+## Database TLS & Rotation Defaults
+- Production and staging environments now enforce database TLS by default; `DB_SSL` defaults to `true` with optional CA configuration via `DB_SSL_CA_FILE` or `DB_SSL_CA_BASE64`, and the service refuses to boot if TLS is disabled in these environments.
+- Added a `database.rotation` namespace capturing rotation enablement, secret ARN, intervals, AWS region, and TLS enforcement; the credential rotation job consumes this configuration to manage password changes.
+- Secrets Manager refreshes after rotation update in-process configuration (`sequelize.config.password`) ensuring new connections immediately use the rotated credential set.
+
+## Data Warehouse Export Controls
+- Added a `dataWarehouse` configuration branch exposing export root, interval, batch size, dataset configuration overrides, and default region lists to drive CDC scheduling.
+- Dataset configuration accepts per-dataset lookback windows, minimum run spacing, and region scoping, letting operators tune export cadence without redeploying the service.
+- Exports default to writing under `storage/warehouse-exports/<REGION>/<dataset>` but can be redirected via `DATA_WAREHOUSE_EXPORT_ROOT` for S3 or persistent volume mounts.

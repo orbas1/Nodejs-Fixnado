@@ -18,7 +18,16 @@
 ## Consent Ledger Endpoints
 - `/api/consent/snapshot` returns the latest decisions for each configured policy plus a resolved `subjectId`; clients should cache the returned `subjectId` to avoid generating redundant anonymous identities.
 - `/api/consent/decisions` accepts consent decisions with metadata (channel, region, version) and persists them to the ledger while emitting audit events. Required policies respond with HTTP 200 and an updated policy snapshot.
+
+## Compliance Data Requests
+- `/api/compliance/data-requests` (POST) records GDPR access/erasure/rectification requests, auto-linking known users via hashed email, resolving region codes, and logging audit metadata.
+- `/api/compliance/data-requests` (GET) supports optional `status` filters and returns enriched records including audit history, processed timestamps, payload locations, and associated region codes.
+- `/api/compliance/data-requests/:id/export` triggers asynchronous export generation with region-specific storage, while `/status` updates allow authorised operators to progress requests through `received`, `in_progress`, `completed`, and `rejected` states.
 - `/api/consent/verify` checks that the provided subject has active consent for the supplied policies, returning HTTP 428 with structured details when any mandatory agreements are missing or stale.
+
+## Compliance Data Warehouse
+- `/api/compliance/data-warehouse/runs` (GET) lists warehouse export runs, allowing optional `dataset`, `regionCode`, and `limit` query parameters while returning status, row counts, audit metadata, and resolved region summaries for each run.
+- `/api/compliance/data-warehouse/runs` (POST) schedules an export for the requested dataset/region, enforcing the `compliance:data-warehouse:export` policy and returning the persisted `WarehouseExportRun` payload including file location and generated audit trail.
 
 ## Booking Risk & Scam Detection
 - Booking creation now enriches analytics metadata with `risk.score`, `risk.reasonCodes`, and `risk.escalated` fields based on heuristic scoring and optional AI analysis.

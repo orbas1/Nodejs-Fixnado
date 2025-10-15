@@ -27,7 +27,12 @@ Order.init(
       type: DataTypes.STRING,
       defaultValue: 'USD'
     },
-    scheduledFor: DataTypes.DATE
+    scheduledFor: DataTypes.DATE,
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
+    }
   },
   {
     sequelize,

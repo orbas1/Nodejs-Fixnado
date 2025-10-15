@@ -31,6 +31,7 @@ Primary objectives:
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
 - Implement tabbed/drawer hybrids for larger devices, preserving gesture-based shortcuts and accessible focus rings.
 - Update booking, messaging, finance, and compliance screens with refreshed cards, chip groups, and micro-interactions.
+- Extend legal/compliance surfaces with a dedicated Data Requests screen and profile entry card that reflects shared audit tokens and GDPR metrics across platforms.
 - Mirror the RBAC navigation blueprint by pairing Flutter tab sets and secure drawers with the same role-driven menu allowances, ensuring compliance badges and finance widgets appear only for authorised personas.
 - Provide offline and loading states consistent with web skeleton patterns.
 - Overlay biometric unlock prompts and session status banners so mobile flows mirror the hardened authentication posture delivered in this milestone.
@@ -53,7 +54,7 @@ Primary objectives:
 | **Creation Studio** | Modular wizard steps, inline previews, theme pickers, content validation, audit timeline. | Supports partial saving and theme-based preview toggles. |
 | **Finance & Disputes** | Escrow timeline visualisation, payout cards, dispute resolution checklist, compliance footers. | Ensures parity between web dashboards and Flutter finance modules. |
 | **Settings & Profiles** | Security badges, consent preferences, integration toggles, avatar management, audit logs. | Draws on `Settings Dashboard.md` and `Profile Look.md`. |
-| **Support & Compliance Pages** | GDPR portal, accessibility statement, security and privacy copy blocks. | Connects to compliance and legal deliverables. |
+| **Support & Compliance Pages** | GDPR portal, warehouse operations console, accessibility statement, security and privacy copy blocks. | Connects to compliance and legal deliverables, supplying dataset triggers, retention countdown widgets, and DPIA guidance overlays. |
 
 ## Theme Strategy
 1. **Default Theme:** Neutral blue/teal palette for enterprise operations with muted gradients, standard imagery.

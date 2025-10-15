@@ -23,7 +23,12 @@ Dispute.init(
       type: DataTypes.ENUM('open', 'under_review', 'resolved', 'closed'),
       defaultValue: 'open'
     },
-    resolution: DataTypes.TEXT
+    resolution: DataTypes.TEXT,
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
+    }
   },
   {
     sequelize,

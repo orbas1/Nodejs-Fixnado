@@ -124,6 +124,11 @@ Company.init(
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0
+    },
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
     }
   },
   {

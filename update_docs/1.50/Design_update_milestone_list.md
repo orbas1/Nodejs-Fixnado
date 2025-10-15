@@ -24,6 +24,7 @@
 5. Emo theme adaptation guidelines for navigation and header/footer treatments.
 6. Usability test plan and findings summary for navigation prototypes (desktop, tablet, mobile).
 7. RBAC navigation blueprint translating the hardened backend matrix into role-specific landing routes, menu groupings, and badge placements for web and Flutter shells.
+8. Warehouse operations console IA package capturing dataset pickers, retention countdown chips, manual trigger modals, and DPIA documentation hooks for compliance operators across platforms.
 
 ## Milestone D3 – Page Templates & Partial Layout Library (Target Week 3–6)
 **Goals:** Rebuild priority pages and partial sections for marketing, dashboards, creation studio, and finance experiences.

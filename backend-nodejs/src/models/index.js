@@ -53,9 +53,21 @@ import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 import SecurityAuditEvent from './securityAuditEvent.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
+import Region from './region.js';
+import DataSubjectRequest from './dataSubjectRequest.js';
+import FinanceTransactionHistory from './financeTransactionHistory.js';
+import MessageHistory from './messageHistory.js';
+import StorefrontRevisionLog from './storefrontRevisionLog.js';
+import WarehouseExportRun from './warehouseExportRun.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
+User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Region.hasMany(Company, { foreignKey: 'regionId', as: 'companies' });
+Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
@@ -88,14 +100,26 @@ Order.belongsTo(Service, { foreignKey: 'serviceId' });
 User.hasMany(Order, { foreignKey: 'buyerId' });
 Order.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
 
+Region.hasMany(Order, { foreignKey: 'regionId', as: 'orders' });
+Order.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
 Order.hasOne(Escrow, { foreignKey: 'orderId' });
 Escrow.belongsTo(Order, { foreignKey: 'orderId' });
+
+Region.hasMany(Escrow, { foreignKey: 'regionId', as: 'escrows' });
+Escrow.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 Escrow.hasMany(Dispute, { foreignKey: 'escrowId' });
 Dispute.belongsTo(Escrow, { foreignKey: 'escrowId' });
 
+Region.hasMany(Dispute, { foreignKey: 'regionId', as: 'disputes' });
+Dispute.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
+
+Region.hasMany(MarketplaceItem, { foreignKey: 'regionId', as: 'marketplaceItems' });
+MarketplaceItem.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 Company.hasMany(ComplianceDocument, { foreignKey: 'companyId' });
 ComplianceDocument.belongsTo(Company, { foreignKey: 'companyId' });
@@ -118,6 +142,12 @@ MarketplaceModerationAction.belongsTo(MarketplaceItem, {
 });
 MarketplaceModerationAction.belongsTo(User, { foreignKey: 'actorId', as: 'actor', constraints: false });
 
+MarketplaceItem.hasMany(StorefrontRevisionLog, { foreignKey: 'marketplaceItemId', as: 'revisionLogs' });
+StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId', as: 'item' });
+StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
 
@@ -130,6 +160,9 @@ CampaignTargetingRule.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 AdCampaign.hasMany(CampaignInvoice, { foreignKey: 'campaignId', as: 'invoices' });
 CampaignInvoice.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignInvoice.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
+CampaignInvoice.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+CampaignInvoice.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+Region.hasMany(CampaignInvoice, { foreignKey: 'regionId', as: 'campaignInvoices' });
 
 AdCampaign.hasMany(CampaignDailyMetric, { foreignKey: 'campaignId', as: 'dailyMetrics' });
 CampaignDailyMetric.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
@@ -144,6 +177,16 @@ CampaignAnalyticsExport.belongsTo(CampaignDailyMetric, {
   as: 'dailyMetric'
 });
 
+FinanceTransactionHistory.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+FinanceTransactionHistory.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+FinanceTransactionHistory.belongsTo(Dispute, { foreignKey: 'disputeId', as: 'dispute' });
+FinanceTransactionHistory.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+FinanceTransactionHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+Region.hasMany(FinanceTransactionHistory, { foreignKey: 'regionId', as: 'financeHistory' });
+Order.hasMany(FinanceTransactionHistory, { foreignKey: 'orderId', as: 'financeHistory' });
+Escrow.hasMany(FinanceTransactionHistory, { foreignKey: 'escrowId', as: 'financeEvents' });
+Dispute.hasMany(FinanceTransactionHistory, { foreignKey: 'disputeId', as: 'financeEvents' });
+
 AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSignals' });
 CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
@@ -153,6 +196,11 @@ ConversationParticipant.belongsTo(Conversation, { foreignKey: 'conversationId', 
 
 Conversation.hasMany(ConversationMessage, { foreignKey: 'conversationId', as: 'messages' });
 ConversationMessage.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
+
+Region.hasMany(Conversation, { foreignKey: 'regionId', as: 'conversations' });
+Conversation.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+Region.hasMany(ConversationMessage, { foreignKey: 'regionId', as: 'messages' });
+ConversationMessage.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 ConversationParticipant.hasMany(ConversationMessage, {
   foreignKey: 'senderParticipantId',
@@ -165,6 +213,13 @@ ConversationMessage.belongsTo(ConversationParticipant, {
 
 ConversationMessage.hasMany(MessageDelivery, { foreignKey: 'conversationMessageId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationMessage, { foreignKey: 'conversationMessageId', as: 'message' });
+
+Region.hasMany(MessageDelivery, { foreignKey: 'regionId', as: 'deliveries' });
+MessageDelivery.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+ConversationMessage.hasMany(MessageHistory, { foreignKey: 'messageId', as: 'history' });
+MessageHistory.belongsTo(ConversationMessage, { foreignKey: 'messageId', as: 'message' });
+MessageHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
@@ -195,6 +250,9 @@ RentalAgreement.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId' });
 
 Company.hasMany(RentalAgreement, { foreignKey: 'companyId' });
 RentalAgreement.belongsTo(Company, { foreignKey: 'companyId' });
+
+Region.hasMany(RentalAgreement, { foreignKey: 'regionId', as: 'rentalAgreements' });
+RentalAgreement.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 User.hasMany(RentalAgreement, { foreignKey: 'renterId', as: 'Rentals' });
 RentalAgreement.belongsTo(User, { as: 'renter', foreignKey: 'renterId' });
@@ -233,6 +291,16 @@ AffiliateLedgerEntry.belongsTo(AffiliateReferral, { foreignKey: 'referralId', as
 AffiliateLedgerEntry.belongsTo(AffiliateCommissionRule, { foreignKey: 'commissionRuleId', as: 'commissionRule' });
 
 AffiliateCommissionRule.hasMany(AffiliateLedgerEntry, { foreignKey: 'commissionRuleId', as: 'ledgerEntries' });
+
+User.hasMany(DataSubjectRequest, { foreignKey: 'userId', as: 'dataSubjectRequests' });
+DataSubjectRequest.belongsTo(User, { foreignKey: 'userId', as: 'requester' });
+Region.hasMany(DataSubjectRequest, { foreignKey: 'regionId', as: 'dataSubjectRequests' });
+DataSubjectRequest.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Region.hasMany(WarehouseExportRun, { foreignKey: 'regionId', as: 'warehouseExports' });
+WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
+WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
@@ -336,5 +404,11 @@ export {
   AffiliateLedgerEntry,
   SecurityAuditEvent,
   UserSession,
-  ConsentEvent
+  ConsentEvent,
+  Region,
+  DataSubjectRequest,
+  FinanceTransactionHistory,
+  MessageHistory,
+  StorefrontRevisionLog,
+  WarehouseExportRun
 };
