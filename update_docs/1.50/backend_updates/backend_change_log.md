@@ -9,3 +9,13 @@
 - Migrated user and company PII to AES-256-GCM encrypted columns with SHA-512/HMAC lookup hashes, ensuring email uniqueness without storing cleartext identifiers.
 - Added transactional migration to backfill encrypted payloads, drop legacy plaintext columns, and enforce new uniqueness constraints on hashed values.
 - Introduced shared field encryption utility, model hooks, and targeted Vitest coverage to verify encrypted persistence and case-insensitive lookups.
+
+## 2025-03-12 – Security & Secrets Hardening, Subtask 2
+- Reconstructed `panelService` to reinstate provider dashboard orchestration: RBAC-enforced company resolution, booking analytics, trust score computation, and review summarisation now drive production responses again.
+- Normalised business front generation to leverage active bookings, campaign telemetry, and marketplace intelligence while sourcing savings data from cached platform commission configuration.
+- Resolved the lingering ESLint failure set (69 errors) and re-ran the backend lint suite to confirm the panel stack is compliant ahead of follow-on security automation.
+
+## 2025-03-17 – Security & Secrets Hardening, Subtask 6
+- Introduced `sessionService` with refresh-token hashing, JWT issuance, and cookie builders that emit httpOnly/secure/authenticated cookies for browser consumers while exposing bearer tokens for mobile clients.
+- Added Sequelize models/migrations for `user_sessions`, wired rotation and revocation into the auth controller, and documented the new configuration surface (cookie names, TTLs, secure flags).
+- Authored Vitest coverage asserting session issuance, rotation persistence, cookie policies, and token extraction to anchor the new authentication runtime in automated evidence.

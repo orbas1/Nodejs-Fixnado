@@ -2,114 +2,57 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import PropTypes from 'prop-types';
 import { loginAdmin, revokeAdminSession } from '../api/adminSessionClient.js';
 import { clearPanelCache, PanelApiError } from '../api/panelClient.js';
+import { fetchCurrentUser } from '../api/authClient.js';
 
 const AdminSessionContext = createContext(null);
 
-const TOKEN_STORAGE_KEY = 'fixnado:accessToken';
-const USER_STORAGE_KEY = 'fixnado:adminUser';
-const EXPIRY_STORAGE_KEY = 'fixnado:adminExpiry';
-
-function readStoredValue(key) {
-  if (typeof window === 'undefined' || !window.localStorage) {
-    return null;
-  }
-  try {
-    return window.localStorage.getItem(key);
-  } catch (error) {
-    console.warn('[AdminSession] Unable to read storage key', key, error);
-    return null;
-  }
-}
-
-function writeStoredValue(key, value) {
-  if (typeof window === 'undefined' || !window.localStorage) {
-    return;
-  }
-  try {
-    if (value == null) {
-      window.localStorage.removeItem(key);
-    } else {
-      window.localStorage.setItem(key, value);
-    }
-  } catch (error) {
-    console.warn('[AdminSession] Unable to persist storage key', key, error);
-  }
-}
-
-function parseJson(value) {
-  if (!value) return null;
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.warn('[AdminSession] Failed to parse JSON payload', error);
-    return null;
-  }
-}
-
-function computeExpiryTimestamp(expiresIn) {
-  if (!expiresIn) {
-    return null;
-  }
-
-  const match = /^([0-9]+)h$/i.exec(String(expiresIn).trim());
-  if (match) {
-    const hours = Number.parseInt(match[1], 10);
-    if (Number.isFinite(hours)) {
-      return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-    }
-  }
-
-  const numeric = Number.parseInt(expiresIn, 10);
-  if (Number.isFinite(numeric)) {
-    return new Date(Date.now() + numeric * 1000).toISOString();
-  }
-
-  return null;
-}
-
-function isExpired(expiresAt) {
-  if (!expiresAt) {
-    return false;
-  }
-  const expires = new Date(expiresAt);
-  if (Number.isNaN(expires.getTime())) {
-    return false;
-  }
-  return expires.getTime() <= Date.now();
-}
+const INITIAL_STATE = {
+  status: 'initialising',
+  user: null,
+  session: null,
+  error: null
+};
 
 export function AdminSessionProvider({ children }) {
-  const [state, setState] = useState({
-    status: 'initialising',
-    token: null,
-    user: null,
-    error: null,
-    expiresAt: null
-  });
+  const [state, setState] = useState(INITIAL_STATE);
   const pendingLoginRef = useRef(null);
 
   useEffect(() => {
-    const storedToken = readStoredValue(TOKEN_STORAGE_KEY);
-    const storedUser = parseJson(readStoredValue(USER_STORAGE_KEY));
-    const storedExpiry = readStoredValue(EXPIRY_STORAGE_KEY);
-
-    if (!storedToken || !storedUser || storedUser.type !== 'admin' || isExpired(storedExpiry)) {
-      writeStoredValue(TOKEN_STORAGE_KEY, null);
-      writeStoredValue(USER_STORAGE_KEY, null);
-      writeStoredValue(EXPIRY_STORAGE_KEY, null);
-      setState({ status: 'anonymous', token: null, user: null, error: null, expiresAt: null });
-      return;
+    let isMounted = true;
+    async function initialise() {
+      try {
+        const profile = await fetchCurrentUser();
+        if (!isMounted) return;
+        setState({
+          status: 'authenticated',
+          user: profile,
+          session: {
+            role: profile?.type ?? 'admin',
+            expiresAt: null,
+            issuedAt: null
+          },
+          error: null
+        });
+      } catch (error) {
+        if (!isMounted) return;
+        if (error instanceof PanelApiError && error.status === 401) {
+          setState({ status: 'anonymous', user: null, session: null, error: null });
+        } else {
+          setState({ status: 'error', user: null, session: null, error });
+        }
+      }
     }
 
-    setState({ status: 'authenticated', token: storedToken, user: storedUser, error: null, expiresAt: storedExpiry });
+    initialise();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const logout = useCallback(async () => {
-    writeStoredValue(TOKEN_STORAGE_KEY, null);
-    writeStoredValue(USER_STORAGE_KEY, null);
-    writeStoredValue(EXPIRY_STORAGE_KEY, null);
+    setState({ status: 'anonymous', user: null, session: null, error: null });
     clearPanelCache();
-    setState({ status: 'anonymous', token: null, user: null, error: null, expiresAt: null });
     try {
       await revokeAdminSession();
     } catch {
@@ -129,22 +72,22 @@ export function AdminSessionProvider({ children }) {
 
       try {
         const payload = await loginPromise;
-        const { token, user, expiresIn } = payload;
-        const expiresAt = computeExpiryTimestamp(expiresIn) ?? null;
-
-        writeStoredValue(TOKEN_STORAGE_KEY, token);
-        writeStoredValue(USER_STORAGE_KEY, JSON.stringify(user));
-        writeStoredValue(EXPIRY_STORAGE_KEY, expiresAt);
         clearPanelCache();
 
-        setState({ status: 'authenticated', token, user, error: null, expiresAt });
+        setState({
+          status: 'authenticated',
+          user: payload.user,
+          session: payload.session,
+          error: null
+        });
+
         return payload;
       } catch (error) {
-        const normalised = error instanceof PanelApiError ? error : new PanelApiError('Unable to authenticate admin user', 503, { cause: error });
-        writeStoredValue(TOKEN_STORAGE_KEY, null);
-        writeStoredValue(USER_STORAGE_KEY, null);
-        writeStoredValue(EXPIRY_STORAGE_KEY, null);
-        setState({ status: 'error', token: null, user: null, error: normalised, expiresAt: null });
+        const normalised =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to authenticate admin user', 503, { cause: error });
+        setState({ status: 'error', user: null, session: null, error: normalised });
         throw normalised;
       } finally {
         pendingLoginRef.current = null;
@@ -154,18 +97,17 @@ export function AdminSessionProvider({ children }) {
   );
 
   const value = useMemo(() => {
-    const { token, user, status, error, expiresAt } = state;
-    const authenticated = Boolean(token && user?.type === 'admin' && !isExpired(expiresAt));
+    const { user, session, status, error } = state;
     const loading = status === 'initialising' || status === 'authenticating';
+    const isAuthenticated = status === 'authenticated' && user?.type === 'admin';
 
     return {
-      token,
       user,
+      session,
       status,
       error,
-      expiresAt,
       loading,
-      isAuthenticated: authenticated,
+      isAuthenticated,
       login,
       logout
     };

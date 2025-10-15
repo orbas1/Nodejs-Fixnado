@@ -5,68 +5,45 @@ import 'package:logging/logging.dart';
 
 import '../exceptions/api_exception.dart';
 
+typedef AuthTokenResolver = String? Function();
+
 class FixnadoApiClient {
   FixnadoApiClient({
     required this.baseUrl,
     required this.client,
     required this.defaultHeaders,
     required this.requestTimeout,
-    String? Function()? accessTokenProvider,
+    AuthTokenResolver? authTokenResolver,
     Logger? logger,
-  })  : _accessTokenProvider = accessTokenProvider,
+  })  : _authTokenResolver = authTokenResolver,
         _logger = logger ?? Logger('FixnadoApiClient');
-    String? Function()? authTokenResolver,
-  })  : _logger = logger ?? Logger('FixnadoApiClient'),
-        _authTokenResolver = authTokenResolver;
 
   final Uri baseUrl;
   final http.Client client;
   final Map<String, String> defaultHeaders;
   final Duration requestTimeout;
+  final AuthTokenResolver? _authTokenResolver;
   final Logger _logger;
-  final String? Function()? _accessTokenProvider;
-  final String? Function()? _authTokenResolver;
 
   Uri _buildUri(String path, [Map<String, dynamic>? query]) {
-    final base = baseUrl.resolve(path.startsWith('/') ? path.substring(1) : path);
+    final normalisedPath = path.startsWith('/') ? path.substring(1) : path;
+    final uri = baseUrl.resolve(normalisedPath);
     if (query == null || query.isEmpty) {
-      return base;
+      return uri;
     }
-    final filtered = query.entries.where((entry) => entry.value != null).map((entry) => MapEntry(entry.key, '${entry.value}'));
-    return base.replace(queryParameters: {
-      ...base.queryParameters,
-      for (final entry in filtered) entry.key: entry.value,
-    });
-  }
-
-  String? _resolveAccessToken() {
-    if (_accessTokenProvider == null) {
-      return null;
-    }
-    try {
-      final token = _accessTokenProvider!.call();
-      if (token == null || token.isEmpty) {
-        return null;
-      }
-      return token;
-    } catch (error, stackTrace) {
-      _logger.warning('Failed to resolve access token', error, stackTrace);
-      return null;
-    }
+    final filtered = query.entries
+        .where((entry) => entry.value != null)
+        .map((entry) => MapEntry(entry.key, '${entry.value}'));
+    return uri.replace(
+      queryParameters: {
+        ...uri.queryParameters,
+        for (final entry in filtered) entry.key: entry.value,
+      },
+    );
   }
 
   Map<String, String> _headers([Map<String, String>? headers]) {
     final resolved = <String, String>{
-      ...defaultHeaders,
-    };
-    final token = _resolveAccessToken();
-    if (token != null) {
-      resolved['Authorization'] = 'Bearer $token';
-    }
-    if (headers != null) {
-      resolved.addAll(headers);
-  Map<String, String> _headers([Map<String, String>? headers]) {
-    final resolved = {
       ...defaultHeaders,
       if (headers != null) ...headers,
     };
@@ -94,14 +71,7 @@ class FixnadoApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response.body;
     }
-
-    Object? parsed;
-    try {
-      parsed = response.body.isEmpty ? null : jsonDecode(response.body);
-    } catch (_) {
-      parsed = response.body;
-    }
-    throw ApiException(response.statusCode, 'Request failed with status ${response.statusCode}', details: parsed);
+    throw _toApiException(response);
   }
 
   Future<List<dynamic>> getJsonList(String path, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
@@ -121,7 +91,10 @@ class FixnadoApiClient {
     final response = await client
         .post(
           uri,
-          headers: _headers(headers),
+          headers: _headers({
+            'Content-Type': 'application/json',
+            if (headers != null) ...headers,
+          }),
           body: body == null ? null : jsonEncode(body),
         )
         .timeout(requestTimeout);
@@ -134,32 +107,42 @@ class FixnadoApiClient {
     final response = await client
         .patch(
           uri,
-          headers: _headers(headers),
+          headers: _headers({
+            'Content-Type': 'application/json',
+            if (headers != null) ...headers,
+          }),
           body: body == null ? null : jsonEncode(body),
         )
         .timeout(requestTimeout);
     return _decodeResponse(response);
   }
 
+  ApiException _toApiException(http.Response response) {
+    Object? parsed;
+    try {
+      parsed = response.body.isEmpty ? null : jsonDecode(response.body);
+    } catch (_) {
+      parsed = response.body;
+    }
+    return ApiException(
+      response.statusCode,
+      'Request failed with status ${response.statusCode}',
+      details: parsed,
+    );
+  }
+
   Future<Map<String, dynamic>> _decodeResponse(http.Response response) async {
-    final text = response.body;
+    final body = response.body;
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (text.isEmpty) {
+      if (body.isEmpty) {
         return <String, dynamic>{};
       }
-      final decoded = jsonDecode(text);
+      final decoded = jsonDecode(body);
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
       return {'data': decoded};
     }
-
-    Object? parsed;
-    try {
-      parsed = text.isEmpty ? null : jsonDecode(text);
-    } catch (_) {
-      parsed = text;
-    }
-    throw ApiException(response.statusCode, 'Request failed with status ${response.statusCode}', details: parsed);
+    throw _toApiException(response);
   }
 }

@@ -8,15 +8,16 @@ import {
   addCustomJobBidMessageHandler
 } from '../controllers/feedController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { Permissions } from '../services/accessControlService.js';
 
 const router = Router();
 
-router.get('/live', authenticate, authorize(['servicemen', 'company', 'user']), getLiveFeed);
+router.get('/live', authenticate, authorize([Permissions.FEED_VIEW]), getLiveFeed);
 
 router.post(
   '/live',
   authenticate,
-  authorize(['user', 'company']),
+  authorize([Permissions.FEED_POST]),
   [
     body('title').isString().trim().isLength({ min: 5, max: 160 }),
     body('description').optional({ checkFalsy: true }).isString().trim().isLength({ max: 4000 }),
@@ -47,7 +48,7 @@ router.post(
 router.post(
   '/live/:postId/bids',
   authenticate,
-  authorize(['servicemen', 'company']),
+  authorize([Permissions.FEED_BID]),
   [
     param('postId').isUUID(),
     body('amount').optional({ checkFalsy: true }).isFloat({ gt: 0 }),
@@ -66,7 +67,7 @@ router.post(
 router.post(
   '/live/:postId/bids/:bidId/messages',
   authenticate,
-  authorize(['servicemen', 'company', 'user']),
+  authorize([Permissions.FEED_MESSAGE]),
   [
     param('postId').isUUID(),
     param('bidId').isUUID(),

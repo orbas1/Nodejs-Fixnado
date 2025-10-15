@@ -31,6 +31,7 @@
 3. Creation studio stepper, preview panes, and theme selector interactions documented.
 4. Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
 5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
+6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.
@@ -41,6 +42,7 @@
 3. Responsive behaviour matrices covering breakpoints, device classes, and orientation states.
 4. Offline/loading/error state illustrations and microcopy guidelines.
 5. Cross-platform regression scripts for design QA (visual diff, accessibility, localisation).
+6. Biometric unlock flows, secure-session banners, and token status indicators aligned with backend session hardening.
 
 ## Milestone D5 – Design QA, Documentation & Handover (Target Week 7–9)
 **Goals:** Complete design QA, documentation packages, and engineer handover for implementation readiness.

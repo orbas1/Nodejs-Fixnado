@@ -8,10 +8,11 @@ import {
   resolveAlert
 } from '../controllers/inventoryController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { Permissions } from '../services/accessControlService.js';
 
 const router = Router();
 
-router.use(authenticate, authorize(['company']));
+router.use(authenticate, authorize([Permissions.INVENTORY_WRITE]));
 
 router.post('/items', createInventoryItem);
 router.get('/items', listInventory);

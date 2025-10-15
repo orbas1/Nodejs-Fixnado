@@ -1,25 +1,10 @@
 const API_ROOT = '/api/affiliate';
 const ADMIN_API_ROOT = '/api/admin/affiliate';
-const TOKEN_KEY = 'fixnado:accessToken';
 
 const memoryCache = new Map();
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem(TOKEN_KEY) ?? null;
-  } catch (error) {
-    console.warn('[affiliateClient] Unable to read auth token', error);
-    return null;
-  }
-}
-
 function buildHeaders(extra = {}) {
   const headers = new Headers({ Accept: 'application/json', ...extra });
-  const token = getAuthToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
