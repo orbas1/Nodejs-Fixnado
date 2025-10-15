@@ -4,6 +4,8 @@ import { startCampaignAnalyticsJob } from './campaignAnalyticsJob.js';
 import { startAnalyticsIngestionJob } from './analyticsIngestionJob.js';
 import { startWarehouseFreshnessJob } from './warehouseFreshnessJob.js';
 import { startDataGovernanceRetentionJob } from './dataGovernanceRetentionJob.js';
+import { startDataWarehouseExportJob } from './dataWarehouseExportJob.js';
+import { startDatabaseCredentialRotationJob } from './databaseCredentialRotationJob.js';
 
 export function startBackgroundJobs(logger = console) {
   const jobs = [];
@@ -35,6 +37,16 @@ export function startBackgroundJobs(logger = console) {
   const dataGovernanceHandle = startDataGovernanceRetentionJob(logger);
   if (dataGovernanceHandle) {
     jobs.push(dataGovernanceHandle);
+  }
+
+  const warehouseExportHandle = startDataWarehouseExportJob(logger);
+  if (warehouseExportHandle) {
+    jobs.push(warehouseExportHandle);
+  }
+
+  const credentialRotationHandle = startDatabaseCredentialRotationJob(logger);
+  if (credentialRotationHandle) {
+    jobs.push(credentialRotationHandle);
   }
 
   return jobs;

@@ -7,3 +7,5 @@
 - Captured Opsgenie escalation metadata returned from booking creation to support future in-app trust notifications once the mobile dashboards surface risk insights.
 - Added compliance API integration for `/api/compliance/data-requests` including create, list, status update, and export endpoints with retry-safe request bodies and localisation-aware region codes.
 - Normalised GDPR request payloads to trim emails, attach Riverpod-provided justification, and persist audit messages for offline replay.
+- Implemented `/api/compliance/data-warehouse/runs` client support with paginated fetch, manual trigger POSTs, and polling of long-running exports using exponential backoff tuned for mobile connectivity constraints.
+- Mapped warehouse export responses into strongly typed models capturing dataset, region, actor, record counts, checksums, storage paths, and retention deadlines so the UI can surface actionable operations context without additional API calls.

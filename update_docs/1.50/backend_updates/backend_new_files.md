@@ -14,3 +14,9 @@
 | `backend-nodejs/src/models/storefrontRevisionLog.js` | Records storefront revision metadata including region, actor, and snapshot payloads for export transparency. |
 | `backend-nodejs/src/services/dataGovernanceService.js` | Service orchestrating data subject request submission, export generation, and retention-safe cleanup. |
 | `backend-nodejs/src/jobs/dataGovernanceRetentionJob.js` | Scheduled job purging aged exports and history rows according to configurable retention windows. |
+| `backend-nodejs/src/database/migrations/20250321000000-data-warehouse-exports.js` | Creates the `warehouse_export_runs` table with dataset/region metadata, status tracking, audit payloads, and indexes to power CDC exports. |
+| `backend-nodejs/src/models/warehouseExportRun.js` | Sequelize model mapping warehouse export runs with region and user associations for scheduling and audit retrieval. |
+| `backend-nodejs/src/services/dataWarehouseExportService.js` | Streams dataset snapshots to NDJSON.gz bundles, persists run metadata, and exposes programmatic triggers for warehouse exports. |
+| `backend-nodejs/src/services/databaseCredentialRotationService.js` | Rotates database credentials via Secrets Manager, enforces TLS, terminates stale sessions, and refreshes configuration at runtime. |
+| `backend-nodejs/src/jobs/dataWarehouseExportJob.js` | Interval job invoking the warehouse export service for configured datasets/regions, logging triggered runs for audit. |
+| `backend-nodejs/src/jobs/databaseCredentialRotationJob.js` | Scheduled job monitoring rotation intervals, invoking the credential rotation service, and surfacing failures to operators. |

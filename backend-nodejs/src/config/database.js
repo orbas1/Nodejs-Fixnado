@@ -57,7 +57,8 @@ function buildSequelizeInstance() {
           config.database.ssl
             ? {
                 require: true,
-                rejectUnauthorized: config.database.rejectUnauthorized
+                rejectUnauthorized: config.database.rejectUnauthorized,
+                ca: config.database.caCertificate ? [config.database.caCertificate] : undefined
               }
             : undefined
       }
@@ -75,7 +76,8 @@ function buildSequelizeInstance() {
         config.database.ssl
           ? {
               require: true,
-              rejectUnauthorized: config.database.rejectUnauthorized
+              rejectUnauthorized: config.database.rejectUnauthorized,
+              ca: config.database.caCertificate ? [config.database.caCertificate] : undefined
             }
           : undefined
     }

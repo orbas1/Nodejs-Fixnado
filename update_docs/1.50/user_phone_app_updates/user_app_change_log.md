@@ -14,3 +14,8 @@
 - Added the compliance Data Requests domain (models, repository, controller, screen) enabling GDPR submissions, exports, and status updates directly from the user app.
 - Integrated the navigation card within the profile legal pane featuring real-time counts, latest submission timestamps, and retry affordances.
 - Wired controller providers to preload compliance metrics so cross-screen widgets stay responsive even with intermittent connectivity.
+
+## 2025-03-30 – Warehouse Export Operations View
+- Expanded the compliance screen with a warehouse export tab summarising the latest CDC runs, dataset/region filters, and retention timers aligned with backend metadata.
+- Added repository/controller methods to call `listWarehouseExportRuns` and to fire manual export triggers with optimistic state, error surface mapping, and analytics instrumentation.
+- Surfaced toast/snackbar messaging plus inline documentation links guiding operators through DPIA evidence capture when runs complete or error, ensuring parity with the web portal experience.

@@ -14,6 +14,8 @@ export const Permissions = Object.freeze({
   CAMPAIGN_REVIEW: 'campaign:review',
   COMPLIANCE_PORTAL: 'compliance:portal:access',
   COMPLIANCE_EXPORT: 'compliance:export:execute',
+  COMPLIANCE_WAREHOUSE_VIEW: 'compliance:data-warehouse:view',
+  COMPLIANCE_WAREHOUSE_EXPORT: 'compliance:data-warehouse:export',
   DISPUTE_MANAGE: 'finance:dispute:manage',
   DISPUTE_VIEW: 'finance:dispute:view',
   FEED_VIEW: 'feed:live:view',

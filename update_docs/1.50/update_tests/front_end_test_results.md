@@ -3,3 +3,6 @@
 
 ## 2025-03-28 – Compliance Portal Experience
 - `npm run lint` (frontend-reactjs) — **PASS**. Confirms the compliance portal page, API client, navigation updates, and PropTypes additions land without new lint issues. 【d3400a†L1-L6】
+
+## 2025-03-30 – Warehouse Operations Console
+- `npm run lint` (frontend-reactjs) — **PASS**. Revalidated the portal after adding the warehouse export panel, operator guidance footers, and API client extensions for run listing/triggering. 【2cd4bc†L1-L6】【bef0ef†L1】

@@ -30,3 +30,8 @@
 - Dynamic text support tested up to 200%; key screens reflow to vertical stacks and maintain padding to avoid clipping.
 - VoiceOver labels added for quick action buttons and map annotations; ensures booking timeline accessible without visual cues.
 - Colourblind-safe palette validated using simulators; status differences also conveyed via icons and text.
+
+## Compliance Operations Styling
+- Warehouse export run cards use compliance green (`#1AAE70`) for successful states, amber (`#FFB300`) for in-progress, and crimson (`#D32F2F`) for failures, with matching iconography to maintain clarity for colourblind operators.
+- Retention countdown chips adopt mono-spaced numerals with 12px padding and gradient borders referencing the shared audit token to visually differentiate them from generic badges.
+- DPIA guidance drawer integrates legal typography styles (Manrope 500 headings, Inter 400 body) and uses muted slate backgrounds so compliance copy remains legible during extended review sessions.

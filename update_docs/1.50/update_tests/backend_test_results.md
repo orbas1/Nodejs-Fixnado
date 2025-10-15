@@ -19,3 +19,6 @@
 ## 2025-03-28 – Compliance & Data Governance
 - `npm run lint` (backend-nodejs) — **PASS**. Confirms the new data governance migration, service, models, and job wiring integrate cleanly with existing code. 【ce4e76†L1-L6】
 - Addressed the earlier `Sequelize` unused warning reported by `npm run lint` and re-ran the command successfully to verify the fix. 【af6030†L1-L4】【ce4e76†L1-L6】
+
+## 2025-03-30 – Warehouse Exports & Credential Rotation
+- `npm run lint` (backend-nodejs) — **PASS**. Validated after removing an obsolete `no-constant-condition` directive in `dataWarehouseExportService`, confirming the expanded services, jobs, and migration compile without lint debt. 【1f26b7†L1-L5】【e8d4a3†L1】

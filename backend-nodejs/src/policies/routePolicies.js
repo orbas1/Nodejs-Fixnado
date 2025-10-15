@@ -216,6 +216,28 @@ const ROUTE_POLICIES = {
     severity: 'high',
     metadata: (req) => ({ requestId: req.params.requestId, nextStatus: req.body?.status || null })
   },
+  'compliance.data-warehouse.list': {
+    id: 'compliance.data-warehouse.list',
+    version: '1.0.0',
+    resource: 'compliance.data-warehouse',
+    action: 'compliance.data-warehouse:list',
+    description: 'Allow compliance and data teams to review warehouse export runs.',
+    requirements: [Permissions.COMPLIANCE_WAREHOUSE_VIEW],
+    tags: ['compliance', 'privacy', 'data-platform'],
+    severity: 'medium',
+    metadata: (req) => ({ dataset: req.query?.dataset || null, region: req.query?.regionCode || null })
+  },
+  'compliance.data-warehouse.export': {
+    id: 'compliance.data-warehouse.export',
+    version: '1.0.0',
+    resource: 'compliance.data-warehouse',
+    action: 'compliance.data-warehouse:export',
+    description: 'Allow privileged operators to trigger warehouse CDC exports with audit logging.',
+    requirements: [Permissions.COMPLIANCE_WAREHOUSE_EXPORT],
+    tags: ['compliance', 'privacy', 'data-platform'],
+    severity: 'critical',
+    metadata: (req) => ({ dataset: req.body?.dataset || req.query?.dataset || null, region: req.body?.regionCode || null })
+  },
   'zones.match': {
     id: 'zones.match',
     version: '1.0.0',

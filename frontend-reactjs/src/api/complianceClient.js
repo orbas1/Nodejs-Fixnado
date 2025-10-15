@@ -108,3 +108,55 @@ export async function updateDataSubjectRequestStatus(requestId, payload, { signa
     throw new PanelApiError('Network error while updating request status', 503, { cause: error });
   }
 }
+
+export async function fetchWarehouseExportRuns({ dataset, regionCode, limit = 50 } = {}, { signal } = {}) {
+  const params = new URLSearchParams();
+  if (dataset) {
+    params.set('dataset', dataset);
+  }
+  if (regionCode) {
+    params.set('regionCode', regionCode);
+  }
+  if (limit) {
+    params.set('limit', String(limit));
+  }
+
+  try {
+    const response = await fetch(`/api/compliance/data-warehouse/runs?${params.toString()}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+      signal
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+    if (error instanceof PanelApiError) {
+      throw error;
+    }
+    throw new PanelApiError('Network error while loading warehouse export runs', 503, { cause: error });
+  }
+}
+
+export async function triggerWarehouseExportRun(payload, { signal } = {}) {
+  try {
+    const response = await fetch('/api/compliance/data-warehouse/runs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+      signal
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+    if (error instanceof PanelApiError) {
+      throw error;
+    }
+    throw new PanelApiError('Network error while triggering warehouse export', 503, { cause: error });
+  }
+}

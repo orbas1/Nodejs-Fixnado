@@ -54,7 +54,7 @@ Primary objectives:
 | **Creation Studio** | Modular wizard steps, inline previews, theme pickers, content validation, audit timeline. | Supports partial saving and theme-based preview toggles. |
 | **Finance & Disputes** | Escrow timeline visualisation, payout cards, dispute resolution checklist, compliance footers. | Ensures parity between web dashboards and Flutter finance modules. |
 | **Settings & Profiles** | Security badges, consent preferences, integration toggles, avatar management, audit logs. | Draws on `Settings Dashboard.md` and `Profile Look.md`. |
-| **Support & Compliance Pages** | GDPR portal, accessibility statement, security and privacy copy blocks. | Connects to compliance and legal deliverables. |
+| **Support & Compliance Pages** | GDPR portal, warehouse operations console, accessibility statement, security and privacy copy blocks. | Connects to compliance and legal deliverables, supplying dataset triggers, retention countdown widgets, and DPIA guidance overlays. |
 
 ## Theme Strategy
 1. **Default Theme:** Neutral blue/teal palette for enterprise operations with muted gradients, standard imagery.

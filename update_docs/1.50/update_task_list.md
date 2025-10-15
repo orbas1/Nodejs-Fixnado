@@ -3,7 +3,7 @@
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 92% |
-| 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 58% |
+| 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 82% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 0% |
 | 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 0% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
@@ -38,7 +38,7 @@
 - **Logic:** Permission evaluations, scam scoring accuracy, token revocation.
 - **Design:** Privacy layouts, alert components, RBAC state indicators.
 
-## Task 2 – Compliance & Data Governance (58%)
+## Task 2 – Compliance & Data Governance (82%)
 **Objective:** Provide multi-region, auditable data infrastructure with GDPR lifecycle automation.
 
 **Subtasks:**
@@ -61,7 +61,7 @@
 - **Logic:** Region routing, consent state enforcement, purge automation.
 - **Design:** Compliance UX flows, iconography, legal copy support.
 
-**Progress Notes:** Completed the compliance data governance migration introducing `regions`, history tables, and GDPR request tracking while wiring models, associations, and retention jobs into the backend runtime. Exposed `/api/compliance/data-requests` endpoints with RBAC guardrails, automated export/delete orchestration, and regression-safe sanitisation helpers. Delivered the React compliance portal with submission, filtering, export, and status management flows plus Riverpod-driven Flutter data request tooling embedded in profile navigation. Aligned documentation, trackers, and design artefacts to reflect the production-ready governance experience and recorded backend/frontend lint evidence for the new surfaces.
+**Progress Notes:** Completed the compliance data governance migration introducing `regions`, history tables, and GDPR request tracking while wiring models, associations, and retention jobs into the backend runtime. Exposed `/api/compliance/data-requests` endpoints with RBAC guardrails, automated export/delete orchestration, and regression-safe sanitisation helpers. Delivered the React compliance portal with submission, filtering, export, and status management flows plus Riverpod-driven Flutter data request tooling embedded in profile navigation. Shipped a warehouse CDC export service with configurable datasets, scheduled jobs, secure storage outputs, and React/Flutter operator consoles, and enforced database TLS plus credential rotation automation to satisfy residency controls. Published warehouse operations documentation across backend, frontend, mobile, and design artefacts so operators have dataset trigger guidance, retention countdown cues, and DPIA evidence links, raising compliance task completion to 82% with production-ready runbooks.
 
 ## Task 3 – Payments, Escrow & Finance Orchestration (0%)
 **Objective:** Deliver production-grade payment lifecycle, dispute automation, and financial reporting for all clients.

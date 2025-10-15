@@ -25,6 +25,10 @@
 - `/api/compliance/data-requests/:id/export` triggers asynchronous export generation with region-specific storage, while `/status` updates allow authorised operators to progress requests through `received`, `in_progress`, `completed`, and `rejected` states.
 - `/api/consent/verify` checks that the provided subject has active consent for the supplied policies, returning HTTP 428 with structured details when any mandatory agreements are missing or stale.
 
+## Compliance Data Warehouse
+- `/api/compliance/data-warehouse/runs` (GET) lists warehouse export runs, allowing optional `dataset`, `regionCode`, and `limit` query parameters while returning status, row counts, audit metadata, and resolved region summaries for each run.
+- `/api/compliance/data-warehouse/runs` (POST) schedules an export for the requested dataset/region, enforcing the `compliance:data-warehouse:export` policy and returning the persisted `WarehouseExportRun` payload including file location and generated audit trail.
+
 ## Booking Risk & Scam Detection
 - Booking creation now enriches analytics metadata with `risk.score`, `risk.reasonCodes`, and `risk.escalated` fields based on heuristic scoring and optional AI analysis.
 - High-risk bookings trigger Opsgenie escalations when the integration is configured; downstream consumers should expect audit events and risk annotations even if the external escalation is unavailable.

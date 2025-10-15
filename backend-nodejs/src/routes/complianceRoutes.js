@@ -9,7 +9,9 @@ import {
   createDataSubjectRequest,
   getDataSubjectRequests,
   generateDataSubjectRequestExport,
-  updateDataSubjectRequest
+  updateDataSubjectRequest,
+  getWarehouseExportRuns,
+  createWarehouseExportRun
 } from '../controllers/complianceController.js';
 
 const router = Router();
@@ -24,5 +26,7 @@ router.post('/data-requests', createDataSubjectRequest);
 router.get('/data-requests', getDataSubjectRequests);
 router.post('/data-requests/:requestId/export', generateDataSubjectRequestExport);
 router.post('/data-requests/:requestId/status', updateDataSubjectRequest);
+router.get('/data-warehouse/runs', getWarehouseExportRuns);
+router.post('/data-warehouse/runs', createWarehouseExportRun);
 
 export default router;

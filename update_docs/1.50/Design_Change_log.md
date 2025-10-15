@@ -101,6 +101,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Captured card metrics, chip treatments, and CTA copy referencing GDPR request counts so mobile parity documentation reflects production copy and data signals.
    - Updated compliance portal visuals with shared tokens, ensuring Flutter and React implementations now consume the same badge, typography, and audit messaging guidance documented in the design system.
 
+19. **Warehouse Operations Console Patterns (2025-03-30)**
+   - Authored operator console layouts for both web and Flutter that introduce dataset pickers, retention countdown chips, run timeline visualisations, and export health badges aligned with compliance typography tokens.
+   - Documented manual trigger workflows, error/empty states, and contextual documentation footers using the shared card templates so operations teams receive consistent guidance across platforms.
+   - Added iconography and illustration treatments for secure export directories, vault rotation success, and DPIA evidence capture, extending the imagery catalogue and updating accessibility annotations for new badges.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

@@ -58,6 +58,7 @@ import DataSubjectRequest from './dataSubjectRequest.js';
 import FinanceTransactionHistory from './financeTransactionHistory.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
+import WarehouseExportRun from './warehouseExportRun.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -296,6 +297,11 @@ DataSubjectRequest.belongsTo(User, { foreignKey: 'userId', as: 'requester' });
 Region.hasMany(DataSubjectRequest, { foreignKey: 'regionId', as: 'dataSubjectRequests' });
 DataSubjectRequest.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
+Region.hasMany(WarehouseExportRun, { foreignKey: 'regionId', as: 'warehouseExports' });
+WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
+WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -403,5 +409,6 @@ export {
   DataSubjectRequest,
   FinanceTransactionHistory,
   MessageHistory,
-  StorefrontRevisionLog
+  StorefrontRevisionLog,
+  WarehouseExportRun
 };

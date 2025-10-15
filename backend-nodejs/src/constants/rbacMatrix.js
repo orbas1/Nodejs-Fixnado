@@ -111,6 +111,7 @@ export const RBAC_MATRIX = {
       Permissions.ANALYTICS_OVERVIEW,
       Permissions.ANALYTICS_EXPORT,
       Permissions.COMPLIANCE_PORTAL,
+      Permissions.COMPLIANCE_WAREHOUSE_VIEW,
       Permissions.DISPUTE_VIEW,
       Permissions.FINANCE_OVERVIEW,
       Permissions.USER_DIRECTORY
@@ -173,6 +174,8 @@ export const RBAC_MATRIX = {
       Permissions.ZONES_MATCH,
       Permissions.ZONES_PREVIEW,
       Permissions.COMPLIANCE_EXPORT,
+      Permissions.COMPLIANCE_WAREHOUSE_VIEW,
+      Permissions.COMPLIANCE_WAREHOUSE_EXPORT,
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,

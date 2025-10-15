@@ -30,3 +30,8 @@
 - Form fields meet minimum 48px height, focus outlines accessible on all backgrounds, error messaging includes icon + actionable text.
 - RTL support improved by mirroring layout grid, adjusting icons that imply direction, and ensuring text alignment flips gracefully.
 - Language selector style ensures long locale names truncate with tooltip fallback.
+
+## Compliance Operations Console
+- Warehouse export dashboard uses split panels with dark-surface cards and neon-accent chips to distinguish export health from GDPR request widgets while remaining within the shared token system.
+- Manual trigger drawer includes caution banner styling (Amber 400 background, Navy 700 text) outlining DPIA prerequisites before operators launch exports.
+- Audit timeline uses stacked badges with subtle glow to highlight active runs; completed runs display download pills with gradient outlines and embedded iconography for quick recognition.

@@ -18,6 +18,7 @@
 3. **Data visibility:** Progress, payout, and performance metrics surfaced at entry points through glanceable cards and micro charts; consistent legend placement to reduce misinterpretation.
 4. **Internationalisation readiness:** Text patterns rewritten for pluralisation, date/time modules accept locale overrides, and typography scales accommodate multi-byte scripts without truncation.
 5. **Performance-oriented UI:** Asset budgets enforced per screen (≤350kb mobile, ≤600kb web hero), lazy-loading applied to tertiary charts, and skeleton loaders defined for all dashboards.
+6. **Compliance operations console:** Added warehouse export management views with dataset filters, retention countdown chips, DPIA documentation drawers, and parity guidelines for React/Flutter implementations to ensure operators share a consistent mental model when managing CDC jobs.
 
 ## Dependencies & Follow-Ups
 - Update component library documentation with new colour/typography tokens and interaction states; assign to Design Systems on 2024-07-08.

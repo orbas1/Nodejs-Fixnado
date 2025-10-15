@@ -46,3 +46,8 @@
 - Added migration `20250320000000-compliance-data-governance.js` creating the `regions` table, GDPR data subject request ledger, finance/message/storefront history tables, and region-aware indexes while backfilling existing entities.
 - Implemented `dataGovernanceService` with subject resolution, export generation, retention-safe storage paths, and sanitised audit logging plus scheduled `dataGovernanceRetentionJob` wiring through the job index.
 - Extended `complianceController`, routes, and RBAC policies to expose `/api/compliance/data-requests` CRUD/status/export flows guarded by hardened permissions and recorded the new Sequelize models for regions, requests, finance history, message history, and storefront revisions.
+
+## 2025-03-30 – Warehouse CDC Exports & Credential Rotation
+- Added migration `20250321000000-data-warehouse-exports.js`, Sequelize model `WarehouseExportRun`, and associations to track dataset/region exports with audit trails, status, and storage metadata.
+- Introduced `dataWarehouseExportService` plus scheduled job wiring to stream orders, finance, and communications datasets into compressed NDJSON bundles, exposing `/api/compliance/data-warehouse/runs` endpoints guarded by new RBAC policies.
+- Enforced TLS-by-default database connections, Secrets Manager-backed credential rotation via `databaseCredentialRotationService`, and interval job orchestration that refreshes secrets, updates pools, and terminates stale sessions post-rotation.

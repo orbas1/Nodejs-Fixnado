@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+import { readFileSync } from 'node:fs';
+
 import { getSecretSyncMetadata, loadSecretsIntoEnv } from './secretManager.js';
 
 await loadSecretsIntoEnv({ stage: 'config-bootstrap', logger: console });
@@ -90,6 +92,74 @@ function listFromEnv(key) {
     .filter(Boolean);
 }
 
+function readDatabaseCaCertificate() {
+  if (typeof process.env.DB_SSL_CA_BASE64 === 'string' && process.env.DB_SSL_CA_BASE64.trim() !== '') {
+    try {
+      return Buffer.from(process.env.DB_SSL_CA_BASE64.trim(), 'base64').toString('utf8');
+    } catch (error) {
+      console.warn('Failed to decode DB_SSL_CA_BASE64 payload:', error.message);
+    }
+  }
+
+  if (typeof process.env.DB_SSL_CA_FILE === 'string' && process.env.DB_SSL_CA_FILE.trim() !== '') {
+    try {
+      return readFileSync(process.env.DB_SSL_CA_FILE.trim(), 'utf8');
+    } catch (error) {
+      console.warn(`Failed to read DB_SSL_CA_FILE at ${process.env.DB_SSL_CA_FILE}:`, error.message);
+    }
+  }
+
+  return null;
+}
+
+function normaliseRegionList(regions, fallback = []) {
+  const source = Array.isArray(regions) ? regions : fallback;
+  return source
+    .map((value) => (typeof value === 'string' ? value.trim().toUpperCase() : null))
+    .filter(Boolean);
+}
+
+function normaliseDatasetConfigurations(source) {
+  const base = {
+    orders: { enabled: true, lookbackDays: 2 },
+    finance: { enabled: true, lookbackDays: 7 },
+    communications: { enabled: true, lookbackDays: 7 }
+  };
+
+  if (!source || typeof source !== 'object') {
+    return base;
+  }
+
+  for (const [key, value] of Object.entries(source)) {
+    if (!value || typeof value !== 'object') {
+      continue;
+    }
+
+    const datasetKey = key.trim().toLowerCase();
+    if (!base[datasetKey]) {
+      continue;
+    }
+
+    const current = base[datasetKey];
+    const configEntry = {
+      enabled: value.enabled !== false,
+      lookbackDays: Number.isFinite(Number(value.lookbackDays))
+        ? Math.max(Number(value.lookbackDays), 1)
+        : current.lookbackDays,
+      minIntervalMinutes: Number.isFinite(Number(value.minIntervalMinutes))
+        ? Math.max(Number(value.minIntervalMinutes), 5)
+        : current.minIntervalMinutes,
+      regions: Array.isArray(value.regions) && value.regions.length > 0
+        ? normaliseRegionList(value.regions)
+        : current.regions
+    };
+
+    base[datasetKey] = configEntry;
+  }
+
+  return base;
+}
+
 const DEFAULT_WAREHOUSE_THRESHOLDS = {
   default: 120,
   bookings: 30,
@@ -130,6 +200,15 @@ const DEFAULT_CONSENT_POLICIES = {
     preferenceKey: 'marketing.opt_in'
   }
 };
+
+const TLS_REQUIRED_ENVIRONMENTS = new Set(['production', 'staging']);
+const tlsRequired = TLS_REQUIRED_ENVIRONMENTS.has(env);
+const databaseSslEnabled = boolFromEnv('DB_SSL', tlsRequired);
+if (tlsRequired && !databaseSslEnabled) {
+  throw new Error('Database TLS must be enabled in production or staging environments. Set DB_SSL=true.');
+}
+const databaseRejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
+const databaseCaCertificate = readDatabaseCaCertificate();
 
 function normaliseThresholds(source, fallback) {
   const base = { ...fallback };
@@ -243,9 +322,19 @@ const config = {
       hasConnectionString || requestedDialect === 'sqlite'
         ? process.env.DB_PASSWORD || ''
         : requireEnv('DB_PASSWORD'),
-    ssl: process.env.DB_SSL === 'true',
-    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
-    dialect: requestedDialect || 'postgres'
+    ssl: databaseSslEnabled,
+    rejectUnauthorized: databaseRejectUnauthorized,
+    caCertificate: databaseCaCertificate,
+    dialect: requestedDialect || 'postgres',
+    rotation: {
+      enabled: boolFromEnv('DB_ROTATION_ENABLED', true),
+      secretArn:
+        process.env.DB_ROTATION_SECRET_ARN || process.env.SECRETS_MANAGER_DB_SECRET_ARN || process.env.DB_SECRET_ARN || '',
+      intervalHours: Math.max(intFromEnv('DB_ROTATION_INTERVAL_HOURS', 168), 1),
+      minIntervalHours: Math.max(intFromEnv('DB_ROTATION_MIN_INTERVAL_HOURS', 24), 1),
+      region: process.env.DB_ROTATION_REGION || process.env.SECRETS_MANAGER_REGION || process.env.AWS_REGION || '',
+      requireTls: boolFromEnv('DB_ROTATION_REQUIRE_TLS', true)
+    }
   },
   jwt: {
     secret: requireEnv('JWT_SECRET'),
@@ -397,6 +486,14 @@ const config = {
     messageHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_MESSAGE_RETENTION_DAYS', 365), 30),
     financeHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_FINANCE_RETENTION_DAYS', 2555), 365),
     retentionSweepMinutes: Math.max(intFromEnv('DATA_GOVERNANCE_SWEEP_MINUTES', 180), 15)
+  },
+  dataWarehouse: {
+    exportRoot: process.env.DATA_WAREHOUSE_EXPORT_ROOT || 'storage/warehouse-exports',
+    scheduleMinutes: Math.max(intFromEnv('DATA_WAREHOUSE_EXPORT_INTERVAL_MINUTES', 180), 15),
+    batchSize: Math.max(intFromEnv('DATA_WAREHOUSE_EXPORT_BATCH_SIZE', 500), 50),
+    minIntervalMinutes: Math.max(intFromEnv('DATA_WAREHOUSE_MIN_INTERVAL_MINUTES', 30), 5),
+    regions: normaliseRegionList(jsonFromEnv('DATA_WAREHOUSE_REGIONS', null), ['GB', 'IE', 'AE']),
+    datasets: normaliseDatasetConfigurations(jsonFromEnv('DATA_WAREHOUSE_DATASETS', null))
   },
   campaigns: {
     overspendTolerance: Math.max(floatFromEnv('CAMPAIGN_OVERSPEND_TOLERANCE', 0.15), 0),

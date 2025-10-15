@@ -28,3 +28,8 @@
 ## Reports & Analytics
 - Reporting hub presents saved reports list, quick create templates, and insights gallery. Chart area reserved for upcoming trend visualisations with filter shelf above.
 - Export flow wireframe introduces scheduler for recurring exports, format selection (CSV, XLSX, PDF), and confirmation summary with delivery recipients.
+
+## Compliance Operations Console
+- New portal section wireframes include dual-column layout: left column shows dataset selector cards with status chips, right column renders run history table with inline download buttons and retention countdown.
+- Manual trigger modal wireframe highlights justification textarea, dataset/region pickers, retention summary callout, and confirm button styled as destructive to reinforce governance weight.
+- DPIA support drawer wireframe embeds checklist with quick links to policy docs, audit log IDs, and contact options for security/legal teams.

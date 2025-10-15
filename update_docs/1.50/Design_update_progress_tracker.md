@@ -2,12 +2,12 @@
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 66 | 72 | 64 | 68 | 76 | 62 | 80 | 82 | 70 | 58 | 68 | 72 | 54 | 58 | 64 | 68 |
-| D2 | Navigation & IA Harmonisation | 52 | 58 | 52 | 50 | 44 | 46 | 66 | 64 | 54 | 42 | 58 | 60 | 42 | 40 | 50 | 52 |
+| D1 | Token & System Foundation | 66 | 72 | 64 | 68 | 78 | 64 | 82 | 84 | 70 | 60 | 68 | 72 | 54 | 58 | 66 | 69 |
+| D2 | Navigation & IA Harmonisation | 56 | 62 | 56 | 54 | 48 | 50 | 70 | 68 | 60 | 46 | 62 | 62 | 44 | 42 | 54 | 56 |
 | D3 | Page Templates & Partial Library | 28 | 27 | 30 | 30 | 28 | 27 | 34 | 30 | 28 | 24 | 34 | 42 | 26 | 26 | 29 | 31 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 52 | 54 | 50 | 50 | 48 | 48 | 58 | 60 | 56 | 50 | 58 | 54 | 46 | 44 | 52 | 52 |
-| D6 | Design QA, Documentation & Handover | 18 | 22 | 20 | 22 | 20 | 20 | 26 | 26 | 22 | 20 | 24 | 36 | 20 | 22 | 22 | 24 |
+| D5 | Mobile Parity & Component Adaptation | 58 | 60 | 56 | 56 | 52 | 54 | 64 | 66 | 60 | 54 | 58 | 58 | 48 | 46 | 58 | 57 |
+| D6 | Design QA, Documentation & Handover | 22 | 26 | 24 | 26 | 22 | 24 | 30 | 30 | 26 | 24 | 28 | 38 | 24 | 26 | 26 | 26 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -24,6 +24,7 @@
 > - Mobile security surfaces (Task D5) gained the consent overlay, refreshed legal typography, and biometric unlock patterns, improving quality, organisation, functionality, and security scores for the parity workstream.
 > - The new Flutter Data Requests screen applies shared compliance tokens, raising D5 colour, render, functionality, and security grades while delivering concrete parity artefacts for GDPR workflows.
 > - Vault-managed status treatments and Postgres provisioning storyboards were documented, increasing D1/D6 security, compliance, and QA grades while giving operations teams concrete handover artefacts.
+> - Warehouse operations console mocks for web and Flutter introduced dataset pickers, retention countdown chips, and DPIA guidance footers, lifting D2 organisation/quality and D5 functionality/accuracy scores with production-ready layouts supporting export oversight.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.

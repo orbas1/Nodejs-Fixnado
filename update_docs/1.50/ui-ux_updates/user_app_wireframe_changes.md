@@ -26,3 +26,8 @@
 - Profile overview card highlights verification status, saved payment methods, preferred contact mode, and loyalty tier.
 - Preferences screen reorganised into sections (Notifications, Payment, Safety, Accessibility) with toggles, dropdowns, and inline guidance.
 - Safety section features emergency contact setup, two-factor authentication control, and data sharing preferences.
+
+## Compliance & Data Governance
+- Data Requests screen wireframe features segmented tabs (Requests, Warehouse) with sticky summary header showing outstanding actions, export quotas, and retention alerts.
+- Warehouse tab list uses stacked cards with dataset icon, run status chip, retention countdown, and quick action buttons (Download, Copy Link, Trigger Export).
+- Manual trigger sheet wireframe includes justification field, dataset/region pickers, and compliance acknowledgement checkboxes before the primary CTA activates.

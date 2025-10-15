@@ -12,6 +12,7 @@ import {
   generateDataSubjectExport,
   updateDataSubjectRequestStatus
 } from '../services/dataGovernanceService.js';
+import { listWarehouseExportRuns, triggerWarehouseExport } from '../services/dataWarehouseExportService.js';
 
 export async function createComplianceDocument(req, res, next) {
   try {
@@ -110,6 +111,29 @@ export async function updateDataSubjectRequest(req, res, next) {
     const { status, note, actorId } = req.body;
     const request = await updateDataSubjectRequestStatus(requestId, status, actorId, note);
     res.json(request);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getWarehouseExportRuns(req, res, next) {
+  try {
+    const runs = await listWarehouseExportRuns({
+      dataset: req.query.dataset,
+      regionCode: req.query.regionCode,
+      limit: req.query.limit
+    });
+    res.json(runs);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createWarehouseExportRun(req, res, next) {
+  try {
+    const { dataset, regionCode, since, force = false, actorId = null } = req.body || {};
+    const run = await triggerWarehouseExport({ dataset, regionCode, since, force, actorId, source: 'api' });
+    res.status(201).json(run);
   } catch (error) {
     next(error);
   }

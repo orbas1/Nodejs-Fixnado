@@ -3,7 +3,7 @@
 | Task # | Task Name | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
 | 1 | Security & Secrets Hardening | 94 | 93 | 90 | 89 | 78 | 88 | 89 |
-| 2 | Compliance & Data Governance | 76 | 58 | 54 | 60 | 52 | 56 | 59 |
+| 2 | Compliance & Data Governance | 88 | 82 | 78 | 80 | 72 | 76 | 79 |
 | 3 | Payments, Escrow & Finance Orchestration | 10 | 5 | 5 | 5 | 5 | 5 | 6 |
 | 4 | Experience & Navigation Overhaul | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -21,6 +21,8 @@
 > - Scam detection heuristics with AI enrichment and Opsgenie escalations are wired into booking creation, further improving Task 1 security posture and production readiness while supplying actionable telemetry to analytics.
 > - Compliance data governance migration introduced the multi-region `Region` catalogue, GDPR request ledger, finance/message/storefront history tables, and automated retention job, propelling Task 2 security and integration readiness into production territory.
 > - Backend and React compliance portals now expose submission, filtering, export, and status management flows with RBAC enforcement; Flutter profile navigation embeds the Riverpod-driven Data Requests screen, increasing Task 2 completion, functionality, and usability scores.
+> - Warehouse CDC exports now run on a scheduled service with Secrets Manager credential rotation, TLS enforcement, and operator consoles across React and Flutter, significantly raising Task 2 integration, functionality, and production readiness.
+> - Compliance documentation and design artefacts for the warehouse operations console, DPIA guidance, and mobile parity are now published, lifting Task 2 completion, integration, and production readiness metrics to 79% overall as operator teams receive end-to-end support.
 > - RBAC policy matrix, navigation blueprint, and access-control refactor are complete, raising Task 1 completion, integration, and production scores while unlocking downstream compliance, payments, and IA deliverables.
 > - Policy middleware now protects every privileged route, writes structured audit trail entries, and publishes Vitest coverage for policy allow/deny flows, lifting Task 1 security, integration, and error-free readiness.
 > - Overall readiness for Task 1 sits at 89% with security controls, consent enforcement, risk telemetry, policy auditing, and vault-backed secrets exercised end-to-end across web and mobile channels.

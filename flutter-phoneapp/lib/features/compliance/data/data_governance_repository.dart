@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/bootstrap.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/data_subject_request.dart';
+import '../domain/warehouse_export_run.dart';
 
 class DataGovernanceRepository {
   DataGovernanceRepository(this._client);
@@ -48,6 +49,23 @@ class DataGovernanceRepository {
       return DataSubjectRequest.fromJson(Map<String, dynamic>.from(payload['request'] as Map));
     }
     return DataSubjectRequest.fromJson(payload);
+  }
+
+  Future<List<WarehouseExportRun>> fetchWarehouseExports({String? dataset}) async {
+    final results = await _client.getJsonList('/compliance/data-warehouse/runs', query: {
+      if (dataset != null && dataset.isNotEmpty) 'dataset': dataset,
+    });
+    return results
+        .map((item) => WarehouseExportRun.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Future<WarehouseExportRun> triggerWarehouseExport({required String dataset, String? regionCode}) async {
+    final payload = await _client.postJson('/compliance/data-warehouse/runs', body: {
+      'dataset': dataset,
+      if (regionCode != null && regionCode.isNotEmpty) 'regionCode': regionCode,
+    });
+    return WarehouseExportRun.fromJson(payload);
   }
 }
 

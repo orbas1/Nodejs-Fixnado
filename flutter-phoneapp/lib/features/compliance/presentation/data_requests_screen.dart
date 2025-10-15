@@ -19,6 +19,9 @@ class _DataRequestsScreenState extends ConsumerState<DataRequestsScreen> {
   String _regionCode = 'GB';
   String? _submittingId;
   String? _statusMessage;
+  String _warehouseDataset = 'orders';
+  String? _warehouseRegion;
+  bool _warehouseSubmitting = false;
 
   @override
   void dispose() {
@@ -38,7 +41,10 @@ class _DataRequestsScreenState extends ConsumerState<DataRequestsScreen> {
         title: Text('Data governance', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
       ),
       body: RefreshIndicator(
-        onRefresh: () => controller.load(status: state.statusFilter),
+        onRefresh: () async {
+          await controller.load(status: state.statusFilter);
+          await controller.loadWarehouse(dataset: state.warehouseDatasetFilter);
+        },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
           children: [
@@ -156,6 +162,31 @@ class _DataRequestsScreenState extends ConsumerState<DataRequestsScreen> {
                   ),
                 );
               }),
+            const SizedBox(height: 32),
+            _WarehouseExportsSection(
+              dataset: _warehouseDataset,
+              regionCode: _warehouseRegion,
+              submitting: _warehouseSubmitting,
+              state: state,
+              onDatasetChanged: (value) => setState(() => _warehouseDataset = value),
+              onRegionChanged: (value) => setState(() => _warehouseRegion = value.isEmpty ? null : value),
+              onTrigger: () async {
+                setState(() => _warehouseSubmitting = true);
+                try {
+                  await controller.triggerWarehouseExport(
+                    _warehouseDataset,
+                    regionCode: _warehouseRegion,
+                  );
+                  setState(() => _statusMessage = 'Warehouse export queued for $_warehouseDataset');
+                } catch (_) {
+                  setState(() => _statusMessage = 'Unable to trigger warehouse export.');
+                } finally {
+                  setState(() => _warehouseSubmitting = false);
+                }
+              },
+              onFilterChanged: (dataset) => controller.loadWarehouse(dataset: dataset.isEmpty ? null : dataset),
+              onRefresh: () => controller.loadWarehouse(dataset: state.warehouseDatasetFilter),
+            ),
           ],
         ),
       ),
@@ -288,6 +319,247 @@ class _RequestForm extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+}
+
+class _WarehouseExportsSection extends StatelessWidget {
+  const _WarehouseExportsSection({
+    required this.dataset,
+    required this.regionCode,
+    required this.submitting,
+    required this.state,
+    required this.onDatasetChanged,
+    required this.onRegionChanged,
+    required this.onTrigger,
+    required this.onFilterChanged,
+    required this.onRefresh,
+  });
+
+  final String dataset;
+  final String? regionCode;
+  final bool submitting;
+  final DataRequestsState state;
+  final ValueChanged<String> onDatasetChanged;
+  final ValueChanged<String> onRegionChanged;
+  final VoidCallback onTrigger;
+  final ValueChanged<String> onFilterChanged;
+  final VoidCallback onRefresh;
+
+  static const _datasetOptions = [
+    DropdownMenuItem(value: 'orders', child: Text('Orders & fulfilment')),
+    DropdownMenuItem(value: 'finance', child: Text('Finance history')),
+    DropdownMenuItem(value: 'communications', child: Text('Communications ledger')),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final filterValue = state.warehouseDatasetFilter ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: theme.colorScheme.primary.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 12)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Warehouse CDC exports', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Text(
+            'Trigger incremental exports to keep the analytics warehouse in sync and satisfy audit traceability.',
+            style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: [
+              SizedBox(
+                width: 240,
+                child: DropdownButtonFormField<String>(
+                  value: dataset,
+                  decoration: const InputDecoration(labelText: 'Dataset'),
+                  items: _datasetOptions,
+                  onChanged: (value) {
+                    if (value != null) onDatasetChanged(value);
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: DropdownButtonFormField<String>(
+                  value: regionCode ?? '',
+                  decoration: const InputDecoration(labelText: 'Region scope'),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('Global rollup')),
+                    DropdownMenuItem(value: 'GB', child: Text('United Kingdom (GB)')),
+                    DropdownMenuItem(value: 'IE', child: Text('Ireland (IE)')),
+                    DropdownMenuItem(value: 'AE', child: Text('United Arab Emirates (AE)')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      onRegionChanged(value);
+                    }
+                  },
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: submitting ? null : onTrigger,
+                icon: submitting
+                    ? SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary),
+                      )
+                    : const Icon(Icons.playlist_add_check_rounded, size: 18),
+                label: Text(submitting ? 'Triggering…' : 'Trigger export'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: filterValue,
+                  decoration: const InputDecoration(labelText: 'Filter dataset'),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('All datasets')),
+                    DropdownMenuItem(value: 'orders', child: Text('Orders & fulfilment')),
+                    DropdownMenuItem(value: 'finance', child: Text('Finance history')),
+                    DropdownMenuItem(value: 'communications', child: Text('Communications ledger')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) onFilterChanged(value);
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              OutlinedButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ),
+          if (state.warehouseError != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                state.warehouseError!,
+                style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onErrorContainer),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          if (state.warehouseLoading)
+            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: CircularProgressIndicator()))
+          else if (state.warehouseRuns.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'No export runs recorded yet. Trigger an export to capture CDC bundles for compliance evidence.',
+                style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            Column(
+              children: state.warehouseRuns
+                  .map((run) => _WarehouseRunTile(run: run))
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WarehouseRunTile extends StatelessWidget {
+  const _WarehouseRunTile({required this.run});
+
+  final WarehouseExportRun run;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(run.dataset, style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),
+              _StatusBadge(status: run.status),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _InfoChip(label: 'Region', value: run.regionCode ?? 'GLOBAL'),
+              _InfoChip(label: 'Rows', value: run.rowCount.toString()),
+              if (run.runStartedAt != null)
+                _InfoChip(label: 'Started', value: _formatDate(run.runStartedAt!)),
+              if (run.runFinishedAt != null)
+                _InfoChip(label: 'Completed', value: _formatDate(run.runFinishedAt!)),
+            ],
+          ),
+          if (run.filePath != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              run.filePath!,
+              style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ]
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text('$label: $value', style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
     );
   }
 }
@@ -430,6 +702,10 @@ class _StatusBadge extends StatelessWidget {
       'in_progress': theme.colorScheme.tertiary,
       'completed': theme.colorScheme.secondary,
       'rejected': theme.colorScheme.error,
+      'running': theme.colorScheme.primary,
+      'pending': theme.colorScheme.outline,
+      'succeeded': theme.colorScheme.secondary,
+      'failed': theme.colorScheme.error,
     };
     final color = palette[status] ?? theme.colorScheme.outline;
     return Container(
