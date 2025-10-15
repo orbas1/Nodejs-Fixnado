@@ -5,7 +5,7 @@
 | 1 | Security & Secrets Hardening | 94 | 93 | 90 | 89 | 78 | 88 | 89 |
 | 2 | Compliance & Data Governance | 88 | 82 | 78 | 80 | 72 | 76 | 79 |
 | 3 | Payments, Escrow & Finance Orchestration | 76 | 80 | 76 | 82 | 71 | 76 | 77 |
-| 4 | Experience & Navigation Overhaul | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
+| 4 | Experience & Navigation Overhaul | 34 | 32 | 30 | 34 | 28 | 32 | 32 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 6 | Mobile Parity & Stabilisation | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 7 | Observability, Testing & Quality Automation | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -32,6 +32,7 @@
 > - Finance reporting exports now generate daily timeline CSVs, regulatory alert queues, and payout backlog metrics consumed by React and Flutter dashboards, boosting Task 3 completion, integration, functionality, and error-free confidence through automated coverage and test-backed API contracts.
 > - Export ceilings inside the finance service and new Vitest coverage for invalid ranges plus alert-empty scenarios nudge Task 3 security, completion, and error-free percentages higher while keeping CSV generation production-safe.
 > - React jsdom suites for finance widgets and responsive Flutter currency cards cut render overhead on large datasets, lifting Task 3 integration, functionality, and production readiness benchmarks.
+> - Navigation overhaul introduced a production-ready mega menu, footer IA refresh, and Flutter workspaces parity screen, lifting Task 4 security, completion, integration, functionality, and production readiness metrics.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
 
@@ -43,10 +44,10 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 64 | 70 | 62 | 66 | 74 | 60 | 78 | 76 | 68 | 56 | 66 | 70 | 52 | 56 | 62 | 65 |
-| D2 | Navigation & IA Harmonisation | 46 | 52 | 48 | 44 | 40 | 42 | 58 | 60 | 48 | 38 | 52 | 56 | 38 | 36 | 46 | 47 |
+| D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
 | D3 | Page Templates & Partial Library | 46 | 44 | 42 | 42 | 40 | 38 | 46 | 44 | 44 | 38 | 44 | 40 | 34 | 36 | 42 | 42 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 62 | 64 | 60 | 60 | 56 | 60 | 70 | 72 | 64 | 58 | 62 | 62 | 50 | 50 | 62 | 61 |
+| D5 | Mobile Parity & Component Adaptation | 72 | 72 | 70 | 70 | 64 | 70 | 80 | 82 | 72 | 68 | 72 | 72 | 60 | 60 | 72 | 71 |
 | D6 | Design QA, Documentation & Handover | 15 | 18 | 16 | 18 | 16 | 16 | 20 | 20 | 18 | 16 | 20 | 32 | 16 | 16 | 18 | 18 |
 
 **Interpretation:**

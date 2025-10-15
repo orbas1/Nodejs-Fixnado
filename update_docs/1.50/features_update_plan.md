@@ -41,6 +41,11 @@
 - React finance widgets now include jsdom regression tests, memoised data tables, and bounded list sizes; Flutter dashboards adopt responsive currency cards to prevent chip overflow on smaller devices.
 - Vitest integration suite verifies happy-path settlement, webhook retry scheduling, and invoice snapshots; additional negative-path tests (invalid secrets, duplicate payloads, payout exhaustion) remain in-flight alongside export/report automation.
 
+### Progress Snapshot – Experience & Navigation Overhaul (2025-04-06)
+- React global header rebuilt with a production mega menu, notifications trays, and consent-aware footer IA that route to dashboards, resources, and compliance content without placeholder copy.
+- Navigation configuration centralised in `navigationConfig.js`, enabling shared use across marketing and dashboard shells while unlocking translation coverage for new solutions/resources taxonomy.
+- Flutter shell updated with a dedicated Workspaces screen and navigation order matching the RBAC blueprint, ensuring role switching, finance shortcuts, and communications access mirror the web overhaul.
+
 ## 4. Frontend (Web) Delivery Plan
 1. **Foundation setup**
    - Introduce feature-based folder structure; align state management modules and service hooks with backend contracts.

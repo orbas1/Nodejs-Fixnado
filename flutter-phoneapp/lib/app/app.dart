@@ -23,8 +23,8 @@ import '../features/finance/presentation/finance_dashboard_screen.dart';
 import '../shared/localization/language_controller.dart';
 import '../shared/localization/language_options.dart';
 import '../shared/localization/language_switcher.dart';
-import '../features/blog/presentation/blog_screen.dart';
 import '../features/legal/presentation/consent_overlay.dart';
+import '../features/home/presentation/workspaces_screen.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -167,6 +167,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     UserRole.admin,
   };
 
+  static const Set<UserRole> _operationsAllowedRoles = {
+    UserRole.provider,
+    UserRole.enterprise,
+    UserRole.operations,
+    UserRole.admin,
+  };
+
   List<_NavigationDestination> _visibleDestinationsForRole(UserRole role) {
     final items = <_NavigationDestination>[
       _NavigationDestination.explorer,
@@ -174,15 +181,17 @@ class _AppShellState extends ConsumerState<AppShell> {
       _NavigationDestination.bookings,
       _NavigationDestination.rentals,
       _NavigationDestination.materials,
-      _NavigationDestination.inbox,
-      _NavigationDestination.profile,
-      _NavigationDestination.operations,
+      _NavigationDestination.workspaces,
     ];
-    if (!_communicationsAllowedRoles.contains(role)) {
-      items.remove(_NavigationDestination.inbox);
-    }
     if (_financeAllowedRoles.contains(role)) {
-      items.insert(items.length - 1, _NavigationDestination.finance);
+      items.add(_NavigationDestination.finance);
+    }
+    if (_communicationsAllowedRoles.contains(role)) {
+      items.add(_NavigationDestination.inbox);
+    }
+    items.add(_NavigationDestination.profile);
+    if (_operationsAllowedRoles.contains(role)) {
+      items.add(_NavigationDestination.operations);
     }
     return items;
   }
@@ -199,6 +208,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         return const RentalScreen();
       case _NavigationDestination.materials:
         return const MaterialsScreen();
+      case _NavigationDestination.workspaces:
+        return const WorkspacesScreen();
       case _NavigationDestination.inbox:
         return const CommunicationsScreen();
       case _NavigationDestination.profile:
@@ -235,7 +246,7 @@ enum _NavigationDestination {
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
   materials('Materials', Icons.precision_manufacturing_outlined),
-  blog('Blog', Icons.menu_book_outlined),
+  workspaces('Workspaces', Icons.dashboard_customize_outlined),
   inbox('Inbox', Icons.inbox_outlined),
   profile('Profile', Icons.person_outline),
   finance('Finance', Icons.payments_outlined),

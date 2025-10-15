@@ -5,6 +5,7 @@
 - Recommendation feed reorganised into horizontal carousels by category (Cranes, Operators, Logistics, Support Services) with context tags showing availability windows.
 - Added "Marketplace Pulse" banner featuring demand hotspots map with tap-through to full analytics view.
 - Bottom navigation simplified to four core tabs (Home, Bookings, Messages, Profile) with floating "New Booking" button accessible on all screens.
+- Workspaces hub screen introduced to align with web mega menu, presenting role cards with compliance copy and quick switch CTAs; accessible from navigation and profile handoff.
 
 ## Booking Flow
 - Multi-step booking wizard split into five screens: Service Selection, Schedule, Site Details, Add-ons, Review & Confirm; progress indicator shows estimated completion time.

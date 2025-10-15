@@ -1,545 +1,395 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Fragment, useMemo, useState } from 'react';
+import { Link, NavLink } from 'react-router-dom';
 import {
   Bars3Icon,
   BellIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
+import { Popover, Transition, Dialog } from '@headlessui/react';
+import PropTypes from 'prop-types';
+import clsx from 'clsx';
 import { LOGO_URL } from '../constants/branding';
 import { useLocale } from '../hooks/useLocale.js';
 import { useSession } from '../hooks/useSession.js';
 import LanguageSelector from './LanguageSelector.jsx';
-
-const explorerLinks = (t) => [
-  {
-    key: 'search-services',
-    name: t('nav.explorerSearchServices'),
-    description: t('nav.explorerSearchServicesDescription'),
-    href: '/search'
-  },
-  {
-    key: 'providers',
-    name: t('nav.explorerProviders'),
-    description: t('nav.explorerProvidersDescription'),
-    href: '/providers'
-  },
-  {
-    key: 'servicemen',
-    name: t('nav.explorerServicemen'),
-    description: t('nav.explorerServicemenDescription'),
-    href: '/services#field-teams'
-  },
-  {
-    key: 'materials',
-    name: t('nav.explorerMaterials'),
-    description: t('nav.explorerMaterialsDescription'),
-    href: '/materials'
-  }
-];
-
-const marketplaceLinks = (t) => [
-  {
-    key: 'tools',
-    name: t('nav.marketplaceTools'),
-    description: t('nav.marketplaceToolsDescription'),
-    href: '/tools'
-  },
-  {
-    key: 'materials',
-    name: t('nav.marketplaceMaterials'),
-    description: t('nav.marketplaceMaterialsDescription'),
-    href: '/materials'
-  }
-];
+import { buildMobileNavigation, buildPrimaryNavigation } from '../constants/navigationConfig.js';
 
 const notificationPreview = [
   {
-    id: 'n1',
-    title: 'Marketplace scheduling',
-    body: 'Tower crane inspection confirmed for Thursday 08:00.',
-    time: '2h'
+    id: 'ops-1',
+    title: 'Escrow verification cleared',
+    body: 'Dispute #4830 resolved. Funds released to provider.',
+    timeAgo: '12m'
   },
   {
-    id: 'n2',
-    title: 'Compliance reminder',
-    body: 'Upload updated insurance paperwork before 31 May.',
-    time: '1d'
+    id: 'ops-2',
+    title: 'Geo zone insights',
+    body: 'Southbank crane requests increased 18% week-on-week.',
+    timeAgo: '2h'
   }
 ];
 
 const inboxPreview = [
   {
-    id: 'c1',
-    sender: 'Dispatch desk',
-    snippet: 'We have a crew available to cover your shift tomorrow.',
-    href: '/communications?thread=dispatch'
+    id: 'inbox-1',
+    sender: 'Operations HQ',
+    snippet: 'Dispatch confirmed for Tuesday 07:30 with backup crew on-call.',
+    href: '/communications?thread=operations'
   },
   {
-    id: 'c2',
-    sender: 'Operations HQ',
-    snippet: 'Thanks for confirming the preventative maintenance window.',
-    href: '/communications?thread=operations'
+    id: 'inbox-2',
+    sender: 'Finance automation',
+    snippet: 'Reminder: approve payout batch FNA-372 before Friday.',
+    href: '/communications?thread=finance'
   }
 ];
 
-const capitalise = (value, fallback = 'Guest') => {
-  if (!value || typeof value !== 'string') {
-    return fallback;
-  }
-  return value.charAt(0).toUpperCase() + value.slice(1);
+const MobileLink = ({ title, description, href, onNavigate }) => (
+  <Link
+    to={href}
+    onClick={onNavigate}
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition hover:border-accent/40 hover:shadow-lg"
+  >
+    <p className="text-sm font-semibold text-slate-900">{title}</p>
+    {description ? <p className="mt-1 text-xs text-slate-500">{description}</p> : null}
+  </Link>
+);
+
+MobileLink.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  href: PropTypes.string.isRequired,
+  onNavigate: PropTypes.func.isRequired
 };
 
-const resolveAvatarInitial = (userId, role) => {
-  if (userId && typeof userId === 'string') {
-    const trimmed = userId.trim();
-    if (trimmed.length > 0) {
-      return trimmed.charAt(0).toUpperCase();
-    }
-  }
-  if (role && typeof role === 'string') {
-    return role.charAt(0).toUpperCase();
-  }
-  return 'F';
+MobileLink.defaultProps = {
+  description: null
+};
+
+function MegaMenuSection({ section }) {
+  return (
+    <div className="grid gap-4">
+      <div>
+        <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{section.label}</p>
+        <p className="mt-1 text-sm text-slate-500">{section.description}</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {section.items.map((item) => (
+          <NavLink
+            key={item.id}
+            to={item.href}
+            className={({ isActive }) =>
+              clsx(
+                'group flex h-full flex-col justify-between rounded-2xl border p-4 transition',
+                isActive
+                  ? 'border-accent/60 bg-accent/10 text-accent'
+                  : 'border-slate-200 bg-white hover:border-accent/30 hover:shadow-glow'
+              )
+            }
+          >
+            <div>
+              <p className="text-sm font-semibold text-slate-900 group-hover:text-accent">{item.title}</p>
+              <p className="mt-2 text-xs text-slate-500 group-hover:text-slate-600">{item.description}</p>
+            </div>
+            <span className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent/70 group-hover:text-accent">
+              Explore
+            </span>
+          </NavLink>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+MegaMenuSection.propTypes = {
+  section: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    items: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        description: PropTypes.string,
+        href: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired
+};
+
+function NotificationTray({ title, emptyLabel, items }) {
+  return (
+    <div className="w-[22rem] rounded-3xl border border-slate-200 bg-white p-5 shadow-xl ring-1 ring-black/5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <Link to="/communications" className="text-xs font-semibold text-accent hover:text-accent/80">
+          View all
+        </Link>
+      </div>
+      <div className="mt-4 space-y-3">
+        {items.length === 0 ? (
+          <p className="text-xs text-slate-500">{emptyLabel}</p>
+        ) : (
+          items.map((item) => (
+            <Link key={item.id} to={item.href ?? '#'} className="group block rounded-2xl border border-slate-200 p-3 hover:border-accent/30">
+              <p className="text-xs font-semibold text-slate-900 group-hover:text-accent">{item.title ?? item.sender}</p>
+              <p className="mt-1 text-xs text-slate-500">{item.body ?? item.snippet}</p>
+              {item.timeAgo ? (
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">{item.timeAgo}</p>
+              ) : null}
+            </Link>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+NotificationTray.propTypes = {
+  title: PropTypes.string.isRequired,
+  emptyLabel: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string,
+      sender: PropTypes.string,
+      body: PropTypes.string,
+      snippet: PropTypes.string,
+      href: PropTypes.string,
+      timeAgo: PropTypes.string
+    })
+  ).isRequired
 };
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
-  const [desktopMenu, setDesktopMenu] = useState(null);
-  const [mobileMenu, setMobileMenu] = useState(null);
-  const [tray, setTray] = useState(null);
-  const menuRefs = useRef({});
-  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useLocale();
-  const { isAuthenticated, role, userId, dashboards } = useSession();
-  const defaultDashboard = dashboards?.[0] ?? null;
-  const dashboardLink = defaultDashboard ? `/dashboards/${defaultDashboard}` : '/dashboards';
+  const { isAuthenticated, dashboards } = useSession();
 
-  const navigation = useMemo(() => {
-    if (!isAuthenticated) {
-      return [];
-    }
+  const primaryNavigation = useMemo(
+    () => buildPrimaryNavigation({ t, dashboards }),
+    [dashboards, t]
+  );
 
-    return [
-      { key: 'feed', name: t('nav.feed'), href: '/feed' },
-      { key: 'explorer', name: t('nav.explorer'), children: explorerLinks(t) },
-      { key: 'marketplace', name: t('nav.marketplace'), children: marketplaceLinks(t) }
-    ];
-  }, [isAuthenticated, t]);
+  const mobileNavigation = useMemo(
+    () => buildMobileNavigation({ t, dashboards, isAuthenticated }),
+    [dashboards, isAuthenticated, t]
+  );
 
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      const containers = Object.values(menuRefs.current);
-      if (containers.length === 0) {
-        return;
-      }
-      const clickedInside = containers.some((node) => node && node.contains(event.target));
-      if (!clickedInside) {
-        setDesktopMenu(null);
-        setTray(null);
-      }
-    };
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        setDesktopMenu(null);
-        setMobileMenu(null);
-        setTray(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, []);
-
-  useEffect(() => {
-    setOpen(false);
-    setDesktopMenu(null);
-    setMobileMenu(null);
-    setTray(null);
-  }, [location.pathname]);
-
-  const setMenuRef = (id) => (node) => {
-    if (!menuRefs.current) {
-      menuRefs.current = {};
-    }
-    if (node) {
-      menuRefs.current[id] = node;
-    } else {
-      delete menuRefs.current[id];
-    }
-  };
-
-  const matchPath = (target) => {
-    if (!target) return false;
-    const [path] = target.split('#');
-    if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
-
-  const isNavItemActive = (item) => {
-    if (item.children) {
-      return item.children.some((child) => matchPath(child.href));
-    }
-    return matchPath(item.href);
-  };
-
-  const handleMenuBlur = (id, event) => {
-    const container = menuRefs.current?.[id];
-    if (!container) {
-      setDesktopMenu(null);
-      return;
-    }
-    if (event?.relatedTarget && container.contains(event.relatedTarget)) {
-      return;
-    }
-    setDesktopMenu((current) => (current === id ? null : current));
-  };
+  const activeDashboard = dashboards?.[0] ?? 'user';
+  const accountLink = isAuthenticated ? `/dashboards/${activeDashboard}` : '/login';
+  const accountLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
 
   return (
-    <header className="bg-gradient-to-r from-sky-50/90 via-white/90 to-blue-50/90 backdrop-blur border-b border-sky-100 sticky top-0 z-40 shadow-glow">
-      <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <img
-            src={LOGO_URL}
-            alt="Fixnado"
-            className="h-[3.75rem] w-auto object-contain md:h-16"
-            loading="lazy"
-          />
-        </Link>
-        {isAuthenticated ? (
-          <>
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600" aria-label="Primary">
-              {navigation.map((item) => (
-                item.children ? (
-                  <div
-                    key={item.key}
-                    className="relative"
-                    ref={setMenuRef(item.key)}
-                    onMouseEnter={() => setDesktopMenu(item.key)}
-                    onFocus={() => setDesktopMenu(item.key)}
-                    onMouseLeave={() => setDesktopMenu(null)}
-                    onBlur={(event) => handleMenuBlur(item.key, event)}
-                  >
-                    <button
-                      type="button"
-                      className={`flex items-center gap-1 rounded-full px-4 py-2 transition-colors ${
-                        isNavItemActive(item)
-                          ? 'text-primary'
-                          : 'text-slate-500 hover:text-sky-600'
-                      }`}
-                      aria-expanded={desktopMenu === item.key}
-                      aria-haspopup="true"
-                      onClick={() =>
-                        setDesktopMenu((current) => (current === item.key ? null : item.key))
-                      }
-                    >
-                      {item.name}
-                      <ChevronDownIcon className="h-4 w-4 text-sky-500" aria-hidden="true" />
-                    </button>
-                    {desktopMenu === item.key ? (
-                      <div
-                        role="menu"
-                        aria-label={`${item.name} menu`}
-                        className="absolute left-1/2 z-50 mt-3 w-80 -translate-x-1/2 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-blue-50/95 to-sky-50/95 p-4 shadow-xl backdrop-blur"
-                      >
-                        <ul className="space-y-2">
-                          {item.children.map((child) => (
-                            <li key={child.key}>
-                              <NavLink
-                                to={child.href}
-                                className="block rounded-2xl p-3 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                                onClick={() => setDesktopMenu(null)}
-                              >
-                                <p className="text-sm font-semibold text-primary">{child.name}</p>
-                                {child.description ? (
-                                  <p className="mt-1 text-xs text-slate-500">{child.description}</p>
-                                ) : null}
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <NavLink
-                    key={item.key}
-                    to={item.href}
-                    className={({ isActive }) =>
-                      `transition-colors ${
-                        isActive || isNavItemActive(item)
-                          ? 'text-primary'
-                          : 'text-slate-500 hover:text-sky-600'
-                      }`
-                    }
-                  >
-                    {item.name}
-                  </NavLink>
-                )
-              ))}
-            </nav>
-            <div className="hidden md:flex items-center gap-3">
-              <LanguageSelector variant="header" />
-              <div className="relative" ref={setMenuRef('tray:notifications')}>
-                <button
-                  type="button"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-sky-100 bg-white text-slate-500 transition-colors hover:text-primary"
-                  onClick={() => setTray((current) => (current === 'notifications' ? null : 'notifications'))}
-                  aria-haspopup="true"
-                  aria-expanded={tray === 'notifications'}
-                  aria-label={t('nav.notifications')}
-                >
-                  <BellIcon className="h-5 w-5" aria-hidden="true" />
-                  <span className="absolute top-2 right-2 inline-flex h-2 w-2 rounded-full bg-sky-500" aria-hidden="true" />
-                </button>
-                {tray === 'notifications' ? (
-                  <div className="absolute right-0 z-50 mt-3 w-80 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-blue-50/95 to-sky-50/95 p-4 shadow-xl backdrop-blur">
-                    <h3 className="text-sm font-semibold text-primary">{t('nav.notifications')}</h3>
-                    <ul className="mt-3 space-y-3">
-                      {notificationPreview.length === 0 ? (
-                        <li className="rounded-2xl border border-sky-100 bg-sky-50/80 p-3 text-xs text-slate-500">
-                          {t('nav.notificationsEmpty')}
-                        </li>
-                      ) : (
-                        notificationPreview.map((item) => (
-                          <li key={item.id} className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm">
-                            <p className="text-sm font-semibold text-primary">{item.title}</p>
-                            <p className="mt-1 text-xs text-slate-500">{item.body}</p>
-                            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">{item.time} {t('nav.notificationsAgo')}</p>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-              <div className="relative" ref={setMenuRef('tray:inbox')}>
-                <button
-                  type="button"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-sky-100 bg-white text-slate-500 transition-colors hover:text-primary"
-                  onClick={() => setTray((current) => (current === 'inbox' ? null : 'inbox'))}
-                  aria-haspopup="true"
-                  aria-expanded={tray === 'inbox'}
-                  aria-label={t('nav.inbox')}
-                >
-                  <ChatBubbleLeftRightIcon className="h-5 w-5" aria-hidden="true" />
-                  <span className="absolute top-2 right-2 inline-flex h-2 w-2 rounded-full bg-sky-500" aria-hidden="true" />
-                </button>
-                {tray === 'inbox' ? (
-                  <div className="absolute right-0 z-50 mt-3 w-80 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-blue-50/95 to-sky-50/95 p-4 shadow-xl backdrop-blur">
-                    <h3 className="text-sm font-semibold text-primary">{t('nav.inbox')}</h3>
-                    <ul className="mt-3 space-y-3">
-                      {inboxPreview.length === 0 ? (
-                        <li className="rounded-2xl border border-sky-100 bg-sky-50/80 p-3 text-xs text-slate-500">
-                          {t('nav.inboxEmpty')}
-                        </li>
-                      ) : (
-                        inboxPreview.map((item) => (
-                          <li key={item.id} className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm">
-                            <p className="text-sm font-semibold text-primary">{item.sender}</p>
-                            <p className="mt-1 text-xs text-slate-500">{item.snippet}</p>
-                            <Link
-                              to={item.href}
-                              className="mt-2 inline-flex items-center text-xs font-semibold text-accent hover:text-primary"
-                              onClick={() => setTray(null)}
-                            >
-                              {t('nav.messagesOpenThread')}
-                            </Link>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                    <Link
-                      to="/communications"
-                      className="mt-4 inline-flex w-full justify-center rounded-full bg-sky-100 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-sky-200"
-                      onClick={() => setTray(null)}
-                    >
-                      {t('nav.messagesViewMore')}
-                    </Link>
-                  </div>
-                ) : null}
-              </div>
-              <div className="relative" ref={setMenuRef('tray:avatar')}>
-                <button
-                  type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-primary"
-                  onClick={() => setTray((current) => (current === 'avatar' ? null : 'avatar'))}
-                  aria-haspopup="true"
-                  aria-expanded={tray === 'avatar'}
-                  aria-label={t('nav.accountMenu')}
-                >
-                  <span className="text-sm font-semibold">
-                    {resolveAvatarInitial(userId, role)}
-                  </span>
-                </button>
-                {tray === 'avatar' ? (
-                  <div className="absolute right-0 z-50 mt-3 w-72 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-blue-50/95 to-sky-50/95 p-4 shadow-xl backdrop-blur">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-100 text-primary">
-                        <UserCircleIcon className="h-7 w-7" aria-hidden="true" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-primary">{capitalise(userId, 'Fixnado member')}</p>
-                        <p className="text-xs text-slate-500">{t('nav.statusLabel', { status: capitalise(role, 'guest') })}</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Link
-                        to={dashboardLink}
-                        className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-sky-50"
-                        onClick={() => setTray(null)}
-                      >
-                        {t('nav.viewDashboard')}
-                        <span aria-hidden="true">→</span>
-                      </Link>
-                      <Link
-                        to="/settings/security"
-                        className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-sky-50"
-                        onClick={() => setTray(null)}
-                      >
-                        Security settings
-                        <span aria-hidden="true">→</span>
-                      </Link>
-                      <p className="rounded-2xl border border-dashed border-sky-100 bg-sky-50/80 px-4 py-3 text-xs text-slate-500">
-                        {t('nav.manageAccountHint')}
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="hidden md:flex items-center gap-3">
-            <LanguageSelector variant="header" />
-            <Link
-              to="/login"
-              className="px-4 py-2 rounded-full border border-sky-300 text-sky-700 font-semibold hover:bg-sky-100"
-            >
-              {t('nav.login')}
-            </Link>
-            <Link
-              to="/register"
-              className="px-4 py-2 rounded-full bg-primary text-white font-semibold shadow-lg shadow-primary/30 hover:bg-primary/90"
-            >
-              {t('nav.getStarted')}
-            </Link>
-          </div>
-        )}
-        {isAuthenticated ? (
-          <div className="md:hidden flex items-center gap-3">
-            <LanguageSelector variant="header" className="px-2 py-1" />
-            <button
-              className="inline-flex items-center justify-center rounded-full border border-sky-100 p-2 bg-white/90"
-              onClick={() => setOpen((prev) => !prev)}
-              aria-label={t('nav.toggleMenu')}
-            >
-              <Bars3Icon className="h-6 w-6 text-primary" />
-            </button>
-          </div>
-        ) : (
-          <div className="md:hidden flex items-center gap-3">
-            <LanguageSelector variant="header" className="px-2 py-1" />
-            <Link
-              to="/login"
-              className="rounded-full border border-sky-300 px-4 py-2 text-sm font-semibold text-sky-700"
-            >
-              {t('nav.login')}
-            </Link>
-            <Link
-              to="/register"
-              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
-            >
-              {t('nav.getStarted')}
-            </Link>
-          </div>
-        )}
-      </div>
-      {isAuthenticated && open ? (
-        <div className="md:hidden px-6 pb-6 space-y-4">
-          {navigation.map((item) => (
-            item.children ? (
-              <div key={item.key}>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-2xl bg-sky-50/80 px-4 py-3 text-left text-base font-semibold text-primary"
-                  onClick={() =>
-                    setMobileMenu((current) => (current === item.key ? null : item.key))
-                  }
-                  aria-expanded={mobileMenu === item.key}
-                >
-                  {item.name}
-                  <span aria-hidden="true" className="text-xs text-slate-500">
-                    {mobileMenu === item.key ? '▴' : '▾'}
-                  </span>
-                </button>
-                {mobileMenu === item.key ? (
-                  <ul className="mt-2 space-y-2 rounded-2xl border border-sky-100 bg-white/95 p-3">
-                    {item.children.map((child) => (
-                      <li key={child.key}>
-                        <NavLink
-                          to={child.href}
-                          className="block rounded-xl px-3 py-2 text-sm text-slate-600 transition-colors hover:text-primary"
-                          onClick={() => {
-                            setOpen(false);
-                            setMobileMenu(null);
-                          }}
-                        >
-                          <p className="font-semibold text-primary">{child.name}</p>
-                          {child.description ? (
-                            <p className="text-xs text-slate-500">{child.description}</p>
-                          ) : null}
-                        </NavLink>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : (
-              <NavLink
-                key={item.key}
-                to={item.href}
-                className={({ isActive }) =>
-                  `block text-base ${
-                    isActive || isNavItemActive(item)
-                      ? 'text-primary font-semibold'
-                      : 'text-slate-600 hover:text-sky-600'
-                  }`
-                }
-                onClick={() => setOpen(false)}
-              >
-                {item.name}
-              </NavLink>
-            )
-          ))}
-          <div className="flex flex-col gap-3 pt-2">
-            <LanguageSelector variant="mobile" />
-            <Link
-              to="/communications"
-              className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-3 text-sm text-primary"
-              onClick={() => setOpen(false)}
-            >
-              {t('nav.inbox')}
-              <span aria-hidden="true">→</span>
-            </Link>
-            <Link
-              to={dashboardLink}
-              className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-4 py-3 text-sm text-primary"
-              onClick={() => setOpen(false)}
-            >
-              {t('nav.viewDashboard')}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 lg:px-6">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            className="inline-flex rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent lg:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label={t('nav.toggleMenu')}
+          >
+            <Bars3Icon className="h-5 w-5" />
+          </button>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
+            <span className="hidden text-sm font-semibold tracking-[0.3em] text-slate-500 sm:inline-block">
+              MARKETPLACE OPERATING SYSTEM
+            </span>
+          </Link>
         </div>
-      ) : null}
+
+        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+          {primaryNavigation.map((section) => (
+            <Popover className="relative" key={section.id}>
+              {({ open }) => (
+                <>
+                  <Popover.Button
+                    className={clsx(
+                      'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition',
+                      open
+                        ? 'bg-accent/10 text-accent shadow-glow'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    )}
+                  >
+                    <span>{section.label}</span>
+                    <ChevronDownIcon className={clsx('h-4 w-4 transition-transform', open ? 'rotate-180' : 'rotate-0')} />
+                  </Popover.Button>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-150"
+                    enterFrom="opacity-0 translate-y-1"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-1"
+                  >
+                    <Popover.Panel className="absolute left-1/2 mt-6 w-screen max-w-3xl -translate-x-1/2 px-4">
+                      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
+                        <MegaMenuSection section={section} />
+                      </div>
+                    </Popover.Panel>
+                  </Transition>
+                </>
+              )}
+            </Popover>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <Popover className="hidden lg:block">
+            <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
+              <span className="sr-only">{t('nav.notifications')}</span>
+              <BellIcon className="h-5 w-5" />
+            </Popover.Button>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-150"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute right-0 mt-4">
+                <NotificationTray
+                  title={t('nav.notifications')}
+                  emptyLabel={t('nav.notificationsEmpty')}
+                  items={notificationPreview}
+                />
+              </Popover.Panel>
+            </Transition>
+          </Popover>
+
+          <Popover className="hidden lg:block">
+            <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
+              <span className="sr-only">{t('nav.inbox')}</span>
+              <ChatBubbleLeftRightIcon className="h-5 w-5" />
+            </Popover.Button>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-150"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute right-0 mt-4">
+                <NotificationTray
+                  title={t('nav.inbox')}
+                  emptyLabel={t('nav.inboxEmpty')}
+                  items={inboxPreview}
+                />
+              </Popover.Panel>
+            </Transition>
+          </Popover>
+
+          <LanguageSelector />
+
+          <NavLink
+            to={accountLink}
+            className={({ isActive }) =>
+              clsx(
+                'hidden items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition lg:flex',
+                isActive
+                  ? 'border-accent bg-accent text-white shadow-glow'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+              )
+            }
+          >
+            <UserCircleIcon className="h-5 w-5" />
+            <span>{accountLabel}</span>
+          </NavLink>
+        </div>
+      </div>
+
+      <Transition.Root show={mobileOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50 lg:hidden" onClose={setMobileOpen}>
+          <Transition.Child
+            as={Fragment}
+            enter="duration-150 ease-out"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="duration-150 ease-in"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-950/40" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-50 flex">
+            <Transition.Child
+              as={Fragment}
+              enter="transition ease-out duration-150"
+              enterFrom="-translate-x-full"
+              enterTo="translate-x-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="translate-x-0"
+              leaveTo="-translate-x-full"
+            >
+              <Dialog.Panel className="relative flex w-80 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <Link to="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
+                    <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Fixnado</span>
+                  </Link>
+                  <button
+                    type="button"
+                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close menu"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {primaryNavigation.map((section) => (
+                    <div key={section.id} className="space-y-3">
+                      <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{section.label}</p>
+                      <div className="grid gap-3">
+                        {section.items.map((item) => (
+                          <MobileLink
+                            key={item.id}
+                            title={item.title}
+                            description={item.description}
+                            href={item.href}
+                            onNavigate={() => setMobileOpen(false)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-auto space-y-3 border-t border-slate-200 pt-4">
+                  <MobileLink
+                    title={accountLabel}
+                    description={isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta')}
+                    href={accountLink}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                  {mobileNavigation
+                    .filter((item) => item.href !== accountLink)
+                    .map((item) => (
+                      <MobileLink
+                        key={item.id}
+                        title={item.title}
+                        description={item.description}
+                        href={item.href}
+                        onNavigate={() => setMobileOpen(false)}
+                      />
+                    ))}
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
     </header>
   );
 }

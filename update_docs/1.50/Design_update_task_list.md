@@ -3,7 +3,7 @@
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 68% |
-| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 56% |
+| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
 | D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 28% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
 | D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 72% |
@@ -43,7 +43,7 @@
 8. Run moderated usability tests on desktop/tablet/mobile prototypes and capture insights.
 9. Update IA documentation and publish to the knowledge base for cross-team consumption.
 
-**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways. Warehouse operations console user journeys now map dataset pickers, retention countdown chips, and DPIA help footers across both React and Flutter shells, closing IA gaps for manual trigger workflows and monitoring dashboards.
+**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways. Warehouse operations console user journeys now map dataset pickers, retention countdown chips, and DPIA help footers across both React and Flutter shells, closing IA gaps for manual trigger workflows and monitoring dashboards. Latest deliverables include a production-ready mega menu specification, responsive footer IA diagram, and Flutter workspaces card layouts, unlocking engineering implementation for the navigation overhaul.
 
 ## Task D3 – Page Templates & Partial Library (28%)
 **Objective:** Build modular page templates and partial sections enabling rapid assembly of marketing and product surfaces.
