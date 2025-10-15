@@ -6,7 +6,8 @@ const featureCopy = {
   user: 'Custom jobs, service and marketplace control built for clients.',
   serviceman: 'Run crews, bids and Fixnado Ads optimisations in one lane.',
   provider: 'Operate your SME marketplace business end-to-end.',
-  enterprise: 'Enterprise-level observability, AI automation and insights.'
+  enterprise: 'Enterprise-level observability, AI automation and insights.',
+  finance: 'Coordinate settlements, escrows and dispute risk from one control tower.'
 };
 
 const DashboardHub = () => {

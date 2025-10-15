@@ -52,5 +52,16 @@
 - Introduced `/api/compliance/data-warehouse/runs` endpoints, RBAC policies, and React/Flutter operator consoles that allow dataset/region filtering, manual triggers, and audit visibility for warehouse jobs.
 - Enabled automated database credential rotation via AWS Secrets Manager with TLS enforcement, post-rotation pool refresh, and Secrets Manager metadata updates, increasing compliance task readiness and security posture.
 
+## 2025-04-01 – Finance Orchestration Foundations
+- Delivered Payments Task 3 foundations by introducing `payments`, `payout_requests`, `finance_invoices`, and `finance_webhook_events` schemas with Sequelize models, migrations, and RBAC-protected `/api/finance` controllers for checkout, overview, and timeline access.
+- Implemented queue-backed webhook processing with configurable retry budgets, payout scheduling, finance history logging, and new route policies while wiring a background job to stream Stripe and escrow lifecycle events into the orchestration service.
+- Shipped a React finance control centre featuring revenue cards, payout readiness, invoice health, disputes, and timeline drill-downs powered by a typed finance API client and shared number formatter utilities.
+- Added a Flutter finance dashboard surface, Riverpod providers, and repository integration so provider, enterprise, operations, and admin roles can review finance metrics, payout queues, and dispute telemetry from the mobile shell.
+
+## 2025-04-02 – Finance Evidence & Tracker Alignment
+- Raised Task 3 readiness metrics and milestone checkpoints after staging replay fixtures, webhook monitors, and finance dashboard walkthroughs demonstrated stable checkout→payout orchestration across backend, React, and Flutter clients.
+- Documented finance platform progress inside the Update Plan, Features Update Plan, and milestone/task trackers so downstream squads have accurate references for export/report automation, negative-path testing, and regulatory alert work.
+- Captured outstanding deliverables—finance exports, SLA alert fan-out, failure-mode regression suites—in tracker notes to guide the remaining Payments Tiger Team scope.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

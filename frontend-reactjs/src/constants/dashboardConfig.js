@@ -49,6 +49,20 @@ export const DASHBOARD_ROLES = [
     ]
   },
   {
+    id: 'finance',
+    name: 'Finance Control Center',
+    persona: 'Finance & Revenue Operations',
+    headline: 'Track captured revenue, escrow status, payout readiness, and disputes in one control tower.',
+    registered: true,
+    navigation: [
+      { id: 'overview', label: 'Revenue Overview', icon: 'finance' },
+      { id: 'escrows', label: 'Escrow Pipeline', icon: 'pipeline' },
+      { id: 'payouts', label: 'Payout Approvals', icon: 'assets' },
+      { id: 'disputes', label: 'Dispute Resolution', icon: 'compliance' },
+      { id: 'reports', label: 'Exports & Reports', icon: 'automation' }
+    ]
+  },
+  {
     id: 'serviceman',
     name: 'Crew Performance Cockpit',
     persona: 'Technician & Crew Operations',

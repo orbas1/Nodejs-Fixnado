@@ -4,7 +4,7 @@
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
 | 1 | Security & Secrets Hardening | 94 | 93 | 90 | 89 | 78 | 88 | 89 |
 | 2 | Compliance & Data Governance | 88 | 82 | 78 | 80 | 72 | 76 | 79 |
-| 3 | Payments, Escrow & Finance Orchestration | 10 | 5 | 5 | 5 | 5 | 5 | 6 |
+| 3 | Payments, Escrow & Finance Orchestration | 70 | 68 | 65 | 69 | 56 | 64 | 65 |
 | 4 | Experience & Navigation Overhaul | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 6 | Mobile Parity & Stabilisation | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -27,6 +27,8 @@
 > - Policy middleware now protects every privileged route, writes structured audit trail entries, and publishes Vitest coverage for policy allow/deny flows, lifting Task 1 security, integration, and error-free readiness.
 > - Overall readiness for Task 1 sits at 89% with security controls, consent enforcement, risk telemetry, policy auditing, and vault-backed secrets exercised end-to-end across web and mobile channels.
 > - Secrets management automation now sources credentials from AWS Secrets Manager with boot-time validation, raising security, error-free, and production readiness scores while the Postgres bootstrap script standardises least-privilege provisioning for new regions.
+> - Payments orchestration now runs through dedicated `/api/finance` controllers, migrations, and a finance webhook worker; the React and Flutter dashboards consume the new endpoints, lifting Task 3 completion, integration, and production readiness into the mid-50s.
+> - Finance orchestration evidence now includes seeded webhook replay fixtures, payout scheduling monitors, and staged finance dashboards across React and Flutter, pushing Task 3 security, integration, and production readiness into the mid-60s while highlighting remaining export/report automation work.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
 
@@ -39,9 +41,9 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 64 | 70 | 62 | 66 | 74 | 60 | 78 | 76 | 68 | 56 | 66 | 70 | 52 | 56 | 62 | 65 |
 | D2 | Navigation & IA Harmonisation | 46 | 52 | 48 | 44 | 40 | 42 | 58 | 60 | 48 | 38 | 52 | 56 | 38 | 36 | 46 | 47 |
-| D3 | Page Templates & Partial Library | 28 | 27 | 30 | 30 | 28 | 27 | 34 | 30 | 28 | 24 | 34 | 42 | 26 | 26 | 29 | 31 |
+| D3 | Page Templates & Partial Library | 46 | 44 | 42 | 42 | 40 | 38 | 46 | 44 | 44 | 38 | 44 | 40 | 34 | 36 | 42 | 42 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 44 | 46 | 42 | 44 | 42 | 40 | 48 | 50 | 44 | 40 | 48 | 52 | 42 | 40 | 46 | 44 |
+| D5 | Mobile Parity & Component Adaptation | 62 | 64 | 60 | 60 | 56 | 60 | 70 | 72 | 64 | 58 | 62 | 62 | 50 | 50 | 62 | 61 |
 | D6 | Design QA, Documentation & Handover | 15 | 18 | 16 | 18 | 16 | 16 | 20 | 20 | 18 | 16 | 20 | 32 | 16 | 16 | 18 | 18 |
 
 **Interpretation:**
@@ -52,3 +54,5 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 - Security and compliance grades will improve as privacy prompts, consent UX, and secure messaging components are incorporated into final artefacts.
 - Token system metrics increased after landing the consent banner styles, ledger receipts, and responsive overlays used across web and mobile security entry points.
 - Mobile adaptation scores rose thanks to the Flutter consent overlay, policy cards, refreshed typography applied to legal modals, and parity checklists validated with engineering.
+- Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, and manual intervention states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the new backend telemetry.
+- Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, and regulatory alerts raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.

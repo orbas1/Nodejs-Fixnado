@@ -56,6 +56,12 @@ Primary objectives:
 | **Settings & Profiles** | Security badges, consent preferences, integration toggles, avatar management, audit logs. | Draws on `Settings Dashboard.md` and `Profile Look.md`. |
 | **Support & Compliance Pages** | GDPR portal, warehouse operations console, accessibility statement, security and privacy copy blocks. | Connects to compliance and legal deliverables, supplying dataset triggers, retention countdown widgets, and DPIA guidance overlays. |
 
+### Finance Orchestration Experience (2025-04-02)
+- Authored production-ready finance dashboard blueprints showing revenue, escrow balance, dispute volume, payout readiness, and regulatory alert tiles for enterprise, provider, and operations personas.
+- Defined cross-platform timeline visualisations with status chips, SLA breach badges, and retry annotations so React and Flutter clients stay visually aligned with the orchestration service telemetry.
+- Added invoice health widgets, pending payout drawers, and compliance copy patterns referencing FCA wallet guidance, enabling the product teams to surface actionable finance insights while meeting regulatory tone requirements.
+- Documented empty, loading, and error states for finance data sources, including webhook replay notifications and manual reconciliation prompts, to ensure resilient UX under degraded conditions.
+
 ## Theme Strategy
 1. **Default Theme:** Neutral blue/teal palette for enterprise operations with muted gradients, standard imagery.
 2. **Industrial Theme:** Deep greys, safety yellows, rugged textures for heavy machinery campaigns.

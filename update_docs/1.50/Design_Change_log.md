@@ -106,6 +106,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Documented manual trigger workflows, error/empty states, and contextual documentation footers using the shared card templates so operations teams receive consistent guidance across platforms.
    - Added iconography and illustration treatments for secure export directories, vault rotation success, and DPIA evidence capture, extending the imagery catalogue and updating accessibility annotations for new badges.
 
+20. **Finance Orchestration Dashboards & Mobile Parity (2025-04-02)**
+   - Produced high-fidelity finance dashboard specs featuring revenue cadence, escrow health, dispute funnels, payout readiness, and regulatory alert modules derived from the new orchestration telemetry.
+   - Authored shared timeline patterns with SLA breach, retry, and manual intervention cues ensuring React and Flutter finance experiences communicate webhook/job state consistently.
+   - Expanded invoice and payout card templates with FCA wallet guidance copy, empty/error placeholders, and compliance footers so future exports/reporting screens align with regulatory expectations.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

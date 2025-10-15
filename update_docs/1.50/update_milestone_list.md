@@ -41,9 +41,9 @@
    - Document retention policies and audit them in QA.
    - Verify rollback plans for compliance jobs.
 3. **Payment Orchestration Service**
-   - Implement checkout→escrow→dispute→payout workflows with queue-backed webhooks.
-   - Create serviceman selection logic aligned with ranking/matching services.
-   - Build finance dashboards (web) and finance settings (mobile) with realtime status.
+   - ✅ Implement checkout→escrow→dispute→payout workflows with queue-backed webhooks.
+   - ✅ Create serviceman selection logic aligned with ranking/matching services.
+   - ✅ Build finance dashboards (web) and finance settings (mobile) with realtime status.
    - Generate finance reports and FCA wallet guidance notices.
 4. **Financial Data Quality & Reconciliation**
    - Automate payment reconciliation and ledger balancing jobs.

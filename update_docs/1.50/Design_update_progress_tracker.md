@@ -4,9 +4,9 @@
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 66 | 72 | 64 | 68 | 78 | 64 | 82 | 84 | 70 | 60 | 68 | 72 | 54 | 58 | 66 | 69 |
 | D2 | Navigation & IA Harmonisation | 56 | 62 | 56 | 54 | 48 | 50 | 70 | 68 | 60 | 46 | 62 | 62 | 44 | 42 | 54 | 56 |
-| D3 | Page Templates & Partial Library | 28 | 27 | 30 | 30 | 28 | 27 | 34 | 30 | 28 | 24 | 34 | 42 | 26 | 26 | 29 | 31 |
+| D3 | Page Templates & Partial Library | 46 | 44 | 42 | 42 | 40 | 38 | 46 | 44 | 44 | 38 | 44 | 40 | 34 | 36 | 42 | 42 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 58 | 60 | 56 | 56 | 52 | 54 | 64 | 66 | 60 | 54 | 58 | 58 | 48 | 46 | 58 | 57 |
+| D5 | Mobile Parity & Component Adaptation | 62 | 64 | 60 | 60 | 56 | 60 | 70 | 72 | 64 | 58 | 62 | 62 | 50 | 50 | 62 | 61 |
 | D6 | Design QA, Documentation & Handover | 22 | 26 | 24 | 26 | 22 | 24 | 30 | 30 | 26 | 24 | 28 | 38 | 24 | 26 | 26 | 26 |
 
 > **Scoring Notes:**
@@ -25,6 +25,8 @@
 > - The new Flutter Data Requests screen applies shared compliance tokens, raising D5 colour, render, functionality, and security grades while delivering concrete parity artefacts for GDPR workflows.
 > - Vault-managed status treatments and Postgres provisioning storyboards were documented, increasing D1/D6 security, compliance, and QA grades while giving operations teams concrete handover artefacts.
 > - Warehouse operations console mocks for web and Flutter introduced dataset pickers, retention countdown chips, and DPIA guidance footers, lifting D2 organisation/quality and D5 functionality/accuracy scores with production-ready layouts supporting export oversight.
+> - Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, and manual intervention states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the new backend telemetry.
+> - Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, and regulatory alerts raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.
