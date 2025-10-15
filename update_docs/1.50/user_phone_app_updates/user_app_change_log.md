@@ -24,3 +24,8 @@
 - Updated the compliance repository/controller to request the new metrics endpoint, exposing backlog counts, due-soon figures, and percentile completion timings to Riverpod consumers.
 - Enhanced the Data Requests screen with KPI banners, due-at labels, overdue indicators, and pull-to-refresh wiring so operators can triage SLA risk from mobile.
 - Added Flutter unit tests (`test/features/compliance/data_subject_request_test.dart`, `test/features/compliance/data_requests_controller_test.dart`) covering JSON parsing, overdue detection, repository error handling, and metrics propagation.
+
+## 2025-04-09 – Finance Escalations & Alert Parity
+- Extended the finance domain models, repository, and Riverpod controller to ingest webhook retry metadata, alert acknowledgement state, and Slack/Opsgenie delivery receipts exposed by the new backend fan-out service.
+- Updated `FinanceDashboardScreen` with escalation trays, responder chips, retry countdown timers, and manual refresh/acknowledge actions while tuning layouts for compact devices.
+- Authored Dart unit coverage (`test/features/finance/finance_models_test.dart`) validating alert parsing, escalation severity mapping, and retry countdown formatting against representative payloads.

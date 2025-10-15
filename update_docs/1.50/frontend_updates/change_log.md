@@ -19,3 +19,8 @@
 - Enhanced `CompliancePortal.jsx` with metrics cards visualising backlog, overdue counts, completion rates, and percentile timings plus a due-date column on the request table.
 - Extended the filter panel with subject email search, date range pickers, and region/request-type selectors that drive both request listings and the new metrics API calls.
 - Added Vitest coverage (`src/pages/__tests__/CompliancePortal.test.jsx`) asserting metrics rendering, refresh behaviour, and filter-driven API interactions to keep the dashboard regression-safe.
+
+## 2025-04-09 – Finance Alert Escalations & Retry Telemetry
+- Updated `FinanceOverview.jsx` to surface escalation ribbons, Slack/Opsgenie delivery state, retry counters, and acknowledgement controls so finance operators can triage SLA breaches directly from the dashboard.
+- Extended the finance client with alert acknowledgement, escalation filters, and retry metadata normalisation to keep the React UI aligned with the fan-out job payloads.
+- Added Vitest coverage (`src/pages/__tests__/FinanceOverview.test.jsx`) validating severity theming, retry indicators, and manual refresh flows against mocked `/api/finance/alerts` responses.

@@ -37,3 +37,6 @@
 - Audit timeline uses stacked badges with subtle glow to highlight active runs; completed runs display download pills with gradient outlines and embedded iconography for quick recognition.
 - GDPR metrics header introduces four KPI tiles (total requests, overdue, average completion, completion rate) leveraging gradient backgrounds (Primary/Warning/Success/Info) with 24px corner radius and 20px type scale; refresh button adopts ghost style with primary hover accent.
 - Data request table now reserves 180px column for `Due at` with badge colours: emerald for on track, amber for due soon, rose for overdue; tooltips include SLA copy and timezone conversions.
+- Finance alert ribbons adopt severity palettes (Critical `#D32F2F`, High `#F57C00`, Medium `#FBC02D`, Informational `#0288D1`) with 18px pill badges indicating Slack/Opsgenie delivery state and retry counters rendered in JetBrains Mono for clarity.
+- Escalation drawers use stacked section headers with 16px divider spacing, responder avatar chips, and a neutral slate background so long-form remediation steps remain legible alongside telemetry pills.
+- Retry countdown timers animate via subtle progress bars (4px height) that inherit severity colour and reset smoothly when acknowledgements pause repeats, preventing jarring flashes during extended monitoring sessions.

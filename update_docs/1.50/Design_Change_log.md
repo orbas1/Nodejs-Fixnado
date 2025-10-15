@@ -136,6 +136,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Added due-at indicator treatments (badge colours, SLA breach icons, helper microcopy) for table rows and Flutter list items referencing the new `dueAt` field, ensuring consistent escalation cues.
    - Updated compliance portal wireframes (`dashboard_drawings.md`, `admin_panel_drawings.md`, `App_screens_drawings.md`) with the metrics header, refresh affordances, and advanced filter states so engineering teams have production-ready references.
 
+26. **Finance Escalation Ribbons & Responder Workflows (2025-04-09)**
+   - Defined alert ribbon patterns with severity-specific palettes, responder avatar chips, retry countdown timers, and acknowledgement controls mapped to the new finance alert fan-out payloads.
+   - Documented Slack/Opsgenie delivery affordances, audit note drawers, and manual refresh behaviour inside both web and Flutter dashboards to ensure parity across operations tooling.
+   - Captured design QA tasks, runbook references, and accessibility notes (colour contrast, motion limits, icon labelling) linked to the escalation workflows so engineering and ops can ship the new finance monitoring experience with confidence.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

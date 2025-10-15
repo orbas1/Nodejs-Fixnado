@@ -4,7 +4,7 @@
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
 | 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
 | 2 | Compliance & Data Governance | 94 | 100 | 94 | 95 | 88 | 92 | 94 |
-| 3 | Payments, Escrow & Finance Orchestration | 76 | 80 | 76 | 82 | 71 | 76 | 77 |
+| 3 | Payments, Escrow & Finance Orchestration | 92 | 100 | 92 | 94 | 88 | 92 | 93 |
 | 4 | Experience & Navigation Overhaul | 34 | 32 | 30 | 34 | 28 | 32 | 32 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 6 | Mobile Parity & Stabilisation | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -32,6 +32,9 @@
 > - Payments orchestration now runs through dedicated `/api/finance` controllers, migrations, and a finance webhook worker; the React and Flutter dashboards consume the new endpoints, lifting Task 3 completion, integration, and production readiness into the mid-50s.
 > - Finance orchestration evidence now includes seeded webhook replay fixtures, payout scheduling monitors, and staged finance dashboards across React and Flutter, pushing Task 3 security, integration, and production readiness into the mid-60s while highlighting remaining export/report automation work.
 > - Finance reporting exports now generate daily timeline CSVs, regulatory alert queues, and payout backlog metrics consumed by React and Flutter dashboards, boosting Task 3 completion, integration, functionality, and error-free confidence through automated coverage and test-backed API contracts.
+> - Finance webhook ingestion now deduplicates provider payloads, stamps last-attempt metadata, and hard-fails exhausted retries, lifting Task 3 security, error-free, and production readiness scores while keeping escrow events consistent across settlements.
+> - A finance alert fan-out worker now evaluates SLA breaches, persists escalation state in `finance_alert_notifications`, and fans alerts into Slack/Opsgenie with regression coverage, raising Task 3 completion, integration, and functionality levels for backend, web, and Flutter operators consuming the enriched `/api/finance/alerts` payload.
+> - Finance dashboards now expose escalation trays, acknowledgement controls, and retry countdowns across React and Flutter clients with mirrored styling guidance; documentation, changelogs, and task trackers were updated to evidence the workflow, closing Task 3 at production readiness.
 > - Export ceilings inside the finance service and new Vitest coverage for invalid ranges plus alert-empty scenarios nudge Task 3 security, completion, and error-free percentages higher while keeping CSV generation production-safe.
 > - React jsdom suites for finance widgets and responsive Flutter currency cards cut render overhead on large datasets, lifting Task 3 integration, functionality, and production readiness benchmarks.
 > - Navigation overhaul introduced a production-ready mega menu, footer IA refresh, and Flutter workspaces parity screen, lifting Task 4 security, completion, integration, functionality, and production readiness metrics.
@@ -48,10 +51,10 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 64 | 70 | 62 | 66 | 74 | 60 | 78 | 76 | 68 | 56 | 66 | 70 | 52 | 56 | 62 | 65 |
 | D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 46 | 44 | 42 | 42 | 40 | 38 | 46 | 44 | 44 | 38 | 44 | 40 | 34 | 36 | 42 | 42 |
+| D3 | Page Templates & Partial Library | 58 | 56 | 54 | 54 | 52 | 50 | 60 | 56 | 56 | 52 | 56 | 50 | 44 | 46 | 54 | 53 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 72 | 72 | 70 | 70 | 64 | 70 | 80 | 82 | 72 | 68 | 72 | 72 | 60 | 60 | 72 | 71 |
-| D6 | Design QA, Documentation & Handover | 15 | 18 | 16 | 18 | 16 | 16 | 20 | 20 | 18 | 16 | 20 | 32 | 16 | 16 | 18 | 18 |
+| D5 | Mobile Parity & Component Adaptation | 74 | 74 | 72 | 72 | 66 | 72 | 82 | 84 | 74 | 70 | 74 | 74 | 62 | 62 | 74 | 73 |
+| D6 | Design QA, Documentation & Handover | 34 | 36 | 34 | 36 | 32 | 34 | 40 | 40 | 36 | 34 | 38 | 48 | 34 | 38 | 36 | 37 |
 
 **Interpretation:**
 - Progress remains early-stage; token work shows the highest traction due to consolidated palette, typography, and state documentation.
@@ -61,5 +64,6 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 - Security and compliance grades will improve as privacy prompts, consent UX, and secure messaging components are incorporated into final artefacts.
 - Token system metrics increased after landing the consent banner styles, ledger receipts, and responsive overlays used across web and mobile security entry points.
 - Mobile adaptation scores rose thanks to the Flutter consent overlay, policy cards, refreshed typography applied to legal modals, and parity checklists validated with engineering.
-- Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, and manual intervention states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the new backend telemetry.
-- Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, and regulatory alerts raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.
+- Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, manual intervention, and escalation ribbon states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the alert fan-out telemetry.
+- Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, regulatory alerts, and responder acknowledgement flows raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.
+- Finance escalation QA checklists and handover notes expanded D6 readiness by detailing alert palettes, responder workflows, and release artefacts needed to operationalise the new monitoring surfaces.

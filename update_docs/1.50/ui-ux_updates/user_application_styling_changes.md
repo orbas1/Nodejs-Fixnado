@@ -38,3 +38,6 @@
 - DPIA guidance drawer integrates legal typography styles (Manrope 500 headings, Inter 400 body) and uses muted slate backgrounds so compliance copy remains legible during extended review sessions.
 - Added KPI banner row above the data requests list featuring four gradient cards (backlog, overdue, completion rate, percentile timing) with 16px corner radius and support for one-line and two-line metrics copy.
 - Due-at badges inside request rows use tonal fills: emerald for within SLA, amber for due soon (inside configurable window), and rose for overdue; badges include iconography and accessible text describing remaining days.
+- Finance alert trays introduce stacked cards with severity colour bars (Critical `#D84315`, High `#FB8C00`, Medium `#FDD835`, Low `#039BE5`) and overlay icons representing Slack or Opsgenie delivery confirmation.
+- Retry countdown chips use mono-spaced numerals with soft-glow borders, scaling from 14px on phones to 16px on tablets while maintaining 12px vertical rhythm to avoid layout jump during updates.
+- Responder avatars adopt 32px circular frames with status rings that change hue when an acknowledgement is recorded, aligning mobile visuals with the React dashboard styling guidance.

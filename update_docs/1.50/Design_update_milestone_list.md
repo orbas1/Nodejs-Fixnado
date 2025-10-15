@@ -38,6 +38,7 @@
 5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
 6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
 7. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
+8. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.

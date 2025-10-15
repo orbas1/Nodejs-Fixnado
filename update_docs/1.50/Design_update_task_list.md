@@ -4,10 +4,10 @@
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 70% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
-| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 38% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 45% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 72% |
-| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 10% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 75% |
+| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 16% |
 
 ---
 
@@ -63,7 +63,7 @@
 12. Review templates with marketing, product, and compliance stakeholders for alignment.
 13. ✅ Validate provider dashboard and business front templates against restored backend payloads; document evidence in design QA backlog.
 
-**Progress Notes:** Finance dashboard and escrow timeline templates now include production data slots, SLA breach indicators, and manual intervention cues aligned with the orchestration telemetry, raising template readiness alongside the completed dashboard overview refresh. Provider/business front evidence has been cross-checked against restored payloads and recorded in the QA backlog. Newly authored compliance metrics layout pack covers KPI tiles, due-date tables, advanced filters, and refresh micro-interactions for web and Flutter parity, pushing Task D3 completion toward the 40% mark while marketing partials and creation studio wizard visuals continue in design.
+**Progress Notes:** Finance dashboard and escrow timeline templates now include production data slots, SLA breach indicators, manual intervention cues, and the new escalation ribbon specs aligned with the alert fan-out contract. Provider/business front evidence has been cross-checked against restored payloads and recorded in the QA backlog. Compliance metrics and finance escalation layout packs cover KPI tiles, due-date tables, advanced filters, alert drawers, and refresh micro-interactions for web and Flutter parity, pushing Task D3 completion toward the mid-40% range while marketing partials and creation studio wizard visuals continue in design.
 
 ## Task D4 – Theme & Visual Narrative Development (0%)
 **Objective:** Deliver theme variants (default, industrial, premium, emo) with imagery and motion guidance.
@@ -94,7 +94,7 @@
 10. Coordinate with engineering on component feasibility and edge cases.
 11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
 
-**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, and regulatory alert cards, while Riverpod interaction notes guide orchestration telemetry states (webhook retry, manual payout review). Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
+**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, regulatory alert cards, and the escalation trays/acknowledgement flows documented for Slack/Opsgenie parity. Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
 
 ## Task D6 – Design QA, Documentation & Handover (10%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.
@@ -110,4 +110,4 @@
 8. Coordinate with QA to integrate design checkpoints into overall test plan.
 9. Conduct final stakeholder walkthrough and capture sign-off artefacts.
 
-**Progress Notes:** Compiled initial QA checklist entries for the warehouse operations console, including annotation guidelines, export badge iconography references, and DPIA documentation link placements so engineering handover kits capture the new compliance workflows. Added operational readiness handover notes describing `/readyz` states, alert palette references, and deployment dashboard mock-ups to the QA bundle so release management receives design-backed guidance for the new backend telemetry.
+**Progress Notes:** Compiled QA checklist entries for the warehouse operations console and the new finance escalation flows, including annotation guidelines, alert badge colour references, responder acknowledgement paths, and DPIA documentation link placements so engineering handover kits capture the compliance and finance workflows. Added operational readiness and finance alert handover notes describing `/readyz` states, alert palette references, Slack/Opsgenie copy decks, and deployment dashboard mock-ups so release management receives design-backed guidance for the new telemetry.
