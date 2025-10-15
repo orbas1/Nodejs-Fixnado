@@ -24,3 +24,8 @@
 - Booking creation now enriches analytics metadata with `risk.score`, `risk.reasonCodes`, and `risk.escalated` fields based on heuristic scoring and optional AI analysis.
 - High-risk bookings trigger Opsgenie escalations when the integration is configured; downstream consumers should expect audit events and risk annotations even if the external escalation is unavailable.
 - API consumers should tolerate booking creation succeeding with warnings logged server-side when AI enrichment times out—the booking payload still contains risk metadata for follow-up actions.
+
+## RBAC Policy Metadata
+- New RBAC matrix definitions expose `describeRole` metadata for each persona via internal tooling; integration partners pulling policy snapshots should rely on the exported navigation/data visibility hints instead of duplicating role logic.
+- Route guards continue to use permission strings defined in `src/constants/permissions.js`; clients building dashboards should subscribe to permission-driven feature toggles rather than inferring capabilities from legacy role names.
+- Downstream systems storing role grants (analytics, support tooling) must refresh cached permission inventories to capture new finance, compliance, integration, and support scopes prior to orchestrating task automation.

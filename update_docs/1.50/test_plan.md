@@ -24,3 +24,8 @@
 - **Automated:** `tests/scamDetectionService.test.js` verifies heuristic scoring thresholds, Opsgenie escalation toggles, AI enrichment fallbacks, and risk metadata serialization during booking creation.
 - **Manual:** Execute booking creation scenarios (low/medium/high risk) via API client to confirm risk annotations appear in analytics and Opsgenie notifications trigger when configured.
 - **Monitoring Hooks:** Track scam detection latency, AI enrichment timeouts, and escalation volumes to ensure heuristics remain performant and actionable in production.
+
+## RBAC Matrix & Policy Orchestration
+- **Automated:** `tests/accessControlService.test.js` validates hierarchical permission inheritance, canonical role resolution (including header/persona aliases), and the exposed `describeRole` metadata used by dashboards and audit tooling.
+- **Manual:** Verify administrator tooling surfaces the new role descriptors, landing routes, and badge placements; run smoke checks against secured routes to confirm updated permissions do not regress existing access patterns.
+- **Monitoring Hooks:** Extend security event analytics to capture granted vs. missing permission ratios per role so policy drift is detectable after deployment.

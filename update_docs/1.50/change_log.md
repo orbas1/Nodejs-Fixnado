@@ -26,5 +26,11 @@
 - Implemented scam detection heuristics with AI enrichment hooks, Opsgenie escalations, and booking metadata annotations; `bookingService` now persists risk telemetry without blocking fulfilment.
 - Authored Vitest coverage for consent and scam detection services plus documented lint/test runs across backend, frontend, and Flutter deliverables to evidence the rollout.
 
+## 2025-03-21 – RBAC Matrix Finalisation & Policy Telemetry
+- Finalised the RBAC policy matrix for guest, customer, serviceman, provider, enterprise, operations, and admin cohorts with inheritance-aware permissions covering finance, compliance, integrations, and storefront scopes.
+- Refactored `accessControlService` to compose permissions from the matrix definition, expose role descriptors for audit/reporting, and extend policy coverage to new finance/compliance permissions.
+- Added dedicated Vitest coverage to validate hierarchical permission grants, canonical role resolution, and exported metadata, supplying evidence for Security & Secrets Hardening subtask 1 and downstream IA work.
+- Updated change trackers, design artefacts, and milestone progress indicators to reflect the completed RBAC deliverable and unblock dependent compliance, payments, and navigation initiatives.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

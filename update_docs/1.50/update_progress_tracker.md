@@ -2,7 +2,7 @@
 
 | Task # | Task Name | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
-| 1 | Security & Secrets Hardening | 84 | 78 | 76 | 80 | 60 | 72 | 75 |
+| 1 | Security & Secrets Hardening | 88 | 86 | 82 | 84 | 62 | 78 | 80 |
 | 2 | Compliance & Data Governance | 15 | 5 | 5 | 5 | 5 | 5 | 7 |
 | 3 | Payments, Escrow & Finance Orchestration | 10 | 5 | 5 | 5 | 5 | 5 | 6 |
 | 4 | Experience & Navigation Overhaul | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -19,7 +19,8 @@
 > - Session handling now issues signed JWT access tokens with httpOnly cookie delivery for web clients and secure storage + biometric gates for Flutter, keeping Task 1 security, completion, integration, and production readiness metrics elevated.
 > - Consent management now captures granular ledger entries, surfaces banner/overlay flows, and exposes REST endpoints plus tests, pushing Task 1 completion to 78% with measurable gains in integration, functionality, and error-free scores.
 > - Scam detection heuristics with AI enrichment and Opsgenie escalations are wired into booking creation, further improving Task 1 security posture and production readiness while supplying actionable telemetry to analytics.
-> - Overall readiness for Task 1 sits at 75% with security controls, consent enforcement, and risk telemetry now exercised end-to-end across web and mobile channels.
+> - RBAC policy matrix, navigation blueprint, and access-control refactor are complete, raising Task 1 completion, integration, and production scores while unlocking downstream compliance, payments, and IA deliverables.
+> - Overall readiness for Task 1 sits at 80% with security controls, consent enforcement, and risk telemetry now exercised end-to-end across web and mobile channels.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
 
@@ -31,7 +32,7 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 64 | 70 | 62 | 66 | 74 | 60 | 78 | 76 | 68 | 56 | 66 | 70 | 52 | 56 | 62 | 65 |
-| D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
+| D2 | Navigation & IA Harmonisation | 38 | 42 | 40 | 36 | 34 | 34 | 46 | 44 | 38 | 32 | 44 | 50 | 32 | 30 | 38 | 38 |
 | D3 | Page Templates & Partial Library | 28 | 27 | 30 | 30 | 28 | 27 | 34 | 30 | 28 | 24 | 34 | 42 | 26 | 26 | 29 | 31 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
 | D5 | Mobile Parity & Component Adaptation | 44 | 46 | 42 | 44 | 42 | 40 | 48 | 50 | 44 | 40 | 48 | 52 | 42 | 40 | 46 | 44 |
@@ -40,6 +41,7 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 **Interpretation:**
 - Progress remains early-stage; token work shows the highest traction due to consolidated palette, typography, and state documentation.
 - Navigation and template efforts will raise organisational and usability scores once usability testing and partial builds commence.
+- RBAC navigation blueprint captured landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes, lifting D2 organisation, security, and usability scores while grounding IA deliverables in the hardened permissions model.
 - Security and compliance grades will improve as privacy prompts, consent UX, and secure messaging components are incorporated into final artefacts.
 - Token system metrics increased after landing the consent banner styles, ledger receipts, and responsive overlays used across web and mobile security entry points.
 - Mobile adaptation scores rose thanks to the Flutter consent overlay, policy cards, refreshed typography applied to legal modals, and parity checklists validated with engineering.

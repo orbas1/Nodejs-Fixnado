@@ -2,7 +2,7 @@
 
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
-| 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 78% |
+| 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 86% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 0% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 0% |
 | 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 0% |
@@ -17,7 +17,7 @@
 **Objective:** Close security gaps by enforcing RBAC, rotating secrets, and introducing scam detection across platforms.
 
 **Subtasks (4–15):**
-1. Finalise RBAC matrix for users, servicemen, providers, enterprise, admins (issue list 1, 11).
+1. ✅ Finalise RBAC matrix for users, servicemen, providers, enterprise, admins (issue list 1, 11).
 2. Implement policy middleware, per-route permission guards, and audit logging pipeline.
 3. Migrate `.env` secrets into secrets manager, replace MySQL bootstrap with Postgres secure scripts.
 4. ✅ Configure API gateway protections (rate limiting, payload size, CORS allowlist, `/healthz`).
@@ -26,7 +26,7 @@
 7. ✅ Implement consent banner, privacy/terms pages, and consent log storage.
 8. ✅ Build scam detection heuristics, AI hooks, and notifications.
 
-**Progress Notes:** Consent ledger services, REST endpoints, and migrations feed both the React banner and Flutter overlay. Scam detection heuristics trigger Opsgenie escalations and route booking risk insights into analytics, closing the remaining Task 1 security surface gaps ahead of compliance sign-off.
+**Progress Notes:** Consent ledger services, REST endpoints, and migrations feed both the React banner and Flutter overlay. Scam detection heuristics trigger Opsgenie escalations and route booking risk insights into analytics, closing the remaining Task 1 security surface gaps ahead of compliance sign-off. RBAC blueprint and backend matrix have been finalised, unlocking downstream policy middleware and navigation workstreams.
 
 **Integration Testing Coverage:**
 - **Backend:** Regression of auth middleware, threat detection logging, secrets rotation.

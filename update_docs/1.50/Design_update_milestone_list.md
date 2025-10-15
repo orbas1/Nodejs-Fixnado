@@ -21,6 +21,7 @@
 3. Compliance messaging placements (consent, privacy alerts, security banners) across page types.
 4. Emo theme adaptation guidelines for navigation and header/footer treatments.
 5. Usability test plan and findings summary for navigation prototypes (desktop, tablet, mobile).
+6. RBAC navigation blueprint translating the hardened backend matrix into role-specific landing routes, menu groupings, and badge placements for web and Flutter shells.
 
 ## Milestone D3 – Page Templates & Partial Layout Library (Target Week 3–6)
 **Goals:** Rebuild priority pages and partial sections for marketing, dashboards, creation studio, and finance experiences.
