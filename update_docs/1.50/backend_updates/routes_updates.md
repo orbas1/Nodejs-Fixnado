@@ -20,6 +20,11 @@
 - All routes enforce the hardened RBAC policies via `routePolicies.compliance.manageRequests`, log audit events, and return sanitised metadata suitable for portal consumption.
 - Requests support optional status filtering, justification/region metadata, and respond with updated audit logs and export payload references when actions complete.
 
+### `/api/compliance/data-requests/metrics`
+- Added `GET /metrics` providing aggregated backlog, SLA, percentile completion, `dueSoonWindowDays`, and `oldestPending` telemetry with the same query-string filters as the listing route.
+- Endpoint leverages the upgraded `dataGovernanceService` analytics pipeline and returns HTTP 200 with structured metrics or HTTP 400 when invalid filters (unsupported status/region combinations) are supplied.
+- Supertest coverage validates default responses, filter combinations, and ensures null `oldestPending` payloads when filters yield only completed requests.
+
 ## `/api/compliance/data-warehouse/runs`
 - Added a policy-guarded listing endpoint (`GET /runs`) that returns paginated warehouse export runs filtered by dataset, region, status, and triggered-by metadata for audit reconcilation.
 - Introduced a manual trigger endpoint (`POST /runs`) allowing operations users to launch CDC exports on-demand with validation around active runs, dataset availability, and lookback configuration overrides.

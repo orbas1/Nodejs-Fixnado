@@ -3,7 +3,7 @@
 | Task # | Task Name | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
 | 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
-| 2 | Compliance & Data Governance | 88 | 82 | 78 | 80 | 72 | 76 | 79 |
+| 2 | Compliance & Data Governance | 94 | 100 | 94 | 95 | 88 | 92 | 94 |
 | 3 | Payments, Escrow & Finance Orchestration | 76 | 80 | 76 | 82 | 71 | 76 | 77 |
 | 4 | Experience & Navigation Overhaul | 34 | 32 | 30 | 34 | 28 | 32 | 32 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -23,6 +23,7 @@
 > - Backend and React compliance portals now expose submission, filtering, export, and status management flows with RBAC enforcement; Flutter profile navigation embeds the Riverpod-driven Data Requests screen, increasing Task 2 completion, functionality, and usability scores.
 > - Warehouse CDC exports now run on a scheduled service with Secrets Manager credential rotation, TLS enforcement, and operator consoles across React and Flutter, significantly raising Task 2 integration, functionality, and production readiness.
 > - Compliance documentation and design artefacts for the warehouse operations console, DPIA guidance, and mobile parity are now published, lifting Task 2 completion, integration, and production readiness metrics to 79% overall as operator teams receive end-to-end support.
+> - GDPR request metrics with backlog, SLA, and due-date telemetry are exposed through the new compliance metrics API, lifting Task 2 completion, integration, functionality, and production readiness as operations can evidence SLAs and prioritise escalations across web and mobile.
 > - RBAC policy matrix, navigation blueprint, and access-control refactor are complete, raising Task 1 completion, integration, and production scores while unlocking downstream compliance, payments, and IA deliverables.
 > - Policy middleware now protects every privileged route, writes structured audit trail entries, and publishes Vitest coverage for policy allow/deny flows, lifting Task 1 security, integration, and error-free readiness.
 > - Overall readiness for Task 1 sits at 94% with security controls, consent enforcement, risk telemetry, policy auditing, and vault-backed secrets exercised end-to-end across web and mobile channels.
@@ -34,6 +35,7 @@
 > - Export ceilings inside the finance service and new Vitest coverage for invalid ranges plus alert-empty scenarios nudge Task 3 security, completion, and error-free percentages higher while keeping CSV generation production-safe.
 > - React jsdom suites for finance widgets and responsive Flutter currency cards cut render overhead on large datasets, lifting Task 3 integration, functionality, and production readiness benchmarks.
 > - Navigation overhaul introduced a production-ready mega menu, footer IA refresh, and Flutter workspaces parity screen, lifting Task 4 security, completion, integration, functionality, and production readiness metrics.
+> - GDPR metrics endpoint, migration, and SLA instrumentation now drive real backlog/due-date telemetry across backend, React, and Flutter clients; Vitest/Supertest coverage plus design artefact updates elevate Task 2 completion, functionality, and production readiness to the 90s.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
 

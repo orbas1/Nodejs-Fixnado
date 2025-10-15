@@ -38,6 +38,7 @@
 2. **GDPR Lifecycle Automation**
    - Implement retention schedules, purge jobs, and data export APIs.
    - Build frontend/mobile portals for export/delete requests and consent review.
+   - ✅ Deliver SLA analytics via `/api/compliance/data-requests/metrics`, React KPI tiles, and Flutter KPI banners with regression coverage.
    - Document retention policies and audit them in QA.
    - Verify rollback plans for compliance jobs.
 3. **Payment Orchestration Service**

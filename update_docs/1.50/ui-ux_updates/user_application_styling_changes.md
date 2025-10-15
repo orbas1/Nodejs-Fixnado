@@ -36,3 +36,5 @@
 - Warehouse export run cards use compliance green (`#1AAE70`) for successful states, amber (`#FFB300`) for in-progress, and crimson (`#D32F2F`) for failures, with matching iconography to maintain clarity for colourblind operators.
 - Retention countdown chips adopt mono-spaced numerals with 12px padding and gradient borders referencing the shared audit token to visually differentiate them from generic badges.
 - DPIA guidance drawer integrates legal typography styles (Manrope 500 headings, Inter 400 body) and uses muted slate backgrounds so compliance copy remains legible during extended review sessions.
+- Added KPI banner row above the data requests list featuring four gradient cards (backlog, overdue, completion rate, percentile timing) with 16px corner radius and support for one-line and two-line metrics copy.
+- Due-at badges inside request rows use tonal fills: emerald for within SLA, amber for due soon (inside configurable window), and rose for overdue; badges include iconography and accessible text describing remaining days.

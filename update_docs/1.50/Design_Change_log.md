@@ -131,6 +131,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Documented notification badge treatments and copy tone for readiness degradations so design system alerts mirror the new backend telemetry, ensuring consistent feedback loops across web and mobile shells.
    - Updated operations storyboard panels with zero-downtime deployment cues and readiness state legends so design reviews cover the newly exposed infrastructure signals alongside security milestones.
 
+25. **GDPR Metrics Visualisation (2025-04-08)**
+   - Authored KPI card specs for backlog, overdue, completion rate, and percentile timing tiles within the compliance dashboard, including accent gradients, typography ramps, and iconography guidelines shared across web and mobile.
+   - Added due-at indicator treatments (badge colours, SLA breach icons, helper microcopy) for table rows and Flutter list items referencing the new `dueAt` field, ensuring consistent escalation cues.
+   - Updated compliance portal wireframes (`dashboard_drawings.md`, `admin_panel_drawings.md`, `App_screens_drawings.md`) with the metrics header, refresh affordances, and advanced filter states so engineering teams have production-ready references.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

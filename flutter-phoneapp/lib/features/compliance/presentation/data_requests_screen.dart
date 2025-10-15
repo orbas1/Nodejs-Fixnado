@@ -84,6 +84,14 @@ class _DataRequestsScreenState extends ConsumerState<DataRequestsScreen> {
                 }
               },
             ),
+            const SizedBox(height: 16),
+            if (state.metricsLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (state.metrics != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _MetricsStrip(metrics: state.metrics!),
+              ),
             const SizedBox(height: 24),
             _FilterChips(
               active: state.statusFilter,
@@ -151,7 +159,7 @@ class _DataRequestsScreenState extends ConsumerState<DataRequestsScreen> {
                         _statusMessage = null;
                       });
                       try {
-                        await controller.updateStatus(request.id, status);
+                        await controller.updateStatus(request.id, status: status);
                         setState(() => _statusMessage = 'Status updated for ${request.subjectEmail}');
                       } catch (_) {
                         setState(() => _statusMessage = 'Unable to update status. Try again shortly.');
@@ -592,6 +600,106 @@ class _FilterChips extends StatelessWidget {
   }
 }
 
+class _MetricsStrip extends StatelessWidget {
+  const _MetricsStrip({required this.metrics});
+
+  final Map<String, dynamic> metrics;
+
+  String _formatNumber(num? value) => (value ?? 0).toInt().toString();
+
+  String _formatDuration(num? minutes) {
+    if (minutes == null) {
+      return '—';
+    }
+    final totalMinutes = minutes.toDouble();
+    if (totalMinutes >= 60) {
+      final hours = totalMinutes / 60;
+      return '${hours.toStringAsFixed(hours >= 10 ? 1 : 2)}h';
+    }
+    if (totalMinutes >= 1) {
+      return '${totalMinutes.toStringAsFixed(totalMinutes >= 10 ? 1 : 2)}m';
+    }
+    return '${(totalMinutes * 60).round()}s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final total = metrics['totalRequests'] as num?;
+    final completed = (metrics['statusBreakdown'] as Map?)?['completed'] as num?;
+    final overdue = metrics['overdueCount'] as num?;
+    final dueSoon = metrics['dueSoonCount'] as num?;
+    final averageMinutes = metrics['averageCompletionMinutes'] as num?;
+    final completionRate = ((metrics['completionRate'] as num?) ?? 0).toDouble() * 100;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        _MetricTile(
+          label: 'Total requests',
+          value: _formatNumber(total ?? 0),
+          caption: 'Completed ${_formatNumber(completed ?? 0)}',
+          accent: theme.colorScheme.primary,
+        ),
+        _MetricTile(
+          label: 'Overdue',
+          value: _formatNumber(overdue ?? 0),
+          caption: 'Due soon ${_formatNumber(dueSoon ?? 0)}',
+          accent: theme.colorScheme.error,
+        ),
+        _MetricTile(
+          label: 'Avg completion',
+          value: _formatDuration(averageMinutes),
+          caption: 'Completion ${completionRate.toStringAsFixed(0)}%',
+          accent: theme.colorScheme.secondary,
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    required this.caption,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final String caption;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(color: theme.colorScheme.shadow.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 12)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 6),
+          Text(value, style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w700, color: accent)),
+          const SizedBox(height: 4),
+          Text(caption, style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+
 class _RequestCard extends StatelessWidget {
   const _RequestCard({
     required this.request,
@@ -608,6 +716,7 @@ class _RequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isOverdue = request.isOverdue;
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -646,6 +755,26 @@ class _RequestCard extends StatelessWidget {
               Text(_formatDate(request.requestedAt), style: GoogleFonts.inter(fontSize: 13)),
             ],
           ),
+          if (request.dueAt != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  size: 16,
+                  color: isOverdue ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Due ${_formatDate(request.dueAt!)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: isOverdue ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (request.payloadLocation != null) ...[
             const SizedBox(height: 12),
             Text('Export location', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),

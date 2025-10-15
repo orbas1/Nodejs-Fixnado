@@ -4,7 +4,7 @@
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
 | D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 46 | 44 | 42 | 42 | 40 | 38 | 46 | 44 | 44 | 38 | 44 | 40 | 34 | 36 | 42 | 42 |
+| D3 | Page Templates & Partial Library | 52 | 50 | 48 | 48 | 46 | 44 | 54 | 50 | 48 | 44 | 48 | 42 | 38 | 40 | 48 | 47 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
 | D5 | Mobile Parity & Component Adaptation | 72 | 72 | 70 | 70 | 64 | 70 | 80 | 82 | 72 | 68 | 72 | 72 | 60 | 60 | 72 | 71 |
 | D6 | Design QA, Documentation & Handover | 28 | 30 | 28 | 30 | 26 | 28 | 34 | 34 | 30 | 28 | 32 | 42 | 28 | 32 | 30 | 31 |
@@ -27,6 +27,7 @@
 > - `/readyz` readiness telemetry now has documented iconography, alert copy, and QA checklist coverage, lifting D1 quality/security/compliance and D6 QA/test scores by equipping release dashboards with design-backed guidance.
 > - Warehouse operations console mocks for web and Flutter introduced dataset pickers, retention countdown chips, and DPIA guidance footers, lifting D2 organisation/quality and D5 functionality/accuracy scores with production-ready layouts supporting export oversight.
 > - Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, and manual intervention states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the new backend telemetry.
+> - Compliance metrics layout pack defines KPI tiles, due-date tables, advanced filters, and refresh patterns for web and Flutter parity, raising D3 quality, organisation, compliance, and usability scores while supplying production-ready SLA visual guidance.
 > - Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, and regulatory alerts raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.
 > - Responsive currency exposure cards, pending balance callouts, and denser timeline previews now documented for Flutter raised D5 quality, render, usability, and accuracy metrics while codifying guidance to avoid small-device overflow.
 > - Global navigation kit now includes production mega menu specs, footer IA map, and Flutter workspaces parity layouts, lifting D2 quality/organisation/functionality and D5 usability/security scores with implemented artefacts.

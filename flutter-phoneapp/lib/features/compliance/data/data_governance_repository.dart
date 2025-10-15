@@ -10,9 +10,22 @@ class DataGovernanceRepository {
 
   final FixnadoApiClient _client;
 
-  Future<List<DataSubjectRequest>> fetchRequests({String? status}) async {
+  Future<List<DataSubjectRequest>> fetchRequests({
+    String? status,
+    String? requestType,
+    String? regionCode,
+    String? subjectEmail,
+    String? submittedAfter,
+    String? submittedBefore,
+  }) async {
     final payload = await _client.getJson('/compliance/data-requests', query: {
       if (status != null) 'status': status,
+      if (requestType != null) 'requestType': requestType,
+      if (regionCode != null) 'regionCode': regionCode,
+      if (subjectEmail != null) 'subjectEmail': subjectEmail,
+      if (submittedAfter != null) 'submittedAfter': submittedAfter,
+      if (submittedBefore != null) 'submittedBefore': submittedBefore,
+      'limit': '200',
     });
     final raw = payload['data'] as List<dynamic>? ?? [];
     return raw
@@ -66,6 +79,25 @@ class DataGovernanceRepository {
       if (regionCode != null && regionCode.isNotEmpty) 'regionCode': regionCode,
     });
     return WarehouseExportRun.fromJson(payload);
+  }
+
+  Future<Map<String, dynamic>> fetchMetrics({
+    String? status,
+    String? requestType,
+    String? regionCode,
+    String? subjectEmail,
+    String? submittedAfter,
+    String? submittedBefore,
+  }) async {
+    final payload = await _client.getJson('/compliance/data-requests/metrics', query: {
+      if (status != null) 'status': status,
+      if (requestType != null) 'requestType': requestType,
+      if (regionCode != null) 'regionCode': regionCode,
+      if (subjectEmail != null) 'subjectEmail': subjectEmail,
+      if (submittedAfter != null) 'submittedAfter': submittedAfter,
+      if (submittedBefore != null) 'submittedBefore': submittedBefore,
+    });
+    return Map<String, dynamic>.from(payload as Map);
   }
 }
 

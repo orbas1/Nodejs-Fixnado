@@ -14,3 +14,8 @@
 - Extended the compliance portal with a warehouse export panel supporting dataset/region filters, manual trigger controls, run state badges, download links, and retention countdowns aligned with backend metadata.
 - Updated `complianceClient` with `listWarehouseExportRuns` and `createWarehouseExportRun` helpers, adding defensive parsing for NDJSON bundle metadata and long-running job polling.
 - Added operator-focused empty states, error toasts, and contextual documentation links within the portal so compliance and platform security teams can diagnose export health without leaving the UI.
+
+## 2025-04-08 – GDPR Metrics Dashboard & SLA Filters
+- Enhanced `CompliancePortal.jsx` with metrics cards visualising backlog, overdue counts, completion rates, and percentile timings plus a due-date column on the request table.
+- Extended the filter panel with subject email search, date range pickers, and region/request-type selectors that drive both request listings and the new metrics API calls.
+- Added Vitest coverage (`src/pages/__tests__/CompliancePortal.test.jsx`) asserting metrics rendering, refresh behaviour, and filter-driven API interactions to keep the dashboard regression-safe.

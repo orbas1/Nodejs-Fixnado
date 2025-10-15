@@ -3,6 +3,7 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 import { Op } from 'sequelize';
 import config from '../config/index.js';
+import sequelize from '../config/database.js';
 import {
   DataSubjectRequest,
   Region,
@@ -23,6 +24,7 @@ import { normaliseEmail, stableHash } from '../utils/security/fieldEncryption.js
 
 const EXPORT_ROOT = path.resolve(process.cwd(), 'storage', 'data-exports');
 const SUPPORTED_REQUEST_TYPES = new Set(['access', 'erasure', 'rectification']);
+const SUPPORTED_STATUSES = new Set(['received', 'in_progress', 'completed', 'rejected']);
 
 function dataGovernanceError(message, statusCode = 400) {
   const error = new Error(message);
@@ -30,16 +32,27 @@ function dataGovernanceError(message, statusCode = 400) {
   return error;
 }
 
-async function resolveRegion(regionCode) {
+async function findRegionByCode(regionCode) {
   if (typeof regionCode !== 'string' || regionCode.trim() === '') {
-    return Region.findOne({ where: { code: 'GB' } });
+    return null;
   }
 
-  const region = await Region.findOne({ where: { code: regionCode.trim().toUpperCase() } });
-  if (!region) {
-    return resolveRegion('GB');
+  return Region.findOne({ where: { code: regionCode.trim().toUpperCase() } });
+}
+
+async function resolveRegion(regionCode) {
+  const region = await findRegionByCode(regionCode);
+  if (region) {
+    return region;
   }
-  return region;
+
+  const fallbackCode = (config.consent?.defaultRegion || 'GB').toUpperCase();
+  const fallback = await findRegionByCode(fallbackCode);
+  if (fallback) {
+    return fallback;
+  }
+
+  return Region.findOne({ where: { code: 'GB' } });
 }
 
 async function ensureExportDirectory(region) {
@@ -74,6 +87,111 @@ function appendAuditEntry(request, entry) {
     timestamp: new Date().toISOString()
   });
   request.auditLog = current;
+}
+
+function normaliseEmailForStorage(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseIsoDate(value, fieldName) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw dataGovernanceError(`${fieldName} must be an ISO-8601 timestamp string`);
+  }
+
+  const parsed = DateTime.fromISO(value, { zone: 'utc' });
+  if (!parsed.isValid) {
+    throw dataGovernanceError(`Invalid ${fieldName} supplied`);
+  }
+  return parsed;
+}
+
+async function buildRequestFilters({
+  status,
+  requestType,
+  regionCode,
+  submittedAfter,
+  submittedBefore,
+  subjectEmail
+} = {}) {
+  const where = {};
+
+  if (status) {
+    if (!SUPPORTED_STATUSES.has(status)) {
+      throw dataGovernanceError(`Unsupported status filter: ${status}`);
+    }
+    where.status = status;
+  }
+
+  if (requestType) {
+    if (!SUPPORTED_REQUEST_TYPES.has(requestType)) {
+      throw dataGovernanceError(`Unsupported request type filter: ${requestType}`);
+    }
+    where.requestType = requestType;
+  }
+
+  if (subjectEmail) {
+    const normalised = normaliseEmailForStorage(subjectEmail);
+    if (!normalised) {
+      throw dataGovernanceError('subjectEmail filter must contain a valid email address');
+    }
+    where.subjectEmail = normalised;
+  }
+
+  let submittedAfterDate = null;
+  if (submittedAfter) {
+    submittedAfterDate = parseIsoDate(submittedAfter, 'submittedAfter');
+    where.requestedAt = {
+      ...(where.requestedAt || {}),
+      [Op.gte]: submittedAfterDate.toJSDate()
+    };
+  }
+
+  if (submittedBefore) {
+    const to = parseIsoDate(submittedBefore, 'submittedBefore');
+    where.requestedAt = {
+      ...(where.requestedAt || {}),
+      [Op.lte]: to.toJSDate()
+    };
+
+    if (submittedAfterDate && submittedAfterDate > to) {
+      throw dataGovernanceError('submittedAfter must be before submittedBefore');
+    }
+  }
+
+  if (regionCode) {
+    const region = await findRegionByCode(regionCode);
+    if (!region) {
+      throw dataGovernanceError(`Unknown region code: ${regionCode}`);
+    }
+    where.regionId = region.id;
+  }
+
+  return { where };
+}
+
+function computePercentile(values, percentile) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return null;
+  }
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const rank = (sorted.length - 1) * percentile;
+  const lowerIndex = Math.floor(rank);
+  const upperIndex = Math.ceil(rank);
+
+  if (lowerIndex === upperIndex) {
+    return sorted[lowerIndex];
+  }
+
+  const lower = sorted[lowerIndex];
+  const upper = sorted[upperIndex];
+  const weight = rank - lowerIndex;
+  return lower + (upper - lower) * weight;
 }
 
 async function buildOrderSnapshot(userId) {
@@ -202,17 +320,23 @@ export async function submitDataSubjectRequest({
     throw dataGovernanceError(`Unsupported request type: ${requestType}`);
   }
 
-  if (typeof subjectEmail !== 'string' || subjectEmail.trim() === '') {
+  const normalisedEmail = normaliseEmailForStorage(subjectEmail);
+  if (!normalisedEmail) {
     throw dataGovernanceError('subjectEmail is required');
   }
 
   const region = await resolveRegion(regionCode);
   const user = await findSubjectUser({ userId, subjectEmail });
 
+  const submittedAt = DateTime.utc();
+  const dueAt = submittedAt.plus({ days: config.dataGovernance.requestSlaDays }).toJSDate();
+
   const request = await DataSubjectRequest.create({
     userId: user ? user.id : userId,
-    subjectEmail,
+    subjectEmail: normalisedEmail,
     requestType,
+    requestedAt: submittedAt.toJSDate(),
+    dueAt,
     regionId: region?.id ?? null,
     metadata: {
       justification: justification?.trim() || null,
@@ -229,21 +353,167 @@ export async function submitDataSubjectRequest({
   return request;
 }
 
-export async function listDataSubjectRequests({ status, limit = 50 }) {
-  const where = {};
-  if (status) {
-    where.status = status;
-  }
+export async function listDataSubjectRequests({
+  status,
+  requestType,
+  regionCode,
+  submittedAfter,
+  submittedBefore,
+  subjectEmail,
+  limit = 50
+} = {}) {
+  const { where } = await buildRequestFilters({
+    status,
+    requestType,
+    regionCode,
+    submittedAfter,
+    submittedBefore,
+    subjectEmail
+  });
 
   return DataSubjectRequest.findAll({
     where,
-    order: [['requestedAt', 'DESC']],
+    order: [
+      ['requestedAt', 'DESC'],
+      ['id', 'DESC']
+    ],
     include: [
       { model: Region, as: 'region' },
       { model: User, as: 'requester', attributes: ['id', 'firstName', 'lastName', 'type'] }
     ],
     limit: Math.min(Math.max(Number(limit) || 50, 1), 200)
   });
+}
+
+export async function calculateDataSubjectRequestMetrics(filters = {}) {
+  const { where } = await buildRequestFilters(filters);
+  const now = DateTime.utc();
+
+  const totalRequests = await DataSubjectRequest.count({ where });
+
+  const statusRows = await DataSubjectRequest.findAll({
+    attributes: [
+      'status',
+      [sequelize.fn('COUNT', sequelize.col('DataSubjectRequest.id')), 'count']
+    ],
+    where,
+    group: ['status'],
+    raw: true
+  });
+
+  const statusBreakdown = {
+    received: 0,
+    in_progress: 0,
+    completed: 0,
+    rejected: 0
+  };
+  statusRows.forEach((row) => {
+    const key = row.status;
+    if (typeof key === 'string' && Object.prototype.hasOwnProperty.call(statusBreakdown, key)) {
+      statusBreakdown[key] = Number(row.count) || 0;
+    }
+  });
+
+  const overdueCount = await DataSubjectRequest.count({
+    where: {
+      ...where,
+      status: { [Op.ne]: 'completed' },
+      dueAt: { [Op.lt]: now.toJSDate() }
+    }
+  });
+
+  const dueSoonCount = await DataSubjectRequest.count({
+    where: {
+      ...where,
+      status: { [Op.ne]: 'completed' },
+      dueAt: {
+        [Op.gte]: now.toJSDate(),
+        [Op.lte]: now.plus({ days: config.dataGovernance.dueSoonWindowDays }).toJSDate()
+      }
+    }
+  });
+
+  const oldestPending = await DataSubjectRequest.findOne({
+    where: {
+      ...where,
+      status: { [Op.ne]: 'completed' }
+    },
+    order: [
+      ['requestedAt', 'ASC'],
+      ['id', 'ASC']
+    ],
+    raw: true
+  });
+
+  const completionWhere = {
+    ...where,
+    status: 'completed',
+    processedAt: { [Op.ne]: null }
+  };
+
+  if (!completionWhere.requestedAt) {
+    completionWhere.requestedAt = { [Op.gte]: now.minus({ days: config.dataGovernance.metricsWindowDays }).toJSDate() };
+  } else if (!completionWhere.requestedAt[Op.gte]) {
+    completionWhere.requestedAt = {
+      ...completionWhere.requestedAt,
+      [Op.gte]: now.minus({ days: config.dataGovernance.metricsWindowDays }).toJSDate()
+    };
+  }
+
+  const completedRows = await DataSubjectRequest.findAll({
+    attributes: ['requestedAt', 'processedAt'],
+    where: completionWhere,
+    order: [['processedAt', 'DESC']],
+    limit: 1000,
+    raw: true
+  });
+
+  const durations = completedRows
+    .map((row) => {
+      const requested = row.requestedAt || row.requested_at;
+      const processed = row.processedAt || row.processed_at;
+      if (!requested || !processed) {
+        return null;
+      }
+      const requestedMs = new Date(requested).getTime();
+      const processedMs = new Date(processed).getTime();
+      if (!Number.isFinite(requestedMs) || !Number.isFinite(processedMs) || processedMs < requestedMs) {
+        return null;
+      }
+      return (processedMs - requestedMs) / 60000;
+    })
+    .filter((value) => Number.isFinite(value));
+
+  const averageCompletionMinutes =
+    durations.length > 0 ? durations.reduce((sum, value) => sum + value, 0) / durations.length : null;
+  const medianCompletionMinutes = computePercentile(durations, 0.5);
+  const percentile95CompletionMinutes = computePercentile(durations, 0.95);
+
+  return {
+    generatedAt: now.toISO(),
+    totalRequests,
+    statusBreakdown,
+    overdueCount,
+    dueSoonCount,
+    completionRate: totalRequests > 0 ? statusBreakdown.completed / totalRequests : 0,
+    averageCompletionMinutes: averageCompletionMinutes != null ? Number(averageCompletionMinutes.toFixed(2)) : null,
+    medianCompletionMinutes: medianCompletionMinutes != null ? Number(medianCompletionMinutes.toFixed(2)) : null,
+    percentile95CompletionMinutes:
+      percentile95CompletionMinutes != null ? Number(percentile95CompletionMinutes.toFixed(2)) : null,
+    windowDays: config.dataGovernance.metricsWindowDays,
+    slaTargetDays: config.dataGovernance.requestSlaDays,
+    dueSoonWindowDays: config.dataGovernance.dueSoonWindowDays,
+    oldestPending: oldestPending
+      ? {
+          id: oldestPending.id,
+          subjectEmail: oldestPending.subject_email || oldestPending.subjectEmail,
+          status: oldestPending.status,
+          requestedAt: oldestPending.requested_at || oldestPending.requestedAt,
+          dueAt: oldestPending.due_at || oldestPending.dueAt,
+          regionId: oldestPending.region_id || oldestPending.regionId
+        }
+      : null
+  };
 }
 
 export async function generateDataSubjectExport(requestId, actorId = null) {
@@ -284,8 +554,11 @@ export async function generateDataSubjectExport(requestId, actorId = null) {
   return { filePath, request };
 }
 
-export async function updateDataSubjectRequestStatus(requestId, status, actorId = null, note = null) {
-  if (!['received', 'in_progress', 'completed', 'rejected'].includes(status)) {
+export async function updateDataSubjectRequestStatus(
+  requestId,
+  { status, actorId = null, note = null, dueAt = null } = {}
+) {
+  if (status && !SUPPORTED_STATUSES.has(status)) {
     throw dataGovernanceError(`Unsupported status: ${status}`);
   }
 
@@ -294,12 +567,45 @@ export async function updateDataSubjectRequestStatus(requestId, status, actorId 
     throw dataGovernanceError('Data subject request not found', 404);
   }
 
-  request.status = status;
-  if (status === 'completed') {
-    request.processedAt = new Date();
+  const updates = [];
+  const trimmedNote = typeof note === 'string' && note.trim().length > 0 ? note.trim() : null;
+
+  if (dueAt) {
+    const dueDate = parseIsoDate(dueAt, 'dueAt');
+    const requestedAt = DateTime.fromJSDate(new Date(request.requestedAt));
+    if (dueDate < requestedAt) {
+      throw dataGovernanceError('dueAt must be after the original request timestamp');
+    }
+    request.dueAt = dueDate.toJSDate();
+    appendAuditEntry(request, {
+      action: 'due_date_updated',
+      actorId,
+      note: `Due date adjusted to ${dueDate.toISO()}`
+    });
+    updates.push('dueAt');
   }
 
-  appendAuditEntry(request, { action: 'status_update', actorId, note: note || `Status set to ${status}` });
+  if (status && status !== request.status) {
+    request.status = status;
+    if (status === 'completed') {
+      request.processedAt = new Date();
+    } else if (status !== 'completed') {
+      request.processedAt = status === 'received' ? null : request.processedAt;
+    }
+    appendAuditEntry(request, {
+      action: 'status_update',
+      actorId,
+      note: trimmedNote || `Status set to ${status}`
+    });
+    updates.push('status');
+  } else if (trimmedNote) {
+    appendAuditEntry(request, { action: 'status_note', actorId, note: trimmedNote });
+  }
+
+  if (updates.length === 0 && !trimmedNote) {
+    return request;
+  }
+
   await request.save();
   return request;
 }

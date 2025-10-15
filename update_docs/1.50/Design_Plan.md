@@ -22,6 +22,7 @@ Primary objectives:
 - Implement responsive breakpoints (320px, 480px, 768px, 1024px, 1440px) with adaptive layout rules for navigation, cards, and data tables.
 - Rebuild landing and marketing pages with modular partials for hero, proof, pricing, and CTA sections, supporting both single-scroll and multi-section home experiences.
 - Update dashboards (user, provider, enterprise, admin) with analytics summaries, task boards, compliance banners, and quick filters.
+- Extend the compliance portal blueprint with a workload snapshot header, KPI tiles (backlog, overdue, completion rate, percentile timings), due-date table column treatments, and refresh affordances informed by the new SLA analytics.
 - Apply the RBAC navigation blueprint that maps role personas to landing routes, sidebar groupings, finance/compliance surfacing, and restricted drawers so IA harmonisation reflects the hardened security posture.
 - Implement responsive mega menu and footer IA patterns surfacing solutions, resources, and compliance entry points aligned with stakeholder copy decks.
 - Introduce policy decision badges, audit log drawers, and denial microcopy patterns so route-level enforcement is transparent and consistent across dashboards.
@@ -32,6 +33,7 @@ Primary objectives:
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
 - Implement tabbed/drawer hybrids for larger devices, preserving gesture-based shortcuts and accessible focus rings.
 - Update booking, messaging, finance, and compliance screens with refreshed cards, chip groups, and micro-interactions.
+- Add mobile compliance KPI banners, due-at badge styles, and pull-to-refresh micro-interactions mirroring the web metrics experience while respecting Flutter layout constraints.
 - Extend legal/compliance surfaces with a dedicated Data Requests screen and profile entry card that reflects shared audit tokens and GDPR metrics across platforms.
 - Mirror the RBAC navigation blueprint by pairing Flutter tab sets and secure drawers with the same role-driven menu allowances, ensuring compliance badges and finance widgets appear only for authorised personas.
 - Provide offline and loading states consistent with web skeleton patterns.

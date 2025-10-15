@@ -19,3 +19,8 @@
 - Expanded the compliance screen with a warehouse export tab summarising the latest CDC runs, dataset/region filters, and retention timers aligned with backend metadata.
 - Added repository/controller methods to call `listWarehouseExportRuns` and to fire manual export triggers with optimistic state, error surface mapping, and analytics instrumentation.
 - Surfaced toast/snackbar messaging plus inline documentation links guiding operators through DPIA evidence capture when runs complete or error, ensuring parity with the web portal experience.
+
+## 2025-04-08 – GDPR Metrics & Due-Date Awareness
+- Updated the compliance repository/controller to request the new metrics endpoint, exposing backlog counts, due-soon figures, and percentile completion timings to Riverpod consumers.
+- Enhanced the Data Requests screen with KPI banners, due-at labels, overdue indicators, and pull-to-refresh wiring so operators can triage SLA risk from mobile.
+- Added Flutter unit tests (`test/features/compliance/data_subject_request_test.dart`, `test/features/compliance/data_requests_controller_test.dart`) covering JSON parsing, overdue detection, repository error handling, and metrics propagation.

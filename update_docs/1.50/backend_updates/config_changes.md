@@ -20,6 +20,11 @@
 - Defaults retain access exports for two years, message histories for one year, and finance transactions for seven years, aligning with GDPR and accounting obligations while remaining overrideable per environment.
 - Retention values are validated for sensible minimums to avoid accidental short-lived purges during configuration mistakes.
 
+### SLA & Metrics Windows
+- Added `dataGovernance.requestSlaDays` and `dataGovernance.dueSoonWindowDays` configuration keys (overrideable via `DATA_GOVERNANCE_REQUEST_SLA_DAYS` and `DATA_GOVERNANCE_DUE_SOON_WINDOW_DAYS`) to drive due-date assignments and dashboard due-soon calculations.
+- Configuration defaults align with legal’s 30-day SLA and a five-day due-soon warning window; both values feed the upgraded metrics endpoint and UI KPI messaging.
+- Vitest and Supertest suites stub these values during tests to ensure analytics remain deterministic under different SLA policies.
+
 ## Database TLS & Rotation Defaults
 - Production and staging environments now enforce database TLS by default; `DB_SSL` defaults to `true` with optional CA configuration via `DB_SSL_CA_FILE` or `DB_SSL_CA_BASE64`, and the service refuses to boot if TLS is disabled in these environments.
 - Added a `database.rotation` namespace capturing rotation enablement, secret ARN, intervals, AWS region, and TLS enforcement; the credential rotation job consumes this configuration to manage password changes.

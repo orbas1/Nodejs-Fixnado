@@ -10,7 +10,8 @@ import {
   submitDataSubjectRequest,
   listDataSubjectRequests,
   generateDataSubjectExport,
-  updateDataSubjectRequestStatus
+  updateDataSubjectRequestStatus,
+  calculateDataSubjectRequestMetrics
 } from '../services/dataGovernanceService.js';
 import { listWarehouseExportRuns, triggerWarehouseExport } from '../services/dataWarehouseExportService.js';
 
@@ -87,9 +88,30 @@ export async function getDataSubjectRequests(req, res, next) {
   try {
     const requests = await listDataSubjectRequests({
       status: req.query.status,
+      requestType: req.query.requestType,
+      regionCode: req.query.regionCode,
+      submittedAfter: req.query.submittedAfter,
+      submittedBefore: req.query.submittedBefore,
+      subjectEmail: req.query.subjectEmail,
       limit: req.query.limit ? Number(req.query.limit) : 50
     });
     res.json(requests);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDataSubjectRequestMetrics(req, res, next) {
+  try {
+    const metrics = await calculateDataSubjectRequestMetrics({
+      status: req.query.status,
+      requestType: req.query.requestType,
+      regionCode: req.query.regionCode,
+      submittedAfter: req.query.submittedAfter,
+      submittedBefore: req.query.submittedBefore,
+      subjectEmail: req.query.subjectEmail
+    });
+    res.json(metrics);
   } catch (error) {
     next(error);
   }
@@ -108,8 +130,8 @@ export async function generateDataSubjectRequestExport(req, res, next) {
 export async function updateDataSubjectRequest(req, res, next) {
   try {
     const { requestId } = req.params;
-    const { status, note, actorId } = req.body;
-    const request = await updateDataSubjectRequestStatus(requestId, status, actorId, note);
+    const { status, note, actorId, dueAt } = req.body;
+    const request = await updateDataSubjectRequestStatus(requestId, { status, note, actorId, dueAt });
     res.json(request);
   } catch (error) {
     next(error);

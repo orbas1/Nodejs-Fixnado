@@ -15,6 +15,8 @@
 - `PII_HASH_KEY`: Base64-encoded 32-byte key used for deterministic SHA-512/HMAC hashes enabling encrypted lookups.
 - `PII_ENCRYPTION_KEY_ID`: Optional identifier to track the active key version for rotation runbooks.
 - `PII_ENCRYPTION_KEY_PREVIOUS`: Optional base64 key stored temporarily during rotations for decrypt-only operations.
+- `DATA_GOVERNANCE_REQUEST_SLA_DAYS`: Overrides the default 30-day SLA applied when assigning `dueAt` for new data subject requests.
+- `DATA_GOVERNANCE_DUE_SOON_WINDOW_DAYS`: Controls how many days ahead the metrics endpoint counts items as “due soon” (defaults to 5).
 
 ## Operational Guidance
 - Production environments must explicitly set the allowlist to partner domains; staging/test environments can retain open access by leaving the variable unset.

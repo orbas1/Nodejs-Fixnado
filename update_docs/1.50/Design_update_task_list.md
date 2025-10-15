@@ -4,7 +4,7 @@
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 70% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
-| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 28% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 38% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
 | D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 72% |
 | D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 10% |
@@ -45,7 +45,7 @@
 
 **Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways. Warehouse operations console user journeys now map dataset pickers, retention countdown chips, and DPIA help footers across both React and Flutter shells, closing IA gaps for manual trigger workflows and monitoring dashboards. Latest deliverables include a production-ready mega menu specification, responsive footer IA diagram, and Flutter workspaces card layouts, unlocking engineering implementation for the navigation overhaul.
 
-## Task D3 – Page Templates & Partial Library (28%)
+## Task D3 – Page Templates & Partial Library (38%)
 **Objective:** Build modular page templates and partial sections enabling rapid assembly of marketing and product surfaces.
 
 **Subtasks (12):**
@@ -63,7 +63,7 @@
 12. Review templates with marketing, product, and compliance stakeholders for alignment.
 13. ✅ Validate provider dashboard and business front templates against restored backend payloads; document evidence in design QA backlog.
 
-**Progress Notes:** Finance dashboard and escrow timeline templates now include production data slots, SLA breach indicators, and manual intervention cues aligned with the orchestration telemetry, raising template readiness alongside the completed dashboard overview refresh. Provider/business front evidence has been cross-checked against restored payloads and recorded in the QA backlog. Remaining marketing partials (hero variants, testimonials, feature grids) and creation studio wizard visuals continue in design.
+**Progress Notes:** Finance dashboard and escrow timeline templates now include production data slots, SLA breach indicators, and manual intervention cues aligned with the orchestration telemetry, raising template readiness alongside the completed dashboard overview refresh. Provider/business front evidence has been cross-checked against restored payloads and recorded in the QA backlog. Newly authored compliance metrics layout pack covers KPI tiles, due-date tables, advanced filters, and refresh micro-interactions for web and Flutter parity, pushing Task D3 completion toward the 40% mark while marketing partials and creation studio wizard visuals continue in design.
 
 ## Task D4 – Theme & Visual Narrative Development (0%)
 **Objective:** Deliver theme variants (default, industrial, premium, emo) with imagery and motion guidance.

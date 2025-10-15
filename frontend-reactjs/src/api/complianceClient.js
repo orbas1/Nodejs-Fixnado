@@ -39,10 +39,28 @@ export async function createDataSubjectRequest(payload, { signal } = {}) {
   }
 }
 
-export async function fetchDataSubjectRequests({ status, limit = 50 } = {}, { signal } = {}) {
+export async function fetchDataSubjectRequests(
+  { status, requestType, regionCode, submittedAfter, submittedBefore, subjectEmail, limit = 50 } = {},
+  { signal } = {}
+) {
   const params = new URLSearchParams();
   if (status) {
     params.set('status', status);
+  }
+  if (requestType) {
+    params.set('requestType', requestType);
+  }
+  if (regionCode) {
+    params.set('regionCode', regionCode);
+  }
+  if (submittedAfter) {
+    params.set('submittedAfter', submittedAfter);
+  }
+  if (submittedBefore) {
+    params.set('submittedBefore', submittedBefore);
+  }
+  if (subjectEmail) {
+    params.set('subjectEmail', subjectEmail);
   }
   if (limit) {
     params.set('limit', String(limit));
@@ -158,5 +176,48 @@ export async function triggerWarehouseExportRun(payload, { signal } = {}) {
       throw error;
     }
     throw new PanelApiError('Network error while triggering warehouse export', 503, { cause: error });
+  }
+}
+
+export async function fetchDataSubjectRequestMetrics(
+  { status, requestType, regionCode, submittedAfter, submittedBefore, subjectEmail } = {},
+  { signal } = {}
+) {
+  const params = new URLSearchParams();
+  if (status) {
+    params.set('status', status);
+  }
+  if (requestType) {
+    params.set('requestType', requestType);
+  }
+  if (regionCode) {
+    params.set('regionCode', regionCode);
+  }
+  if (submittedAfter) {
+    params.set('submittedAfter', submittedAfter);
+  }
+  if (submittedBefore) {
+    params.set('submittedBefore', submittedBefore);
+  }
+  if (subjectEmail) {
+    params.set('subjectEmail', subjectEmail);
+  }
+
+  try {
+    const response = await fetch(`/api/compliance/data-requests/metrics?${params.toString()}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+      signal
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+    if (error instanceof PanelApiError) {
+      throw error;
+    }
+    throw new PanelApiError('Network error while loading compliance metrics', 503, { cause: error });
   }
 }

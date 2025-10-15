@@ -47,6 +47,12 @@
 - Navigation configuration centralised in `navigationConfig.js`, enabling shared use across marketing and dashboard shells while unlocking translation coverage for new solutions/resources taxonomy.
 - Flutter shell updated with a dedicated Workspaces screen and navigation order matching the RBAC blueprint, ensuring role switching, finance shortcuts, and communications access mirror the web overhaul.
 
+### Progress Snapshot – Compliance & Data Governance (2025-04-08)
+- Sequelize migration `20250323000000-enhance-data-subject-requests.js` adds `due_at` indexing so backlog and SLA analytics can run without table scans; historical rows are backfilled with configurable SLA windows.
+- `dataGovernanceService` now assigns due dates, validates filters, and aggregates backlog/due-soon/completion percentile metrics that back the new `/api/compliance/data-requests/metrics` controller.
+- React compliance portal renders workload KPI tiles, due-at table column, advanced filters, and manual refresh affordances while Vitest coverage verifies metrics rendering and filter propagation.
+- Flutter compliance repository/controller consume the metrics endpoint, expose KPI banners, and add widget/unit tests for overdue detection and error handling to maintain mobile parity.
+
 ## 4. Frontend (Web) Delivery Plan
 1. **Foundation setup**
    - Introduce feature-based folder structure; align state management modules and service hooks with backend contracts.
