@@ -1,9 +1,16 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { User, Company } from '../models/index.js';
 import config from '../config/index.js';
+import {
+  issueSession,
+  rotateSession,
+  revokeSession,
+  setSessionCookies,
+  clearSessionCookies,
+  extractTokens
+} from '../services/sessionService.js';
 
 const SALT_ROUNDS = 10;
 
@@ -94,7 +101,7 @@ export async function login(req, res, next) {
       return res.status(422).json({ errors: errors.array() });
     }
 
-    const { email, password, securityToken } = req.body;
+    const { email, password, securityToken, rememberMe, clientType, deviceLabel, clientVersion } = req.body;
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -115,13 +122,129 @@ export async function login(req, res, next) {
         return res.status(403).json({ message: 'Admin access restricted' });
       }
 
-      const expiresIn = `${sessionTtlHours}h`;
-      const token = jwt.sign({ sub: user.id, type: user.type }, config.jwt.secret, { expiresIn });
-      return res.json({ token, user: { id: user.id, email: user.email, type: user.type }, expiresIn });
+      const sessionResult = await issueSession({
+        user,
+        headers: req.headers,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        clientType: 'admin',
+        deviceLabel: deviceLabel ?? 'Admin Console',
+        metadata: { clientVersion: clientVersion ?? 'web-admin', loginContext: 'admin' },
+        remember: rememberMe === true
+      });
+
+      setSessionCookies(res, sessionResult);
+
+      return res.json({
+        user: { id: user.id, email: user.email, type: user.type },
+        session: {
+          id: sessionResult.session.id,
+          issuedAt: sessionResult.session.createdAt?.toISOString?.() ?? new Date().toISOString(),
+          expiresAt: sessionResult.accessTokenExpiresAt.toISOString(),
+          refreshExpiresAt: sessionResult.refreshTokenExpiresAt.toISOString(),
+          role: sessionResult.actorContext.role,
+          persona: sessionResult.actorContext.persona
+        },
+        tokens: {
+          accessToken: sessionResult.accessToken,
+          refreshToken: sessionResult.refreshToken
+        },
+        expiresIn: `${sessionTtlHours}h`
+      });
     }
 
-    const token = jwt.sign({ sub: user.id, type: user.type }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
-    return res.json({ token, user: { id: user.id, email: user.email, type: user.type }, expiresIn: config.jwt.expiresIn });
+    const detectedClientType = typeof clientType === 'string' ? clientType.toLowerCase().trim() : '';
+    const clientPlatform = detectedClientType || `${req.headers['x-client-platform'] ?? ''}`.toLowerCase();
+    const mobileClients = new Set(['mobile', 'flutter', 'ios', 'android']);
+    const sessionResult = await issueSession({
+      user,
+      headers: req.headers,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      clientType: mobileClients.has(clientPlatform) ? 'mobile' : 'web',
+      deviceLabel: deviceLabel ?? null,
+      metadata: { clientVersion: clientVersion ?? req.headers['x-client-version'] ?? null },
+      remember: rememberMe === true
+    });
+
+    setSessionCookies(res, sessionResult);
+
+    const tokens = mobileClients.has(clientPlatform)
+      ? { accessToken: sessionResult.accessToken, refreshToken: sessionResult.refreshToken }
+      : null;
+
+    return res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        type: user.type
+      },
+      session: {
+        id: sessionResult.session.id,
+        issuedAt: sessionResult.session.createdAt?.toISOString?.() ?? new Date().toISOString(),
+        expiresAt: sessionResult.accessTokenExpiresAt.toISOString(),
+        refreshExpiresAt: sessionResult.refreshTokenExpiresAt.toISOString(),
+        role: sessionResult.actorContext.role,
+        persona: sessionResult.actorContext.persona
+      },
+      tokens,
+      expiresIn: `${Math.floor(config.auth.session.accessTokenTtlSeconds / 60)}m`
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function refresh(req, res, next) {
+  try {
+    const bodyToken = typeof req.body?.refreshToken === 'string' ? req.body.refreshToken : null;
+    const { refreshToken } = extractTokens(req);
+    const token = bodyToken || refreshToken;
+    if (!token) {
+      return res.status(401).json({ message: 'Refresh token missing' });
+    }
+
+    const rotation = await rotateSession(token, {
+      headers: req.headers,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    setSessionCookies(res, rotation);
+
+    return res.json({
+      session: {
+        id: rotation.session.id,
+        issuedAt: rotation.session.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+        expiresAt: rotation.accessTokenExpiresAt.toISOString(),
+        refreshExpiresAt: rotation.refreshTokenExpiresAt.toISOString(),
+        role: rotation.actorContext.role,
+        persona: rotation.actorContext.persona
+      },
+      tokens: {
+        accessToken: rotation.accessToken,
+        refreshToken: rotation.refreshToken
+      }
+    });
+  } catch (error) {
+    clearSessionCookies(res);
+    if (error.message && /session/i.test(error.message)) {
+      return res.status(401).json({ message: 'Unable to refresh session', detail: error.message });
+    }
+    next(error);
+  }
+}
+
+export async function logout(req, res, next) {
+  try {
+    const sessionId = req.auth?.sessionId;
+    if (sessionId) {
+      await revokeSession(sessionId);
+    }
+    clearSessionCookies(res);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

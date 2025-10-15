@@ -31,6 +31,7 @@
 3. Creation studio stepper, preview panes, and theme selector interactions documented.
 4. Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
 5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
+6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.

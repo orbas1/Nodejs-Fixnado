@@ -157,6 +157,20 @@ const config = {
       allowedEmails: listFromEnv('ADMIN_ALLOWED_EMAILS'),
       allowedDomains: listFromEnv('ADMIN_ALLOWED_DOMAINS'),
       sessionTtlHours: Math.max(intFromEnv('ADMIN_SESSION_TTL_HOURS', 12), 1)
+    },
+    session: {
+      cookieName: process.env.AUTH_COOKIE_NAME || 'fx_session',
+      refreshCookieName: process.env.AUTH_REFRESH_COOKIE_NAME || 'fx_refresh',
+      cookieDomain: process.env.AUTH_COOKIE_DOMAIN || undefined,
+      cookiePath: process.env.AUTH_COOKIE_PATH || '/',
+      cookieSameSite: process.env.AUTH_COOKIE_SAMESITE || 'lax',
+      cookieSecure:
+        typeof process.env.AUTH_COOKIE_SECURE === 'string'
+          ? process.env.AUTH_COOKIE_SECURE.trim().toLowerCase() !== 'false'
+          : env === 'production',
+      accessTokenTtlSeconds: Math.max(intFromEnv('AUTH_ACCESS_TOKEN_TTL_SECONDS', 900), 300),
+      refreshTokenTtlDays: Math.max(intFromEnv('AUTH_REFRESH_TOKEN_TTL_DAYS', 14), 1),
+      rollingSessions: boolFromEnv('AUTH_ROLLING_SESSIONS', true)
     }
   },
   telemetry: {

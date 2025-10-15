@@ -40,32 +40,32 @@ const TZ = 'Europe/London';
 async function createCompanyWithFixtures() {
   const now = DateTime.now().setZone(TZ);
 
-  const [owner, provider, renter] = await Promise.all([
-    User.create({
-      id: IDS.owner,
-      firstName: 'Metro',
-      lastName: 'Ops',
-      email: `ops-${Date.now()}@example.com`,
-      passwordHash: 'hash',
-      type: 'company'
-    }),
-    User.create({
-      id: IDS.provider,
-      firstName: 'Amina',
-      lastName: 'Khan',
-      email: `crew-${Date.now()}@example.com`,
-      passwordHash: 'hash',
-      type: 'servicemen'
-    }),
-    User.create({
-      id: IDS.renter,
-      firstName: 'Enterprise',
-      lastName: 'Client',
-      email: `client-${Date.now()}@example.com`,
-      passwordHash: 'hash',
-      type: 'user'
-    })
-  ]);
+  const owner = await User.create({
+    id: IDS.owner,
+    firstName: 'Metro',
+    lastName: 'Ops',
+    email: `ops-${Date.now()}@example.com`,
+    passwordHash: 'hash',
+    type: 'company'
+  });
+
+  await User.create({
+    id: IDS.provider,
+    firstName: 'Amina',
+    lastName: 'Khan',
+    email: `crew-${Date.now()}@example.com`,
+    passwordHash: 'hash',
+    type: 'servicemen'
+  });
+
+  await User.create({
+    id: IDS.renter,
+    firstName: 'Enterprise',
+    lastName: 'Client',
+    email: `client-${Date.now()}@example.com`,
+    passwordHash: 'hash',
+    type: 'user'
+  });
 
   const company = await Company.create({
     userId: owner.id,
@@ -298,7 +298,7 @@ async function createCompanyWithFixtures() {
   await RentalAgreement.create({
     rentalNumber: 'RA-1002',
     itemId: inventoryItem.id,
-    marketplaceItemId: approvedListing.id,
+    marketplaceItemId: listing.id,
     companyId: company.id,
     renterId: IDS.renter,
     status: 'settled',
@@ -311,7 +311,7 @@ async function createCompanyWithFixtures() {
     meta: { project: 'Completed works' }
   });
 
-  return { company, owner: user };
+  return { company, owner };
 }
 
 beforeAll(async () => {

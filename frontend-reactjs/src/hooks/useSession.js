@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isRolePermitted, normaliseRole } from '../constants/accessControl.js';
 
 const SESSION_STORAGE_KEY = 'fx.session';
-const TOKEN_STORAGE_KEY = 'fixnado:accessToken';
 
 const FALLBACK_SESSION = Object.freeze({
   tenantId: 'fixnado-demo',
@@ -110,15 +109,6 @@ const resolveSessionFromWindow = () => {
     console.warn('[useSession] Unable to parse stored session context', error);
   }
 
-  const accessToken = (() => {
-    try {
-      return window.localStorage?.getItem(TOKEN_STORAGE_KEY) ?? null;
-    } catch (error) {
-      console.warn('[useSession] Unable to read access token', error);
-      return null;
-    }
-  })();
-
   const resolvedRole = normaliseRole(base.role) || FALLBACK_SESSION.role;
   const dashboards = base.dashboards.length ? base.dashboards : ROLE_DASHBOARD_MAP[resolvedRole] ?? [];
 
@@ -131,8 +121,8 @@ const resolveSessionFromWindow = () => {
     scopes: Object.freeze(base.scopes),
     features: Object.freeze(base.features),
     permissions: Object.freeze(base.permissions),
-    token: accessToken,
-    isAuthenticated: Boolean(accessToken || base.userId)
+    token: null,
+    isAuthenticated: Boolean(base.userId)
   };
 };
 
@@ -173,7 +163,7 @@ export function useSession() {
     };
 
     const handleStorage = (event) => {
-      if (event?.key && ![SESSION_STORAGE_KEY, TOKEN_STORAGE_KEY].includes(event.key)) {
+      if (event?.key && event.key !== SESSION_STORAGE_KEY) {
         return;
       }
       refresh();

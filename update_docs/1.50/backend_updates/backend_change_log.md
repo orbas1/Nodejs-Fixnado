@@ -9,3 +9,8 @@
 - Migrated user and company PII to AES-256-GCM encrypted columns with SHA-512/HMAC lookup hashes, ensuring email uniqueness without storing cleartext identifiers.
 - Added transactional migration to backfill encrypted payloads, drop legacy plaintext columns, and enforce new uniqueness constraints on hashed values.
 - Introduced shared field encryption utility, model hooks, and targeted Vitest coverage to verify encrypted persistence and case-insensitive lookups.
+
+## 2025-03-12 – Security & Secrets Hardening, Subtask 2
+- Reconstructed `panelService` to reinstate provider dashboard orchestration: RBAC-enforced company resolution, booking analytics, trust score computation, and review summarisation now drive production responses again.
+- Normalised business front generation to leverage active bookings, campaign telemetry, and marketplace intelligence while sourcing savings data from cached platform commission configuration.
+- Resolved the lingering ESLint failure set (69 errors) and re-ran the backend lint suite to confirm the panel stack is compliant ahead of follow-on security automation.

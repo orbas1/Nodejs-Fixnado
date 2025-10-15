@@ -120,16 +120,6 @@ function resolveCacheKey(path, method, body) {
   }
 }
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
-  } catch (error) {
-    console.warn('[panelClient] unable to read auth token', error);
-    return null;
-  }
-}
-
 async function request(path, {
   method = 'GET',
   body,
@@ -162,13 +152,6 @@ async function request(path, {
   headers.set('Accept', 'application/json');
   if (body && !(body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
-  }
-
-  if (!anonymous) {
-    const token = getAuthToken();
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
   }
 
   const { controller, timeoutId } = mergeAbortSignals(signal);

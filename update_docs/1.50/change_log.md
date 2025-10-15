@@ -10,5 +10,10 @@
 - Delivered supporting migration, shared crypto utility, and regression tests confirming deterministic lookups and decrypted reads remain intact.
 - Updated security, database, documentation, and design trackers to reflect the new privacy posture and consent surface specifications.
 
+## 2025-03-12 – Provider Panel Service Restoration
+- Rebuilt `panelService` with production-ready company resolution, RBAC-aware access checks, and trust/review scoring pipelines to recover from the conflicted file and unblock Security & Secrets Hardening Task 1.
+- Normalised provider dashboards to surface real inventory, booking, rental, and marketplace analytics; integrates cached platform commission rates to keep savings messaging aligned with monetisation strategy.
+- Restored lint cleanliness for the backend workspace (69 errors cleared) and recorded new automation baselines in the task tracker for continued security milestone delivery.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.
