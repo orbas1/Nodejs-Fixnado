@@ -2,6 +2,7 @@
 
 ## Global Navigation & Layout
 - Header redesigned with consolidated navigation: primary links (Dashboard, Marketplace, Resources, Reports) plus utility icons (Notifications, Help, Profile) and quick search bar.
+- Mega menu blueprint translated into production build with card-based sections for Explorer, Dashboards, Solutions, and Resources; mobile drawer mirrors IA with workspaces CTA and consent messaging.
 - Left dock introduced for authenticated dashboards featuring collapsible sections and context-aware shortcuts.
 - Responsive grid supports 12-column layout on desktop, 8-column on tablet; sticky breadcrumb row aids orientation within deeper modules.
 

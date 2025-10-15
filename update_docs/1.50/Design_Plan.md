@@ -23,6 +23,7 @@ Primary objectives:
 - Rebuild landing and marketing pages with modular partials for hero, proof, pricing, and CTA sections, supporting both single-scroll and multi-section home experiences.
 - Update dashboards (user, provider, enterprise, admin) with analytics summaries, task boards, compliance banners, and quick filters.
 - Apply the RBAC navigation blueprint that maps role personas to landing routes, sidebar groupings, finance/compliance surfacing, and restricted drawers so IA harmonisation reflects the hardened security posture.
+- Implement responsive mega menu and footer IA patterns surfacing solutions, resources, and compliance entry points aligned with stakeholder copy decks.
 - Introduce policy decision badges, audit log drawers, and denial microcopy patterns so route-level enforcement is transparent and consistent across dashboards.
 - Validate provider dashboard modules against restored service responses (trust score, review summaries, inventory alerts) to confirm component coverage without additional visual redesign.
 - Refactor forms with inline validation, progressive disclosure for advanced settings, and security copy for sensitive actions.

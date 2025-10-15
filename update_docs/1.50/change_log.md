@@ -74,5 +74,10 @@
 - Added jsdom tests for the React finance timeline and regulatory alert cards while memoising heavy render paths and constraining list sizes to keep the reporting hub responsive for large datasets.
 - Refactored the Flutter finance dashboard currency grid with responsive cards, pending-balance insights, and denser timeline previews so handset screens render without chip overflow while preserving parity with web reporting widgets.
 
+## 2025-04-06 – Experience & Navigation Overhaul Kickoff
+- Shipped the production-ready global navigation overhaul featuring a mega menu backed by role-aware dashboard links, refreshed footer IA, and responsive notification trays for desktop and mobile layouts.
+- Refactored the React header to consume a centralised navigation config, added accessible mobile drawer navigation, and aligned translation catalogues with the new solutions/resources hierarchy.
+- Delivered a Flutter workspaces hub screen and updated bottom navigation to surface dashboard switching, ensuring parity with the new web experience and reinforcing RBAC-driven role transitions across platforms.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

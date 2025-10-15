@@ -121,6 +121,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Captured memoisation guidance and row caps for finance tables within the React design tokens so component libraries reinforce performant rendering on long timelines.
    - Refreshed Flutter parity notes with condensed timeline list density, updated typography ramps, and accessibility cues to keep regulatory alerts legible on compact viewports.
 
+23. **Navigation & Workspaces Overhaul (2025-04-06)**
+   - Delivered responsive mega menu architecture with card-based columns, dashboard deep links, and compliance-aware descriptions aligning with the IA captured in `ui-ux_updates/web_app_wireframe_changes.md`.
+   - Refreshed footer information architecture to include solutions, resources, company, and account columns, mapping legal/comms entry points to the updated change management narratives.
+   - Authored Flutter workspaces parity guidelines, showcasing role cards, actionable chips, and Riverpod-driven role switching to mirror the new React navigation journey across mobile shells.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

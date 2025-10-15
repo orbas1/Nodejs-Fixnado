@@ -23,6 +23,7 @@
 
 ## Motion & Feedback
 - Screen transitions adopt native navigation patterns with 200ms duration; modals slide up from bottom with overshoot suppressed to reduce motion sickness.
+- Workspaces cards use Material 3 tonal fills, neon accent chips, and Riverpod-driven state labels to communicate active role, matching React mega menu styling tokens.
 - Loading states rely on skeleton placeholders for lists and shimmering progress bars for timeline updates; avoid spinner loops longer than 8 seconds.
 - Toast notifications appear top-right with auto-dismiss after 6 seconds; accessible alternative ensures screen reader announces context and action.
 

@@ -5,7 +5,7 @@
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 92% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 82% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 83% |
-| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 0% |
+| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 32% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
 | 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 0% |
 | 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 0% |
