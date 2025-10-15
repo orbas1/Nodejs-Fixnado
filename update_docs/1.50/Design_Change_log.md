@@ -126,6 +126,21 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Refreshed footer information architecture to include solutions, resources, company, and account columns, mapping legal/comms entry points to the updated change management narratives.
    - Authored Flutter workspaces parity guidelines, showcasing role cards, actionable chips, and Riverpod-driven role switching to mirror the new React navigation journey across mobile shells.
 
+24. **Operational Readiness Telemetry (2025-04-07)**
+   - Added design ops notes for deployment and observability consoles outlining how `/readyz` component statuses (database, background jobs, HTTP server) surface within admin dashboards and release runbooks.
+   - Documented notification badge treatments and copy tone for readiness degradations so design system alerts mirror the new backend telemetry, ensuring consistent feedback loops across web and mobile shells.
+   - Updated operations storyboard panels with zero-downtime deployment cues and readiness state legends so design reviews cover the newly exposed infrastructure signals alongside security milestones.
+
+25. **GDPR Metrics Visualisation (2025-04-08)**
+   - Authored KPI card specs for backlog, overdue, completion rate, and percentile timing tiles within the compliance dashboard, including accent gradients, typography ramps, and iconography guidelines shared across web and mobile.
+   - Added due-at indicator treatments (badge colours, SLA breach icons, helper microcopy) for table rows and Flutter list items referencing the new `dueAt` field, ensuring consistent escalation cues.
+   - Updated compliance portal wireframes (`dashboard_drawings.md`, `admin_panel_drawings.md`, `App_screens_drawings.md`) with the metrics header, refresh affordances, and advanced filter states so engineering teams have production-ready references.
+
+26. **Finance Escalation Ribbons & Responder Workflows (2025-04-09)**
+   - Defined alert ribbon patterns with severity-specific palettes, responder avatar chips, retry countdown timers, and acknowledgement controls mapped to the new finance alert fan-out payloads.
+   - Documented Slack/Opsgenie delivery affordances, audit note drawers, and manual refresh behaviour inside both web and Flutter dashboards to ensure parity across operations tooling.
+   - Captured design QA tasks, runbook references, and accessibility notes (colour contrast, motion limits, icon labelling) linked to the escalation workflows so engineering and ops can ship the new finance monitoring experience with confidence.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

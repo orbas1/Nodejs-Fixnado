@@ -5,6 +5,11 @@
 - Clients making cross-origin requests must ensure their origin appears in the central allowlist; partner onboarding runbooks have been updated to capture the new requirement.
 - Excessive request bursts now receive HTTP 429 responses including a `retryAfterSeconds` hint, providing predictable behaviour for SDK backoff implementations.
 
+## API Versioning & Readiness
+- All REST controllers are now exposed under a versioned `/api/v1` namespace while retaining the legacy `/api` mount as a compatibility bridge; SDKs and documentation should begin referencing the versioned paths for forward compatibility.
+- `/readyz` joins `/healthz` as a first-class operational endpoint, reporting readiness for the database, background jobs, and HTTP server so deploy pipelines can block traffic until the service is fully initialised.
+- `/healthz` responses now embed readiness telemetry, giving observability systems a single payload covering both latency diagnostics and component readiness states.
+
 ## Panel & Storefront Endpoints
 - `/api/panel/provider/dashboard` now returns enhanced payloads including `trust`, `reviews.summary.band`, and `marketplace.deals` keyed to platform commission settings; consumers should surface the new analytics fields for richer operator insights.
 - `/api/business-fronts/:slug` outputs consolidated spend, programme, and escalation telemetry in addition to legacy hero/testimonial content—frontends must handle the expanded object to present finance and trust metrics.
@@ -23,6 +28,7 @@
 - `/api/compliance/data-requests` (POST) records GDPR access/erasure/rectification requests, auto-linking known users via hashed email, resolving region codes, and logging audit metadata.
 - `/api/compliance/data-requests` (GET) supports optional `status` filters and returns enriched records including audit history, processed timestamps, payload locations, and associated region codes.
 - `/api/compliance/data-requests/:id/export` triggers asynchronous export generation with region-specific storage, while `/status` updates allow authorised operators to progress requests through `received`, `in_progress`, `completed`, and `rejected` states.
+- `/api/compliance/data-requests/metrics` (GET) aggregates backlog size, SLA exposure, percentile completion timings, `dueSoonWindowDays`, and `oldestPending` metadata with support for the same filters as the listing endpoint; responses feed the web/mobile dashboards and regression tests cover query combinations.
 - `/api/consent/verify` checks that the provided subject has active consent for the supplied policies, returning HTTP 428 with structured details when any mandatory agreements are missing or stale.
 
 ## Compliance Data Warehouse

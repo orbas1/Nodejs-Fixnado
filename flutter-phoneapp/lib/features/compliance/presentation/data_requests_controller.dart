@@ -15,6 +15,14 @@ class DataRequestsState extends Equatable {
     this.warehouseLoading = false,
     this.warehouseError,
     this.warehouseDatasetFilter,
+    this.requestTypeFilter,
+    this.regionFilter,
+    this.subjectQuery,
+    this.submittedAfter,
+    this.submittedBefore,
+    this.metrics,
+    this.metricsLoading = false,
+    this.metricsError,
   });
 
   final List<DataSubjectRequest> requests;
@@ -25,6 +33,14 @@ class DataRequestsState extends Equatable {
   final bool warehouseLoading;
   final String? warehouseError;
   final String? warehouseDatasetFilter;
+  final String? requestTypeFilter;
+  final String? regionFilter;
+  final String? subjectQuery;
+  final String? submittedAfter;
+  final String? submittedBefore;
+  final Map<String, dynamic>? metrics;
+  final bool metricsLoading;
+  final String? metricsError;
 
   DataRequestsState copyWith({
     List<DataSubjectRequest>? requests,
@@ -35,6 +51,14 @@ class DataRequestsState extends Equatable {
     bool? warehouseLoading,
     String? warehouseError,
     String? warehouseDatasetFilter,
+    String? requestTypeFilter,
+    String? regionFilter,
+    String? subjectQuery,
+    String? submittedAfter,
+    String? submittedBefore,
+    Map<String, dynamic>? metrics,
+    bool? metricsLoading,
+    String? metricsError,
   }) {
     return DataRequestsState(
       requests: requests ?? this.requests,
@@ -45,6 +69,14 @@ class DataRequestsState extends Equatable {
       warehouseLoading: warehouseLoading ?? this.warehouseLoading,
       warehouseError: warehouseError,
       warehouseDatasetFilter: warehouseDatasetFilter ?? this.warehouseDatasetFilter,
+      requestTypeFilter: requestTypeFilter ?? this.requestTypeFilter,
+      regionFilter: regionFilter ?? this.regionFilter,
+      subjectQuery: subjectQuery ?? this.subjectQuery,
+      submittedAfter: submittedAfter ?? this.submittedAfter,
+      submittedBefore: submittedBefore ?? this.submittedBefore,
+      metrics: metrics ?? this.metrics,
+      metricsLoading: metricsLoading ?? this.metricsLoading,
+      metricsError: metricsError ?? this.metricsError,
     );
   }
 
@@ -58,6 +90,14 @@ class DataRequestsState extends Equatable {
         warehouseLoading,
         warehouseError,
         warehouseDatasetFilter,
+        requestTypeFilter,
+        regionFilter,
+        subjectQuery,
+        submittedAfter,
+        submittedBefore,
+        metrics,
+        metricsLoading,
+        metricsError,
       ];
 }
 
@@ -67,13 +107,60 @@ class DataRequestsController extends StateNotifier<DataRequestsState> {
 
   final DataGovernanceRepository _repository;
 
-  Future<void> load({String? status}) async {
-    state = state.copyWith(loading: true, error: null, statusFilter: status);
+  Future<void> load({
+    String? status,
+    String? requestType,
+    String? regionCode,
+    String? subjectEmail,
+    String? submittedAfter,
+    String? submittedBefore,
+  }) async {
+    final effectiveStatus = status ?? state.statusFilter;
+    final effectiveType = requestType ?? state.requestTypeFilter;
+    final effectiveRegion = regionCode ?? state.regionFilter;
+    final effectiveSubject = subjectEmail ?? state.subjectQuery;
+    final effectiveSubmittedAfter = submittedAfter ?? state.submittedAfter;
+    final effectiveSubmittedBefore = submittedBefore ?? state.submittedBefore;
+
+    state = state.copyWith(
+      loading: true,
+      error: null,
+      statusFilter: effectiveStatus,
+      requestTypeFilter: effectiveType,
+      regionFilter: effectiveRegion,
+      subjectQuery: effectiveSubject,
+      submittedAfter: effectiveSubmittedAfter,
+      submittedBefore: effectiveSubmittedBefore,
+      metricsLoading: true,
+      metricsError: null,
+    );
+
     try {
-      final requests = await _repository.fetchRequests(status: status);
+      final requests = await _repository.fetchRequests(
+        status: effectiveStatus,
+        requestType: effectiveType,
+        regionCode: effectiveRegion,
+        subjectEmail: effectiveSubject,
+        submittedAfter: effectiveSubmittedAfter,
+        submittedBefore: effectiveSubmittedBefore,
+      );
       state = state.copyWith(requests: requests, loading: false);
     } catch (error) {
       state = state.copyWith(error: error.toString(), loading: false);
+    }
+
+    try {
+      final metrics = await _repository.fetchMetrics(
+        status: effectiveStatus,
+        requestType: effectiveType,
+        regionCode: effectiveRegion,
+        subjectEmail: effectiveSubject,
+        submittedAfter: effectiveSubmittedAfter,
+        submittedBefore: effectiveSubmittedBefore,
+      );
+      state = state.copyWith(metrics: metrics, metricsLoading: false);
+    } catch (error) {
+      state = state.copyWith(metricsLoading: false, metricsError: error.toString());
     }
   }
 
@@ -98,28 +185,23 @@ class DataRequestsController extends StateNotifier<DataRequestsState> {
     String? regionCode,
   }) async {
     try {
-      final created = await _repository.createRequest(
+      await _repository.createRequest(
         subjectEmail: email,
         requestType: type,
         justification: justification,
         regionCode: regionCode,
       );
-      state = state.copyWith(requests: [created, ...state.requests], error: null);
+      await load();
     } catch (error) {
       state = state.copyWith(error: error.toString());
       rethrow;
     }
   }
 
-  Future<void> updateStatus(String requestId, String status) async {
+  Future<void> updateStatus(String requestId, {required String status, String? note}) async {
     try {
-      final updated = await _repository.updateStatus(requestId, status: status);
-      state = state.copyWith(
-        requests: state.requests
-            .map((request) => request.id == requestId ? updated : request)
-            .toList(),
-        error: null,
-      );
+      await _repository.updateStatus(requestId, status: status, note: note);
+      await load();
     } catch (error) {
       state = state.copyWith(error: error.toString());
       rethrow;
@@ -128,13 +210,8 @@ class DataRequestsController extends StateNotifier<DataRequestsState> {
 
   Future<void> generateExport(String requestId) async {
     try {
-      final updated = await _repository.generateExport(requestId);
-      state = state.copyWith(
-        requests: state.requests
-            .map((request) => request.id == requestId ? updated : request)
-            .toList(),
-        error: null,
-      );
+      await _repository.generateExport(requestId);
+      await load();
     } catch (error) {
       state = state.copyWith(error: error.toString());
       rethrow;

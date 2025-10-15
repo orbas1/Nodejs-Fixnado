@@ -20,6 +20,8 @@
 5. **Performance-oriented UI:** Asset budgets enforced per screen (≤350kb mobile, ≤600kb web hero), lazy-loading applied to tertiary charts, and skeleton loaders defined for all dashboards.
 6. **Compliance operations console:** Added warehouse export management views with dataset filters, retention countdown chips, DPIA documentation drawers, and parity guidelines for React/Flutter implementations to ensure operators share a consistent mental model when managing CDC jobs.
 7. **Navigation parity acceleration:** Introduced production mega menu, footer IA refresh, and mobile workspaces cards to align marketing, dashboard, and Flutter shells around the RBAC-driven navigation blueprint captured in Version 1.00 drawings.
+8. **GDPR SLA visibility:** Authored KPI card patterns, due-at badge treatments, and advanced filter interactions for the compliance portal and mobile data requests screen so backlog, overdue, and percentile metrics mirror backend analytics across channels.
+9. **Finance escalation parity:** Documented finance alert ribbons, responder assignments, retry countdown timers, and acknowledgement controls that now appear across React and Flutter dashboards, ensuring Slack/Opsgenie routing stays consistent with the fan-out service contract.
 
 ## Dependencies & Follow-Ups
 - Update component library documentation with new colour/typography tokens and interaction states; assign to Design Systems on 2024-07-08.

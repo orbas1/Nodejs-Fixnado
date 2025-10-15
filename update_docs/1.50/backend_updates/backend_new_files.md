@@ -20,3 +20,5 @@
 | `backend-nodejs/src/services/databaseCredentialRotationService.js` | Rotates database credentials via Secrets Manager, enforces TLS, terminates stale sessions, and refreshes configuration at runtime. |
 | `backend-nodejs/src/jobs/dataWarehouseExportJob.js` | Interval job invoking the warehouse export service for configured datasets/regions, logging triggered runs for audit. |
 | `backend-nodejs/src/jobs/databaseCredentialRotationJob.js` | Scheduled job monitoring rotation intervals, invoking the credential rotation service, and surfacing failures to operators. |
+| `backend-nodejs/src/database/migrations/20250323000000-enhance-data-subject-requests.js` | Adds the `due_at` column and supporting index for GDPR request SLA tracking, backfilling historical records. |
+| `backend-nodejs/tests/complianceMetricsRoutes.test.js` | Supertest suite covering `/api/compliance/data-requests/metrics` responses, filters, and readiness for dashboard integrations. |

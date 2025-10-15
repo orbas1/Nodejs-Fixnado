@@ -7,3 +7,8 @@
 - Creates `regions`, `data_subject_requests`, `finance_transaction_histories`, `message_histories`, and `storefront_revision_logs` tables with appropriate foreign keys and indexes.
 - Augments existing domain tables (users, orders, escrows, disputes, rentals, conversations, companies, storefronts) to include `region_id` references and default GB assignments for legacy records.
 - Seeds baseline regions (GB, IE, AE) and ensures down migration removes indexes, drops tables, and cleans up enum types without leaving residues.
+
+### `20250323000000-enhance-data-subject-requests.js`
+- Adds a nullable `due_at` column to `data_subject_requests` with a supporting `(status, due_at)` index to accelerate SLA reporting and due-soon filtering.
+- Backfills `due_at` for existing rows using the configured SLA window and persists the original timestamp in an audit log entry for traceability.
+- Down migration drops the column/index while preserving request history, keeping rollback rehearsals straightforward.

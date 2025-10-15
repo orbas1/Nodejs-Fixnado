@@ -6,7 +6,8 @@ import {
   triggerDataSubjectExport,
   updateDataSubjectRequestStatus,
   fetchWarehouseExportRuns,
-  triggerWarehouseExportRun
+  triggerWarehouseExportRun,
+  fetchDataSubjectRequestMetrics
 } from '../api/complianceClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 
@@ -52,6 +53,23 @@ function formatDateTime(value) {
   }
 }
 
+function formatDurationMinutes(minutes) {
+  if (minutes == null || Number.isNaN(minutes)) {
+    return '—';
+  }
+
+  if (minutes >= 60) {
+    const hours = minutes / 60;
+    return `${hours.toFixed(hours >= 10 ? 1 : 2)} hrs`;
+  }
+
+  if (minutes >= 1) {
+    return `${minutes.toFixed(minutes >= 10 ? 1 : 2)} mins`;
+  }
+
+  return `${Math.round(minutes * 60)} secs`;
+}
+
 function StatusBadge({ status }) {
   const colourMap = {
     received: 'bg-blue-100 text-blue-700 ring-blue-200',
@@ -72,6 +90,38 @@ function StatusBadge({ status }) {
 
 StatusBadge.propTypes = {
   status: PropTypes.string.isRequired
+};
+
+function MetricCard({ label, value, description, accent = 'primary' }) {
+  const accentColours = {
+    primary: 'text-primary',
+    warning: 'text-amber-400',
+    success: 'text-emerald-400',
+    info: 'text-sky-400'
+  };
+  const gradientMap = {
+    primary: 'from-primary/15 via-slate-950/70 to-slate-950/40',
+    warning: 'from-amber-300/20 via-slate-950/70 to-slate-950/40',
+    success: 'from-emerald-300/20 via-slate-950/70 to-slate-950/40',
+    info: 'from-sky-300/20 via-slate-950/70 to-slate-950/40'
+  };
+  const colourClass = accentColours[accent] ?? 'text-slate-100';
+  const gradientClass = gradientMap[accent] ?? 'from-slate-500/10 via-slate-950/70 to-slate-950/40';
+
+  return (
+    <div className={`rounded-xl border border-slate-800 bg-gradient-to-br ${gradientClass} p-5 shadow-lg shadow-slate-900/50`}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold ${colourClass}`}>{value}</p>
+      {description ? <p className="mt-2 text-xs text-slate-400">{description}</p> : null}
+    </div>
+  );
+}
+
+MetricCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+  description: PropTypes.node,
+  accent: PropTypes.string
 };
 
 export default function CompliancePortal() {
@@ -96,15 +146,38 @@ export default function CompliancePortal() {
   const [datasetSelection, setDatasetSelection] = useState('orders');
   const [regionSelection, setRegionSelection] = useState('GB');
   const [isTriggeringWarehouse, setIsTriggeringWarehouse] = useState(false);
+  const [requestTypeFilter, setRequestTypeFilter] = useState('');
+  const [regionFilter, setRegionFilter] = useState('');
+  const [searchEmailInput, setSearchEmailInput] = useState('');
+  const [searchEmail, setSearchEmail] = useState('');
+  const [submittedAfter, setSubmittedAfter] = useState('');
+  const [submittedBefore, setSubmittedBefore] = useState('');
+  const [requestsReloadToken, setRequestsReloadToken] = useState(0);
+  const [metrics, setMetrics] = useState(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [metricsError, setMetricsError] = useState(null);
+  const [metricsReloadToken, setMetricsReloadToken] = useState(0);
+
+  const requestFilters = useMemo(
+    () => ({
+      status: statusFilter || undefined,
+      requestType: requestTypeFilter || undefined,
+      regionCode: regionFilter || undefined,
+      submittedAfter: submittedAfter || undefined,
+      submittedBefore: submittedBefore || undefined,
+      subjectEmail: searchEmail || undefined
+    }),
+    [statusFilter, requestTypeFilter, regionFilter, submittedAfter, submittedBefore, searchEmail]
+  );
 
   useEffect(() => {
-    let abortController = new AbortController();
+    const abortController = new AbortController();
     async function loadRequests() {
       setIsLoading(true);
       setError(null);
       try {
         const results = await fetchDataSubjectRequests(
-          { status: statusFilter || undefined },
+          { ...requestFilters, limit: 200 },
           { signal: abortController.signal }
         );
         setRequests(results);
@@ -121,7 +194,32 @@ export default function CompliancePortal() {
     return () => {
       abortController.abort();
     };
-  }, [statusFilter]);
+  }, [requestFilters, requestsReloadToken]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    async function loadMetrics() {
+      setMetricsLoading(true);
+      setMetricsError(null);
+      try {
+        const response = await fetchDataSubjectRequestMetrics(requestFilters, {
+          signal: abortController.signal
+        });
+        setMetrics(response);
+      } catch (loadError) {
+        if (loadError.name !== 'AbortError') {
+          setMetricsError(loadError.message || 'Failed to load compliance metrics.');
+        }
+      } finally {
+        setMetricsLoading(false);
+      }
+    }
+
+    loadMetrics();
+    return () => {
+      abortController.abort();
+    };
+  }, [requestFilters, metricsReloadToken]);
 
   useEffect(() => {
     let abortController = new AbortController();
@@ -169,6 +267,49 @@ export default function CompliancePortal() {
     [warehouseRuns]
   );
 
+  const backlogCount = useMemo(() => {
+    if (!metrics) {
+      return 0;
+    }
+    const completed = metrics.statusBreakdown?.completed ?? 0;
+    return Math.max((metrics.totalRequests ?? 0) - completed, 0);
+  }, [metrics]);
+
+  const completionRate = useMemo(() => {
+    if (!metrics || typeof metrics.completionRate !== 'number') {
+      return null;
+    }
+    return Math.round(metrics.completionRate * 100);
+  }, [metrics]);
+
+  function refreshRequests() {
+    setRequestsReloadToken((value) => value + 1);
+  }
+
+  function refreshMetrics() {
+    setMetricsReloadToken((value) => value + 1);
+  }
+
+  function handleApplyFilters(event) {
+    event.preventDefault();
+    setSearchEmail(searchEmailInput.trim().toLowerCase());
+  }
+
+  function handleResetFilters() {
+    setStatusFilter('');
+    setRequestTypeFilter('');
+    setRegionFilter('');
+    setSearchEmailInput('');
+    setSearchEmail('');
+    setSubmittedAfter('');
+    setSubmittedBefore('');
+  }
+
+  function handleManualRefresh() {
+    refreshRequests();
+    refreshMetrics();
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -182,6 +323,8 @@ export default function CompliancePortal() {
       const created = await createDataSubjectRequest(payload);
       setRequests((current) => [created, ...current]);
       setFormState({ subjectEmail: '', requestType: 'access', justification: '', regionCode: 'GB' });
+      refreshMetrics();
+      refreshRequests();
     } catch (submitError) {
       setError(submitError.message || 'Unable to submit data subject request.');
     } finally {
@@ -199,6 +342,7 @@ export default function CompliancePortal() {
           current.map((item) => (item.id === requestId ? { ...item, ...result.request } : item))
         );
       }
+      refreshMetrics();
     } catch (exportError) {
       setError(exportError.message || 'Failed to generate export package.');
     } finally {
@@ -212,6 +356,7 @@ export default function CompliancePortal() {
     try {
       const updated = await updateDataSubjectRequestStatus(requestId, { status });
       setRequests((current) => current.map((item) => (item.id === requestId ? updated : item)));
+      refreshMetrics();
     } catch (updateError) {
       setError(updateError.message || 'Failed to update request status.');
     } finally {
@@ -249,6 +394,64 @@ export default function CompliancePortal() {
             regulatory evidence.
           </p>
         </header>
+
+        <section className="mb-12 rounded-xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-slate-900/60">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Compliance workload snapshot</h2>
+              <p className="mt-1 text-sm text-slate-300">
+                Monitor backlog, SLA exposure, and completion cadence across the {metrics?.windowDays ?? 365}-day evidence
+                window. Metrics refresh automatically whenever filters change.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-primary hover:text-primary"
+            >
+              Refresh data
+            </button>
+          </div>
+
+          {metricsError && (
+            <div className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+              {metricsError}
+            </div>
+          )}
+
+          {metricsLoading ? (
+            <div className="mt-8 flex justify-center" role="status" aria-live="polite">
+              <Spinner className="h-6 w-6 text-primary" />
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Total requests"
+                value={(metrics?.totalRequests ?? 0).toLocaleString('en-GB')}
+                description={`Resolved ${metrics?.statusBreakdown?.completed ?? 0} • Pending ${backlogCount}`}
+                accent="primary"
+              />
+              <MetricCard
+                label="Overdue"
+                value={(metrics?.overdueCount ?? 0).toLocaleString('en-GB')}
+                description={`Due within ${metrics?.dueSoonCount ?? 0} / Next ${metrics?.dueSoonWindowDays ?? 5} days`}
+                accent="warning"
+              />
+              <MetricCard
+                label="Avg completion"
+                value={formatDurationMinutes(metrics?.averageCompletionMinutes)}
+                description={`Median ${formatDurationMinutes(metrics?.medianCompletionMinutes)} • P95 ${formatDurationMinutes(metrics?.percentile95CompletionMinutes)}`}
+                accent="success"
+              />
+              <MetricCard
+                label="Completion rate"
+                value={completionRate != null ? `${completionRate}%` : '—'}
+                description={`SLA target ${metrics?.slaTargetDays ?? 30} days`}
+                accent="info"
+              />
+            </div>
+          )}
+        </section>
 
         <section className="mb-12 rounded-xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-slate-900/60">
           <h2 className="text-xl font-semibold text-white">Log a new request</h2>
@@ -347,6 +550,82 @@ export default function CompliancePortal() {
             </label>
           </div>
 
+          <form className="mt-6 grid gap-4 md:grid-cols-5" onSubmit={handleApplyFilters}>
+            <label className="flex flex-col gap-1 text-sm text-slate-200">
+              Request type
+              <select
+                value={requestTypeFilter}
+                onChange={(event) => setRequestTypeFilter(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-white focus:border-primary focus:outline-none"
+              >
+                <option value="">All</option>
+                {REQUEST_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-200">
+              Region
+              <select
+                value={regionFilter}
+                onChange={(event) => setRegionFilter(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-white focus:border-primary focus:outline-none"
+              >
+                <option value="">All</option>
+                {REGION_OPTIONS.map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {region.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-200">
+              Submitted after
+              <input
+                type="date"
+                value={submittedAfter}
+                onChange={(event) => setSubmittedAfter(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-white focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-200">
+              Submitted before
+              <input
+                type="date"
+                value={submittedBefore}
+                onChange={(event) => setSubmittedBefore(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-white focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-200">
+              Subject email
+              <input
+                type="email"
+                value={searchEmailInput}
+                onChange={(event) => setSearchEmailInput(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-white focus:border-primary focus:outline-none"
+                placeholder="compliance.contact@example.com"
+              />
+            </label>
+            <div className="md:col-span-5 flex flex-wrap gap-3">
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+              >
+                Apply filters
+              </button>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-primary hover:text-primary"
+              >
+                Reset
+              </button>
+            </div>
+          </form>
+
           {error && <p className="mt-4 rounded-md border border-rose-400 bg-rose-900/30 px-4 py-3 text-sm text-rose-100">{error}</p>}
 
           {isLoading ? (
@@ -374,6 +653,9 @@ export default function CompliancePortal() {
                       Requested
                     </th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Due by
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Export path
                     </th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -399,6 +681,21 @@ export default function CompliancePortal() {
                         <div>{formatDateTime(request.requestedAt || request.createdAt)}</div>
                         {request.processedAt && (
                           <div className="text-xs text-slate-400">Closed {formatDateTime(request.processedAt)}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {request.dueAt ? (
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
+                              request.status !== 'completed' && new Date(request.dueAt).getTime() < Date.now()
+                                ? 'bg-rose-500/10 text-rose-200'
+                                : 'bg-slate-800/80 text-slate-200'
+                            }`}
+                          >
+                            {formatDateTime(request.dueAt)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500">Not set</span>
                         )}
                       </td>
                       <td className="px-4 py-3 align-top">
@@ -444,7 +741,7 @@ export default function CompliancePortal() {
                   ))}
                   {sortedRequests.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">
+                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400">
                         No data subject requests recorded for this filter yet.
                       </td>
                     </tr>

@@ -79,5 +79,16 @@
 - Refactored the React header to consume a centralised navigation config, added accessible mobile drawer navigation, and aligned translation catalogues with the new solutions/resources hierarchy.
 - Delivered a Flutter workspaces hub screen and updated bottom navigation to surface dashboard switching, ensuring parity with the new web experience and reinforcing RBAC-driven role transitions across platforms.
 
+## 2025-04-07 – API Versioning & Operational Readiness
+- Wrapped the Express router in a `/api/v1` namespace while maintaining backwards-compatible `/api` fallbacks, unlocking contract versioning without breaking existing clients and aligning with the security milestone’s gateway roadmap.
+- Added a production `/readyz` endpoint backed by component-level readiness telemetry (database, background jobs, HTTP server) so load balancers, deployment tooling, and observability stacks can distinguish startup vs. steady-state health.
+- Implemented graceful shutdown orchestration that drains background jobs, closes HTTP listeners, and terminates Sequelize pools on `SIGINT`/`SIGTERM`/failure signals, enabling zero-downtime deploys and eliminating leaked timers called out in the pre-update evaluation.
+
+## 2025-04-08 – GDPR Metrics & SLA Visibility Rollout
+- Enhanced the data governance service with percentile completion telemetry, backlog segmentation, SLA due-date calculations, and a `/api/compliance/data-requests/metrics` controller so operations teams can track GDPR response health in real time.
+- Surfaced the new metrics across the React compliance portal via dashboard tiles, advanced filters, due-date columns, and Vitest coverage that exercises refresh/filters behaviour alongside the metrics client.
+- Updated the Flutter data governance repository, Riverpod controller, and screen to ingest the metrics payload, render KPI banners, and expose due-at indicators with widget/unit coverage validating overdue detection and repository error handling.
+- Captured the service, API, UI, and mobile upgrades across backend/frontend/mobile/design change logs, trackers, and milestone artefacts to close the Compliance & Data Governance milestone at production readiness.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

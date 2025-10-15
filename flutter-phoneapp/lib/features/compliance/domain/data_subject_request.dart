@@ -8,6 +8,7 @@ class DataSubjectRequest extends Equatable {
     required this.status,
     required this.requestedAt,
     this.processedAt,
+    this.dueAt,
     this.payloadLocation,
     this.regionCode,
     this.auditTrail,
@@ -21,6 +22,7 @@ class DataSubjectRequest extends Equatable {
       status: json['status'] as String? ?? 'received',
       requestedAt: _parseRequiredDate(json['requested_at'] ?? json['requestedAt']),
       processedAt: _parseOptionalDate(json['processed_at'] ?? json['processedAt']),
+      dueAt: _parseOptionalDate(json['due_at'] ?? json['dueAt']),
       payloadLocation: json['payload_location'] as String? ?? json['payloadLocation'] as String?,
       regionCode: (json['region'] is Map)
           ? (json['region']['code'] as String?)
@@ -36,6 +38,7 @@ class DataSubjectRequest extends Equatable {
   final String status;
   final DateTime requestedAt;
   final DateTime? processedAt;
+  final DateTime? dueAt;
   final String? payloadLocation;
   final String? regionCode;
   final List<Map<String, dynamic>>? auditTrail;
@@ -43,6 +46,7 @@ class DataSubjectRequest extends Equatable {
   DataSubjectRequest copyWith({
     String? status,
     DateTime? processedAt,
+    DateTime? dueAt,
     String? payloadLocation,
     List<Map<String, dynamic>>? auditTrail,
   }) {
@@ -53,6 +57,7 @@ class DataSubjectRequest extends Equatable {
       status: status ?? this.status,
       requestedAt: requestedAt,
       processedAt: processedAt ?? this.processedAt,
+      dueAt: dueAt ?? this.dueAt,
       payloadLocation: payloadLocation ?? this.payloadLocation,
       regionCode: regionCode,
       auditTrail: auditTrail ?? this.auditTrail,
@@ -67,6 +72,7 @@ class DataSubjectRequest extends Equatable {
       'status': status,
       'requestedAt': requestedAt.toIso8601String(),
       if (processedAt != null) 'processedAt': processedAt!.toIso8601String(),
+      if (dueAt != null) 'dueAt': dueAt!.toIso8601String(),
       if (payloadLocation != null) 'payloadLocation': payloadLocation,
       if (regionCode != null) 'regionCode': regionCode,
       if (auditTrail != null) 'auditLog': auditTrail,
@@ -74,7 +80,19 @@ class DataSubjectRequest extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, subjectEmail, requestType, status, requestedAt, processedAt, payloadLocation, regionCode];
+  List<Object?> get props => [
+        id,
+        subjectEmail,
+        requestType,
+        status,
+        requestedAt,
+        processedAt,
+        dueAt,
+        payloadLocation,
+        regionCode
+      ];
+
+  bool get isOverdue => dueAt != null && dueAt!.isBefore(DateTime.now().toUtc()) && status != 'completed';
 }
 
 DateTime _parseRequiredDate(Object? value) {

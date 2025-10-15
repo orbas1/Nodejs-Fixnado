@@ -36,3 +36,8 @@
 - Warehouse export run cards use compliance green (`#1AAE70`) for successful states, amber (`#FFB300`) for in-progress, and crimson (`#D32F2F`) for failures, with matching iconography to maintain clarity for colourblind operators.
 - Retention countdown chips adopt mono-spaced numerals with 12px padding and gradient borders referencing the shared audit token to visually differentiate them from generic badges.
 - DPIA guidance drawer integrates legal typography styles (Manrope 500 headings, Inter 400 body) and uses muted slate backgrounds so compliance copy remains legible during extended review sessions.
+- Added KPI banner row above the data requests list featuring four gradient cards (backlog, overdue, completion rate, percentile timing) with 16px corner radius and support for one-line and two-line metrics copy.
+- Due-at badges inside request rows use tonal fills: emerald for within SLA, amber for due soon (inside configurable window), and rose for overdue; badges include iconography and accessible text describing remaining days.
+- Finance alert trays introduce stacked cards with severity colour bars (Critical `#D84315`, High `#FB8C00`, Medium `#FDD835`, Low `#039BE5`) and overlay icons representing Slack or Opsgenie delivery confirmation.
+- Retry countdown chips use mono-spaced numerals with soft-glow borders, scaling from 14px on phones to 16px on tablets while maintaining 12px vertical rhythm to avoid layout jump during updates.
+- Responder avatars adopt 32px circular frames with status rings that change hue when an acknowledgement is recorded, aligning mobile visuals with the React dashboard styling guidance.

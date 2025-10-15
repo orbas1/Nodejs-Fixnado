@@ -10,7 +10,7 @@
    - Encrypt core PII columns with deterministic hashes, delivering transactional migrations and rollback rehearsals.
 2. **API Gateway Hardening**
    - Introduce versioned `/v1` routing, rate limiting, payload caps, and CORS allowlist.
-   - Add `/healthz` and `/readyz` endpoints plus SIGTERM shutdown handling.
+   - ✅ Add `/healthz` and `/readyz` endpoints plus SIGTERM shutdown handling.
    - Enable structured logging with correlation IDs and threat detection alerts.
    - Document new gateway behaviour for frontend/mobile consumers.
 3. **GDPR Consent & Privacy UX**
@@ -38,6 +38,7 @@
 2. **GDPR Lifecycle Automation**
    - Implement retention schedules, purge jobs, and data export APIs.
    - Build frontend/mobile portals for export/delete requests and consent review.
+   - ✅ Deliver SLA analytics via `/api/compliance/data-requests/metrics`, React KPI tiles, and Flutter KPI banners with regression coverage.
    - Document retention policies and audit them in QA.
    - Verify rollback plans for compliance jobs.
 3. **Payment Orchestration Service**

@@ -298,6 +298,9 @@ const config = {
     health: {
       databaseTimeoutMs: Math.max(intFromEnv('HEALTHCHECK_DB_TIMEOUT_MS', 2000), 100)
     },
+    shutdown: {
+      timeoutMs: Math.max(intFromEnv('SECURITY_SHUTDOWN_TIMEOUT_MS', 15000), 1000)
+    },
     pii: {
       encryptionKeySet: Boolean(process.env.PII_ENCRYPTION_KEY),
       hashKeySet: Boolean(process.env.PII_HASH_KEY),
@@ -491,7 +494,10 @@ const config = {
     accessLogRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_ACCESS_RETENTION_DAYS', 730), 30),
     messageHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_MESSAGE_RETENTION_DAYS', 365), 30),
     financeHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_FINANCE_RETENTION_DAYS', 2555), 365),
-    retentionSweepMinutes: Math.max(intFromEnv('DATA_GOVERNANCE_SWEEP_MINUTES', 180), 15)
+    retentionSweepMinutes: Math.max(intFromEnv('DATA_GOVERNANCE_SWEEP_MINUTES', 180), 15),
+    requestSlaDays: Math.max(intFromEnv('DATA_GOVERNANCE_REQUEST_SLA_DAYS', 30), 7),
+    dueSoonWindowDays: Math.max(intFromEnv('DATA_GOVERNANCE_DUE_SOON_DAYS', 5), 1),
+    metricsWindowDays: Math.max(intFromEnv('DATA_GOVERNANCE_METRICS_WINDOW_DAYS', 365), 30)
   },
   dataWarehouse: {
     exportRoot: process.env.DATA_WAREHOUSE_EXPORT_ROOT || 'storage/warehouse-exports',

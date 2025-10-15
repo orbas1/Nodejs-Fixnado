@@ -30,3 +30,8 @@
 - Warehouse export tab follows a review → trigger → monitor sequence: users first review latest run summaries, then optionally trigger a new export after confirming dataset scope and retention notices, and finally monitor progress via streamed status updates.
 - Manual triggers require biometric confirmation when enabled and log `compliance_export_trigger` analytics events with dataset, region, and justification metadata to maintain DPIA evidence.
 - Completed runs surface actionable buttons (`Download`, `Copy secure link`, `View DPIA guidance`) with guardrails preventing downloads on expired retention windows; errors route operators into troubleshooting checklists referencing backend status codes.
+
+## Finance Escalation Handling
+- Alert inbox polls orchestration telemetry every five minutes; when new SLA breaches appear the flow highlights the alert card, preloads context, and prompts the user to confirm or delegate the responder from a quick-pick roster.
+- Acknowledge action posts responder details and optional notes, pauses repeat notifications, and records analytics event `user_finance_alert_acknowledged` with severity, retry count, and downstream channel metadata.
+- Retry countdown timers update locally every 30 seconds; when a timer expires without acknowledgement the flow escalates severity, vibrates the device (respecting quiet hours), and surfaces direct links to finance runbooks stored in the knowledge base module.

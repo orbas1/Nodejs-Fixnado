@@ -10,6 +10,7 @@ import {
   getDataSubjectRequests,
   generateDataSubjectRequestExport,
   updateDataSubjectRequest,
+  getDataSubjectRequestMetrics,
   getWarehouseExportRuns,
   createWarehouseExportRun
 } from '../controllers/complianceController.js';
@@ -23,6 +24,7 @@ router.post('/companies/:companyId/evaluate', evaluateCompliance);
 router.post('/companies/:companyId/badge', toggleBadgeVisibility);
 router.post('/companies/:companyId/suspend', suspendCompany);
 router.post('/data-requests', createDataSubjectRequest);
+router.get('/data-requests/metrics', getDataSubjectRequestMetrics);
 router.get('/data-requests', getDataSubjectRequests);
 router.post('/data-requests/:requestId/export', generateDataSubjectRequestExport);
 router.post('/data-requests/:requestId/status', updateDataSubjectRequest);

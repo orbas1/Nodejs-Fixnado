@@ -12,6 +12,7 @@
 6. Status and alert token expansions covering rate limiting, CORS denial, and consent prompts aligned with backend copy.
 7. Privacy and consent banner patterns referencing encrypted data handling, breach notices, and audit log confirmations.
 8. Vault-managed secrets indicators, rotation status chips, and operations storyboard panels supporting AWS Secrets Manager adoption.
+9. Operational readiness telemetry patterns representing `/readyz` components (database, jobs, HTTP server) for deployment dashboards and release runbooks.
 
 ## Milestone D2 – Navigation & Information Architecture Alignment (Target Week 2–4)
 **Goals:** Harmonise navigation, menu structures, and logic flows while incorporating compliance and security cues.
@@ -36,6 +37,8 @@
 4. ✅ Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
 5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
 6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
+7. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
+8. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.
@@ -57,3 +60,4 @@
 3. Updated design change log and versioned library release notes.
 4. Developer enablement kit (component usage guides, token documentation, asset inventory).
 5. Stakeholder sign-off records (Product, Engineering, Compliance, Marketing).
+6. Release and observability handover pack illustrating `/readyz` readiness statuses, alert copy, and zero-downtime deployment storyboard panels aligned with the new backend telemetry.

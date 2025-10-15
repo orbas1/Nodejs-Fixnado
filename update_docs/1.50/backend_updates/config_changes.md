@@ -2,6 +2,7 @@
 
 ## Security Namespaces Added to `src/config/index.js`
 - Introduced a `security` configuration branch with sub-namespaces for `cors`, `bodyParser`, `rateLimiting`, and `health` so operational policies can be expressed via environment variables and audited centrally.
+- Expanded the `security` namespace with a `shutdown.timeoutMs` control feeding graceful shutdown timers to match load balancer drain windows and `/readyz` transitions.
 - Added intelligent parsers (`boolFromEnv`, `listFromEnv`, etc.) to safely consume comma-separated allowlists and human-readable booleans while defaulting to production-safe values.
 - Normalised trusted proxy and client IP header handling, enabling reverse proxies/CDNs to be configured without code changes.
 
@@ -18,6 +19,11 @@
 - Introduced a `dataGovernance` configuration branch exposing retention windows for exports, message history, and finance events plus the scheduler cadence (`DATA_GOVERNANCE_SWEEP_MINUTES`).
 - Defaults retain access exports for two years, message histories for one year, and finance transactions for seven years, aligning with GDPR and accounting obligations while remaining overrideable per environment.
 - Retention values are validated for sensible minimums to avoid accidental short-lived purges during configuration mistakes.
+
+### SLA & Metrics Windows
+- Added `dataGovernance.requestSlaDays` and `dataGovernance.dueSoonWindowDays` configuration keys (overrideable via `DATA_GOVERNANCE_REQUEST_SLA_DAYS` and `DATA_GOVERNANCE_DUE_SOON_WINDOW_DAYS`) to drive due-date assignments and dashboard due-soon calculations.
+- Configuration defaults align with legal’s 30-day SLA and a five-day due-soon warning window; both values feed the upgraded metrics endpoint and UI KPI messaging.
+- Vitest and Supertest suites stub these values during tests to ensure analytics remain deterministic under different SLA policies.
 
 ## Database TLS & Rotation Defaults
 - Production and staging environments now enforce database TLS by default; `DB_SSL` defaults to `true` with optional CA configuration via `DB_SSL_CA_FILE` or `DB_SSL_CA_BASE64`, and the service refuses to boot if TLS is disabled in these environments.

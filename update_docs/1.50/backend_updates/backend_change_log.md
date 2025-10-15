@@ -51,3 +51,13 @@
 - Added migration `20250321000000-data-warehouse-exports.js`, Sequelize model `WarehouseExportRun`, and associations to track dataset/region exports with audit trails, status, and storage metadata.
 - Introduced `dataWarehouseExportService` plus scheduled job wiring to stream orders, finance, and communications datasets into compressed NDJSON bundles, exposing `/api/compliance/data-warehouse/runs` endpoints guarded by new RBAC policies.
 - Enforced TLS-by-default database connections, Secrets Manager-backed credential rotation via `databaseCredentialRotationService`, and interval job orchestration that refreshes secrets, updates pools, and terminates stale sessions post-rotation.
+
+## 2025-04-07 – API Versioning & Operational Readiness
+- Reworked the Express routing entrypoint to mount all controllers under a versioned `/api/v1` namespace while preserving legacy `/api` fallbacks, preparing the platform for additive contract evolution without client regressions.
+- Added a `/readyz` endpoint under `src/app.js` that reports readiness per component (database, background jobs, HTTP server) and feeds `/healthz` responses with the same telemetry to improve deployment and observability workflows.
+- Introduced a graceful shutdown pipeline in `src/server.js` that drains background jobs via the new `stopBackgroundJobs` helper, closes the HTTP server, and terminates Sequelize pools on signals or fatal errors, eliminating leaked timers and supporting zero-downtime deploys highlighted in the pre-update evaluation.
+
+## 2025-04-08 – GDPR Metrics Endpoint & SLA Instrumentation
+- Enriched `dataGovernanceService` with due-date calculations, percentile completion analytics, backlog segmentation, and configurable SLA/due-soon windows sourced from `config.dataGovernance`.
+- Added controller/route wiring for `/api/compliance/data-requests/metrics`, returning aggregated metrics with `dueAt`, `dueSoonWindowDays`, and `oldestPending` metadata plus a Supertest-backed regression suite covering filters and payload integrity.
+- Extended the Sequelize migration stack with `20250323000000-enhance-data-subject-requests.js`, introducing a `due_at` column, supporting index, and data backfill to keep analytics performant at scale.
