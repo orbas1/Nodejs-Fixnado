@@ -4,9 +4,9 @@
   "tradingName": "Fixnado",
   "companyNumber": "13847592",
   "registeredAddress": "Blackwellen Ltd, 58-60 Kensington Church Street, London, W8 4DB, United Kingdom",
-  "effectiveDate": "2024-05-01",
-  "lastUpdated": "2025-03-01",
-  "version": "1.1.0",
+  "effectiveDate": "2025-03-16",
+  "lastUpdated": "2025-03-16",
+  "version": "1.2.0",
   "jurisdiction": "England and Wales",
   "contact": {
     "email": "legal@fixnado.co.uk",
@@ -394,6 +394,35 @@
           "content": [
             "We may revise these Terms to reflect legal developments, product enhancements, or changes in business practices. Updates will be published on our website with the effective date clearly stated. Where changes are material, we will provide at least 30 days’ notice to registered users via email. Continued use of the Platform after the effective date constitutes acceptance of the updated Terms.",
             "If you do not agree to a material change, you may terminate your Account before the effective date. In that scenario, outstanding Work Orders should be completed, and we will continue to process data in accordance with the previous Terms for a reasonable wind-down period unless law requires otherwise."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consent-management",
+      "title": "Digital Consent and Record Keeping",
+      "summary": "How Fixnado records, renews, and respects user consents across web and mobile experiences.",
+      "clauses": [
+        {
+          "heading": "Consent capture and renewal",
+          "content": [
+            "We operate a consent management platform that records each acceptance of these Terms, the Privacy Policy, and optional communication preferences. Consents are linked to your authenticated Account or, where you browse without logging in, to a pseudonymous device token stored in encrypted form. Each record captures the policy version, timestamp, channel (web, mobile, API), IP address, and user agent so we can evidence lawful processing and respond to regulatory audits.",
+            "Consents remain valid until you withdraw them or until we publish a materially updated policy. When a new version is issued, we prompt affected users to reconfirm within the timeframe communicated in-product. If you do not respond, certain functionality—including continued platform access—may be paused until consent is renewed."
+          ],
+          "bullets": {
+            "style": "decimal",
+            "items": [
+              "We surface consent prompts when you first register, access new features, or when policies materially change.",
+              "Enterprise administrators can download consent evidence through the Governance workspace for their workforce.",
+              "We store consent events for the longer of seven years or the statutory retention period applicable to the workflow."
+            ]
+          }
+        },
+        {
+          "heading": "Withdrawal and preference management",
+          "content": [
+            "You may withdraw consent or update your marketing preferences at any time through the Privacy Center, the mobile application, or by emailing privacy@fixnado.com. Withdrawal takes effect immediately for optional communications and within a reasonable period for contractual or regulatory notices. We log withdrawal events in the same ledger so that downstream systems honour your updated state.",
+            "Where withdrawal affects ongoing Work Orders, we will liaise with you to agree compliant alternatives (for example, switching to contract-based processing for safety notifications). We may retain minimal records demonstrating prior consent if required to establish, exercise, or defend legal claims."
           ]
         }
       ]

@@ -1,6 +1,7 @@
 import { Booking, BookingAssignment, BookingBid, BookingBidComment, sequelize } from '../models/index.js';
 import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 import { calculateBookingTotals, resolveSlaExpiry } from './financeService.js';
+import { applyScamDetection } from './scamDetectionService.js';
 
 const ALLOWED_STATUS_TRANSITIONS = {
   pending: ['awaiting_assignment', 'cancelled'],
@@ -136,6 +137,12 @@ export async function createBooking({
       },
       { transaction }
     );
+
+    try {
+      await applyScamDetection({ booking, actor, transaction });
+    } catch (error) {
+      console.error('Failed to run scam detection heuristic', error);
+    }
 
     return booking;
   };

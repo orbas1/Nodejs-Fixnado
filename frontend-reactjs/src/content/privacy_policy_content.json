@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "Fixnado Privacy Policy",
-    "version": "1.0",
-    "effectiveDate": "2024-06-01",
+    "version": "1.1",
+    "effectiveDate": "2025-03-16",
     "owner": "Blackwellen Ltd",
     "summary": "How Fixnado, operated by Blackwellen Ltd, handles personal data across web and mobile and the rights available to you."
   },
@@ -44,7 +44,25 @@
       "title": "Privacy governance and accountability",
       "paragraphs": [
         "Blackwellen Ltd operates a privacy management framework aligned with ISO/IEC 27701 and integrates privacy risk reviews into our enterprise risk management cycle. Product squads must complete a data protection impact assessment (DPIA) for new or high-risk features and submit the results to the Privacy Office before release. Our legal, compliance, and security teams maintain a joint change control board that reviews policy changes, monitors regulatory developments, and ensures training coverage across all staff.",
-        "We maintain mandatory privacy training for employees, contractors, and temporary workers with annual refreshers and scenario-based simulations. Access to production systems requires multi-factor authentication, device posture compliance, and completion of privacy awareness modules. Audit logs are monitored for anomalies, and breaches of this Policy may result in disciplinary action or termination of vendor contracts. These governance steps ensure that privacy is treated as a continuous operational responsibility." 
+        "We maintain mandatory privacy training for employees, contractors, and temporary workers with annual refreshers and scenario-based simulations. Access to production systems requires multi-factor authentication, device posture compliance, and completion of privacy awareness modules. Audit logs are monitored for anomalies, and breaches of this Policy may result in disciplinary action or termination of vendor contracts. These governance steps ensure that privacy is treated as a continuous operational responsibility."
+      ]
+    },
+    {
+      "id": "consent-ledger",
+      "title": "Consent management and evidence",
+      "paragraphs": [
+        "Fixnado maintains a dedicated consent ledger that records every acceptance, withdrawal, and refresh of our Terms, Privacy Policy, cookie preferences, and optional marketing communications. Each event stores the policy version, timestamp, channel, IP address, device fingerprint, and user identifier or pseudonymous token so we can evidence lawful bases during audits and regulator enquiries.",
+        "Consent records are encrypted, access-controlled, and replicated across regions for resilience. We retain evidence for the longer of seven years or the statutory retention period that applies to the associated workflow. If you revoke consent we log the change immediately and orchestrate downstream updates so marketing, analytics, and product systems honour your choice." 
+      ],
+      "lists": [
+        {
+          "title": "How you stay in control",
+          "items": [
+            "Manage consent at any time via the Privacy Center on web or mobile, including opting in or out of marketing communications.",
+            "Request a copy of your consent history, which we deliver through secure download links or encrypted email.",
+            "Escalate consent-related concerns to privacy@fixnado.com; our Privacy Office responds within five Business Days with remediation actions." 
+          ]
+        }
       ]
     },
     {

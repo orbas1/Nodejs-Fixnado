@@ -24,29 +24,10 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : '';
 }
 
-function readAuthToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
-  } catch (error) {
-    console.warn('[blogClient] unable to read auth token', error);
-    return null;
-  }
-}
-
-async function request(path, { method = 'GET', body, signal, authenticated = false } = {}) {
+async function request(path, { method = 'GET', body, signal } = {}) {
   const headers = new Headers({ Accept: 'application/json' });
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json');
-  }
-  if (authenticated) {
-    const token = readAuthToken();
-    if (!token) {
-      const error = new Error('Authentication required');
-      error.status = 401;
-      throw error;
-    }
-    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const controller = new AbortController();
@@ -121,8 +102,7 @@ export async function fetchBlogPost(slug, options = {}) {
 export async function fetchDashboardBlogPosts({ limit } = {}, options = {}) {
   const query = buildQuery({ limit });
   const payload = await request(`${BLOG_API_ROOT}/dashboard${query}`, {
-    ...options,
-    authenticated: true
+    ...options
   });
   return Array.isArray(payload?.data) ? payload.data : [];
 }
