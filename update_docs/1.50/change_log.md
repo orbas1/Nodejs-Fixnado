@@ -42,5 +42,10 @@
 - Updated runtime configuration to depend on vault-sourced credentials (JWT secret, database password) while surfacing sync telemetry during server initialisation and exposing metadata to downstream diagnostics.
 - Replaced the legacy MySQL bootstrap file with a Postgres provisioning script that prompts for strong credentials, revokes default privileges, grants least-privilege access to the application role, and installs required extensions (pgcrypto, uuid-ossp, PostGIS).
 
+## 2025-03-28 – Compliance & Data Governance Portal Launch
+- Executed the compliance migration introducing the `regions` catalogue, GDPR request ledger, finance/message/storefront history tables, and automated retention scheduler alongside updated Sequelize models and associations.
+- Delivered guarded `/api/compliance/data-requests` endpoints, orchestration service, and export/delete automation with RBAC coverage, sanitised audit payloads, and retention-aware storage paths.
+- Shipped the React compliance portal experience with submission, filter, export, and status workflows plus Riverpod-powered Flutter Data Requests screen and profile navigation card built on shared compliance tokens and copy.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

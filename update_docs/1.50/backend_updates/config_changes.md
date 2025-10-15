@@ -13,3 +13,8 @@
 ## PII Configuration Visibility
 - Added a `security.pii` namespace exposing whether the encryption and hash keys are present, alongside optional rotation identifiers.
 - Application startup now fails fast if the encryption or hash keys are missing, preventing plaintext persistence in misconfigured environments.
+
+## Data Governance Retention Controls
+- Introduced a `dataGovernance` configuration branch exposing retention windows for exports, message history, and finance events plus the scheduler cadence (`DATA_GOVERNANCE_SWEEP_MINUTES`).
+- Defaults retain access exports for two years, message histories for one year, and finance transactions for seven years, aligning with GDPR and accounting obligations while remaining overrideable per environment.
+- Retention values are validated for sensible minimums to avoid accidental short-lived purges during configuration mistakes.

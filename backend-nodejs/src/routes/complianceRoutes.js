@@ -5,7 +5,11 @@ import {
   getComplianceSummary,
   reviewComplianceDocumentAction,
   suspendCompany,
-  toggleBadgeVisibility
+  toggleBadgeVisibility,
+  createDataSubjectRequest,
+  getDataSubjectRequests,
+  generateDataSubjectRequestExport,
+  updateDataSubjectRequest
 } from '../controllers/complianceController.js';
 
 const router = Router();
@@ -16,5 +20,9 @@ router.get('/companies/:companyId', getComplianceSummary);
 router.post('/companies/:companyId/evaluate', evaluateCompliance);
 router.post('/companies/:companyId/badge', toggleBadgeVisibility);
 router.post('/companies/:companyId/suspend', suspendCompany);
+router.post('/data-requests', createDataSubjectRequest);
+router.get('/data-requests', getDataSubjectRequests);
+router.post('/data-requests/:requestId/export', generateDataSubjectRequestExport);
+router.post('/data-requests/:requestId/status', updateDataSubjectRequest);
 
 export default router;

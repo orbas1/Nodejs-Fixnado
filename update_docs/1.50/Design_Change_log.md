@@ -96,6 +96,10 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Produced operator hand-off cards for the infrastructure console, outlining secrets rotation cadence, AWS Secrets Manager vault taxonomy, and UI cues for stale credentials.
    - Added Postgres bootstrap storyboard panels illustrating the credential prompt, extension verification, and least-privilege role confirmation for onboarding documentation.
    - Updated security copy decks and empty states so admin tooling surfaces "Vault managed" badges instead of `.env` warnings, aligning messaging with the new backend runtime behaviour.
+18. **Compliance Portal Navigation & Mobile Card (2025-03-28)**
+   - Finalised the compliance portal navigation entry for Flutter by adding a governance insight card within the legal terms pane that mirrors the React dashboard taxonomy.
+   - Captured card metrics, chip treatments, and CTA copy referencing GDPR request counts so mobile parity documentation reflects production copy and data signals.
+   - Updated compliance portal visuals with shared tokens, ensuring Flutter and React implementations now consume the same badge, typography, and audit messaging guidance documented in the design system.
 
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.

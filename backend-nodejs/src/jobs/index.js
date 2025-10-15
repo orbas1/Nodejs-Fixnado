@@ -3,6 +3,7 @@ import { startZoneAnalyticsJob } from './zoneAnalyticsJob.js';
 import { startCampaignAnalyticsJob } from './campaignAnalyticsJob.js';
 import { startAnalyticsIngestionJob } from './analyticsIngestionJob.js';
 import { startWarehouseFreshnessJob } from './warehouseFreshnessJob.js';
+import { startDataGovernanceRetentionJob } from './dataGovernanceRetentionJob.js';
 
 export function startBackgroundJobs(logger = console) {
   const jobs = [];
@@ -29,6 +30,11 @@ export function startBackgroundJobs(logger = console) {
   const warehouseFreshnessHandle = startWarehouseFreshnessJob(logger);
   if (warehouseFreshnessHandle) {
     jobs.push(warehouseFreshnessHandle);
+  }
+
+  const dataGovernanceHandle = startDataGovernanceRetentionJob(logger);
+  if (dataGovernanceHandle) {
+    jobs.push(dataGovernanceHandle);
   }
 
   return jobs;

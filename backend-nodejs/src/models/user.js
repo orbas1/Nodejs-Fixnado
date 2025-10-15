@@ -201,6 +201,11 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'two_factor_app'
+    },
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
     }
   },
   {

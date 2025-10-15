@@ -31,6 +31,7 @@ Primary objectives:
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
 - Implement tabbed/drawer hybrids for larger devices, preserving gesture-based shortcuts and accessible focus rings.
 - Update booking, messaging, finance, and compliance screens with refreshed cards, chip groups, and micro-interactions.
+- Extend legal/compliance surfaces with a dedicated Data Requests screen and profile entry card that reflects shared audit tokens and GDPR metrics across platforms.
 - Mirror the RBAC navigation blueprint by pairing Flutter tab sets and secure drawers with the same role-driven menu allowances, ensuring compliance badges and finance widgets appear only for authorised personas.
 - Provide offline and loading states consistent with web skeleton patterns.
 - Overlay biometric unlock prompts and session status banners so mobile flows mirror the hardened authentication posture delivered in this milestone.

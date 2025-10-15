@@ -6,6 +6,12 @@ import {
   suspendInsuredSeller,
   toggleInsuredSellerBadge
 } from '../services/complianceService.js';
+import {
+  submitDataSubjectRequest,
+  listDataSubjectRequests,
+  generateDataSubjectExport,
+  updateDataSubjectRequestStatus
+} from '../services/dataGovernanceService.js';
 
 export async function createComplianceDocument(req, res, next) {
   try {
@@ -62,6 +68,48 @@ export async function suspendCompany(req, res, next) {
     const { companyId } = req.params;
     const application = await suspendInsuredSeller(companyId, req.body);
     res.json(application);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createDataSubjectRequest(req, res, next) {
+  try {
+    const request = await submitDataSubjectRequest(req.body);
+    res.status(201).json(request);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDataSubjectRequests(req, res, next) {
+  try {
+    const requests = await listDataSubjectRequests({
+      status: req.query.status,
+      limit: req.query.limit ? Number(req.query.limit) : 50
+    });
+    res.json(requests);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function generateDataSubjectRequestExport(req, res, next) {
+  try {
+    const { requestId } = req.params;
+    const { filePath, request } = await generateDataSubjectExport(requestId, req.body.actorId);
+    res.json({ filePath, request });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateDataSubjectRequest(req, res, next) {
+  try {
+    const { requestId } = req.params;
+    const { status, note, actorId } = req.body;
+    const request = await updateDataSubjectRequestStatus(requestId, status, actorId, note);
+    res.json(request);
   } catch (error) {
     next(error);
   }

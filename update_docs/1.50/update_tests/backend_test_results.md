@@ -15,3 +15,7 @@
 - `npm run lint` (backend-nodejs) — **PASS**. Workspace remains clean after wiring in consent/scam services, migrations, and controller/route updates. 【38eb14†L1-L7】
 - `npm run test -- consentService` — **PASS**. Ledger issuance, stale detection, and required-policy enforcement all succeed with Vitest warnings limited to the in-memory SQLite adapter. 【0c4216†L1-L21】
 - `npm run test -- scamDetectionService` — **PASS**. Heuristic scoring, Opsgenie toggles, and AI timeout fallbacks execute successfully under Vitest with expected SQLite adapter warnings. 【adac33†L1-L8】【6ec148†L1-L13】
+
+## 2025-03-28 – Compliance & Data Governance
+- `npm run lint` (backend-nodejs) — **PASS**. Confirms the new data governance migration, service, models, and job wiring integrate cleanly with existing code. 【ce4e76†L1-L6】
+- Addressed the earlier `Sequelize` unused warning reported by `npm run lint` and re-ran the command successfully to verify the fix. 【af6030†L1-L4】【ce4e76†L1-L6】

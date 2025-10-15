@@ -392,6 +392,12 @@ const config = {
       defaultExpireSeconds: Math.max(intFromEnv('AGORA_SESSION_TTL_SECONDS', 3600), 300)
     }
   },
+  dataGovernance: {
+    accessLogRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_ACCESS_RETENTION_DAYS', 730), 30),
+    messageHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_MESSAGE_RETENTION_DAYS', 365), 30),
+    financeHistoryRetentionDays: Math.max(intFromEnv('DATA_GOVERNANCE_FINANCE_RETENTION_DAYS', 2555), 365),
+    retentionSweepMinutes: Math.max(intFromEnv('DATA_GOVERNANCE_SWEEP_MINUTES', 180), 15)
+  },
   campaigns: {
     overspendTolerance: Math.max(floatFromEnv('CAMPAIGN_OVERSPEND_TOLERANCE', 0.15), 0),
     underspendTolerance: Math.max(floatFromEnv('CAMPAIGN_UNDERSPEND_TOLERANCE', 0.25), 0),

@@ -5,3 +5,5 @@
 - Documented the cookie + token interplay so QA can verify that mobile logins continue to function without cookies while browsers rely on httpOnly storage.
 - Extended the legal API client to invoke `/api/consent/snapshot`, `/api/consent/decisions`, and `/api/consent/verify`, aligning request payloads with the ledger requirements (channel metadata, region codes, anonymous subjects).
 - Captured Opsgenie escalation metadata returned from booking creation to support future in-app trust notifications once the mobile dashboards surface risk insights.
+- Added compliance API integration for `/api/compliance/data-requests` including create, list, status update, and export endpoints with retry-safe request bodies and localisation-aware region codes.
+- Normalised GDPR request payloads to trim emails, attach Riverpod-provided justification, and persist audit messages for offline replay.

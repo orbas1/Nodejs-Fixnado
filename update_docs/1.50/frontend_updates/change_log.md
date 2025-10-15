@@ -4,3 +4,8 @@
 - Added `ConsentProvider`, hook (`useConsent`), and banner component orchestrating consent snapshot retrieval, acknowledgement, and verification with anonymous subject persistence.
 - Wired the provider into `App.jsx`/`main.jsx`, updated API clients, and refreshed `uk_terms.json` + `privacy_policy_content.json` to surface the revised legal copy from the consent ledger.
 - Introduced `consentClient` with typed error handling plus ESLint clean-up across existing API utilities to keep shared fetch helpers warning-free.
+
+## 2025-03-28 – Compliance Portal Experience
+- Created `frontend-reactjs/src/pages/CompliancePortal.jsx` delivering data subject submission, filtering, export, and status management workflows with responsive layout and dark theme styling.
+- Added `frontend-reactjs/src/api/complianceClient.js` providing typed fetch helpers for GDPR request CRUD/export endpoints with abort support and error parsing.
+- Integrated the portal route into `App.jsx` navigation, surfaced PropTypes on shared status badges, and ensured lint coverage across new components.

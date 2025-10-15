@@ -19,6 +19,11 @@ Escrow.init(
     status: {
       type: DataTypes.ENUM('pending', 'funded', 'released', 'disputed'),
       defaultValue: 'pending'
+    },
+    regionId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'region_id'
     }
   },
   {

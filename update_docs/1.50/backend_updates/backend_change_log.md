@@ -41,3 +41,8 @@
 - Stood up a reusable secrets manager loader that synchronises AWS Secrets Manager values into `process.env`, captures refresh metadata, and surfaces enforcement through the configuration module with fail-fast validation for critical secrets.
 - Updated configuration bootstrap to require `JWT_SECRET` and database credentials from the vault, exposing sync metadata to the runtime and logging successful synchronisation during API startup.
 - Replaced the legacy MySQL bootstrap artefact with a Postgres-first provisioning script that prompts for strong credentials, locks down default privileges, and installs PostGIS/pgcrypto extensions for regional deployments.
+
+## 2025-03-28 – Compliance & Data Governance Rollout
+- Added migration `20250320000000-compliance-data-governance.js` creating the `regions` table, GDPR data subject request ledger, finance/message/storefront history tables, and region-aware indexes while backfilling existing entities.
+- Implemented `dataGovernanceService` with subject resolution, export generation, retention-safe storage paths, and sanitised audit logging plus scheduled `dataGovernanceRetentionJob` wiring through the job index.
+- Extended `complianceController`, routes, and RBAC policies to expose `/api/compliance/data-requests` CRUD/status/export flows guarded by hardened permissions and recorded the new Sequelize models for regions, requests, finance history, message history, and storefront revisions.

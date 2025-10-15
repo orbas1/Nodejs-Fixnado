@@ -9,11 +9,12 @@ import '../../communications/presentation/communications_screen.dart';
 import '../../storefront/presentation/storefront_screen.dart';
 import '../domain/profile_models.dart';
 import 'profile_controller.dart';
-import '../../storefront/presentation/storefront_screen.dart';
 import '../../legal/presentation/legal_terms_screen.dart';
 import '../../legal/application/legal_terms_loader.dart';
 import '../../legal/domain/legal_terms_models.dart';
 import '../../compliance/presentation/privacy_policy_screen.dart';
+import '../../compliance/presentation/data_requests_controller.dart';
+import '../../compliance/presentation/data_requests_screen.dart';
 
 class ProfileManagementScreen extends ConsumerStatefulWidget {
   const ProfileManagementScreen({super.key});
@@ -681,14 +682,14 @@ class _ProfileManagementScreenState extends ConsumerState<ProfileManagementScree
   }
 }
 
-class _LegalTermsAccessPane extends StatefulWidget {
+class _LegalTermsAccessPane extends ConsumerStatefulWidget {
   const _LegalTermsAccessPane();
 
   @override
-  State<_LegalTermsAccessPane> createState() => _LegalTermsAccessPaneState();
+  ConsumerState<_LegalTermsAccessPane> createState() => _LegalTermsAccessPaneState();
 }
 
-class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
+class _LegalTermsAccessPaneState extends ConsumerState<_LegalTermsAccessPane> {
   late Future<LegalTermsDocument> _future;
 
   @override
@@ -700,6 +701,35 @@ class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final requestsState = ref.watch(dataRequestsControllerProvider);
+    final requestsController = ref.read(dataRequestsControllerProvider.notifier);
+    final numberFormat = NumberFormat.compact();
+    final openRequests = requestsState.requests
+        .where((request) => request.status == 'received' || request.status == 'in_progress')
+        .length;
+    final completedRequests = requestsState.requests.where((request) => request.status == 'completed').length;
+    final latestSubmittedAt = _latestDate(
+      requestsState.requests.map((request) => request.requestedAt).toList(),
+    );
+    final latestCompletedAt = _latestDate(
+      requestsState.requests
+          .where((request) => request.processedAt != null)
+          .map((request) => request.processedAt!)
+          .toList(),
+    );
+
+    final portalSubtitle = () {
+      if (openRequests > 0) {
+        final formatted = latestSubmittedAt != null ? _formatAuditDate(latestSubmittedAt) : 'recently';
+        return 'Monitor ${openRequests == 1 ? 'one active GDPR request' : '$openRequests active GDPR requests'} and keep regulators informed. Last submission $formatted.';
+      }
+      if (completedRequests > 0) {
+        final formatted = latestCompletedAt != null ? _formatAuditDate(latestCompletedAt) : 'recently';
+        return 'All current GDPR actions are resolved. The most recent completion was logged $formatted.';
+      }
+      return 'Stay audit-ready by raising access, erasure, and rectification requests from the mobile compliance centre whenever clients reach out.';
+    }();
+
     return FutureBuilder<LegalTermsDocument>(
       future: _future,
       builder: (context, snapshot) {
@@ -771,6 +801,95 @@ class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
               ),
             ),
             const SizedBox(height: 12),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                leading: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: theme.colorScheme.tertiary.withOpacity(0.12),
+                  ),
+                  child: Icon(Icons.policy_outlined, color: theme.colorScheme.tertiary),
+                ),
+                title: Text('Data subject requests',
+                    style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  portalSubtitle,
+                  style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant, height: 1.5),
+                ),
+                trailing: requestsState.loading && requestsState.requests.isEmpty
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.tertiary),
+                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('${numberFormat.format(openRequests)} open',
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: openRequests > 0
+                                        ? theme.colorScheme.tertiary
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  )),
+                              const SizedBox(height: 4),
+                              Text('${numberFormat.format(completedRequests)} completed',
+                                  style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.chevron_right_rounded),
+                        ],
+                      ),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DataRequestsScreen(),
+                  ),
+                ),
+              ),
+            ),
+            if (requestsState.error != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: theme.colorScheme.errorContainer,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: theme.colorScheme.onErrorContainer),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Compliance metrics failed to refresh. ${requestsState.error}'.trim(),
+                        style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onErrorContainer, height: 1.4),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(foregroundColor: theme.colorScheme.onErrorContainer),
+                      onPressed: () => requestsController.load(status: requestsState.statusFilter),
+                      child: const Text('Retry'),
+                    )
+                  ],
+                ),
+              ),
+            ],
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -784,7 +903,7 @@ class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Track acknowledgements and ensure every team member reviews the latest contractual posture before accepting work orders.',
+                      'Capture signatures and GDPR fulfilment proof in one place so compliance and account teams can confidently accept new work orders.',
                       style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -807,6 +926,20 @@ class _LegalTermsAccessPaneState extends State<_LegalTermsAccessPane> {
     } catch (_) {
       return raw;
     }
+  }
+
+  DateTime? _latestDate(List<DateTime> dates) {
+    if (dates.isEmpty) {
+      return null;
+    }
+    return dates.reduce((a, b) => a.isAfter(b) ? a : b);
+  }
+
+  String _formatAuditDate(DateTime? date) {
+    if (date == null) {
+      return 'recently';
+    }
+    return DateFormat.yMMMMd().format(date.toLocal());
   }
 }
 

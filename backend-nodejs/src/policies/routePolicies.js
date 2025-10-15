@@ -169,6 +169,53 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'compliance.data-requests.create': {
+    id: 'compliance.data-requests.create',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:create',
+    description: 'Allow compliance operators to log GDPR data subject requests.',
+    requirements: [Permissions.COMPLIANCE_PORTAL],
+    tags: ['compliance', 'privacy'],
+    severity: 'high',
+    metadata: (req) => ({
+      requestType: req.body?.requestType || null,
+      region: req.body?.regionCode || null
+    })
+  },
+  'compliance.data-requests.list': {
+    id: 'compliance.data-requests.list',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:list',
+    description: 'Allow compliance operators to review and triage GDPR requests.',
+    requirements: [Permissions.COMPLIANCE_PORTAL],
+    tags: ['compliance', 'privacy'],
+    severity: 'medium',
+    metadata: (req) => ({ status: req.query?.status || null })
+  },
+  'compliance.data-requests.export': {
+    id: 'compliance.data-requests.export',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:export',
+    description: 'Allow compliance officers to generate GDPR data export bundles.',
+    requirements: [Permissions.COMPLIANCE_EXPORT],
+    tags: ['compliance', 'privacy', 'export'],
+    severity: 'critical',
+    metadata: (req) => ({ requestId: req.params.requestId })
+  },
+  'compliance.data-requests.update': {
+    id: 'compliance.data-requests.update',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:update',
+    description: 'Allow compliance officers to update GDPR request status and audit notes.',
+    requirements: [Permissions.COMPLIANCE_EXPORT],
+    tags: ['compliance', 'privacy'],
+    severity: 'high',
+    metadata: (req) => ({ requestId: req.params.requestId, nextStatus: req.body?.status || null })
+  },
   'zones.match': {
     id: 'zones.match',
     version: '1.0.0',

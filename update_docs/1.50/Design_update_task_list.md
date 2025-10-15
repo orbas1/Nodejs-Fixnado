@@ -3,10 +3,10 @@
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 68% |
-| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 34% |
+| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 48% |
 | D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 4% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 44% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 56% |
 | D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 0% |
 
 ---
@@ -29,7 +29,7 @@
 
 **Progress Notes:** Vault-managed status badges, secrets rotation callouts, and Postgres provisioning storyboards were added to the foundational token library, aligning security messaging with the new infrastructure workflows while nudging QA/ops documentation forward.
 
-## Task D2 – Navigation & IA Harmonisation (0%)
+## Task D2 – Navigation & IA Harmonisation (48%)
 **Objective:** Align navigation patterns, menus, and information architecture for web and Flutter clients.
 
 **Subtasks (9):**
@@ -43,7 +43,7 @@
 8. Run moderated usability tests on desktop/tablet/mobile prototypes and capture insights.
 9. Update IA documentation and publish to the knowledge base for cross-team consumption.
 
-**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion.
+**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways.
 
 ## Task D3 – Page Templates & Partial Library (0%)
 **Objective:** Build modular page templates and partial sections enabling rapid assembly of marketing and product surfaces.
@@ -76,7 +76,7 @@
 7. Validate theme accessibility, ensuring compliance with contrast and motion preferences.
 8. Publish theme adoption playbook for engineering and marketing teams.
 
-## Task D5 – Mobile Parity & Component Adaptation (44%)
+## Task D5 – Mobile Parity & Component Adaptation (56%)
 **Objective:** Translate web patterns into Flutter-ready components with parity across user and provider apps.
 
 **Subtasks (11):**
@@ -92,7 +92,7 @@
 10. Coordinate with engineering on component feasibility and edge cases.
 11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
 
-**Progress Notes:** Flutter consent overlays now mirror the web ledger receipts and legal typography, delivering parity for consent workflows, messaging gates, and offline placeholders. Mobile component documentation captures biometric unlocking, consent acknowledgements, and compliance cues for engineering hand-off, with screen inventories cross-referenced against the updated web journeys.
+**Progress Notes:** Flutter consent overlays now mirror the web ledger receipts and legal typography, delivering parity for consent workflows, messaging gates, and offline placeholders. Mobile component documentation captures biometric unlocking, consent acknowledgements, and compliance cues for engineering hand-off, with screen inventories cross-referenced against the updated web journeys. The new Data Requests screen and profile navigation card carry the shared compliance tokens, providing production visuals, metrics, and messaging for GDPR fulfilment on mobile and unlocking the parity checklist items covering legal tooling.
 
 ## Task D6 – Design QA, Documentation & Handover (0%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.

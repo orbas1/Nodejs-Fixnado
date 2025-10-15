@@ -9,3 +9,8 @@
 - Implemented `ConsentApi`, models, controller, and full-screen overlay that enforce ledger-backed consent acceptance before unlocking authenticated navigation.
 - Synced legal typography, policy cards, and ledger timestamps with the shared design tokens so copy matches the refreshed React experience.
 - Captured Opsgenie escalation metadata on booking creation responses to prepare for future in-app trust alerts.
+
+## 2025-03-28 – Compliance Portal Parity
+- Added the compliance Data Requests domain (models, repository, controller, screen) enabling GDPR submissions, exports, and status updates directly from the user app.
+- Integrated the navigation card within the profile legal pane featuring real-time counts, latest submission timestamps, and retry affordances.
+- Wired controller providers to preload compliance metrics so cross-screen widgets stay responsive even with intermittent connectivity.
