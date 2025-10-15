@@ -44,6 +44,7 @@ Primary objectives:
 - Document animation easing curves, durations, and motion safety preferences.
 - Extend the status messaging component library to cover rate-limit, CORS, and consent prompts so visual treatments mirror the hardened backend responses.
 - Introduce vault-managed status badges and secrets rotation alerts within admin/ops surfaces so design artefacts reflect the new AWS Secrets Manager workflow.
+- Define operational dashboard treatments for the `/readyz` readiness states, including badge colours, typography scale, and alert copy for database/background job/server degradation to align design reviews with the new backend telemetry.
 - Publish privacy surface specifications for consent receipts, encrypted data disclosures, and breach notification banners aligned with new PII storage safeguards.
 
 ## Page & Flow Redesign Scope

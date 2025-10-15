@@ -12,6 +12,7 @@
 6. Status and alert token expansions covering rate limiting, CORS denial, and consent prompts aligned with backend copy.
 7. Privacy and consent banner patterns referencing encrypted data handling, breach notices, and audit log confirmations.
 8. Vault-managed secrets indicators, rotation status chips, and operations storyboard panels supporting AWS Secrets Manager adoption.
+9. Operational readiness telemetry patterns representing `/readyz` components (database, jobs, HTTP server) for deployment dashboards and release runbooks.
 
 ## Milestone D2 – Navigation & Information Architecture Alignment (Target Week 2–4)
 **Goals:** Harmonise navigation, menu structures, and logic flows while incorporating compliance and security cues.
@@ -57,3 +58,4 @@
 3. Updated design change log and versioned library release notes.
 4. Developer enablement kit (component usage guides, token documentation, asset inventory).
 5. Stakeholder sign-off records (Product, Engineering, Compliance, Marketing).
+6. Release and observability handover pack illustrating `/readyz` readiness statuses, alert copy, and zero-downtime deployment storyboard panels aligned with the new backend telemetry.

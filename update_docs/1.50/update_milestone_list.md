@@ -10,7 +10,7 @@
    - Encrypt core PII columns with deterministic hashes, delivering transactional migrations and rollback rehearsals.
 2. **API Gateway Hardening**
    - Introduce versioned `/v1` routing, rate limiting, payload caps, and CORS allowlist.
-   - Add `/healthz` and `/readyz` endpoints plus SIGTERM shutdown handling.
+   - ✅ Add `/healthz` and `/readyz` endpoints plus SIGTERM shutdown handling.
    - Enable structured logging with correlation IDs and threat detection alerts.
    - Document new gateway behaviour for frontend/mobile consumers.
 3. **GDPR Consent & Privacy UX**

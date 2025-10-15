@@ -2,12 +2,12 @@
 
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
-| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 68% |
+| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 70% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
 | D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 28% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
 | D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 72% |
-| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 8% |
+| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 10% |
 
 ---
 
@@ -27,7 +27,7 @@
 10. Socialise token documentation with engineering teams for early feedback.
 11. ✅ Extend semantic token catalogue with rate-limit, CORS, consent, and PII incident alert states aligned to backend messaging.
 
-**Progress Notes:** Vault-managed status badges, secrets rotation callouts, and Postgres provisioning storyboards were added to the foundational token library, aligning security messaging with the new infrastructure workflows while nudging QA/ops documentation forward.
+**Progress Notes:** Vault-managed status badges, secrets rotation callouts, and Postgres provisioning storyboards were added to the foundational token library, aligning security messaging with the new infrastructure workflows while nudging QA/ops documentation forward. Operational readiness icons, badge tones, and alert copy tied to `/readyz` states were added to the token set so deployment dashboards, release runbooks, and observability mock-ups mirror the backend readiness telemetry introduced in Task 1.
 
 ## Task D2 – Navigation & IA Harmonisation (48%)
 **Objective:** Align navigation patterns, menus, and information architecture for web and Flutter clients.
@@ -96,7 +96,7 @@
 
 **Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, and regulatory alert cards, while Riverpod interaction notes guide orchestration telemetry states (webhook retry, manual payout review). Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
 
-## Task D6 – Design QA, Documentation & Handover (8%)
+## Task D6 – Design QA, Documentation & Handover (10%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.
 
 **Subtasks (9):**
@@ -110,4 +110,4 @@
 8. Coordinate with QA to integrate design checkpoints into overall test plan.
 9. Conduct final stakeholder walkthrough and capture sign-off artefacts.
 
-**Progress Notes:** Compiled initial QA checklist entries for the warehouse operations console, including annotation guidelines, export badge iconography references, and DPIA documentation link placements so engineering handover kits capture the new compliance workflows.
+**Progress Notes:** Compiled initial QA checklist entries for the warehouse operations console, including annotation guidelines, export badge iconography references, and DPIA documentation link placements so engineering handover kits capture the new compliance workflows. Added operational readiness handover notes describing `/readyz` states, alert palette references, and deployment dashboard mock-ups to the QA bundle so release management receives design-backed guidance for the new backend telemetry.

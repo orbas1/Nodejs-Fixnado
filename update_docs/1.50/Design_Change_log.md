@@ -126,6 +126,11 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Refreshed footer information architecture to include solutions, resources, company, and account columns, mapping legal/comms entry points to the updated change management narratives.
    - Authored Flutter workspaces parity guidelines, showcasing role cards, actionable chips, and Riverpod-driven role switching to mirror the new React navigation journey across mobile shells.
 
+24. **Operational Readiness Telemetry (2025-04-07)**
+   - Added design ops notes for deployment and observability consoles outlining how `/readyz` component statuses (database, background jobs, HTTP server) surface within admin dashboards and release runbooks.
+   - Documented notification badge treatments and copy tone for readiness degradations so design system alerts mirror the new backend telemetry, ensuring consistent feedback loops across web and mobile shells.
+   - Updated operations storyboard panels with zero-downtime deployment cues and readiness state legends so design reviews cover the newly exposed infrastructure signals alongside security milestones.
+
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.
 - Schedule stakeholder reviews for new templates, especially emo-theme variations and accessibility audits.

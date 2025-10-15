@@ -79,5 +79,10 @@
 - Refactored the React header to consume a centralised navigation config, added accessible mobile drawer navigation, and aligned translation catalogues with the new solutions/resources hierarchy.
 - Delivered a Flutter workspaces hub screen and updated bottom navigation to surface dashboard switching, ensuring parity with the new web experience and reinforcing RBAC-driven role transitions across platforms.
 
+## 2025-04-07 – API Versioning & Operational Readiness
+- Wrapped the Express router in a `/api/v1` namespace while maintaining backwards-compatible `/api` fallbacks, unlocking contract versioning without breaking existing clients and aligning with the security milestone’s gateway roadmap.
+- Added a production `/readyz` endpoint backed by component-level readiness telemetry (database, background jobs, HTTP server) so load balancers, deployment tooling, and observability stacks can distinguish startup vs. steady-state health.
+- Implemented graceful shutdown orchestration that drains background jobs, closes HTTP listeners, and terminates Sequelize pools on `SIGINT`/`SIGTERM`/failure signals, enabling zero-downtime deploys and eliminating leaked timers called out in the pre-update evaluation.
+
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.

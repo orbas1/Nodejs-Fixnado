@@ -10,6 +10,7 @@
 - `RATE_LIMIT_WINDOW_MINUTES`, `RATE_LIMIT_MAX_REQUESTS`: Window and request quota for throttling clients (defaults 1 minute / 120 requests).
 - `RATE_LIMIT_SKIP_SUCCESS`, `RATE_LIMIT_STANDARD_HEADERS`, `RATE_LIMIT_LEGACY_HEADERS`: Behavioural toggles for limiter accounting and headers.
 - `HEALTHCHECK_DB_TIMEOUT_MS`: Millisecond timeout applied to the database readiness probe.
+- `SECURITY_SHUTDOWN_TIMEOUT_MS`: Optional timeout (milliseconds) before forcing process exit during graceful shutdown (defaults to 15000ms).
 - `PII_ENCRYPTION_KEY`: Base64-encoded 32-byte key used for AES-256-GCM encryption of sensitive columns.
 - `PII_HASH_KEY`: Base64-encoded 32-byte key used for deterministic SHA-512/HMAC hashes enabling encrypted lookups.
 - `PII_ENCRYPTION_KEY_ID`: Optional identifier to track the active key version for rotation runbooks.
@@ -19,5 +20,6 @@
 - Production environments must explicitly set the allowlist to partner domains; staging/test environments can retain open access by leaving the variable unset.
 - When placing the API behind multiple proxies (Cloudflare → Ingress → App), set `SECURITY_TRUST_PROXY` to the numeric hop count to preserve the originating IP for rate limiting.
 - Monitor limiter metrics after rollout and adjust the window/quota to match observed throughput before enabling additional Task 1 controls (token rotation, audit logging).
+- Configure `SECURITY_SHUTDOWN_TIMEOUT_MS` in production to match load balancer drain windows so `/readyz` transitions to `stopping` before the process exits, preserving zero-downtime deploy guarantees.
 - Store PII keys in the secrets manager with strict rotation cadence; never commit values to source control or CI logs.
 - Run migration rehearsals with throwaway keys to validate encryption backfill before promoting to production keys.

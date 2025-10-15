@@ -298,6 +298,9 @@ const config = {
     health: {
       databaseTimeoutMs: Math.max(intFromEnv('HEALTHCHECK_DB_TIMEOUT_MS', 2000), 100)
     },
+    shutdown: {
+      timeoutMs: Math.max(intFromEnv('SECURITY_SHUTDOWN_TIMEOUT_MS', 15000), 1000)
+    },
     pii: {
       encryptionKeySet: Boolean(process.env.PII_ENCRYPTION_KEY),
       hashKeySet: Boolean(process.env.PII_HASH_KEY),

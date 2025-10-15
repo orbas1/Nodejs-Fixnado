@@ -225,7 +225,7 @@ async function ensureBookingRecord({ transaction, order, payment, buyerId, compa
   return booking;
 }
 
-async function assignServicemen({ transaction, booking, companyId, zoneId, regionId }) {
+async function assignServicemen({ transaction, booking, companyId: _companyId, zoneId, regionId }) {
   const candidates = await User.findAll({
     where: {
       type: 'servicemen',

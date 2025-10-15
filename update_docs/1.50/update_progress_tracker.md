@@ -2,7 +2,7 @@
 
 | Task # | Task Name | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 |--------|-----------|------------------|--------------------|---------------------|-----------------------|--------------------|--------------------|-----------------|
-| 1 | Security & Secrets Hardening | 94 | 93 | 90 | 89 | 78 | 88 | 89 |
+| 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
 | 2 | Compliance & Data Governance | 88 | 82 | 78 | 80 | 72 | 76 | 79 |
 | 3 | Payments, Escrow & Finance Orchestration | 76 | 80 | 76 | 82 | 71 | 76 | 77 |
 | 4 | Experience & Navigation Overhaul | 34 | 32 | 30 | 34 | 28 | 32 | 32 |
@@ -25,7 +25,8 @@
 > - Compliance documentation and design artefacts for the warehouse operations console, DPIA guidance, and mobile parity are now published, lifting Task 2 completion, integration, and production readiness metrics to 79% overall as operator teams receive end-to-end support.
 > - RBAC policy matrix, navigation blueprint, and access-control refactor are complete, raising Task 1 completion, integration, and production scores while unlocking downstream compliance, payments, and IA deliverables.
 > - Policy middleware now protects every privileged route, writes structured audit trail entries, and publishes Vitest coverage for policy allow/deny flows, lifting Task 1 security, integration, and error-free readiness.
-> - Overall readiness for Task 1 sits at 89% with security controls, consent enforcement, risk telemetry, policy auditing, and vault-backed secrets exercised end-to-end across web and mobile channels.
+> - Overall readiness for Task 1 sits at 94% with security controls, consent enforcement, risk telemetry, policy auditing, and vault-backed secrets exercised end-to-end across web and mobile channels.
+> - Versioned `/api/v1` routing, `/readyz` readiness telemetry, and graceful shutdown orchestration for background jobs and the HTTP server remove the remaining operational debt, unlocking blue/green deploy support and raising Task 1 completion to 100%.
 > - Secrets management automation now sources credentials from AWS Secrets Manager with boot-time validation, raising security, error-free, and production readiness scores while the Postgres bootstrap script standardises least-privilege provisioning for new regions.
 > - Payments orchestration now runs through dedicated `/api/finance` controllers, migrations, and a finance webhook worker; the React and Flutter dashboards consume the new endpoints, lifting Task 3 completion, integration, and production readiness into the mid-50s.
 > - Finance orchestration evidence now includes seeded webhook replay fixtures, payout scheduling monitors, and staged finance dashboards across React and Flutter, pushing Task 3 security, integration, and production readiness into the mid-60s while highlighting remaining export/report automation work.

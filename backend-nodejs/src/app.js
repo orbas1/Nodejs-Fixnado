@@ -8,6 +8,116 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { sequelize } from './models/index.js';
 import config from './config/index.js';
 
+function createComponentState(status = 'initialising') {
+  return {
+    status,
+    lastUpdatedAt: new Date().toISOString(),
+    error: null,
+    metadata: {}
+  };
+}
+
+function normaliseError(error) {
+  if (!error) {
+    return null;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+const readinessState = {
+  startedAt: new Date().toISOString(),
+  components: {
+    httpServer: createComponentState(),
+    database: createComponentState(),
+    backgroundJobs: createComponentState()
+  }
+};
+
+function computeOverallReadinessStatus() {
+  const componentStates = Object.values(readinessState.components);
+
+  if (componentStates.some((component) => component.status === 'error')) {
+    return 'fail';
+  }
+
+  if (componentStates.some((component) => component.status === 'stopping')) {
+    return 'degraded';
+  }
+
+  if (componentStates.every((component) => component.status === 'ready')) {
+    return 'pass';
+  }
+
+  if (componentStates.some((component) => component.status === 'degraded')) {
+    return 'degraded';
+  }
+
+  return 'initialising';
+}
+
+export function updateReadiness(component, { status, error, metadata } = {}) {
+  if (!component) {
+    throw new Error('A readiness component name is required.');
+  }
+
+  if (!readinessState.components[component]) {
+    readinessState.components[component] = createComponentState();
+  }
+
+  const nextState = readinessState.components[component];
+
+  if (status) {
+    nextState.status = status;
+  }
+
+  nextState.lastUpdatedAt = new Date().toISOString();
+  nextState.error = normaliseError(error);
+  if (metadata) {
+    nextState.metadata = metadata;
+  }
+
+  readinessState.components[component] = nextState;
+  readinessState.status = computeOverallReadinessStatus();
+  readinessState.lastUpdatedAt = nextState.lastUpdatedAt;
+
+  return readinessState.components[component];
+}
+
+export function getReadinessSnapshot() {
+  const components = Object.entries(readinessState.components).reduce((acc, [key, value]) => {
+    acc[key] = {
+      status: value.status,
+      lastUpdatedAt: value.lastUpdatedAt,
+      error: value.error,
+      metadata: value.metadata
+    };
+    return acc;
+  }, {});
+
+  const status = readinessState.status ?? computeOverallReadinessStatus();
+
+  return {
+    status,
+    startedAt: readinessState.startedAt,
+    lastUpdatedAt: readinessState.lastUpdatedAt,
+    uptimeSeconds: Math.round(process.uptime()),
+    components
+  };
+}
+
 function assertPiiConfiguration() {
   const piiConfig = config.security?.pii;
   if (!piiConfig?.encryptionKeySet || !piiConfig?.hashKeySet) {
@@ -181,7 +291,8 @@ app.get('/healthz', async (req, res, next) => {
       timestamp: new Date().toISOString(),
       checks: {
         database: databaseHealth
-      }
+      },
+      readiness: getReadinessSnapshot()
     };
 
     res.status(healthy ? 200 : 503).json(response);
@@ -190,13 +301,25 @@ app.get('/healthz', async (req, res, next) => {
   }
 });
 
+app.get('/readyz', (req, res) => {
+  const readiness = getReadinessSnapshot();
+  res.status(readiness.status === 'pass' ? 200 : 503).json(readiness);
+});
+
 app.use('/api', routes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 export async function initDatabase(logger = console) {
-  await sequelize.authenticate();
+  updateReadiness('database', { status: 'initialising' });
+
+  try {
+    await sequelize.authenticate();
+  } catch (error) {
+    updateReadiness('database', { status: 'error', error });
+    throw error;
+  }
 
   if (sequelize.getDialect() === 'postgres') {
     try {
@@ -212,15 +335,33 @@ export async function initDatabase(logger = console) {
         throw new Error('PostGIS extension not installed for the current database user');
       }
 
+      const postgisVersion = rows[0].installed_version;
+
       logger?.info?.('PostGIS extension verified', {
-        postgisVersion: rows[0].installed_version
+        postgisVersion
+      });
+
+      updateReadiness('database', {
+        status: 'ready',
+        metadata: {
+          dialect: sequelize.getDialect(),
+          postgisVersion
+        }
       });
     } catch (error) {
       logger?.error?.('PostGIS verification failed', {
         message: error.message
       });
+      updateReadiness('database', { status: 'error', error });
       throw error;
     }
+  } else {
+    updateReadiness('database', {
+      status: 'ready',
+      metadata: {
+        dialect: sequelize.getDialect()
+      }
+    });
   }
 }
 

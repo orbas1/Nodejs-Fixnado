@@ -2,6 +2,7 @@
 
 ## Security Namespaces Added to `src/config/index.js`
 - Introduced a `security` configuration branch with sub-namespaces for `cors`, `bodyParser`, `rateLimiting`, and `health` so operational policies can be expressed via environment variables and audited centrally.
+- Expanded the `security` namespace with a `shutdown.timeoutMs` control feeding graceful shutdown timers to match load balancer drain windows and `/readyz` transitions.
 - Added intelligent parsers (`boolFromEnv`, `listFromEnv`, etc.) to safely consume comma-separated allowlists and human-readable booleans while defaulting to production-safe values.
 - Normalised trusted proxy and client IP header handling, enabling reverse proxies/CDNs to be configured without code changes.
 
