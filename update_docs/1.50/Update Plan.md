@@ -69,6 +69,8 @@
 - **Logic:** Serviceman assignment algorithms, dispute resolution workflows, notification triggers.
 - **Design:** Checkout flows, finance UI, notification states, compliance messaging.
 
+**Current Progress (2025-04-02):** Finance orchestration service, Sequelize models, and migrations are deployed with guarded `/api/finance` routes for summaries, timelines, and payout actions. A queue-backed webhook job persists Stripe and escrow events with retry budgets, while React and Flutter finance dashboards render revenue KPIs, payout readiness, disputes, and invoice health using the new client utilities. Integration tests cover happy-path settlements and webhook retries; export/report automation plus failure-mode coverage remain in flight.
+
 ## Task 4 – Experience & Navigation Overhaul (0%)
 **Goal:** Rebuild public, dashboard, and creation studio experiences with responsive layouts, accessibility compliance, and finished logic flows.
 

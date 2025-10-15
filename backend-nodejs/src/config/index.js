@@ -394,7 +394,13 @@ const config = {
     slaTargetsMinutes: jsonFromEnv('FINANCE_SLA_TARGET_MINUTES', {
       on_demand: 90,
       scheduled: 240
-    })
+    }),
+    payoutDelayDays: Math.max(intFromEnv('FINANCE_PAYOUT_DELAY_DAYS', 3), 0),
+    webhookMaxAttempts: Math.max(intFromEnv('FINANCE_WEBHOOK_MAX_ATTEMPTS', 8), 1),
+    webhookPollIntervalMs: Math.max(intFromEnv('FINANCE_WEBHOOK_POLL_MS', 15000), 5000),
+    webhookBatchSize: Math.max(intFromEnv('FINANCE_WEBHOOK_BATCH', 10), 1),
+    webhookSharedSecret: process.env.FINANCE_WEBHOOK_TOKEN || '',
+    disputeAutoEscalationDays: Math.max(intFromEnv('FINANCE_DISPUTE_ESCALATION_DAYS', 10), 1)
   },
   subscriptions: {
     enabled: process.env.SUBSCRIPTIONS_ENABLED !== 'false',

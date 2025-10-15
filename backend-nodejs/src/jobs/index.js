@@ -6,6 +6,7 @@ import { startWarehouseFreshnessJob } from './warehouseFreshnessJob.js';
 import { startDataGovernanceRetentionJob } from './dataGovernanceRetentionJob.js';
 import { startDataWarehouseExportJob } from './dataWarehouseExportJob.js';
 import { startDatabaseCredentialRotationJob } from './databaseCredentialRotationJob.js';
+import { startFinanceWebhookJob } from './financeWebhookJob.js';
 
 export function startBackgroundJobs(logger = console) {
   const jobs = [];
@@ -47,6 +48,11 @@ export function startBackgroundJobs(logger = console) {
   const credentialRotationHandle = startDatabaseCredentialRotationJob(logger);
   if (credentialRotationHandle) {
     jobs.push(credentialRotationHandle);
+  }
+
+  const financeWebhookHandle = startFinanceWebhookJob(logger);
+  if (financeWebhookHandle) {
+    jobs.push(financeWebhookHandle);
   }
 
   return jobs;

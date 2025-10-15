@@ -19,6 +19,7 @@ import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
 import '../features/materials/presentation/materials_screen.dart';
 import '../features/enterprise/presentation/enterprise_dashboard_screen.dart';
+import '../features/finance/presentation/finance_dashboard_screen.dart';
 import '../shared/localization/language_controller.dart';
 import '../shared/localization/language_options.dart';
 import '../shared/localization/language_switcher.dart';
@@ -159,6 +160,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     UserRole.admin,
   };
 
+  static const Set<UserRole> _financeAllowedRoles = {
+    UserRole.provider,
+    UserRole.enterprise,
+    UserRole.operations,
+    UserRole.admin,
+  };
+
   List<_NavigationDestination> _visibleDestinationsForRole(UserRole role) {
     final items = <_NavigationDestination>[
       _NavigationDestination.explorer,
@@ -172,6 +180,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     ];
     if (!_communicationsAllowedRoles.contains(role)) {
       items.remove(_NavigationDestination.inbox);
+    }
+    if (_financeAllowedRoles.contains(role)) {
+      items.insert(items.length - 1, _NavigationDestination.finance);
     }
     return items;
   }
@@ -192,6 +203,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         return const CommunicationsScreen();
       case _NavigationDestination.profile:
         return const ProfileManagementScreen();
+      case _NavigationDestination.finance:
+        return const FinanceDashboardScreen();
       case _NavigationDestination.operations:
         if (role == UserRole.provider) {
           return const ServiceManagementScreen();
@@ -225,6 +238,7 @@ enum _NavigationDestination {
   blog('Blog', Icons.menu_book_outlined),
   inbox('Inbox', Icons.inbox_outlined),
   profile('Profile', Icons.person_outline),
+  finance('Finance', Icons.payments_outlined),
   operations('Ops Pulse', Icons.analytics_outlined);
 
   const _NavigationDestination(this.title, this.icon);

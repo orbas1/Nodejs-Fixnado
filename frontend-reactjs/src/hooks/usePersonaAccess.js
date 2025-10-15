@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 const ACCESS_KEY = 'fixnado:personaAccess';
 const ACTIVE_KEY = 'fixnado:activePersona';
-const DEFAULT_ALLOWED = ['user'];
+const DEFAULT_ALLOWED = ['user', 'finance'];
 
 function normaliseList(value) {
   if (!Array.isArray(value)) {

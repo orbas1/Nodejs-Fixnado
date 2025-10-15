@@ -29,6 +29,18 @@
    - Expose versioned REST/GraphQL endpoints used by web/phone clients; document via OpenAPI.
    - Build automated test suites (unit, integration, contract) including security regression (auth bypass, input sanitisation).
 
+### Progress Snapshot – Payments & Finance Platform (2025-04-02)
+- Payment orchestration service now drives checkout → escrow → dispute → payout workflows with persisted finance ledgers, webhook fingerprinting, and retryable queue jobs tied to settlement SLAs.
+- New finance data models (`Payment`, `PayoutRequest`, `FinanceInvoice`, `FinanceWebhookEvent`) and migrations are live with audit hooks, seeded fixtures, and rollback coverage validated in staging.
+- `/api/finance` routes expose role-guarded summaries, timelines, and payout actions for enterprise, provider, and operations personas, backed by orchestration service telemetry.
+- Finance webhook worker streams Stripe and escrow events into the ledger with replay/backoff policies, observability counters, and configurable retry ceilings surfaced in config docs.
+- React Finance Overview and Flutter Finance Dashboard consume the orchestration APIs, rendering revenue KPIs, dispute funnels, payout readiness, and invoice health using shared number formatters and role-aware access hooks.
+- Finance reporting endpoints now surface daily aggregates, currency exposure, payout backlog telemetry, and regulatory alert queues with CSV export support, backed by vitest API coverage and RBAC policy enforcement.
+- Export ceilings guard CSV/JSON payloads while Vitest now covers invalid range requests and empty-alert responses to ensure finance reporting degrades gracefully under misconfiguration.
+- React and Flutter finance workspaces render the new reporting insights—currency breakdowns, regulatory alert cards, and payout backlog summaries—while exposing CSV download tooling and Riverpod providers that keep mobile parity intact.
+- React finance widgets now include jsdom regression tests, memoised data tables, and bounded list sizes; Flutter dashboards adopt responsive currency cards to prevent chip overflow on smaller devices.
+- Vitest integration suite verifies happy-path settlement, webhook retry scheduling, and invoice snapshots; additional negative-path tests (invalid secrets, duplicate payloads, payout exhaustion) remain in-flight alongside export/report automation.
+
 ## 4. Frontend (Web) Delivery Plan
 1. **Foundation setup**
    - Introduce feature-based folder structure; align state management modules and service hooks with backend contracts.

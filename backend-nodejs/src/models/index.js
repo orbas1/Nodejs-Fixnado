@@ -56,6 +56,10 @@ import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
 import DataSubjectRequest from './dataSubjectRequest.js';
 import FinanceTransactionHistory from './financeTransactionHistory.js';
+import Payment from './payment.js';
+import PayoutRequest from './payoutRequest.js';
+import FinanceInvoice from './financeInvoice.js';
+import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
@@ -114,6 +118,52 @@ Dispute.belongsTo(Escrow, { foreignKey: 'escrowId' });
 
 Region.hasMany(Dispute, { foreignKey: 'regionId', as: 'disputes' });
 Dispute.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Order.hasMany(Payment, { foreignKey: 'orderId', as: 'payments' });
+Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+Service.hasMany(Payment, { foreignKey: 'serviceId', as: 'payments' });
+Payment.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
+
+User.hasMany(Payment, { foreignKey: 'buyerId', as: 'payments' });
+Payment.belongsTo(User, { foreignKey: 'buyerId', as: 'buyerAccount' });
+
+User.hasMany(Payment, { foreignKey: 'providerId', as: 'providerPayments' });
+Payment.belongsTo(User, { foreignKey: 'providerId', as: 'providerAccount' });
+
+Region.hasMany(Payment, { foreignKey: 'regionId', as: 'payments' });
+Payment.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Payment.hasMany(PayoutRequest, { foreignKey: 'paymentId', as: 'payouts' });
+PayoutRequest.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
+
+User.hasMany(PayoutRequest, { foreignKey: 'providerId', as: 'payoutRequests' });
+PayoutRequest.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+Region.hasMany(PayoutRequest, { foreignKey: 'regionId', as: 'payoutRequests' });
+PayoutRequest.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Order.hasOne(FinanceInvoice, { foreignKey: 'orderId', as: 'invoice' });
+FinanceInvoice.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+Region.hasMany(FinanceInvoice, { foreignKey: 'regionId', as: 'invoices' });
+FinanceInvoice.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
+Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
+
+FinanceTransactionHistory.belongsTo(PayoutRequest, { foreignKey: 'payoutRequestId', as: 'payoutRequest' });
+PayoutRequest.hasMany(FinanceTransactionHistory, { foreignKey: 'payoutRequestId', as: 'history' });
+
+FinanceTransactionHistory.belongsTo(FinanceInvoice, { foreignKey: 'invoiceId', as: 'invoice' });
+FinanceInvoice.hasMany(FinanceTransactionHistory, { foreignKey: 'invoiceId', as: 'history' });
+
+FinanceWebhookEvent.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+FinanceWebhookEvent.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
+FinanceWebhookEvent.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+Order.hasMany(FinanceWebhookEvent, { foreignKey: 'orderId', as: 'financeEvents' });
+Payment.hasMany(FinanceWebhookEvent, { foreignKey: 'paymentId', as: 'webhookEvents' });
+Escrow.hasMany(FinanceWebhookEvent, { foreignKey: 'escrowId', as: 'webhookEvents' });
 
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -408,6 +458,10 @@ export {
   Region,
   DataSubjectRequest,
   FinanceTransactionHistory,
+  Payment,
+  PayoutRequest,
+  FinanceInvoice,
+  FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun

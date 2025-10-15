@@ -169,6 +169,79 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'finance.checkout.create': {
+    id: 'finance.checkout.create',
+    version: '1.0.0',
+    resource: 'finance.checkout',
+    action: 'finance.checkout:create',
+    description: 'Allow trusted personas to initiate marketplace checkout and escrow funding.',
+    requirements: [Permissions.PAYMENTS_CAPTURE],
+    tags: ['finance', 'payments'],
+    severity: 'critical',
+    metadata: (req) => ({
+      orderId: req.body?.orderId || null,
+      serviceId: req.body?.serviceId || null,
+      amount: req.body?.amount || null,
+      currency: req.body?.currency || null,
+      source: req.body?.source || req.headers['x-finance-source'] || 'unknown'
+    })
+  },
+  'finance.overview.read': {
+    id: 'finance.overview.read',
+    version: '1.0.0',
+    resource: 'finance.overview',
+    action: 'finance.overview:read',
+    description: 'Allow finance operators to review captured payments, disputes, and payouts.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'reporting'],
+    severity: 'high',
+    metadata: (req) => ({
+      regionId: req.query?.regionId || null,
+      providerId: req.query?.providerId || null
+    })
+  },
+  'finance.timeline.read': {
+    id: 'finance.timeline.read',
+    version: '1.0.0',
+    resource: 'finance.timeline',
+    action: 'finance.timeline:read',
+    description: 'Allow finance and operations roles to inspect an order finance timeline.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'operations'],
+    severity: 'medium',
+    metadata: (req) => ({
+      orderId: req.params?.orderId || null
+    })
+  },
+  'finance.reports.read': {
+    id: 'finance.reports.read',
+    version: '1.0.0',
+    resource: 'finance.reports',
+    action: 'finance.reports:read',
+    description: 'Allow authorised finance roles to generate settlement and reconciliation reports.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'reporting', 'export'],
+    severity: 'high',
+    metadata: (req) => ({
+      format: req.query?.format || 'json',
+      regionId: req.query?.regionId || null,
+      providerId: req.query?.providerId || null
+    })
+  },
+  'finance.alerts.read': {
+    id: 'finance.alerts.read',
+    version: '1.0.0',
+    resource: 'finance.alerts',
+    action: 'finance.alerts:read',
+    description: 'Allow finance control tower roles to review regulatory alert queues.',
+    requirements: [Permissions.FINANCE_OVERVIEW],
+    tags: ['finance', 'risk', 'compliance'],
+    severity: 'high',
+    metadata: (req) => ({
+      regionId: req.query?.regionId || null,
+      providerId: req.query?.providerId || null
+    })
+  },
   'compliance.data-requests.create': {
     id: 'compliance.data-requests.create',
     version: '1.0.0',

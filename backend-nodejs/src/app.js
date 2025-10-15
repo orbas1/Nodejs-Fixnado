@@ -86,7 +86,7 @@ const corsMiddleware = cors((req, callback) => {
 });
 
 app.use(corsMiddleware);
-app.options('*', corsMiddleware);
+app.options(/.*/, corsMiddleware);
 
 app.use(
   express.json({

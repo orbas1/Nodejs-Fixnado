@@ -21,6 +21,7 @@ import blogRoutes from './blogRoutes.js';
 import adminBlogRoutes from './adminBlogRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
+import financeRoutes from './financeRoutes.js';
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use('/blog', blogRoutes);
 router.use('/admin/blog', adminBlogRoutes);
 router.use('/affiliate', affiliateRoutes);
 router.use('/consent', consentRoutes);
+router.use('/finance', financeRoutes);
 
 export default router;
