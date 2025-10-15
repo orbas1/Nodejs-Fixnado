@@ -3,6 +3,7 @@
 ## Milestone 1 – Security & Compliance Foundation (Target Week 1–3)
 1. **RBAC & Secrets Overhaul**
    - Map role/permission matrix for all experiences using issue list references 1, 11, 19.
+   - ✅ Publish RBAC navigation blueprint and backend matrix exports covering permissions, landing routes, and data visibility envelopes for every persona.
    - Implement policy middleware and auditing hooks in backend routes.
    - Replace insecure `.env` defaults and MySQL bootstrap with vault-managed secrets.
    - Configure httpOnly/session storage for web and secure storage for mobile tokens.

@@ -22,6 +22,7 @@ Primary objectives:
 - Implement responsive breakpoints (320px, 480px, 768px, 1024px, 1440px) with adaptive layout rules for navigation, cards, and data tables.
 - Rebuild landing and marketing pages with modular partials for hero, proof, pricing, and CTA sections, supporting both single-scroll and multi-section home experiences.
 - Update dashboards (user, provider, enterprise, admin) with analytics summaries, task boards, compliance banners, and quick filters.
+- Apply the RBAC navigation blueprint that maps role personas to landing routes, sidebar groupings, finance/compliance surfacing, and restricted drawers so IA harmonisation reflects the hardened security posture.
 - Validate provider dashboard modules against restored service responses (trust score, review summaries, inventory alerts) to confirm component coverage without additional visual redesign.
 - Refactor forms with inline validation, progressive disclosure for advanced settings, and security copy for sensitive actions.
 
@@ -29,6 +30,7 @@ Primary objectives:
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
 - Implement tabbed/drawer hybrids for larger devices, preserving gesture-based shortcuts and accessible focus rings.
 - Update booking, messaging, finance, and compliance screens with refreshed cards, chip groups, and micro-interactions.
+- Mirror the RBAC navigation blueprint by pairing Flutter tab sets and secure drawers with the same role-driven menu allowances, ensuring compliance badges and finance widgets appear only for authorised personas.
 - Provide offline and loading states consistent with web skeleton patterns.
 - Overlay biometric unlock prompts and session status banners so mobile flows mirror the hardened authentication posture delivered in this milestone.
 - Layer consent acknowledgement overlays that reference the ledger templates and block navigation until required policies are accepted, aligning copy with the web banner system.

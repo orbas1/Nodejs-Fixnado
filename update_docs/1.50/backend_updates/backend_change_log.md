@@ -25,3 +25,9 @@
 - Built `consentService`, controller, and routes exposing snapshot, record, and verification endpoints alongside configuration-driven policy catalogues consumed by both web and mobile clients.
 - Implemented `scamDetectionService` heuristics with AI enrichment hooks, Opsgenie escalation support, and booking metadata annotations to surface high-risk attempts directly in analytics and downstream workflows.
 - Extended `bookingService` to run the scam heuristics during creation while preserving transactional integrity, ensuring risk markers persist even when third-party enrichments fail.
+
+## 2025-03-21 – Security & Secrets Hardening, Subtask 1
+- Authored a production RBAC matrix (`src/constants/rbacMatrix.js`) capturing permission inheritance, navigation scaffolding, and data visibility envelopes for guest through admin cohorts.
+- Refactored `accessControlService` to compose permission sets from the matrix, normalise role aliases, and expose `describeRole` metadata for downstream auditing, telemetry, and navigation orchestration.
+- Expanded the permission catalogue with finance, compliance, integration, and support scopes to align with upcoming payments and automation milestones while keeping existing route guards backward compatible.
+- Introduced Vitest coverage validating hierarchical permission grants, canonical alias resolution, and metadata exports so security evidence accompanies the matrix deliverable.
