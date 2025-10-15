@@ -9,3 +9,8 @@
 - **Automated:** Introduced `tests/piiEncryption.test.js` to confirm AES-256-GCM storage, hashed email lookups, and company contact redaction operate end-to-end under Vitest.
 - **Manual:** Run migration dry-runs in staging with dummy keys before promoting production rotations; verify seeded admin accounts remain accessible post-migration.
 - **Monitoring Hooks:** Add metrics/alerts tracking failed decryptions or hash mismatches; integrate with security incident response runbooks.
+
+## Session Integrity & Token Rotation
+- **Automated:** Added `tests/sessionService.test.js` validating refresh-token hashing, JWT issuance, cookie policies, and rotation persistence to guarantee hardened session behaviour.
+- **Manual:** Verify browser login flows receive secure/httpOnly cookies while Flutter builds ingest bearer tokens; confirm biometric unlock gating on devices with Face ID/Touch ID and passcode fallback for those without biometrics.
+- **Monitoring Hooks:** Track session creation, rotation, and revocation metrics; alert when refresh failures spike or cookie issuance deviates from expected secure/httpOnly flags.

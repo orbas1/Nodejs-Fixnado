@@ -2,11 +2,11 @@
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 48 | 54 | 45 | 52 | 60 | 44 | 62 | 64 | 52 | 38 | 52 | 54 | 36 | 38 | 50 | 49 |
+| D1 | Token & System Foundation | 55 | 60 | 52 | 56 | 64 | 50 | 68 | 70 | 58 | 44 | 58 | 60 | 40 | 42 | 54 | 56 |
 | D2 | Navigation & IA Harmonisation | 30 | 28 | 32 | 34 | 30 | 28 | 38 | 35 | 30 | 26 | 32 | 45 | 28 | 26 | 30 | 31 |
-| D3 | Page Templates & Partial Library | 25 | 24 | 26 | 28 | 26 | 24 | 32 | 28 | 24 | 22 | 28 | 40 | 22 | 24 | 26 | 27 |
+| D3 | Page Templates & Partial Library | 28 | 27 | 30 | 30 | 28 | 27 | 34 | 30 | 28 | 24 | 34 | 42 | 26 | 26 | 29 | 31 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 18 | 20 | 18 | 20 | 18 | 18 | 24 | 24 | 20 | 18 | 24 | 34 | 18 | 18 | 20 | 20 |
+| D5 | Mobile Parity & Component Adaptation | 26 | 30 | 26 | 30 | 26 | 26 | 34 | 36 | 30 | 26 | 34 | 40 | 26 | 26 | 30 | 30 |
 | D6 | Design QA, Documentation & Handover | 15 | 18 | 16 | 18 | 16 | 16 | 20 | 20 | 18 | 16 | 20 | 32 | 16 | 16 | 18 | 18 |
 
 > **Scoring Notes:**
@@ -17,6 +17,8 @@
 > - Task D1 security score increased after documenting rate-limit and CORS alert tokens that align with the hardened backend behaviours.
 > - Privacy banner, consent receipt, and PII breach notification patterns were added to the token catalogue, lifting D1 security, compliance, and QA readiness scores.
 > - **Overall Grade %** is an average of all recorded metrics, rounded to the nearest whole number.
+> - Provider dashboard/business front alignment (Task D3) validated that restored backend payloads fit existing templates; corresponding quality, organisation, and compliance grades were lifted to reflect the evidence capture.
+> - Mobile security surfaces (Task D5) gained biometric unlock patterns, secure-session banners, and loading placeholders, improving quality, organisation, functionality, and security scores for the parity workstream.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.

@@ -1,25 +1,9 @@
 import { PanelApiError } from './panelClient.js';
 
-function getAccessToken() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
-  } catch (error) {
-    console.warn('[geoMatchingClient] unable to read auth token', error);
-    return null;
-  }
-}
-
 export async function matchGeoServices(payload, { signal } = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
   const headers = new Headers({ Accept: 'application/json', 'Content-Type': 'application/json' });
-  const token = getAccessToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
 
   const requestPayload = {
     latitude: payload.latitude,
@@ -66,10 +50,6 @@ export async function matchGeoServices(payload, { signal } = {}) {
 
 export async function previewCoverage(payload, { signal } = {}) {
   const headers = new Headers({ Accept: 'application/json' });
-  const token = getAccessToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
 
   const params = new URLSearchParams();
   if (payload.latitude != null) params.set('latitude', String(payload.latitude));
