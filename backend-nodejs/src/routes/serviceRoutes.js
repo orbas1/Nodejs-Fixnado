@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { listServices, createService, purchaseService } from '../controllers/serviceController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { Permissions } from '../services/accessControlService.js';
 
 const router = Router();
 
@@ -10,7 +11,7 @@ router.get('/', listServices);
 router.post(
   '/',
   authenticate,
-  authorize(['servicemen', 'company']),
+  authorize([Permissions.SERVICES_MANAGE]),
   [
     body('title').isString().isLength({ min: 3 }),
     body('price').isFloat({ gt: 0 }),
@@ -23,7 +24,7 @@ router.post(
 router.post(
   '/:serviceId/purchase',
   authenticate,
-  authorize(['user', 'company']),
+  authorize([Permissions.SERVICES_BOOK]),
   [
     body('zoneId').isUUID(),
     body('bookingType').optional().isIn(['on_demand', 'scheduled']),

@@ -14,11 +14,10 @@ import {
   deleteAdminTag
 } from '../controllers/blogAdminController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { Permissions } from '../services/accessControlService.js';
 
 const router = Router();
-const allowedRoles = ['admin', 'operations_admin'];
-
-router.use(authenticate, authorize(allowedRoles));
+router.use(authenticate, authorize([Permissions.ADMIN_FEATURE_WRITE]));
 
 router.get('/posts', listAdminPosts);
 router.post('/posts', createAdminPost);

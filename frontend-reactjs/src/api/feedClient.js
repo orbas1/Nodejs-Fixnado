@@ -1,15 +1,4 @@
 const FEED_API_ROOT = '/api/feed';
-const AUTH_TOKEN_KEY = 'fixnado:accessToken';
-
-function readAuthToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem(AUTH_TOKEN_KEY) ?? null;
-  } catch (error) {
-    console.warn('[feedClient] unable to read auth token', error);
-    return null;
-  }
-}
 
 function buildQuery(params = {}) {
   const searchParams = new URLSearchParams();
@@ -77,16 +66,6 @@ async function request(path, {
 
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json');
-  }
-
-  if (authenticated) {
-    const token = readAuthToken();
-    if (!token) {
-      const error = new Error('You must be signed in to access the live feed');
-      error.status = 401;
-      throw error;
-    }
-    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const controller = new AbortController();

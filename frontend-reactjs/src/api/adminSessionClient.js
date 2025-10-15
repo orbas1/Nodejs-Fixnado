@@ -32,7 +32,7 @@ export async function loginAdmin({ email, password, securityToken }) {
       throw new PanelApiError(message, response.status, { details: payload });
     }
 
-    if (!payload?.token || !payload?.user) {
+    if (!payload?.user || !payload?.session) {
       throw new PanelApiError('Malformed authentication response', 500);
     }
 
