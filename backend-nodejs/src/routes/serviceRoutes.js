@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { listServices, createService, purchaseService } from '../controllers/serviceController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
@@ -11,7 +11,9 @@ router.get('/', listServices);
 router.post(
   '/',
   authenticate,
-  authorize([Permissions.SERVICES_MANAGE]),
+  enforcePolicy('services.manage', {
+    metadata: (req) => ({ companyId: req.body?.companyId || null })
+  }),
   [
     body('title').isString().isLength({ min: 3 }),
     body('price').isFloat({ gt: 0 }),
@@ -24,7 +26,12 @@ router.post(
 router.post(
   '/:serviceId/purchase',
   authenticate,
-  authorize([Permissions.SERVICES_BOOK]),
+  enforcePolicy('services.book', {
+    metadata: (req) => ({
+      serviceId: req.params.serviceId,
+      bookingType: req.body?.bookingType || null
+    })
+  }),
   [
     body('zoneId').isUUID(),
     body('bookingType').optional().isIn(['on_demand', 'scheduled']),

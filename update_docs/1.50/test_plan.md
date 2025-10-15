@@ -24,3 +24,18 @@
 - **Automated:** `tests/scamDetectionService.test.js` verifies heuristic scoring thresholds, Opsgenie escalation toggles, AI enrichment fallbacks, and risk metadata serialization during booking creation.
 - **Manual:** Execute booking creation scenarios (low/medium/high risk) via API client to confirm risk annotations appear in analytics and Opsgenie notifications trigger when configured.
 - **Monitoring Hooks:** Track scam detection latency, AI enrichment timeouts, and escalation volumes to ensure heuristics remain performant and actionable in production.
+
+## RBAC Matrix & Policy Orchestration
+- **Automated:** `tests/accessControlService.test.js` validates hierarchical permission inheritance, canonical role resolution (including header/persona aliases), and the exposed `describeRole` metadata used by dashboards and audit tooling.
+- **Manual:** Verify administrator tooling surfaces the new role descriptors, landing routes, and badge placements; run smoke checks against secured routes to confirm updated permissions do not regress existing access patterns.
+- **Monitoring Hooks:** Extend security event analytics to capture granted vs. missing permission ratios per role so policy drift is detectable after deployment.
+
+## Policy Enforcement Middleware & Audit Logging
+- **Automated:** `tests/policyMiddleware.test.js` exercises allow/deny paths, inline policy definitions, and metadata sanitisation to ensure the new middleware responds with the correct status codes and always records audit events.
+- **Manual:** Execute representative API calls (feed posting, admin toggles, inventory adjustments, storefront access) with valid and invalid actors to confirm HTTP 401/403 responses, response bodies, and audit event payloads behave as expected.
+- **Monitoring Hooks:** Configure the optional security audit webhook in staging to validate dispatch success, sampling behaviour, and downstream correlation with request IDs before enabling in production.
+
+## Secrets Management & Database Provisioning
+- **Automated:** Added `tests/secretManager.test.js` to assert AWS Secrets Manager payloads hydrate runtime configuration, respect local override preferences, and fail closed when identifiers are absent.
+- **Manual:** Validate new environment bootstraps by running `psql -f sql/install.sql` against staging Postgres, supplying a unique role/password, and confirming PostGIS/pgcrypto extensions install successfully. Verify API startup fails when vault entries omit `JWT_SECRET` or `DB_PASSWORD` and recovers immediately once secrets are restored.
+- **Monitoring Hooks:** Extend launch checklists with AWS Secrets Manager alarms (rotation age, failed retrievals) and database privilege audits ensuring public access remains revoked after provisioning scripts run.

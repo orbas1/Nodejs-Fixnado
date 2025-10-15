@@ -25,3 +25,19 @@
 - Built `consentService`, controller, and routes exposing snapshot, record, and verification endpoints alongside configuration-driven policy catalogues consumed by both web and mobile clients.
 - Implemented `scamDetectionService` heuristics with AI enrichment hooks, Opsgenie escalation support, and booking metadata annotations to surface high-risk attempts directly in analytics and downstream workflows.
 - Extended `bookingService` to run the scam heuristics during creation while preserving transactional integrity, ensuring risk markers persist even when third-party enrichments fail.
+
+## 2025-03-21 – Security & Secrets Hardening, Subtask 1
+- Authored a production RBAC matrix (`src/constants/rbacMatrix.js`) capturing permission inheritance, navigation scaffolding, and data visibility envelopes for guest through admin cohorts.
+- Refactored `accessControlService` to compose permission sets from the matrix, normalise role aliases, and expose `describeRole` metadata for downstream auditing, telemetry, and navigation orchestration.
+- Expanded the permission catalogue with finance, compliance, integration, and support scopes to align with upcoming payments and automation milestones while keeping existing route guards backward compatible.
+- Introduced Vitest coverage validating hierarchical permission grants, canonical alias resolution, and metadata exports so security evidence accompanies the matrix deliverable.
+
+## 2025-03-24 – Security & Secrets Hardening, Subtask 2
+- Introduced `src/middleware/policyMiddleware.js` and a central `routePolicies` registry to drive RBAC-aware enforcement across feed, admin, inventory, zone, panel, materials, and service endpoints.
+- Upgraded the security audit trail service with webhook dispatch, sampling, metadata redaction, and configuration-driven sink registration, exposing new `SECURITY_AUDIT_*` environment variables and documentation updates.
+- Replaced legacy `authorize` guards in all secured routes, refreshed the storefront helper, and added Vitest coverage exercising allow, deny, and metadata sanitisation paths for the new middleware.
+
+## 2025-03-25 – Security & Secrets Hardening, Subtask 3
+- Stood up a reusable secrets manager loader that synchronises AWS Secrets Manager values into `process.env`, captures refresh metadata, and surfaces enforcement through the configuration module with fail-fast validation for critical secrets.
+- Updated configuration bootstrap to require `JWT_SECRET` and database credentials from the vault, exposing sync metadata to the runtime and logging successful synchronisation during API startup.
+- Replaced the legacy MySQL bootstrap artefact with a Postgres-first provisioning script that prompts for strong credentials, locks down default privileges, and installs PostGIS/pgcrypto extensions for regional deployments.

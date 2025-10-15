@@ -15,7 +15,7 @@
 
 ## 3. Backend Implementation Roadmap
 1. **Infrastructure readiness**
-   - Update configuration management to support reduced `.env` usage and enforce environment validation.
+   - ✅ Update configuration management to support reduced `.env` usage and enforce environment validation via AWS Secrets Manager bootstrap and fail-fast config checks.
    - Implement monitoring/alerting baselines, log aggregation, and security scanners.
 2. **Core services**
    - Refactor auth and RBAC middleware; lock down controllers/routes; add policy-based guards and permission audits.

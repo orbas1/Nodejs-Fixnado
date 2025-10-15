@@ -24,3 +24,18 @@
 - Booking creation now enriches analytics metadata with `risk.score`, `risk.reasonCodes`, and `risk.escalated` fields based on heuristic scoring and optional AI analysis.
 - High-risk bookings trigger Opsgenie escalations when the integration is configured; downstream consumers should expect audit events and risk annotations even if the external escalation is unavailable.
 - API consumers should tolerate booking creation succeeding with warnings logged server-side when AI enrichment times out—the booking payload still contains risk metadata for follow-up actions.
+
+## RBAC Policy Metadata
+- New RBAC matrix definitions expose `describeRole` metadata for each persona via internal tooling; integration partners pulling policy snapshots should rely on the exported navigation/data visibility hints instead of duplicating role logic.
+- Route guards continue to use permission strings defined in `src/constants/permissions.js`; clients building dashboards should subscribe to permission-driven feature toggles rather than inferring capabilities from legacy role names.
+- Downstream systems storing role grants (analytics, support tooling) must refresh cached permission inventories to capture new finance, compliance, integration, and support scopes prior to orchestrating task automation.
+
+## Policy Enforcement & Audit Logging
+- Privileged endpoints now respond with HTTP 401 for unauthenticated requests and HTTP 403 for authenticated actors missing the required permissions; clients must handle both states distinctly when presenting error copy.
+- Security audit events can be streamed to an optional webhook defined by `SECURITY_AUDIT_WEBHOOK_URL`; payloads include `resource`, `action`, `decision`, and sanitised metadata fields. Configure downstream listeners to accept the JSON schema and honour sampling.
+- Requests should continue forwarding correlation identifiers (`x-request-id`, `x-correlation-id`, or `x-amzn-trace-id`) so audit entries link to upstream observability pipelines; missing IDs will be auto-generated but correlation is improved when clients supply them.
+
+## Secrets & Configuration
+- AWS Secrets Manager is now the authoritative source for runtime secrets. Deployments must set `SECRETS_MANAGER_SECRET_IDS` with one or more vault entries containing key/value pairs (e.g., `JWT_SECRET`, `DB_PASSWORD`, `STRIPE_SECRET_KEY`).
+- The API refuses to boot when `JWT_SECRET` or database credentials are absent after vault hydration; ensure the shared secret bundle is populated ahead of deployments.
+- Operations teams should use the updated `backend-nodejs/sql/install.sql` Postgres script when bootstrapping new environments—the script prompts for strong passwords, revokes default privileges, and installs `pgcrypto`, `uuid-ossp`, and PostGIS extensions by default.
