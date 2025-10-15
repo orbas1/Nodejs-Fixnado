@@ -84,6 +84,18 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Authored consent banner variants (web hero, sticky footer, modal) alongside receipt templates and notification chips referencing ledger metadata.
    - Produced consent overlay artwork for Flutter, aligning typography, card elevations, and tone with the shared legal templates.
    - Updated scam alert badge styling to harmonise with Opsgenie escalation messaging and recorded linkage in the security copy deck.
+15. **RBAC Navigation Blueprint (2025-03-21)**
+   - Finalised role-to-navigation mapping derived from the hardened RBAC matrix, documenting landing routes, accessible menus, and restricted drawers for guest, customer, serviceman, provider, enterprise, operations, and admin personas.
+   - Captured finance/compliance badge placements per role, ensuring dashboards surface the appropriate alerts, payout actions, and escalation tiles without cross-role leakage.
+   - Published cross-channel parity guidance aligning React sidebars and Flutter tab/drawer combinations so IA harmonisation can proceed with concrete guardrails.
+16. **Policy Audit Surfaces (2025-03-24)**
+   - Added policy decision badges, inline audit log summaries, and denial messaging variants to dashboard templates so users understand why access was blocked or granted.
+   - Documented webhook-driven audit feeds and correlation ID affordances for operator consoles, including guidance on log retention indicators and privacy redactions.
+   - Updated design QA checklists to include policy-state theming (default, warning, critical) and ensured Flutter parity via shared iconography and chip states.
+17. **Vault & Provisioning Artefacts (2025-03-25)**
+   - Produced operator hand-off cards for the infrastructure console, outlining secrets rotation cadence, AWS Secrets Manager vault taxonomy, and UI cues for stale credentials.
+   - Added Postgres bootstrap storyboard panels illustrating the credential prompt, extension verification, and least-privilege role confirmation for onboarding documentation.
+   - Updated security copy decks and empty states so admin tooling surfaces "Vault managed" badges instead of `.env` warnings, aligning messaging with the new backend runtime behaviour.
 
 ## Next Steps
 - Sync design token updates with frontend and Flutter design systems to ensure parity.

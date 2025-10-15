@@ -11,6 +11,7 @@
 5. Accessibility checklist for foundational components including focus states and keyboard interactions.
 6. Status and alert token expansions covering rate limiting, CORS denial, and consent prompts aligned with backend copy.
 7. Privacy and consent banner patterns referencing encrypted data handling, breach notices, and audit log confirmations.
+8. Vault-managed secrets indicators, rotation status chips, and operations storyboard panels supporting AWS Secrets Manager adoption.
 
 ## Milestone D2 – Navigation & Information Architecture Alignment (Target Week 2–4)
 **Goals:** Harmonise navigation, menu structures, and logic flows while incorporating compliance and security cues.
@@ -19,8 +20,10 @@
 1. Updated IA diagrams reflecting mega menu, dashboard sidebars, quick actions, and Flutter navigation parity.
 2. Breadcrumb, notification tray, and contextual action patterns with responsive behaviour.
 3. Compliance messaging placements (consent, privacy alerts, security banners) across page types.
-4. Emo theme adaptation guidelines for navigation and header/footer treatments.
-5. Usability test plan and findings summary for navigation prototypes (desktop, tablet, mobile).
+4. Policy decision feedback components (badges, denial copy, audit log drawers) aligned with the new middleware and audit pipeline.
+5. Emo theme adaptation guidelines for navigation and header/footer treatments.
+6. Usability test plan and findings summary for navigation prototypes (desktop, tablet, mobile).
+7. RBAC navigation blueprint translating the hardened backend matrix into role-specific landing routes, menu groupings, and badge placements for web and Flutter shells.
 
 ## Milestone D3 – Page Templates & Partial Layout Library (Target Week 3–6)
 **Goals:** Rebuild priority pages and partial sections for marketing, dashboards, creation studio, and finance experiences.

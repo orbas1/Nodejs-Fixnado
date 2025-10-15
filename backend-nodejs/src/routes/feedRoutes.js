@@ -7,17 +7,17 @@ import {
   submitCustomJobBidHandler,
   addCustomJobBidMessageHandler
 } from '../controllers/feedController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
-router.get('/live', authenticate, authorize([Permissions.FEED_VIEW]), getLiveFeed);
+router.get('/live', authenticate, enforcePolicy('feed.live.read'), getLiveFeed);
 
 router.post(
   '/live',
   authenticate,
-  authorize([Permissions.FEED_POST]),
+  enforcePolicy('feed.live.create'),
   [
     body('title').isString().trim().isLength({ min: 5, max: 160 }),
     body('description').optional({ checkFalsy: true }).isString().trim().isLength({ max: 4000 }),
@@ -48,7 +48,14 @@ router.post(
 router.post(
   '/live/:postId/bids',
   authenticate,
-  authorize([Permissions.FEED_BID]),
+  enforcePolicy('feed.live.bid', {
+    metadata: (req) => ({
+      postId: req.params.postId,
+      currency: req.body?.currency || null,
+      hasAmount: typeof req.body?.amount === 'number',
+      hasMessage: Boolean(req.body?.message)
+    })
+  }),
   [
     param('postId').isUUID(),
     body('amount').optional({ checkFalsy: true }).isFloat({ gt: 0 }),
@@ -67,7 +74,13 @@ router.post(
 router.post(
   '/live/:postId/bids/:bidId/messages',
   authenticate,
-  authorize([Permissions.FEED_MESSAGE]),
+  enforcePolicy('feed.live.message', {
+    metadata: (req) => ({
+      postId: req.params.postId,
+      bidId: req.params.bidId,
+      hasAttachments: Array.isArray(req.body?.attachments) ? req.body.attachments.length : 0
+    })
+  }),
   [
     param('postId').isUUID(),
     param('bidId').isUUID(),

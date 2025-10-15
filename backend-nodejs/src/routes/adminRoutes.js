@@ -17,18 +17,37 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
-router.get('/dashboard', authenticate, authorize([Permissions.ADMIN_DASHBOARD]), dashboard);
-router.get('/feature-toggles', authenticate, authorize([Permissions.ADMIN_FEATURE_READ]), getToggles);
-router.get('/feature-toggles/:key', authenticate, authorize([Permissions.ADMIN_FEATURE_READ]), getToggle);
+router.get(
+  '/dashboard',
+  authenticate,
+  enforcePolicy('admin.dashboard.view', { metadata: () => ({ section: 'dashboard' }) }),
+  dashboard
+);
+router.get(
+  '/feature-toggles',
+  authenticate,
+  enforcePolicy('admin.features.read', { metadata: () => ({ scope: 'all' }) }),
+  getToggles
+);
+router.get(
+  '/feature-toggles/:key',
+  authenticate,
+  enforcePolicy('admin.features.read', {
+    metadata: (req) => ({ scope: 'single', key: req.params.key })
+  }),
+  getToggle
+);
 router.patch(
   '/feature-toggles/:key',
   authenticate,
-  authorize([Permissions.ADMIN_FEATURE_WRITE]),
+  enforcePolicy('admin.features.write', {
+    metadata: (req) => ({ key: req.params.key, method: req.method })
+  }),
   upsertToggleValidators,
   updateToggle
 );
@@ -36,50 +55,54 @@ router.patch(
 router.get(
   '/platform-settings',
   authenticate,
-  authorize([Permissions.ADMIN_PLATFORM_READ]),
+  enforcePolicy('admin.platform.read', { metadata: () => ({ section: 'platform-settings' }) }),
   fetchPlatformSettings
 );
 router.put(
   '/platform-settings',
   authenticate,
-  authorize([Permissions.ADMIN_PLATFORM_WRITE]),
+  enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
 );
 
 router.get(
   '/affiliate/settings',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_READ]),
+  enforcePolicy('admin.affiliates.read', { metadata: () => ({ entity: 'settings' }) }),
   getAffiliateSettingsHandler
 );
 router.put(
   '/affiliate/settings',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  enforcePolicy('admin.affiliates.write', { metadata: () => ({ entity: 'settings' }) }),
   saveAffiliateSettingsHandler
 );
 router.get(
   '/affiliate/rules',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_READ]),
+  enforcePolicy('admin.affiliates.read', { metadata: () => ({ entity: 'commission-rules' }) }),
   listAffiliateCommissionRulesHandler
 );
 router.post(
   '/affiliate/rules',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  enforcePolicy('admin.affiliates.write', { metadata: () => ({ entity: 'commission-rules' }) }),
   upsertAffiliateCommissionRuleHandler
 );
 router.patch(
   '/affiliate/rules/:id',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  enforcePolicy('admin.affiliates.write', {
+    metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
+  }),
   upsertAffiliateCommissionRuleHandler
 );
 router.delete(
   '/affiliate/rules/:id',
   authenticate,
-  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  enforcePolicy('admin.affiliates.write', {
+    metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
+  }),
   deactivateAffiliateCommissionRuleHandler
 );
 

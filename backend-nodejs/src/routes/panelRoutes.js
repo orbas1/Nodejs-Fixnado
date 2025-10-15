@@ -4,13 +4,23 @@ import {
   getProviderDashboardHandler,
   getProviderStorefrontHandler
 } from '../controllers/panelController.js';
-import { authenticate, authorize, requireStorefrontRole } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate, requireStorefrontRole } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
-router.get('/provider/dashboard', authenticate, authorize([Permissions.PANEL_PROVIDER]), getProviderDashboardHandler);
-router.get('/enterprise/overview', authenticate, authorize([Permissions.PANEL_ENTERPRISE]), getEnterprisePanelHandler);
+router.get(
+  '/provider/dashboard',
+  authenticate,
+  enforcePolicy('panel.provider.dashboard', { metadata: () => ({ section: 'provider-dashboard' }) }),
+  getProviderDashboardHandler
+);
+router.get(
+  '/enterprise/overview',
+  authenticate,
+  enforcePolicy('panel.enterprise.dashboard', { metadata: () => ({ section: 'enterprise-overview' }) }),
+  getEnterprisePanelHandler
+);
 router.get('/provider/storefront', authenticate, requireStorefrontRole, getProviderStorefrontHandler);
 
 export default router;

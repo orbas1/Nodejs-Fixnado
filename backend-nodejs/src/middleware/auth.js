@@ -1,11 +1,12 @@
 import { User, UserSession } from '../models/index.js';
-import { evaluateAccess, Permissions, resolveActorContext } from '../services/accessControlService.js';
+import { resolveActorContext } from '../services/accessControlService.js';
 import { recordSecurityEvent } from '../services/auditTrailService.js';
 import {
   extractTokens,
   verifyAccessToken,
   clearSessionCookies
 } from '../services/sessionService.js';
+import { enforcePolicy } from './policyMiddleware.js';
 
 export async function authenticate(req, res, next) {
   try {
@@ -132,47 +133,27 @@ export async function maybeAuthenticate(req, res, next) {
   }
 }
 
-export function authorize(requirements = []) {
-  const expected = Array.isArray(requirements) ? requirements : [requirements];
-  return async (req, res, next) => {
-    try {
-      const decision = evaluateAccess({
-        user: req.user ? { id: req.user.id, type: req.user.type } : null,
-        headers: req.headers,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        requirements: expected
-      });
+export function authorize(requirements = [], options = {}) {
+  if (typeof requirements === 'string' && !Array.isArray(requirements)) {
+    return enforcePolicy(requirements, options);
+  }
 
-      await recordSecurityEvent({
-        userId: decision.actorId,
-        actorRole: decision.role,
-        actorPersona: decision.persona,
-        resource: req.baseUrl ? `${req.baseUrl}${req.route?.path ?? ''}` : req.originalUrl ?? 'unknown',
-        action: `${req.method} ${req.route?.path ?? req.originalUrl ?? 'unknown'}`,
-        decision: decision.allowed ? 'allow' : 'deny',
-        reason: decision.allowed ? null : `missing_permissions`,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        metadata: { granted: decision.granted, missing: decision.missing, requirements: expected }
-      });
-
-      if (!decision.allowed) {
-        const status = req.user ? 403 : 401;
-        return res.status(status).json({ message: 'Forbidden' });
-      }
-
-      req.auth = {
-        ...(req.auth ?? {}),
-        actor: decision,
-        grantedPermissions: decision.granted
-      };
-
-      next();
-    } catch (error) {
-      next(error);
-    }
+  const requirementList = Array.isArray(requirements) ? requirements : [requirements];
+  const inlinePolicy = {
+    id: options.policyId ?? `inline:${requirementList.join('|') || 'none'}`,
+    resource: options.resource ?? options.policyId ?? 'inline',
+    action: options.action ?? 'inline:access',
+    description: options.description ?? 'Inline permission guard',
+    requirements: requirementList,
+    tags: options.tags ?? ['inline'],
+    severity: options.severity ?? 'medium',
+    metadata: options.metadata
   };
+
+  const overrides = { ...options };
+  delete overrides.requirements;
+
+  return enforcePolicy(inlinePolicy, overrides);
 }
 
 export function requireStorefrontRole(req, res, next) {
@@ -181,5 +162,10 @@ export function requireStorefrontRole(req, res, next) {
     return res.status(403).json({ message: 'Persona not authorised for storefront operations' });
   }
 
-  return authorize([Permissions.PANEL_STOREFRONT])(req, res, next);
+  return enforcePolicy('panel.storefront.manage', {
+    metadata: (request) => ({
+      persona: request.headers['x-fixnado-persona'] || null,
+      policy: 'panel.storefront.manage'
+    })
+  })(req, res, next);
 }

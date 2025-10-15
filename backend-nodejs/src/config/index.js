@@ -1,6 +1,22 @@
 import 'dotenv/config';
 
+import { getSecretSyncMetadata, loadSecretsIntoEnv } from './secretManager.js';
+
+await loadSecretsIntoEnv({ stage: 'config-bootstrap', logger: console });
+
 const env = process.env.NODE_ENV || 'development';
+const requestedDialect = (process.env.DB_DIALECT || '').toLowerCase();
+const hasConnectionString = typeof process.env.DB_URL === 'string' && process.env.DB_URL.trim() !== '';
+
+function requireEnv(key) {
+  const value = process.env[key];
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(
+      `${key} is not configured. Populate it via AWS Secrets Manager or environment variables before starting the service.`
+    );
+  }
+  return value;
+}
 
 function intFromEnv(key, defaultValue) {
   const raw = process.env[key];
@@ -175,6 +191,7 @@ function normaliseConsentPolicies(source) {
 const config = {
   env,
   port: intFromEnv('PORT', 4000),
+  secrets: getSecretSyncMetadata(),
   security: {
     trustProxy:
       typeof process.env.SECURITY_TRUST_PROXY === 'string'
@@ -207,20 +224,31 @@ const config = {
       hashKeySet: Boolean(process.env.PII_HASH_KEY),
       rotationKeyId: process.env.PII_ENCRYPTION_KEY_ID || null,
       rotationFallbackSet: Boolean(process.env.PII_ENCRYPTION_KEY_PREVIOUS)
+    },
+    audit: {
+      enabled: boolFromEnv('SECURITY_AUDIT_ENABLED', true),
+      webhookUrl: process.env.SECURITY_AUDIT_WEBHOOK_URL || '',
+      webhookToken: process.env.SECURITY_AUDIT_WEBHOOK_TOKEN || '',
+      httpTimeoutMs: Math.max(intFromEnv('SECURITY_AUDIT_HTTP_TIMEOUT_MS', 2000), 250),
+      sampleRate: Math.min(Math.max(floatFromEnv('SECURITY_AUDIT_SAMPLE_RATE', 1), 0), 1),
+      dropMetadataKeys: listFromEnv('SECURITY_AUDIT_DROP_METADATA_KEYS')
     }
   },
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: intFromEnv('DB_PORT', 5432),
     name: process.env.DB_NAME || 'fixnado',
-    user: process.env.DB_USER || 'fixnado_user',
-    password: process.env.DB_PASSWORD || 'change_me',
+    user: process.env.DB_USER || 'fixnado_service',
+    password:
+      hasConnectionString || requestedDialect === 'sqlite'
+        ? process.env.DB_PASSWORD || ''
+        : requireEnv('DB_PASSWORD'),
     ssl: process.env.DB_SSL === 'true',
     rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
-    dialect: (process.env.DB_DIALECT || 'postgres').toLowerCase()
+    dialect: requestedDialect || 'postgres'
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'change_this_secret',
+    secret: requireEnv('JWT_SECRET'),
     expiresIn: '12h'
   },
   auth: {

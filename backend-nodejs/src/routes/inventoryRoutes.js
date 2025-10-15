@@ -7,12 +7,20 @@ import {
   listInventory,
   resolveAlert
 } from '../controllers/inventoryController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
-router.use(authenticate, authorize([Permissions.INVENTORY_WRITE]));
+router.use(
+  authenticate,
+  enforcePolicy('inventory.manage', {
+    metadata: (req) => ({
+      method: req.method,
+      path: req.path
+    })
+  })
+);
 
 router.post('/items', createInventoryItem);
 router.get('/items', listInventory);

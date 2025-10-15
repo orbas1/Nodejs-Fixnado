@@ -13,11 +13,19 @@ import {
   upsertAdminTag,
   deleteAdminTag
 } from '../controllers/blogAdminController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { Permissions } from '../services/accessControlService.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
-router.use(authenticate, authorize([Permissions.ADMIN_FEATURE_WRITE]));
+router.use(
+  authenticate,
+  enforcePolicy('admin.blog.manage', {
+    metadata: (req) => ({
+      section: 'blog-admin',
+      method: req.method
+    })
+  })
+);
 
 router.get('/posts', listAdminPosts);
 router.post('/posts', createAdminPost);
