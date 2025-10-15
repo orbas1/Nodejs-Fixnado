@@ -7,6 +7,7 @@ import { LocaleProvider } from './providers/LocaleProvider.jsx';
 import { FeatureToggleProvider } from './providers/FeatureToggleProvider.jsx';
 import { PersonaProvider } from './providers/PersonaProvider.jsx';
 import { AdminSessionProvider } from './providers/AdminSessionProvider.jsx';
+import { ConsentProvider } from './providers/ConsentProvider.jsx';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <PersonaProvider>
             <ThemeProvider>
               <AdminSessionProvider>
-                <App />
+                <ConsentProvider>
+                  <App />
+                </ConsentProvider>
               </AdminSessionProvider>
             </ThemeProvider>
           </PersonaProvider>

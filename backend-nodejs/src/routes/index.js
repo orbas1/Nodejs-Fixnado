@@ -20,6 +20,7 @@ import businessFrontRoutes from './businessFrontRoutes.js';
 import blogRoutes from './blogRoutes.js';
 import adminBlogRoutes from './adminBlogRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
+import consentRoutes from './consentRoutes.js';
 
 const router = Router();
 
@@ -44,5 +45,6 @@ router.use('/business-fronts', businessFrontRoutes);
 router.use('/blog', blogRoutes);
 router.use('/admin/blog', adminBlogRoutes);
 router.use('/affiliate', affiliateRoutes);
+router.use('/consent', consentRoutes);
 
 export default router;

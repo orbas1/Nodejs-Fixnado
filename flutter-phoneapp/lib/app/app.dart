@@ -23,6 +23,7 @@ import '../shared/localization/language_controller.dart';
 import '../shared/localization/language_options.dart';
 import '../shared/localization/language_switcher.dart';
 import '../features/blog/presentation/blog_screen.dart';
+import '../features/legal/presentation/consent_overlay.dart';
 
 class FixnadoApp extends ConsumerWidget {
   const FixnadoApp({super.key});
@@ -105,7 +106,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final selectedTitle =
         selected == _NavigationDestination.operations ? operationsLabel : selected.title;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(selectedTitle, style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w700)),
         actions: const [
@@ -140,6 +141,13 @@ class _AppShellState extends ConsumerState<AppShell> {
             .toList(),
         onDestinationSelected: (index) => setState(() => _index = index),
       ),
+    );
+
+    return Stack(
+      children: [
+        scaffold,
+        const ConsentOverlay(),
+      ],
     );
   }
 

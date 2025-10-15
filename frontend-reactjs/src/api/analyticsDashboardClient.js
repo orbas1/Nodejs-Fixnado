@@ -1,7 +1,6 @@
 import mockDashboards from './mockDashboards.js';
 
 const API_BASE = '/api/analytics/dashboards';
-const TOKEN_STORAGE_KEY = 'fixnado:accessToken';
 
 const toQueryString = (params = {}) => {
   const searchParams = new URLSearchParams();
@@ -15,27 +14,10 @@ const toQueryString = (params = {}) => {
   return result ? `?${result}` : '';
 };
 
-const readAuthToken = () => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  try {
-    return window.localStorage?.getItem(TOKEN_STORAGE_KEY) ?? null;
-  } catch (error) {
-    console.warn('[analyticsDashboardClient] Unable to read auth token', error);
-    return null;
-  }
-};
-
 const createHeaders = (accept, persona) => {
   const headers = new Headers({ Accept: accept });
   if (persona) {
     headers.set('X-Fixnado-Persona', persona);
-  }
-
-  const token = readAuthToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
   }
 
   return headers;

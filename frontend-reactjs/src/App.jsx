@@ -9,6 +9,7 @@ import { useLocale } from './hooks/useLocale.js';
 import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
+import ConsentBanner from './components/legal/ConsentBanner.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -156,6 +157,7 @@ function App() {
       {!isDashboardExperience && (
         <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       )}
+      <ConsentBanner />
     </div>
   );
 }

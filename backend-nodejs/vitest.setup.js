@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { vi } from 'vitest';
 
 if (!vi) {

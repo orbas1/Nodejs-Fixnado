@@ -1,15 +1,5 @@
 const ADMIN_BLOG_ROOT = '/api/admin/blog';
 
-function readToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
-  } catch (error) {
-    console.warn('[adminBlogClient] unable to read auth token', error);
-    return null;
-  }
-}
-
 function buildQuery(params = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -21,16 +11,8 @@ function buildQuery(params = {}) {
 }
 
 async function request(path, { method = 'GET', body, signal } = {}) {
-  const token = readToken();
-  if (!token) {
-    const error = new Error('Admin authentication required');
-    error.status = 401;
-    throw error;
-  }
-
   const headers = new Headers({
-    Accept: 'application/json',
-    Authorization: `Bearer ${token}`
+    Accept: 'application/json'
   });
 
   if (body !== undefined) {

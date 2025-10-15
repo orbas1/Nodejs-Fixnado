@@ -90,7 +90,7 @@ export const writeSecurityPreferences = (preferences) => {
 
   try {
     window.dispatchEvent(new CustomEvent(SECURITY_EVENT, { detail: payload }));
-  } catch (error) {
+  } catch {
     window.dispatchEvent(new Event(SECURITY_EVENT));
   }
 

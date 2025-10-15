@@ -102,6 +102,6 @@ class AuthController extends StateNotifier<AuthState> {
     // Clear any cached API credentials to mirror server-side session revocation.
     // Intentionally not awaiting to avoid blocking UI transitions.
     // ignore: discarded_futures
-    _ref.read(authTokenProvider.notifier).setToken(null);
+    _ref.read(authTokenProvider.notifier).clear();
   }
 }

@@ -50,6 +50,9 @@ import AffiliateProfile from './affiliateProfile.js';
 import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
+import SecurityAuditEvent from './securityAuditEvent.js';
+import UserSession from './userSession.js';
+import ConsentEvent from './consentEvent.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -165,6 +168,15 @@ MessageDelivery.belongsTo(ConversationMessage, { foreignKey: 'conversationMessag
 
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
+
+User.hasMany(UserSession, { foreignKey: 'userId', as: 'sessions' });
+UserSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(SecurityAuditEvent, { foreignKey: 'userId', as: 'securityAuditEvents' });
+SecurityAuditEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(ConsentEvent, { foreignKey: 'userId', as: 'consentEvents' });
+ConsentEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
 InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -321,5 +333,8 @@ export {
   AffiliateProfile,
   AffiliateCommissionRule,
   AffiliateReferral,
-  AffiliateLedgerEntry
+  AffiliateLedgerEntry,
+  SecurityAuditEvent,
+  UserSession,
+  ConsentEvent
 };

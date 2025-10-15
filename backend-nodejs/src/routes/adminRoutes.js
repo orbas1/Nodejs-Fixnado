@@ -18,30 +18,69 @@ import {
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { Permissions } from '../services/accessControlService.js';
 
 const router = Router();
 
-router.get('/dashboard', authenticate, authorize(['admin']), dashboard);
-router.get('/feature-toggles', authenticate, authorize(['admin']), getToggles);
-router.get('/feature-toggles/:key', authenticate, authorize(['admin']), getToggle);
+router.get('/dashboard', authenticate, authorize([Permissions.ADMIN_DASHBOARD]), dashboard);
+router.get('/feature-toggles', authenticate, authorize([Permissions.ADMIN_FEATURE_READ]), getToggles);
+router.get('/feature-toggles/:key', authenticate, authorize([Permissions.ADMIN_FEATURE_READ]), getToggle);
 router.patch(
   '/feature-toggles/:key',
   authenticate,
-  authorize(['admin']),
+  authorize([Permissions.ADMIN_FEATURE_WRITE]),
   upsertToggleValidators,
   updateToggle
 );
 
-router.get('/platform-settings', authenticate, authorize(['admin']), fetchPlatformSettings);
-router.put('/platform-settings', authenticate, authorize(['admin']), savePlatformSettings);
+router.get(
+  '/platform-settings',
+  authenticate,
+  authorize([Permissions.ADMIN_PLATFORM_READ]),
+  fetchPlatformSettings
+);
+router.put(
+  '/platform-settings',
+  authenticate,
+  authorize([Permissions.ADMIN_PLATFORM_WRITE]),
+  savePlatformSettings
+);
 
-const ADMIN_AFFILIATE_ROLES = ['admin', 'provider_admin', 'operations_admin'];
-
-router.get('/affiliate/settings', authenticate, authorize(ADMIN_AFFILIATE_ROLES), getAffiliateSettingsHandler);
-router.put('/affiliate/settings', authenticate, authorize(ADMIN_AFFILIATE_ROLES), saveAffiliateSettingsHandler);
-router.get('/affiliate/rules', authenticate, authorize(ADMIN_AFFILIATE_ROLES), listAffiliateCommissionRulesHandler);
-router.post('/affiliate/rules', authenticate, authorize(ADMIN_AFFILIATE_ROLES), upsertAffiliateCommissionRuleHandler);
-router.patch('/affiliate/rules/:id', authenticate, authorize(ADMIN_AFFILIATE_ROLES), upsertAffiliateCommissionRuleHandler);
-router.delete('/affiliate/rules/:id', authenticate, authorize(ADMIN_AFFILIATE_ROLES), deactivateAffiliateCommissionRuleHandler);
+router.get(
+  '/affiliate/settings',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_READ]),
+  getAffiliateSettingsHandler
+);
+router.put(
+  '/affiliate/settings',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  saveAffiliateSettingsHandler
+);
+router.get(
+  '/affiliate/rules',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_READ]),
+  listAffiliateCommissionRulesHandler
+);
+router.post(
+  '/affiliate/rules',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  upsertAffiliateCommissionRuleHandler
+);
+router.patch(
+  '/affiliate/rules/:id',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  upsertAffiliateCommissionRuleHandler
+);
+router.delete(
+  '/affiliate/rules/:id',
+  authenticate,
+  authorize([Permissions.ADMIN_AFFILIATE_WRITE]),
+  deactivateAffiliateCommissionRuleHandler
+);
 
 export default router;

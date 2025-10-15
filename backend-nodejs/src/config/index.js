@@ -84,6 +84,37 @@ const DEFAULT_WAREHOUSE_THRESHOLDS = {
   zones: 90
 };
 
+const DEFAULT_CONSENT_POLICIES = {
+  terms_of_service: {
+    title: 'Terms of Service',
+    version: '2024-06-01',
+    required: true,
+    region: 'GB',
+    url: '/legal/terms',
+    description: 'Marketplace terms governing bookings, rentals, and payments.',
+    retentionYears: 7
+  },
+  privacy_policy: {
+    title: 'Privacy Policy',
+    version: '2024-06-01',
+    required: true,
+    region: 'GB',
+    url: '/privacy',
+    description: 'Explains how Fixnado handles personal data and privacy rights.',
+    retentionYears: 7
+  },
+  marketing_emails: {
+    title: 'Marketing Preferences',
+    version: '2024-06-01',
+    required: false,
+    region: 'GB',
+    url: '/privacy#marketing',
+    description: 'Optional email updates on new features and marketplace insights.',
+    retentionYears: 3,
+    preferenceKey: 'marketing.opt_in'
+  }
+};
+
 function normaliseThresholds(source, fallback) {
   const base = { ...fallback };
   if (!source || typeof source !== 'object') {
@@ -95,6 +126,47 @@ function normaliseThresholds(source, fallback) {
     if (Number.isFinite(parsed) && parsed > 0) {
       base[key] = parsed;
     }
+  }
+
+  return base;
+}
+
+function normaliseConsentPolicies(source) {
+  const base = { ...DEFAULT_CONSENT_POLICIES };
+  if (!source || typeof source !== 'object') {
+    return base;
+  }
+
+  for (const [key, value] of Object.entries(source)) {
+    if (!value || typeof value !== 'object') {
+      continue;
+    }
+
+    const policyKey = key.trim().toLowerCase();
+    const current = base[policyKey] || DEFAULT_CONSENT_POLICIES.terms_of_service;
+    const normalised = {
+      version: String(value.version || current.version || '1.0'),
+      required: value.required ?? current.required ?? true,
+      region: String(value.region || current.region || 'GB').toUpperCase(),
+      url: typeof value.url === 'string' && value.url.trim() ? value.url.trim() : current.url,
+      title:
+        typeof value.title === 'string' && value.title.trim()
+          ? value.title.trim()
+          : current.title ?? DEFAULT_CONSENT_POLICIES.terms_of_service.title,
+      description:
+        typeof value.description === 'string' && value.description.trim()
+          ? value.description.trim()
+          : current.description,
+      retentionYears: Number.isFinite(Number(value.retentionYears))
+        ? Number(value.retentionYears)
+        : current.retentionYears ?? 7,
+      preferenceKey:
+        typeof value.preferenceKey === 'string' && value.preferenceKey.trim()
+          ? value.preferenceKey.trim()
+          : current.preferenceKey ?? null
+    };
+
+    base[policyKey] = normalised;
   }
 
   return base;
@@ -157,6 +229,35 @@ const config = {
       allowedEmails: listFromEnv('ADMIN_ALLOWED_EMAILS'),
       allowedDomains: listFromEnv('ADMIN_ALLOWED_DOMAINS'),
       sessionTtlHours: Math.max(intFromEnv('ADMIN_SESSION_TTL_HOURS', 12), 1)
+    },
+    session: {
+      cookieName: process.env.AUTH_COOKIE_NAME || 'fx_session',
+      refreshCookieName: process.env.AUTH_REFRESH_COOKIE_NAME || 'fx_refresh',
+      cookieDomain: process.env.AUTH_COOKIE_DOMAIN || undefined,
+      cookiePath: process.env.AUTH_COOKIE_PATH || '/',
+      cookieSameSite: process.env.AUTH_COOKIE_SAMESITE || 'lax',
+      cookieSecure:
+        typeof process.env.AUTH_COOKIE_SECURE === 'string'
+          ? process.env.AUTH_COOKIE_SECURE.trim().toLowerCase() !== 'false'
+          : env === 'production',
+      accessTokenTtlSeconds: Math.max(intFromEnv('AUTH_ACCESS_TOKEN_TTL_SECONDS', 900), 300),
+      refreshTokenTtlDays: Math.max(intFromEnv('AUTH_REFRESH_TOKEN_TTL_DAYS', 14), 1),
+      rollingSessions: boolFromEnv('AUTH_ROLLING_SESSIONS', true)
+    }
+  },
+  consent: {
+    policies: normaliseConsentPolicies(jsonFromEnv('CONSENT_POLICIES', null)),
+    defaultRegion: (process.env.CONSENT_DEFAULT_REGION || 'GB').toUpperCase(),
+    refreshDays: Math.max(intFromEnv('CONSENT_REFRESH_DAYS', 365), 30),
+    marketingDoubleOptIn: boolFromEnv('CONSENT_MARKETING_DOUBLE_OPT_IN', true)
+  },
+  risk: {
+    scamDetection: {
+      highRiskScore: Math.max(floatFromEnv('SCAM_HIGH_RISK_SCORE', 0.75), 0),
+      mediumRiskScore: Math.max(floatFromEnv('SCAM_MEDIUM_RISK_SCORE', 0.45), 0),
+      aiEndpoint: process.env.SCAM_AI_ENDPOINT || '',
+      aiToken: process.env.SCAM_AI_TOKEN || '',
+      aiTimeoutMs: Math.max(intFromEnv('SCAM_AI_TIMEOUT_MS', 1500), 250)
     }
   },
   telemetry: {

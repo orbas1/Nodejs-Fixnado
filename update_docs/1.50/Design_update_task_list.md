@@ -2,27 +2,27 @@
 
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
-| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 18% |
+| D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 64% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 0% |
-| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 0% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 4% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 0% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 44% |
 | D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 0% |
 
 ---
 
-## Task D1 – Token & System Foundation (8%)
+## Task D1 – Token & System Foundation (64%)
 **Objective:** Create a unified token library, baseline components, and accessibility guardrails.
 
-**Subtasks (10):**
-1. Audit `Colours.md`, `Screen_update_Screen_colours.md`, and `colours.md` to map overlaps and gaps.
-2. Define colour token naming convention (core, accent, semantic) and store in shared library.
-3. Establish typography scale and fallback stack referencing both application and web font specs.
-4. Document spacing, elevation, and radius tokens aligned with component density guidelines.
-5. Produce baseline component specs for buttons, cards, chips, alerts, and form elements.
+**Subtasks (11):**
+1. ✅ Audit `Colours.md`, `Screen_update_Screen_colours.md`, and `colours.md` to map overlaps and gaps.
+2. ✅ Define colour token naming convention (core, accent, semantic) and store in shared library.
+3. ✅ Establish typography scale and fallback stack referencing both application and web font specs.
+4. ✅ Document spacing, elevation, and radius tokens aligned with component density guidelines.
+5. ✅ Produce baseline component specs for buttons, cards, chips, alerts, and form elements.
 6. Configure Style Dictionary (or equivalent) pipeline exporting JSON/Sass/Flutter tokens.
-7. Draft focus, hover, pressed, and disabled state patterns including motion parameters.
-8. Validate tokens against WCAG AA/AAA thresholds and annotate failures.
+7. ✅ Draft focus, hover, pressed, and disabled state patterns including motion parameters.
+8. ✅ Validate tokens against WCAG AA/AAA thresholds and annotate failures.
 9. Create sample component usage pages demonstrating token application across themes.
 10. Socialise token documentation with engineering teams for early feedback.
 11. ✅ Extend semantic token catalogue with rate-limit, CORS, consent, and PII incident alert states aligned to backend messaging.
@@ -57,6 +57,7 @@
 10. Assemble partial library into reusable Figma/UXPin master components.
 11. Create dummy-data scaffolding guidelines for QA/staging use.
 12. Review templates with marketing, product, and compliance stakeholders for alignment.
+13. Validate provider dashboard and business front templates against restored backend payloads; document evidence in design QA backlog.
 
 ## Task D4 – Theme & Visual Narrative Development (0%)
 **Objective:** Deliver theme variants (default, industrial, premium, emo) with imagery and motion guidance.
@@ -71,21 +72,23 @@
 7. Validate theme accessibility, ensuring compliance with contrast and motion preferences.
 8. Publish theme adoption playbook for engineering and marketing teams.
 
-## Task D5 – Mobile Parity & Component Adaptation (0%)
+## Task D5 – Mobile Parity & Component Adaptation (44%)
 **Objective:** Translate web patterns into Flutter-ready components with parity across user and provider apps.
 
 **Subtasks (11):**
-1. Inventory Flutter screens from application update files and match them to web counterparts.
+1. ✅ Inventory Flutter screens from application update files and match them to web counterparts.
 2. Adapt card, list, and widget components to Material 3 standards with shared tokens.
 3. Design navigation transitions (tab ↔ drawer) with gesture support and accessibility cues.
-4. Build mobile forms with inline validation, multi-step progress, and secure input states.
-5. Align messaging threads with AI-assist overlays, attachment trays, and emo theme variants.
+4. ✅ Build mobile forms with inline validation, multi-step progress, and secure input states.
+5. ✅ Align messaging threads with AI-assist overlays, attachment trays, and emo theme variants.
 6. Create finance module layouts (payouts, disputes, wallets) aligned with web dashboards.
-7. Document offline/loading placeholders mirroring web skeleton patterns.
+7. ✅ Document offline/loading placeholders mirroring web skeleton patterns.
 8. Specify push notification banners, in-app alerts, and settings toggles.
 9. Provide asset sizing and compression guidelines for mobile packaging.
 10. Coordinate with engineering on component feasibility and edge cases.
-11. Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
+11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
+
+**Progress Notes:** Flutter consent overlays now mirror the web ledger receipts and legal typography, delivering parity for consent workflows, messaging gates, and offline placeholders. Mobile component documentation captures biometric unlocking, consent acknowledgements, and compliance cues for engineering hand-off, with screen inventories cross-referenced against the updated web journeys.
 
 ## Task D6 – Design QA, Documentation & Handover (0%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.

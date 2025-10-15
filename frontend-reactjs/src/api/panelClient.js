@@ -120,16 +120,6 @@ function resolveCacheKey(path, method, body) {
   }
 }
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage?.getItem('fixnado:accessToken') ?? null;
-  } catch (error) {
-    console.warn('[panelClient] unable to read auth token', error);
-    return null;
-  }
-}
-
 async function request(path, {
   method = 'GET',
   body,
@@ -137,7 +127,6 @@ async function request(path, {
   cacheKey: explicitCacheKey,
   ttl = 15000,
   headers: customHeaders,
-  anonymous = false,
   forceRefresh = false
 } = {}) {
   const cacheKey = explicitCacheKey ?? resolveCacheKey(path, method, body);
@@ -162,13 +151,6 @@ async function request(path, {
   headers.set('Accept', 'application/json');
   if (body && !(body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
-  }
-
-  if (!anonymous) {
-    const token = getAuthToken();
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
   }
 
   const { controller, timeoutId } = mergeAbortSignals(signal);
@@ -2775,7 +2757,6 @@ const businessFrontFetcher = withFallback(
     request(`/business-fronts/${encodeURIComponent(options?.slug ?? 'featured')}`, {
       cacheKey: `business-front:${options?.slug ?? 'featured'}`,
       ttl: 60000,
-      anonymous: true,
       forceRefresh: options?.forceRefresh,
       signal: options?.signal
     })
