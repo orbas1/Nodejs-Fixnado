@@ -79,6 +79,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import HomePage from './homePage.js';
+import HomePageSection from './homePageSection.js';
+import HomePageComponent from './homePageComponent.js';
 import LegalDocument from './legalDocument.js';
 import LegalDocumentVersion from './legalDocumentVersion.js';
 import LiveFeedAuditEvent from './liveFeedAuditEvent.js';
@@ -548,6 +551,29 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+HomePage.hasMany(HomePageSection, {
+  foreignKey: 'homePageId',
+  as: 'sections',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageSection.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+
+HomePageSection.hasMany(HomePageComponent, {
+  foreignKey: 'sectionId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePageSection, { foreignKey: 'sectionId', as: 'section' });
+
+HomePage.hasMany(HomePageComponent, {
+  foreignKey: 'homePageId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
 export default sequelize;
 WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
 WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
@@ -639,6 +665,9 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  HomePage,
+  HomePageSection,
+  HomePageComponent
   LegalDocument,
   LegalDocumentVersion
   LiveFeedAuditEvent,

@@ -216,6 +216,21 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.home-builder.manage': {
+    id: 'admin.home-builder.manage',
+    version: '1.0.0',
+    resource: 'admin.home-builder',
+    action: 'admin.home-builder:manage',
+    description: 'Allow platform administrators to build and publish marketing home pages.',
+    requirements: [Permissions.ADMIN_HOME_BUILDER],
+    tags: ['admin', 'content', 'marketing'],
+    severity: 'critical',
+    metadata: (req) => ({
+      method: req.method,
+      pageId: req.params?.pageId ?? null,
+      sectionId: req.params?.sectionId ?? null,
+      componentId: req.params?.componentId ?? null
+    })
   'admin.website.read': {
     id: 'admin.website.read',
     version: '1.0.0',

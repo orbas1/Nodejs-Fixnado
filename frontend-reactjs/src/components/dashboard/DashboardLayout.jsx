@@ -25,6 +25,7 @@ import {
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
   CubeIcon,
+  PaintBrushIcon
   TagIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
@@ -144,6 +145,8 @@ const navIconMap = {
   seo: TagIcon
 };
 
+navIconMap.builder = PaintBrushIcon;
+
 const getNavIcon = (item) => {
   if (!item?.icon) {
     return Squares2X2Icon;
@@ -167,6 +170,9 @@ const formatRelativeTime = (timestamp) => {
 };
 
 const buildSearchIndex = (navigation) =>
+  navigation
+    .filter((section) => !section.href)
+    .flatMap((section) => {
   navigation.flatMap((section) => {
     if (section.to) {
     if (section.type === 'link') {
@@ -390,6 +396,9 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
+  const initialSectionId = navigableItems[0]?.id ?? null;
+  const [selectedSection, setSelectedSection] = useState(initialSectionId);
   const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
   const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
   const contentSections = useMemo(
@@ -408,6 +417,15 @@ const DashboardLayout = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleNavClick = useCallback(
+    (item) => {
+      if (item.href) {
+        if (item.target === '_blank') {
+          window.open(item.href, '_blank', 'noopener');
+        } else {
+          navigate(item.href);
+        }
+        setMobileNavOpen(false);
   const handleNavItemSelect = useCallback(
     (item) => {
       if (item.type === 'link') {
@@ -422,6 +440,15 @@ const DashboardLayout = ({
   );
 
   useEffect(() => {
+    setSelectedSection((current) => {
+      if (current && navigableItems.some((item) => item.id === current)) {
+        return current;
+      }
+      return navigableItems[0]?.id ?? null;
+    });
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigation, navigableItems]);
     const defaultSection = contentSections[0]?.id ?? null;
     setSelectedSection(defaultSection);
     setSearchQuery('');
@@ -450,6 +477,7 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
+  const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
   const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
   const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
   const persona = dashboard?.persona ?? roleMeta.id;
@@ -550,6 +578,7 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
+                        onClick={() => handleNavClick(item)}
                         onClick={handleClick}
                         onClick={() => {
                           handleNavItemSelect(item);
@@ -734,6 +763,7 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
+                onClick={() => handleNavClick(item)}
                 onClick={handleClick}
                 onClick={() => handleNavItemSelect(item)}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${

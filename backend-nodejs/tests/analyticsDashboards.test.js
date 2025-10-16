@@ -642,6 +642,9 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Jobs Received');
     expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
     expect(response.body.exports.csv.href).toContain('/api/analytics/dashboards/admin/export');
+    const builderLink = response.body.navigation.find((section) => section.id === 'home-builder');
+    expect(builderLink).toBeTruthy();
+    expect(builderLink.href).toBe('/admin/home-builder');
     const websiteSection = response.body.navigation.find((section) => section.id === 'website-management');
     expect(websiteSection).toBeTruthy();
     expect(websiteSection.data.panels.length).toBeGreaterThan(0);
