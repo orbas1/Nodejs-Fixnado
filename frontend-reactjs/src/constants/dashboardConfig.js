@@ -9,6 +9,7 @@ export const DASHBOARD_ROLES = [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
       { id: 'customer-control', label: 'Customer Control Centre', icon: 'control' },
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
+      { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
       { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
       { id: 'history', label: 'Order History', icon: 'documents' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },

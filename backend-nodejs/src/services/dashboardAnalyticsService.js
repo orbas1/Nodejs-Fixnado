@@ -617,9 +617,18 @@ async function loadUserData(context) {
                 .setZone(window.timezone)
                 .toRelative({ base: window.end })
             : 'Schedule pending';
+        const ownerLabel =
+          order.metadata?.siteAddress ||
+          order.metadata?.contactName ||
+          order.Service?.category ||
+          'Service order';
+        const priorityLabel =
+          order.priority && order.priority !== 'medium'
+            ? `Priority: ${order.priority.replace(/_/g, ' ')}`
+            : null;
         return {
-          title: order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
-          owner: order.Service?.category || 'Service order',
+          title: order.title || order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
+          owner: priorityLabel ? `${ownerLabel} • ${priorityLabel}` : ownerLabel,
           value: formatCurrency(order.totalAmount, order.currency || order.Service?.currency || 'GBP'),
           eta: etaLabel
         };

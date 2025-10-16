@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 
@@ -1630,6 +1631,9 @@ const DashboardSection = ({ section, features = {}, persona }) => {
     case 'grid':
       return <GridSection section={section} />;
     case 'board':
+      if (section.id === 'orders') {
+        return <ServiceOrdersWorkspace section={section} />;
+      }
       return <BoardSection section={section} />;
     case 'table':
       return <TableSection section={section} />;
@@ -1673,6 +1677,7 @@ const DashboardSection = ({ section, features = {}, persona }) => {
 
 DashboardSection.propTypes = {
   section: PropTypes.shape({
+    id: PropTypes.string,
     type: PropTypes.string.isRequired,
     access: PropTypes.shape({
       label: PropTypes.string,

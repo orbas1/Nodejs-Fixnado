@@ -45,6 +45,8 @@ export const Permissions = Object.freeze({
   PROVIDER_ONBOARD: 'provider:onboard:manage',
   REPORTING_DOWNLOAD: 'reporting:download',
   SCHEDULE_MANAGE: 'schedule:manage',
+  SERVICE_ORDERS_VIEW: 'service-orders:view',
+  SERVICE_ORDERS_MANAGE: 'service-orders:manage',
   SERVICES_MANAGE: 'services:manage',
   SERVICES_BOOK: 'services:book',
   SUPPORT_TICKETS: 'support:tickets:manage',

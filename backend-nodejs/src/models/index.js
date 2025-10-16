@@ -7,6 +7,7 @@ import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
 import ServiceZoneCoverage from './serviceZoneCoverage.js';
 import Order from './order.js';
+import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
@@ -137,6 +138,12 @@ Order.belongsTo(Service, { foreignKey: 'serviceId' });
 
 User.hasMany(Order, { foreignKey: 'buyerId' });
 Order.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
+
+Order.hasMany(OrderNote, { foreignKey: 'orderId', as: 'notes' });
+OrderNote.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+OrderNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(OrderNote, { foreignKey: 'authorId', as: 'orderNotes' });
 
 Region.hasMany(Order, { foreignKey: 'regionId', as: 'orders' });
 Order.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -457,6 +464,7 @@ export {
   ServiceZone,
   ServiceZoneCoverage,
   Order,
+  OrderNote,
   Escrow,
   Dispute,
   UiPreferenceTelemetry,

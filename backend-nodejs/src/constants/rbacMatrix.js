@@ -29,6 +29,8 @@ export const RBAC_MATRIX = {
       Permissions.FEED_MESSAGE,
       Permissions.FEED_POST,
       Permissions.SERVICES_BOOK,
+      Permissions.SERVICE_ORDERS_VIEW,
+      Permissions.SERVICE_ORDERS_MANAGE,
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
       Permissions.SCHEDULE_MANAGE,
