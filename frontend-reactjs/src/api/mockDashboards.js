@@ -1,4 +1,9 @@
 import { readSecurityPreferences } from '../utils/securityPreferences.js';
+import {
+  ORDER_HISTORY_ENTRY_TYPES,
+  ORDER_HISTORY_ACTOR_ROLES,
+  ORDER_HISTORY_ATTACHMENT_TYPES
+} from '../constants/orderHistory.js';
 
 const createWindow = () => ({
   label: 'Next 30 days',
@@ -205,6 +210,107 @@ const mockDashboards = {
                 { title: 'Emergency plumbing', owner: 'Civic Centre', value: '£640', eta: 'Inspection passed' },
                 { title: 'Solar panel clean', owner: 'City Schools', value: '£1.1k', eta: 'Feedback due 22 Mar' }
               ]
+            }
+          ]
+        }
+      },
+      {
+        id: 'history',
+        icon: 'documents',
+        label: 'Order History',
+        description: 'Detailed audit trail for every service order.',
+        type: 'history',
+        access: { level: 'manage', features: ['order-history:write', 'history:write'] },
+        data: {
+          statusOptions: [
+            { value: 'all', label: 'All statuses' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'in_progress', label: 'In progress' },
+            { value: 'completed', label: 'Completed' },
+            { value: 'cancelled', label: 'Cancelled' }
+          ],
+          entryTypes: ORDER_HISTORY_ENTRY_TYPES,
+          actorRoles: ORDER_HISTORY_ACTOR_ROLES,
+          defaultFilters: { status: 'all', sort: 'desc', limit: 25 },
+          attachments: { acceptedTypes: ORDER_HISTORY_ATTACHMENT_TYPES, maxPerEntry: 6 },
+          context: { customerId: 'USR-2488', companyId: 'COMP-100' },
+          access: { level: 'manage', features: ['order-history:write', 'history:write'] },
+          orders: [
+            {
+              id: 'ORD-1001',
+              reference: 'ORD-1001',
+              status: 'in_progress',
+              serviceTitle: 'Retail lighting upgrade',
+              serviceCategory: 'Electrical',
+              totalAmount: 1900,
+              currency: 'GBP',
+              scheduledFor: '2025-03-18T09:00:00Z',
+              createdAt: '2025-03-10T08:00:00Z',
+              updatedAt: '2025-03-16T14:00:00Z',
+              lastStatusTransitionAt: '2025-03-16T14:00:00Z',
+              zoneId: 'ZONE-B',
+              companyId: 'COMP-100',
+              meta: {
+                serviceOwner: 'Avery Stone',
+                location: 'Downtown Core',
+                severity: 'standard'
+              }
+            },
+            {
+              id: 'ORD-1002',
+              reference: 'ORD-1002',
+              status: 'completed',
+              serviceTitle: 'Community centre deep clean',
+              serviceCategory: 'Facilities',
+              totalAmount: 1400,
+              currency: 'GBP',
+              scheduledFor: '2025-03-14T07:30:00Z',
+              createdAt: '2025-03-05T11:45:00Z',
+              updatedAt: '2025-03-14T16:20:00Z',
+              lastStatusTransitionAt: '2025-03-14T16:20:00Z',
+              zoneId: 'ZONE-B',
+              companyId: 'COMP-100',
+              meta: {
+                serviceOwner: 'Jordan Patel',
+                location: 'Community Centre A',
+                severity: 'standard'
+              }
+            }
+          ],
+          entries: [
+            {
+              id: 'HIST-001',
+              title: 'Crew check-in confirmed',
+              entryType: 'milestone',
+              status: 'in_progress',
+              summary: 'Crew onsite at 07:45, safety briefing completed and work area secured.',
+              actorRole: 'provider',
+              actorId: 'crew-17',
+              occurredAt: '2025-03-17T07:45:00Z',
+              createdAt: '2025-03-17T07:50:00Z',
+              updatedAt: '2025-03-17T07:50:00Z',
+              attachments: [
+                {
+                  id: 'ATT-001',
+                  label: 'Site photo',
+                  url: 'https://cdn.fixnado.com/orders/ord-1001/site-photo.jpg',
+                  type: 'image',
+                  previewImage: 'https://cdn.fixnado.com/orders/ord-1001/site-photo-thumb.jpg'
+                }
+              ],
+              meta: { shift: 'AM', severity: 'standard' }
+            },
+            {
+              id: 'HIST-002',
+              title: 'Finance approved release',
+              entryType: 'status_update',
+              status: 'completed',
+              summary: 'Finance approved escrow release following proof-of-service upload. Release queued for 24h settlement.',
+              actorRole: 'finance',
+              actorId: 'fin-ops',
+              occurredAt: '2025-03-15T16:30:00Z',
+              createdAt: '2025-03-15T16:32:00Z',
+              meta: { approvalId: 'ESC-4821', amount: '£1,300' }
             }
           ]
         }

@@ -16,6 +16,7 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
@@ -367,6 +368,9 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
 
+Booking.hasMany(BookingHistoryEntry, { foreignKey: 'bookingId', as: 'history' });
+BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+
 BlogPost.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 User.hasMany(BlogPost, { foreignKey: 'authorId', as: 'blogPosts' });
 
@@ -418,6 +422,7 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,
   InventoryItem,
