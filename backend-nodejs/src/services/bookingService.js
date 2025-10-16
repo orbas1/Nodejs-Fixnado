@@ -1,4 +1,6 @@
-import { Booking, BookingAssignment, BookingBid, BookingBidComment, sequelize } from '../models/index.js';
+import { randomUUID } from 'node:crypto';
+import { Op } from 'sequelize';
+import { Booking, BookingAssignment, BookingBid, BookingBidComment, BookingHistoryEntry, sequelize } from '../models/index.js';
 import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 import { calculateBookingTotals, resolveSlaExpiry } from './financeService.js';
 import { applyScamDetection } from './scamDetectionService.js';
@@ -12,6 +14,11 @@ const ALLOWED_STATUS_TRANSITIONS = {
   cancelled: [],
   disputed: ['in_progress']
 };
+
+const HISTORY_ENTRY_TYPES = ['note', 'status_update', 'milestone', 'handoff', 'document'];
+const HISTORY_STATUSES = ['open', 'in_progress', 'blocked', 'completed', 'cancelled'];
+const HISTORY_ACTOR_ROLES = ['customer', 'provider', 'operations', 'support', 'finance', 'system'];
+const HISTORY_ATTACHMENT_TYPES = ['image', 'document', 'link'];
 
 function assertTransition(current, next) {
   const allowed = ALLOWED_STATUS_TRANSITIONS[current] || [];
@@ -37,10 +44,138 @@ function ensureDate(value, fieldName) {
   return date;
 }
 
+function normaliseChecklist(items = []) {
+  if (!Array.isArray(items)) {
+    return undefined;
+  }
+
+  const entries = items
+    .map((item, index) => {
+      if (!item) return null;
+      const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `item-${index + 1}`;
+      const label = typeof item.label === 'string' ? item.label.trim() : '';
+      if (!label) {
+        return null;
+      }
+      return {
+        id,
+        label,
+        mandatory: item.mandatory === true
+      };
+    })
+    .filter(Boolean);
+
+  return entries;
+}
+
+function normaliseAttachments(items = []) {
+  if (!Array.isArray(items)) {
+    return undefined;
+  }
+
+  const entries = items
+    .map((item) => {
+      if (!item) return null;
+      const label = typeof item.label === 'string' ? item.label.trim() : '';
+      const url = typeof item.url === 'string' ? item.url.trim() : '';
+      if (!label || !url) {
+        return null;
+      }
+      return {
+        label,
+        url,
+        type:
+          typeof item.type === 'string' && item.type.trim() ? item.type.trim().toLowerCase() : 'document'
+      };
+    })
+    .filter(Boolean);
+
+  return entries;
+function sanitiseString(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function coerceHistoryValue(value, allowed, fallback) {
+  if (typeof value === 'string') {
+    const normalised = value.trim();
+    if (allowed.includes(normalised)) {
+      return normalised;
+    }
+  }
+  return fallback;
+}
+
+function normaliseHistoryAttachments(rawAttachments) {
+  if (!Array.isArray(rawAttachments)) {
+    return [];
+  }
+
+  return rawAttachments
+    .map((attachment) => {
+      if (!attachment || typeof attachment !== 'object') {
+        return null;
+      }
+
+      const url = sanitiseString(attachment.url);
+      if (!url) {
+        return null;
+      }
+
+      const label = sanitiseString(attachment.label) || url;
+      const type = coerceHistoryValue(attachment.type, HISTORY_ATTACHMENT_TYPES, 'link');
+      const description = sanitiseString(attachment.description);
+      const previewImage = sanitiseString(attachment.previewImage);
+
+      return {
+        id: sanitiseString(attachment.id ? String(attachment.id) : '') || randomUUID(),
+        label,
+        url,
+        type,
+        description: description || null,
+        previewImage: previewImage || null
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeHistoryMeta(baseMeta = {}, nextMeta = {}) {
+  const result = {};
+
+  if (baseMeta && typeof baseMeta === 'object' && !Array.isArray(baseMeta)) {
+    Object.assign(result, baseMeta);
+  }
+
+  if (nextMeta && typeof nextMeta === 'object' && !Array.isArray(nextMeta)) {
+    for (const [key, value] of Object.entries(nextMeta)) {
+      if (value === undefined) {
+        continue;
+      }
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
 function invalidBooking(message) {
   const error = new Error(message);
   error.statusCode = 400;
   return error;
+}
+
+async function assertBookingExists(bookingId) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return booking;
 }
 
 export async function createBooking({
@@ -600,22 +735,386 @@ export async function triggerDispute({ bookingId, reason, actorId }) {
 }
 
 export async function listBookings(filters = {}) {
-  const where = {};
+  const clauses = [];
+
   if (filters.zoneId) {
-    where.zoneId = filters.zoneId;
-  }
-  if (filters.status) {
-    where.status = filters.status;
-  }
-  if (filters.companyId) {
-    where.companyId = filters.companyId;
+    clauses.push({ zoneId: filters.zoneId });
   }
 
-  return Booking.findAll({ where, order: [['createdAt', 'DESC']] });
+  if (filters.status) {
+    clauses.push({ status: filters.status });
+  }
+
+  if (filters.companyId) {
+    clauses.push({ companyId: filters.companyId });
+  }
+
+  if (filters.customerId) {
+    clauses.push({ customerId: filters.customerId });
+  }
+
+  if (filters.search && typeof filters.search === 'string') {
+    const lowered = `%${filters.search.trim().toLowerCase()}%`;
+    if (lowered !== '%%') {
+      const dialect = sequelize.getDialect();
+      const idExpression =
+        dialect === 'postgres'
+          ? 'LOWER("Booking"."id"::text)'
+          : 'LOWER("Booking"."id")';
+      const jsonExpression = (path) => {
+        if (dialect === 'postgres') {
+          return `LOWER(meta->>'${path}')`;
+        }
+        return `LOWER(json_extract("Booking"."meta", '$.${path}'))`;
+      };
+
+      const metaFields = ['title', 'customerName', 'requester', 'service'];
+      const searchExpressions = [
+        sequelize.where(sequelize.literal(idExpression), { [Op.like]: lowered }),
+        ...metaFields.map((field) =>
+          sequelize.where(sequelize.literal(jsonExpression(field)), { [Op.like]: lowered })
+        )
+      ];
+
+      clauses.push({ [Op.or]: searchExpressions });
+    }
+  }
+
+  const where = clauses.length ? { [Op.and]: clauses } : undefined;
+
+  const limit = filters.limit ? Math.min(Math.max(Number(filters.limit) || 0, 1), 100) : undefined;
+  const offset = filters.offset ? Math.max(Number(filters.offset) || 0, 0) : undefined;
+  const sortDirection = filters.sort === 'asc' ? 'ASC' : 'DESC';
+
+  return Booking.findAll({
+    where,
+    order: [['createdAt', sortDirection]],
+    ...(limit ? { limit } : {}),
+    ...(offset ? { offset } : {})
+  });
 }
 
 export async function getBookingById(id) {
   return Booking.findByPk(id, {
     include: [BookingAssignment, BookingBid]
   });
+}
+
+export async function updateBookingSchedule(bookingId, schedule = {}, context = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const startProvided = Object.hasOwn(schedule, 'scheduledStart');
+  const endProvided = Object.hasOwn(schedule, 'scheduledEnd');
+  const slaProvided = Object.hasOwn(schedule, 'slaExpiresAt');
+
+  const nextStart = startProvided
+    ? schedule.scheduledStart
+      ? ensureDate(schedule.scheduledStart, 'scheduledStart')
+      : null
+    : booking.scheduledStart;
+  const nextEnd = endProvided
+    ? schedule.scheduledEnd
+      ? ensureDate(schedule.scheduledEnd, 'scheduledEnd')
+      : null
+    : booking.scheduledEnd;
+  const nextSla = slaProvided
+    ? schedule.slaExpiresAt
+      ? ensureDate(schedule.slaExpiresAt, 'slaExpiresAt')
+      : null
+    : booking.slaExpiresAt;
+
+  if (booking.type === 'scheduled') {
+    if (!nextStart || !nextEnd || nextEnd <= nextStart) {
+      throw invalidBooking('Scheduled bookings require a valid start and end window');
+    }
+  } else if (startProvided || endProvided) {
+    throw invalidBooking('On-demand bookings cannot include scheduled windows');
+  }
+
+  const payload = {};
+  if (startProvided) {
+    payload.scheduledStart = nextStart;
+  }
+  if (endProvided) {
+    payload.scheduledEnd = nextEnd;
+  }
+  if (slaProvided) {
+    payload.slaExpiresAt = nextSla ?? booking.slaExpiresAt;
+  }
+
+  const meta = {
+    ...booking.meta,
+    schedule: {
+      ...(booking.meta?.schedule || {}),
+      updatedAt: new Date().toISOString(),
+      updatedBy: context.actorId || null
+    }
+  };
+
+  if (nextStart) {
+    meta.schedule.start = nextStart.toISOString();
+  }
+  if (nextEnd) {
+    meta.schedule.end = nextEnd.toISOString();
+  }
+  if (nextSla) {
+    meta.schedule.slaExpiresAt = nextSla.toISOString();
+  }
+
+  await booking.update({ ...payload, meta });
+  return booking.reload();
+}
+
+export async function updateBookingMetadata(bookingId, updates = {}, context = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const meta = { ...booking.meta };
+  const nextMeta = { ...meta };
+
+  if (Object.hasOwn(updates, 'title')) {
+    nextMeta.title =
+      typeof updates.title === 'string' && updates.title.trim() ? updates.title.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'summary')) {
+    nextMeta.summary =
+      typeof updates.summary === 'string' && updates.summary.trim() ? updates.summary.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'instructions')) {
+    nextMeta.instructions =
+      typeof updates.instructions === 'string' && updates.instructions.trim()
+        ? updates.instructions.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'notes')) {
+    nextMeta.notes =
+      typeof updates.notes === 'string' && updates.notes.trim() ? updates.notes.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'ownerName')) {
+    nextMeta.ownerName =
+      typeof updates.ownerName === 'string' && updates.ownerName.trim()
+        ? updates.ownerName.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'templateId')) {
+    nextMeta.templateId = updates.templateId || null;
+  }
+
+  if (Object.hasOwn(updates, 'heroImageUrl')) {
+    nextMeta.heroImageUrl =
+      typeof updates.heroImageUrl === 'string' && updates.heroImageUrl.trim()
+        ? updates.heroImageUrl.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'images')) {
+    nextMeta.images = Array.isArray(updates.images)
+      ? updates.images
+          .map((entry) => (typeof entry === 'string' ? entry.trim() : null))
+          .filter(Boolean)
+      : [];
+  }
+
+  const checklist = normaliseChecklist(updates.checklist);
+  if (checklist !== undefined) {
+    nextMeta.checklist = checklist;
+  }
+
+  const attachments = normaliseAttachments(updates.attachments);
+  if (attachments !== undefined) {
+    nextMeta.attachments = attachments;
+  }
+
+  if (Object.hasOwn(updates, 'demandLevel')) {
+    if (typeof updates.demandLevel === 'string' && updates.demandLevel.trim()) {
+      nextMeta.demandLevel = updates.demandLevel.trim().toLowerCase();
+    }
+  }
+
+  if (Object.hasOwn(updates, 'tags')) {
+    nextMeta.tags = Array.isArray(updates.tags)
+      ? updates.tags
+          .map((tag) => (typeof tag === 'string' ? tag.trim() : null))
+          .filter(Boolean)
+      : [];
+  }
+
+  if (Object.hasOwn(updates, 'autoAssignEnabled')) {
+    nextMeta.autoAssignEnabled = Boolean(updates.autoAssignEnabled);
+  }
+
+  if (Object.hasOwn(updates, 'allowCustomerEdits')) {
+    nextMeta.allowCustomerEdits = Boolean(updates.allowCustomerEdits);
+  }
+
+  if (updates.extraMetadata && typeof updates.extraMetadata === 'object' && !Array.isArray(updates.extraMetadata)) {
+    nextMeta.extraMetadata = { ...(nextMeta.extraMetadata || {}), ...updates.extraMetadata };
+  }
+
+  nextMeta.lastEdited = {
+    actorId: context.actorId || null,
+    updatedAt: new Date().toISOString()
+  };
+
+  await booking.update({ meta: nextMeta });
+  return booking.reload();
+export async function listBookingHistory(bookingId, options = {}) {
+  if (!bookingId) {
+    throw invalidBooking('bookingId is required');
+  }
+
+  await assertBookingExists(bookingId);
+
+  const limit = Math.min(Math.max(Number(options.limit) || 0, 1), 100);
+  const offset = Math.max(Number(options.offset) || 0, 0);
+  const sortDirection = options.sort === 'asc' ? 'ASC' : 'DESC';
+
+  const where = { bookingId };
+  if (options.status && options.status !== 'all' && HISTORY_STATUSES.includes(options.status)) {
+    where.status = options.status;
+  }
+
+  const { count, rows } = await BookingHistoryEntry.findAndCountAll({
+    where,
+    order: [
+      ['occurredAt', sortDirection],
+      ['createdAt', sortDirection]
+    ],
+    limit,
+    offset
+  });
+
+  return {
+    total: count,
+    entries: rows.map((entry) => entry.toJSON())
+  };
+}
+
+export async function createBookingHistoryEntry(bookingId, payload = {}) {
+  if (!bookingId) {
+    throw invalidBooking('bookingId is required');
+  }
+
+  const title = sanitiseString(payload.title);
+  if (!title) {
+    throw invalidBooking('A title is required for history entries');
+  }
+
+  await assertBookingExists(bookingId);
+
+  const occurredAt = ensureDate(payload.occurredAt, 'occurredAt') || new Date();
+  const entryType = coerceHistoryValue(payload.entryType, HISTORY_ENTRY_TYPES, 'note');
+  const status = coerceHistoryValue(payload.status, HISTORY_STATUSES, 'open');
+  const actorRole = coerceHistoryValue(payload.actorRole, HISTORY_ACTOR_ROLES, 'customer');
+  const summary = sanitiseString(payload.summary);
+  const actorId = sanitiseString(payload.actorId ? String(payload.actorId) : '') || null;
+  const attachments = normaliseHistoryAttachments(payload.attachments);
+  const meta = mergeHistoryMeta({}, payload.meta);
+
+  const entry = await BookingHistoryEntry.create({
+    bookingId,
+    title,
+    entryType,
+    status,
+    summary,
+    actorId,
+    actorRole,
+    occurredAt,
+    attachments,
+    meta
+  });
+
+  return entry.toJSON();
+}
+
+export async function updateBookingHistoryEntry(bookingId, entryId, payload = {}) {
+  if (!bookingId || !entryId) {
+    throw invalidBooking('bookingId and entryId are required');
+  }
+
+  await assertBookingExists(bookingId);
+
+  const entry = await BookingHistoryEntry.findOne({ where: { id: entryId, bookingId } });
+  if (!entry) {
+    const error = new Error('History entry not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const updates = {};
+
+  if (payload.title !== undefined) {
+    const title = sanitiseString(payload.title);
+    if (!title) {
+      throw invalidBooking('History entry title cannot be empty');
+    }
+    updates.title = title;
+  }
+
+  if (payload.entryType !== undefined) {
+    updates.entryType = coerceHistoryValue(payload.entryType, HISTORY_ENTRY_TYPES, entry.entryType);
+  }
+
+  if (payload.status !== undefined) {
+    updates.status = coerceHistoryValue(payload.status, HISTORY_STATUSES, entry.status);
+  }
+
+  if (payload.actorRole !== undefined) {
+    updates.actorRole = coerceHistoryValue(payload.actorRole, HISTORY_ACTOR_ROLES, entry.actorRole);
+  }
+
+  if (payload.summary !== undefined) {
+    updates.summary = sanitiseString(payload.summary);
+  }
+
+  if (payload.actorId !== undefined) {
+    updates.actorId = sanitiseString(payload.actorId ? String(payload.actorId) : '') || null;
+  }
+
+  if (payload.occurredAt !== undefined) {
+    updates.occurredAt = ensureDate(payload.occurredAt, 'occurredAt') || entry.occurredAt;
+  }
+
+  if (payload.attachments !== undefined) {
+    updates.attachments = normaliseHistoryAttachments(payload.attachments);
+  }
+
+  if (payload.meta !== undefined) {
+    updates.meta = mergeHistoryMeta(entry.meta, payload.meta);
+  }
+
+  await entry.update(updates);
+  return entry.toJSON();
+}
+
+export async function deleteBookingHistoryEntry(bookingId, entryId) {
+  if (!bookingId || !entryId) {
+    throw invalidBooking('bookingId and entryId are required');
+  }
+
+  await assertBookingExists(bookingId);
+
+  const entry = await BookingHistoryEntry.findOne({ where: { id: entryId, bookingId } });
+  if (!entry) {
+    const error = new Error('History entry not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await entry.destroy();
+  return { id: entryId };
 }

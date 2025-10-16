@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import isEmail from 'validator/lib/isEmail.js';
 
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH_BYTES = 12;
@@ -94,13 +95,37 @@ export function normaliseEmail(value) {
     throw new TypeError('Email value must be a string.');
   }
 
-  return value.trim().toLowerCase();
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Email value cannot be empty.');
+  }
+
+  return trimmed.toLowerCase();
+}
+
+function assertValidEmail(value) {
+  if (!isEmail(value, { allow_utf8_local_part: true, require_tld: true })) {
+    const error = new Error('Email value must be a valid email address.');
+    error.code = 'INVALID_EMAIL_FORMAT';
+    throw error;
+  }
 }
 
 export function protectEmail(value) {
-  const normalised = normaliseEmail(value);
+  if (typeof value !== 'string') {
+    throw new TypeError('Email value must be a string.');
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Email value cannot be empty.');
+  }
+
+  assertValidEmail(trimmed);
+  const normalised = normaliseEmail(trimmed);
+
   return {
-    encrypted: encryptString(value, 'user:email'),
+    encrypted: encryptString(trimmed, 'user:email'),
     hash: stableHash(normalised, 'user:email-hash'),
     normalised
   };

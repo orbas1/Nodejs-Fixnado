@@ -3,11 +3,12 @@ import sequelize from '../config/database.js';
 import { Company, CustomJobBid, CustomJobBidMessage, Post, ServiceZone, User } from '../models/index.js';
 import { listApprovedMarketplaceItems } from './marketplaceService.js';
 import { broadcastLiveFeedEvent } from './liveFeedStreamService.js';
+import { recordLiveFeedAuditEvent } from './liveFeedAuditService.js';
 
 const DEFAULT_FEED_LIMIT = 25;
 
-const POST_INCLUDE_GRAPH = [
-  { model: User, attributes: ['id', 'firstName', 'lastName', 'type'] },
+export const POST_INCLUDE_GRAPH = [
+  { model: User, attributes: ['id', 'firstName', 'lastName', 'type', 'email'] },
   { model: ServiceZone, as: 'zone', attributes: ['id', 'name', 'companyId'] },
   {
     model: CustomJobBid,
@@ -21,7 +22,21 @@ const POST_INCLUDE_GRAPH = [
         include: [{ model: User, as: 'author', attributes: ['id', 'firstName', 'lastName', 'type'] }]
       }
     ]
-  }
+  },
+  {
+    model: CustomJobBid,
+    as: 'awardedBid',
+    include: [
+      { model: User, as: 'provider', attributes: ['id', 'firstName', 'lastName', 'type'] },
+      { model: Company, as: 'providerCompany', attributes: ['id', 'legalStructure', 'contactName'] },
+      {
+        model: CustomJobBidMessage,
+        as: 'messages',
+        include: [{ model: User, as: 'author', attributes: ['id', 'firstName', 'lastName', 'type'] }]
+      }
+    ]
+  },
+  { model: User, as: 'awardedByUser', attributes: ['id', 'firstName', 'lastName', 'type', 'email'] }
 ];
 
 function sanitizeLimit(limit) {
@@ -32,7 +47,7 @@ function sanitizeLimit(limit) {
   return Math.min(Math.max(Math.trunc(limit), 1), 100);
 }
 
-function serialiseBid(bid) {
+export function serialiseBid(bid) {
   const json = typeof bid?.toJSON === 'function' ? bid.toJSON() : bid;
   if (!json) return json;
 
@@ -46,7 +61,7 @@ function serialiseBid(bid) {
   };
 }
 
-function serialisePost(post) {
+export function serialisePost(post) {
   const json = typeof post?.toJSON === 'function' ? post.toJSON() : post;
   if (!json) return json;
 
@@ -57,11 +72,38 @@ function serialisePost(post) {
         .map((entry) => serialiseBid(entry))
     : [];
 
+  const customer = json.customer ?? json.User ?? null;
+  const awardedByUser = json.awardedByUser ?? null;
+  const awardedBid = json.awardedBid ? serialiseBid(json.awardedBid) : null;
+  const messageCount = bids.reduce((acc, bidEntry) => acc + (bidEntry.messages?.length ?? 0), 0);
+
   return {
     ...json,
     images: Array.isArray(json.images) ? json.images : [],
     metadata: json.metadata ?? {},
-    bids
+    bids,
+    awardedBid,
+    customer: customer
+      ? {
+          id: customer.id,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          type: customer.type
+        }
+      : null,
+    awardedByUser: awardedByUser
+      ? {
+          id: awardedByUser.id,
+          firstName: awardedByUser.firstName,
+          lastName: awardedByUser.lastName,
+          email: awardedByUser.email,
+          type: awardedByUser.type
+        }
+      : null,
+    bidCount: bids.length,
+    messageCount,
+    internalNotes: json.internalNotes ?? null
   };
 }
 
@@ -244,6 +286,7 @@ export async function listMarketplaceFeed({ limit = 25 } = {}) {
 
 export async function createLiveFeedPost({
   userId,
+  actorContext = null,
   title,
   description,
   budgetLabel,
@@ -315,6 +358,69 @@ export async function createLiveFeedPost({
     allowOutOfZone: Boolean(job.allowOutOfZone)
   });
 
+  const owner = job.User ?? job.user ?? null;
+  const zoneSnapshot = job.zone
+    ? { id: job.zone.id, name: job.zone.name, companyId: job.zone.companyId }
+    : null;
+  const postSnapshot = {
+    id: job.id,
+    title: job.title,
+    budgetLabel: job.budget ?? null,
+    budgetAmount: job.budgetAmount ?? null,
+    budgetCurrency: job.budgetCurrency ?? null,
+    category: job.category ?? null,
+    allowOutOfZone: Boolean(job.allowOutOfZone),
+    zoneId: job.zoneId ?? job.zone?.id ?? null,
+    imageCount: Array.isArray(job.images) ? job.images.length : 0,
+    bidDeadline: job.bidDeadline ?? null
+  };
+  const actorSnapshot = owner
+    ? {
+        id: owner.id,
+        name: [owner.firstName, owner.lastName].filter(Boolean).join(' ') || null,
+        email: owner.email ?? null,
+        role: owner.type ?? null
+      }
+    : null;
+  const detailParts = [
+    job.category ? `Category: ${job.category}` : null,
+    job.location ? `Location: ${job.location}` : null,
+    job.budget ? `Budget: ${job.budget}` : null,
+    job.budgetAmount != null
+      ? `Budget amount: ${job.budgetAmount}${job.budgetCurrency ? ` ${job.budgetCurrency}` : ''}`
+      : null
+  ].filter(Boolean);
+
+  try {
+    await recordLiveFeedAuditEvent({
+      eventType: 'live_feed.post.created',
+      summary: `Job posted: ${job.title}`,
+      details: detailParts.length ? detailParts.join(' • ') : null,
+      resourceType: 'post',
+      resourceId: job.id,
+      postId: job.id,
+      postSnapshot,
+      zoneId: zoneSnapshot?.id ?? null,
+      zoneSnapshot,
+      companyId: zoneSnapshot?.companyId ?? null,
+      actorId: actorSnapshot?.id ?? userId ?? actorContext?.actorId ?? null,
+      actorRole: actorContext?.role ?? actorSnapshot?.role ?? null,
+      actorPersona: actorContext?.persona ?? null,
+      actorSnapshot,
+      metadata: {
+        allowOutOfZone: Boolean(job.allowOutOfZone),
+        imageCount: Array.isArray(job.images) ? job.images.length : 0,
+        metadataKeys: Object.keys(job.metadata ?? {}),
+        hasDescription: Boolean(job.description)
+      }
+    });
+  } catch (error) {
+    console.error('[liveFeedAudit] Failed to record post.created event', {
+      error: error.message,
+      postId: job.id
+    });
+  }
+
   return job;
 }
 
@@ -322,6 +428,7 @@ export async function submitCustomJobBid({
   postId,
   providerId,
   providerRole,
+  actorContext = null,
   amount,
   currency,
   message,
@@ -345,8 +452,17 @@ export async function submitCustomJobBid({
 
     postContext = {
       id: post.id,
+      title: post.title,
       zoneId: post.zoneId,
-      allowOutOfZone: Boolean(post.allowOutOfZone)
+      zone: post.zone
+        ? { id: post.zone.id, name: post.zone.name, companyId: post.zone.companyId }
+        : null,
+      allowOutOfZone: Boolean(post.allowOutOfZone),
+      ownerId: post.userId,
+      category: post.category,
+      budgetLabel: post.budget,
+      budgetAmount: post.budgetAmount,
+      budgetCurrency: post.budgetCurrency
     };
 
     if (post.status !== 'open') {
@@ -419,6 +535,66 @@ export async function submitCustomJobBid({
     });
   }
 
+  if (postContext) {
+    const provider = bidResult.provider ?? null;
+    const providerSnapshot = provider
+      ? {
+          id: provider.id,
+          name: [provider.firstName, provider.lastName].filter(Boolean).join(' ') || null,
+          role: provider.type ?? null
+        }
+      : null;
+    const zoneSnapshot = postContext.zone ?? null;
+    const postSnapshot = {
+      id: postContext.id,
+      title: postContext.title ?? null,
+      allowOutOfZone: postContext.allowOutOfZone,
+      zoneId: postContext.zoneId ?? null,
+      category: postContext.category ?? null,
+      budgetLabel: postContext.budgetLabel ?? null,
+      budgetAmount: postContext.budgetAmount ?? null,
+      budgetCurrency: postContext.budgetCurrency ?? null
+    };
+    const detailParts = [
+      postContext.title ? `Job: ${postContext.title}` : null,
+      bidResult.amount != null ? `Amount: ${bidResult.amount}` : null,
+      bidResult.currency ? `Currency: ${bidResult.currency}` : null
+    ].filter(Boolean);
+
+    try {
+      await recordLiveFeedAuditEvent({
+        eventType: 'live_feed.bid.created',
+        summary: `Bid submitted${postContext.title ? ` for ${postContext.title}` : ''}`.trim(),
+        details: detailParts.length ? detailParts.join(' • ') : null,
+        resourceType: 'bid',
+        resourceId: bidResult.id,
+        postId: postContext.id,
+        postSnapshot,
+        zoneId: zoneSnapshot?.id ?? null,
+        zoneSnapshot,
+        companyId: bidResult.providerCompany?.id ?? zoneSnapshot?.companyId ?? null,
+        actorId: actorContext?.actorId ?? providerSnapshot?.id ?? providerId,
+        actorRole: actorContext?.role ?? providerSnapshot?.role ?? providerRole ?? null,
+        actorPersona: actorContext?.persona ?? null,
+        actorSnapshot: providerSnapshot,
+        metadata: {
+          amount: bidResult.amount,
+          currency: bidResult.currency,
+          hasMessage: Boolean(initialMessage),
+          attachmentsCount: normalisedAttachments.length,
+          allowOutOfZone: postContext.allowOutOfZone,
+          providerCompanyId: bidResult.providerCompany?.id ?? null
+        }
+      });
+    } catch (error) {
+      console.error('[liveFeedAudit] Failed to record bid.created event', {
+        error: error.message,
+        bidId: bidResult.id,
+        postId
+      });
+    }
+  }
+
   return bidResult;
 }
 
@@ -427,6 +603,7 @@ export async function addCustomJobBidMessage({
   bidId,
   authorId,
   authorRole,
+  actorContext = null,
   body,
   attachments
 }) {
@@ -450,8 +627,17 @@ export async function addCustomJobBidMessage({
 
     postContext = {
       id: post.id,
+      title: post.title,
       zoneId: post.zoneId,
-      allowOutOfZone: Boolean(post.allowOutOfZone)
+      zone: post.zone
+        ? { id: post.zone.id, name: post.zone.name, companyId: post.zone.companyId }
+        : null,
+      allowOutOfZone: Boolean(post.allowOutOfZone),
+      ownerId: post.userId,
+      category: post.category,
+      budgetLabel: post.budget,
+      budgetAmount: post.budgetAmount,
+      budgetCurrency: post.budgetCurrency
     };
 
     const bid = await CustomJobBid.findOne({
@@ -508,6 +694,58 @@ export async function addCustomJobBidMessage({
       zoneId: postContext.zoneId,
       allowOutOfZone: postContext.allowOutOfZone
     });
+  }
+
+  if (postContext) {
+    const author = messageResult.author ?? null;
+    const actorSnapshot = author
+      ? {
+          id: author.id,
+          name: [author.firstName, author.lastName].filter(Boolean).join(' ') || null,
+          role: author.type ?? null
+        }
+      : null;
+    const zoneSnapshot = postContext.zone ?? null;
+    const postSnapshot = {
+      id: postContext.id,
+      title: postContext.title ?? null,
+      allowOutOfZone: postContext.allowOutOfZone,
+      zoneId: postContext.zoneId ?? null
+    };
+
+    try {
+      await recordLiveFeedAuditEvent({
+        eventType: 'live_feed.bid.message',
+        summary: `Bid message on ${postContext.title ?? 'live job'}`,
+        details: actorSnapshot?.name ? `Authored by ${actorSnapshot.name}` : null,
+        resourceType: 'bid_message',
+        resourceId: messageResult.id,
+        postId: postContext.id,
+        postSnapshot,
+        zoneId: zoneSnapshot?.id ?? null,
+        zoneSnapshot,
+        companyId: zoneSnapshot?.companyId ?? null,
+        actorId: actorContext?.actorId ?? actorSnapshot?.id ?? authorId,
+        actorRole: actorContext?.role ?? actorSnapshot?.role ?? resolvedRole,
+        actorPersona: actorContext?.persona ?? null,
+        actorSnapshot,
+        metadata: {
+          bidId,
+          attachmentsCount: normalisedAttachments.length,
+          bodyLength: messageBody.length,
+          messagePreview: messageBody.slice(0, 140),
+          authorRole: resolvedRole,
+          allowOutOfZone: postContext.allowOutOfZone
+        }
+      });
+    } catch (error) {
+      console.error('[liveFeedAudit] Failed to record bid.message event', {
+        error: error.message,
+        bidId,
+        postId,
+        messageId: messageResult.id
+      });
+    }
   }
 
   return messageResult;
