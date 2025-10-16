@@ -432,6 +432,40 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
+  const zoneGovernanceSection = {
+    id: 'zone-governance',
+    label: 'Zone governance',
+    description: 'Launch the dedicated zone workspace to edit polygons, metadata, and service coverage.',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'zone-governance-panel',
+          title: 'Zone design & coverage',
+          description: 'Draw polygons, manage dispatch guardrails, and attach services to live zones.',
+          items: [
+            {
+              id: 'open-zone-workspace',
+              label: 'Zone builder workspace',
+              helper: 'Create, edit, and audit production-ready service zones.',
+              type: 'action',
+              cta: 'Open workspace',
+              href: '/admin/zones'
+            },
+            {
+              id: 'bulk-zone-import',
+              label: 'Bulk GeoJSON ingestion',
+              helper: 'Upload FeatureCollections with RBAC tags and automation policies.',
+              type: 'action',
+              cta: 'Launch importer',
+              href: '/admin/zones#zone-bulk-import'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
   const auditSection = auditTimeline.length
     ? {
         id: 'audit-log',
@@ -453,6 +487,7 @@ function buildAdminNavigation(payload) {
     disputeSection,
     complianceSection,
     automationSection,
+    zoneGovernanceSection,
     auditSection
   ].filter(Boolean);
 }
