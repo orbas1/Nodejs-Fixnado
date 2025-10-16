@@ -1,6 +1,8 @@
 import request from 'supertest';
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
+
 const { default: app } = await import('../src/app.js');
 const {
   sequelize,
@@ -12,15 +14,19 @@ const {
   Service,
   ServiceZoneCoverage
 } = await import('../src/models/index.js');
+const { createSessionToken } = await import('./helpers/session.js');
 
 async function bootstrapCompany() {
-  const owner = await User.create({
-    firstName: 'Zone',
-    lastName: 'Owner',
-    email: `zone-owner-${Date.now()}@example.com`,
-    passwordHash: 'hashed',
-    type: 'provider_admin'
-  });
+  const owner = await User.create(
+    {
+      firstName: 'Zone',
+      lastName: 'Owner',
+      email: `zone-owner-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'provider_admin'
+    },
+    { validate: false }
+  );
 
   return Company.create({
     userId: owner.id,
@@ -44,6 +50,24 @@ const polygon = {
     ]
   ]
 };
+
+async function createOperationsActor() {
+  const user = await User.create(
+    {
+      firstName: 'Ops',
+      lastName: 'Admin',
+      email: `ops-admin-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'operations'
+    },
+    { validate: false }
+  );
+
+  const { token } = await createSessionToken(user, { role: 'operations' });
+  return { user, token };
+}
+
+let opsAuth;
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
@@ -70,6 +94,7 @@ beforeEach(async () => {
   });
 
   await sequelize.truncate({ cascade: true, restartIdentity: true });
+  opsAuth = await createOperationsActor();
 });
 
 describe('Zone routes', () => {
@@ -82,6 +107,7 @@ describe('Zone routes', () => {
 
     const response = await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({ companyId: company.id, name: 'Invalid', geometry: malformed })
       .expect(400);
 
@@ -94,6 +120,7 @@ describe('Zone routes', () => {
 
     const response = await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({
         companyId: company.id,
         name: 'Central London',
@@ -133,6 +160,7 @@ describe('Zone routes', () => {
 
     await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({
         companyId: company.id,
         name: 'Core Zone',
@@ -155,6 +183,7 @@ describe('Zone routes', () => {
 
     const response = await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({
         companyId: company.id,
         name: 'Overlap Attempt',
@@ -171,15 +200,20 @@ describe('Zone routes', () => {
 
     const zoneResponse = await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({ companyId: company.id, name: 'Analytics Zone', geometry: polygon })
       .expect(201);
 
     const zoneId = zoneResponse.body.id;
 
-    await request(app).post(`/api/zones/${zoneId}/analytics/snapshot`).expect(201);
+    await request(app)
+      .post(`/api/zones/${zoneId}/analytics/snapshot`)
+      .set('Authorization', opsAuth.token)
+      .expect(201);
 
     const listResponse = await request(app)
       .get('/api/zones')
+      .set('Authorization', opsAuth.token)
       .query({ includeAnalytics: 'true' })
       .expect(200);
 
@@ -202,6 +236,7 @@ describe('Zone routes', () => {
 
     const zoneResponse = await request(app)
       .post('/api/zones')
+      .set('Authorization', opsAuth.token)
       .send({ companyId: company.id, name: 'Coverage Zone', geometry: polygon })
       .expect(201);
 
@@ -209,6 +244,7 @@ describe('Zone routes', () => {
 
     const syncResponse = await request(app)
       .post(`/api/zones/${zoneId}/services`)
+      .set('Authorization', opsAuth.token)
       .send({
         actor: { id: 'admin-1', type: 'user' },
         coverages: [
@@ -234,6 +270,7 @@ describe('Zone routes', () => {
 
     const listResponse = await request(app)
       .get(`/api/zones/${zoneId}/services`)
+      .set('Authorization', opsAuth.token)
       .expect(200);
 
     expect(listResponse.body).toHaveLength(1);
@@ -241,6 +278,7 @@ describe('Zone routes', () => {
 
     await request(app)
       .delete(`/api/zones/${zoneId}/services/${syncResponse.body[0].id}`)
+      .set('Authorization', opsAuth.token)
       .send({ actor: { id: 'admin-1', type: 'user' } })
       .expect(204);
 

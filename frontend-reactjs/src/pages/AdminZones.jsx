@@ -5,6 +5,7 @@ import { Button } from '../components/ui/index.js';
 import ZoneOverviewSection from '../components/zones/admin/ZoneOverviewSection.jsx';
 import ZoneWorkspaceSection from '../components/zones/admin/ZoneWorkspaceSection.jsx';
 import ZoneBulkImportSection from '../components/zones/admin/ZoneBulkImportSection.jsx';
+import PageHeader from '../components/blueprints/PageHeader.jsx';
 import {
   fetchZonesWithAnalytics,
   createZone,
@@ -23,6 +24,22 @@ const DEMAND_LEVELS = [
   { value: 'medium', label: 'Balanced demand', tone: 'bg-amber-100 text-amber-700 border border-amber-200' },
   { value: 'low', label: 'Emerging demand', tone: 'bg-emerald-100 text-emerald-700 border border-emerald-200' }
 ];
+  fetchZoneServices,
+  syncZoneServices,
+  removeZoneService
+} from '../api/zoneAdminClient.js';
+import { fetchServiceCatalogue } from '../api/serviceAdminClient.js';
+import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
+import ZoneServiceEditor from '../components/zones/ZoneServiceEditor.jsx';
+import ZoneWorkspace from '../components/zones/ZoneWorkspace.jsx';
+import ZoneInsights from '../components/zones/ZoneInsights.jsx';
+import ZoneGuardrails from '../components/zones/ZoneGuardrails.jsx';
+import {
+  determineCompliance,
+  parseTagList,
+  toFeatureCollection,
+  toMultiPolygon
+} from '../components/zones/zoneManagementUtils.js';
 
 const VISIBILITY_OPTIONS = [
   { value: 'live', label: 'Live • Dispatch ready' },
@@ -289,36 +306,10 @@ function computeMeta(zones, user) {
   ];
 }
 
-function determineCompliance(zone) {
-  const compliance = zone?.metadata?.compliance?.openStreetMap;
-  if (!compliance) {
-    return { status: 'pending', label: 'Pending verification' };
+function openInNewTab(url) {
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener');
   }
-  if (compliance.status === 'verified') {
-    return { status: 'verified', label: 'Verified via OpenStreetMap', payload: compliance };
-  }
-  return { status: 'error', label: 'Verification failed', payload: compliance };
-}
-
-function toMultiPolygon(geometry) {
-  if (!geometry) {
-    return null;
-  }
-  if (geometry.type === 'MultiPolygon') {
-    return geometry;
-  }
-  if (geometry.type === 'Polygon') {
-    return {
-      type: 'Polygon',
-      coordinates: geometry.coordinates
-    };
-  }
-  return null;
-}
-
-function demandTone(level) {
-  const entry = DEMAND_LEVELS.find((option) => option.value === level);
-  return entry?.tone ?? 'bg-slate-100 text-slate-600 border border-slate-200';
 }
 
 export default function AdminZones() {
@@ -341,6 +332,31 @@ export default function AdminZones() {
   const [bulkImportFeedback, setBulkImportFeedback] = useState(null);
   const [bulkImportLoading, setBulkImportLoading] = useState(false);
   const [bulkImportFileError, setBulkImportFileError] = useState(null);
+  const [geometryDirty, setGeometryDirty] = useState(false);
+  const [zoneServicesState, setZoneServicesState] = useState({ loading: false, error: null, data: [] });
+  const [serviceCatalogueState, setServiceCatalogueState] = useState({
+    companyId: null,
+    loading: false,
+    error: null,
+    data: []
+  });
+  const [serviceFeedback, setServiceFeedback] = useState(null);
+  const [coverageModal, setCoverageModal] = useState({ open: false, coverage: null });
+  const [coverageSaving, setCoverageSaving] = useState(false);
+  const [coverageError, setCoverageError] = useState(null);
+  const catalogueCacheRef = useRef(new Map());
+
+  const actor = useMemo(
+    () =>
+      user
+        ? {
+            id: user.id,
+            email: user.email,
+            type: user.type
+          }
+        : null,
+    [user]
+  );
 
   const meta = useMemo(() => computeMeta(zonesState.data, user), [zonesState.data, user]);
   const existingFeatures = useMemo(() => toFeatureCollection(zonesState.data), [zonesState.data]);
@@ -392,6 +408,24 @@ export default function AdminZones() {
   ]
     .filter((entry) => entry && entry.length > 0)
     .join(' • ');
+  const selectedZoneCompliance = useMemo(
+    () => (selectedZone ? determineCompliance(selectedZone.zone) : null),
+    [selectedZone]
+  );
+
+  const analytics = selectedZone?.analytics ?? null;
+  const bookingTotals = analytics?.bookingTotals ?? {};
+  const bookingStatusEntries = Object.entries(bookingTotals).map(([status, count]) => ({
+    status,
+    count: Number.isFinite(Number(count)) ? Number(count) : 0
+  }));
+  const totalBookings = bookingStatusEntries.reduce((sum, entry) => sum + entry.count, 0);
+
+  const handleOpenLink = useCallback((path) => {
+    if (path) {
+      openInNewTab(path);
+    }
+  }, []);
 
   const requestZones = useCallback(async () => {
     setZonesState((current) => ({ ...current, loading: true, error: null }));
@@ -410,6 +444,54 @@ export default function AdminZones() {
   useEffect(() => {
     if (!selectedZoneId) {
       setDetailState({ loading: false, error: null, data: null });
+  const requestZoneServices = useCallback(
+    async ({ zoneId, signal } = {}) => {
+      if (!zoneId) {
+        setZoneServicesState({ loading: false, error: null, data: [] });
+        return;
+      }
+      setZoneServicesState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const coverages = await fetchZoneServices(zoneId, { signal });
+        setZoneServicesState({ loading: false, error: null, data: coverages });
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return;
+        }
+        setZoneServicesState({
+          loading: false,
+          error: error.message ?? 'Unable to load zone service coverage',
+          data: []
+        });
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!selectedZoneId) {
+      setZoneServicesState({ loading: false, error: null, data: [] });
+      return;
+    }
+    const controller = new AbortController();
+    requestZoneServices({ zoneId: selectedZoneId, signal: controller.signal });
+    return () => controller.abort();
+  }, [selectedZoneId, requestZoneServices]);
+
+  useEffect(() => {
+    const companyId = selectedZone?.zone?.companyId ?? null;
+    if (!companyId) {
+      setServiceCatalogueState({ companyId: null, loading: false, error: null, data: [] });
+      return;
+    }
+
+    if (catalogueCacheRef.current.has(companyId)) {
+      setServiceCatalogueState({
+        companyId,
+        loading: false,
+        error: null,
+        data: catalogueCacheRef.current.get(companyId)
+      });
       return;
     }
 
@@ -418,6 +500,11 @@ export default function AdminZones() {
     fetchZone(selectedZoneId, { signal: controller.signal })
       .then((payload) => {
         setDetailState({ loading: false, error: null, data: payload });
+    setServiceCatalogueState({ companyId, loading: true, error: null, data: [] });
+    fetchServiceCatalogue({ companyId, limit: 100, signal: controller.signal })
+      .then((services) => {
+        catalogueCacheRef.current.set(companyId, services);
+        setServiceCatalogueState({ companyId, loading: false, error: null, data: services });
       })
       .catch((error) => {
         if (error.name === 'AbortError') {
@@ -427,11 +514,17 @@ export default function AdminZones() {
           loading: false,
           error: error.message ?? 'Unable to load zone details',
           data: null
+        setServiceCatalogueState({
+          companyId,
+          loading: false,
+          error: error.message ?? 'Unable to load available services',
+          data: []
         });
       });
 
     return () => controller.abort();
   }, [selectedZoneId]);
+  }, [selectedZone?.zone?.companyId]);
 
   const requestLocation = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -643,6 +736,13 @@ export default function AdminZones() {
     setGeometryDirty(false);
     setSelectedZoneId(null);
     setFeedback(null);
+    setGeometryDirty(false);
+    setZoneServicesState({ loading: false, error: null, data: [] });
+    setServiceCatalogueState({ companyId: null, loading: false, error: null, data: [] });
+    setServiceFeedback(null);
+    setCoverageModal({ open: false, coverage: null });
+    setCoverageSaving(false);
+    setCoverageError(null);
   };
 
   const handleSelectZone = (zone) => {
@@ -669,11 +769,22 @@ export default function AdminZones() {
     event.preventDefault();
 
     if (!form.name.trim() || !form.companyId.trim()) {
+    setServiceFeedback(null);
+    setCoverageModal({ open: false, coverage: null });
+    setCoverageError(null);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const trimmedName = form.name.trim();
+    const trimmedCompany = form.companyId.trim();
+    if (!trimmedName || !trimmedCompany) {
       setFeedback({ tone: 'danger', message: 'Provide both a zone name and company identifier.' });
       return;
     }
 
     if (!isEditing && !geometry) {
+    if (!selectedZoneId && !geometry) {
       setFeedback({ tone: 'danger', message: 'Draw a polygon before saving the zone.' });
       return;
     }
@@ -681,6 +792,43 @@ export default function AdminZones() {
     if (isEditing && geometryDirty && !geometry) {
       setFeedback({ tone: 'danger', message: 'Draw a replacement polygon or reset the draft.' });
       return;
+    }
+
+    if (geometryDirty && !geometry) {
+      setFeedback({ tone: 'danger', message: 'Draw a polygon before saving your changes.' });
+      return;
+    }
+
+    const baseMetadata = selectedZone?.zone?.metadata ?? {};
+    const metadata = { ...baseMetadata, source: 'admin-zones-ui' };
+    const tags = parseTagList(form.tags);
+    if (tags.length > 0) {
+      metadata.tags = tags;
+    } else {
+      delete metadata.tags;
+    }
+    const notes = form.notes.trim();
+    if (notes) {
+      metadata.notes = notes;
+    } else {
+      delete metadata.notes;
+    }
+    if (actor?.email) {
+      metadata.updatedBy = actor.email;
+    }
+
+    const payload = {
+      name: trimmedName,
+      companyId: trimmedCompany,
+      demandLevel: form.demandLevel,
+      metadata,
+      actor
+    };
+
+    if (!selectedZoneId || geometryDirty) {
+      if (geometry) {
+        payload.geometry = geometry;
+      }
     }
 
     setSaving(true);
@@ -722,6 +870,14 @@ export default function AdminZones() {
           metadata,
           actor
         });
+      if (selectedZoneId) {
+        const updated = await updateZone(selectedZoneId, payload);
+        setFeedback({ tone: 'success', message: `Zone "${updated.name}" updated successfully.` });
+        setGeometry(updated.boundary ?? geometry ?? null);
+        setGeometryDirty(false);
+        await requestZones();
+      } else {
+        const created = await createZone({ ...payload, geometry });
         setFeedback({
           tone: 'success',
           message: `Zone "${created.name}" persisted and verified via OpenStreetMap.`
@@ -768,6 +924,10 @@ export default function AdminZones() {
       setGeometry(null);
       setGeometryDirty(false);
       await requestZones();
+        setGeometry(created.boundary ?? geometry);
+        setGeometryDirty(false);
+        await requestZones();
+      }
     } catch (error) {
       setFeedback({
         tone: 'danger',
@@ -821,6 +981,141 @@ export default function AdminZones() {
             type: 'Feature',
             properties: { id: selectedZone.id, name: selectedZone.name },
             geometry: selectedZone.boundary
+  const handleDeleteZone = async () => {
+    if (!selectedZoneId) {
+      return;
+    }
+    const zoneLabel = selectedZone?.zone?.name ?? 'this zone';
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(
+        `Deleting ${zoneLabel} will remove analytics and service coverage links. Continue?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setSaving(true);
+    setFeedback(null);
+    try {
+      await deleteZone(selectedZoneId, { actor });
+      setFeedback({ tone: 'success', message: `Zone "${zoneLabel}" deleted.` });
+      setForm(INITIAL_FORM);
+      setGeometry(null);
+      setSelectedZoneId(null);
+      setGeometryDirty(false);
+      setZoneServicesState({ loading: false, error: null, data: [] });
+      setServiceCatalogueState({ companyId: null, loading: false, error: null, data: [] });
+      setServiceFeedback(null);
+      setCoverageModal({ open: false, coverage: null });
+      setCoverageSaving(false);
+      setCoverageError(null);
+      await requestZones();
+    } catch (error) {
+      setFeedback({ tone: 'danger', message: error.message ?? 'Unable to delete zone.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenCoverageEditor = (coverage = null) => {
+    setCoverageModal({ open: true, coverage });
+    setCoverageError(null);
+  };
+
+  const handleCloseCoverageEditor = () => {
+    setCoverageModal({ open: false, coverage: null });
+    setCoverageSaving(false);
+    setCoverageError(null);
+  };
+
+  const handlePersistCoverage = async (payload) => {
+    if (!selectedZoneId) {
+      setCoverageError('Select a zone before attaching coverage.');
+      return;
+    }
+    setCoverageSaving(true);
+    setCoverageError(null);
+    setServiceFeedback(null);
+    try {
+      const metadata = { ...(coverageModal.coverage?.metadata ?? {}) };
+      if (payload.notes) {
+        metadata.notes = payload.notes;
+      } else {
+        delete metadata.notes;
+      }
+      await syncZoneServices(
+        selectedZoneId,
+        {
+          coverages: [
+            {
+              serviceId: payload.serviceId,
+              coverageType: payload.coverageType,
+              priority: payload.priority,
+              effectiveFrom: payload.effectiveFrom,
+              effectiveTo: payload.effectiveTo,
+              metadata
+            }
+          ],
+          replace: false,
+          actor
+        }
+      );
+      setCoverageModal({ open: false, coverage: null });
+      setServiceFeedback({ tone: 'success', message: 'Service coverage saved.' });
+      await requestZoneServices({ zoneId: selectedZoneId });
+    } catch (error) {
+      setCoverageError(error.message ?? 'Unable to persist service coverage.');
+    } finally {
+      setCoverageSaving(false);
+    }
+  };
+
+  const handleRemoveCoverage = async (coverage) => {
+    if (!selectedZoneId || !coverage) {
+      return;
+    }
+    const serviceLabel = coverage.service?.title ?? 'service';
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(
+        `Detach ${serviceLabel} from ${selectedZone?.zone?.name ?? 'the zone'}?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+    setCoverageSaving(true);
+    setCoverageError(null);
+    setServiceFeedback(null);
+    try {
+      await removeZoneService(selectedZoneId, coverage.id, { actor });
+      setServiceFeedback({ tone: 'success', message: `${serviceLabel} detached from the zone.` });
+      await requestZoneServices({ zoneId: selectedZoneId });
+    } catch (error) {
+      setServiceFeedback({
+        tone: 'danger',
+        message: error.message ?? 'Unable to detach service coverage.'
+      });
+    } finally {
+      setCoverageSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      <PageHeader
+        eyebrow="Operations control"
+        title="Geo-zonal governance"
+        description="Design, validate, and publish service zones with OpenStreetMap-backed compliance. Updates propagate instantly to search, dispatch orchestration, and the mobile geo-matching workspace."
+        breadcrumbs={[
+          { label: 'Admin', to: '/admin/dashboard' },
+          { label: 'Geo zones' }
+        ]}
+        actions={[
+          {
+            label: 'Refresh zones',
+            onClick: requestZones,
+            variant: 'secondary'
           }
         ]
       };
@@ -1007,5 +1302,56 @@ export default function AdminZones() {
         user={user}
       />
     </>
+      <main className="mx-auto max-w-7xl px-6 py-12 space-y-10">
+        <ZoneWorkspace
+          geometry={geometry}
+          existingFeatures={existingFeatures}
+          focus={location.coords}
+          onGeometryChange={handleGeometryChange}
+          onClearDraft={() => setGeometry(null)}
+          onImportGeoJson={handleFileImport}
+          fileError={fileError}
+          location={location}
+          zonesState={zonesState}
+          selectedZoneId={selectedZoneId}
+          onSelectZone={handleSelectZone}
+          form={form}
+          onFieldChange={handleFieldChange}
+          onDemandChange={handleDemandChange}
+          onSubmit={handleSubmit}
+          onReset={handleReset}
+          onDelete={handleDeleteZone}
+          saving={saving}
+          feedback={feedback}
+        />
+
+        <ZoneInsights
+          zone={selectedZone}
+          compliance={selectedZoneCompliance}
+          analytics={analytics}
+          bookingStatusEntries={bookingStatusEntries}
+          totalBookings={totalBookings}
+          serviceCatalogueState={serviceCatalogueState}
+          zoneServicesState={zoneServicesState}
+          serviceFeedback={serviceFeedback}
+          onOpenCoverageEditor={handleOpenCoverageEditor}
+          onRemoveCoverage={handleRemoveCoverage}
+          onOpenLink={handleOpenLink}
+          coverageSaving={coverageSaving}
+        />
+
+        <ZoneGuardrails />
+      </main>
+      <ZoneServiceEditor
+        open={coverageModal.open}
+        services={serviceCatalogueState.data}
+        coverage={coverageModal.coverage}
+        onClose={handleCloseCoverageEditor}
+        onSubmit={handlePersistCoverage}
+        saving={coverageSaving}
+        error={coverageError}
+        zoneName={selectedZone?.zone?.name ?? null}
+      />
+    </div>
   );
 }
