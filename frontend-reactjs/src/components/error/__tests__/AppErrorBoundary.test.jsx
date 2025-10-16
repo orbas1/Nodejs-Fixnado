@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import PropTypes from 'prop-types';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import PropTypes from 'prop-types';
 import AppErrorBoundary from '../AppErrorBoundary.jsx';
 import { LocaleProvider } from '../../../providers/LocaleProvider.jsx';
 
@@ -11,6 +13,10 @@ vi.mock('../../../utils/errorReporting.js', () => ({
 function Wrapper({ children }) {
   return <LocaleProvider>{children}</LocaleProvider>;
 }
+
+Wrapper.propTypes = {
+  children: PropTypes.node.isRequired
+};
 
 describe('AppErrorBoundary', () => {
   beforeEach(() => {

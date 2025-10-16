@@ -7,10 +7,16 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'customer-control', label: 'Customer Control Centre', icon: 'control' },
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
+      { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
       { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
+      { id: 'history', label: 'Order History', icon: 'documents' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },
+      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       { id: 'rentals', label: 'Asset Management', icon: 'assets' },
+      { id: 'support', label: 'Support & Communications', icon: 'support', href: '/communications' },
+      { id: 'wallet', label: 'Wallet & Payments', icon: 'finance' },
       { id: 'support', label: 'Support & Communications', icon: 'support' },
       { id: 'settings', label: 'Account Settings', icon: 'settings' }
     ]
@@ -35,7 +41,18 @@ export const DASHBOARD_ROLES = [
         type: 'route',
         href: '/admin/rentals'
       },
+      { id: 'purchases', label: 'Purchase Management', icon: 'documents', href: '/admin/purchases' },
+      {
+        id: 'zones',
+        label: 'Zone Design Studio',
+        icon: 'map',
+        description: 'Launch the full zone governance workspace.',
+        href: '/admin/zones'
+      },
+      { id: 'assets', label: 'Hire & Rental Control', icon: 'assets' },
       { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
+      { id: 'home-builder', label: 'Home Page Builder', icon: 'builder', href: '/admin/home-builder' },
+      { id: 'live-feed-auditing', label: 'Live Feed Auditing', icon: 'analytics' },
       { id: 'settings', label: 'Platform Settings', icon: 'settings' }
     ]
   },
@@ -50,7 +67,7 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
-      { id: 'rentals', label: 'Asset Lifecycle', icon: 'assets' },
+      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
