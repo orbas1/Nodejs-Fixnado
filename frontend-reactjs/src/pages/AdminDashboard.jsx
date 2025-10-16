@@ -7,6 +7,7 @@ import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
+import SecurityTelemetryWorkspace from '../components/security/telemetry/index.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
@@ -339,28 +340,24 @@ function buildAdminNavigation(payload) {
     }
   };
 
-  const securitySection = securitySignals.length
-    ? {
-        id: 'security-posture',
-        label: 'Security & telemetry posture',
-        description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
-        type: 'grid',
-        data: {
-          cards: securitySignals.map((signal) => ({
-            title: `${signal.label} — ${signal.valueLabel}`,
-            accent: resolveAccent(signal.tone),
-            details: [
-              signal.caption,
-              signal.tone === 'danger'
-                ? 'Immediate investigation required.'
-                : signal.tone === 'warning'
-                  ? 'Monitor closely and prepare contingency.'
-                  : 'Tracking to plan.'
-            ]
-          }))
-        }
+  const securitySection = {
+    id: 'security-posture',
+    label: 'Security & telemetry posture',
+    description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
+    type: 'component',
+    component: SecurityTelemetryWorkspace,
+    data: {
+      initialData: {
+        timezone: 'Europe/London',
+        updatedAt: payload.generatedAt,
+        signals: securitySignals,
+        automationTasks: payload.security?.automationBacklog ?? [],
+        connectors: payload.security?.connectors ?? [],
+        summary: payload.security?.summary ?? {},
+        capabilities: payload.security?.capabilities ?? {}
       }
-    : null;
+    }
+  };
 
   const operationsSection = queueBoards.length
     ? {
