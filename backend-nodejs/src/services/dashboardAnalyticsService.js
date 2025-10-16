@@ -26,6 +26,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
 
@@ -390,6 +391,12 @@ async function loadUserData(context) {
     ...(userId ? { participantReferenceId: userId } : {})
   };
 
+  const companyPromise = companyId
+    ? Company.findByPk(companyId, {
+        attributes: ['id', 'name', 'contactName', 'contactEmail', 'contactPhone']
+      })
+    : Promise.resolve(null);
+
   const [
     user,
     bookings,
@@ -399,6 +406,7 @@ async function loadUserData(context) {
     rentals,
     disputes,
     conversations,
+    company
     walletOverview
   ] = await Promise.all([
     userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
@@ -440,6 +448,7 @@ async function loadUserData(context) {
       ]
     }),
     ConversationParticipant.findAll({ where: conversationWhere }),
+    companyPromise
     getWalletOverview({ userId, companyId })
   ]);
 
@@ -834,6 +843,30 @@ async function loadUserData(context) {
     });
   }
 
+  const supportTasksResult = await listAccountSupportTasks({
+    companyId,
+    userId,
+    limit: 25
+  });
+
+  const supportTaskMeta = supportTasksResult?.meta ?? {};
+  const openSupportTasks =
+    (supportTaskMeta.open ?? 0) +
+    (supportTaskMeta.inProgress ?? 0) +
+    (supportTaskMeta.waitingExternal ?? 0);
+
+  const supportContacts = {
+    email:
+      company?.contactEmail ||
+      config.integrations?.app?.supportEmail ||
+      'support@fixnado.com',
+    phone: company?.contactPhone || '+44 20 4520 9282',
+    concierge: company?.contactName
+      ? `Account managed by ${company.contactName}`
+      : 'Fixnado concierge support',
+    knowledgeBase: config.support?.knowledgeBaseUrl || 'https://support.fixnado.com/knowledge-base'
+  };
+
   const overviewSidebar = {
     badge: `${formatNumber(totalBookings)} jobs`,
     status:
@@ -975,15 +1008,18 @@ async function loadUserData(context) {
   };
 
   const accountSidebar = {
-    badge: `${formatNumber(supportConversations)} support`,
+    badge: `${formatNumber(openSupportTasks)} active`,
     status:
       disputes.length > 0
         ? { label: 'Escalations open', tone: 'danger' }
+        : openSupportTasks > 0
+        ? { label: 'Support actions pending', tone: 'warning' }
         : supportConversations > 0
-        ? { label: 'Active conversations', tone: 'info' }
+        ? { label: 'Concierge engaged', tone: 'info' }
         : { label: 'Support quiet', tone: 'success' },
     highlights: [
-      { label: 'Disputes', value: formatNumber(disputes.length) },
+      { label: 'Active tasks', value: formatNumber(openSupportTasks) },
+      { label: 'Resolved', value: formatNumber(supportTaskMeta.resolved ?? 0) },
       { label: 'Conversations', value: formatNumber(supportConversations) }
     ]
   };
@@ -1285,6 +1321,14 @@ async function loadUserData(context) {
               email: user.email
             }
           : null,
+        company: company
+          ? {
+              id: company.id,
+              name: company.contactName || company.name || null,
+              contactEmail: company.contactEmail || null,
+              contactPhone: company.contactPhone || null
+            }
+          : null,
         totals: {
           bookings: totalBookings,
           activeBookings: activeBookings.length,
@@ -1394,9 +1438,14 @@ async function loadUserData(context) {
         id: 'account',
         label: 'Account & Support',
         description: 'Next best actions to keep everything running smoothly.',
-        type: 'list',
+        type: 'accountSupport',
         sidebar: accountSidebar,
-        data: { items: accountItems }
+        data: {
+          insights: accountItems,
+          tasks: supportTasksResult.tasks,
+          stats: supportTaskMeta,
+          contacts: supportContacts
+        }
       },
       {
         id: 'settings',

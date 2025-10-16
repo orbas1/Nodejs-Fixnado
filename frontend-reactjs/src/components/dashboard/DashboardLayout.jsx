@@ -746,6 +746,7 @@ const DashboardLayout = ({
         section={activeSection}
         persona={persona}
         features={dashboard?.metadata?.features ?? {}}
+        context={dashboard?.metadata ?? {}}
       />
     );
   };

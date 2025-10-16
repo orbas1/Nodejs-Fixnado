@@ -19,11 +19,18 @@ const mockDashboards = {
     headline: 'Coordinate service orders, rentals, availability, and support in one workspace.',
     window: createWindow(),
     metadata: {
+      userId: 'USR-2488',
+      companyId: 'CMP-9031',
       user: {
         id: 'USR-2488',
         name: 'Avery Stone',
-        email: 'avery@fixnado.com',
-        company: 'Stone Facilities Co-op'
+        email: 'avery@fixnado.com'
+      },
+      company: {
+        id: 'CMP-9031',
+        name: 'Stone Facilities Co-op',
+        contactEmail: 'ops@stonefacilities.co.uk',
+        contactPhone: '+44 20 7946 0998'
       },
       totals: {
         bookings: 22,
@@ -804,34 +811,149 @@ const mockDashboards = {
         }
       },
       {
-        id: 'support',
+        id: 'account',
         icon: 'support',
-        label: 'Support & Communications',
-        description: 'Concierge follow-ups, compliance checkpoints, and escalations.',
-        type: 'list',
+        label: 'Account & Support',
+        description: 'Next best actions to keep everything running smoothly.',
+        type: 'accountSupport',
         data: {
-          items: [
+          insights: [
             {
-              title: 'Upload completion photos • City Schools contract',
-              description: 'Finance will release escrow once documentation is attached.',
+              title: 'Weekend coverage plan',
+              description: 'Share your on-call rota so concierge can escalate to the right contact.',
               status: 'Action required'
             },
             {
-              title: 'Confirm insurance documentation',
-              description: 'Liability certificate renewal due within 8 days.',
+              title: 'Compliance renewal',
+              description: 'Insurance certificate renewal needs confirmation before Wednesday.',
               status: 'Due soon'
             },
             {
-              title: 'Respond to concierge follow-up',
-              description: 'Operations asked for status on dispute #DP-301.',
-              status: 'In progress'
+              title: 'Concierge signal',
+              description: 'Response times improved 12% after quiet hours automation last week.',
+              status: 'Positive'
+            }
+          ],
+          tasks: [
+            {
+              id: 'TASK-ACCT-001',
+              title: 'Upload concierge weekend rota',
+              summary: 'Provide the on-call schedule for 22-24 Mar so concierge can triage emergencies.',
+              status: 'open',
+              priority: 'high',
+              channel: 'concierge',
+              dueAt: '2025-03-21T17:00:00Z',
+              assignedTo: 'Avery Stone',
+              assignedToRole: 'customer_admin',
+              createdBy: 'Fixnado concierge',
+              createdByRole: 'support',
+              createdAt: '2025-03-17T08:30:00Z',
+              updatedAt: '2025-03-17T08:30:00Z',
+              updates: [
+                {
+                  id: 'TASK-ACCT-001-UPD-1',
+                  body: 'Initial concierge request sent with weekend incident checklist.',
+                  status: 'open',
+                  createdBy: 'Fixnado concierge',
+                  createdAt: '2025-03-17T08:30:00Z'
+                }
+              ]
             },
             {
-              title: 'Enable quiet hours for weekend',
-              description: 'Set notification rules ahead of weekend concierge sweep.',
-              status: 'Suggested'
+              id: 'TASK-ACCT-002',
+              title: 'Confirm insurance certificate renewal',
+              summary: 'Upload the renewed liability certificate to keep compliance coverage current.',
+              status: 'in_progress',
+              priority: 'medium',
+              channel: 'email',
+              dueAt: '2025-03-19T12:00:00Z',
+              assignedTo: 'Morgan Shaw',
+              assignedToRole: 'facilities_manager',
+              createdBy: 'Avery Stone',
+              createdByRole: 'customer_admin',
+              conversationUrl: '/support/conversations/TASK-ACCT-002',
+              createdAt: '2025-03-14T10:15:00Z',
+              updatedAt: '2025-03-17T09:20:00Z',
+              updates: [
+                {
+                  id: 'TASK-ACCT-002-UPD-1',
+                  body: 'Certificate request sent to insurance broker.',
+                  status: 'in_progress',
+                  createdBy: 'Morgan Shaw',
+                  createdAt: '2025-03-15T11:10:00Z'
+                },
+                {
+                  id: 'TASK-ACCT-002-UPD-2',
+                  body: 'Broker confirmed dispatch of renewed certificate.',
+                  status: 'in_progress',
+                  createdBy: 'Fixnado concierge',
+                  createdAt: '2025-03-17T09:20:00Z'
+                }
+              ]
+            },
+            {
+              id: 'TASK-ACCT-003',
+              title: 'Resolve dispute DP-301 follow-up',
+              summary: 'Share remediation notes and attach photos to close the outstanding dispute.',
+              status: 'waiting_external',
+              priority: 'critical',
+              channel: 'slack',
+              assignedTo: 'Disputes squad',
+              assignedToRole: 'customer_admin',
+              createdBy: 'Fixnado concierge',
+              createdByRole: 'support',
+              createdAt: '2025-03-12T14:05:00Z',
+              updatedAt: '2025-03-16T17:40:00Z',
+              updates: [
+                {
+                  id: 'TASK-ACCT-003-UPD-1',
+                  body: 'Awaiting confirmation from tenant after emergency repair.',
+                  status: 'waiting_external',
+                  createdBy: 'Fixnado concierge',
+                  createdAt: '2025-03-16T17:40:00Z'
+                }
+              ]
+            },
+            {
+              id: 'TASK-ACCT-004',
+              title: 'Enable quiet hours for concierge inbox',
+              summary: 'Configure notification window ahead of the weekend concierge sweep.',
+              status: 'resolved',
+              priority: 'low',
+              channel: 'self_service',
+              dueAt: '2025-03-16T18:00:00Z',
+              assignedTo: 'Avery Stone',
+              assignedToRole: 'customer_admin',
+              createdBy: 'Fixnado concierge',
+              createdByRole: 'support',
+              resolvedAt: '2025-03-16T17:10:00Z',
+              createdAt: '2025-03-15T09:00:00Z',
+              updatedAt: '2025-03-16T17:10:00Z',
+              updates: [
+                {
+                  id: 'TASK-ACCT-004-UPD-1',
+                  body: 'Quiet hours configured for 22:00-06:00.',
+                  status: 'resolved',
+                  createdBy: 'Avery Stone',
+                  createdAt: '2025-03-16T17:10:00Z'
+                }
+              ]
             }
-          ]
+          ],
+          stats: {
+            open: 1,
+            inProgress: 1,
+            waitingExternal: 1,
+            resolved: 1,
+            dismissed: 0,
+            total: 4
+          },
+          contacts: {
+            email: 'concierge@fixnado.com',
+            phone: '+44 20 4520 9282',
+            concierge: 'Account managed by Riley Chen',
+            knowledgeBase: 'https://support.fixnado.com/knowledge-base'
+          }
         }
       },
       {

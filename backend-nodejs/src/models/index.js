@@ -46,6 +46,8 @@ import Conversation from './conversation.js';
 import ConversationParticipant from './conversationParticipant.js';
 import ConversationMessage from './conversationMessage.js';
 import MessageDelivery from './messageDelivery.js';
+import AccountSupportTask from './accountSupportTask.js';
+import AccountSupportTaskUpdate from './accountSupportTaskUpdate.js';
 import AdminUserProfile from './adminUserProfile.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
@@ -507,6 +509,16 @@ MessageHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
 
+AccountSupportTask.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+Company.hasMany(AccountSupportTask, { foreignKey: 'companyId', as: 'accountSupportTasks' });
+
+AccountSupportTask.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(AccountSupportTask, { foreignKey: 'userId', as: 'accountSupportTasks' });
+
+AccountSupportTask.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
+
+AccountSupportTask.hasMany(AccountSupportTaskUpdate, { foreignKey: 'taskId', as: 'updates' });
+AccountSupportTaskUpdate.belongsTo(AccountSupportTask, { foreignKey: 'taskId', as: 'task' });
 OperationsQueueBoard.hasMany(OperationsQueueUpdate, { foreignKey: 'boardId', as: 'updates' });
 OperationsQueueUpdate.belongsTo(OperationsQueueBoard, { foreignKey: 'boardId', as: 'board' });
 CommunicationsInboxConfiguration.hasMany(CommunicationsEntryPoint, {
@@ -812,6 +824,8 @@ export {
   ConversationParticipant,
   ConversationMessage,
   MessageDelivery,
+  AccountSupportTask,
+  AccountSupportTaskUpdate,
   CommunicationsInboxConfiguration,
   CommunicationsEntryPoint,
   CommunicationsQuickReply,
