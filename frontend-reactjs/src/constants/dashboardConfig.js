@@ -32,6 +32,14 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Network Calendar', icon: 'calendar' },
       { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
       { id: 'availability', label: 'Serviceman Management', icon: 'crew' },
+      { id: 'assets', label: 'Asset & Rental Control', icon: 'assets' },
+      {
+        id: 'zones',
+        label: 'Zone Design Studio',
+        icon: 'map',
+        description: 'Launch the full zone governance workspace.',
+        href: '/admin/zones'
+      },
       { id: 'assets', label: 'Hire & Rental Control', icon: 'assets' },
       { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
       { id: 'home-builder', label: 'Home Page Builder', icon: 'builder', href: '/admin/home-builder' },
