@@ -1,3 +1,4 @@
+import { validationResult } from 'express-validator';
 import {
   createBooking,
   updateBookingStatus,
@@ -9,6 +10,14 @@ import {
   triggerDispute,
   listBookings,
   getBookingById,
+  updateBooking,
+  listBookingNotes,
+  createBookingNote,
+  updateBookingNote,
+  deleteBookingNote,
+  listBookingAssignments,
+  updateBookingAssignment,
+  removeBookingAssignment
   listBookingHistory,
   createBookingHistoryEntry,
   updateBookingHistoryEntry,
@@ -60,6 +69,20 @@ export async function updateBookingStatusHandler(req, res, next) {
       actorId: req.body.actorId,
       reason: req.body.reason
     });
+    res.json(booking);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const booking = await updateBooking(req.params.bookingId, req.body);
     res.json(booking);
   } catch (error) {
     handleServiceError(res, next, error);
@@ -145,6 +168,15 @@ export async function triggerDisputeHandler(req, res, next) {
   }
 }
 
+export async function listBookingNotesHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const notes = await listBookingNotes(req.params.bookingId);
+    res.json(notes);
 export async function listBookingHistoryHandler(req, res, next) {
   try {
     const history = await listBookingHistory(req.params.bookingId, {
@@ -159,6 +191,15 @@ export async function listBookingHistoryHandler(req, res, next) {
   }
 }
 
+export async function createBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const note = await createBookingNote(req.params.bookingId, req.body);
+    res.status(201).json(note);
 export async function createBookingHistoryEntryHandler(req, res, next) {
   try {
     const entry = await createBookingHistoryEntry(req.params.bookingId, req.body || {});
@@ -168,6 +209,15 @@ export async function createBookingHistoryEntryHandler(req, res, next) {
   }
 }
 
+export async function updateBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const note = await updateBookingNote(req.params.bookingId, req.params.noteId, req.body);
+    res.json(note);
 export async function updateBookingHistoryEntryHandler(req, res, next) {
   try {
     const entry = await updateBookingHistoryEntry(req.params.bookingId, req.params.entryId, req.body || {});
@@ -177,6 +227,62 @@ export async function updateBookingHistoryEntryHandler(req, res, next) {
   }
 }
 
+export async function deleteBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    await deleteBookingNote(req.params.bookingId, req.params.noteId);
+    res.status(204).send();
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function listBookingAssignmentsHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const assignments = await listBookingAssignments(req.params.bookingId);
+    res.json(assignments);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingAssignmentHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const assignment = await updateBookingAssignment(
+      req.params.bookingId,
+      req.params.assignmentId,
+      req.body,
+      req.body.actorId
+    );
+    res.json(assignment);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function deleteBookingAssignmentHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    await removeBookingAssignment(req.params.bookingId, req.params.assignmentId, req.query.actorId);
+    res.status(204).send();
 export async function deleteBookingHistoryEntryHandler(req, res, next) {
   try {
     await deleteBookingHistoryEntry(req.params.bookingId, req.params.entryId);

@@ -18,6 +18,14 @@ Booking.init(
       type: DataTypes.UUID,
       allowNull: false
     },
+    title: {
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
+    location: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     zoneId: {
       type: DataTypes.UUID,
       allowNull: false
@@ -76,6 +84,10 @@ Booking.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: {}
+    },
+    instructions: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     lastStatusTransitionAt: {
       type: DataTypes.DATE,

@@ -2,6 +2,8 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getFixnadoWorkspaceSnapshot } from './fixnadoAdsService.js';
+import { getBookingCalendar } from './bookingCalendarService.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
 import {
@@ -649,6 +651,14 @@ async function loadUserData(context) {
         : `${formatNumber(rentalsInUse)} rental asset${rentalsInUse === 1 ? '' : 's'} currently in the field`
     ]
   };
+
+  const calendarMonth = window.end?.toFormat?.('yyyy-LL') || DateTime.now().setZone(window.timezone).toFormat('yyyy-LL');
+  const calendarData = await getBookingCalendar({
+    customerId: userId,
+    companyId,
+    month: calendarMonth,
+    timezone: window.timezone
+  });
 
   const orderBoardColumns = [
     {
@@ -1388,6 +1398,14 @@ async function loadUserData(context) {
         type: 'overview',
         analytics: overview,
         sidebar: overviewSidebar
+      },
+      {
+        id: 'calendar',
+        icon: 'calendar',
+        label: 'Service Calendar',
+        description: 'Plan visits, assignments, and follow-ups in one view.',
+        type: 'calendar',
+        data: calendarData
       },
       {
         id: 'orders',
@@ -3482,6 +3500,7 @@ async function loadServicemanData(context) {
     quickReplies: quickReplyCount,
     escalationRules: escalationRuleCount
   };
+  const fixnadoSnapshot = await getFixnadoWorkspaceSnapshot({ windowDays: 30 });
 
   return {
     persona: 'serviceman',
@@ -3566,6 +3585,14 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'fixnado-ads',
+        label: 'Fixnado Ads',
+        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+        icon: 'analytics',
+        type: 'fixnado-ads',
+        data: fixnadoSnapshot
       }
     ]
   };

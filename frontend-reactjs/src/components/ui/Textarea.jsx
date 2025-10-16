@@ -28,13 +28,13 @@ const Textarea = forwardRef(function Textarea(
         </label>
       ) : null}
       <textarea
-        {...rest}
         ref={ref}
         id={fieldId}
         rows={rows}
         className={clsx('fx-text-input fx-textarea', error && 'fx-text-input--error', textareaClassName)}
-        aria-invalid={Boolean(error)}
         aria-describedby={describedBy.join(' ') || undefined}
+        aria-invalid={Boolean(error)}
+        {...rest}
       />
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
@@ -49,64 +49,6 @@ const Textarea = forwardRef(function Textarea(
     </div>
   );
 });
-const Textarea = forwardRef(
-  (
-    {
-      id,
-      label,
-      optionalLabel,
-      hint,
-      error,
-      className,
-      textareaClassName,
-      minRows,
-      ...rest
-    },
-    ref
-  ) => {
-    const generatedId = useId();
-    const fieldId = id ?? generatedId;
-    const describedBy = [];
-
-    if (hint) {
-      describedBy.push(`${fieldId}-hint`);
-    }
-
-    if (error) {
-      describedBy.push(`${fieldId}-error`);
-    }
-
-    return (
-      <div className={clsx('fx-field', className)}>
-        {label ? (
-          <label className="fx-field__label" htmlFor={fieldId}>
-            {label}
-            {optionalLabel ? <span className="fx-field__optional">{optionalLabel}</span> : null}
-          </label>
-        ) : null}
-        <textarea
-          ref={ref}
-          id={fieldId}
-          className={clsx('fx-textarea', error && 'fx-textarea--error', textareaClassName)}
-          rows={minRows}
-          aria-describedby={describedBy.join(' ') || undefined}
-          aria-invalid={Boolean(error)}
-          {...rest}
-        />
-        {hint ? (
-          <p id={`${fieldId}-hint`} className="fx-field__hint">
-            {hint}
-          </p>
-        ) : null}
-        {error ? (
-          <p id={`${fieldId}-error`} role="alert" className="fx-field__error">
-            {error}
-          </p>
-        ) : null}
-      </div>
-    );
-  }
-);
 
 Textarea.displayName = 'Textarea';
 
@@ -119,7 +61,6 @@ Textarea.propTypes = {
   className: PropTypes.string,
   textareaClassName: PropTypes.string,
   rows: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-  minRows: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };
 
 Textarea.defaultProps = {
@@ -131,7 +72,6 @@ Textarea.defaultProps = {
   className: undefined,
   textareaClassName: undefined,
   rows: 4
-  minRows: 4
 };
 
 export default Textarea;
