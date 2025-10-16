@@ -54,6 +54,14 @@ function parseRate(value, fallback) {
   return Number.parseFloat(parsed.toFixed(4));
 }
 
+function stringOrDefault(value, fallback = '') {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
 const defaultCommissionRates = (() => {
   const { commissionRates = {} } = config.finance ?? {};
   const { default: defaultRate = 0.025, ...custom } = commissionRates;
@@ -62,6 +70,80 @@ const defaultCommissionRates = (() => {
     custom
   };
 })();
+
+const SEO_ALLOWED_ROLES = ['admin', 'provider', 'finance', 'serviceman', 'user', 'enterprise'];
+
+function normaliseSeoRole(value) {
+  if (typeof value !== 'string') {
+    return 'admin';
+  }
+  const trimmed = value.trim().toLowerCase();
+  return SEO_ALLOWED_ROLES.includes(trimmed) ? trimmed : 'admin';
+}
+
+function buildSeoRoleAccess(values) {
+  const roles = uniqueStrings(
+    Array.isArray(values)
+      ? values
+      : typeof values === 'string'
+        ? values.split(',')
+        : []
+  ).map((role) => role.toLowerCase());
+  const allowed = roles.filter((role) => SEO_ALLOWED_ROLES.includes(role));
+  if (!allowed.includes('admin')) {
+    allowed.push('admin');
+  }
+  return allowed;
+}
+
+const defaultSeoRoleAccess = buildSeoRoleAccess(config.seo?.tagDefaults?.defaultRoleAccess);
+
+const DEFAULT_SEO_SETTINGS = {
+  siteName: stringOrDefault(config.seo?.siteName, 'Fixnado'),
+  defaultTitle: stringOrDefault(config.seo?.defaultTitle, 'Fixnado — Facilities command'),
+  titleTemplate: stringOrDefault(config.seo?.titleTemplate, '%s • Fixnado'),
+  defaultDescription: stringOrDefault(config.seo?.defaultDescription, ''),
+  defaultKeywords: uniqueStrings(
+    Array.isArray(config.seo?.defaultKeywords)
+      ? config.seo.defaultKeywords
+      : typeof config.seo?.defaultKeywords === 'string'
+        ? config.seo.defaultKeywords.split(',')
+        : []
+  ),
+  canonicalHost: stringOrDefault(config.seo?.canonicalHost, ''),
+  robots: {
+    index: config.seo?.robots?.index !== false,
+    follow: config.seo?.robots?.follow !== false,
+    advancedDirectives: stringOrDefault(config.seo?.robots?.advancedDirectives, '')
+  },
+  sitemap: {
+    autoGenerate: config.seo?.sitemap?.autoGenerate !== false,
+    pingSearchEngines: config.seo?.sitemap?.pingSearchEngines !== false,
+    lastGeneratedAt: config.seo?.sitemap?.lastGeneratedAt || null
+  },
+  social: {
+    twitterHandle: stringOrDefault(config.seo?.social?.twitterHandle, ''),
+    facebookAppId: stringOrDefault(config.seo?.social?.facebookAppId, ''),
+    defaultImageUrl: stringOrDefault(config.seo?.social?.defaultImageUrl, ''),
+    defaultImageAlt: stringOrDefault(config.seo?.social?.defaultImageAlt, '')
+  },
+  structuredData: {
+    organisationJsonLd: stringOrDefault(config.seo?.structuredData?.organisationJsonLd, ''),
+    enableAutoBreadcrumbs: config.seo?.structuredData?.enableAutoBreadcrumbs !== false
+  },
+  tagDefaults: {
+    metaTitleTemplate: stringOrDefault(config.seo?.tagDefaults?.metaTitleTemplate, '%tag% • Fixnado'),
+    metaDescriptionTemplate: stringOrDefault(config.seo?.tagDefaults?.metaDescriptionTemplate, ''),
+    defaultRoleAccess: defaultSeoRoleAccess,
+    ownerRole: normaliseSeoRole(config.seo?.tagDefaults?.ownerRole),
+    defaultOgImageAlt: stringOrDefault(config.seo?.tagDefaults?.defaultOgImageAlt, ''),
+    autoPopulateOg: config.seo?.tagDefaults?.autoPopulateOg !== false
+  },
+  governance: {
+    lockSlugEdits: config.seo?.governance?.lockSlugEdits === true,
+    requireOwnerForPublish: config.seo?.governance?.requireOwnerForPublish === true
+  }
+};
 
 const DEFAULT_SETTINGS = {
   commissions: {
@@ -119,7 +201,8 @@ const DEFAULT_SETTINGS = {
       password: process.env.DB_PASSWORD || '',
       ssl: Boolean(config.database?.ssl)
     }
-  }
+  },
+  seo: DEFAULT_SEO_SETTINGS
 };
 
 let cachedSettings = clone(DEFAULT_SETTINGS);
@@ -144,6 +227,8 @@ function applyRuntimeSideEffects(settings) {
     tiers: clone(settings.subscriptions?.tiers ?? []),
     restrictedFeatures: clone(settings.subscriptions?.restrictedFeatures ?? [])
   };
+
+  config.seo = clone(settings.seo ?? DEFAULT_SEO_SETTINGS);
 
   config.integrations = deepMerge(config.integrations || {}, settings.integrations || {});
 }
@@ -306,6 +391,299 @@ function sanitiseIntegrations(update = {}, current = DEFAULT_SETTINGS.integratio
   return next;
 }
 
+function sanitiseSeo(update = {}, current = DEFAULT_SEO_SETTINGS) {
+  const next = clone(current);
+  const errors = [];
+
+  const assignTopLevelString = (field, value, { allowEmpty = false, maxLength } = {}) => {
+    if (typeof value !== 'string') {
+      errors.push({ field, message: 'must be a string' });
+      return;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      if (allowEmpty) {
+        next[field] = '';
+        return;
+      }
+      errors.push({ field, message: 'cannot be empty' });
+      return;
+    }
+    if (maxLength && trimmed.length > maxLength) {
+      errors.push({ field, message: `must be ${maxLength} characters or fewer` });
+      return;
+    }
+    next[field] = trimmed;
+  };
+
+  if (Object.hasOwn(update, 'siteName')) {
+    assignTopLevelString('siteName', update.siteName, { allowEmpty: false, maxLength: 80 });
+  }
+
+  if (Object.hasOwn(update, 'defaultTitle')) {
+    assignTopLevelString('defaultTitle', update.defaultTitle, { allowEmpty: false, maxLength: 140 });
+  }
+
+  if (Object.hasOwn(update, 'titleTemplate')) {
+    assignTopLevelString('titleTemplate', update.titleTemplate, { allowEmpty: false, maxLength: 160 });
+  }
+
+  if (Object.hasOwn(update, 'defaultDescription')) {
+    if (typeof update.defaultDescription === 'string') {
+      const trimmed = update.defaultDescription.trim();
+      if (trimmed.length > 320) {
+        errors.push({ field: 'defaultDescription', message: 'must be 320 characters or fewer' });
+      } else {
+        next.defaultDescription = trimmed;
+      }
+    } else {
+      errors.push({ field: 'defaultDescription', message: 'must be a string' });
+    }
+  }
+
+  if (Object.hasOwn(update, 'defaultKeywords')) {
+    const keywords = Array.isArray(update.defaultKeywords)
+      ? uniqueStrings(update.defaultKeywords)
+      : typeof update.defaultKeywords === 'string'
+        ? uniqueStrings(update.defaultKeywords.split(','))
+        : null;
+    if (keywords) {
+      next.defaultKeywords = keywords.slice(0, 50);
+    } else {
+      errors.push({ field: 'defaultKeywords', message: 'must be an array or comma separated string' });
+    }
+  }
+
+  if (Object.hasOwn(update, 'canonicalHost')) {
+    if (typeof update.canonicalHost === 'string') {
+      const trimmed = update.canonicalHost.trim();
+      if (!trimmed) {
+        next.canonicalHost = '';
+      } else {
+        try {
+          const url = new URL(trimmed);
+          next.canonicalHost = url.origin;
+        } catch (error) {
+          errors.push({ field: 'canonicalHost', message: 'must be a valid absolute URL (https://example.com)' });
+        }
+      }
+    } else {
+      errors.push({ field: 'canonicalHost', message: 'must be a string' });
+    }
+  }
+
+  if (Object.hasOwn(update, 'robots')) {
+    if (!isPlainObject(update.robots)) {
+      errors.push({ field: 'robots', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.robots, 'index')) {
+        next.robots.index = Boolean(update.robots.index);
+      }
+      if (Object.hasOwn(update.robots, 'follow')) {
+        next.robots.follow = Boolean(update.robots.follow);
+      }
+      if (Object.hasOwn(update.robots, 'advancedDirectives')) {
+        if (typeof update.robots.advancedDirectives === 'string') {
+          const trimmed = update.robots.advancedDirectives.trim();
+          if (trimmed.length > 400) {
+            errors.push({ field: 'robots.advancedDirectives', message: 'must be 400 characters or fewer' });
+          } else {
+            next.robots.advancedDirectives = trimmed;
+          }
+        } else {
+          errors.push({ field: 'robots.advancedDirectives', message: 'must be a string' });
+        }
+      }
+    }
+  }
+
+  if (Object.hasOwn(update, 'sitemap')) {
+    if (!isPlainObject(update.sitemap)) {
+      errors.push({ field: 'sitemap', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.sitemap, 'autoGenerate')) {
+        next.sitemap.autoGenerate = Boolean(update.sitemap.autoGenerate);
+      }
+      if (Object.hasOwn(update.sitemap, 'pingSearchEngines')) {
+        next.sitemap.pingSearchEngines = Boolean(update.sitemap.pingSearchEngines);
+      }
+      if (Object.hasOwn(update.sitemap, 'lastGeneratedAt')) {
+        const value = update.sitemap.lastGeneratedAt;
+        if (value === null || value === '') {
+          next.sitemap.lastGeneratedAt = null;
+        } else if (typeof value === 'string') {
+          const parsed = new Date(value);
+          if (Number.isNaN(parsed.getTime())) {
+            errors.push({ field: 'sitemap.lastGeneratedAt', message: 'must be an ISO 8601 date string' });
+          } else {
+            next.sitemap.lastGeneratedAt = parsed.toISOString();
+          }
+        } else {
+          errors.push({ field: 'sitemap.lastGeneratedAt', message: 'must be a string or null' });
+        }
+      }
+    }
+  }
+
+  if (Object.hasOwn(update, 'social')) {
+    if (!isPlainObject(update.social)) {
+      errors.push({ field: 'social', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.social, 'twitterHandle')) {
+        if (typeof update.social.twitterHandle === 'string') {
+          next.social.twitterHandle = update.social.twitterHandle.trim();
+        } else {
+          errors.push({ field: 'social.twitterHandle', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.social, 'facebookAppId')) {
+        if (typeof update.social.facebookAppId === 'string') {
+          next.social.facebookAppId = update.social.facebookAppId.trim();
+        } else {
+          errors.push({ field: 'social.facebookAppId', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.social, 'defaultImageUrl')) {
+        if (typeof update.social.defaultImageUrl === 'string') {
+          const trimmed = update.social.defaultImageUrl.trim();
+          if (!trimmed) {
+            next.social.defaultImageUrl = '';
+          } else {
+            try {
+              const url = new URL(trimmed);
+              if (!['http:', 'https:'].includes(url.protocol)) {
+                throw new Error('invalid protocol');
+              }
+              next.social.defaultImageUrl = url.toString();
+            } catch (error) {
+              errors.push({ field: 'social.defaultImageUrl', message: 'must be an absolute URL with http or https' });
+            }
+          }
+        } else {
+          errors.push({ field: 'social.defaultImageUrl', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.social, 'defaultImageAlt')) {
+        if (typeof update.social.defaultImageAlt === 'string') {
+          const trimmed = update.social.defaultImageAlt.trim();
+          if (trimmed.length > 180) {
+            errors.push({ field: 'social.defaultImageAlt', message: 'must be 180 characters or fewer' });
+          } else {
+            next.social.defaultImageAlt = trimmed;
+          }
+        } else {
+          errors.push({ field: 'social.defaultImageAlt', message: 'must be a string' });
+        }
+      }
+    }
+  }
+
+  if (Object.hasOwn(update, 'structuredData')) {
+    if (!isPlainObject(update.structuredData)) {
+      errors.push({ field: 'structuredData', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.structuredData, 'organisationJsonLd')) {
+        const payload = update.structuredData.organisationJsonLd;
+        if (payload == null || payload === '') {
+          next.structuredData.organisationJsonLd = '';
+        } else if (typeof payload === 'string') {
+          const trimmed = payload.trim();
+          if (!trimmed) {
+            next.structuredData.organisationJsonLd = '';
+          } else {
+            try {
+              JSON.parse(trimmed);
+              next.structuredData.organisationJsonLd = trimmed;
+            } catch (error) {
+              errors.push({ field: 'structuredData.organisationJsonLd', message: 'must be valid JSON' });
+            }
+          }
+        } else if (typeof payload === 'object') {
+          try {
+            next.structuredData.organisationJsonLd = JSON.stringify(payload);
+          } catch (error) {
+            errors.push({ field: 'structuredData.organisationJsonLd', message: 'could not serialise JSON payload' });
+          }
+        } else {
+          errors.push({ field: 'structuredData.organisationJsonLd', message: 'must be a string or object' });
+        }
+      }
+      if (Object.hasOwn(update.structuredData, 'enableAutoBreadcrumbs')) {
+        next.structuredData.enableAutoBreadcrumbs = Boolean(update.structuredData.enableAutoBreadcrumbs);
+      }
+    }
+  }
+
+  if (Object.hasOwn(update, 'tagDefaults')) {
+    if (!isPlainObject(update.tagDefaults)) {
+      errors.push({ field: 'tagDefaults', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.tagDefaults, 'metaTitleTemplate')) {
+        if (typeof update.tagDefaults.metaTitleTemplate === 'string') {
+          const trimmed = update.tagDefaults.metaTitleTemplate.trim();
+          if (!trimmed) {
+            errors.push({ field: 'tagDefaults.metaTitleTemplate', message: 'cannot be empty' });
+          } else if (trimmed.length > 160) {
+            errors.push({ field: 'tagDefaults.metaTitleTemplate', message: 'must be 160 characters or fewer' });
+          } else {
+            next.tagDefaults.metaTitleTemplate = trimmed;
+          }
+        } else {
+          errors.push({ field: 'tagDefaults.metaTitleTemplate', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.tagDefaults, 'metaDescriptionTemplate')) {
+        if (typeof update.tagDefaults.metaDescriptionTemplate === 'string') {
+          const trimmed = update.tagDefaults.metaDescriptionTemplate.trim();
+          if (trimmed.length > 320) {
+            errors.push({ field: 'tagDefaults.metaDescriptionTemplate', message: 'must be 320 characters or fewer' });
+          } else {
+            next.tagDefaults.metaDescriptionTemplate = trimmed;
+          }
+        } else {
+          errors.push({ field: 'tagDefaults.metaDescriptionTemplate', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.tagDefaults, 'defaultRoleAccess')) {
+        next.tagDefaults.defaultRoleAccess = buildSeoRoleAccess(update.tagDefaults.defaultRoleAccess);
+      }
+      if (Object.hasOwn(update.tagDefaults, 'ownerRole')) {
+        next.tagDefaults.ownerRole = normaliseSeoRole(update.tagDefaults.ownerRole);
+      }
+      if (Object.hasOwn(update.tagDefaults, 'defaultOgImageAlt')) {
+        if (typeof update.tagDefaults.defaultOgImageAlt === 'string') {
+          const trimmed = update.tagDefaults.defaultOgImageAlt.trim();
+          if (trimmed.length > 180) {
+            errors.push({ field: 'tagDefaults.defaultOgImageAlt', message: 'must be 180 characters or fewer' });
+          } else {
+            next.tagDefaults.defaultOgImageAlt = trimmed;
+          }
+        } else {
+          errors.push({ field: 'tagDefaults.defaultOgImageAlt', message: 'must be a string' });
+        }
+      }
+      if (Object.hasOwn(update.tagDefaults, 'autoPopulateOg')) {
+        next.tagDefaults.autoPopulateOg = Boolean(update.tagDefaults.autoPopulateOg);
+      }
+    }
+  }
+
+  if (Object.hasOwn(update, 'governance')) {
+    if (!isPlainObject(update.governance)) {
+      errors.push({ field: 'governance', message: 'must be an object' });
+    } else {
+      if (Object.hasOwn(update.governance, 'lockSlugEdits')) {
+        next.governance.lockSlugEdits = Boolean(update.governance.lockSlugEdits);
+      }
+      if (Object.hasOwn(update.governance, 'requireOwnerForPublish')) {
+        next.governance.requireOwnerForPublish = Boolean(update.governance.requireOwnerForPublish);
+      }
+    }
+  }
+
+  return { value: next, errors };
+}
+
 function validationError(message, details = []) {
   const error = new Error(message);
   error.name = 'ValidationError';
@@ -342,6 +720,15 @@ export async function updatePlatformSettings(updates = {}, actor = 'system') {
   if (Object.hasOwn(updates, 'integrations')) {
     next.integrations = sanitiseIntegrations(updates.integrations, current.integrations);
     changedKeys.add('integrations');
+  }
+
+  if (Object.hasOwn(updates, 'seo')) {
+    const { value, errors } = sanitiseSeo(updates.seo, current.seo);
+    if (errors.length > 0) {
+      throw validationError('Invalid SEO configuration', errors);
+    }
+    next.seo = value;
+    changedKeys.add('seo');
   }
 
   if (changedKeys.size === 0) {
