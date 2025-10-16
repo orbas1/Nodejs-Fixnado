@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import MarketplaceWorkspace from '../../features/marketplace-admin/MarketplaceWorkspace.jsx';
 import { ServiceManagementSection } from '../service-management/index.js';
 import AuditTimelineSection from '../audit-timeline/AuditTimelineSection.jsx';
 import ComplianceControlSection from './compliance/ComplianceControlSection.jsx';
@@ -405,6 +406,26 @@ const ListSection = ({ section }) => {
               <p className="text-base font-semibold text-primary">{item.title}</p>
               <p className="text-sm text-slate-600">{item.description}</p>
               <span className="text-xs uppercase tracking-wide text-primary/60">{item.status}</span>
+              {item.href ? (
+                item.href.startsWith('http') ? (
+                  <a
+                    href={item.href}
+                    target={item.target ?? '_blank'}
+                    rel="noreferrer"
+                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                  >
+                    {item.cta ?? 'Open link'}
+                  </a>
+                ) : (
+                  <Link
+                    to={item.href}
+                    target={item.target ?? '_self'}
+                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                  >
+                    {item.cta ?? 'Open workspace'}
+                  </Link>
+                )
+              ) : null}
             </div>
           </div>
         ))}
@@ -422,7 +443,10 @@ ListSection.propTypes = {
         PropTypes.shape({
           title: PropTypes.string.isRequired,
           description: PropTypes.string.isRequired,
-          status: PropTypes.string.isRequired
+          status: PropTypes.string.isRequired,
+          href: PropTypes.string,
+          target: PropTypes.string,
+          cta: PropTypes.string
         })
       ).isRequired
     }).isRequired
@@ -1677,6 +1701,13 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'marketplace-workspace':
+      return (
+        <MarketplaceWorkspace
+          initialCompanyId={section.data?.companyId ?? ''}
+          prefetchedOverview={section.data?.overview ?? null}
+        />
+      );
     case 'service-management':
       return <ServiceManagementSection section={section} />;
     case 'audit-timeline':

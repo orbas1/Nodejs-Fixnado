@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
 import {
   AdCampaign,
@@ -1412,7 +1413,15 @@ async function loadUserData(context) {
 async function loadAdminData(context) {
   const { companyId, window } = context;
 
-  const [bookings, previousBookings, rentals, inventoryAlerts, complianceDocs, fraudSignals, campaignMetrics] = await Promise.all([
+  const [
+    bookings,
+    previousBookings,
+    rentals,
+    inventoryAlerts,
+    complianceDocs,
+    fraudSignals,
+    campaignMetrics
+  ] = await Promise.all([
     Booking.findAll({
       where: {
         ...(companyId ? { companyId } : {}),
@@ -1632,6 +1641,27 @@ async function loadAdminData(context) {
     insights
   };
 
+  const marketplaceOverview = await buildMarketplaceDashboardSlice({ companyId });
+
+  const marketplaceSection = marketplaceOverview
+    ? {
+        id: 'marketplace-workspace',
+        label: 'Marketplace management',
+        description: 'Tools, consumables, and listing governance workspace.',
+        type: 'marketplace-workspace',
+        icon: 'marketplace',
+        data: {
+          overview: marketplaceOverview,
+          companyId: companyId ?? null,
+          summary: {
+            tools: marketplaceOverview.summary.tools,
+            materials: marketplaceOverview.summary.materials,
+            moderationQueue: marketplaceOverview.moderationQueue.length
+          }
+        }
+      }
+    : null;
+
   return {
     persona: 'admin',
     name: PERSONA_METADATA.admin.name,
@@ -1699,6 +1729,8 @@ async function loadAdminData(context) {
           ]
         }
       },
+      marketplaceSection
+    ].filter(Boolean)
       {
         id: 'home-builder',
         label: 'Home Page Builder',

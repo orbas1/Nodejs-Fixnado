@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, SwatchIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, CubeIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
@@ -1281,6 +1282,7 @@ export default function AdminDashboard() {
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const timeframeParam = searchParams.get('timeframe') ?? DEFAULT_TIMEFRAME;
+  const focusParam = searchParams.get('focus');
   const [timeframe, setTimeframe] = useState(timeframeParam);
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
@@ -1748,6 +1750,8 @@ export default function AdminDashboard() {
       to: '/admin/monetisation'
     });
     return sections;
+  }, [state.data, affiliateSection]);
+  const dashboardPayload = state.data ? { ...state.data, navigation } : null;
   }, [state.data, serviceSection, affiliateSection]);
   }, [navigationModel.sections, affiliateSection]);
 
@@ -1772,6 +1776,28 @@ export default function AdminDashboard() {
         }
         return params;
       });
+    },
+    [setSearchParams]
+  );
+
+  const handleSectionChange = useCallback(
+    (sectionId) => {
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        const currentFocus = params.get('focus');
+        if (sectionId && sectionId !== 'overview') {
+          if (currentFocus === sectionId) {
+            return current;
+          }
+          params.set('focus', sectionId);
+          return params;
+        }
+        if (!currentFocus) {
+          return current;
+        }
+        params.delete('focus');
+        return params;
+      }, { replace: true });
     },
     [setSearchParams]
   );
@@ -2340,6 +2366,13 @@ export default function AdminDashboard() {
         Geo-zonal builder
       </Button>
       <Button
+        to="/admin/marketplace"
+        size="sm"
+        variant="secondary"
+        icon={WrenchScrewdriverIcon}
+        iconPosition="start"
+      >
+        Marketplace workspace
         to="/admin/website-management"
         size="sm"
         variant="secondary"
@@ -2384,6 +2417,19 @@ export default function AdminDashboard() {
   );
 
   return (
+    <DashboardLayout
+      roleMeta={{ ...roleMeta, persona: personaLabel }}
+      registeredRoles={registeredRoles}
+      dashboard={dashboardPayload}
+      loading={state.loading}
+      error={state.error?.message ?? null}
+      onRefresh={handleRefresh}
+      lastRefreshed={lastRefreshed}
+      filters={filters}
+      initialSectionId={focusParam}
+      onSectionChange={handleSectionChange}
+      onLogout={handleLogout}
+    />
     <>
       <DashboardLayout
         roleMeta={{ ...roleMeta, persona: personaLabel }}

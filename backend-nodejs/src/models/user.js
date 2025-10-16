@@ -146,6 +146,10 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
+        isEmail(value) {
+          const decrypted = typeof value === 'string' && value ? decryptString(value, 'user:email') : null;
+          const candidate = (decrypted ?? this.email ?? '').trim();
+          if (!EMAIL_PATTERN.test(candidate)) {
         isEncryptedEmail(value) {
           if (value == null) {
             throw new Error('Validation isEmail on email failed');
@@ -191,6 +195,9 @@ User.init(
           throw new TypeError('email must be a string');
         }
         const trimmed = value.trim();
+        if (!EMAIL_PATTERN.test(trimmed)) {
+          throw new Error('Validation isEmail on email failed');
+        }
         if (!trimmed) {
           throw new Error('email cannot be empty');
         }

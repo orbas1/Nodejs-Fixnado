@@ -38,6 +38,7 @@ const AdminLiveFeedAuditing = lazy(() => import('./pages/AdminLiveFeedAuditing.j
 const AdminSystemSettings = lazy(() => import('./pages/AdminSystemSettings.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
+const AdminMarketplace = lazy(() => import('./pages/AdminMarketplace.jsx'));
 const AdminTaxonomy = lazy(() => import('./pages/AdminTaxonomy.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const CreationStudio = lazy(() => import('./pages/CreationStudio.jsx'));
@@ -159,6 +160,10 @@ function App() {
                 }
               />
               <Route
+                path="/admin/marketplace"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminMarketplace />
                 path="/admin/appearance"
                 element={
                   <AdminProtectedRoute>

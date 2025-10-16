@@ -143,6 +143,7 @@ const navIconMap = {
   automation: BoltIcon,
   map: MapIcon,
   documents: ClipboardDocumentCheckIcon,
+  marketplace: WrenchScrewdriverIcon
   seo: TagIcon
 };
 
@@ -322,6 +323,28 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'marketplace-workspace' && section.data?.summary) {
+      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
+      entries.push(
+        {
+          id: `${section.id}-tools-summary`,
+          type: 'record',
+          label: `${tools.count ?? 0} tools catalogued`,
+          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-materials-summary`,
+          type: 'record',
+          label: `${materials.count ?? 0} materials tracked`,
+          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-moderation-summary`,
+          type: 'record',
+          label: `${moderationQueue} listings pending review`,
+          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
     if (section.type === 'service-management') {
       const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
       const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
@@ -443,9 +466,17 @@ const DashboardLayout = ({
   toggleMeta = null,
   toggleReason = null,
   onLogout,
-  blogPosts = []
+  blogPosts = [],
+  initialSectionId = null,
+  onSectionChange = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const [selectedSection, setSelectedSection] = useState(() => {
+    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
+      return initialSectionId;
+    }
+    return navigation[0]?.id ?? 'overview';
+  });
   const firstSectionId = useMemo(() => {
     const first = navigation.find((item) => item.type !== 'route');
     return first?.id ?? navigation[0]?.id ?? 'overview';
@@ -524,6 +555,17 @@ const DashboardLayout = ({
   }, [navSections]);
 
   useEffect(() => {
+    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
+      setSelectedSection((current) => (current === initialSectionId ? current : initialSectionId));
+      return;
+    }
+
+    if (navigation.length > 0 && !navigation.some((item) => item.id === selectedSection)) {
+      setSelectedSection(navigation[0]?.id ?? 'overview');
+    }
+  }, [initialSectionId, navigation, selectedSection]);
+
+  useEffect(() => {
     if (!mobileNavOpen) return;
     setMobileNavOpen(false);
   }, [selectedSection, mobileNavOpen]);
@@ -551,6 +593,16 @@ const DashboardLayout = ({
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
+
+  const handleSectionSelect = useCallback(
+    (sectionId) => {
+      setSelectedSection(sectionId);
+      if (onSectionChange) {
+        onSectionChange(sectionId);
+      }
+    },
+    [onSectionChange]
+  );
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -704,6 +756,7 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
+                        onClick={() => handleSectionSelect(item.id)}
                         onClick={() => setSelectedSection(item.id)}
                         className={baseClass}
                         aria-pressed={isActive}
@@ -963,6 +1016,7 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
+                onClick={() => handleSectionSelect(item.id)}
                 onClick={() => setSelectedSection(item.id)}
                 className={baseClass}
                 onClick={() => handleNavClick(item)}
@@ -1163,6 +1217,7 @@ const DashboardLayout = ({
                           <button
                             type="button"
                             onClick={() => {
+                              handleSectionSelect(result.targetSection);
                               if (result.type === 'route' && result.href) {
                                 navigate(result.href);
                               } else if (result.targetSection) {
@@ -1278,7 +1333,9 @@ DashboardLayout.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired
     })
-  )
+  ),
+  initialSectionId: PropTypes.string,
+  onSectionChange: PropTypes.func
 };
 
 DashboardLayout.defaultProps = {
@@ -1290,7 +1347,9 @@ DashboardLayout.defaultProps = {
   toggleMeta: null,
   toggleReason: null,
   onLogout: null,
-  blogPosts: []
+  blogPosts: [],
+  initialSectionId: null,
+  onSectionChange: null
 };
 
 export default DashboardLayout;
