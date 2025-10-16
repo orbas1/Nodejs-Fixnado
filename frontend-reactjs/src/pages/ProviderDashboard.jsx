@@ -8,6 +8,7 @@ import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
 import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
+  CalendarDaysIcon,
   ChartBarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -22,6 +23,8 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
+import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
 import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
@@ -573,6 +576,8 @@ export default function ProviderDashboard() {
     return 'success';
   }, [metrics]);
 
+  const hasCalendarAccess = Boolean(state.meta?.companyId);
+
   const navigation = useMemo(() => {
     const items = [
       {
@@ -609,6 +614,13 @@ export default function ProviderDashboard() {
             id: 'provider-dashboard-service-health',
             label: t('providerDashboard.serviceHealthHeadline'),
             description: t('providerDashboard.nav.serviceHealth')
+          }
+        : null,
+      hasCalendarAccess
+        ? {
+            id: 'provider-dashboard-calendar',
+            label: t('providerDashboard.calendarHeadline'),
+            description: t('providerDashboard.nav.calendar')
           }
         : null,
       deliveryBoard.length
@@ -655,6 +667,7 @@ export default function ProviderDashboard() {
   }, [
     alerts.length,
     deliveryBoard.length,
+    hasCalendarAccess,
     serviceCatalogue.length,
     serviceCategories.length,
     serviceHealth.length,
@@ -680,6 +693,18 @@ export default function ProviderDashboard() {
   );
 
   const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
+
+  const calendarInitialSnapshot = useMemo(() => {
+    if (state.data?.calendar) {
+      return state.data.calendar;
+    }
+    if (state.meta?.companyId) {
+      return { meta: { companyId: state.meta.companyId } };
+    }
+    return null;
+  }, [state.data?.calendar, state.meta?.companyId]);
+
+  const renderCalendarSection = hasCalendarAccess && (calendarInitialSnapshot || !state.loading);
   const onboardingKey = provider?.onboardingStatus
     ? `providerDashboard.onboardingStatus.${provider.onboardingStatus}`
     : 'providerDashboard.onboardingStatus.active';
@@ -934,6 +959,23 @@ export default function ProviderDashboard() {
                 <ServiceHealthCard key={metric.id} metric={metric} />
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {renderCalendarSection ? (
+          <section id="provider-dashboard-calendar" aria-labelledby="provider-dashboard-calendar" className="space-y-4">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <CalendarDaysIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <div>
+                  <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.calendarHeadline')}</h2>
+                  <p className="text-xs text-slate-500">{t('providerDashboard.calendarDescription')}</p>
+                </div>
+              </div>
+            </header>
+            <ProviderCalendarProvider initialSnapshot={calendarInitialSnapshot ?? {}}>
+              <ProviderCalendarWorkspace />
+            </ProviderCalendarProvider>
           </section>
         ) : null}
 

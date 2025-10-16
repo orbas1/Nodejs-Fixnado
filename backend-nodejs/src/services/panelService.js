@@ -22,6 +22,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getProviderCalendar } from './providerCalendarService.js';
 import {
   getWalletOverview as getCompanyWalletOverview,
   listWalletTransactions as listCompanyWalletTransactions
@@ -707,8 +708,19 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     },
     trust: trustScore,
     alerts,
+    calendar: null
     wallet: walletSection
   };
+
+  try {
+    const calendarSnapshot = await getProviderCalendar({ companyId });
+    data.calendar = {
+      ...calendarSnapshot.data,
+      meta: calendarSnapshot.meta
+    };
+  } catch (error) {
+    console.warn('[panel] Failed to load provider calendar snapshot for dashboard', error);
+  }
 
   const meta = {
     companyId,

@@ -285,10 +285,15 @@
   border-radius: var(--fx-radius-lg);
   border: 1px solid var(--fx-color-border-subtle);
   padding: var(--fx-space-4) calc(var(--fx-space-5) + 1px);
+  padding-block: var(--fx-space-3);
   font-size: 0.95rem;
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--fx-color-text-primary);
   background: var(--fx-color-surface-base);
+  line-height: 1.6;
+  resize: vertical;
+  transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
+    box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
   line-height: 1.5;
   transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
     box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);

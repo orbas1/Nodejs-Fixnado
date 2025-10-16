@@ -344,6 +344,24 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseCalendarSnapshot(snapshot) {
+  if (!snapshot) {
+    return null;
+  }
+
+  const root = snapshot.data ?? snapshot;
+  const meta = snapshot.meta ?? root.meta ?? {};
+
+  return {
+    calendar: root.calendar ?? {},
+    summary: root.summary ?? {},
+    bookings: ensureArray(root.bookings),
+    events: ensureArray(root.events),
+    settings: root.settings ?? {},
+    options: root.options ?? {},
+    permissions: root.permissions ?? {},
+    links: root.links ?? {},
+    meta
 function normaliseToolSaleCoupon(coupon, index) {
   if (!coupon) {
     return { id: `tool-sale-coupon-${index}`, name: 'Coupon', status: 'draft' };
@@ -539,7 +557,8 @@ function normaliseProviderDashboard(payload = {}) {
         tags: ensureArray(service.tags),
         coverage: ensureArray(service.coverage)
       }))
-    }
+    },
+    calendar: normaliseCalendarSnapshot(root.calendar)
   };
 }
 
@@ -2966,6 +2985,39 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
   }
 });
 
+const fallbackCalendarNow = new Date();
+const fallbackCalendarMonthLabel = fallbackCalendarNow.toLocaleDateString('en-GB', {
+  month: 'long',
+  year: 'numeric'
+});
+const fallbackCalendarRangeStart = new Date(
+  Date.UTC(fallbackCalendarNow.getUTCFullYear(), fallbackCalendarNow.getUTCMonth(), 1)
+).toISOString();
+const fallbackCalendarRangeEnd = new Date(
+  Date.UTC(fallbackCalendarNow.getUTCFullYear(), fallbackCalendarNow.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+).toISOString();
+const fallbackCalendarWeeks = (() => {
+  const start = new Date(fallbackCalendarRangeStart);
+  const weeks = [];
+  for (let week = 0; week < 5; week += 1) {
+    const days = [];
+    for (let day = 0; day < 7; day += 1) {
+      const current = new Date(start);
+      current.setUTCDate(start.getUTCDate() + week * 7 + day);
+      days.push({
+        date: current.getUTCDate().toString(),
+        iso: current.toISOString().slice(0, 10),
+        isCurrentMonth: current.getUTCMonth() === start.getUTCMonth(),
+        isToday: false,
+        capacity: null,
+        events: []
+      });
+    }
+    weeks.push(days);
+  }
+  return weeks;
+})();
+
 const providerFallback = normaliseProviderDashboard({
   provider: {
     legalName: 'Metro Power Services',
@@ -3166,6 +3218,131 @@ const providerFallback = normaliseProviderDashboard({
         ]
       }
     ]
+  },
+  calendar: {
+    calendar: {
+      monthLabel: fallbackCalendarMonthLabel,
+      rangeStart: fallbackCalendarRangeStart,
+      rangeEnd: fallbackCalendarRangeEnd,
+      legend: [
+        { id: 'booking-confirmed', label: 'Confirmed booking', status: 'confirmed' },
+        { id: 'booking-pending', label: 'Pending booking', status: 'pending' },
+        { id: 'booking-risk', label: 'Escalation / hold', status: 'risk' },
+        { id: 'event-standby', label: 'Standby window', status: 'standby' },
+        { id: 'event-travel', label: 'Travel', status: 'travel' }
+      ],
+      weeks: fallbackCalendarWeeks
+    },
+    summary: {
+      totals: {
+        total: 6,
+        active: 3,
+        byStatus: {
+          scheduled: 3,
+          completed: 2,
+          pending: 1
+        }
+      },
+      utilisation: 0.58,
+      holds: 1,
+      travel: 2,
+      upcoming: 4
+    },
+    bookings: [
+      {
+        id: 'fallback-booking-1',
+        title: 'Lift maintenance — Riverside Campus',
+        status: 'scheduled',
+        type: 'scheduled',
+        start: new Date(Date.now() + 86400000).toISOString(),
+        end: new Date(Date.now() + 97200000).toISOString(),
+        zoneId: 'zone-central',
+        zoneName: 'Central London',
+        customerName: 'Finova HQ',
+        value: 6800,
+        currency: 'GBP'
+      },
+      {
+        id: 'fallback-booking-2',
+        title: 'Generator inspection — Northbank',
+        status: 'pending',
+        type: 'scheduled',
+        start: new Date(Date.now() + 259200000).toISOString(),
+        end: new Date(Date.now() + 273600000).toISOString(),
+        zoneId: 'zone-central',
+        zoneName: 'Central London',
+        customerName: 'Northbank Serviced Offices',
+        value: 2400,
+        currency: 'GBP'
+      }
+    ],
+    events: [
+      {
+        id: 'fallback-event-standby',
+        title: 'Crew standby window',
+        status: 'planned',
+        type: 'hold',
+        visibility: 'crew',
+        start: new Date(Date.now() + 172800000).toISOString(),
+        end: new Date(Date.now() + 190800000).toISOString()
+      },
+      {
+        id: 'fallback-event-travel',
+        title: 'Travel to Riverside Campus',
+        status: 'travel',
+        type: 'travel',
+        visibility: 'internal',
+        start: new Date(Date.now() + 86400000).toISOString(),
+        end: new Date(Date.now() + 90000000).toISOString()
+      }
+    ],
+    settings: {
+      timezone: 'Europe/London',
+      weekStartsOn: 'monday',
+      defaultView: 'month',
+      workdayStart: '08:00',
+      workdayEnd: '18:00',
+      allowOverlapping: true,
+      autoAcceptAssignments: false,
+      notificationRecipients: ['ops@metropower.example']
+    },
+    options: {
+      zones: [
+        { id: 'zone-central', label: 'Central London' },
+        { id: 'zone-east', label: 'East Borough' }
+      ],
+      eventTypes: [
+        { value: 'internal', label: 'Internal activity' },
+        { value: 'hold', label: 'Scheduling hold' },
+        { value: 'travel', label: 'Travel window' }
+      ],
+      eventStatuses: [
+        { value: 'planned', label: 'Planned' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'travel', label: 'Travel' }
+      ],
+      bookingStatuses: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'scheduled', label: 'Scheduled' },
+        { value: 'completed', label: 'Completed' }
+      ]
+    },
+    permissions: {
+      canManageBookings: true,
+      canManageEvents: true,
+      canEditSettings: true
+    },
+    links: {
+      fetch: '/api/providers/calendar?companyId=provider-metro-power',
+      events: '/api/providers/calendar/events',
+      settings: '/api/providers/calendar/settings',
+      bookings: '/api/providers/calendar/bookings'
+    },
+    meta: {
+      companyId: 'provider-metro-power',
+      timezone: 'Europe/London',
+      generatedAt: new Date().toISOString()
+    }
   },
   servicePackages: [
     {
