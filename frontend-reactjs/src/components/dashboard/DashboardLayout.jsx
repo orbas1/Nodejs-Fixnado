@@ -163,6 +163,9 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.href) {
+      return [];
+    }
     const entries = [
       {
         id: section.id,
@@ -445,25 +448,45 @@ const DashboardLayout = ({
                   {navigation.map((item) => {
                     const isActive = item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
+                    const commonClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      isActive
+                        ? 'border-accent bg-accent text-white shadow-glow'
+                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                    }`;
+                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                    }`;
+                    if (item.href) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className={commonClasses}
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          <span className={iconClasses}>
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold">{item.label}</p>
+                            {item.description ? (
+                              <p className="text-xs text-slate-500">{item.description}</p>
+                            ) : null}
+                          </div>
+                        </Link>
+                      );
+                    }
                     return (
                       <button
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
+                        className={commonClasses}
                         aria-pressed={isActive}
                       >
-                        <span
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                          }`}
-                        >
+                        <span className={iconClasses}>
                           <Icon className="h-5 w-5" />
                         </span>
                         <div className="flex-1">
@@ -528,26 +551,19 @@ const DashboardLayout = ({
           {navigation.map((item) => {
             const isActive = item.id === activeSection?.id;
             const Icon = getNavIcon(item);
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                  }`}
-                >
+            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+              isActive
+                ? 'border-accent bg-accent text-white shadow-glow'
+                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+            } ${navCollapsed ? 'justify-center px-2' : ''}`;
+            const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
+              isActive
+                ? 'bg-white/20 text-white'
+                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+            }`;
+            const content = (
+              <>
+                <span className={iconClasses}>
                   <Icon className="h-5 w-5" />
                 </span>
                 {!navCollapsed && (
@@ -558,6 +574,30 @@ const DashboardLayout = ({
                     ) : null}
                   </div>
                 )}
+              </>
+            );
+            if (item.href) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={baseClasses}
+                  title={navCollapsed ? item.label : undefined}
+                >
+                  {content}
+                </Link>
+              );
+            }
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedSection(item.id)}
+                className={baseClasses}
+                title={navCollapsed ? item.label : undefined}
+                aria-pressed={isActive}
+              >
+                {content}
               </button>
             );
           })}

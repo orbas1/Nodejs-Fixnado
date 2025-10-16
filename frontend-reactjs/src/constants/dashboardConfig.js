@@ -27,6 +27,7 @@ export const DASHBOARD_ROLES = [
       { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
       { id: 'availability', label: 'Serviceman Management', icon: 'crew' },
       { id: 'assets', label: 'Asset & Rental Control', icon: 'assets' },
+      { id: 'purchases', label: 'Purchase Management', icon: 'documents', href: '/admin/purchases' },
       { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
       { id: 'settings', label: 'Platform Settings', icon: 'settings' }
     ]

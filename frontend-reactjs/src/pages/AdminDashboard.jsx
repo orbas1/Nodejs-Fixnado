@@ -533,6 +533,14 @@ export default function AdminDashboard() {
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
+    sections.push({
+      id: 'purchases-link',
+      label: 'Purchase management',
+      description: 'Create purchase orders, manage suppliers, and align budgets.',
+      type: 'link',
+      icon: 'documents',
+      href: '/admin/purchases'
+    });
     return sections;
   }, [state.data, affiliateSection]);
   const dashboardPayload = state.data ? { navigation } : null;

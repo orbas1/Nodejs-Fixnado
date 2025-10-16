@@ -63,6 +63,11 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import Supplier from './supplier.js';
+import PurchaseOrder from './purchaseOrder.js';
+import PurchaseOrderItem from './purchaseOrderItem.js';
+import PurchaseAttachment from './purchaseAttachment.js';
+import PurchaseBudget from './purchaseBudget.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -148,6 +153,27 @@ FinanceInvoice.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
 Region.hasMany(FinanceInvoice, { foreignKey: 'regionId', as: 'invoices' });
 FinanceInvoice.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplierId', as: 'purchaseOrders' });
+PurchaseOrder.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+
+PurchaseBudget.hasMany(PurchaseOrder, { foreignKey: 'budgetId', as: 'orders' });
+PurchaseOrder.belongsTo(PurchaseBudget, { foreignKey: 'budgetId', as: 'budget' });
+
+PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: 'purchaseOrderId', as: 'items' });
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+PurchaseOrder.hasMany(PurchaseAttachment, { foreignKey: 'purchaseOrderId', as: 'attachments' });
+PurchaseAttachment.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+User.hasMany(PurchaseOrder, { foreignKey: 'createdBy', as: 'createdPurchaseOrders' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
+User.hasMany(PurchaseOrder, { foreignKey: 'updatedBy', as: 'updatedPurchaseOrders' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
+
+User.hasMany(PurchaseAttachment, { foreignKey: 'uploadedBy', as: 'uploadedPurchaseAttachments' });
+PurchaseAttachment.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 
 FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
 Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
@@ -464,5 +490,10 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  Supplier,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  PurchaseAttachment,
+  PurchaseBudget
 };
