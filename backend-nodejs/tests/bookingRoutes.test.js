@@ -1,4 +1,6 @@
 import request from 'supertest';
+import { DateTime } from 'luxon';
+import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -256,6 +258,11 @@ describe('Booking orchestration', () => {
     expect(await Booking.count()).toBe(0);
   });
 
+  it('updates booking schedule, metadata, and status', async () => {
+    const customer = await User.create({
+      firstName: 'Calendar',
+      lastName: 'Owner',
+      email: 'calendar-owner@example.com',
   it('supports order history CRUD and filtered listing', async () => {
     const customer = await User.create({
       firstName: 'History',
@@ -267,6 +274,10 @@ describe('Booking orchestration', () => {
 
     const { company, zoneId } = await createCompanyWithZone();
 
+    const start = DateTime.now().plus({ days: 1 }).set({ minute: 0, second: 0, millisecond: 0 });
+    const end = start.plus({ hours: 2 });
+
+    const createResponse = await request(app)
     const bookingResponse = await request(app)
       .post('/api/bookings')
       .send({
@@ -275,6 +286,267 @@ describe('Booking orchestration', () => {
         zoneId,
         type: 'scheduled',
         demandLevel: 'medium',
+        baseAmount: 140,
+        currency: 'GBP',
+        scheduledStart: start.toISO(),
+        scheduledEnd: end.toISO(),
+        metadata: { title: 'Initial Boiler Service' }
+      })
+      .expect(201);
+
+    const bookingId = createResponse.body.id;
+
+    const newStart = start.plus({ hours: 1 });
+    const newEnd = end.plus({ hours: 1 });
+
+    const patchResponse = await request(app)
+      .patch(`/api/bookings/${bookingId}`)
+      .send({
+        title: 'Updated Boiler Service',
+        location: 'Block A, Roof plant room',
+        instructions: 'Meet caretaker on arrival. Bring lift keys.',
+        scheduledStart: newStart.toISO(),
+        scheduledEnd: newEnd.toISO(),
+        status: 'in_progress',
+        actorId: customer.id,
+        statusReason: 'Crew dispatched to site',
+        attachments: [
+          { url: 'https://files.example.com/site-plan.pdf', label: 'Site plan', type: 'document' }
+        ]
+      })
+      .expect(200);
+
+    expect(patchResponse.body.status).toBe('in_progress');
+    expect(patchResponse.body.title).toBe('Updated Boiler Service');
+    expect(patchResponse.body.location).toContain('Roof');
+    expect(patchResponse.body.instructions).toContain('caretaker');
+    expect(patchResponse.body.meta.attachments).toHaveLength(1);
+
+    const refreshed = await Booking.findByPk(bookingId);
+    expect(refreshed.status).toBe('in_progress');
+    expect(refreshed.title).toBe('Updated Boiler Service');
+    expect(new Date(refreshed.scheduledStart).getTime()).toBeCloseTo(newStart.toJSDate().getTime());
+    expect(new Date(refreshed.scheduledEnd).getTime()).toBeCloseTo(newEnd.toJSDate().getTime());
+  });
+
+  it('manages booking notes lifecycle', async () => {
+    const customer = await User.create({
+      firstName: 'Notes',
+      lastName: 'Owner',
+      email: 'notes-owner@example.com',
+      passwordHash: 'hashed',
+      type: 'user'
+    });
+
+    const { company, zoneId } = await createCompanyWithZone();
+    const start = DateTime.now().plus({ days: 2 }).set({ minute: 0, second: 0, millisecond: 0 });
+    const end = start.plus({ hours: 1 });
+
+    const bookingResponse = await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'scheduled',
+        baseAmount: 90,
+        currency: 'GBP',
+        scheduledStart: start.toISO(),
+        scheduledEnd: end.toISO()
+      })
+      .expect(201);
+
+    const bookingId = bookingResponse.body.id;
+
+    const noteResponse = await request(app)
+      .post(`/api/bookings/${bookingId}/notes`)
+      .send({
+        authorId: customer.id,
+        authorType: 'user',
+        body: 'Site contact is Alice. Gate code 4821.',
+        attachments: [{ url: 'https://files.example.com/site-photo.jpg', label: 'Site photo' }]
+      })
+      .expect(201);
+
+    const noteId = noteResponse.body.id;
+
+    const listResponse = await request(app)
+      .get(`/api/bookings/${bookingId}/notes`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(1);
+    expect(listResponse.body[0].attachments).toHaveLength(1);
+
+    const updatedNote = await request(app)
+      .patch(`/api/bookings/${bookingId}/notes/${noteId}`)
+      .send({ body: 'Site contact Alice – ring before arrival.', isPinned: true })
+      .expect(200);
+
+    expect(updatedNote.body.body).toContain('ring before');
+    expect(updatedNote.body.isPinned).toBe(true);
+
+    await request(app)
+      .delete(`/api/bookings/${bookingId}/notes/${noteId}`)
+      .expect(204);
+
+    const postDelete = await request(app)
+      .get(`/api/bookings/${bookingId}/notes`)
+      .expect(200);
+
+    expect(postDelete.body).toHaveLength(0);
+  });
+
+  it('manages crew assignments through dedicated endpoints', async () => {
+    const customer = await User.create({
+      firstName: 'Schedule',
+      lastName: 'Owner',
+      email: `calendar-owner-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'user'
+    });
+
+    const leadProvider = await User.create({
+      firstName: 'Amelia',
+      lastName: 'Rigby',
+      email: `lead-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'servicemen'
+    });
+
+    const supportProvider = await User.create({
+      firstName: 'Noah',
+      lastName: 'Cole',
+      email: `support-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'servicemen'
+    });
+
+    const { company, zoneId } = await createCompanyWithZone();
+
+    const start = DateTime.now().plus({ hours: 2 }).set({ minute: 0, second: 0, millisecond: 0 });
+    const end = start.plus({ hours: 3 });
+
+    const bookingResponse = await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'scheduled',
+        baseAmount: 200,
+        currency: 'GBP',
+        scheduledStart: start.toISO(),
+        scheduledEnd: end.toISO()
+      })
+      .expect(201);
+
+    const bookingId = bookingResponse.body.id;
+
+    const initialAssignmentResponse = await request(app)
+      .post(`/api/bookings/${bookingId}/assignments`)
+      .send({ assignments: [{ providerId: leadProvider.id, role: 'lead' }] })
+      .expect(201);
+
+    expect(initialAssignmentResponse.body).toHaveLength(1);
+    expect(initialAssignmentResponse.body[0].providerId).toBe(leadProvider.id);
+    expect(initialAssignmentResponse.body[0].provider.email).toBe(leadProvider.email);
+
+    await request(app)
+      .post(`/api/bookings/${bookingId}/assignments`)
+      .send({ assignments: [{ providerId: supportProvider.id }] })
+      .expect(201);
+
+    const listResponse = await request(app)
+      .get(`/api/bookings/${bookingId}/assignments`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    const supportAssignment = listResponse.body.find((assignment) => assignment.providerId === supportProvider.id);
+    expect(supportAssignment.role).toBe('support');
+
+    const updatedAssignment = await request(app)
+      .patch(`/api/bookings/${bookingId}/assignments/${supportAssignment.id}`)
+      .send({ role: 'lead', status: 'accepted' })
+      .expect(200);
+
+    expect(updatedAssignment.body.role).toBe('lead');
+    expect(updatedAssignment.body.status).toBe('accepted');
+    expect(new Date(updatedAssignment.body.acknowledgedAt).getTime()).toBeGreaterThan(0);
+
+    const bookingAfterAcceptance = await Booking.findByPk(bookingId);
+    expect(bookingAfterAcceptance.status).toBe('scheduled');
+
+    const assignmentToRemove = listResponse.body.find((assignment) => assignment.providerId === leadProvider.id);
+
+    await request(app)
+      .delete(`/api/bookings/${bookingId}/assignments/${assignmentToRemove.id}`)
+      .expect(204);
+
+    const afterDeletion = await request(app)
+      .get(`/api/bookings/${bookingId}/assignments`)
+      .expect(200);
+
+    expect(afterDeletion.body).toHaveLength(1);
+    expect(afterDeletion.body[0].providerId).toBe(supportProvider.id);
+  });
+
+  it('returns calendar data for customer scheduling', async () => {
+    const customer = await User.create({
+      firstName: 'Calendar',
+      lastName: 'Viewer',
+      email: 'calendar-viewer@example.com',
+      passwordHash: 'hashed',
+      type: 'user'
+    });
+
+    const { company, zoneId } = await createCompanyWithZone();
+
+    const base = DateTime.now().plus({ days: 5 }).set({ hour: 9, minute: 0, second: 0, millisecond: 0 });
+    const bookingOneStart = base;
+    const bookingOneEnd = base.plus({ hours: 2 });
+
+    await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'scheduled',
+        baseAmount: 120,
+        currency: 'GBP',
+        scheduledStart: bookingOneStart.toISO(),
+        scheduledEnd: bookingOneEnd.toISO(),
+        metadata: { title: 'HVAC service', primaryCrew: 'Team Volt' }
+      })
+      .expect(201);
+
+    await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'on_demand',
+        baseAmount: 60,
+        currency: 'GBP'
+      })
+      .expect(201);
+
+    const monthValue = bookingOneStart.toFormat('yyyy-LL');
+
+    const calendarResponse = await request(app)
+      .get('/api/bookings/calendar')
+      .query({ customerId: customer.id, companyId: company.id, month: monthValue, timezone: 'Europe/London' })
+      .expect(200);
+
+    expect(calendarResponse.body.monthValue).toBe(monthValue);
+    expect(calendarResponse.body.weeks.length).toBeGreaterThan(0);
+    const hasEvent = calendarResponse.body.weeks.some((week) =>
+      week.some((day) => day.events && day.events.length > 0)
+    );
+    expect(hasEvent).toBe(true);
+    expect(calendarResponse.body.backlog.length).toBeGreaterThan(0);
+    expect(calendarResponse.body.filters.statuses).toHaveLength(5);
         baseAmount: 150,
         currency: 'GBP',
         scheduledStart: new Date(Date.now() + 3600 * 1000).toISOString(),

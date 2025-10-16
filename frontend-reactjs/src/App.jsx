@@ -21,6 +21,8 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
+const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -77,6 +79,36 @@ const ServicemanByokWorkspace = lazy(() =>
   import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
 );
 
+const ADMIN_ROUTES = [
+  { path: '/admin/dashboard', Component: AdminDashboard },
+  { path: '/admin/profile', Component: AdminProfile },
+  { path: '/admin/disputes/health/:bucketId/history', Component: AdminDisputeHealthHistory },
+  { path: '/admin/home-builder', Component: AdminHomeBuilder },
+  { path: '/admin/blog', Component: AdminBlog },
+  { path: '/admin/rentals', Component: AdminRentals },
+  { path: '/admin/monetisation', Component: AdminMonetization },
+  { path: '/admin/escrows', Component: AdminEscrow },
+  { path: '/admin/bookings', Component: AdminBookings },
+  { path: '/admin/wallets', Component: AdminWallets },
+  { path: '/admin/custom-jobs', Component: AdminCustomJobs },
+  { path: '/admin/roles', Component: AdminRoles },
+  { path: '/admin/preferences', Component: AdminPreferences },
+  { path: '/admin/enterprise', Component: AdminEnterprise },
+  { path: '/admin/marketplace', Component: AdminMarketplace },
+  { path: '/admin/appearance', Component: AppearanceManagement },
+  { path: '/admin/inbox', Component: AdminInbox },
+  { path: '/admin/purchases', Component: AdminPurchaseManagement },
+  { path: '/admin/website-management', Component: AdminWebsiteManagement },
+  { path: '/admin/live-feed/auditing', Component: AdminLiveFeedAuditing },
+  { path: '/admin/system-settings', Component: AdminSystemSettings },
+  { path: '/admin/taxonomy', Component: AdminTaxonomy },
+  { path: '/admin/seo', Component: AdminSeo },
+  { path: '/admin/theme-studio', Component: ThemeStudio },
+  { path: '/admin/telemetry', Component: TelemetryDashboard },
+  { path: '/admin/zones', Component: AdminZones },
+  { path: '/admin/legal/:slug?', Component: AdminLegal }
+];
+
 function App() {
   const { t } = useLocale();
   const location = useLocation();
@@ -110,6 +142,14 @@ function App() {
               <Route path="/feed" element={<Feed />} />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
               <Route
+                path="/provider/custom-jobs"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderCustomJobs />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
                 path="/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
@@ -132,6 +172,17 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/admin" element={<AdminLogin />} />
+              {ADMIN_ROUTES.map(({ path, Component }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <AdminProtectedRoute>
+                      <Component />
+                    </AdminProtectedRoute>
+                  }
+                />
+              ))}
               <Route
                 path="/admin/dashboard"
                 element={
@@ -361,6 +412,11 @@ function App() {
                   <ServicemanProtectedRoute>
                     <ServicemanByokWorkspace />
                   </ServicemanProtectedRoute>
+                path="/dashboards/provider/storefront"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderStorefrontControl />
+                  </ProviderProtectedRoute>
                 }
               />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />

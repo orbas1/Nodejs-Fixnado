@@ -135,59 +135,660 @@ const mockDashboards = {
         type: 'calendar',
         data: {
           month: 'March 2025',
+          monthValue: '2025-03',
+          timezone: 'Europe/London',
+          summary: [
+            { id: 'total', label: 'Total bookings', value: 22 },
+            { id: 'active', label: 'In progress', value: 8 },
+            { id: 'awaiting', label: 'Awaiting assignment', value: 5 },
+            { id: 'completed', label: 'Completed this month', value: 6 },
+            { id: 'risk', label: 'Needs attention', value: 3 }
+          ],
           legend: [
             { label: 'Confirmed visit', status: 'confirmed' },
-            { label: 'Standby crew', status: 'standby' },
+            { label: 'Pending assignment', status: 'pending' },
             { label: 'Travel / prep', status: 'travel' },
-            { label: 'Escalation risk', status: 'risk' }
+            { label: 'Escalation risk', status: 'risk' },
+            { label: 'Standby crew', status: 'standby' }
           ],
+          filters: {
+            statuses: [
+              { value: 'confirmed', label: 'Confirmed visits' },
+              { value: 'pending', label: 'Awaiting assignment' },
+              { value: 'travel', label: 'In progress & travel' },
+              { value: 'risk', label: 'Escalations & disputes' },
+              { value: 'standby', label: 'Standby / rest day' }
+            ],
+            zones: [
+              { value: 'zone-centre', label: 'City Centre' },
+              { value: 'zone-docklands', label: 'Docklands' },
+              { value: 'zone-residential', label: 'Residential North' }
+            ]
+          },
+          controls: {
+            month: '2025-03',
+            previousMonth: '2025-02',
+            nextMonth: '2025-04',
+            start: '2025-03-01T00:00:00Z',
+            end: '2025-03-31T23:59:59Z'
+          },
           weeks: [
             [
-              { date: '24', isCurrentMonth: false, events: [] },
-              { date: '25', isCurrentMonth: false, events: [] },
-              { date: '26', isCurrentMonth: false, events: [] },
-              { date: '27', isCurrentMonth: false, events: [] },
-              { date: '28', isCurrentMonth: false, events: [] },
-              { date: '1', isCurrentMonth: true, events: [{ title: 'Depot inventory audit', status: 'travel', time: '08:00' }] },
-              { date: '2', isCurrentMonth: true, events: [] }
+              { isoDate: '2025-02-24', date: '24', isCurrentMonth: false, events: [], capacity: '4 slots left' },
+              { isoDate: '2025-02-25', date: '25', isCurrentMonth: false, events: [], capacity: '4 slots left' },
+              { isoDate: '2025-02-26', date: '26', isCurrentMonth: false, events: [], capacity: '4 slots left' },
+              { isoDate: '2025-02-27', date: '27', isCurrentMonth: false, events: [], capacity: '4 slots left' },
+              { isoDate: '2025-02-28', date: '28', isCurrentMonth: false, events: [], capacity: '4 slots left' },
+              {
+                isoDate: '2025-03-01',
+                date: '1',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-001',
+                    title: 'Depot inventory audit',
+                    status: 'travel',
+                    statusRaw: 'in_progress',
+                    time: '08:00 – 10:00',
+                    start: '2025-03-01T08:00:00Z',
+                    end: '2025-03-01T10:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Logistics depot',
+                    crew: 'Ops crew A',
+                    value: '£1,200',
+                    notesCount: 1,
+                    attachments: [
+                      { label: 'Briefing deck', url: 'https://docs.example.com/audit-brief.pdf', type: 'document' }
+                    ]
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-02', date: '2', isCurrentMonth: true, events: [], capacity: '4 slots left' }
             ],
             [
-              { date: '3', isCurrentMonth: true, events: [{ title: 'Retail lighting retrofit', status: 'confirmed', time: '09:30' }] },
-              { date: '4', isCurrentMonth: true, events: [{ title: 'Pool chemical balance', status: 'confirmed', time: '13:00' }] },
-              { date: '5', isCurrentMonth: true, events: [{ title: 'Insurance audit prep', status: 'standby', time: 'All day' }] },
-              { date: '6', isCurrentMonth: true, events: [{ title: 'Escalation: boiler repair', status: 'risk', time: 'SLA 4h' }] },
-              { date: '7', isCurrentMonth: true, events: [] },
-              { date: '8', isCurrentMonth: true, events: [{ title: 'Condo HVAC tune-up', status: 'confirmed', time: '08:45' }] },
-              { date: '9', isCurrentMonth: true, events: [] }
+              {
+                isoDate: '2025-03-03',
+                date: '3',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-002',
+                    title: 'Retail lighting retrofit',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '09:30 – 12:30',
+                    start: '2025-03-03T09:30:00Z',
+                    end: '2025-03-03T12:30:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Market Street Mall',
+                    crew: 'Crew Delta',
+                    value: '£2,400',
+                    notesCount: 2,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-04',
+                date: '4',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-003',
+                    title: 'Pool chemical balance',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '13:00 – 15:00',
+                    start: '2025-03-04T13:00:00Z',
+                    end: '2025-03-04T15:00:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'Waterside apartments',
+                    crew: 'Crew Aqua',
+                    value: '£950',
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-05',
+                date: '5',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-004',
+                    title: 'Insurance audit prep',
+                    status: 'standby',
+                    statusRaw: 'awaiting_assignment',
+                    time: 'All day',
+                    start: '2025-03-05T08:00:00Z',
+                    end: '2025-03-05T17:00:00Z',
+                    zone: 'Residential North',
+                    zoneId: 'zone-residential',
+                    location: 'Harbour Tower',
+                    crew: null,
+                    value: null,
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-06',
+                date: '6',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-005',
+                    title: 'Escalation: boiler repair',
+                    status: 'risk',
+                    statusRaw: 'disputed',
+                    time: 'SLA 4h',
+                    start: '2025-03-06T10:00:00Z',
+                    end: '2025-03-06T14:00:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'Community centre',
+                    crew: 'Escalation pod',
+                    value: '£1,700',
+                    notesCount: 4,
+                    attachments: [
+                      { label: 'Incident photos', url: 'https://cdn.example.com/boiler/photos', type: 'image' }
+                    ]
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-07', date: '7', isCurrentMonth: true, events: [], capacity: '4 slots left' },
+              {
+                isoDate: '2025-03-08',
+                date: '8',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-006',
+                    title: 'Condo HVAC tune-up',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '08:45 – 11:00',
+                    start: '2025-03-08T08:45:00Z',
+                    end: '2025-03-08T11:00:00Z',
+                    zone: 'Residential North',
+                    zoneId: 'zone-residential',
+                    location: 'Maple Residences',
+                    crew: 'Crew Thermo',
+                    value: '£1,050',
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-09', date: '9', isCurrentMonth: true, events: [], capacity: '4 slots left' }
             ],
             [
-              { date: '10', isCurrentMonth: true, events: [{ title: 'Fleet sanitation', status: 'confirmed', time: '07:30' }] },
-              { date: '11', isCurrentMonth: true, events: [{ title: 'Fire safety drill', status: 'standby', time: '15:00' }] },
-              { date: '12', isCurrentMonth: true, events: [{ title: 'Escrow review 4821', status: 'risk', time: 'Finance' }] },
-              { date: '13', isCurrentMonth: true, events: [{ title: 'Access control upgrade', status: 'confirmed', time: '11:00' }] },
-              { date: '14', isCurrentMonth: true, events: [] },
-              { date: '15', isCurrentMonth: true, events: [{ title: 'Depot inventory catch-up', status: 'travel', time: '13:30' }] },
-              { date: '16', isCurrentMonth: true, events: [] }
+              {
+                isoDate: '2025-03-10',
+                date: '10',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-007',
+                    title: 'Fleet sanitation',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '07:30 – 09:30',
+                    start: '2025-03-10T07:30:00Z',
+                    end: '2025-03-10T09:30:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'Service depot',
+                    crew: 'Crew Alpha',
+                    value: '£680',
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-11',
+                date: '11',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-008',
+                    title: 'Fire safety drill',
+                    status: 'standby',
+                    statusRaw: 'awaiting_assignment',
+                    time: '15:00 – 17:00',
+                    start: '2025-03-11T15:00:00Z',
+                    end: '2025-03-11T17:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Innovation Hub',
+                    crew: null,
+                    value: '£540',
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-12',
+                date: '12',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-009',
+                    title: 'Escrow review 4821',
+                    status: 'risk',
+                    statusRaw: 'disputed',
+                    time: 'Finance',
+                    start: '2025-03-12T10:00:00Z',
+                    end: '2025-03-12T12:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Finance HQ',
+                    crew: 'Finance partner',
+                    value: '£1,300',
+                    notesCount: 3,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-13',
+                date: '13',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-010',
+                    title: 'Access control upgrade',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '11:00 – 14:00',
+                    start: '2025-03-13T11:00:00Z',
+                    end: '2025-03-13T14:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Civic centre',
+                    crew: 'Crew Secure',
+                    value: '£2,150',
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-14', date: '14', isCurrentMonth: true, events: [], capacity: '4 slots left' },
+              {
+                isoDate: '2025-03-15',
+                date: '15',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-011',
+                    title: 'Depot inventory catch-up',
+                    status: 'travel',
+                    statusRaw: 'in_progress',
+                    time: '13:30 – 15:00',
+                    start: '2025-03-15T13:30:00Z',
+                    end: '2025-03-15T15:00:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'North depot',
+                    crew: 'Crew Logistics',
+                    value: '£720',
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-16', date: '16', isCurrentMonth: true, events: [], capacity: '4 slots left' }
             ],
             [
-              { date: '17', isCurrentMonth: true, isToday: true, capacity: '2 slots', events: [{ title: 'Escrow release audit', status: 'confirmed', time: '09:00' }] },
-              { date: '18', isCurrentMonth: true, capacity: '1 slot', events: [{ title: 'HVAC seasonal service', status: 'confirmed', time: '09:00' }] },
-              { date: '19', isCurrentMonth: true, capacity: '1 slot', events: [{ title: 'Escrow review board', status: 'risk', time: '14:30' }] },
-              { date: '20', isCurrentMonth: true, capacity: '3 slots', events: [{ title: 'Rooftop access permit', status: 'pending', time: 'All day' }] },
-              { date: '21', isCurrentMonth: true, events: [{ title: 'Community centre deep clean', status: 'confirmed', time: '07:30' }] },
-              { date: '22', isCurrentMonth: true, events: [{ title: 'Crew rest day', status: 'standby', time: 'All day' }] },
-              { date: '23', isCurrentMonth: true, events: [] }
+              {
+                isoDate: '2025-03-17',
+                date: '17',
+                isCurrentMonth: true,
+                isToday: true,
+                events: [
+                  {
+                    id: 'mock-visit-012',
+                    title: 'Escrow release audit',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '09:00 – 11:00',
+                    start: '2025-03-17T09:00:00Z',
+                    end: '2025-03-17T11:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Finance HQ',
+                    crew: 'Finance squad',
+                    value: '£1,100',
+                    notesCount: 3,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-18',
+                date: '18',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-013',
+                    title: 'HVAC seasonal service',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '09:00 – 13:00',
+                    start: '2025-03-18T09:00:00Z',
+                    end: '2025-03-18T13:00:00Z',
+                    zone: 'Residential North',
+                    zoneId: 'zone-residential',
+                    location: 'Community centre',
+                    crew: 'Crew Thermo',
+                    value: '£1,650',
+                    notesCount: 2,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-19',
+                date: '19',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-014',
+                    title: 'Escrow review board',
+                    status: 'risk',
+                    statusRaw: 'disputed',
+                    time: '14:30 – 16:00',
+                    start: '2025-03-19T14:30:00Z',
+                    end: '2025-03-19T16:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Board room 4',
+                    crew: 'Finance partner',
+                    value: '£1,800',
+                    notesCount: 4,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-20',
+                date: '20',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-015',
+                    title: 'Rooftop access permit',
+                    status: 'pending',
+                    statusRaw: 'pending',
+                    time: 'All day',
+                    start: '2025-03-20T08:00:00Z',
+                    end: '2025-03-20T17:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Skyline tower',
+                    crew: null,
+                    value: null,
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-21',
+                date: '21',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-016',
+                    title: 'Community centre deep clean',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '07:30 – 12:00',
+                    start: '2025-03-21T07:30:00Z',
+                    end: '2025-03-21T12:00:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'Riverside hub',
+                    crew: 'Crew Clean',
+                    value: '£1,400',
+                    notesCount: 2,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-22',
+                date: '22',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-017',
+                    title: 'Crew rest day',
+                    status: 'standby',
+                    statusRaw: 'awaiting_assignment',
+                    time: 'All day',
+                    start: '2025-03-22T00:00:00Z',
+                    end: '2025-03-22T23:59:59Z',
+                    zone: 'Residential North',
+                    zoneId: 'zone-residential',
+                    location: 'Portfolio wide',
+                    crew: 'All crews',
+                    value: null,
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-23', date: '23', isCurrentMonth: true, events: [], capacity: '4 slots left' }
             ],
             [
-              { date: '24', isCurrentMonth: true, events: [{ title: 'Smart thermostat rollout', status: 'confirmed', time: '10:15' }] },
-              { date: '25', isCurrentMonth: true, events: [{ title: 'Tenant onboarding', status: 'standby', time: '16:00' }] },
-              { date: '26', isCurrentMonth: true, events: [{ title: 'Post-work inspection', status: 'confirmed', time: '08:30' }] },
-              { date: '27', isCurrentMonth: true, events: [] },
-              { date: '28', isCurrentMonth: true, events: [{ title: 'Dispute follow-up 1142', status: 'risk', time: '15:00' }] },
-              { date: '29', isCurrentMonth: true, events: [] },
-              { date: '30', isCurrentMonth: true, events: [{ title: 'Weekend concierge sweep', status: 'standby', time: 'All day' }] }
+              {
+                isoDate: '2025-03-24',
+                date: '24',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-018',
+                    title: 'Smart thermostat rollout',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '10:15 – 13:45',
+                    start: '2025-03-24T10:15:00Z',
+                    end: '2025-03-24T13:45:00Z',
+                    zone: 'Residential North',
+                    zoneId: 'zone-residential',
+                    location: 'Highline towers',
+                    crew: 'Crew Thermo',
+                    value: '£2,900',
+                    notesCount: 5,
+                    attachments: [
+                      { label: 'Rollout checklist', url: 'https://docs.example.com/rollout', type: 'document' }
+                    ]
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-25',
+                date: '25',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-019',
+                    title: 'Tenant onboarding',
+                    status: 'standby',
+                    statusRaw: 'awaiting_assignment',
+                    time: '16:00 – 18:00',
+                    start: '2025-03-25T16:00:00Z',
+                    end: '2025-03-25T18:00:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Innovation Hub',
+                    crew: 'Concierge team',
+                    value: '£480',
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              {
+                isoDate: '2025-03-26',
+                date: '26',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-020',
+                    title: 'Post-work inspection',
+                    status: 'confirmed',
+                    statusRaw: 'scheduled',
+                    time: '08:30 – 09:30',
+                    start: '2025-03-26T08:30:00Z',
+                    end: '2025-03-26T09:30:00Z',
+                    zone: 'Docklands',
+                    zoneId: 'zone-docklands',
+                    location: 'Harbour Tower',
+                    crew: 'QA Team',
+                    value: '£660',
+                    notesCount: 1,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-27', date: '27', isCurrentMonth: true, events: [], capacity: '4 slots left' },
+              {
+                isoDate: '2025-03-28',
+                date: '28',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-021',
+                    title: 'Dispute follow-up 1142',
+                    status: 'risk',
+                    statusRaw: 'disputed',
+                    time: '15:00 – 16:30',
+                    start: '2025-03-28T15:00:00Z',
+                    end: '2025-03-28T16:30:00Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Tenant conference room',
+                    crew: 'Escalation pod',
+                    value: '£1,050',
+                    notesCount: 2,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              },
+              { isoDate: '2025-03-29', date: '29', isCurrentMonth: true, events: [], capacity: '4 slots left' },
+              {
+                isoDate: '2025-03-30',
+                date: '30',
+                isCurrentMonth: true,
+                events: [
+                  {
+                    id: 'mock-visit-022',
+                    title: 'Weekend concierge sweep',
+                    status: 'standby',
+                    statusRaw: 'awaiting_assignment',
+                    time: 'All day',
+                    start: '2025-03-30T00:00:00Z',
+                    end: '2025-03-30T23:59:59Z',
+                    zone: 'City Centre',
+                    zoneId: 'zone-centre',
+                    location: 'Portfolio wide',
+                    crew: 'Concierge team',
+                    value: null,
+                    notesCount: 0,
+                    attachments: []
+                  }
+                ],
+                capacity: '3 slots left'
+              }
             ]
-          ]
+          ],
+          backlog: [
+            {
+              id: 'mock-backlog-001',
+              title: 'Emergency lift reset',
+              status: 'pending',
+              type: 'on_demand',
+              statusLabel: 'Awaiting assignment',
+              requestedAt: '2025-03-05T18:45:00Z',
+              zone: 'City Centre',
+              zoneId: 'zone-centre',
+              value: '£1,250',
+              demandLevel: 'High urgency',
+              notesCount: 2,
+              attachments: [
+                { label: 'Incident ticket', url: 'https://status.example.com/incidents/712', type: 'link' }
+              ]
+            },
+            {
+              id: 'mock-backlog-002',
+              title: 'Roof leak mitigation',
+              status: 'awaiting_assignment',
+              type: 'on_demand',
+              statusLabel: 'Crew review',
+              requestedAt: '2025-03-08T09:20:00Z',
+              zone: 'Docklands',
+              zoneId: 'zone-docklands',
+              value: '£2,400',
+              demandLevel: 'Medium',
+              notesCount: 1,
+              attachments: []
+            },
+            {
+              id: 'mock-backlog-003',
+              title: 'Tenant onboarding bundle',
+              status: 'pending',
+              type: 'on_demand',
+              statusLabel: 'Awaiting assignment',
+              requestedAt: '2025-03-11T14:10:00Z',
+              zone: 'Residential North',
+              zoneId: 'zone-residential',
+              value: '£980',
+              demandLevel: 'Standard',
+              notesCount: 0,
+              attachments: []
+            }
+          ],
+          permissions: {
+            canCreate: true,
+            canEdit: true,
+            canManageNotes: true,
+            canManageCrew: true
+          },
+          context: {
+            customerId: 'USR-2488',
+            companyId: 'COMP-482',
+            timezone: 'Europe/London'
+          }
         }
       },
       {
@@ -1180,6 +1781,24 @@ const mockDashboards = {
             label: 'Crew Ads Insights',
             features: ['campaigns', 'guardrails']
           }
+        },
+        communications: {
+          tenantId: 'fixnado-demo',
+          participant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
         }
       },
     navigation: [
@@ -1250,6 +1869,51 @@ const mockDashboards = {
             'Schedule calibration kit swap before Friday to avoid delays.',
             'Average CSAT improved 0.2 points after new completion checklist.',
             'Confirm spare PPE stock before next hospital rotation.'
+          ]
+        }
+      },
+      {
+        id: 'escrows',
+        icon: 'finance',
+        label: 'Escrow Management',
+        description: 'Release readiness, notes, and work logs aligned with finance.',
+        type: 'serviceman-escrows',
+        data: {
+          summary: {
+            totalAmountFormatted: '£48.2k',
+            readyForRelease: 3,
+            onHold: 2,
+            active: 5
+          },
+          upcoming: [
+            {
+              id: 'ESC-4821',
+              title: 'Hospital sterilisation',
+              autoReleaseAt: '2025-03-18T16:00:00Z',
+              amountFormatted: '£8,200',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4794',
+              title: 'University access control',
+              autoReleaseAt: '2025-03-19T18:30:00Z',
+              amountFormatted: '£6,450',
+              status: 'pending'
+            },
+            {
+              id: 'ESC-4760',
+              title: 'Retail lighting retrofit',
+              autoReleaseAt: '2025-03-20T15:00:00Z',
+              amountFormatted: '£4,980',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4712',
+              title: 'Emergency HVAC follow-up',
+              autoReleaseAt: '2025-03-22T09:30:00Z',
+              amountFormatted: '£3,300',
+              status: 'pending'
+            }
           ]
         }
       },
@@ -1405,6 +2069,52 @@ const mockDashboards = {
         }
       },
       {
+        id: 'booking-management',
+        icon: 'pipeline',
+        label: 'Booking Management',
+        description: 'Manage jobs, notes, and crew preferences without leaving the cockpit.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: 'SRV-2210',
+            timezone: 'Europe/London',
+            summary: {
+              totalAssignments: 28,
+              scheduledAssignments: 7,
+              activeAssignments: 5,
+              awaitingResponse: 3,
+              completedThisMonth: 21,
+              slaAtRisk: 1,
+              revenueEarned: 18450,
+              averageTravelMinutes: 26
+            }
+        id: 'inbox',
+        icon: 'support',
+        label: 'Crew Inbox',
+        description: 'Coordinate live chat, quick replies, and escalation guardrails.',
+        type: 'serviceman-inbox',
+        data: {
+          defaultParticipantId: 'PART-2210',
+          currentParticipant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          tenantId: 'fixnado-demo',
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
+        }
+      },
+      {
         id: 'toolkit',
         icon: 'assets',
         label: 'Asset Kit',
@@ -1445,6 +2155,120 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: {
+            general: {
+              heroTitle: 'Metro North rapid response crew',
+              heroSubtitle: 'Trusted specialists on every critical dispatch',
+              heroTagline: 'Average arrival under 90 minutes across Metro North.',
+              callToActionLabel: 'Book this crew',
+              callToActionUrl: 'https://app.fixnado.com/bookings',
+              heroImageUrl: 'https://cdn.fixnado.com/images/crews/metro-north-hero.jpg',
+              aboutContent:
+                'Jordan Miles leads a Fixnado certified crew covering high-priority facilities, event resets, and compliance call-outs.'
+            },
+            branding: {
+              primaryColor: '#1D4ED8',
+              accentColor: '#0EA5E9',
+              theme: 'dark',
+              layout: 'spotlight',
+              logoUrl: 'https://cdn.fixnado.com/images/logos/metro-north.svg',
+              galleryMedia: [
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-1.jpg',
+                  altText: 'Crew installing HVAC units'
+                },
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-2.jpg',
+                  altText: 'Technician completing compliance checklist'
+                }
+              ]
+            },
+            contact: {
+              contactEmail: 'crew@fixnado.com',
+              contactPhone: '+44 20 1234 5678',
+              emergencyPhone: '+44 20 7654 3210',
+              bookingUrl: 'https://app.fixnado.com/bookings',
+              serviceAreas: ['Metro North', 'Central Loop'],
+              serviceTags: ['HVAC', 'sanitation', 'rapid response'],
+              contactHours: [
+                { label: 'Weekdays', value: '06:00 - 20:00' },
+                { label: 'Weekends', value: '08:00 - 18:00' }
+              ],
+              languages: ['English'],
+              socialLinks: {
+                facebook: '',
+                instagram: '',
+                linkedin: 'https://www.linkedin.com/company/fixnado',
+                youtube: '',
+                twitter: ''
+              }
+            },
+            operations: {
+              allowOnlineBooking: true,
+              enableEnquiryForm: true,
+              showTravelRadius: true,
+              travelRadiusKm: 25,
+              averageResponseMinutes: 90,
+              emergencySupport: true
+            },
+            content: {
+              highlights: ['Fixnado certified', 'Rapid arrival guarantee', 'Concierge messaging'],
+              testimonials: [
+                {
+                  name: 'Avery Harper',
+                  role: 'Facilities Director',
+                  quote: 'Jordan’s crew is on site faster than any vendor we have used.'
+                }
+              ],
+              featuredProjects: [
+                {
+                  title: 'Hospital isolation reset',
+                  summary: 'Completed sanitisation and filter replacements within 12 hours.',
+                  imageUrl: 'https://cdn.fixnado.com/images/projects/hospital-reset.jpg',
+                  link: 'https://app.fixnado.com/cases/hospital-reset'
+                }
+              ]
+            },
+            seo: {
+              seoTitle: 'Jordan Miles Crew | Fixnado Metro North Technicians',
+              seoDescription:
+                'Book the Metro North crew for rapid FM, HVAC, and sanitation assignments with audited travel buffers.',
+              seoKeywords: ['fixnado crew', 'metro north technicians'],
+              seoIndexable: true,
+              seoMetaImageUrl: 'https://cdn.fixnado.com/images/social/metro-north-og.jpg'
+            },
+            access: {
+              allowedRoles: ['serviceman', 'provider'],
+              publishedAt: new Date().toISOString()
+            }
+          },
+          meta: {
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'SRV-2210',
+            allowedRoles: ['serviceman', 'provider']
+          }
+        }
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile Settings',
+        description: 'Keep your crew profile, emergency contacts, and gear assignments current.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'Updates sync instantly with provider leadership dashboards and dispatch automations.'
+        }
+        id: 'serviceman-disputes',
+        icon: 'compliance',
+        label: 'Dispute Management',
+        description: 'Manage crew dispute cases, action items, and evidence.',
+        type: 'component'
       }
     ]
   },
@@ -1713,6 +2537,17 @@ const mockDashboards = {
             ['AGR-5389', 'Water-fed poles', 'Ready for pickup', 'Crew Delta', 'Collection scheduled'],
             ['AGR-5371', 'Fogging units', 'Awaiting sanitisation', 'Crew Beta', 'Prep 20 Mar']
           ]
+        }
+      },
+      {
+        id: 'escrow-management',
+        icon: 'finance',
+        label: 'Escrow management',
+        description: 'Escrow funding status, approvals, and release readiness.',
+        type: 'component',
+        meta: {
+          api: 'provider-escrows',
+          providerId: 'PRV-1108'
         }
       },
       {
