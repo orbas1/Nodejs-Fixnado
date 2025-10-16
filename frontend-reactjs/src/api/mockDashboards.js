@@ -34,7 +34,8 @@ const mockDashboards = {
           level: 'view',
           label: 'Unavailable',
           features: []
-        }
+        },
+        accountSettings: true
       }
     },
     navigation: [

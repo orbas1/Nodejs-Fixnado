@@ -7,3 +7,4 @@ export { default as Skeleton } from './Skeleton.jsx';
 export { default as Spinner } from './Spinner.jsx';
 export { default as StatusPill } from './StatusPill.jsx';
 export { default as TextInput } from './TextInput.jsx';
+export { default as Select } from './Select.jsx';

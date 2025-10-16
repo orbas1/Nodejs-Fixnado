@@ -129,7 +129,26 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
-        isEmail: true
+        isEmail(value) {
+          if (typeof value !== 'string') {
+            throw new Error('Validation isEmail on email failed');
+          }
+
+          let candidate = value;
+          try {
+            const decrypted = decryptString(value, 'user:email');
+            if (decrypted) {
+              candidate = decrypted;
+            }
+          } catch (error) {
+            // If decryption fails we fall back to the raw value which will fail validation below.
+          }
+
+          const normalised = normaliseEmail(candidate);
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalised)) {
+            throw new Error('Validation isEmail on email failed');
+          }
+        }
       },
       set(value) {
         if (typeof value !== 'string') {
@@ -179,6 +198,30 @@ User.init(
         return stored ? decryptString(stored, 'user:address') : null;
       }
     },
+    phoneNumber: {
+      type: DataTypes.TEXT,
+      field: 'phone_number_encrypted',
+      allowNull: true,
+      set(value) {
+        if (value === null || value === undefined || value === '') {
+          this.setDataValue('phoneNumber', null);
+          return;
+        }
+        if (typeof value !== 'string') {
+          throw new TypeError('phoneNumber must be a string when provided');
+        }
+        const trimmed = value.trim();
+        if (!trimmed) {
+          this.setDataValue('phoneNumber', null);
+          return;
+        }
+        this.setDataValue('phoneNumber', encryptString(trimmed, 'user:phoneNumber'));
+      },
+      get() {
+        const stored = this.getDataValue('phoneNumber');
+        return stored ? decryptString(stored, 'user:phoneNumber') : null;
+      }
+    },
     age: DataTypes.INTEGER,
     type: {
       type: DataTypes.ENUM(
@@ -201,6 +244,14 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'two_factor_app'
+    },
+    profileImageUrl: {
+      type: DataTypes.STRING(2048),
+      allowNull: true,
+      field: 'profile_image_url',
+      validate: {
+        isUrl: true
+      }
     },
     regionId: {
       type: DataTypes.UUID,
