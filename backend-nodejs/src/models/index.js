@@ -142,6 +142,11 @@ import AppearanceVariant from './appearanceVariant.js';
 import Supplier from './supplier.js';
 import PurchaseOrder from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
+import ServicemanIdentity from './servicemanIdentity.js';
+import ServicemanIdentityDocument from './servicemanIdentityDocument.js';
+import ServicemanIdentityCheck from './servicemanIdentityCheck.js';
+import ServicemanIdentityWatcher from './servicemanIdentityWatcher.js';
+import ServicemanIdentityEvent from './servicemanIdentityEvent.js';
 import PurchaseAttachment from './purchaseAttachment.js';
 import PurchaseBudget from './purchaseBudget.js';
 import ServicemanFinancialProfile from './servicemanFinancialProfile.js';
@@ -196,6 +201,23 @@ ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasOne(ServicemanIdentity, { foreignKey: 'servicemanId', as: 'identityProfile' });
+ServicemanIdentity.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+ServicemanIdentity.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityDocument, { foreignKey: 'identityId', as: 'documents' });
+ServicemanIdentityDocument.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityCheck, { foreignKey: 'identityId', as: 'checks' });
+ServicemanIdentityCheck.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityWatcher, { foreignKey: 'identityId', as: 'watchers' });
+ServicemanIdentityWatcher.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityEvent, { foreignKey: 'identityId', as: 'events' });
+ServicemanIdentityEvent.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+ServicemanIdentityEvent.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+User.hasMany(ServicemanIdentityEvent, { foreignKey: 'actorId', as: 'identityEvents' });
 User.hasOne(ServicemanBookingSetting, { foreignKey: 'servicemanId', as: 'servicemanBookingSetting' });
 ServicemanBookingSetting.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
 
@@ -1140,6 +1162,11 @@ export {
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
+  ServicemanIdentity,
+  ServicemanIdentityDocument,
+  ServicemanIdentityCheck,
+  ServicemanIdentityWatcher,
+  ServicemanIdentityEvent,
   PurchaseAttachment,
   PurchaseBudget,
   ServicemanFinancialProfile,

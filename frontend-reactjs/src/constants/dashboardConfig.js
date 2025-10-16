@@ -127,6 +127,8 @@ export const DASHBOARD_ROLES = [
       { id: 'wallet', label: 'Wallet & Earnings', icon: 'finance' },
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' }
       { id: 'financial-management', label: 'Financial management', icon: 'finance' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },

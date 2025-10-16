@@ -39,6 +39,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getServicemanIdentitySnapshot } from './servicemanIdentityService.js';
 import { getServicemanMetricsBundle } from './servicemanMetricsService.js';
 import { getServicemanFinanceWorkspace } from './servicemanFinanceService.js';
 import { getServicemanWebsitePreferences } from './servicemanWebsitePreferencesService.js';
@@ -351,6 +352,21 @@ async function resolveUserId({ userId }) {
 
   const fallback = await User.findOne({
     where: { type: 'user' },
+    attributes: ['id'],
+    order: [['createdAt', 'ASC']]
+  });
+
+  return fallback?.id ?? null;
+}
+
+async function resolveServicemanId({ servicemanId }) {
+  const coerced = normaliseUuid(servicemanId);
+  if (coerced) {
+    return coerced;
+  }
+
+  const fallback = await User.findOne({
+    where: { type: 'servicemen' },
     attributes: ['id'],
     order: [['createdAt', 'ASC']]
   });
@@ -3045,10 +3061,13 @@ async function loadProviderData(context) {
 }
 
 async function loadServicemanData(context) {
-  const { providerId, window } = context;
+  const { providerId, servicemanId, window } = context;
+
+  const identityOwnerId = servicemanId ?? providerId;
 
   const providerFilter = providerId ? { providerId } : {};
 
+  const [assignments, previousAssignments, bids, services, identitySnapshot] = await Promise.all([
   const [assignments, previousAssignments, bids, services, metricsBundle] = await Promise.all([
   const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
   const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
@@ -3079,6 +3098,7 @@ async function loadServicemanData(context) {
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
     }),
+    identityOwnerId ? getServicemanIdentitySnapshot(identityOwnerId) : Promise.resolve(null)
     getServicemanMetricsBundle({ includeInactiveCards: true })
     providerId
       ? getServicemanFinanceWorkspace({ servicemanId: providerId, limit: 6 }).catch((error) => {
@@ -3589,6 +3609,15 @@ async function loadServicemanData(context) {
         autoMatched: autoMatchedCount,
         adsSourced: adsSourcedCount
       },
+      identity: identitySnapshot
+        ? {
+            status: identitySnapshot.verification?.status ?? 'pending',
+            riskRating: identitySnapshot.verification?.riskRating ?? 'medium',
+            verificationLevel: identitySnapshot.verification?.verificationLevel ?? 'standard',
+            reviewer: identitySnapshot.verification?.reviewer ?? null,
+            expiresAt: identitySnapshot.verification?.expiresAt ?? null
+          }
+        : null,
       features: {
         ads: buildAdsFeatureMetadata('serviceman')
       },
@@ -3680,6 +3709,17 @@ async function loadServicemanData(context) {
         type: 'grid',
         data: { cards: serviceCards }
       },
+      ...(identitySnapshot
+        ? [
+            {
+              id: 'id-verification',
+              label: 'ID Verification',
+              description: 'Identity records, document governance, and reviewer notes.',
+              type: 'serviceman-identity',
+              data: identitySnapshot
+            }
+          ]
+        : []),
       {
         id: 'automation',
         label: 'Automation & Growth',
@@ -3879,12 +3919,16 @@ async function resolveContext(persona, query, window) {
         providerId: normaliseUuid(query.providerId ?? defaults.providerId),
         companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
       };
-    case 'serviceman':
+    case 'serviceman': {
+      const fallbackId = query.servicemanId ?? query.providerId ?? defaults.servicemanId ?? defaults.providerId;
+      const resolvedServicemanId = await resolveServicemanId({ servicemanId: fallbackId });
       return {
         persona,
         window,
-        providerId: normaliseUuid(query.providerId ?? defaults.providerId)
+        providerId: resolvedServicemanId,
+        servicemanId: resolvedServicemanId
       };
+    }
     case 'enterprise':
       return {
         persona,
