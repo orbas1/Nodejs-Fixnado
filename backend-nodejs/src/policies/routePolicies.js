@@ -169,6 +169,41 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.users.read': {
+    id: 'admin.users.read',
+    version: '1.0.0',
+    resource: 'admin.users',
+    action: 'admin.users:read',
+    description: 'Allow platform administrators to audit and search user accounts and roles.',
+    requirements: [Permissions.ADMIN_USER_READ],
+    tags: ['admin', 'users'],
+    severity: 'high',
+    metadata: (req) => ({
+      roleFilter: req.query?.role ?? null,
+      statusFilter: req.query?.status ?? null
+    })
+  },
+  'admin.users.write': {
+    id: 'admin.users.write',
+    version: '1.0.0',
+    resource: 'admin.users',
+    action: 'admin.users:write',
+    description: 'Allow platform administrators to update user roles, status, and security controls.',
+    requirements: [Permissions.ADMIN_USER_WRITE],
+    tags: ['admin', 'users'],
+    severity: 'critical',
+    metadata: (req) => ({ userId: req.params?.id ?? null })
+  },
+  'admin.users.invite': {
+    id: 'admin.users.invite',
+    version: '1.0.0',
+    resource: 'admin.users',
+    action: 'admin.users:invite',
+    description: 'Allow platform administrators to create or invite new platform users.',
+    requirements: [Permissions.ADMIN_USER_INVITE],
+    tags: ['admin', 'users'],
+    severity: 'critical'
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',
