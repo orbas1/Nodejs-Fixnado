@@ -185,3 +185,93 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Provider crew deployment, availability, and delegation tables
+-- These power the provider control centre crew management workspace.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "ProviderCrewMember" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  role TEXT,
+  email TEXT,
+  phone TEXT,
+  avatar_url TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'standby', 'leave', 'inactive')),
+  employment_type TEXT NOT NULL DEFAULT 'employee' CHECK (employment_type IN ('employee', 'contractor', 'partner')),
+  timezone TEXT,
+  default_shift_start TIME,
+  default_shift_end TIME,
+  skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+  notes TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "ProviderCrewAvailability" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID NOT NULL REFERENCES "ProviderCrewMember"(id) ON DELETE CASCADE,
+  day_of_week TEXT NOT NULL CHECK (day_of_week IN ('monday','tuesday','wednesday','thursday','friday','saturday','sunday')),
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available','on_call','unavailable','standby')),
+  location TEXT,
+  effective_from TIMESTAMPTZ,
+  effective_to TIMESTAMPTZ,
+  notes TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "ProviderCrewDeployment" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID NOT NULL REFERENCES "ProviderCrewMember"(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  assignment_type TEXT NOT NULL DEFAULT 'booking' CHECK (assignment_type IN ('booking','project','standby','maintenance','training','support')),
+  reference_id TEXT,
+  start_at TIMESTAMPTZ NOT NULL,
+  end_at TIMESTAMPTZ,
+  location TEXT,
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled','in_progress','completed','cancelled','on_hold')),
+  notes TEXT,
+  created_by UUID,
+  updated_by UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "ProviderCrewDelegation" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID REFERENCES "ProviderCrewMember"(id) ON DELETE SET NULL,
+  delegate_name TEXT NOT NULL,
+  delegate_email TEXT,
+  delegate_phone TEXT,
+  role TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','scheduled','expired','revoked')),
+  scope JSONB NOT NULL DEFAULT '[]'::jsonb,
+  start_at TIMESTAMPTZ,
+  end_at TIMESTAMPTZ,
+  notes TEXT,
+  created_by UUID,
+  updated_by UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS provider_crew_member_company_status_idx
+  ON "ProviderCrewMember" (company_id, status, employment_type);
+CREATE INDEX IF NOT EXISTS provider_crew_availability_day_idx
+  ON "ProviderCrewAvailability" (company_id, crew_member_id, day_of_week);
+CREATE INDEX IF NOT EXISTS provider_crew_deployment_schedule_idx
+  ON "ProviderCrewDeployment" (company_id, crew_member_id, start_at);
+CREATE INDEX IF NOT EXISTS provider_crew_delegation_status_idx
+  ON "ProviderCrewDelegation" (company_id, status);

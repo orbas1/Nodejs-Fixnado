@@ -91,7 +91,10 @@ export const RBAC_MATRIX = {
       Permissions.AFFILIATE_REFERRALS,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
-      Permissions.REPORTING_DOWNLOAD
+      Permissions.REPORTING_DOWNLOAD,
+      Permissions.PROVIDER_CREW_VIEW,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
     ],
     navigation: {
       landing: '/app/provider/dashboard',
@@ -156,7 +159,9 @@ export const RBAC_MATRIX = {
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
       Permissions.PROVIDER_ONBOARD,
-      Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
     ],
     navigation: {
       landing: '/app/provider/admin',

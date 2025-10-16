@@ -15,6 +15,22 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null,
       surface: req.route?.path || null
   'account.settings.manage': {
+  'provider.control.crew': {
+    id: 'provider.control.crew',
+    version: '1.0.0',
+    resource: 'provider.control',
+    action: 'provider.control:crew',
+    description:
+      'Allow provider and operations personas to manage crew deployment, availability, delegations, and rota configurations.',
+    requirements: [Permissions.PROVIDER_CREW_MANAGE],
+    tags: ['provider', 'operations', 'crew'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      companyId: req.query?.companyId || req.body?.companyId || null
+    })
+  },
+  'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
     resource: 'account.settings',
