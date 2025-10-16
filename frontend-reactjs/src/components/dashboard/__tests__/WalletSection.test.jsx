@@ -20,7 +20,9 @@ vi.mock('../../../api/walletClient.js', () => ({
   createWalletTransaction: vi.fn(),
   getWalletPaymentMethods: vi.fn(),
   createWalletPaymentMethod: vi.fn(),
-  updateWalletPaymentMethod: vi.fn()
+  updateWalletPaymentMethod: vi.fn(),
+  deleteWalletPaymentMethod: vi.fn(),
+  exportWalletTransactions: vi.fn()
 }));
 
 describe('WalletSection', () => {
