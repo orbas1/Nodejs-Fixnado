@@ -42,6 +42,10 @@ import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
 import PlatformSetting from './platformSetting.js';
+import CommunicationsInboxConfiguration from './communicationsInboxConfiguration.js';
+import CommunicationsEntryPoint from './communicationsEntryPoint.js';
+import CommunicationsQuickReply from './communicationsQuickReply.js';
+import CommunicationsEscalationRule from './communicationsEscalationRule.js';
 import BlogPost from './blogPost.js';
 import BlogCategory from './blogCategory.js';
 import BlogTag from './blogTag.js';
@@ -329,6 +333,33 @@ MessageHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
 
+CommunicationsInboxConfiguration.hasMany(CommunicationsEntryPoint, {
+  foreignKey: 'configurationId',
+  as: 'entryPoints'
+});
+CommunicationsEntryPoint.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
+CommunicationsInboxConfiguration.hasMany(CommunicationsQuickReply, {
+  foreignKey: 'configurationId',
+  as: 'quickReplies'
+});
+CommunicationsQuickReply.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
+CommunicationsInboxConfiguration.hasMany(CommunicationsEscalationRule, {
+  foreignKey: 'configurationId',
+  as: 'escalationRules'
+});
+CommunicationsEscalationRule.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
 User.hasMany(UserSession, { foreignKey: 'userId', as: 'sessions' });
 UserSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -515,6 +546,10 @@ export {
   ConversationParticipant,
   ConversationMessage,
   MessageDelivery,
+  CommunicationsInboxConfiguration,
+  CommunicationsEntryPoint,
+  CommunicationsQuickReply,
+  CommunicationsEscalationRule,
   PlatformSetting,
   BlogPost,
   BlogCategory,

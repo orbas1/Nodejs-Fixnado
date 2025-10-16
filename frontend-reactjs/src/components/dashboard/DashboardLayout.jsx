@@ -492,6 +492,9 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const isActive = !item.href && item.id === activeSection?.id;
+                    const Icon = getNavIcon(item);
+                    const sharedClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                     const isSection = !item.route && !item.href;
                     const isActive = isSection && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
@@ -500,11 +503,16 @@ const DashboardLayout = ({
                         ? 'border-accent bg-accent text-white shadow-glow'
                         : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                     }`;
+                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
                     const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
                       isActive
                         ? 'bg-white/20 text-white'
                         : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
                     }`;
+
+                    const content = (
+                      <>
+                        <span className={iconClasses}>
                     const content = (
                       <>
                         <span className={iconWrapperClass}>
@@ -519,6 +527,12 @@ const DashboardLayout = ({
                       </>
                     );
 
+                    if (item.href) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className={sharedClasses}
                     if (item.route) {
                       return (
                         <Link
@@ -550,6 +564,7 @@ const DashboardLayout = ({
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedSection(item.id)}
+                        className={sharedClasses}
                         className={navItemClass}
                         aria-pressed={isActive}
                       >
@@ -608,6 +623,9 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const isActive = !item.href && item.id === activeSection?.id;
+            const Icon = getNavIcon(item);
+            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
             const isSection = !item.route && !item.href;
             const isActive = isSection && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
@@ -616,11 +634,16 @@ const DashboardLayout = ({
                 ? 'border-accent bg-accent text-white shadow-glow'
                 : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
             } ${navCollapsed ? 'justify-center px-2' : ''}`;
+            const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
             const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
               isActive
                 ? 'bg-white/20 text-white'
                 : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
             }`;
+
+            const content = (
+              <>
+                <span className={iconClasses}>
             const content = (
               <>
                 <span className={iconWrapperClass}>
@@ -637,6 +660,14 @@ const DashboardLayout = ({
               </>
             );
 
+            if (item.href) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={baseClasses}
+                  title={navCollapsed ? item.label : undefined}
+                >
             if (item.route) {
               return (
                 <Link key={item.id} to={item.route} className={baseClass} title={navCollapsed ? item.label : undefined}>
@@ -658,6 +689,7 @@ const DashboardLayout = ({
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedSection(item.id)}
+                className={baseClasses}
                 className={baseClass}
                 title={navCollapsed ? item.label : undefined}
                 aria-pressed={isActive}

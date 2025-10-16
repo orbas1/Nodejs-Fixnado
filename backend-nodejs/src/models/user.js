@@ -1,4 +1,5 @@
 import { DataTypes, Model, Op } from 'sequelize';
+import isEmail from 'validator/lib/isEmail.js';
 import validator from 'validator';
 import sequelize from '../config/database.js';
 import {
@@ -158,6 +159,12 @@ User.init(
           throw new TypeError('email must be a string');
         }
         const trimmed = value.trim();
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+        if (!isEmail(trimmed, { allow_utf8_local_part: false })) {
+          throw new Error('email must be a valid address');
+        }
         if (!EMAIL_PATTERN.test(trimmed)) {
           throw new Error('email must be a valid email address');
         }
