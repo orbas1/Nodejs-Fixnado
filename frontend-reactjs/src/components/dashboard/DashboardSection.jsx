@@ -24,6 +24,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import ServicemanFinanceWorkspace from '../../modules/servicemanFinance/ServicemanFinanceWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1796,6 +1797,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       );
     case 'service-management':
       return <ServiceManagementSection section={section} />;
+    case 'serviceman-finance':
+      return <ServicemanFinanceWorkspace initialData={section.data ?? {}} />;
     case 'audit-timeline':
       return <AuditTimelineSection section={section} />;
     case 'compliance-controls':

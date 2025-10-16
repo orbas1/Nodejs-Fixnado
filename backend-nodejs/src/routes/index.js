@@ -38,6 +38,7 @@ import walletRoutes from './walletRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
+import servicemanFinanceRoutes from './servicemanFinanceRoutes.js';
 
 const v1Router = Router();
 
@@ -80,6 +81,7 @@ v1Router.use('/wallet', walletRoutes);
 v1Router.use('/service-orders', serviceOrderRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
 v1Router.use('/account', accountRoutes);
+v1Router.use('/servicemen/finance', servicemanFinanceRoutes);
 
 const router = Router();
 

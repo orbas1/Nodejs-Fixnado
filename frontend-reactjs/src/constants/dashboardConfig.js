@@ -103,6 +103,7 @@ export const DASHBOARD_ROLES = [
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
+      { id: 'financial-management', label: 'Financial management', icon: 'finance' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
     ]
   },

@@ -1421,6 +1421,228 @@ const mockDashboards = {
         }
       },
       {
+        id: 'financial-management',
+        icon: 'finance',
+        label: 'Financial management',
+        description: 'Monitor payouts, reimbursements, and allowances in one place.',
+        type: 'serviceman-finance',
+        data: {
+          context: {
+            servicemanId: 'SRV-2210',
+            serviceman: {
+              id: 'SRV-2210',
+              name: 'Jordan Miles',
+              role: 'Lead technician',
+              region: 'Metro North'
+            }
+          },
+          profile: {
+            currency: 'GBP',
+            baseHourlyRate: 28,
+            overtimeRate: 36,
+            calloutFee: 65,
+            mileageRate: 0.45,
+            payoutMethod: 'wallet',
+            payoutSchedule: 'weekly',
+            taxRate: 22,
+            taxIdentifier: 'UTR-210394',
+            payoutInstructions:
+              'Release weekly payouts every Friday by 17:00. Apply hazard premium when assignments include hospital sterilisation.',
+            bankAccount: {
+              accountName: 'Jordan Miles',
+              accountNumber: '****1122',
+              sortCode: '04-00-15',
+              iban: null,
+              bic: null
+            },
+            updatedAt: '2025-03-18T09:30:00.000Z'
+          },
+          summary: {
+            earnings: { total: 4200, outstanding: 860, payable: 1250, paid: 2090 },
+            expenses: { total: 740, awaitingReimbursement: 180, reimbursed: 560 },
+            allowances: { active: 3, inactive: 1 }
+          },
+          earnings: {
+            items: [
+              {
+                id: 'earn-2451',
+                title: 'Hospital sterilisation · completion bonus',
+                reference: 'EARN-2451',
+                amount: 1250,
+                currency: 'GBP',
+                status: 'payable',
+                dueAt: '2025-03-21T12:00:00.000Z',
+                paidAt: null,
+                notes: 'Awaiting QA acceptance and invoice coding.',
+                createdAt: '2025-03-18T08:00:00.000Z',
+                updatedAt: '2025-03-18T08:00:00.000Z'
+              },
+              {
+                id: 'earn-2442',
+                title: 'Emergency HVAC call-out',
+                reference: 'EARN-2442',
+                amount: 1200,
+                currency: 'GBP',
+                status: 'paid',
+                dueAt: '2025-03-14T09:00:00.000Z',
+                paidAt: '2025-03-15T16:30:00.000Z',
+                notes: 'Paid via wallet top-up after completion sign-off.',
+                createdAt: '2025-03-14T07:15:00.000Z',
+                updatedAt: '2025-03-15T16:30:00.000Z'
+              },
+              {
+                id: 'earn-2427',
+                title: 'Weekend standby retainer',
+                reference: 'EARN-2427',
+                amount: 890,
+                currency: 'GBP',
+                status: 'paid',
+                dueAt: '2025-03-10T08:00:00.000Z',
+                paidAt: '2025-03-11T09:45:00.000Z',
+                notes: 'Auto-released after weekend rota completion.',
+                createdAt: '2025-03-09T18:00:00.000Z',
+                updatedAt: '2025-03-11T09:45:00.000Z'
+              },
+              {
+                id: 'earn-2460',
+                title: 'University access control upgrade',
+                reference: 'EARN-2460',
+                amount: 860,
+                currency: 'GBP',
+                status: 'approved',
+                dueAt: '2025-03-25T17:00:00.000Z',
+                paidAt: null,
+                notes: 'Finance to release after integration checklist upload.',
+                createdAt: '2025-03-18T12:30:00.000Z',
+                updatedAt: '2025-03-18T12:30:00.000Z'
+              }
+            ],
+            meta: {
+              total: 4,
+              outstanding: 860,
+              payable: 1250,
+              paid: 2090
+            }
+          },
+          expenses: {
+            items: [
+              {
+                id: 'exp-905',
+                title: 'Hospital parking reimbursement',
+                description: 'Parking for sterile services deployment.',
+                category: 'travel',
+                amount: 180,
+                currency: 'GBP',
+                status: 'submitted',
+                submittedAt: '2025-03-17T19:10:00.000Z',
+                approvedAt: null,
+                receipts: [
+                  {
+                    id: 'rcpt-101',
+                    label: 'Parking receipt',
+                    url: 'https://assets.fixnado.example/receipts/rcpt-101.pdf',
+                    uploadedAt: '2025-03-17T19:15:00.000Z'
+                  }
+                ],
+                notes: 'Awaiting facilities manager approval.',
+                createdAt: '2025-03-17T19:10:00.000Z',
+                updatedAt: '2025-03-17T19:15:00.000Z'
+              },
+              {
+                id: 'exp-881',
+                title: 'Sterilisation PPE kit',
+                description: 'Replacement PPE ordered for hospital project.',
+                category: 'equipment',
+                amount: 560,
+                currency: 'GBP',
+                status: 'reimbursed',
+                submittedAt: '2025-03-08T10:00:00.000Z',
+                approvedAt: '2025-03-09T14:30:00.000Z',
+                receipts: [
+                  {
+                    id: 'rcpt-102',
+                    label: 'PPE supplier invoice',
+                    url: 'https://assets.fixnado.example/receipts/rcpt-102.jpg',
+                    uploadedAt: '2025-03-08T10:05:00.000Z'
+                  }
+                ],
+                notes: 'Paid via provider cost centre.',
+                createdAt: '2025-03-08T10:00:00.000Z',
+                updatedAt: '2025-03-10T08:15:00.000Z'
+              }
+            ],
+            meta: {
+              total: 2,
+              awaitingReimbursement: 180,
+              reimbursed: 560
+            }
+          },
+          allowances: {
+            items: [
+              {
+                id: 'allow-201',
+                name: 'On-call retainer',
+                amount: 120,
+                currency: 'GBP',
+                cadence: 'per_week',
+                effectiveFrom: '2025-01-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-202',
+                name: 'Hospital sterilisation premium',
+                amount: 85,
+                currency: 'GBP',
+                cadence: 'per_job',
+                effectiveFrom: '2025-02-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-203',
+                name: 'Metro travel uplift',
+                amount: 25,
+                currency: 'GBP',
+                cadence: 'per_day',
+                effectiveFrom: '2024-11-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-180',
+                name: 'Winter hazard bonus',
+                amount: 50,
+                currency: 'GBP',
+                cadence: 'per_day',
+                effectiveFrom: '2024-12-01T00:00:00.000Z',
+                effectiveTo: '2025-02-28T00:00:00.000Z',
+                isActive: false
+              }
+            ]
+          },
+          documents: {
+            receipts: [
+              {
+                id: 'rcpt-101',
+                label: 'Parking receipt',
+                url: 'https://assets.fixnado.example/receipts/rcpt-101.pdf'
+              },
+              {
+                id: 'rcpt-102',
+                label: 'PPE supplier invoice',
+                url: 'https://assets.fixnado.example/receipts/rcpt-102.jpg'
+              }
+            ]
+          },
+          permissions: {
+            canManagePayments: true,
+            canSubmitExpenses: true,
+            canManageAllowances: true
+          }
+        }
+      },
+      {
         id: 'training',
         icon: 'compliance',
         label: 'Training & Compliance',

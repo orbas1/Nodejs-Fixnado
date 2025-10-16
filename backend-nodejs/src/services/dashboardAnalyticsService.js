@@ -30,6 +30,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getServicemanFinanceWorkspace } from './servicemanFinanceService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -2987,7 +2988,7 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3014,7 +3015,13 @@ async function loadServicemanData(context) {
       where: providerFilter,
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
-    })
+    }),
+    providerId
+      ? getServicemanFinanceWorkspace({ servicemanId: providerId, limit: 6 }).catch((error) => {
+          console.warn('Failed to load serviceman finance workspace', error);
+          return null;
+        })
+      : Promise.resolve(null)
   ]);
 
   const providerIds = Array.from(
@@ -3452,6 +3459,21 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'financial-management',
+        label: 'Financial management',
+        description: 'Track payouts, reimbursements, and allowances in real time.',
+        type: 'serviceman-finance',
+        data:
+          financeWorkspace ?? {
+            context: { servicemanId: providerId ?? null },
+            summary: { earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 }, expenses: { total: 0, reimbursed: 0 } },
+            permissions: { canManagePayments: false, canSubmitExpenses: false, canManageAllowances: false },
+            earnings: { items: [], meta: { total: 0 } },
+            expenses: { items: [], meta: { total: 0 } },
+            allowances: { items: [] }
+          }
       }
     ]
   };
