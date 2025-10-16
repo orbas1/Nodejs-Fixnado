@@ -137,6 +137,12 @@ export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
       title: t('nav.dashboards'),
       description: t('nav.enterpriseAnalyticsDescription'),
       href: '/dashboards'
+    },
+    {
+      id: 'mobile-profile',
+      title: 'Profile & settings',
+      description: 'Manage contact details and preferences',
+      href: '/account/profile'
     }
   ];
 
