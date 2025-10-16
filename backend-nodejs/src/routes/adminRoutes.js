@@ -17,6 +17,16 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  getSecurityPostureHandler,
+  upsertSecuritySignalHandler,
+  deactivateSecuritySignalHandler,
+  upsertAutomationTaskHandler,
+  removeAutomationTaskHandler,
+  upsertTelemetryConnectorHandler,
+  removeTelemetryConnectorHandler,
+  reorderSecuritySignalsHandler
+} from '../controllers/securityPostureController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -63,6 +73,103 @@ router.put(
   authenticate,
   enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
+);
+
+router.get(
+  '/security-posture',
+  authenticate,
+  enforcePolicy('admin.security.posture.read', { metadata: () => ({ section: 'security-posture' }) }),
+  getSecurityPostureHandler
+);
+
+router.post(
+  '/security-posture/signals',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: () => ({ entity: 'signal', method: 'POST' })
+  }),
+  upsertSecuritySignalHandler
+);
+
+router.put(
+  '/security-posture/signals/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'signal', method: 'PUT', signalId: req.params.id })
+  }),
+  upsertSecuritySignalHandler
+);
+
+router.put(
+  '/security-posture/signals/reorder',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: () => ({ entity: 'signal', method: 'REORDER' })
+  }),
+  reorderSecuritySignalsHandler
+);
+
+router.delete(
+  '/security-posture/signals/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'signal', method: 'DELETE', signalId: req.params.id })
+  }),
+  deactivateSecuritySignalHandler
+);
+
+router.post(
+  '/security-posture/automation',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: () => ({ entity: 'automation-task', method: 'POST' })
+  }),
+  upsertAutomationTaskHandler
+);
+
+router.put(
+  '/security-posture/automation/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'automation-task', method: 'PUT', taskId: req.params.id })
+  }),
+  upsertAutomationTaskHandler
+);
+
+router.delete(
+  '/security-posture/automation/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'automation-task', method: 'DELETE', taskId: req.params.id })
+  }),
+  removeAutomationTaskHandler
+);
+
+router.post(
+  '/security-posture/connectors',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: () => ({ entity: 'connector', method: 'POST' })
+  }),
+  upsertTelemetryConnectorHandler
+);
+
+router.put(
+  '/security-posture/connectors/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'connector', method: 'PUT', connectorId: req.params.id })
+  }),
+  upsertTelemetryConnectorHandler
+);
+
+router.delete(
+  '/security-posture/connectors/:id',
+  authenticate,
+  enforcePolicy('admin.security.posture.write', {
+    metadata: (req) => ({ entity: 'connector', method: 'DELETE', connectorId: req.params.id })
+  }),
+  removeTelemetryConnectorHandler
 );
 
 router.get(

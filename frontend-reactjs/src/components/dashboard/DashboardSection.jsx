@@ -1659,6 +1659,11 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'component': {
+      const Component = section.component;
+      if (!Component) return null;
+      return <Component {...(section.data ?? {})} />;
+    }
     case 'history':
       return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:

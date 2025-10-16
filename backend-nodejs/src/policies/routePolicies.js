@@ -176,6 +176,26 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.security.posture.read': {
+    id: 'admin.security.posture.read',
+    version: '1.0.0',
+    resource: 'admin.security.posture',
+    action: 'admin.security.posture:read',
+    description: 'Allow administrators to view security posture and telemetry insights.',
+    requirements: [Permissions.ADMIN_SECURITY_POSTURE_READ],
+    tags: ['admin', 'security'],
+    severity: 'high'
+  },
+  'admin.security.posture.write': {
+    id: 'admin.security.posture.write',
+    version: '1.0.0',
+    resource: 'admin.security.posture',
+    action: 'admin.security.posture:write',
+    description: 'Allow administrators to manage security posture signals, automation, and connectors.',
+    requirements: [Permissions.ADMIN_SECURITY_POSTURE_WRITE],
+    tags: ['admin', 'security'],
+    severity: 'critical'
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

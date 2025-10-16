@@ -52,6 +52,9 @@ import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 import SecurityAuditEvent from './securityAuditEvent.js';
+import SecuritySignalConfig from './securitySignalConfig.js';
+import SecurityAutomationTask from './securityAutomationTask.js';
+import TelemetryConnector from './telemetryConnector.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
@@ -224,6 +227,17 @@ StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemI
 StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
+SecuritySignalConfig.hasMany(SecurityAutomationTask, {
+  sourceKey: 'metricKey',
+  foreignKey: 'signalKey',
+  as: 'automationTasks'
+});
+SecurityAutomationTask.belongsTo(SecuritySignalConfig, {
+  foreignKey: 'signalKey',
+  targetKey: 'metricKey',
+  as: 'signal'
+});
 
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
@@ -484,6 +498,9 @@ export {
   AffiliateReferral,
   AffiliateLedgerEntry,
   SecurityAuditEvent,
+  SecuritySignalConfig,
+  SecurityAutomationTask,
+  TelemetryConnector,
   UserSession,
   ConsentEvent,
   Region,

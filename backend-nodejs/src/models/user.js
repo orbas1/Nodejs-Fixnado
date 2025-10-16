@@ -9,6 +9,8 @@ import {
   stableHash
 } from '../utils/security/fieldEncryption.js';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function transformEmailConditions(whereClause) {
   if (!whereClause || typeof whereClause !== 'object') {
     return;
@@ -156,6 +158,9 @@ User.init(
           throw new TypeError('email must be a string');
         }
         const trimmed = value.trim();
+        if (!EMAIL_PATTERN.test(trimmed)) {
+          throw new Error('email must be a valid email address');
+        }
         if (!trimmed) {
           throw new Error('email cannot be empty');
         }
