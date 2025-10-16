@@ -37,6 +37,7 @@ import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
 import AdCampaign from './adCampaign.js';
+import CampaignCreative from './campaignCreative.js';
 import CampaignFlight from './campaignFlight.js';
 import CampaignTargetingRule from './campaignTargetingRule.js';
 import CampaignInvoice from './campaignInvoice.js';
@@ -463,6 +464,9 @@ AdCampaign.hasMany(CampaignDailyMetric, { foreignKey: 'campaignId', as: 'dailyMe
 CampaignDailyMetric.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignDailyMetric.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
+AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
+CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId', as: 'campaign' });
+
 CampaignDailyMetric.hasOne(CampaignAnalyticsExport, {
   foreignKey: 'campaignDailyMetricId',
   as: 'analyticsExport'
@@ -829,6 +833,7 @@ export {
   InsuredSellerApplication,
   MarketplaceModerationAction,
   AdCampaign,
+  CampaignCreative,
   CampaignFlight,
   CampaignTargetingRule,
   CampaignInvoice,

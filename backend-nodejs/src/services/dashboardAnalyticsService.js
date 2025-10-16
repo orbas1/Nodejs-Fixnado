@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getFixnadoWorkspaceSnapshot } from './fixnadoAdsService.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
 import {
@@ -3386,6 +3387,8 @@ async function loadServicemanData(context) {
     }
   ];
 
+  const fixnadoSnapshot = await getFixnadoWorkspaceSnapshot({ windowDays: 30 });
+
   return {
     persona: 'serviceman',
     name: PERSONA_METADATA.serviceman.name,
@@ -3452,6 +3455,14 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'fixnado-ads',
+        label: 'Fixnado Ads',
+        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+        icon: 'analytics',
+        type: 'fixnado-ads',
+        data: fixnadoSnapshot
       }
     ]
   };

@@ -87,6 +87,44 @@ const ROUTE_POLICIES = {
       hasAttachments: Array.isArray(req.body?.attachments) ? req.body.attachments.length : 0
     })
   },
+  'fixnado.ads.read': {
+    id: 'fixnado.ads.read',
+    version: '1.0.0',
+    resource: 'fixnado.ads',
+    action: 'fixnado.ads:read',
+    description: 'Allow Serviceman personas to access the Fixnado ads workspace and read campaign data.',
+    requirements: [Permissions.CAMPAIGN_REVIEW],
+    tags: ['ads', 'fixnado', 'serviceman'],
+    severity: 'medium',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId ?? null,
+      entity: req.params?.creativeId
+        ? 'creative'
+        : req.params?.signalId
+          ? 'fraud-signal'
+          : 'campaign',
+      method: req.method
+    })
+  },
+  'fixnado.ads.write': {
+    id: 'fixnado.ads.write',
+    version: '1.0.0',
+    resource: 'fixnado.ads',
+    action: 'fixnado.ads:write',
+    description: 'Allow authorised personas to create and manage Fixnado ads campaigns, flights, creatives, and metrics.',
+    requirements: [Permissions.CAMPAIGN_MANAGE],
+    tags: ['ads', 'fixnado', 'serviceman'],
+    severity: 'high',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId ?? null,
+      entity: req.params?.creativeId
+        ? 'creative'
+        : req.params?.signalId
+          ? 'fraud-signal'
+          : 'campaign',
+      method: req.method
+    })
+  },
   'affiliate.dashboard.view': {
     id: 'affiliate.dashboard.view',
     version: '1.0.0',

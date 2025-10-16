@@ -24,6 +24,8 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
+import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1747,6 +1749,12 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
+    case 'fixnado-ads':
+      return (
+        <FixnadoAdsProvider network={section.data?.network} initialSnapshot={section.data}>
+          <FixnadoAdsWorkspace section={section} />
+        </FixnadoAdsProvider>
+      );
     case 'component':
       return <ComponentSection section={section} />;
     case 'settings':
