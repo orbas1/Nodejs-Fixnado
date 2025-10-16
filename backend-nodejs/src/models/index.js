@@ -1,5 +1,6 @@
 import sequelize from '../config/database.js';
 import User from './user.js';
+import UserProfileSetting from './userProfileSetting.js';
 import Company from './company.js';
 import Service from './service.js';
 import Post from './post.js';
@@ -85,6 +86,8 @@ import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
 
+User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
+UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -505,6 +508,7 @@ BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 export {
   sequelize,
   User,
+  UserProfileSetting,
   Company,
   Service,
   Post,

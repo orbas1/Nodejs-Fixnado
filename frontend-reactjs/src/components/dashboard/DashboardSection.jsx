@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import CustomerSettingsSection from './CustomerSettingsSection.jsx';
 import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
@@ -1644,6 +1645,12 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
+    case 'settings':
+      return persona === 'user' ? (
+        <CustomerSettingsSection section={section} />
+      ) : (
+        <SettingsSection section={section} />
+      );
     case 'settings': {
       const sectionLabel = section?.label?.toLowerCase?.() ?? '';
       const shouldRenderAccountSettings =

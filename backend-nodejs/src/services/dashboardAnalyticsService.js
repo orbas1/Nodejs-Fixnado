@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getUserProfileSettings } from './userProfileService.js';
 import {
   AdCampaign,
   Booking,
@@ -440,6 +441,16 @@ async function loadUserData(context) {
     getWalletOverview({ userId, companyId })
   ]);
 
+  let profileSettings = null;
+  if (userId) {
+    try {
+      profileSettings = await getUserProfileSettings(userId);
+    } catch (error) {
+      console.warn('Failed to load profile settings for user dashboard', {
+        userId,
+        message: error.message
+      });
+    }
   const bookingIds = bookings.map((booking) => booking.id);
   let historyEntries = [];
 
@@ -858,15 +869,65 @@ async function loadUserData(context) {
   };
 
   const mfaEnabled = Boolean(user?.twoFactorApp || user?.twoFactorEmail);
+  const profilePrefs = profileSettings?.profile ?? {};
+  const notificationsPrefs = profileSettings?.notifications ?? {
+    dispatch: { email: true, sms: false },
+    support: { email: true, sms: false },
+    weeklySummary: { email: true },
+    concierge: { email: true, sms: false },
+    quietHours: { enabled: false, start: null, end: null, timezone: timezoneLabel },
+    escalationContacts: []
+  };
+  const billingPrefs = profileSettings?.billing ?? {
+    preferredCurrency: currency,
+    defaultPaymentMethod: null,
+    paymentNotes: null,
+    invoiceRecipients: []
+  };
+  const securityPrefs = profileSettings?.security?.twoFactor ?? {
+    app: Boolean(user?.twoFactorApp),
+    email: Boolean(user?.twoFactorEmail),
+    methods: [],
+    lastUpdated: null
+  };
+
+  const timezonePreference = profilePrefs.timezone ?? timezoneLabel;
+  const preferredCurrency = billingPrefs.preferredCurrency ?? currency;
+  const quietHours = notificationsPrefs.quietHours ?? {
+    enabled: false,
+    start: null,
+    end: null,
+    timezone: timezonePreference
+  };
+  const quietHoursLabel = quietHours.enabled
+    ? `${quietHours.start ?? '--:--'} – ${quietHours.end ?? '--:--'} ${quietHours.timezone ?? timezonePreference}`
+    : 'Disabled';
+  const escalationCount = Array.isArray(notificationsPrefs.escalationContacts)
+    ? notificationsPrefs.escalationContacts.length
+    : 0;
+  const invoiceRecipientCount = Array.isArray(billingPrefs.invoiceRecipients)
+    ? billingPrefs.invoiceRecipients.length
+    : 0;
+
   const settingsSidebar = {
-    badge: mfaEnabled ? 'MFA secured' : 'Security review',
+    badge: profilePrefs.preferredName
+      ? `${profilePrefs.preferredName}`
+      : mfaEnabled
+        ? 'MFA secured'
+        : 'Security review',
     status: mfaEnabled ? { label: 'MFA enabled', tone: 'success' } : { label: 'Enable MFA', tone: 'warning' },
     highlights: [
-      { label: 'Timezone', value: timezoneLabel },
-      { label: 'Currency', value: currency }
+      { label: 'Timezone', value: timezonePreference },
+      { label: 'Currency', value: preferredCurrency }
     ]
   };
 
+  const displayName = (() => {
+    if (profilePrefs.firstName || profilePrefs.lastName) {
+      return `${profilePrefs.firstName ?? ''} ${profilePrefs.lastName ?? ''}`.trim();
+    }
+    return user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
+  })();
   const walletCurrency = walletOverview?.account?.currency || currency;
   const walletSummary = walletOverview?.summary;
   const walletSidebar = walletOverview
@@ -935,8 +996,14 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Preferred name',
+          value: profilePrefs.preferredName ?? 'Not set',
+          helper: 'Used on dashboards, receipts, and shared documents.'
+        },
+        {
+          type: 'value',
           label: 'Contact email',
-          value: user?.email ?? 'Not provided',
+          value: profilePrefs.email ?? user?.email ?? 'Not provided',
           helper: 'Primary channel for booking updates and notifications.'
         },
         {
@@ -949,8 +1016,20 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Phone number',
+          value: profilePrefs.phoneNumber ?? 'Not provided',
+          helper: 'SMS alerts and concierge outreach use this number.'
+        },
+        {
+          type: 'value',
+          label: 'Language',
+          value: profilePrefs.language ?? 'en-GB',
+          helper: 'Applied to notifications and scheduling copy.'
+        },
+        {
+          type: 'value',
           label: 'Local timezone',
-          value: timezoneLabel,
+          value: timezonePreference,
           helper: 'Applied to scheduling, reminders, and exports.'
         }
       ]
@@ -963,18 +1042,29 @@ async function loadUserData(context) {
         {
           type: 'toggle',
           label: 'Authenticator app 2FA',
-          enabled: Boolean(user?.twoFactorApp),
-          helper: user?.twoFactorApp
+          enabled: Boolean(securityPrefs.app),
+          helper: securityPrefs.app
             ? 'Time-based one-time passcodes are required on sign-in.'
             : 'Add an authenticator app to secure sign-ins.'
         },
         {
           type: 'toggle',
           label: 'Email verification codes',
-          enabled: Boolean(user?.twoFactorEmail),
-          helper: user?.twoFactorEmail
+          enabled: Boolean(securityPrefs.email),
+          helper: securityPrefs.email
             ? 'Backup verification codes are delivered to your inbox.'
             : 'Enable email codes as a fallback second factor.'
+        },
+        {
+          type: 'value',
+          label: 'Registered methods',
+          value:
+            securityPrefs.methods && securityPrefs.methods.length > 0
+              ? securityPrefs.methods.join(', ')
+              : 'No secondary methods saved',
+          helper: securityPrefs.lastUpdated
+            ? `Last security review ${DateTime.fromISO(securityPrefs.lastUpdated).toRelative?.() ?? ''}`
+            : 'Record MFA methods to keep access recovery options ready.'
         },
         {
           type: 'value',
@@ -993,28 +1083,35 @@ async function loadUserData(context) {
       items: [
         {
           type: 'toggle',
-          label: 'Support case updates',
-          enabled: supportConversations > 0,
-          helper: supportConversations > 0
-            ? 'Email alerts active for current support cases.'
-            : 'Alerts activate automatically when a case opens.'
+          label: 'Dispatch email alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.email),
+          helper: 'Emails send whenever a crew assignment or ETA changes.'
         },
         {
           type: 'toggle',
-          label: 'Job dispatch alerts',
-          enabled: activeBookings.length > 0,
-          helper:
-            activeBookings.length > 0
-              ? `${formatNumber(activeBookings.length)} active job${activeBookings.length === 1 ? '' : 's'} will send dispatch nudges.`
-              : 'Dispatch alerts enable once you have active jobs.'
+          label: 'Dispatch SMS alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.sms),
+          helper: 'SMS nudges mirror urgent dispatch or SLA changes.'
+        },
+        {
+          type: 'toggle',
+          label: 'Support email updates',
+          enabled: Boolean(notificationsPrefs.support?.email),
+          helper: 'Escalations and concierge follow-ups trigger email updates.'
         },
         {
           type: 'value',
-          label: 'Weekly summary',
-          value: totalOrders > 0 ? 'Scheduled' : 'Paused',
-          helper: totalOrders > 0
-            ? 'A weekly health report will arrive each Monday.'
-            : 'Resume once new orders are captured.'
+          label: 'Quiet hours',
+          value: quietHoursLabel,
+          helper: quietHours.enabled
+            ? 'Notifications pause during these hours across channels.'
+            : 'No quiet hours configured.'
+        },
+        {
+          type: 'value',
+          label: 'Escalation contacts',
+          value: `${escalationCount} contact${escalationCount === 1 ? '' : 's'}`,
+          helper: 'Escalation contacts mirror urgent disputes or incidents.'
         }
       ]
     },
@@ -1026,16 +1123,20 @@ async function loadUserData(context) {
         {
           type: 'value',
           label: 'Preferred currency',
-          value: currency,
+          value: preferredCurrency,
           helper: 'All new orders default to this currency.'
         },
         {
           type: 'value',
-          label: 'Funded escrows',
-          value: formatNumber(escrowFunded),
-          helper: escrowFunded > 0
-            ? 'Escrows release once jobs complete and pass inspection.'
-            : 'Fund an order to initialise automated escrow releases.'
+          label: 'Default payment method',
+          value: billingPrefs.defaultPaymentMethod ?? 'Not set',
+          helper: 'Shown to finance teams when approving releases.'
+        },
+        {
+          type: 'value',
+          label: 'Invoice recipients',
+          value: `${invoiceRecipientCount} contact${invoiceRecipientCount === 1 ? '' : 's'}`,
+          helper: 'Contacts copied into every invoice and billing summary.'
         },
         {
           type: 'value',
