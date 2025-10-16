@@ -185,3 +185,52 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Provider calendar configuration
+-- These tables back the provider control centre booking calendar, storing
+-- per-company defaults and custom events that complement live bookings.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS provider_calendar_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  timezone VARCHAR(64) NOT NULL DEFAULT 'Europe/London',
+  week_starts_on VARCHAR(16) NOT NULL DEFAULT 'monday' CHECK (week_starts_on IN ('monday', 'sunday')),
+  default_view VARCHAR(16) NOT NULL DEFAULT 'month' CHECK (default_view IN ('month', 'week', 'day')),
+  workday_start VARCHAR(8) NOT NULL DEFAULT '08:00',
+  workday_end VARCHAR(8) NOT NULL DEFAULT '18:00',
+  allow_overlapping BOOLEAN NOT NULL DEFAULT TRUE,
+  auto_accept_assignments BOOLEAN NOT NULL DEFAULT FALSE,
+  notification_recipients JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT provider_calendar_settings_unique_company UNIQUE (company_id)
+);
+
+CREATE TABLE IF NOT EXISTS provider_calendar_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  start_at TIMESTAMPTZ NOT NULL,
+  end_at TIMESTAMPTZ,
+  status VARCHAR(24) NOT NULL DEFAULT 'planned'
+    CHECK (status IN ('planned', 'confirmed', 'cancelled', 'tentative', 'standby', 'travel')),
+  event_type VARCHAR(24) NOT NULL DEFAULT 'internal'
+    CHECK (event_type IN ('internal', 'hold', 'travel', 'maintenance', 'booking')),
+  visibility VARCHAR(24) NOT NULL DEFAULT 'internal'
+    CHECK (visibility IN ('internal', 'crew', 'public')),
+  created_by UUID,
+  updated_by UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_company_time
+  ON provider_calendar_events (company_id, start_at);
+
+CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_booking
+  ON provider_calendar_events (booking_id);

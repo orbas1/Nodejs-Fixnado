@@ -91,6 +91,8 @@ export const RBAC_MATRIX = {
       Permissions.AFFILIATE_REFERRALS,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
+      Permissions.PROVIDER_CALENDAR_VIEW,
+      Permissions.PROVIDER_CALENDAR_MANAGE,
       Permissions.REPORTING_DOWNLOAD
     ],
     navigation: {

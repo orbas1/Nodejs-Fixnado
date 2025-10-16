@@ -338,6 +338,9 @@ describe('Panel routes', () => {
     expect(response.body.data.provider.tradingName).toContain('Metro');
     expect(response.body.data.metrics.activeBookings).toBeGreaterThanOrEqual(1);
     expect(response.body.data.pipeline.upcomingBookings[0].service).toBeDefined();
+    expect(response.body.data.calendar).toBeTruthy();
+    expect(response.body.data.calendar.calendar.weeks.length).toBeGreaterThan(0);
+    expect(response.body.data.calendar.meta.companyId).toBe(company.id);
     expect(response.body.meta.companyId).toBe(company.id);
   });
 

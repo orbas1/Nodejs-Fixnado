@@ -4,6 +4,7 @@ import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
+import { getProviderCalendar } from './providerCalendarService.js';
 import {
   AdCampaign,
   Booking,
@@ -2863,6 +2864,28 @@ async function loadProviderData(context) {
     creativeInsights: uniqueContentInsights
   };
 
+  let calendarSection = null;
+  try {
+    const calendarSnapshot = await getProviderCalendar({
+      companyId,
+      start: window.start?.toISO?.() ?? null,
+      end: window.end?.toISO?.() ?? null,
+      timezone: window.timezone
+    });
+    calendarSection = {
+      id: 'calendar',
+      label: 'Operations Calendar',
+      description: 'Plan bookings, holds, and travel across crews.',
+      type: 'provider-calendar',
+      data: {
+        ...calendarSnapshot.data,
+        meta: calendarSnapshot.meta
+      }
+    };
+  } catch (error) {
+    console.warn('[dashboard] Failed to load provider calendar snapshot', error);
+  }
+
   const navigation = [
     {
       id: 'overview',
@@ -2871,6 +2894,7 @@ async function loadProviderData(context) {
       type: 'overview',
       analytics: overview
     },
+    calendarSection,
     {
       id: 'workboard',
       label: 'Workboard',
@@ -2923,7 +2947,7 @@ async function loadProviderData(context) {
         ]
       }
     }
-  ];
+  ].filter(Boolean);
 
   const adsSection = annotateAdsSection('provider', {
     id: 'fixnado-ads',

@@ -20,6 +20,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getProviderCalendar } from './providerCalendarService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -598,8 +599,19 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       }
     },
     trust: trustScore,
-    alerts
+    alerts,
+    calendar: null
   };
+
+  try {
+    const calendarSnapshot = await getProviderCalendar({ companyId });
+    data.calendar = {
+      ...calendarSnapshot.data,
+      meta: calendarSnapshot.meta
+    };
+  } catch (error) {
+    console.warn('[panel] Failed to load provider calendar snapshot for dashboard', error);
+  }
 
   const meta = {
     companyId,

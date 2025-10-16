@@ -36,6 +36,8 @@ import ComplianceDocument from './complianceDocument.js';
 import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
+import ProviderCalendarSetting from './providerCalendarSetting.js';
+import ProviderCalendarEvent from './providerCalendarEvent.js';
 import AdCampaign from './adCampaign.js';
 import CampaignFlight from './campaignFlight.js';
 import CampaignTargetingRule from './campaignTargetingRule.js';
@@ -183,6 +185,12 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderCalendarSetting, { foreignKey: 'companyId', as: 'calendarSetting' });
+ProviderCalendarSetting.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderCalendarEvent, { foreignKey: 'companyId', as: 'calendarEvents' });
+ProviderCalendarEvent.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
@@ -675,6 +683,11 @@ Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 
 Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
 BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'providerAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+Booking.hasMany(ProviderCalendarEvent, { foreignKey: 'bookingId', as: 'calendarEvents' });
+ProviderCalendarEvent.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
 Booking.hasMany(BookingBid, { foreignKey: 'bookingId' });
 BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
@@ -817,6 +830,8 @@ export {
   BookingBidComment,
   BookingTemplate,
   BookingHistoryEntry,
+  ProviderCalendarSetting,
+  ProviderCalendarEvent,
   CustomJobBid,
   CustomJobBidMessage,
   InventoryItem,

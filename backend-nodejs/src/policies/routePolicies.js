@@ -126,6 +126,35 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'provider.calendar.read': {
+    id: 'provider.calendar.read',
+    version: '1.0.0',
+    resource: 'provider.calendar',
+    action: 'provider.calendar:view',
+    description: 'Allow provider operators to inspect booking calendars, utilisation, and holds.',
+    requirements: [Permissions.PROVIDER_CALENDAR_VIEW],
+    tags: ['provider', 'calendar', 'operations'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'provider.calendar.manage': {
+    id: 'provider.calendar.manage',
+    version: '1.0.0',
+    resource: 'provider.calendar',
+    action: 'provider.calendar:manage',
+    description: 'Allow authorised provider admins to create bookings, manage holds, and update calendar settings.',
+    requirements: [Permissions.PROVIDER_CALENDAR_MANAGE],
+    tags: ['provider', 'calendar', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
   'service.orders.read': {
     id: 'service.orders.read',
     version: '1.0.0',
