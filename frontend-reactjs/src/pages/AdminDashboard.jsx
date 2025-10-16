@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, GlobeAltIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -592,6 +592,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/website-management"
+        size="sm"
+        variant="secondary"
+        icon={GlobeAltIcon}
+        iconPosition="start"
+      >
+        Website management
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"

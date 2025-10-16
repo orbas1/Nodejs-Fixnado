@@ -46,6 +46,10 @@ import BlogTag from './blogTag.js';
 import BlogMedia from './blogMedia.js';
 import BlogPostCategory from './blogPostCategory.js';
 import BlogPostTag from './blogPostTag.js';
+import WebsitePage from './websitePage.js';
+import WebsiteContentBlock from './websiteContentBlock.js';
+import WebsiteNavigationMenu from './websiteNavigationMenu.js';
+import WebsiteNavigationItem from './websiteNavigationItem.js';
 import AffiliateProfile from './affiliateProfile.js';
 import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
@@ -399,6 +403,14 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
+WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
+
+WebsiteNavigationMenu.hasMany(WebsiteNavigationItem, { foreignKey: 'menuId', as: 'items' });
+WebsiteNavigationItem.belongsTo(WebsiteNavigationMenu, { foreignKey: 'menuId', as: 'menu' });
+WebsiteNavigationItem.belongsTo(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'parent' });
+WebsiteNavigationItem.hasMany(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'children' });
+
 export {
   sequelize,
   User,
@@ -448,6 +460,10 @@ export {
   BlogMedia,
   BlogPostCategory,
   BlogPostTag,
+  WebsitePage,
+  WebsiteContentBlock,
+  WebsiteNavigationMenu,
+  WebsiteNavigationItem,
   AffiliateProfile,
   AffiliateCommissionRule,
   AffiliateReferral,
