@@ -15,7 +15,9 @@ const {
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
-  AnalyticsPipelineRun
+  AnalyticsPipelineRun,
+  OperationsQueueBoard,
+  OperationsQueueUpdate
 } = await import('../src/models/index.js');
 
 const { buildAdminDashboard } = await import('../src/services/adminDashboardService.js');
@@ -59,7 +61,7 @@ describe('buildAdminDashboard', () => {
       email: `buyer-${Date.now()}@example.com`,
       passwordHash: 'hashed',
       type: 'user'
-    });
+    }, { validate: false });
 
     const provider = await User.create({
       firstName: 'Jordan',
@@ -68,7 +70,7 @@ describe('buildAdminDashboard', () => {
       passwordHash: 'hashed',
       type: 'servicemen',
       twoFactorApp: true
-    });
+    }, { validate: false });
 
     const companyOwner = await User.create({
       firstName: 'Company',
@@ -77,7 +79,7 @@ describe('buildAdminDashboard', () => {
       passwordHash: 'hashed',
       type: 'company',
       twoFactorEmail: true
-    });
+    }, { validate: false });
 
     const company = await Company.create({
       userId: companyOwner.id,
@@ -257,7 +259,24 @@ describe('buildAdminDashboard', () => {
       severity: 'critical',
       status: 'active',
       triggeredAt: now.minus({ hours: 4 }).toJSDate(),
-      metadata: { reportedBy: 'Ops' }
+    metadata: { reportedBy: 'Ops' }
+  });
+
+    const operationsBoard = await OperationsQueueBoard.create({
+      slug: 'field-operations',
+      title: 'Field operations readiness',
+      summary: 'Live technician coverage and shift readiness overview.',
+      owner: 'Field Ops',
+      status: 'operational',
+      priority: 2
+    });
+
+    await OperationsQueueUpdate.create({
+      boardId: operationsBoard.id,
+      headline: 'Coverage steady at 98%',
+      body: 'Crew availability across primary metros remains above 95% threshold.',
+      tone: 'success',
+      recordedAt: now.minus({ hours: 2 }).toJSDate()
     });
 
     await AnalyticsPipelineRun.create({
@@ -293,6 +312,8 @@ describe('buildAdminDashboard', () => {
 
     expect(dashboard.queues.complianceControls.length).toBeGreaterThan(0);
     expect(dashboard.queues.boards.length).toBeGreaterThanOrEqual(3);
+    expect(dashboard.queues.boards[0].updates.length).toBeGreaterThan(0);
+    expect(dashboard.queues.boards[0].updates[0]).toHaveProperty('headline');
 
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);

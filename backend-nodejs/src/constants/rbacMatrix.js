@@ -179,6 +179,8 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
+      Permissions.ADMIN_OPERATIONS_QUEUE_READ,
+      Permissions.ADMIN_OPERATIONS_QUEUE_WRITE,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS
     ],

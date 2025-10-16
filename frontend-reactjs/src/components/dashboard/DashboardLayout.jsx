@@ -24,7 +24,8 @@ import {
   BoltIcon,
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
-  CubeIcon
+  CubeIcon,
+  QueueListIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
@@ -136,7 +137,8 @@ const navIconMap = {
   analytics: ChartPieIcon,
   automation: BoltIcon,
   map: MapIcon,
-  documents: ClipboardDocumentCheckIcon
+  documents: ClipboardDocumentCheckIcon,
+  operations: QueueListIcon
 };
 
 const getNavIcon = (item) => {
@@ -228,6 +230,27 @@ const buildSearchIndex = (navigation) =>
           targetSection: section.id
         }))
       );
+    }
+
+    if (section.type === 'operations-queues' && Array.isArray(section.data?.boards)) {
+      section.data.boards.forEach((board) => {
+        entries.push({
+          id: `${section.id}-${board.id}`,
+          type: 'board',
+          label: `${board.title} • ${section.label}`,
+          description: [board.summary, board.owner].filter(Boolean).join(' • '),
+          targetSection: section.id
+        });
+        (board.updates ?? []).forEach((update) => {
+          entries.push({
+            id: `${section.id}-${board.id}-${update.id}`,
+            type: 'item',
+            label: update.headline,
+            description: [update.body, formatRelativeTime(update.recordedAt)].filter(Boolean).join(' • '),
+            targetSection: section.id
+          });
+        });
+      });
     }
 
     if (section.type === 'ads') {

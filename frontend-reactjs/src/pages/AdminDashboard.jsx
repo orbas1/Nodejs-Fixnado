@@ -362,21 +362,33 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  const operationsSection = queueBoards.length
-    ? {
-        id: 'operations-queues',
-        label: 'Operations queues',
-        description: 'Owner updates from provider verification, dispute management, and insurance badge workflows.',
-        type: 'grid',
-        data: {
-          cards: queueBoards.map((board) => ({
-            title: board.title,
-            accent: 'from-white via-slate-50 to-blue-50/80',
-            details: [board.summary, ...board.updates, `Owner: ${board.owner}`].filter(Boolean)
-          }))
-        }
-      }
-    : null;
+  const operationsBoards = queueBoards.map((board) => ({
+    ...board,
+    updates: (board.updates || []).map((update, index) =>
+      typeof update === 'string'
+        ? {
+            id: `${board.id}-update-${index}`,
+            headline: update,
+            body: '',
+            tone: 'info',
+            recordedAt: null,
+            attachments: []
+          }
+        : update
+    )
+  }));
+
+  const operationsSection = {
+    id: 'operations-queues',
+    label: 'Operations queues',
+    description: 'Owner updates from provider verification, dispute management, and insurance badge workflows.',
+    type: 'operations-queues',
+    icon: 'operations',
+    data: {
+      boards: operationsBoards,
+      capabilities: payload.queues?.capabilities ?? null
+    }
+  };
 
   const disputeSection = disputeBreakdown.length
     ? {

@@ -169,6 +169,34 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.operations.queues.read': {
+    id: 'admin.operations.queues.read',
+    version: '1.0.0',
+    resource: 'admin.operations.queues',
+    action: 'admin.operations.queues:read',
+    description: 'Allow operations staff to view and audit active operations queue boards and updates.',
+    requirements: [Permissions.ADMIN_OPERATIONS_QUEUE_READ],
+    tags: ['admin', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      queueId: req.params?.id ?? null,
+      hasUpdates: req.query?.includeUpdates !== 'false'
+    })
+  },
+  'admin.operations.queues.write': {
+    id: 'admin.operations.queues.write',
+    version: '1.0.0',
+    resource: 'admin.operations.queues',
+    action: 'admin.operations.queues:write',
+    description: 'Allow authorised staff to create, edit, and archive operations queues and updates.',
+    requirements: [Permissions.ADMIN_OPERATIONS_QUEUE_WRITE],
+    tags: ['admin', 'operations'],
+    severity: 'critical',
+    metadata: (req) => ({
+      queueId: req.params?.id ?? null,
+      updateId: req.params?.updateId ?? null
+    })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',

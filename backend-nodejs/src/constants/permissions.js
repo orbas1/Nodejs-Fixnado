@@ -6,6 +6,8 @@ export const Permissions = Object.freeze({
   ADMIN_PLATFORM_WRITE: 'admin:platform-settings:write',
   ADMIN_AFFILIATE_READ: 'admin:affiliate:read',
   ADMIN_AFFILIATE_WRITE: 'admin:affiliate:write',
+  ADMIN_OPERATIONS_QUEUE_READ: 'admin:operations-queue:read',
+  ADMIN_OPERATIONS_QUEUE_WRITE: 'admin:operations-queue:write',
   AFFILIATE_DASHBOARD: 'affiliate:dashboard:view',
   AFFILIATE_REFERRALS: 'affiliate:referrals:view',
   ANALYTICS_OVERVIEW: 'analytics:overview:view',
