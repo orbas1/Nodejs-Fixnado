@@ -73,6 +73,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import ServiceTaxonomyType from './serviceTaxonomyType.js';
+import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
 import WalletAccount from './walletAccount.js';
 import WalletTransaction from './walletTransaction.js';
 import WalletPaymentMethod from './walletPaymentMethod.js';
@@ -249,6 +251,8 @@ StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
 
+ServiceTaxonomyType.hasMany(ServiceTaxonomyCategory, { foreignKey: 'typeId', as: 'categories' });
+ServiceTaxonomyCategory.belongsTo(ServiceTaxonomyType, { foreignKey: 'typeId', as: 'type' });
 SecuritySignalConfig.hasMany(SecurityAutomationTask, {
   sourceKey: 'metricKey',
   foreignKey: 'signalKey',
@@ -581,6 +585,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  ServiceTaxonomyType,
+  ServiceTaxonomyCategory
   WalletAccount,
   WalletTransaction,
   WalletPaymentMethod

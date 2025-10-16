@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { BanknotesIcon, MapIcon, Cog6ToothIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
@@ -1546,6 +1547,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/taxonomy"
+        size="sm"
+        variant="secondary"
+        icon={Squares2X2Icon}
+        iconPosition="start"
+      >
+        Taxonomy manager
         to="/admin/seo"
         size="sm"
         variant="secondary"

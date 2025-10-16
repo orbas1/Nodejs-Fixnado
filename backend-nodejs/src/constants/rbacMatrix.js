@@ -224,6 +224,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_PLATFORM_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_TAXONOMY_READ,
+      Permissions.ADMIN_TAXONOMY_WRITE,
       Permissions.ADMIN_SECURITY_POSTURE_READ,
       Permissions.ADMIN_SECURITY_POSTURE_WRITE,
       Permissions.FINANCE_OVERVIEW,
