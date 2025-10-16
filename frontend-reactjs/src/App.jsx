@@ -27,6 +27,7 @@ const Tools = lazy(() => import('./pages/Tools.jsx'));
 const Materials = lazy(() => import('./pages/Materials.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminDisputeHealthHistory = lazy(() => import('./pages/AdminDisputeHealthHistory.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
@@ -106,6 +107,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminDashboard />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/disputes/health/:bucketId/history"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDisputeHealthHistory />
                   </AdminProtectedRoute>
                 }
               />

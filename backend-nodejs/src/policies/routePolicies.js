@@ -242,6 +242,37 @@ const ROUTE_POLICIES = {
       providerId: req.query?.providerId || null
     })
   },
+  'finance.disputes.read': {
+    id: 'finance.disputes.read',
+    version: '1.0.0',
+    resource: 'finance.disputes',
+    action: 'finance.disputes:read',
+    description: 'Allow finance operators to review the dispute health workspace.',
+    requirements: [Permissions.DISPUTE_VIEW],
+    tags: ['finance', 'disputes'],
+    severity: 'high',
+    metadata: (req) => ({
+      section: 'dispute-health',
+      capability: req.params?.bucketId ? 'history' : 'view',
+      bucketId: req.params?.bucketId || null
+    })
+  },
+  'finance.disputes.manage': {
+    id: 'finance.disputes.manage',
+    version: '1.0.0',
+    resource: 'finance.disputes',
+    action: 'finance.disputes:manage',
+    description: 'Allow authorised operators to edit dispute cadences, playbooks, and metrics.',
+    requirements: [Permissions.DISPUTE_MANAGE],
+    tags: ['finance', 'disputes', 'admin'],
+    severity: 'critical',
+    metadata: (req) => ({
+      section: 'dispute-health',
+      method: req.method,
+      bucketId: req.params?.bucketId || null,
+      entryId: req.params?.entryId || null
+    })
+  },
   'compliance.data-requests.create': {
     id: 'compliance.data-requests.create',
     version: '1.0.0',

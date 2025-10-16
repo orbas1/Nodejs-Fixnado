@@ -118,7 +118,8 @@ const resultBadge = {
   item: 'Work Item',
   record: 'Record',
   configuration: 'Setting',
-  panel: 'Setting'
+  panel: 'Setting',
+  bucket: 'Bucket'
 };
 
 const navIconMap = {
@@ -202,6 +203,18 @@ const buildSearchIndex = (navigation) =>
             description: [item.owner, item.value, item.eta].filter(Boolean).join(' • '),
             targetSection: section.id
           });
+        });
+      });
+    }
+
+    if (section.type === 'dispute-workspace' && Array.isArray(section.data?.snapshot)) {
+      section.data.snapshot.forEach((bucket) => {
+        entries.push({
+          id: `${section.id}-${bucket.id ?? bucket.label}`,
+          type: 'bucket',
+          label: `${bucket.label} • Dispute cadence`,
+          description: bucket.commentary ?? '',
+          targetSection: section.id
         });
       });
     }
@@ -337,10 +350,15 @@ const DashboardLayout = ({
   toggleMeta = null,
   toggleReason = null,
   onLogout,
-  blogPosts = []
+  blogPosts = [],
+  initialSectionId = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const [selectedSection, setSelectedSection] = useState(
+    initialSectionId && navigation.some((item) => item.id === initialSectionId)
+      ? initialSectionId
+      : navigation[0]?.id ?? 'overview'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -348,10 +366,24 @@ const DashboardLayout = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
+    if (!navigation.length) return;
+    setSelectedSection((current) => {
+      const preferred =
+        initialSectionId && navigation.some((item) => item.id === initialSectionId)
+          ? initialSectionId
+          : navigation[0]?.id ?? 'overview';
+      const hasCurrent = navigation.some((item) => item.id === current);
+      if (!hasCurrent) {
+        return preferred;
+      }
+      if (initialSectionId && current !== preferred) {
+        return preferred;
+      }
+      return current;
+    });
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigation]);
+  }, [navigation, initialSectionId]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -737,7 +769,8 @@ DashboardLayout.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired
     })
-  )
+  ),
+  initialSectionId: PropTypes.string
 };
 
 DashboardLayout.defaultProps = {

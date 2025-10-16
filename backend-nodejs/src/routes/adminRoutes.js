@@ -17,6 +17,15 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  getDisputeHealthWorkspaceHandler,
+  createDisputeHealthBucketHandler,
+  updateDisputeHealthBucketHandler,
+  archiveDisputeHealthBucketHandler,
+  upsertDisputeHealthEntryHandler,
+  getDisputeHealthBucketHistoryHandler,
+  deleteDisputeHealthEntryHandler
+} from '../controllers/disputeHealthController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +113,62 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/disputes/health',
+  authenticate,
+  enforcePolicy('finance.disputes.read'),
+  getDisputeHealthWorkspaceHandler
+);
+
+router.get(
+  '/disputes/health/buckets/:bucketId/history',
+  authenticate,
+  enforcePolicy('finance.disputes.read'),
+  getDisputeHealthBucketHistoryHandler
+);
+
+router.post(
+  '/disputes/health/buckets',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  createDisputeHealthBucketHandler
+);
+
+router.put(
+  '/disputes/health/buckets/:bucketId',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  updateDisputeHealthBucketHandler
+);
+
+router.delete(
+  '/disputes/health/buckets/:bucketId',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  archiveDisputeHealthBucketHandler
+);
+
+router.post(
+  '/disputes/health/entries',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  upsertDisputeHealthEntryHandler
+);
+
+router.put(
+  '/disputes/health/entries/:entryId',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  upsertDisputeHealthEntryHandler
+);
+
+router.delete(
+  '/disputes/health/entries/:entryId',
+  authenticate,
+  enforcePolicy('finance.disputes.manage'),
+  deleteDisputeHealthEntryHandler
 );
 
 export default router;
