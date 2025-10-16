@@ -53,6 +53,11 @@ const EVENT_DEFINITIONS = Object.freeze({
     requiredMetadata: ['bookingId', 'companyId', 'fromStatus', 'toStatus'],
     tenantKey: 'companyId'
   },
+  'booking.risk_evaluated': {
+    domain: 'bookings',
+    entityType: 'booking',
+    requiredMetadata: ['bookingId', 'customerId', 'riskScore', 'tier', 'signals']
+  },
   'booking.assignment.created': {
     domain: 'bookings',
     entityType: 'booking_assignment',
@@ -85,6 +90,13 @@ const EVENT_DEFINITIONS = Object.freeze({
     entityType: 'rental_agreement',
     entityIdKey: 'rentalId',
     requiredMetadata: ['rentalId', 'companyId', 'outcome', 'totalCharges', 'currency', 'durationDays'],
+    tenantKey: 'companyId'
+  },
+  'rental.dispute.opened': {
+    domain: 'rentals',
+    entityType: 'rental_agreement',
+    entityIdKey: 'rentalId',
+    requiredMetadata: ['rentalId', 'companyId', 'reason', 'previousStatus', 'depositStatus'],
     tenantKey: 'companyId'
   },
   'ads.campaign.metrics_recorded': {
