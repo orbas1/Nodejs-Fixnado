@@ -9,6 +9,7 @@ import {
   ExclamationTriangleIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
+import { ServicesManagementSection } from '../servicesManagement/index.js';
 import ProviderManagementSection from '../../features/admin/providers/ProviderManagementSection.jsx';
 import DisputeHealthWorkspace from './DisputeHealthWorkspace.jsx';
 import { OperationsQueuesSection } from '../operationsQueues/index.js';
@@ -1746,6 +1747,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'services-management':
+      return <ServicesManagementSection section={section} />;
     case 'accountSupport':
       return <AccountSupportSection section={section} context={context} />;
     case 'provider-management':

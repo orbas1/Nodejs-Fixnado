@@ -11,6 +11,7 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
       { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
       { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
+      { id: 'services-management', label: 'Services Management', icon: 'automation' },
       { id: 'history', label: 'Order History', icon: 'documents' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },

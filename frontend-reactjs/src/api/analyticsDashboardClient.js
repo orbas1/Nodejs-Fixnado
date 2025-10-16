@@ -71,11 +71,17 @@ export const fetchDashboard = async (persona, params = {}, options = {}) => {
 
     return response.json();
   } catch (error) {
-    if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
+    const fallback = mockDashboards?.[persona];
+
+    if (error?.status === 401 || error?.status === 403) {
       throw error;
     }
 
-    const fallback = mockDashboards?.[persona];
+    if (error?.status === 404 && fallback && shouldUseFallback()) {
+      console.warn(`Falling back to mock ${persona} dashboard after 404`, error);
+      return fallback;
+    }
+
     if (fallback && shouldUseFallback()) {
       console.warn(`Falling back to mock ${persona} dashboard`, error);
       return fallback;

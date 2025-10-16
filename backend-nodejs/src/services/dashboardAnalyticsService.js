@@ -26,6 +26,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { listCustomerServiceManagement } from './customerServiceManagementService.js';
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
@@ -406,6 +407,7 @@ async function loadUserData(context) {
     rentals,
     disputes,
     conversations,
+    serviceManagement
     company
     walletOverview
   ] = await Promise.all([
@@ -448,6 +450,12 @@ async function loadUserData(context) {
       ]
     }),
     ConversationParticipant.findAll({ where: conversationWhere }),
+    userId
+      ? listCustomerServiceManagement({ customerId: userId }).catch((error) => {
+          console.warn('Failed to load customer services management data', error);
+          return null;
+        })
+      : Promise.resolve(null)
     companyPromise
     getWalletOverview({ userId, companyId })
   ]);
@@ -501,6 +509,13 @@ async function loadUserData(context) {
   const activeBookings = bookings.filter((booking) =>
     ['pending', 'awaiting_assignment', 'scheduled', 'in_progress'].includes(booking.status)
   );
+
+  const serviceManagementData =
+    serviceManagement ?? {
+      metrics: { activeOrders: 0, fundedEscrows: 0, disputedOrders: 0, totalOrders: 0, totalSpend: 0 },
+      orders: [],
+      catalogue: { services: [], zones: [] }
+    };
 
   const bookingsMetric = computeTrend(totalBookings, previousTotalBookings, formatNumber, ' jobs');
 
@@ -891,6 +906,24 @@ async function loadUserData(context) {
     ]
   };
 
+  const servicesManagementSidebar = {
+    badge: `${formatNumber(serviceManagementData.metrics.totalOrders ?? 0)} managed`,
+    status:
+      (serviceManagementData.metrics.disputedOrders ?? 0) > 0
+        ? {
+            label: `${formatNumber(serviceManagementData.metrics.disputedOrders)} in dispute`,
+            tone: 'warning'
+          }
+        : (serviceManagementData.metrics.activeOrders ?? 0) > 0
+        ? {
+            label: `${formatNumber(serviceManagementData.metrics.activeOrders)} in delivery`,
+            tone: 'info'
+          }
+        : { label: 'No active orders', tone: 'success' },
+    highlights: [
+      { label: 'Active orders', value: formatNumber(serviceManagementData.metrics.activeOrders ?? 0) },
+      { label: 'Funded escrows', value: formatNumber(serviceManagementData.metrics.fundedEscrows ?? 0) }
+    ]
   const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
   const escalatedBookings = bookings.filter((booking) => ['disputed', 'cancelled'].includes(booking.status)).length;
   const latestHistoryTransition = bookings.reduce((latest, booking) => {
@@ -1359,6 +1392,12 @@ async function loadUserData(context) {
         data: { columns: orderBoardColumns }
       },
       {
+        id: 'services-management',
+        label: 'Services Management',
+        description: 'Create service orders, manage escrow, and launch disputes.',
+        type: 'services-management',
+        sidebar: servicesManagementSidebar,
+        data: serviceManagementData
         id: 'history',
         label: 'Order History',
         description: 'Detailed audit trail for every service order.',
