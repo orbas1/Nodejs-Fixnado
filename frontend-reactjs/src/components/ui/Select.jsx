@@ -4,10 +4,20 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Select = forwardRef(function Select(
-  { id, label, optionalLabel, hint, error, options, className, selectClassName, ...rest },
+  {
+    id,
+    label,
+    optionalLabel,
+    hint,
+    error,
+    options,
+    className,
+    selectClassName,
+    children,
+    ...rest
+  },
   ref
 ) {
-const Select = forwardRef(({ id, label, hint, error, className, children, ...rest }, ref) => {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const describedBy = [];
@@ -19,6 +29,14 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
   if (error) {
     describedBy.push(`${fieldId}-error`);
   }
+
+  const optionNodes = Array.isArray(options) && options.length > 0
+    ? options.map((option) => (
+        <option key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+        </option>
+      ))
+    : children;
 
   return (
     <div className={clsx('fx-field', className)}>
@@ -32,17 +50,11 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
         ref={ref}
         id={fieldId}
         className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
-        className={clsx('fx-text-input', error && 'fx-text-input--error')}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
-        {children}
+        {optionNodes}
       </select>
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
@@ -58,6 +70,8 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
   );
 });
 
+Select.displayName = 'Select';
+
 Select.propTypes = {
   id: PropTypes.string,
   label: PropTypes.string,
@@ -72,16 +86,8 @@ Select.propTypes = {
     })
   ),
   className: PropTypes.string,
-  selectClassName: PropTypes.string
-Select.displayName = 'Select';
-
-Select.propTypes = {
-  id: PropTypes.string,
-  label: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
-  className: PropTypes.string,
-  children: PropTypes.node.isRequired
+  selectClassName: PropTypes.string,
+  children: PropTypes.node
 };
 
 Select.defaultProps = {
@@ -90,12 +96,10 @@ Select.defaultProps = {
   optionalLabel: undefined,
   hint: undefined,
   error: undefined,
-  options: [],
+  options: undefined,
   className: undefined,
-  selectClassName: undefined
-  hint: undefined,
-  error: undefined,
-  className: undefined
+  selectClassName: undefined,
+  children: undefined
 };
 
 export default Select;
