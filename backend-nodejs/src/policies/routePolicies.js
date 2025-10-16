@@ -99,6 +99,36 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'service.orders.read': {
+    id: 'service.orders.read',
+    version: '1.0.0',
+    resource: 'service.orders',
+    action: 'service.orders:read',
+    description: 'Allow authenticated customers to view and search their service orders.',
+    requirements: [Permissions.SERVICE_ORDERS_VIEW],
+    tags: ['orders', 'service', 'dashboard'],
+    severity: 'medium',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      priority: req.query?.priority || 'all',
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'service.orders.manage': {
+    id: 'service.orders.manage',
+    version: '1.0.0',
+    resource: 'service.orders',
+    action: 'service.orders:manage',
+    description: 'Allow eligible personas to create, update, and annotate service orders.',
+    requirements: [Permissions.SERVICE_ORDERS_MANAGE],
+    tags: ['orders', 'service', 'dashboard'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      orderId: req.params?.orderId || null,
+      status: req.body?.status || null
+    })
+  },
   'admin.dashboard.view': {
     id: 'admin.dashboard.view',
     version: '1.0.0',

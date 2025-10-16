@@ -8,7 +8,7 @@ export const DASHBOARD_ROLES = [
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
-      { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
+      { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },
       { id: 'rentals', label: 'Asset Management', icon: 'assets' },
       { id: 'support', label: 'Support & Communications', icon: 'support' },

@@ -63,7 +63,7 @@ export function registerLiveFeedClient(res, filters = {}) {
       }
       try {
         this.res.write(serialiseEvent(eventName, payload));
-      } catch (error) {
+      } catch {
         this.closed = true;
         clients.delete(this);
       }
