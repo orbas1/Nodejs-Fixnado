@@ -355,6 +355,27 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.inbox.read': {
+    id: 'admin.inbox.read',
+    version: '1.0.0',
+    resource: 'admin.inbox',
+    action: 'admin.inbox:read',
+    description: 'Allow platform administrators to view inbox routing, queue health, and automation state.',
+    requirements: [Permissions.ADMIN_INBOX_READ],
+    tags: ['admin', 'communications'],
+    severity: 'high',
+    metadata: (req) => ({ method: req.method, path: req.route?.path ?? null })
+  },
+  'admin.inbox.write': {
+    id: 'admin.inbox.write',
+    version: '1.0.0',
+    resource: 'admin.inbox',
+    action: 'admin.inbox:write',
+    description: 'Allow platform administrators to manage inbox queues, templates, and automation guardrails.',
+    requirements: [Permissions.ADMIN_INBOX_WRITE],
+    tags: ['admin', 'communications'],
+    severity: 'critical',
+    metadata: (req) => ({ method: req.method, path: req.route?.path ?? null })
   'admin.rentals.read': {
     id: 'admin.rentals.read',
     version: '1.0.0',

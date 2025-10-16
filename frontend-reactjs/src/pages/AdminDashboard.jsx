@@ -761,6 +761,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
   const legalSummary = payload.legal ?? null;
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
+  const inboxSummary = payload.inbox ?? null;
   const complianceRegistry = Array.isArray(complianceContext?.payload?.controls)
     ? complianceContext.payload.controls
     : [];
@@ -1098,6 +1099,120 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const inboxSection = inboxSummary
+    ? {
+        id: 'inbox',
+        label: 'Unified inbox',
+        description: 'Queue health, SLA posture, and automation guardrails for communications.',
+        type: 'settings',
+        data: {
+          panels: [
+            {
+              id: 'inbox-health',
+              title: 'Inbox health',
+              description: 'Monitor backlog, SLA breaches, and response times.',
+              items: [
+                {
+                  id: 'inbox-backlog',
+                  label: 'Backlog',
+                  helper: 'Open conversations across queues',
+                  type: 'value',
+                  value: numberFormatter.format(inboxSummary.metrics?.backlog ?? 0)
+                },
+                {
+                  id: 'inbox-awaiting',
+                  label: 'Awaiting response',
+                  helper: 'Threads where the last reply is from a participant',
+                  type: 'value',
+                  value: numberFormatter.format(inboxSummary.metrics?.awaitingResponse ?? 0)
+                },
+                {
+                  id: 'inbox-breaches',
+                  label: 'SLA breaches',
+                  helper: 'Conversations exceeding queue SLA targets',
+                  type: 'value',
+                  value: numberFormatter.format(inboxSummary.metrics?.breachRisk ?? 0)
+                },
+                {
+                  id: 'inbox-templates',
+                  label: 'Active templates',
+                  helper: 'Ready-to-send responses',
+                  type: 'value',
+                  value: numberFormatter.format(inboxSummary.metrics?.templatesActive ?? 0)
+                },
+                {
+                  id: 'inbox-first-response',
+                  label: 'Avg first response',
+                  helper: 'Minutes to first agent reply',
+                  type: 'value',
+                  value:
+                    inboxSummary.metrics?.averageFirstResponseMinutes != null
+                      ? `${Number(inboxSummary.metrics.averageFirstResponseMinutes).toFixed(1)} min`
+                      : 'Not enough data'
+                }
+              ]
+            },
+            {
+              id: 'inbox-queues',
+              title: 'Queue spotlight',
+              description: 'Top queues by backlog and attention required.',
+              items: (inboxSummary.queues ?? []).slice(0, 3).map((queue) => ({
+                id: queue.id,
+                label: queue.name,
+                helper: `${numberFormatter.format(queue.awaitingResponse ?? 0)} awaiting • ${numberFormatter.format(queue.breachRisk ?? 0)} breaches`,
+                value: `${numberFormatter.format(queue.backlog ?? 0)} open`
+              }))
+            },
+            {
+              id: 'inbox-automation',
+              title: 'Automation & guardrails',
+              description: 'Current routing and attachment guardrails.',
+              items: [
+                {
+                  id: 'inbox-auto-assign',
+                  label: 'Auto-assign',
+                  helper: 'Automatically distribute new conversations',
+                  type: 'toggle',
+                  enabled: Boolean(inboxSummary.configuration?.autoAssignEnabled)
+                },
+                {
+                  id: 'inbox-attachments',
+                  label: 'Attachments',
+                  helper: `${inboxSummary.configuration?.maxAttachmentMb ?? 0}MB • ${(inboxSummary.configuration?.allowedFileTypes ?? ['jpg', 'png', 'pdf']).join(', ')}`,
+                  type: 'toggle',
+                  enabled: Boolean(inboxSummary.configuration?.attachmentsEnabled)
+                },
+                {
+                  id: 'inbox-ai-assist',
+                  label: 'AI assist',
+                  helper:
+                    inboxSummary.configuration?.aiAssistEnabled
+                      ? `Provider: ${inboxSummary.configuration?.aiAssistProvider || 'configured'}`
+                      : 'Disabled',
+                  type: 'toggle',
+                  enabled: Boolean(inboxSummary.configuration?.aiAssistEnabled)
+                },
+                {
+                  id: 'inbox-quiet-hours',
+                  label: 'Quiet hours',
+                  helper: inboxSummary.configuration?.quietHours || 'Not configured',
+                  type: 'value',
+                  value: inboxSummary.configuration?.quietHours || 'Not configured'
+                },
+                {
+                  id: 'inbox-manage',
+                  label: 'Inbox administration',
+                  helper: 'Open the inbox control workspace to edit queues and templates',
+                  type: 'action',
+                  cta: 'Manage inbox',
+                  href: '/admin/inbox'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    : null;
   const navigation = [
   const sections = [
   const upcomingManualEntries = manualUpcoming.slice(0, 4).map((entry) => ({
@@ -1117,6 +1232,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
     operationsSection,
     disputeSection,
     complianceSection,
+    inboxSection,
     legalSection,
     automationSection,
     zoneGovernanceSection,

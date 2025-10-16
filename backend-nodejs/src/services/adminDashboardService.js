@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { summariseInboxForDashboard } from './adminInboxService.js';
 import { getServiceManagementSnapshot } from './adminServiceManagementService.js';
 import { listLegalDocumentsSummary } from './legalDocumentService.js';
 import { listAdminAuditEvents } from './adminAuditEventService.js';
@@ -1106,6 +1107,7 @@ export async function buildAdminDashboard({
       : 0
   }));
 
+  const inboxSummary = await summariseInboxForDashboard();
   const platformSettings = getCachedPlatformSettings();
   const commissionSettings = platformSettings?.commissions ?? {};
   const subscriptionSettings = platformSettings?.subscriptions ?? {};
@@ -1179,6 +1181,7 @@ export async function buildAdminDashboard({
     audit: {
       timeline: auditTimeline
     },
+    inbox: inboxSummary
     serviceManagement: serviceSnapshot
     legal: legalSummary
     platform: {

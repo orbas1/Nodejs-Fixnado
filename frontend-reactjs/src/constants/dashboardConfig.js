@@ -31,6 +31,7 @@ export const DASHBOARD_ROLES = [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
       { id: 'calendar', label: 'Network Calendar', icon: 'calendar' },
       { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
+      { id: 'inbox', label: 'Unified Inbox', icon: 'support' },
       { id: 'availability', label: 'Serviceman Management', icon: 'crew' },
       { id: 'assets', label: 'Asset & Rental Control', icon: 'assets' },
       {

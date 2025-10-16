@@ -30,6 +30,13 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  getInboxSnapshot,
+  saveInboxConfiguration,
+  saveInboxQueue,
+  removeInboxQueue,
+  saveInboxTemplate,
+  removeInboxTemplate
+} from '../controllers/adminInboxController.js';
   listPurchaseOrdersHandler,
   getPurchaseOrderHandler,
   createPurchaseOrderHandler,
@@ -470,6 +477,67 @@ router.delete(
 );
 
 router.get(
+  '/inbox',
+  authenticate,
+  enforcePolicy('admin.inbox.read', { metadata: () => ({ section: 'inbox' }) }),
+  getInboxSnapshot
+);
+
+router.put(
+  '/inbox/configuration',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'configuration' }) }),
+  saveInboxConfiguration
+);
+
+router.post(
+  '/inbox/queues',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'queues', method: 'POST' }) }),
+  saveInboxQueue
+);
+
+router.put(
+  '/inbox/queues/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'queues', queueId: req.params.id, method: 'PUT' })
+  }),
+  saveInboxQueue
+);
+
+router.delete(
+  '/inbox/queues/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'queues', queueId: req.params.id, method: 'DELETE' })
+  }),
+  removeInboxQueue
+);
+
+router.post(
+  '/inbox/templates',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'templates', method: 'POST' }) }),
+  saveInboxTemplate
+);
+
+router.put(
+  '/inbox/templates/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'templates', templateId: req.params.id, method: 'PUT' })
+  }),
+  saveInboxTemplate
+);
+
+router.delete(
+  '/inbox/templates/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'templates', templateId: req.params.id, method: 'DELETE' })
+  }),
+  removeInboxTemplate
   '/purchases/orders',
   authenticate,
   enforcePolicy('admin.purchases.read', {
