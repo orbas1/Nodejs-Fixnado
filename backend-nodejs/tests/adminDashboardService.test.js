@@ -17,6 +17,8 @@ const {
   InventoryItem,
   InventoryAlert,
   AnalyticsPipelineRun,
+  Post,
+  CustomJobBid
   OperationsQueueBoard,
   OperationsQueueUpdate
   AdminAuditEvent
@@ -360,6 +362,27 @@ describe('buildAdminDashboard', () => {
       metadata: {}
     });
 
+    const customJob = await Post.create({
+      userId: buyer.id,
+      title: 'Custom electrical audit',
+      description: 'Full compliance-grade electrical inspection.',
+      budget: '£9,500',
+      budgetAmount: 9500,
+      budgetCurrency: 'GBP',
+      category: 'custom-job',
+      metadata: { workflow: 'custom-job', source: 'admin-console' },
+      images: [],
+      status: 'open'
+    });
+
+    await CustomJobBid.create({
+      postId: customJob.id,
+      providerId: provider.id,
+      companyId: company.id,
+      amount: 9100,
+      currency: 'GBP',
+      status: 'pending'
+    });
     await AdminAuditEvent.create({
       title: 'Manual risk review',
       summary: 'Validating bespoke evidence package',
@@ -532,6 +555,9 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.audit.timeline.some((entry) => entry.event === 'Manual audit')).toBe(true);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
+    expect(dashboard.customJobs.summary.openCount).toBe(1);
+    expect(dashboard.customJobs.summary.activeBidCount).toBe(1);
+    expect(dashboard.customJobs.summary.latestUpdate.title).toBe('Custom electrical audit');
     expect(dashboard.platform.monetisation).toBeDefined();
     expect(dashboard.platform.monetisation.commissionsEnabled).toBe(true);
     expect(dashboard.platform.monetisation.baseRateLabel).toBe('2.50%');

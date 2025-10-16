@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
@@ -68,6 +69,10 @@ import SecurityTelemetryWorkspace from '../components/security/telemetry/index.j
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
 const numberFormatter = new Intl.NumberFormat();
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
 
 function formatDateLabel(value) {
   if (!value) {
@@ -932,6 +937,21 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
+function formatJobStatus(status) {
+  if (!status) return '—';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function formatJobTimestamp(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+  return dateTimeFormatter.format(date);
+}
+
+function buildAdminNavigation(payload) {
 function formatRelativeTime(timestamp) {
   if (!timestamp) return null;
   const last = new Date(timestamp);
@@ -974,6 +994,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
     ? complianceContext.payload.controls
     : [];
   const auditTimeline = payload.audit?.timeline ?? [];
+  const customJobSummary = payload.customJobs?.summary ?? {};
   const buildCommandMetricsLink =
     typeof options.commandMetricsLink === 'function'
       ? options.commandMetricsLink
@@ -1166,6 +1187,79 @@ function buildAdminNavigation(payload, complianceContext = null) {
     }
   };
 
+  const customJobsSection = {
+    id: 'custom-job-operations',
+    label: 'Custom jobs',
+    icon: 'pipeline',
+    description: 'Oversee bespoke briefs, bids, and provider negotiations.',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'custom-job-console',
+          title: 'Custom job console',
+          description: 'Launch the dedicated workspace for bespoke work orders, bids, and awards.',
+          items: [
+            {
+              id: 'open-briefs',
+              label: 'Open briefs',
+              helper: 'Live custom jobs awaiting fulfilment',
+              value: `${(customJobSummary.openCount ?? 0).toLocaleString()} open`
+            },
+            {
+              id: 'created-window',
+              label: 'Briefs created',
+              helper: `Within ${payload.timeframeLabel ?? 'current window'}`,
+              value: `${(customJobSummary.createdInWindow ?? 0).toLocaleString()} new`
+            },
+            {
+              id: 'active-bids',
+              label: 'Active bids',
+              helper: 'Negotiations in progress across briefs',
+              value: `${(customJobSummary.activeBidCount ?? 0).toLocaleString()} active`
+            },
+            customJobSummary.latestUpdate
+              ? {
+                  id: 'latest-activity',
+                  label: 'Latest activity',
+                  helper: `Status: ${formatJobStatus(customJobSummary.latestUpdate.status)}`,
+                  value: formatJobTimestamp(customJobSummary.latestUpdate.updatedAt)
+                }
+              : null,
+            {
+              id: 'launch-console',
+              label: 'Management workspace',
+              helper: 'Create briefs, review bids, exchange attachments, and award providers.',
+              type: 'action',
+              href: '/admin/custom-jobs',
+              cta: 'Open console'
+            }
+          ].filter(Boolean)
+        }
+      ]
+    }
+  };
+
+  const securitySection = securitySignals.length
+    ? {
+        id: 'security-posture',
+        label: 'Security & telemetry posture',
+        description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
+        type: 'grid',
+        data: {
+          cards: securitySignals.map((signal) => ({
+            title: `${signal.label} — ${signal.valueLabel}`,
+            accent: resolveAccent(signal.tone),
+            details: [
+              signal.caption,
+              signal.tone === 'danger'
+                ? 'Immediate investigation required.'
+                : signal.tone === 'warning'
+                  ? 'Monitor closely and prepare contingency.'
+                  : 'Tracking to plan.'
+            ]
+          }))
+        }
   const securitySection = {
     id: 'security-posture',
     label: 'Security & telemetry posture',
@@ -1401,6 +1495,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
   const navigation = [
     overview,
     commandMetrics,
+    customJobsSection,
   const inboxSection = inboxSummary
     ? {
         id: 'inbox',
@@ -2980,6 +3075,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/custom-jobs"
+        size="sm"
+        variant="secondary"
+        icon={ClipboardDocumentListIcon}
+        iconPosition="start"
+      >
+        Custom job management
         to="/admin/roles"
         size="sm"
         variant="secondary"

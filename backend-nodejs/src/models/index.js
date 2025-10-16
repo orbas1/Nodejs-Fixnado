@@ -201,6 +201,10 @@ ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
 
 Post.hasMany(CustomJobBid, { foreignKey: 'postId', as: 'bids' });
 CustomJobBid.belongsTo(Post, { foreignKey: 'postId', as: 'job' });
+Post.belongsTo(CustomJobBid, { foreignKey: 'awardedBidId', as: 'awardedBid' });
+CustomJobBid.hasMany(Post, { foreignKey: 'awardedBidId', as: 'awardedJobs' });
+Post.belongsTo(User, { foreignKey: 'awardedBy', as: 'awardedByUser' });
+User.hasMany(Post, { foreignKey: 'awardedBy', as: 'awardedCustomJobs' });
 
 CustomJobBid.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 User.hasMany(CustomJobBid, { foreignKey: 'providerId', as: 'customJobBids' });

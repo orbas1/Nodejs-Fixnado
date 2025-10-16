@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { getCustomJobOperationalSnapshot } from './adminCustomJobService.js';
 import {
   getCommandMetricSettingsSnapshot,
   listActiveCommandMetricCards
@@ -1242,6 +1243,7 @@ export async function buildAdminDashboard({
     queueInsights,
     auditTimeline,
     security,
+    customJobSnapshot
     serviceSnapshot
     legalSummary
     complianceControlsComputed,
@@ -1259,6 +1261,7 @@ export async function buildAdminDashboard({
     computeQueueInsights(range, timezone),
     buildAuditTimeline(range, timezone),
     computeSecuritySignals(timezone),
+    getCustomJobOperationalSnapshot({ rangeStart: range.start.toJSDate(), rangeEnd: range.end.toJSDate() })
     getServiceManagementSnapshot({ listingLimit: 12, packageLimit: 6 })
     listLegalDocumentsSummary({ timezone })
     buildAuditTimeline(range, timezone, key),
@@ -1427,6 +1430,16 @@ export async function buildAdminDashboard({
       connectors: securityConnectors,
       summary: securitySummary,
       capabilities: resolvedSecurityCapabilities
+    },
+    customJobs: {
+      summary: customJobSnapshot,
+      navigation: {
+        actionHref: '/admin/custom-jobs',
+        openCount: customJobSnapshot.openCount,
+        activeBidCount: customJobSnapshot.activeBidCount,
+        latestUpdate: customJobSnapshot.latestUpdate,
+        createdInWindow: customJobSnapshot.createdInWindow
+      }
     },
     queues: {
       boards: queueBoards,
