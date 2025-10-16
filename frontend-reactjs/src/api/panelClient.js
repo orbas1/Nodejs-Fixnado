@@ -1,6 +1,8 @@
 const API_ROOT = '/api';
 const REQUEST_TIMEOUT = 10000;
 const CACHE_NAMESPACE = 'fixnado:panel-cache';
+const DISPUTE_HEALTH_CACHE_KEY = 'admin-dispute-health';
+const DISPUTE_HEALTH_CACHE_TTL = 12000;
 
 const memoryCache = new Map();
 
@@ -228,6 +230,76 @@ function ensureArray(value) {
   if (Array.isArray(value)) return value;
   if (value == null) return [];
   return [value].filter(Boolean);
+}
+
+function normaliseQueueAttachments(rawAttachments) {
+  if (!Array.isArray(rawAttachments)) {
+    return [];
+  }
+  return rawAttachments
+    .map((attachment) => {
+      if (!attachment || typeof attachment !== 'object') {
+        return null;
+      }
+      const label = typeof attachment.label === 'string' && attachment.label.trim().length
+        ? attachment.label.trim()
+        : typeof attachment.title === 'string'
+          ? attachment.title.trim()
+          : null;
+      const url = typeof attachment.url === 'string' && attachment.url.trim().length
+        ? attachment.url.trim()
+        : typeof attachment.href === 'string'
+          ? attachment.href.trim()
+          : null;
+      if (!url) {
+        return null;
+      }
+      const type = typeof attachment.type === 'string' && attachment.type.trim().length
+        ? attachment.type.trim()
+        : 'link';
+      return { label: label || url, url, type };
+    })
+    .filter(Boolean);
+}
+
+function normaliseQueueUpdate(update, boardId, index) {
+  if (!update || typeof update !== 'object') {
+    const fallbackHeadline = typeof update === 'string' && update.trim().length ? update.trim() : `Update ${index + 1}`;
+    return {
+      id: `${boardId}-update-${index}`,
+      headline: fallbackHeadline,
+      body: '',
+      tone: 'info',
+      recordedAt: null,
+      attachments: []
+    };
+  }
+
+  const headline =
+    (typeof update.headline === 'string' && update.headline.trim().length && update.headline.trim()) ||
+    (typeof update.title === 'string' && update.title.trim().length && update.title.trim()) ||
+    `Update ${index + 1}`;
+
+  const body =
+    (typeof update.body === 'string' && update.body.trim()) ||
+    (typeof update.description === 'string' && update.description.trim()) ||
+    '';
+
+  const tone = typeof update.tone === 'string' && update.tone.trim().length ? update.tone.trim() : 'info';
+
+  const recordedAt =
+    (typeof update.recordedAt === 'string' && update.recordedAt) ||
+    (typeof update.timestamp === 'string' && update.timestamp) ||
+    null;
+
+  return {
+    id: update.id || `${boardId}-update-${index}`,
+    headline,
+    body,
+    tone,
+    recordedAt,
+    attachments: normaliseQueueAttachments(update.attachments)
+  };
 }
 
 function toNumber(value, fallback = 0) {
@@ -1490,15 +1562,70 @@ function normaliseAdminDashboard(payload = {}) {
       signal.valueLabel ||
       (signal.value != null ? String(signal.value) : signal.percentage != null ? `${signal.percentage}%` : '—'),
     caption: signal.caption || '',
-    tone: signal.tone || 'info'
+    tone: signal.tone || 'info',
+    statusLabel: signal.statusLabel || signal.status || null,
+    ownerRole: signal.ownerRole || signal.owner || null,
+    runbookUrl: signal.runbookUrl || signal.runbook || null,
+    metricKey: signal.metricKey || `signal-${index}`
   }));
 
   const automationBacklog = ensureArray(payload.security?.automationBacklog).map((item, index) => ({
+    id: item.id || `automation-${index}`,
     name: item.name || `Automation ${index + 1}`,
     status: item.status || 'Monitor',
     notes: item.notes || '',
-    tone: item.tone || 'info'
+    tone: item.tone || 'info',
+    owner: item.owner || null,
+    runbookUrl: item.runbookUrl || null,
+    dueAt: item.dueAt || null,
+    priority: item.priority || 'medium',
+    signalKey: item.signalKey || null
   }));
+
+  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => {
+    const id = board.id || `board-${index}`;
+    const metadata = board.metadata && typeof board.metadata === 'object' ? board.metadata : {};
+    const priority = Number.parseInt(board.priority ?? index + 1, 10);
+    return {
+      id,
+      slug: board.slug || null,
+      title: board.title || board.name || `Queue ${index + 1}`,
+      summary: board.summary || '',
+      owner: board.owner || 'Operations',
+      status: board.status || 'operational',
+      priority: Number.isFinite(priority) ? priority : index + 1,
+      metadata,
+      createdAt: board.createdAt || null,
+      updatedAt: board.updatedAt || null,
+      updates: ensureArray(board.updates).map((update, updateIndex) => normaliseQueueUpdate(update, id, updateIndex))
+    };
+  });
+  const connectors = ensureArray(payload.security?.connectors).map((connector, index) => ({
+    id: connector.id || `connector-${index}`,
+    name: connector.name || `Connector ${index + 1}`,
+    status: connector.status || 'healthy',
+    description: connector.description || '',
+    connectorType: connector.connectorType || connector.type || 'custom',
+    region: connector.region || null,
+    dashboardUrl: connector.dashboardUrl || connector.url || null,
+    ingestionEndpoint: connector.ingestionEndpoint || null,
+    eventsPerMinuteTarget:
+      Number.parseInt(connector.eventsPerMinuteTarget ?? connector.target ?? 0, 10) || 0,
+    eventsPerMinuteActual:
+      Number.parseInt(connector.eventsPerMinuteActual ?? connector.actual ?? 0, 10) || 0,
+    lastHealthCheckAt: connector.lastHealthCheckAt || connector.lastHealth || null,
+    logoUrl: connector.logoUrl || null
+  }));
+
+  const summary = payload.security?.summary || {
+    connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
+    connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
+    automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
+    signalsWarning: securitySignals.filter((signal) => signal.tone === 'warning').length,
+    signalsDanger: securitySignals.filter((signal) => signal.tone === 'danger').length
+  };
+
+  const securityCapabilities = payload.security?.capabilities || {};
 
   const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
     id: board.id || `board-${index}`,
@@ -1517,12 +1644,73 @@ function normaliseAdminDashboard(payload = {}) {
     tone: control.tone || 'info'
   }));
 
-  const auditTimeline = ensureArray(payload.audit?.timeline).map((item, index) => ({
-    time: item.time || '--:--',
-    event: item.event || `Audit event ${index + 1}`,
-    owner: item.owner || 'Operations',
-    status: item.status || 'Scheduled'
-  }));
+  let auditTimeline;
+  if (Array.isArray(payload.audit?.timeline?.events)) {
+    auditTimeline = {
+      events: ensureArray(payload.audit.timeline.events).map((item, index) => ({
+        id: item.id || `audit-${index}`,
+        time: item.time || '--:--',
+        event: item.event || `Audit event ${index + 1}`,
+        owner: item.owner || 'Operations',
+        ownerTeam: item.ownerTeam || null,
+        status: item.status || 'Scheduled',
+        category: item.category || 'other',
+        summary: item.summary || '',
+        attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+          label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+          url: attachment?.url || ''
+        })),
+        occurredAt: item.occurredAt || null,
+        dueAt: item.dueAt || null,
+        source: item.source || 'system',
+        metadata: item.metadata || {}
+      })),
+      summary: {
+        countsByCategory: payload.audit.timeline.summary?.countsByCategory ?? {},
+        countsByStatus: payload.audit.timeline.summary?.countsByStatus ?? {},
+        manualCounts: payload.audit.timeline.summary?.manualCounts ?? {},
+        manualStatusCounts: payload.audit.timeline.summary?.manualStatusCounts ?? {},
+        timeframe: payload.audit.timeline.summary?.timeframe || timeframe,
+        timeframeLabel: payload.audit.timeline.summary?.timeframeLabel || payload.timeframeLabel || '7 days',
+        timezone: payload.audit.timeline.summary?.timezone || 'Europe/London',
+        range: payload.audit.timeline.summary?.range || null,
+        lastUpdated: payload.audit.timeline.summary?.lastUpdated || generatedAt
+      }
+    };
+  } else {
+    const fallbackEvents = ensureArray(payload.audit?.timeline).map((item, index) => ({
+      id: item.id || `audit-${index}`,
+      time: item.time || '--:--',
+      event: item.event || `Audit event ${index + 1}`,
+      owner: item.owner || 'Operations',
+      ownerTeam: item.ownerTeam || null,
+      status: item.status || 'Scheduled',
+      category: item.category || 'other',
+      summary: item.summary || '',
+      attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+        label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+        url: attachment?.url || ''
+      })),
+      occurredAt: item.occurredAt || null,
+      dueAt: item.dueAt || null,
+      source: item.source || 'system',
+      metadata: item.metadata || {}
+    }));
+    auditTimeline = {
+      events: fallbackEvents,
+      summary: {
+        countsByCategory: {},
+        countsByStatus: {},
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe,
+        timeframeLabel: payload.timeframeLabel || '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: generatedAt
+      }
+    };
+  }
 
   return {
     timeframe,
@@ -1552,7 +1740,14 @@ function normaliseAdminDashboard(payload = {}) {
     },
     security: {
       signals: securitySignals,
-      automationBacklog
+      automationBacklog,
+      connectors,
+      summary,
+      capabilities: {
+        canManageSignals: Boolean(securityCapabilities.canManageSignals),
+        canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
+        canManageConnectors: Boolean(securityCapabilities.canManageConnectors)
+      }
     },
     queues: {
       boards: queueBoards,
@@ -1561,6 +1756,207 @@ function normaliseAdminDashboard(payload = {}) {
     audit: {
       timeline: auditTimeline
     }
+  };
+}
+
+function normaliseDisputeAttachment(attachment, index = 0, entryId = 'attachment') {
+  if (!attachment) {
+    return null;
+  }
+
+  if (typeof attachment === 'string') {
+    const trimmed = attachment.trim();
+    if (!trimmed) {
+      return null;
+    }
+    return {
+      id: `${entryId}-${index}`,
+      label: trimmed,
+      url: trimmed,
+      type: 'link',
+      thumbnail: null
+    };
+  }
+
+  const url = typeof attachment.url === 'string' ? attachment.url.trim() : '';
+  if (!url) {
+    return null;
+  }
+
+  const label = typeof attachment.label === 'string' && attachment.label.trim().length > 0
+    ? attachment.label.trim()
+    : url;
+
+  return {
+    id: attachment.id ?? `${entryId}-${index}`,
+    label,
+    url,
+    type: typeof attachment.type === 'string' ? attachment.type : 'link',
+    thumbnail:
+      typeof attachment.thumbnail === 'string' && attachment.thumbnail.trim().length > 0
+        ? attachment.thumbnail.trim()
+        : null
+  };
+}
+
+function normaliseDisputeEntry(entry = {}, index = 0) {
+  const attachments = ensureArray(entry.attachments)
+    .map((item, attachmentIndex) => normaliseDisputeAttachment(item, attachmentIndex, entry.id ?? `entry-${index}`))
+    .filter(Boolean);
+
+  return {
+    id: entry.id || null,
+    bucketId: entry.bucketId || null,
+    periodStart: entry.periodStart || null,
+    periodEnd: entry.periodEnd || null,
+    escalatedCount: Number.parseInt(entry.escalatedCount ?? 0, 10) || 0,
+    resolvedCount: Number.parseInt(entry.resolvedCount ?? 0, 10) || 0,
+    reopenedCount: Number.parseInt(entry.reopenedCount ?? 0, 10) || 0,
+    backlogCount: Number.parseInt(entry.backlogCount ?? 0, 10) || 0,
+    ownerNotes: entry.ownerNotes || '',
+    attachments,
+    createdAt: entry.createdAt || null,
+    updatedAt: entry.updatedAt || null,
+    createdBy: entry.createdBy || null,
+    updatedBy: entry.updatedBy || null
+  };
+}
+
+function normaliseDisputeBucket(bucket = {}, index = 0) {
+  const entries = ensureArray(bucket.entries).map((entry, entryIndex) =>
+    normaliseDisputeEntry(entry, entryIndex)
+  );
+
+  const latestEntry = bucket.latestEntry
+    ? normaliseDisputeEntry(bucket.latestEntry, 0)
+    : entries[0] ?? null;
+
+  return {
+    id: bucket.id || `bucket-${index}`,
+    label: bucket.label || `Cadence bucket ${index + 1}`,
+    cadence: bucket.cadence || 'Window',
+    windowDurationHours: Number.parseInt(bucket.windowDurationHours ?? 24, 10) || 24,
+    ownerName: bucket.ownerName || '',
+    ownerRole: bucket.ownerRole || '',
+    escalationContact: bucket.escalationContact || '',
+    playbookUrl: bucket.playbookUrl || '',
+    heroImageUrl: bucket.heroImageUrl || '',
+    checklist: ensureArray(bucket.checklist).map((item) => String(item)),
+    status: bucket.status || 'on_track',
+    sortOrder: Number.parseInt(bucket.sortOrder ?? index, 10) || index,
+    metrics: {
+      latestResolutionRate: Number.parseFloat(bucket.metrics?.latestResolutionRate ?? 0) || 0,
+      latestEscalated: Number.parseInt(bucket.metrics?.latestEscalated ?? 0, 10) || 0,
+      latestResolved: Number.parseInt(bucket.metrics?.latestResolved ?? 0, 10) || 0,
+      backlog: Number.parseInt(bucket.metrics?.backlog ?? 0, 10) || 0,
+      trend: Number.parseFloat(bucket.metrics?.trend ?? 0) || 0
+    },
+    latestEntry,
+    entries
+  };
+}
+
+function normaliseDisputeHealthWorkspace(payload = {}) {
+  const summary = {
+    open: Number.parseInt(payload.summary?.open ?? 0, 10) || 0,
+    underReview: Number.parseInt(payload.summary?.underReview ?? 0, 10) || 0,
+    resolvedThisWindow: Number.parseInt(payload.summary?.resolvedThisWindow ?? 0, 10) || 0,
+    openedThisWindow: Number.parseInt(payload.summary?.openedThisWindow ?? 0, 10) || 0,
+    resolutionRate: Number.parseFloat(payload.summary?.resolutionRate ?? 0) || 0,
+    backlogOlderThanTarget: Number.parseInt(payload.summary?.backlogOlderThanTarget ?? 0, 10) || 0,
+    reopenedThisWindow: Number.parseInt(payload.summary?.reopenedThisWindow ?? 0, 10) || 0,
+    windowStart: payload.summary?.windowStart || null,
+    generatedAt: payload.summary?.generatedAt || new Date().toISOString()
+  };
+
+  const buckets = ensureArray(payload.buckets).map((bucket, index) =>
+    normaliseDisputeBucket(bucket, index)
+  );
+
+  const insights = ensureArray(payload.insights).map((insight) => ({
+    id: insight.id || null,
+    label: insight.label || 'Cadence bucket',
+    status: insight.status || 'on_track',
+    latestResolutionRate: Number.parseFloat(insight.latestResolutionRate ?? 0) || 0,
+    backlog: Number.parseInt(insight.backlog ?? 0, 10) || 0
+  }));
+
+  return {
+    summary,
+    buckets,
+    insights
+  };
+}
+
+function disputeHealthHistoryFallback() {
+  return {
+    bucket: null,
+    entries: [],
+    pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+    metrics: { latestResolutionRate: 0, latestEscalated: 0, latestResolved: 0, backlog: 0, trend: 0 }
+  };
+}
+
+function normaliseDisputeHealthHistory(payload = {}) {
+  const bucket = payload.bucket
+    ? {
+        id: payload.bucket.id || null,
+        label: payload.bucket.label || 'Cadence bucket',
+        cadence: payload.bucket.cadence || 'Window',
+        status: payload.bucket.status || 'monitor',
+        windowDurationHours: Number.parseInt(payload.bucket.windowDurationHours ?? 24, 10) || 24,
+        ownerName: payload.bucket.ownerName || '',
+        ownerRole: payload.bucket.ownerRole || '',
+        escalationContact: payload.bucket.escalationContact || '',
+        playbookUrl: payload.bucket.playbookUrl || '',
+        heroImageUrl: payload.bucket.heroImageUrl || '',
+        checklist: ensureArray(payload.bucket.checklist).map((item) => String(item))
+      }
+    : null;
+
+  const entries = ensureArray(payload.entries).map((entry, index) => normaliseDisputeEntry(entry, index));
+
+  const parsedTotal = Number.parseInt(payload.pagination?.total ?? entries.length, 10);
+  const total = Number.isFinite(parsedTotal) && parsedTotal >= 0 ? parsedTotal : entries.length;
+  const rawLimit = payload.pagination?.limit ?? (entries.length > 0 ? entries.length : 50);
+  const parsedLimit = Number.parseInt(rawLimit, 10);
+  const limitValue = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : entries.length > 0 ? entries.length : 50;
+  const parsedOffset = Number.parseInt(payload.pagination?.offset ?? 0, 10);
+  const offsetValue = Number.isFinite(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+
+  const pagination = {
+    total,
+    limit: limitValue,
+    offset: offsetValue,
+    hasMore: Boolean(payload.pagination?.hasMore)
+  };
+
+  const metrics = {
+    latestResolutionRate: Number.parseFloat(payload.metrics?.latestResolutionRate ?? 0) || 0,
+    latestEscalated: Number.parseInt(payload.metrics?.latestEscalated ?? 0, 10) || 0,
+    latestResolved: Number.parseInt(payload.metrics?.latestResolved ?? 0, 10) || 0,
+    backlog: Number.parseInt(payload.metrics?.backlog ?? 0, 10) || 0,
+    trend: Number.parseFloat(payload.metrics?.trend ?? 0) || 0
+  };
+
+  return { bucket, entries, pagination, metrics };
+}
+
+function disputeHealthFallback() {
+  return {
+    summary: {
+      open: 0,
+      underReview: 0,
+      resolvedThisWindow: 0,
+      openedThisWindow: 0,
+      resolutionRate: 0,
+      backlogOlderThanTarget: 0,
+      reopenedThisWindow: 0,
+      windowStart: null,
+      generatedAt: new Date().toISOString()
+    },
+    buckets: [],
+    insights: []
   };
 }
 
@@ -1653,30 +2049,117 @@ const adminFallback = normaliseAdminDashboard({
   },
   security: {
     signals: [
-      { label: 'MFA adoption', valueLabel: '96.4%', caption: 'Enterprise + provider portals', tone: 'success' },
-      { label: 'Critical alerts', valueLabel: '0', caption: 'Security Operations Center overnight review', tone: 'success' },
-      { label: 'Audit log ingestion', valueLabel: '100%', caption: '24h ingestion completeness from Splunk', tone: 'info' }
+      {
+        label: 'MFA adoption',
+        valueLabel: '96.4%',
+        caption: 'Enterprise + provider portals',
+        tone: 'success',
+        statusLabel: 'On target',
+        ownerRole: 'Security operations',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/mfa-hardening',
+        metricKey: 'mfa_adoption'
+      },
+      {
+        label: 'Critical alerts',
+        valueLabel: '0',
+        caption: 'Security Operations Center overnight review',
+        tone: 'success',
+        statusLabel: 'No open alerts',
+        ownerRole: 'Trust & safety',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/critical-alerts',
+        metricKey: 'critical_alerts_open'
+      },
+      {
+        label: 'Audit log ingestion',
+        valueLabel: '100%',
+        caption: '24h ingestion completeness from Splunk',
+        tone: 'info',
+        statusLabel: 'Tracking plan',
+        ownerRole: 'Platform engineering',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/telemetry-pipeline-reset',
+        metricKey: 'audit_ingestion_rate'
+      }
     ],
     automationBacklog: [
       {
+        id: 'auto-1',
         name: 'Escrow ledger reconciliation',
         status: 'Ready for QA',
         notes: 'Extends double-entry validation to rental deposits; requires finance sign-off.',
-        tone: 'success'
+        tone: 'success',
+        owner: 'Automation Guild',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/escrow-ledger',
+        dueAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        signalKey: 'audit_ingestion_rate'
       },
       {
+        id: 'auto-2',
         name: 'Compliance webhook retries',
-        status: 'In build',
+        status: 'In progress',
         notes: 'Retries failed submissions to insurance partners with exponential backoff.',
-        tone: 'info'
+        tone: 'info',
+        owner: 'Compliance Ops',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/compliance-retry-service',
+        dueAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'medium',
+        signalKey: 'critical_alerts_open'
       },
       {
+        id: 'auto-3',
         name: 'Dispute document summarisation',
-        status: 'Discovery',
+        status: 'Planned',
         notes: 'Pilot with AI summarisation flagged for accuracy review before production rollout.',
-        tone: 'warning'
+        tone: 'warning',
+        owner: 'Customer Advocacy',
+        runbookUrl: null,
+        dueAt: null,
+        priority: 'urgent',
+        signalKey: null
       }
-    ]
+    ],
+    connectors: [
+      {
+        id: 'connector-1',
+        name: 'Splunk Observability',
+        status: 'healthy',
+        description: 'Primary SIEM connector forwarding platform audit events.',
+        connectorType: 'siem',
+        region: 'eu-west-2',
+        dashboardUrl: 'https://splunk.fixnado.com/app/sre/telemetry-overview',
+        ingestionEndpoint: 'kinesis://splunk-audit',
+        eventsPerMinuteTarget: 4800,
+        eventsPerMinuteActual: 5120,
+        lastHealthCheckAt: new Date().toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/splunk.svg'
+      },
+      {
+        id: 'connector-2',
+        name: 'Azure Sentinel',
+        status: 'warning',
+        description: 'Regional SOC handoff for APAC enterprise tenants.',
+        connectorType: 'siem',
+        region: 'ap-southeast-2',
+        dashboardUrl: 'https://portal.azure.com/#view/Microsoft_Azure_Security/SentinelMainBlade',
+        ingestionEndpoint: 'eventhub://sentinel-apac',
+        eventsPerMinuteTarget: 1800,
+        eventsPerMinuteActual: 1540,
+        lastHealthCheckAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/azure-sentinel.svg'
+      }
+    ],
+    summary: {
+      connectorsHealthy: 1,
+      connectorsAttention: 1,
+      automationOpen: 3,
+      signalsWarning: 1,
+      signalsDanger: 0
+    },
+    capabilities: {
+      canManageSignals: true,
+      canManageAutomation: true,
+      canManageConnectors: true
+    }
   },
   queues: {
     boards: [
@@ -1732,12 +2215,81 @@ const adminFallback = normaliseAdminDashboard({
     ]
   },
   audit: {
-    timeline: [
-      { time: '08:30', event: 'GDPR DSAR pack exported', owner: 'Legal', status: 'Completed' },
-      { time: '09:45', event: 'Escrow reconciliation (daily)', owner: 'Finance Ops', status: 'In progress' },
-      { time: '11:00', event: 'Provider onboarding review', owner: 'Compliance Ops', status: 'Scheduled' },
-      { time: '14:30', event: 'Pen-test retest results review', owner: 'Security', status: 'Scheduled' }
-    ]
+    timeline: {
+      events: [
+        {
+          id: 'fallback-dsar',
+          time: '08:30',
+          event: 'GDPR DSAR pack exported',
+          owner: 'Legal',
+          ownerTeam: 'Privacy',
+          status: 'Completed',
+          category: 'compliance',
+          summary: 'Evidence delivered to requester and archived in compliance vault.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-escrow',
+          time: '09:45',
+          event: 'Escrow reconciliation (daily)',
+          owner: 'Finance Ops',
+          ownerTeam: 'Finance',
+          status: 'In progress',
+          category: 'pipeline',
+          summary: 'Validating settlement balances before release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-onboarding',
+          time: '11:00',
+          event: 'Provider onboarding review',
+          owner: 'Compliance Ops',
+          ownerTeam: 'Compliance',
+          status: 'Scheduled',
+          category: 'compliance',
+          summary: 'Reviewing high-risk provider onboarding artifacts.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-security',
+          time: '14:30',
+          event: 'Pen-test retest results review',
+          owner: 'Security',
+          ownerTeam: 'Security',
+          status: 'Scheduled',
+          category: 'security',
+          summary: 'Confirming remediation of critical findings ahead of release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        }
+      ],
+      summary: {
+        countsByCategory: { compliance: 2, pipeline: 1, security: 1 },
+        countsByStatus: { completed: 1, in_progress: 1, scheduled: 2 },
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe: '7d',
+        timeframeLabel: '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: null
+      }
+    }
   }
 });
 
@@ -2674,6 +3226,14 @@ function withFallback(normaliser, fallback, fetcherFactory) {
   };
 }
 
+function cacheDisputeHealthWorkspace(payload) {
+  const normalised = normaliseDisputeHealthWorkspace(payload);
+  const expires = Date.now() + DISPUTE_HEALTH_CACHE_TTL;
+  memoryCache.set(DISPUTE_HEALTH_CACHE_KEY, { data: normalised, expires });
+  writeStorage(DISPUTE_HEALTH_CACHE_KEY, normalised, DISPUTE_HEALTH_CACHE_TTL);
+  return normalised;
+}
+
 export const getAdminDashboard = withFallback(
   normaliseAdminDashboard,
   adminFallback,
@@ -2685,6 +3245,126 @@ export const getAdminDashboard = withFallback(
       signal: options?.signal
     })
 );
+
+export const getDisputeHealthWorkspace = withFallback(
+  normaliseDisputeHealthWorkspace,
+  disputeHealthFallback(),
+  (options = {}) =>
+    request('/admin/disputes/health', {
+      cacheKey: DISPUTE_HEALTH_CACHE_KEY,
+      ttl: DISPUTE_HEALTH_CACHE_TTL,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    })
+);
+
+export const getDisputeHealthBucketHistory = withFallback(
+  normaliseDisputeHealthHistory,
+  disputeHealthHistoryFallback(),
+  (options = {}) => {
+    if (!options?.bucketId) {
+      throw new Error('bucketId is required to load dispute history');
+    }
+    const query = toQueryString({ limit: options.limit, offset: options.offset });
+    return request(
+      `/admin/disputes/health/buckets/${encodeURIComponent(options.bucketId)}/history${query}`,
+      {
+        cacheKey: `${DISPUTE_HEALTH_CACHE_KEY}:history:${options.bucketId}${query}`,
+        ttl: 5000,
+        forceRefresh: options?.forceRefresh,
+        signal: options?.signal
+      }
+    );
+  }
+);
+
+export async function createDisputeHealthBucket(payload) {
+  const { data } = await request('/admin/disputes/health/buckets', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function updateDisputeHealthBucket(bucketId, payload) {
+  const { data } = await request(`/admin/disputes/health/buckets/${encodeURIComponent(bucketId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function archiveDisputeHealthBucket(bucketId) {
+  const { data } = await request(`/admin/disputes/health/buckets/${encodeURIComponent(bucketId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function createDisputeHealthEntry(payload) {
+  const { data } = await request('/admin/disputes/health/entries', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function updateDisputeHealthEntry(entryId, payload) {
+  const { data } = await request(`/admin/disputes/health/entries/${encodeURIComponent(entryId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function deleteDisputeHealthEntry(entryId) {
+  const { data } = await request(`/admin/disputes/health/entries/${encodeURIComponent(entryId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
+  const query = toQueryString({ timeframe, category, status });
+  return request(`/admin/audit/events${query}`, {
+    cacheKey: `admin-audit-events:${timeframe}:${category ?? 'all'}:${status ?? 'all'}`,
+    ttl: 10000,
+    signal,
+    forceRefresh
+  });
+}
+
+export function createAdminAuditEvent(event, { signal } = {}) {
+  return request('/admin/audit/events', {
+    method: 'POST',
+    body: JSON.stringify(event),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function updateAdminAuditEvent(eventId, payload, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function deleteAdminAuditEvent(eventId, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'DELETE',
+    signal,
+    cacheKey: null
+  });
+}
 
 export const getProviderDashboard = withFallback(
   normaliseProviderDashboard,

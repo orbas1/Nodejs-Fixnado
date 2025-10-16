@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { login, register, profile, refresh, logout } from '../controllers/authController.js';
+import { login, register, profile, refresh, logout, updateProfile } from '../controllers/authController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -31,6 +31,7 @@ router.post(
   login
 );
 router.get('/me', authenticate, profile);
+router.put('/me', authenticate, updateProfile);
 router.post('/session/refresh', [body('refreshToken').optional().isString()], refresh);
 router.post('/logout', authenticate, logout);
 

@@ -87,10 +87,6 @@ function resolvePersona(headers = {}) {
 }
 
 export function resolveCanonicalRole(user, headers = {}) {
-  if (!user) {
-    return CanonicalRoles.GUEST;
-  }
-
   const headerRole = toCanonicalRole(headers['x-fixnado-role']);
   if (headerRole) {
     return headerRole;
@@ -99,6 +95,10 @@ export function resolveCanonicalRole(user, headers = {}) {
   const personaRole = resolvePersona(headers);
   if (personaRole && ROLE_ALIASES.has(personaRole)) {
     return ROLE_ALIASES.get(personaRole);
+  }
+
+  if (!user) {
+    return CanonicalRoles.GUEST;
   }
 
   const userRole = toCanonicalRole(user.type);

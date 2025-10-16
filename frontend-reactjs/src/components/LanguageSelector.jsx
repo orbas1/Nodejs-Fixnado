@@ -22,6 +22,12 @@ const VARIANT_STYLES = {
       'relative inline-flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm',
     select:
       'w-full bg-transparent pr-7 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
+  },
+  menu: {
+    container:
+      'relative flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur',
+    select:
+      'w-full bg-transparent pr-7 text-xs font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
   }
 };
 
@@ -64,7 +70,7 @@ export default function LanguageSelector({ variant, className }) {
 }
 
 LanguageSelector.propTypes = {
-  variant: PropTypes.oneOf(['header', 'hero', 'mobile']),
+  variant: PropTypes.oneOf(['header', 'hero', 'mobile', 'menu']),
   className: PropTypes.string
 };
 
