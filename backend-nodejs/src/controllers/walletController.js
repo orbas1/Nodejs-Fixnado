@@ -1,31 +1,54 @@
 import {
-  getWalletOverview,
+  getWalletOverview as getAdminWalletOverview,
   saveWalletSettings,
-  listWalletAccounts,
-  createWalletAccount,
-  updateWalletAccount,
-  recordWalletTransaction,
-  listWalletTransactions
+  listWalletAccounts as adminListWalletAccounts,
+  createWalletAccount as adminCreateWalletAccount,
+  updateWalletAccount as adminUpdateWalletAccount,
+  recordWalletTransaction as adminRecordWalletTransaction,
+  listWalletTransactions as adminListWalletTransactions
 } from '../services/wallet/index.js';
-
-function handleServiceError(next, error) {
-  if (error && (error.statusCode || error.status)) {
-    const responseError = new Error(error.message);
-    responseError.status = error.statusCode || error.status;
-    return next(responseError);
 import { toCanonicalRole } from '../constants/permissions.js';
 import {
-  listWalletAccounts,
-  createWalletAccount,
+  listWalletAccounts as listUserWalletAccounts,
+  createWalletAccount as createUserWalletAccount,
   getWalletAccountDetails,
-  updateWalletAccount,
-  listWalletTransactions,
-  createWalletTransaction,
+  updateWalletAccount as updateUserWalletAccount,
+  listWalletTransactions as listUserWalletTransactions,
+  createWalletTransaction as createUserWalletTransaction,
+  listWalletPaymentMethods,
   createWalletPaymentMethod,
   updateWalletPaymentMethod,
-  listWalletPaymentMethods,
-  getWalletOverview
+  getWalletOverview as getUserWalletOverview
 } from '../services/walletService.js';
+
+function normaliseHttpError(error) {
+  if (!error) {
+    return new Error('Unknown wallet error');
+  }
+
+  if (error instanceof Error) {
+    if (!error.status && error.statusCode) {
+      const normalised = new Error(error.message);
+      normalised.status = error.statusCode;
+      if (error.code) {
+        normalised.code = error.code;
+      }
+      return normalised;
+    }
+
+    return error;
+  }
+
+  return new Error(typeof error === 'string' ? error : 'Unknown wallet error');
+}
+
+function handleAdminError(next, error) {
+  return next(normaliseHttpError(error));
+}
+
+function handleUserError(next, error) {
+  return next(normaliseHttpError(error));
+}
 
 function resolveActor(req) {
   const actorId = req.user?.id || null;
@@ -35,115 +58,92 @@ function resolveActor(req) {
   return { actorId, actorRole };
 }
 
-function handleError(next, error) {
-  if (error?.statusCode) {
-    const normalised = new Error(error.message);
-    normalised.statusCode = error.statusCode;
-    normalised.status = error.statusCode;
-    return next(normalised);
-  }
-  return next(error);
-}
-
-export async function getWalletOverviewHandler(req, res, next) {
+export async function getAdminWalletOverviewHandler(req, res, next) {
   try {
     const { search, status, page, pageSize } = req.query;
-    const payload = await getWalletOverview({ search, status, page, pageSize });
+    const payload = await getAdminWalletOverview({ search, status, page, pageSize });
     res.json(payload);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function getWalletAccountsHandler(req, res, next) {
+export async function getAdminWalletAccountsHandler(req, res, next) {
   try {
     const { search, status, page, pageSize } = req.query;
-    const payload = await listWalletAccounts({ search, status, page, pageSize, includeRecent: true });
+    const payload = await adminListWalletAccounts({ search, status, page, pageSize, includeRecent: true });
     res.json(payload);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function saveWalletSettingsHandler(req, res, next) {
+export async function saveAdminWalletSettingsHandler(req, res, next) {
   try {
     const actorId = req.user?.id ?? null;
     const settings = await saveWalletSettings({ actorId, settings: req.body });
     res.json({ settings });
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function createWalletAccountHandler(req, res, next) {
+export async function createAdminWalletAccountHandler(req, res, next) {
   try {
     const actorId = req.user?.id ?? null;
-    const account = await createWalletAccount({ ...req.body, actorId });
+    const account = await adminCreateWalletAccount({ ...req.body, actorId });
     res.status(201).json(account);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function updateWalletAccountHandler(req, res, next) {
+export async function updateAdminWalletAccountHandler(req, res, next) {
   try {
-    const account = await updateWalletAccount(req.params.id, req.body);
+    const account = await adminUpdateWalletAccount(req.params.id, req.body);
     res.json(account);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function recordWalletTransactionHandler(req, res, next) {
+export async function recordAdminWalletTransactionHandler(req, res, next) {
   try {
     const actorId = req.user?.id ?? null;
-    const payload = await recordWalletTransaction({
-      accountId: req.params.id,
-      ...req.body,
-      actorId
-    });
+    const payload = await adminRecordWalletTransaction({ accountId: req.params.id, ...req.body, actorId });
     res.status(201).json(payload);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export async function getWalletTransactionsHandler(req, res, next) {
+export async function getAdminWalletTransactionsHandler(req, res, next) {
   try {
     const { limit } = req.query;
-    const payload = await listWalletTransactions({ accountId: req.params.id, limit });
+    const payload = await adminListWalletTransactions({ accountId: req.params.id, limit });
     res.json(payload);
   } catch (error) {
-    handleServiceError(next, error);
+    handleAdminError(next, error);
   }
 }
 
-export default {
-  getWalletOverviewHandler,
-  getWalletAccountsHandler,
-  saveWalletSettingsHandler,
-  createWalletAccountHandler,
-  updateWalletAccountHandler,
-  recordWalletTransactionHandler,
-  getWalletTransactionsHandler
-};
 export async function listWalletAccountsHandler(req, res, next) {
   try {
-    const accounts = await listWalletAccounts({
+    const accounts = await listUserWalletAccounts({
       userId: req.query.userId || req.user?.id || null,
       companyId: req.query.companyId || null,
       includeInactive: req.query.includeInactive === 'true'
     });
     res.json({ accounts });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function createWalletAccountHandler(req, res, next) {
   try {
     const { actorId, actorRole } = resolveActor(req);
-    const account = await createWalletAccount({
+    const account = await createUserWalletAccount({
       userId: req.body.userId || req.user?.id || null,
       companyId: req.body.companyId || null,
       currency: req.body.currency || 'GBP',
@@ -157,7 +157,7 @@ export async function createWalletAccountHandler(req, res, next) {
     });
     res.status(201).json({ account });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -171,23 +171,23 @@ export async function getWalletAccountHandler(req, res, next) {
     });
     res.json(payload);
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function updateWalletAccountHandler(req, res, next) {
   try {
     const { actorId } = resolveActor(req);
-    const account = await updateWalletAccount(req.params.accountId, req.body || {}, { actorId });
+    const account = await updateUserWalletAccount(req.params.accountId, req.body || {}, { actorId });
     res.json({ account });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function listWalletTransactionsHandler(req, res, next) {
   try {
-    const result = await listWalletTransactions(req.params.accountId, {
+    const result = await listUserWalletTransactions(req.params.accountId, {
       type: req.query.type,
       limit: req.query.limit ? Number.parseInt(req.query.limit, 10) : undefined,
       offset: req.query.offset ? Number.parseInt(req.query.offset, 10) : undefined,
@@ -196,17 +196,17 @@ export async function listWalletTransactionsHandler(req, res, next) {
     });
     res.json(result);
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function createWalletTransactionHandler(req, res, next) {
   try {
     const { actorId, actorRole } = resolveActor(req);
-    const result = await createWalletTransaction(req.params.accountId, req.body || {}, { actorId, actorRole });
+    const result = await createUserWalletTransaction(req.params.accountId, req.body || {}, { actorId, actorRole });
     res.status(201).json(result);
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -215,7 +215,7 @@ export async function listWalletPaymentMethodsHandler(req, res, next) {
     const methods = await listWalletPaymentMethods(req.params.accountId);
     res.json({ methods });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -225,33 +225,28 @@ export async function createWalletPaymentMethodHandler(req, res, next) {
     const method = await createWalletPaymentMethod(req.params.accountId, req.body || {}, { actorId, actorRole });
     res.status(201).json({ method });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function updateWalletPaymentMethodHandler(req, res, next) {
   try {
     const { actorId } = resolveActor(req);
-    const method = await updateWalletPaymentMethod(
-      req.params.accountId,
-      req.params.methodId,
-      req.body || {},
-      { actorId }
-    );
+    const method = await updateWalletPaymentMethod(req.params.accountId, req.params.methodId, req.body || {}, { actorId });
     res.json({ method });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function getWalletSummaryHandler(req, res, next) {
   try {
-    const overview = await getWalletOverview({
+    const overview = await getUserWalletOverview({
       userId: req.query.userId || req.user?.id || null,
       companyId: req.query.companyId || null
     });
     res.json({ overview });
   } catch (error) {
-    handleError(next, error);
+    handleUserError(next, error);
   }
 }
