@@ -23,6 +23,8 @@ export const Permissions = Object.freeze({
   ADMIN_LIVE_FEED_AUDIT_WRITE: 'admin:live-feed:audit:write',
   ADMIN_AFFILIATE_READ: 'admin:affiliate:read',
   ADMIN_AFFILIATE_WRITE: 'admin:affiliate:write',
+  ADMIN_ESCROW_READ: 'admin:escrow:read',
+  ADMIN_ESCROW_WRITE: 'admin:escrow:write',
   ADMIN_PROVIDER_READ: 'admin:provider:read',
   ADMIN_PROVIDER_WRITE: 'admin:provider:write',
   ADMIN_PROVIDER_ARCHIVE: 'admin:provider:archive',

@@ -598,6 +598,33 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.escrows.read': {
+    id: 'admin.escrows.read',
+    version: '1.0.0',
+    resource: 'admin.escrows',
+    action: 'admin.escrows:read',
+    description: 'Allow administrators to review escrow records, milestones, and compliance notes.',
+    requirements: [Permissions.ADMIN_ESCROW_READ],
+    tags: ['admin', 'finance', 'escrow'],
+    severity: 'high',
+    metadata: (req) => ({
+      scope: req.query?.status || 'all',
+      policy: req.query?.policyId || 'all'
+    })
+  },
+  'admin.escrows.write': {
+    id: 'admin.escrows.write',
+    version: '1.0.0',
+    resource: 'admin.escrows',
+    action: 'admin.escrows:write',
+    description: 'Allow administrators to create manual escrows and update release policies, notes, and milestones.',
+    requirements: [Permissions.ADMIN_ESCROW_WRITE],
+    tags: ['admin', 'finance', 'escrow'],
+    severity: 'critical',
+    metadata: (req) => ({
+      method: req.method,
+      escrowId: req.params?.id ?? null
+    })
   'admin.wallets.read': {
     id: 'admin.wallets.read',
     version: '1.0.0',

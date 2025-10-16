@@ -12,6 +12,8 @@ import ServiceZoneCoverage from './serviceZoneCoverage.js';
 import Order from './order.js';
 import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
+import EscrowMilestone from './escrowMilestone.js';
+import EscrowNote from './escrowNote.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
@@ -281,6 +283,12 @@ Dispute.belongsTo(Escrow, { foreignKey: 'escrowId' });
 
 Region.hasMany(Dispute, { foreignKey: 'regionId', as: 'disputes' });
 Dispute.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Escrow.hasMany(EscrowMilestone, { foreignKey: 'escrowId', as: 'milestones' });
+EscrowMilestone.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+
+Escrow.hasMany(EscrowNote, { foreignKey: 'escrowId', as: 'notes' });
+EscrowNote.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
 
 Order.hasMany(Payment, { foreignKey: 'orderId', as: 'payments' });
 Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
@@ -792,6 +800,8 @@ export {
   Order,
   OrderNote,
   Escrow,
+  EscrowMilestone,
+  EscrowNote,
   Dispute,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,

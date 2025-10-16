@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, WalletIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
@@ -1507,6 +1508,14 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const escrowConsoleLink = {
+    id: 'escrow-console-link',
+    label: 'Escrow management',
+    description: 'Manual overrides, release approvals, and dispute controls.',
+    type: 'link',
+    href: '/admin/escrows',
+    icon: 'finance'
+  };
   const navigation = [
     overview,
     commandMetrics,
@@ -1648,6 +1657,8 @@ function buildAdminNavigation(payload, complianceContext = null) {
     inboxSection,
     legalSection,
     automationSection,
+    auditSection,
+    escrowConsoleLink
     zoneGovernanceSection,
     auditSection
     auditSection,
@@ -3553,6 +3564,13 @@ export default function AdminDashboard() {
         Geo-zonal builder
       </Button>
       <Button
+        to="/admin/escrows"
+        size="sm"
+        variant="secondary"
+        icon={ShieldCheckIcon}
+        iconPosition="start"
+      >
+        Escrow management
         to="/admin/wallets"
         size="sm"
         variant="secondary"

@@ -181,6 +181,7 @@ const buildSearchIndex = (navigation) =>
     .filter((section) => !section.href)
     .flatMap((section) => {
   navigation.flatMap((section) => {
+    if (section.type === 'link') {
     if (section.href) {
       return [];
     }
@@ -805,6 +806,8 @@ const DashboardLayout = ({
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
                     const Icon = getNavIcon(item);
+                    const baseContent = (
+                      <>
                     if (item.href) {
                       const isActiveLink = location.pathname === item.href;
                     const isLink = item.type === 'link' && item.href;
@@ -985,6 +988,7 @@ const DashboardLayout = ({
                       </>
                     );
 
+                    if (item.type === 'link' && item.href) {
                     if (isRoute) {
                     if (item.href) {
                       return (
@@ -992,6 +996,9 @@ const DashboardLayout = ({
                           key={item.id}
                           to={item.href}
                           className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          {baseContent}
                           className={`${baseClasses} ${stateClasses}`}
                           onClick={() => setMobileNavOpen(false)}
                           aria-label={item.label}
@@ -1026,12 +1033,19 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
+                        onClick={() => {
+                          setSelectedSection(item.id);
+                          setMobileNavOpen(false);
+                        }}
                         onClick={() => setSelectedSection(item.id)}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
                             : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                         }`}
+                        aria-pressed={isActive}
+                      >
+                        {baseContent}
                         className={`${baseClasses} ${stateClasses}`}
                         className={sharedClasses}
                         className={navItemClass}
@@ -1302,6 +1316,7 @@ const DashboardLayout = ({
               </>
             );
 
+            if (item.type === 'link' && item.href) {
             if (isRoute) {
             if (item.href) {
               return (
