@@ -1,56 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-
-const ACCESS_KEY = 'fixnado:personaAccess';
-const ACTIVE_KEY = 'fixnado:activePersona';
-const DEFAULT_ALLOWED = ['user', 'finance'];
-
-function normaliseList(value) {
-  if (!Array.isArray(value)) {
-    return null;
-  }
-  const cleaned = value
-    .map((entry) => (typeof entry === 'string' ? entry.trim() : null))
-    .filter((entry) => entry);
-  return cleaned.length > 0 ? cleaned : null;
-}
-
-function readAllowedPersonas() {
-  if (typeof window === 'undefined') {
-    return DEFAULT_ALLOWED;
-  }
-
-  try {
-    const storage = window.localStorage;
-    if (!storage) {
-      return DEFAULT_ALLOWED;
-    }
-
-    const stored = storage.getItem(ACCESS_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const normalised = normaliseList(parsed);
-        if (normalised) {
-          return normalised;
-        }
-      } catch (error) {
-        console.warn('[personaAccess] failed to parse persona list', error);
-      }
-    }
-
-    const active = storage.getItem(ACTIVE_KEY);
-    if (typeof active === 'string' && active.trim()) {
-      return [active.trim()];
-    }
-  } catch (error) {
-    console.warn('[personaAccess] unable to read persona access metadata', error);
-  }
-
-  return DEFAULT_ALLOWED;
-}
+import {
+  readPersonaAccess,
+  writePersonaAccess,
+  addPersonaAccess,
+  readActivePersona,
+  writeActivePersona,
+  getDefaultAllowedPersonas
+} from '../utils/personaStorage.js';
 
 export function usePersonaAccess() {
-  const [allowed, setAllowed] = useState(() => readAllowedPersonas());
+  const [allowed, setAllowed] = useState(() => readPersonaAccess());
+  const [activePersona, setActivePersonaState] = useState(() => readActivePersona());
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -58,17 +18,32 @@ export function usePersonaAccess() {
     }
 
     const handleStorage = (event) => {
-      if (!event.key || event.key === ACCESS_KEY || event.key === ACTIVE_KEY) {
-        setAllowed(readAllowedPersonas());
+      if (!event.key || event.key === 'fixnado:personaAccess' || event.key === 'fixnado:activePersona') {
+        setAllowed(readPersonaAccess());
       }
     };
 
+    const handlePersonaChange = (event) => {
+      if (event?.detail?.allowed) {
+        setAllowed(event.detail.allowed);
+      } else {
+        setAllowed(readPersonaAccess());
+      }
+      setActivePersonaState(readActivePersona());
+    };
+
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener('fixnado:persona:change', handlePersonaChange);
+    window.addEventListener('fixnado:session:update', handlePersonaChange);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('fixnado:persona:change', handlePersonaChange);
+      window.removeEventListener('fixnado:session:update', handlePersonaChange);
+    };
   }, []);
 
   const refresh = useCallback(() => {
-    setAllowed(readAllowedPersonas());
+    setAllowed(readPersonaAccess());
   }, []);
 
   const hasAccess = useCallback((persona) => {
@@ -78,7 +53,26 @@ export function usePersonaAccess() {
     return allowed.includes(persona);
   }, [allowed]);
 
-  return { allowed, hasAccess, refresh };
+  const grantAccess = useCallback((persona) => {
+    const next = addPersonaAccess(persona);
+    setAllowed(next);
+    return next;
+  }, []);
+
+  const setActivePersona = useCallback((persona) => {
+    writeActivePersona(persona);
+    setAllowed(readPersonaAccess());
+    setActivePersonaState(readActivePersona());
+  }, []);
+
+  const reset = useCallback(() => {
+    const next = writePersonaAccess(getDefaultAllowedPersonas());
+    setAllowed(next);
+    setActivePersonaState(readActivePersona());
+    return next;
+  }, []);
+
+  return { allowed, hasAccess, refresh, grantAccess, setActivePersona, reset, activePersona };
 }
 
 export default usePersonaAccess;

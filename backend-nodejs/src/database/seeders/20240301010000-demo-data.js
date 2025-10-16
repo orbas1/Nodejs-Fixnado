@@ -56,6 +56,35 @@ export async function up({ context: queryInterface }) {
     }
   ]);
 
+  await queryInterface.bulkInsert('user_preferences', [
+    {
+      id: '88888888-8888-4888-8888-888888888888',
+      user_id: userId,
+      timezone: 'Europe/London',
+      locale: 'en-GB',
+      organisation_name: 'Fixnado',
+      job_title: 'Operations Lead',
+      team_name: 'Dispatch',
+      avatar_url: 'https://cdn.fixnado.com/profiles/avery-stone.png',
+      signature: 'Avery Stone\\nOperations Lead',
+      digest_frequency: 'daily',
+      email_alerts: true,
+      sms_alerts: true,
+      push_alerts: false,
+      marketing_opt_in: false,
+      primary_phone_encrypted: null,
+      workspace_shortcuts: ['provider', 'finance', 'enterprise'],
+      role_assignments: [
+        { id: 'role-provider', role: 'provider', allowCreate: true, dashboards: ['provider', 'finance'], notes: 'Manage crews' }
+      ],
+      notification_channels: [
+        { id: 'channel-ops', type: 'email', label: 'Operations mailbox', value: 'ops@fixnado.com' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    }
+  ]);
+
   await queryInterface.bulkInsert('Post', [
     {
       id: '55555555-5555-5555-5555-555555555555',
@@ -129,9 +158,90 @@ export async function up({ context: queryInterface }) {
       updated_at: new Date()
     }
   ]);
+
+  await queryInterface.bulkInsert('ComplianceControl', [
+    {
+      id: '88888888-8888-8888-8888-888888888888',
+      company_id: companyId,
+      owner_team: 'Compliance Ops',
+      title: 'Vendor security review',
+      category: 'vendor',
+      control_type: 'detective',
+      status: 'monitoring',
+      review_frequency: 'quarterly',
+      next_review_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      last_review_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+      owner_email: 'governance@fixnado.com',
+      evidence_required: true,
+      evidence_location: 's3://fixnado-compliance/vendor-security',
+      documentation_url: 'https://docs.fixnado.com/compliance/vendor-security',
+      escalation_policy: 'Escalate to compliance director after 48h overdue',
+      notes: 'Ensure SOC 2 Type II letters are collected before renewal.',
+      tags: ['vendor', 'security', 'soc2'],
+      watchers: ['ciso@fixnado.com', 'governance@fixnado.com'],
+      metadata: {
+        evidenceCheckpoints: [
+          {
+            id: 'evidence-soc2',
+            name: 'SOC 2 report upload',
+            requirement: 'Upload SOC 2 Type II letter',
+            dueAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            owner: 'Vendor success',
+            status: 'pending'
+          }
+        ],
+        exceptionReviews: [
+          {
+            id: 'exception-vendor',
+            summary: 'Legacy supplier with compensating control',
+            owner: 'Compliance Ops',
+            status: 'monitoring',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ]
+      },
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: '99999999-9999-9999-9999-999999999999',
+      company_id: companyId,
+      owner_team: 'Compliance Ops',
+      title: 'Incident response plan drill',
+      category: 'procedure',
+      control_type: 'corrective',
+      status: 'active',
+      review_frequency: 'semiannual',
+      next_review_at: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      last_review_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
+      owner_email: 'ir@fixnado.com',
+      evidence_required: true,
+      evidence_location: 's3://fixnado-compliance/ir-drills',
+      documentation_url: 'https://docs.fixnado.com/compliance/incident-response',
+      escalation_policy: 'Notify security leadership when drill is overdue',
+      notes: 'Rotate drill facilitators per half to broaden ownership.',
+      tags: ['security', 'training'],
+      watchers: ['securitylead@fixnado.com'],
+      metadata: {
+        evidenceCheckpoints: [
+          {
+            id: 'evidence-report',
+            name: 'Drill report uploaded',
+            requirement: 'Attach post-mortem PDF',
+            owner: 'Security ops',
+            status: 'pending'
+          }
+        ],
+        exceptionReviews: []
+      },
+      created_at: new Date(),
+      updated_at: new Date()
+    }
+  ]);
 }
 
 export async function down({ context: queryInterface }) {
+  await queryInterface.bulkDelete('ComplianceControl', null, {});
   await queryInterface.bulkDelete('ServiceZone', null, {});
   await queryInterface.bulkDelete('MarketplaceItem', null, {});
   await queryInterface.bulkDelete('Post', null, {});

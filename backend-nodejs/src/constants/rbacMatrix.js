@@ -29,9 +29,17 @@ export const RBAC_MATRIX = {
       Permissions.FEED_MESSAGE,
       Permissions.FEED_POST,
       Permissions.SERVICES_BOOK,
+      Permissions.SERVICE_ORDERS_VIEW,
+      Permissions.SERVICE_ORDERS_MANAGE,
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
-      Permissions.SCHEDULE_MANAGE
+      Permissions.SCHEDULE_MANAGE,
+      Permissions.WALLET_VIEW,
+      Permissions.WALLET_MANAGE,
+      Permissions.WALLET_TRANSACT,
+      Permissions.WALLET_METHOD_MANAGE
+      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
       landing: '/app/dashboard',
@@ -77,6 +85,7 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
@@ -171,6 +180,9 @@ export const RBAC_MATRIX = {
       'Central operations staff handling escalations, provider approvals, and compliance audits.',
     inherits: [CanonicalRoles.PROVIDER_ADMIN],
     permissions: [
+      Permissions.ZONES_READ,
+      Permissions.ZONES_MANAGE,
+      Permissions.ZONES_COVERAGE,
       Permissions.ZONES_MATCH,
       Permissions.ZONES_PREVIEW,
       Permissions.COMPLIANCE_EXPORT,
@@ -179,9 +191,20 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
+      Permissions.ADMIN_OPERATIONS_QUEUE_READ,
+      Permissions.ADMIN_OPERATIONS_QUEUE_WRITE,
+      Permissions.ADMIN_RENTAL_READ,
+      Permissions.ADMIN_RENTAL_WRITE,
+      Permissions.ADMIN_SERVICES_READ,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
       Permissions.ADMIN_COMMAND_METRICS_READ
+      Permissions.ADMIN_AUTOMATION_READ
+      Permissions.ADMIN_PURCHASE_READ,
+      Permissions.ADMIN_PURCHASE_WRITE
+      Permissions.ADMIN_WEBSITE_READ
+      Permissions.ADMIN_AUDIT_READ
+      Permissions.ADMIN_SECURITY_POSTURE_READ
     ],
     navigation: {
       landing: '/app/operations/overview',
@@ -208,17 +231,51 @@ export const RBAC_MATRIX = {
     inherits: [CanonicalRoles.OPERATIONS],
     permissions: [
       Permissions.ADMIN_DASHBOARD,
+      Permissions.ADMIN_DASHBOARD_WRITE,
       Permissions.ADMIN_FEATURE_READ,
       Permissions.ADMIN_FEATURE_WRITE,
       Permissions.ADMIN_PLATFORM_READ,
       Permissions.ADMIN_PLATFORM_WRITE,
+      Permissions.ADMIN_AUTOMATION_READ,
+      Permissions.ADMIN_AUTOMATION_WRITE,
+      Permissions.ADMIN_APPEARANCE_READ,
+      Permissions.ADMIN_APPEARANCE_WRITE,
+      Permissions.ADMIN_LIVE_FEED_AUDIT_READ,
+      Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
       Permissions.ADMIN_COMMAND_METRICS_READ,
       Permissions.ADMIN_COMMAND_METRICS_WRITE,
+      Permissions.ADMIN_USER_READ,
+      Permissions.ADMIN_USER_WRITE,
+      Permissions.ADMIN_USER_INVITE,
+      Permissions.ADMIN_ENTERPRISE_READ,
+      Permissions.ADMIN_ENTERPRISE_WRITE,
+      Permissions.ADMIN_INBOX_READ,
+      Permissions.ADMIN_INBOX_WRITE,
+      Permissions.ADMIN_RENTAL_READ,
+      Permissions.ADMIN_RENTAL_WRITE,
+      Permissions.ADMIN_SERVICES_READ,
+      Permissions.ADMIN_SERVICES_WRITE,
+      Permissions.ADMIN_HOME_BUILDER,
+      Permissions.ADMIN_LEGAL_READ,
+      Permissions.ADMIN_LEGAL_WRITE,
+      Permissions.ADMIN_WEBSITE_READ,
+      Permissions.ADMIN_WEBSITE_WRITE,
+      Permissions.ADMIN_AUDIT_READ,
+      Permissions.ADMIN_AUDIT_WRITE,
+      Permissions.ADMIN_COMPLIANCE_READ,
+      Permissions.ADMIN_COMPLIANCE_WRITE,
+      Permissions.ADMIN_TAXONOMY_READ,
+      Permissions.ADMIN_TAXONOMY_WRITE,
+      Permissions.ADMIN_SECURITY_POSTURE_READ,
+      Permissions.ADMIN_SECURITY_POSTURE_WRITE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
-      Permissions.SUPPORT_TICKETS
+      Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_PURCHASE_READ,
+      Permissions.ADMIN_PURCHASE_WRITE,
+      Permissions.ADMIN_PURCHASE_BUDGET
     ],
     navigation: {
       landing: '/app/admin/dashboard',

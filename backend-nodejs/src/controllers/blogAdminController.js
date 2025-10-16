@@ -15,7 +15,11 @@ import {
 
 function handleError(error, res) {
   if (error?.statusCode) {
-    return res.status(error.statusCode).json({ message: error.message });
+    const payload = { message: error.message };
+    if (Array.isArray(error.details) && error.details.length > 0) {
+      payload.details = error.details;
+    }
+    return res.status(error.statusCode).json(payload);
   }
   return res.status(500).json({ message: 'Unexpected error' });
 }
@@ -113,8 +117,27 @@ export async function deleteAdminCategory(req, res) {
 
 export async function listAdminTags(req, res) {
   try {
-    const tags = await listTags();
-    return res.json({ data: tags });
+    const {
+      page = '1',
+      pageSize = '20',
+      search,
+      role,
+      indexing,
+      sort,
+      direction
+    } = req.query;
+
+    const result = await listTags({
+      page,
+      pageSize,
+      search,
+      role,
+      indexing,
+      sort,
+      direction
+    });
+
+    return res.json({ data: result.tags, pagination: result.pagination, stats: result.stats });
   } catch (error) {
     return handleError(error, res);
   }
