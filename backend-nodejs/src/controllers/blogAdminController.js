@@ -5,12 +5,15 @@ import {
   archivePost,
   deletePost,
   getAdminPosts,
+  duplicatePost,
   listCategories,
   upsertCategory,
   deleteCategory,
   listTags,
   upsertTag,
-  deleteTag
+  deleteTag,
+  listPostRevisions,
+  restorePostRevision
 } from '../services/blogService.js';
 
 function handleError(error, res) {
@@ -22,10 +25,17 @@ function handleError(error, res) {
 
 export async function listAdminPosts(req, res) {
   try {
-    const { page = 1, pageSize = 20, status, search } = req.query;
+    const { page = 1, pageSize = 20, status, search, category, tag } = req.query;
     const limit = Math.min(Number(pageSize) || 20, 100);
     const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
-    const result = await getAdminPosts({ limit, offset, status, search });
+    const result = await getAdminPosts({
+      limit,
+      offset,
+      status,
+      search,
+      category,
+      tag
+    });
     return res.json({
       data: result.posts,
       pagination: {
@@ -50,7 +60,7 @@ export async function createAdminPost(req, res) {
 
 export async function updateAdminPost(req, res) {
   try {
-    const post = await updatePost(req.params.postId, req.body);
+    const post = await updatePost(req.params.postId, req.body, req.user?.id);
     return res.json({ data: post });
   } catch (error) {
     return handleError(error, res);
@@ -59,7 +69,7 @@ export async function updateAdminPost(req, res) {
 
 export async function publishAdminPost(req, res) {
   try {
-    const post = await publishPost(req.params.postId, req.body ?? {});
+    const post = await publishPost(req.params.postId, req.body ?? {}, req.user?.id);
     return res.json({ data: post });
   } catch (error) {
     return handleError(error, res);
@@ -68,7 +78,7 @@ export async function publishAdminPost(req, res) {
 
 export async function archiveAdminPost(req, res) {
   try {
-    const post = await archivePost(req.params.postId);
+    const post = await archivePost(req.params.postId, req.user?.id);
     return res.json({ data: post });
   } catch (error) {
     return handleError(error, res);
@@ -133,6 +143,33 @@ export async function deleteAdminTag(req, res) {
   try {
     await deleteTag(req.params.tagId);
     return res.status(204).send();
+  } catch (error) {
+    return handleError(error, res);
+  }
+}
+
+export async function duplicateAdminPost(req, res) {
+  try {
+    const post = await duplicatePost(req.params.postId, req.user?.id);
+    return res.status(201).json({ data: post });
+  } catch (error) {
+    return handleError(error, res);
+  }
+}
+
+export async function listAdminPostRevisions(req, res) {
+  try {
+    const revisions = await listPostRevisions(req.params.postId, { limit: 50 });
+    return res.json({ data: revisions });
+  } catch (error) {
+    return handleError(error, res);
+  }
+}
+
+export async function restoreAdminPostRevision(req, res) {
+  try {
+    const post = await restorePostRevision(req.params.postId, req.params.revisionId, req.user?.id);
+    return res.json({ data: post });
   } catch (error) {
     return handleError(error, res);
   }

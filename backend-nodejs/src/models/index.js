@@ -46,6 +46,7 @@ import BlogTag from './blogTag.js';
 import BlogMedia from './blogMedia.js';
 import BlogPostCategory from './blogPostCategory.js';
 import BlogPostTag from './blogPostTag.js';
+import BlogPostRevision from './blogPostRevision.js';
 import AffiliateProfile from './affiliateProfile.js';
 import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
@@ -399,6 +400,11 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+BlogPost.hasMany(BlogPostRevision, { foreignKey: 'postId', as: 'revisions' });
+BlogPostRevision.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
+BlogPostRevision.belongsTo(User, { foreignKey: 'recordedById', as: 'recordedBy' });
+User.hasMany(BlogPostRevision, { foreignKey: 'recordedById', as: 'recordedBlogRevisions' });
+
 export {
   sequelize,
   User,
@@ -448,6 +454,7 @@ export {
   BlogMedia,
   BlogPostCategory,
   BlogPostTag,
+  BlogPostRevision,
   AffiliateProfile,
   AffiliateCommissionRule,
   AffiliateReferral,

@@ -69,9 +69,11 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   return payload;
 }
 
-export async function listAdminBlogPosts(params = {}) {
-  const query = buildQuery(params);
-  return request(`${ADMIN_BLOG_ROOT}/posts${query}`);
+export async function listAdminBlogPosts(params = {}, options = {}) {
+  const { signal } = options;
+  const { signal: legacySignal, ...queryParams } = params;
+  const query = buildQuery(queryParams);
+  return request(`${ADMIN_BLOG_ROOT}/posts${query}`, { signal: signal ?? legacySignal });
 }
 
 export async function createAdminBlogPost(payload) {
@@ -92,6 +94,18 @@ export async function archiveAdminBlogPost(postId) {
 
 export async function deleteAdminBlogPost(postId) {
   return request(`${ADMIN_BLOG_ROOT}/posts/${postId}`, { method: 'DELETE' });
+}
+
+export async function duplicateAdminBlogPost(postId) {
+  return request(`${ADMIN_BLOG_ROOT}/posts/${postId}/duplicate`, { method: 'POST' });
+}
+
+export async function listAdminBlogPostRevisions(postId) {
+  return request(`${ADMIN_BLOG_ROOT}/posts/${postId}/revisions`);
+}
+
+export async function restoreAdminBlogPostRevision(postId, revisionId) {
+  return request(`${ADMIN_BLOG_ROOT}/posts/${postId}/revisions/${revisionId}/restore`, { method: 'POST' });
 }
 
 export async function listAdminBlogCategories() {

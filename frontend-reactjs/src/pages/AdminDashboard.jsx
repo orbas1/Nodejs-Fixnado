@@ -445,7 +445,7 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  return [
+  const sections = [
     overview,
     commandMetrics,
     securitySection,
@@ -455,6 +455,35 @@ function buildAdminNavigation(payload) {
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  sections.push({
+    id: 'blog-management',
+    label: 'Blog management',
+    description: 'Create, schedule, and audit Fixnado editorial content from a dedicated workspace.',
+    icon: 'documents',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'blog-console-entry',
+          title: 'Editorial workspace',
+          description: 'Launch the production blog console to compose posts, manage taxonomy, and review revisions.',
+          items: [
+            {
+              id: 'open-blog-console',
+              label: 'Blog workspace',
+              helper: 'Full CRUD tooling for posts, categories, tags, and revision history.',
+              type: 'action',
+              href: '/admin/blog',
+              cta: 'Open workspace'
+            }
+          ]
+        }
+      ]
+    }
+  });
+
+  return sections;
 }
 
 export default function AdminDashboard() {
