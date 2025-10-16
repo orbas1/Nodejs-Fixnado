@@ -22,6 +22,7 @@ import adminBlogRoutes from './adminBlogRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import financeRoutes from './financeRoutes.js';
+import adminEnterpriseRoutes from './adminEnterpriseRoutes.js';
 
 const v1Router = Router();
 
@@ -30,6 +31,7 @@ v1Router.use('/services', serviceRoutes);
 v1Router.use('/feed', feedRoutes);
 v1Router.use('/search', searchRoutes);
 v1Router.use('/admin', adminRoutes);
+v1Router.use('/admin/enterprise', adminEnterpriseRoutes);
 v1Router.use('/telemetry', telemetryRoutes);
 v1Router.use('/zones', zoneRoutes);
 v1Router.use('/bookings', bookingRoutes);

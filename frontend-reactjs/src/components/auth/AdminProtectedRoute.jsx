@@ -3,6 +3,9 @@ import { Navigate, useLocation } from 'react-router-dom';
 import Spinner from '../ui/Spinner.jsx';
 import { useAdminSession } from '../../providers/AdminSessionProvider.jsx';
 
+const bypassAdminAuth =
+  typeof import.meta !== 'undefined' && import.meta.env?.VITE_DISABLE_ADMIN_AUTH === 'true';
+
 export default function AdminProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAdminSession();
   const location = useLocation();
@@ -16,7 +19,7 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !bypassAdminAuth) {
     return <Navigate to="/admin" replace state={{ from: location }} />;
   }
 

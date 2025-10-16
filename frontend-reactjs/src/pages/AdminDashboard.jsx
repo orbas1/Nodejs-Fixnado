@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
+import { listEnterpriseAccounts, DEFAULT_SUMMARY } from '../api/enterpriseAdminClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
@@ -183,6 +184,127 @@ function buildAffiliateGovernanceSection(affiliateState) {
           title: 'Performance leaders',
           description: 'Top earning partners across the last attribution window.',
           items: performerItems
+        }
+      ]
+    }
+  };
+}
+
+function buildEnterpriseLaunchpad(snapshot) {
+  if (!snapshot) return null;
+
+  if (snapshot.loading) {
+    return {
+      id: 'enterprise-management',
+      label: 'Enterprise management',
+      description: 'Provision programmes, coverage maps, and escalation ladders for enterprise clients.',
+      type: 'settings',
+      data: {
+        panels: [
+          {
+            id: 'enterprise-loading',
+            title: 'Enterprise readiness',
+            description: 'Synchronising enterprise programmes from the admin API.',
+            status: 'Syncing accounts…',
+            items: [
+              {
+                id: 'enterprise-launch-loading',
+                label: 'Open control centre',
+                helper: 'Manage programmes, coverage, and runbooks',
+                type: 'action',
+                cta: 'Open workspace',
+                href: '/admin/enterprise'
+              }
+            ]
+          }
+        ]
+      }
+    };
+  }
+
+  if (snapshot.error) {
+    return {
+      id: 'enterprise-management',
+      label: 'Enterprise management',
+      description: 'Provision programmes, coverage maps, and escalation ladders for enterprise clients.',
+      type: 'settings',
+      data: {
+        panels: [
+          {
+            id: 'enterprise-error',
+            title: 'Enterprise readiness',
+            description: 'We were unable to load the enterprise snapshot.',
+            status: 'Attention required',
+            items: [
+              {
+                id: 'enterprise-error-message',
+                label: 'Status',
+                helper: 'Retry once the admin API is reachable.',
+                value: snapshot.error
+              },
+              {
+                id: 'enterprise-launch-error',
+                label: 'Open control centre',
+                helper: 'Manage programmes, coverage, and runbooks',
+                type: 'action',
+                cta: 'Open workspace',
+                href: '/admin/enterprise'
+              }
+            ]
+          }
+        ]
+      }
+    };
+  }
+
+  const { summary } = snapshot;
+  const format = (value) => Number(value ?? 0).toLocaleString();
+  return {
+    id: 'enterprise-management',
+    label: 'Enterprise management',
+    description: 'Provision programmes, coverage maps, and escalation ladders for enterprise clients.',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'enterprise-summary',
+          title: 'Enterprise readiness',
+          description: 'Snapshot of enterprise programmes managed by Fixnado operations.',
+          status: `${format(summary.sites)} sites • ${format(summary.stakeholders)} stakeholders`,
+          items: [
+            {
+              id: 'enterprise-programmes',
+              label: 'Enterprise programmes',
+              helper: 'Accounts tracked across Fixnado',
+              value: format(summary.total)
+            },
+            {
+              id: 'enterprise-active',
+              label: 'Active programmes',
+              helper: 'Live operational workspaces',
+              value: format(summary.active)
+            },
+            {
+              id: 'enterprise-archived',
+              label: 'Archived programmes',
+              helper: 'Locked historical records',
+              value: format(summary.archived)
+            },
+            {
+              id: 'enterprise-playbooks',
+              label: 'Playbooks catalogued',
+              helper: 'Runbooks managed across accounts',
+              value: format(summary.playbooks)
+            },
+            {
+              id: 'enterprise-launch',
+              label: 'Open control centre',
+              helper: 'Manage programmes, coverage, and runbooks',
+              type: 'action',
+              cta: 'Open workspace',
+              href: '/admin/enterprise'
+            }
+          ]
         }
       ]
     }
@@ -468,6 +590,11 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [enterpriseSnapshot, setEnterpriseSnapshot] = useState({
+    loading: true,
+    summary: DEFAULT_SUMMARY,
+    error: null
+  });
 
   useEffect(() => {
     if (timeframeParam !== timeframe) {
@@ -526,15 +653,38 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const payload = await listEnterpriseAccounts({ includeArchived: true, signal: controller.signal });
+        setEnterpriseSnapshot({
+          loading: false,
+          summary: { ...DEFAULT_SUMMARY, ...payload.summary },
+          error: null
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        const message = error instanceof Error ? error.message : 'Unable to load enterprise snapshot';
+        setEnterpriseSnapshot({ loading: false, summary: DEFAULT_SUMMARY, error: message });
+      }
+    })();
+    return () => controller.abort();
+  }, []);
+
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
+  const enterpriseSection = useMemo(() => buildEnterpriseLaunchpad(enterpriseSnapshot), [enterpriseSnapshot]);
 
   const navigation = useMemo(() => {
     const sections = state.data ? buildAdminNavigation(state.data) : [];
+    if (enterpriseSection) {
+      sections.push(enterpriseSection);
+    }
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
+  }, [state.data, affiliateSection, enterpriseSection]);
   const dashboardPayload = state.data ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
@@ -592,6 +742,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/enterprise"
+        size="sm"
+        variant="secondary"
+        icon={BuildingOfficeIcon}
+        iconPosition="start"
+      >
+        Enterprise management
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"
