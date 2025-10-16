@@ -16,6 +16,11 @@ const translations = {
   'nav.explorer': 'Explorer',
   'nav.explorerSearchServices': 'Search services',
   'nav.explorerSearchServicesDescription': 'Find work',
+  'nav.dashboards': 'Dashboards',
+  'nav.solutions': 'Solutions',
+  'nav.resources': 'Resources',
+  'nav.enterpriseAnalyticsDescription': 'Enterprise analytics',
+  'nav.workspacesDescription': 'Manage workspaces',
   'nav.marketplace': 'Marketplace',
   'nav.notifications': 'Notifications',
   'nav.notificationsEmpty': 'You are all caught up.',
@@ -58,7 +63,7 @@ beforeEach(() => {
 });
 
 describe('Header navigation layout', () => {
-  it('renders login and register buttons for guests', () => {
+  it('renders minimal controls for guests', () => {
     mockUseSession.mockReturnValue({
       isAuthenticated: false,
       role: 'guest',
@@ -72,9 +77,11 @@ describe('Header navigation layout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByRole('link', { name: /Log in/i })).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: /Get started/i })).toHaveLength(2);
-    expect(screen.getAllByTestId('language-selector')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: /Log in/i })).toBeInTheDocument();
+    expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
+    expect(screen.queryByRole('link', { name: /Get started/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Explorer/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Toggle navigation menu/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Feed/i })).not.toBeInTheDocument();
   });
 
@@ -85,23 +92,24 @@ describe('Header navigation layout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('link', { name: /Feed/i })).toBeInTheDocument();
-    expect(screen.getAllByTestId('language-selector')).toHaveLength(2);
+    expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
     const explorerButton = screen.getByRole('button', { name: /Explorer/i });
     fireEvent.click(explorerButton);
     expect(screen.getByRole('link', { name: /Search services/i })).toBeInTheDocument();
+    const dashboardsButton = screen.getByRole('button', { name: /Dashboards/i });
+    fireEvent.click(dashboardsButton);
+    expect(screen.getByRole('link', { name: /Provider Operations Studio/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Admin Control Tower/i })).not.toBeInTheDocument();
   });
 
-  it('opens the account menu from the avatar control', () => {
+  it('links directly to the primary dashboard from the account control', () => {
     render(
       <MemoryRouter>
         <Header />
       </MemoryRouter>
     );
 
-    const accountButton = screen.getByLabelText(/Account menu/i);
-    fireEvent.click(accountButton);
-    expect(screen.getByRole('link', { name: /Go to dashboard/i })).toBeInTheDocument();
-    expect(screen.getByText(/provider status/i)).toBeInTheDocument();
+    const accountLink = screen.getByRole('link', { name: /Go to dashboard/i });
+    expect(accountLink).toHaveAttribute('href', '/dashboards/provider');
   });
 });

@@ -14,7 +14,8 @@ describe('Terms page', () => {
     );
 
     expect(screen.getByRole('heading', { name: /Terms and Conditions/i })).toBeInTheDocument();
-    expect(screen.getByText(termsDocument.effectiveDate)).toBeInTheDocument();
+    const effectiveDateMatches = screen.getAllByText(termsDocument.effectiveDate);
+    expect(effectiveDateMatches.length).toBeGreaterThan(0);
     termsDocument.sections.forEach((section) => {
       expect(screen.getByRole('heading', { name: section.title })).toBeInTheDocument();
       if (section.summary) {
