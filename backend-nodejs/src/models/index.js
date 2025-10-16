@@ -25,6 +25,7 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingNote from './bookingNote.js';
 import BookingTemplate from './bookingTemplate.js';
 import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
@@ -37,6 +38,7 @@ import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
 import AdCampaign from './adCampaign.js';
+import CampaignCreative from './campaignCreative.js';
 import CampaignFlight from './campaignFlight.js';
 import CampaignTargetingRule from './campaignTargetingRule.js';
 import CampaignInvoice from './campaignInvoice.js';
@@ -54,6 +56,8 @@ import AccountSupportTaskUpdate from './accountSupportTaskUpdate.js';
 import AdminUserProfile from './adminUserProfile.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
+import CustomJobInvitation from './customJobInvitation.js';
+import CustomJobReport from './customJobReport.js';
 import PlatformSetting from './platformSetting.js';
 import CommunicationsInboxConfiguration from './communicationsInboxConfiguration.js';
 import CommunicationsEntryPoint from './communicationsEntryPoint.js';
@@ -257,6 +261,20 @@ Company.hasMany(CustomJobBid, { foreignKey: 'companyId', as: 'customJobBids' });
 CustomJobBid.hasMany(CustomJobBidMessage, { foreignKey: 'bidId', as: 'messages' });
 CustomJobBidMessage.belongsTo(CustomJobBid, { foreignKey: 'bidId', as: 'bid' });
 CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+
+Post.hasMany(CustomJobInvitation, { foreignKey: 'postId', as: 'invitations' });
+CustomJobInvitation.belongsTo(Post, { foreignKey: 'postId', as: 'job' });
+Company.hasMany(CustomJobInvitation, { foreignKey: 'companyId', as: 'customJobInvitations' });
+CustomJobInvitation.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'createdBy', as: 'customJobInvitationsCreated' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'targetId', as: 'customJobInvites' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'targetId', as: 'target' });
+
+Company.hasMany(CustomJobReport, { foreignKey: 'companyId', as: 'customJobReports' });
+CustomJobReport.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+CustomJobReport.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+CustomJobReport.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
 
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
@@ -481,6 +499,9 @@ AdCampaign.hasMany(CampaignDailyMetric, { foreignKey: 'campaignId', as: 'dailyMe
 CampaignDailyMetric.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignDailyMetric.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
+AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
+CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId', as: 'campaign' });
+
 CampaignDailyMetric.hasOne(CampaignAnalyticsExport, {
   foreignKey: 'campaignDailyMetricId',
   as: 'analyticsExport'
@@ -693,6 +714,8 @@ Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 
 Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
 BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 
 Booking.hasMany(BookingBid, { foreignKey: 'bookingId' });
 BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
@@ -700,6 +723,8 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
 
+Booking.hasMany(BookingNote, { foreignKey: 'bookingId', as: 'notes' });
+BookingNote.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 Booking.hasMany(BookingHistoryEntry, { foreignKey: 'bookingId', as: 'history' });
 BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
@@ -833,10 +858,13 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingNote,
   BookingTemplate,
   BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,
+  CustomJobInvitation,
+  CustomJobReport,
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
@@ -847,6 +875,7 @@ export {
   InsuredSellerApplication,
   MarketplaceModerationAction,
   AdCampaign,
+  CampaignCreative,
   CampaignFlight,
   CampaignTargetingRule,
   CampaignInvoice,
@@ -901,49 +930,49 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
+  RbacRoleAssignment,
   AdminProfile,
-  AdminDelegate
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
+  ServiceTaxonomyCategory,
   WalletAccount,
   WalletTransaction,
-  WalletPaymentMethod
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -952,7 +981,7 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,

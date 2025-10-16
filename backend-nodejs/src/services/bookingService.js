@@ -1,3 +1,4 @@
+import { Booking, BookingAssignment, BookingBid, BookingBidComment, BookingNote, User, sequelize } from '../models/index.js';
 import { randomUUID } from 'node:crypto';
 import { Op } from 'sequelize';
 import { Booking, BookingAssignment, BookingBid, BookingBidComment, BookingHistoryEntry, sequelize } from '../models/index.js';
@@ -15,6 +16,87 @@ const ALLOWED_STATUS_TRANSITIONS = {
   disputed: ['in_progress']
 };
 
+const ATTACHMENT_LIMIT = 10;
+const ASSIGNMENT_ROLES = ['lead', 'support'];
+const ASSIGNMENT_STATUSES = ['pending', 'accepted', 'declined', 'withdrawn'];
+
+const assignmentInclude = [
+  {
+    model: User,
+    as: 'provider',
+    attributes: ['id', 'firstName', 'lastName', 'email', 'type']
+  }
+];
+
+const toAssignmentRole = (role) => {
+  if (!role) {
+    return null;
+  }
+  const normalised = String(role).trim().toLowerCase();
+  if (!ASSIGNMENT_ROLES.includes(normalised)) {
+    throw invalidBooking('Unsupported assignment role');
+  }
+  return normalised;
+};
+
+const toAssignmentStatus = (status) => {
+  if (!status) {
+    return null;
+  }
+  const normalised = String(status).trim().toLowerCase();
+  if (!ASSIGNMENT_STATUSES.includes(normalised)) {
+    throw invalidBooking('Unsupported assignment status');
+  }
+  return normalised;
+};
+
+const reloadAssignment = (assignment, transaction) =>
+  assignment.reload({ transaction, include: assignmentInclude });
+
+function normaliseIdentifier(value) {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (value && typeof value.toString === 'function') {
+    return value.toString().trim();
+  }
+
+  return '';
+}
+
+function sanitiseString(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim();
+}
+
+function normaliseAttachments(attachments) {
+  if (!Array.isArray(attachments)) {
+    return [];
+  }
+
+  const normalised = attachments
+    .map((attachment) => {
+      if (!attachment || typeof attachment !== 'object') {
+        return null;
+      }
+
+      const url = sanitiseString(attachment.url);
+      if (!url) {
+        return null;
+      }
+
+      const label = sanitiseString(attachment.label) || 'Attachment';
+      const type = sanitiseString(attachment.type) || 'link';
+
+      return { url, label, type };
+    })
+    .filter(Boolean);
+
+  return normalised.slice(0, ATTACHMENT_LIMIT);
+}
 const HISTORY_ENTRY_TYPES = ['note', 'status_update', 'milestone', 'handoff', 'document'];
 const HISTORY_STATUSES = ['open', 'in_progress', 'blocked', 'completed', 'cancelled'];
 const HISTORY_ACTOR_ROLES = ['customer', 'provider', 'operations', 'support', 'finance', 'system'];
@@ -189,10 +271,18 @@ export async function createBooking({
   targetCurrency,
   scheduledStart,
   scheduledEnd,
+  title,
+  location,
+  instructions,
+  attachments = [],
   metadata = {},
   actor = null
 }, { transaction: externalTransaction } = {}) {
-  if (!customerId || !companyId || !zoneId) {
+  const customerIdentifier = normaliseIdentifier(customerId);
+  const companyIdentifier = normaliseIdentifier(companyId);
+  const zoneIdentifier = normaliseIdentifier(zoneId);
+
+  if (!customerIdentifier || !companyIdentifier || !zoneIdentifier) {
     throw invalidBooking('customerId, companyId, and zoneId are required');
   }
 
@@ -211,6 +301,13 @@ export async function createBooking({
   const startAt = ensureDate(scheduledStart, 'scheduledStart');
   const endAt = ensureDate(scheduledEnd, 'scheduledEnd');
 
+  const normalisedTitle = sanitiseString(title) || sanitiseString(metadata.title) || null;
+  const normalisedLocation = sanitiseString(location) || sanitiseString(metadata.location) || null;
+  const normalisedInstructions = sanitiseString(instructions) || sanitiseString(metadata.instructions) || null;
+  const metaAttachments = normaliseAttachments(
+    attachments && attachments.length ? attachments : metadata.attachments
+  );
+
   if (bookingType === 'scheduled' && (!startAt || !endAt || endAt <= startAt)) {
     throw invalidBooking('Scheduled bookings require a valid start and end window');
   }
@@ -222,9 +319,11 @@ export async function createBooking({
   const execute = async (transaction) => {
     const booking = await Booking.create(
       {
-        customerId,
-        companyId,
-        zoneId,
+        customerId: customerIdentifier,
+        companyId: companyIdentifier,
+        zoneId: zoneIdentifier,
+        title: normalisedTitle,
+        location: normalisedLocation,
         status: bookingType === 'on_demand' ? 'awaiting_assignment' : 'scheduled',
         type: bookingType,
         scheduledStart: startAt,
@@ -235,8 +334,13 @@ export async function createBooking({
         totalAmount: totals.totalAmount,
         commissionAmount: totals.commissionAmount,
         taxAmount: totals.taxAmount,
+        instructions: normalisedInstructions,
         meta: {
           ...metadata,
+          title: normalisedTitle ?? undefined,
+          location: normalisedLocation ?? undefined,
+          instructions: normalisedInstructions ?? undefined,
+          attachments: metaAttachments,
           quotedAmount: baseAmount,
           quotedCurrency: currency,
           commissionRate: totals.commissionRate,
@@ -253,12 +357,12 @@ export async function createBooking({
         name: 'booking.created',
         entityId: booking.id,
         actor,
-        tenantId: companyId,
+        tenantId: companyIdentifier,
         occurredAt: now,
         metadata: {
           bookingId: booking.id,
-          companyId,
-          zoneId,
+          companyId: companyIdentifier,
+          zoneId: zoneIdentifier,
           type: bookingType,
           demandLevel: demandLevel || 'medium',
           currency: totals.currency,
@@ -340,6 +444,229 @@ export async function updateBookingStatus(bookingId, nextStatus, context = {}) {
   return reloaded;
 }
 
+export async function updateBooking(bookingId, updates = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const {
+    status,
+    actorId,
+    statusReason,
+    metadata,
+    attachments,
+    scheduledStart,
+    scheduledEnd,
+    title,
+    location,
+    instructions,
+    demandLevel,
+    zoneId
+  } = updates;
+
+  const patch = {};
+  let meta = { ...booking.meta };
+  let statusChanged = false;
+  let metaChanged = false;
+
+  if (title !== undefined) {
+    const normalisedTitle = sanitiseString(title);
+    patch.title = normalisedTitle || null;
+    meta = { ...meta, title: normalisedTitle || undefined };
+    metaChanged = true;
+  }
+
+  if (location !== undefined) {
+    const normalisedLocation = sanitiseString(location);
+    patch.location = normalisedLocation || null;
+    meta = { ...meta, location: normalisedLocation || undefined };
+    metaChanged = true;
+  }
+
+  if (instructions !== undefined) {
+    const normalisedInstructions = sanitiseString(instructions);
+    patch.instructions = normalisedInstructions || null;
+    meta = { ...meta, instructions: normalisedInstructions || undefined };
+    metaChanged = true;
+  }
+
+  if (scheduledStart !== undefined) {
+    patch.scheduledStart = ensureDate(scheduledStart, 'scheduledStart');
+  }
+
+  if (scheduledEnd !== undefined) {
+    patch.scheduledEnd = ensureDate(scheduledEnd, 'scheduledEnd');
+  }
+
+  if (Array.isArray(attachments)) {
+    meta = { ...meta, attachments: normaliseAttachments(attachments) };
+    metaChanged = true;
+  }
+
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    meta = { ...meta, ...metadata };
+    metaChanged = true;
+  }
+
+  if (demandLevel) {
+    meta = { ...meta, demandLevel: sanitiseString(demandLevel) || meta.demandLevel };
+    metaChanged = true;
+  }
+
+  if (zoneId !== undefined) {
+    const nextZoneId = normaliseIdentifier(zoneId);
+    if (!nextZoneId) {
+      throw invalidBooking('Zone is required');
+    }
+    patch.zoneId = nextZoneId;
+  }
+
+  const now = new Date();
+
+  if (status && status !== booking.status) {
+    assertTransition(booking.status, status);
+    patch.status = status;
+    patch.lastStatusTransitionAt = now;
+    statusChanged = true;
+    meta = {
+      ...meta,
+      lastStatusContext: {
+        actorId: actorId || null,
+        reason: sanitiseString(statusReason),
+        updatedAt: now.toISOString()
+      }
+    };
+    metaChanged = true;
+  }
+
+  if (Object.keys(patch).length === 0 && !statusChanged && !metaChanged) {
+    return booking;
+  }
+
+  if (metaChanged || statusChanged) {
+    patch.meta = meta;
+  }
+
+  const result = await sequelize.transaction(async (transaction) => {
+    await booking.update(patch, { transaction });
+    const reloaded = await booking.reload({ transaction });
+
+    if (statusChanged) {
+      await recordAnalyticsEvent(
+        {
+          name: 'booking.status_transition',
+          entityId: reloaded.id,
+          actor: actorId ? { id: actorId, type: 'user' } : null,
+          tenantId: reloaded.companyId,
+          occurredAt: now,
+          metadata: {
+            bookingId: reloaded.id,
+            companyId: reloaded.companyId,
+            fromStatus: booking.status,
+            toStatus: status,
+            reason: sanitiseString(statusReason) || null,
+            zoneId: reloaded.zoneId,
+            type: reloaded.type
+          }
+        },
+        { transaction }
+      );
+    }
+
+    return reloaded;
+  });
+
+  return result;
+}
+
+export async function listBookingNotes(bookingId) {
+  return BookingNote.findAll({
+    where: { bookingId },
+    order: [
+      ['isPinned', 'DESC'],
+      ['createdAt', 'DESC']
+    ]
+  });
+}
+
+export async function createBookingNote(bookingId, payload = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const body = sanitiseString(payload.body);
+  if (!body) {
+    throw invalidBooking('Note body is required');
+  }
+
+  const attachments = normaliseAttachments(payload.attachments);
+
+  return BookingNote.create({
+    bookingId,
+    authorId: payload.authorId || null,
+    authorType: sanitiseString(payload.authorType) || null,
+    body,
+    attachments,
+    isPinned: Boolean(payload.isPinned)
+  });
+}
+
+export async function updateBookingNote(bookingId, noteId, updates = {}) {
+  const note = await BookingNote.findOne({ where: { id: noteId, bookingId } });
+  if (!note) {
+    const error = new Error('Booking note not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const patch = {};
+
+  if (updates.body !== undefined) {
+    const body = sanitiseString(updates.body);
+    if (!body) {
+      throw invalidBooking('Note body cannot be empty');
+    }
+    patch.body = body;
+  }
+
+  if (updates.attachments !== undefined) {
+    patch.attachments = normaliseAttachments(updates.attachments);
+  }
+
+  if (updates.isPinned !== undefined) {
+    patch.isPinned = Boolean(updates.isPinned);
+  }
+
+  if (updates.authorType !== undefined) {
+    patch.authorType = sanitiseString(updates.authorType) || null;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return note;
+  }
+
+  await note.update(patch);
+  return note.reload();
+}
+
+export async function deleteBookingNote(bookingId, noteId) {
+  const note = await BookingNote.findOne({ where: { id: noteId, bookingId } });
+  if (!note) {
+    const error = new Error('Booking note not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await note.destroy();
+  return { id: noteId };
+}
+
 export async function assignProviders(bookingId, assignments, actorId) {
   if (!Array.isArray(assignments) || assignments.length === 0) {
     throw invalidBooking('At least one assignment is required');
@@ -362,43 +689,47 @@ export async function assignProviders(bookingId, assignments, actorId) {
         throw invalidBooking('Assignment providerId is required');
       }
 
+      const role = toAssignmentRole(assignment.role) || 'support';
+      const providerId = assignment.providerId;
+
       const existing = await BookingAssignment.findOne({
-        where: { bookingId, providerId: assignment.providerId },
+        where: { bookingId, providerId },
         transaction,
         lock: transaction.LOCK.UPDATE
       });
 
       if (existing) {
-        results.push(existing);
+        results.push(await reloadAssignment(existing, transaction));
         continue;
       }
 
       const created = await BookingAssignment.create(
         {
           bookingId,
-          providerId: assignment.providerId,
-          role: assignment.role || 'support',
+          providerId,
+          role,
           status: 'pending',
           assignedAt: now,
           acknowledgedAt: null
         },
         { transaction }
       );
-      results.push(created);
+      const hydrated = await reloadAssignment(created, transaction);
+      results.push(hydrated);
 
       assignmentEvents.push({
         name: 'booking.assignment.created',
-        entityId: created.id,
+        entityId: hydrated.id,
         actor: actorId ? { id: actorId, type: 'user' } : null,
         tenantId: booking.companyId,
-        occurredAt: created.assignedAt || now,
+        occurredAt: hydrated.assignedAt || now,
         metadata: {
-          assignmentId: created.id,
+          assignmentId: hydrated.id,
           bookingId,
           companyId: booking.companyId,
-          providerId: assignment.providerId,
-          role: created.role,
-          status: created.status
+          providerId,
+          role: hydrated.role,
+          status: hydrated.status
         }
       });
     }
@@ -419,6 +750,145 @@ export async function assignProviders(bookingId, assignments, actorId) {
     }
 
     return results;
+  });
+}
+
+export async function listBookingAssignments(bookingId) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return BookingAssignment.findAll({
+    where: { bookingId },
+    include: assignmentInclude,
+    order: [['assignedAt', 'ASC']]
+  });
+}
+
+export async function updateBookingAssignment(bookingId, assignmentId, updates = {}, actorId) {
+  if (!updates || (updates.role === undefined && updates.status === undefined)) {
+    throw invalidBooking('An assignment update must include a role or status');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const assignment = await BookingAssignment.findOne({
+      where: { id: assignmentId, bookingId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!assignment) {
+      const error = new Error('Assignment not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const booking = await Booking.findByPk(bookingId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!booking) {
+      const error = new Error('Booking not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const patch = {};
+    const now = new Date();
+    let statusChanged = false;
+
+    if (updates.role !== undefined) {
+      const nextRole = toAssignmentRole(updates.role);
+      if (nextRole && nextRole !== assignment.role) {
+        patch.role = nextRole;
+      }
+    }
+
+    if (updates.status !== undefined) {
+      const nextStatus = toAssignmentStatus(updates.status);
+      if (nextStatus && nextStatus !== assignment.status) {
+        patch.status = nextStatus;
+        patch.acknowledgedAt = nextStatus === 'accepted' ? now : assignment.acknowledgedAt;
+        statusChanged = true;
+      }
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return reloadAssignment(assignment, transaction);
+    }
+
+    await assignment.update(patch, { transaction });
+
+    if (statusChanged && patch.status === 'accepted') {
+      await refreshBookingAfterAcceptance(booking, transaction, { providerId: assignment.providerId });
+    }
+
+    await recordAnalyticsEvent(
+      {
+        name: 'booking.assignment.updated',
+        entityId: assignment.id,
+        actor: actorId ? { id: actorId, type: 'user' } : null,
+        tenantId: booking.companyId,
+        occurredAt: now,
+        metadata: {
+          assignmentId: assignment.id,
+          bookingId,
+          companyId: booking.companyId,
+          ...(patch.role ? { role: patch.role } : {}),
+          ...(patch.status ? { status: patch.status } : {})
+        }
+      },
+      { transaction }
+    );
+
+    return reloadAssignment(assignment, transaction);
+  });
+}
+
+export async function removeBookingAssignment(bookingId, assignmentId, actorId) {
+  return sequelize.transaction(async (transaction) => {
+    const assignment = await BookingAssignment.findOne({
+      where: { id: assignmentId, bookingId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+      include: assignmentInclude
+    });
+
+    if (!assignment) {
+      const error = new Error('Assignment not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const booking = await Booking.findByPk(bookingId, { transaction });
+    if (!booking) {
+      const error = new Error('Booking not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    await assignment.destroy({ transaction });
+
+    await recordAnalyticsEvent(
+      {
+        name: 'booking.assignment.removed',
+        entityId: assignmentId,
+        actor: actorId ? { id: actorId, type: 'user' } : null,
+        tenantId: booking.companyId,
+        occurredAt: new Date(),
+        metadata: {
+          assignmentId,
+          bookingId,
+          companyId: booking.companyId,
+          providerId: assignment.providerId,
+          role: assignment.role,
+          status: assignment.status
+        }
+      },
+      { transaction }
+    );
+
+    return { id: assignmentId };
   });
 }
 
@@ -505,7 +975,13 @@ export async function recordAssignmentResponse({ bookingId, providerId, status }
       await refreshBookingAfterAcceptance(booking, transaction, { providerId });
     }
 
-    return { assignment, booking: await booking.reload({ transaction }) };
+    const refreshedAssignment = await reloadAssignment(assignment, transaction);
+    const refreshedBooking = await booking.reload({
+      transaction,
+      include: [{ model: BookingAssignment, include: assignmentInclude }]
+    });
+
+    return { assignment: refreshedAssignment, booking: refreshedBooking };
   });
 }
 
@@ -796,7 +1272,10 @@ export async function listBookings(filters = {}) {
 
 export async function getBookingById(id) {
   return Booking.findByPk(id, {
-    include: [BookingAssignment, BookingBid]
+    include: [
+      { model: BookingAssignment, include: assignmentInclude },
+      BookingBid
+    ]
   });
 }
 

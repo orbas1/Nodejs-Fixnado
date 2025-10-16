@@ -2,6 +2,8 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getFixnadoWorkspaceSnapshot } from './fixnadoAdsService.js';
+import { getBookingCalendar } from './bookingCalendarService.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
 import {
@@ -16,9 +18,15 @@ import {
   CampaignInvoice,
   Company,
   ComplianceDocument,
+  Conversation,
   ConversationParticipant,
+  CommunicationsInboxConfiguration,
+  CommunicationsEntryPoint,
+  CommunicationsQuickReply,
+  CommunicationsEscalationRule,
   Dispute,
   Escrow,
+  MessageDelivery,
   InventoryAlert,
   InventoryItem,
   Order,
@@ -643,6 +651,14 @@ async function loadUserData(context) {
         : `${formatNumber(rentalsInUse)} rental asset${rentalsInUse === 1 ? '' : 's'} currently in the field`
     ]
   };
+
+  const calendarMonth = window.end?.toFormat?.('yyyy-LL') || DateTime.now().setZone(window.timezone).toFormat('yyyy-LL');
+  const calendarData = await getBookingCalendar({
+    customerId: userId,
+    companyId,
+    month: calendarMonth,
+    timezone: window.timezone
+  });
 
   const orderBoardColumns = [
     {
@@ -1382,6 +1398,14 @@ async function loadUserData(context) {
         type: 'overview',
         analytics: overview,
         sidebar: overviewSidebar
+      },
+      {
+        id: 'calendar',
+        icon: 'calendar',
+        label: 'Service Calendar',
+        description: 'Plan visits, assignments, and follow-ups in one view.',
+        type: 'calendar',
+        data: calendarData
       },
       {
         id: 'orders',
@@ -3386,6 +3410,98 @@ async function loadServicemanData(context) {
     }
   ];
 
+  const tenantId = providerId ? String(providerId) : 'fixnado-demo';
+
+  let crewParticipantRecord = null;
+  let activeThreadCount = 0;
+  let awaitingResponseCount = 0;
+
+  if (crewLead?.id) {
+    const crewParticipants = await ConversationParticipant.findAll({
+      where: {
+        participantReferenceId: crewLead.id,
+        participantType: 'serviceman'
+      },
+      include: [
+        {
+          model: Conversation,
+          as: 'conversation',
+          attributes: ['id', 'updatedAt']
+        }
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: 25
+    });
+
+    crewParticipantRecord = crewParticipants[0] ?? null;
+
+    const participantIds = [];
+    const conversationIds = new Set();
+    crewParticipants.forEach((participant) => {
+      if (participant.conversationId) {
+        conversationIds.add(participant.conversationId);
+      }
+      participantIds.push(participant.id);
+    });
+
+    activeThreadCount = conversationIds.size;
+
+    if (participantIds.length > 0) {
+      awaitingResponseCount = await MessageDelivery.count({
+        where: {
+          participantId: { [Op.in]: participantIds },
+          status: 'pending'
+        }
+      });
+    }
+  }
+
+  const inboxConfiguration = await CommunicationsInboxConfiguration.findOne({ where: { tenantId } });
+  let entryPointCount = 0;
+  let quickReplyCount = 0;
+  let escalationRuleCount = 0;
+
+  if (inboxConfiguration) {
+    const configurationId = inboxConfiguration.id;
+    const [entryPointsTotal, quickRepliesTotal, escalationTotal] = await Promise.all([
+      CommunicationsEntryPoint.count({ where: { configurationId } }),
+      CommunicationsQuickReply.count({ where: { configurationId } }),
+      CommunicationsEscalationRule.count({ where: { configurationId } })
+    ]);
+    entryPointCount = entryPointsTotal;
+    quickReplyCount = quickRepliesTotal;
+    escalationRuleCount = escalationTotal;
+  }
+
+  const crewParticipantPayload = crewParticipantRecord
+    ? {
+        participantId: crewParticipantRecord.id,
+        participantReferenceId: crewParticipantRecord.participantReferenceId,
+        participantType: crewParticipantRecord.participantType,
+        displayName: crewParticipantRecord.displayName,
+        role: crewParticipantRecord.role,
+        timezone: crewParticipantRecord.timezone
+      }
+    : crewLead
+      ? {
+          participantId: null,
+          participantReferenceId: crewLead.id,
+          participantType: 'serviceman',
+          displayName: crewLead.name,
+          role: 'serviceman',
+          timezone: window.timezone
+        }
+      : null;
+
+  const inboxSummary = {
+    activeThreads: activeThreadCount,
+    awaitingResponse: awaitingResponseCount,
+    entryPoints: entryPointCount,
+    quickReplies: quickReplyCount,
+    escalationRules: escalationRuleCount
+  };
+  const fixnadoSnapshot = await getFixnadoWorkspaceSnapshot({ windowDays: 30 });
+
   return {
     persona: 'serviceman',
     name: PERSONA_METADATA.serviceman.name,
@@ -3415,6 +3531,11 @@ async function loadServicemanData(context) {
       },
       features: {
         ads: buildAdsFeatureMetadata('serviceman')
+      },
+      communications: {
+        tenantId,
+        participant: crewParticipantPayload,
+        summary: inboxSummary
       }
     },
     navigation: [
@@ -3431,6 +3552,18 @@ async function loadServicemanData(context) {
         description: 'Daily and weekly workload.',
         type: 'board',
         data: { columns: boardColumns }
+      },
+      {
+        id: 'inbox',
+        label: 'Crew Inbox',
+        description: 'Manage crew messaging, AI assist, and escalation guardrails.',
+        type: 'serviceman-inbox',
+        data: {
+          defaultParticipantId: crewParticipantPayload?.participantId ?? null,
+          currentParticipant: crewParticipantPayload,
+          tenantId,
+          summary: inboxSummary
+        }
       },
       {
         id: 'bid-pipeline',
@@ -3458,6 +3591,12 @@ async function loadServicemanData(context) {
         label: 'Dispute Management',
         description: 'Open and track dispute cases, assignments, and supporting evidence.',
         type: 'component'
+        id: 'fixnado-ads',
+        label: 'Fixnado Ads',
+        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+        icon: 'analytics',
+        type: 'fixnado-ads',
+        data: fixnadoSnapshot
       }
     ]
   };
