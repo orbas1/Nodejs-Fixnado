@@ -40,6 +40,11 @@ AdCampaign.init(
       allowNull: false,
       defaultValue: 'even'
     },
+    network: {
+      type: DataTypes.STRING(40),
+      allowNull: false,
+      defaultValue: 'fixnado'
+    },
     bidStrategy: {
       field: 'bid_strategy',
       type: DataTypes.ENUM('cpc', 'cpm', 'cpa'),

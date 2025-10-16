@@ -71,8 +71,28 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
+      { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
+      {
+        id: 'inventory-management',
+        label: 'Inventory management',
+        icon: 'assets',
+        href: '/provider/inventory'
+      },
+      { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
+      {
+        id: 'onboarding-management',
+        label: 'Onboarding management',
+        icon: 'documents',
+        type: 'route',
+        href: '/dashboards/provider/onboarding'
+        id: 'storefront-control',
+        label: 'Storefront control centre',
+        description: 'Manage storefront branding, catalogue, and incentives.',
+        icon: 'storefront',
+        href: '/dashboards/provider/storefront'
+      },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]
@@ -99,11 +119,28 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'metrics', label: 'Metrics', icon: 'analytics' },
+      { id: 'escrows', label: 'Escrow Management', icon: 'finance' },
       { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
+      { id: 'wallet', label: 'Wallet & Earnings', icon: 'finance' },
+      { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' }
+      { id: 'financial-management', label: 'Financial management', icon: 'finance' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      {
+        id: 'byok-management',
+        label: 'BYOK management',
+        icon: 'compliance',
+        href: '/dashboards/serviceman/byok'
+      }
+      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' }
+      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' }
+      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
     ]
   },
   {

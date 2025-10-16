@@ -61,6 +61,36 @@ InventoryItem.init(
       type: DataTypes.UUID,
       allowNull: true
     },
+    categoryId: {
+      field: 'category_id',
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+    itemType: {
+      field: 'item_type',
+      type: DataTypes.ENUM('tool', 'material'),
+      allowNull: false,
+      defaultValue: 'tool'
+    },
+    fulfilmentType: {
+      field: 'fulfilment_type',
+      type: DataTypes.ENUM('purchase', 'rental', 'hybrid'),
+      allowNull: false,
+      defaultValue: 'purchase'
+    },
+    status: {
+      type: DataTypes.ENUM('draft', 'active', 'inactive', 'retired'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    tagline: {
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     rentalRate: {
       field: 'rental_rate',
       type: DataTypes.DECIMAL(12, 2),
@@ -81,6 +111,16 @@ InventoryItem.init(
       type: DataTypes.STRING(3),
       allowNull: true
     },
+    purchasePrice: {
+      field: 'purchase_price',
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true
+    },
+    purchasePriceCurrency: {
+      field: 'purchase_price_currency',
+      type: DataTypes.STRING(3),
+      allowNull: true
+    },
     replacementCost: {
       field: 'replacement_cost',
       type: DataTypes.DECIMAL(12, 2),
@@ -97,6 +137,11 @@ InventoryItem.init(
       type: DataTypes.ENUM('new', 'excellent', 'good', 'fair', 'needs_service'),
       allowNull: false,
       defaultValue: 'good'
+    },
+    primarySupplierId: {
+      field: 'primary_supplier_id',
+      type: DataTypes.UUID,
+      allowNull: true
     },
     metadata: {
       type: DataTypes.JSON,

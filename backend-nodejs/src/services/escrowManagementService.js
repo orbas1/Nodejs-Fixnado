@@ -153,7 +153,9 @@ function serialiseEscrow(instance, { includeRelated = false } = {}) {
       service: plain.Order.Service
         ? {
             id: plain.Order.Service.id,
-            title: plain.Order.Service.title
+            title: plain.Order.Service.title,
+            providerId: plain.Order.Service.providerId || null,
+            companyId: plain.Order.Service.companyId || null
           }
         : null,
       buyer: plain.Order.buyer
@@ -204,27 +206,47 @@ function serialiseEscrow(instance, { includeRelated = false } = {}) {
   return base;
 }
 
-function buildOrderInclude(searchTerm) {
-  const include = {
-    model: Order,
-    attributes: ['id', 'status', 'serviceId', 'buyerId', 'totalAmount', 'currency', 'scheduledFor'],
-    include: [
-      {
-        model: Service,
-        attributes: ['id', 'title']
-      },
-      {
-        model: User,
-        as: 'buyer',
-        attributes: ['id', 'firstName', 'lastName', 'email']
+function normaliseIdInput(...inputs) {
+  const set = new Set();
+  inputs
+    .flatMap((value) => {
+      if (Array.isArray(value)) {
+        return value;
       }
-    ],
-    required: Boolean(searchTerm)
-  };
+      return value != null ? [value] : [];
+    })
+    .forEach((value) => {
+      if (!value) return;
+      const trimmed = `${value}`.trim();
+      if (trimmed) {
+        set.add(trimmed);
+      }
+    });
+  return Array.from(set);
+}
 
+function buildOrderInclude(searchTerm, context = {}) {
+  const providerIds = normaliseIdInput(context.providerId, context.providerIds);
+  const companyIds = normaliseIdInput(context.companyId, context.companyIds);
+  const orderIds = normaliseIdInput(context.orderId, context.orderIds);
+
+  const serviceWhere = {};
+  if (providerIds.length === 1) {
+    serviceWhere.providerId = providerIds[0];
+  } else if (providerIds.length > 1) {
+    serviceWhere.providerId = { [Op.in]: providerIds };
+  }
+
+  if (companyIds.length === 1) {
+    serviceWhere.companyId = companyIds[0];
+  } else if (companyIds.length > 1) {
+    serviceWhere.companyId = { [Op.in]: companyIds };
+  }
+
+  const orderFilters = [];
   if (searchTerm) {
     const likeValue = `%${searchTerm.toLowerCase()}%`;
-    include.where = {
+    orderFilters.push({
       [Op.or]: [
         sequelize.where(sequelize.fn('lower', sequelize.col('Order.id')), { [Op.like]: likeValue }),
         sequelize.where(sequelize.fn('lower', sequelize.col('Order->buyer.email')), { [Op.like]: likeValue }),
@@ -232,10 +254,83 @@ function buildOrderInclude(searchTerm) {
         sequelize.where(sequelize.fn('lower', sequelize.col('Order->buyer.last_name')), { [Op.like]: likeValue }),
         sequelize.where(sequelize.fn('lower', sequelize.col('Order->Service.title')), { [Op.like]: likeValue })
       ]
-    };
+    });
+  }
+
+  if (orderIds.length === 1) {
+    orderFilters.push({ id: orderIds[0] });
+  } else if (orderIds.length > 1) {
+    orderFilters.push({ id: { [Op.in]: orderIds } });
+  }
+
+  const serviceInclude = {
+    model: Service,
+    attributes: ['id', 'title', 'providerId', 'companyId']
+  };
+
+  if (Object.keys(serviceWhere).length > 0) {
+    serviceInclude.where = serviceWhere;
+    serviceInclude.required = true;
+  }
+
+  const include = {
+    model: Order,
+    attributes: ['id', 'status', 'serviceId', 'buyerId', 'totalAmount', 'currency', 'scheduledFor'],
+    include: [
+      serviceInclude,
+      {
+        model: User,
+        as: 'buyer',
+        attributes: ['id', 'firstName', 'lastName', 'email']
+      }
+    ],
+    required: Boolean(searchTerm) || orderIds.length > 0 || serviceInclude.required === true
+  };
+
+  if (orderFilters.length === 1) {
+    include.where = orderFilters[0];
+  } else if (orderFilters.length > 1) {
+    include.where = { [Op.and]: orderFilters };
   }
 
   return include;
+}
+
+function escrowMatchesContext(instance, context = {}) {
+  if (!context || Object.keys(context).length === 0) {
+    return true;
+  }
+
+  const providerIds = normaliseIdInput(context.providerId, context.providerIds);
+  const companyIds = normaliseIdInput(context.companyId, context.companyIds);
+  const orderIds = normaliseIdInput(context.orderId, context.orderIds);
+
+  const order = instance?.Order ?? null;
+  const orderId = order?.id ?? instance?.orderId ?? null;
+
+  if (orderIds.length > 0) {
+    if (!orderId || !orderIds.includes(`${orderId}`)) {
+      return false;
+    }
+  }
+
+  const service = order?.Service ?? null;
+
+  if (providerIds.length > 0) {
+    const providerId = service?.providerId ? `${service.providerId}` : null;
+    if (!providerId || !providerIds.includes(providerId)) {
+      return false;
+    }
+  }
+
+  if (companyIds.length > 0) {
+    const companyId = service?.companyId ? `${service.companyId}` : null;
+    if (!companyId || !companyIds.includes(companyId)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export async function listEscrows({
@@ -245,7 +340,7 @@ export async function listEscrows({
   search,
   page = 1,
   pageSize = 20
-} = {}) {
+} = {}, context = {}) {
   const trimmedSearch = typeof search === 'string' && search.trim() ? search.trim() : null;
   const parsedPage = Number.isFinite(Number(page)) ? Math.max(Number.parseInt(page, 10), 1) : 1;
   const parsedPageSize = Number.isFinite(Number(pageSize))
@@ -281,8 +376,10 @@ export async function listEscrows({
   }
 
   const where = queryFilters.length > 0 ? { [Op.and]: queryFilters } : {};
+  const orderInclude = buildOrderInclude(trimmedSearch, context);
+
   const include = [
-    buildOrderInclude(trimmedSearch),
+    orderInclude,
     {
       model: Dispute,
       attributes: ['id', 'status', 'reason', 'createdAt', 'updatedAt'],
@@ -313,8 +410,11 @@ export async function listEscrows({
 
   const [totalAmount, holdCount, disputeCount, readyCount] = await Promise.all([
     Escrow.sum('amount', {
-      where: baseFilters.length || searchFilters.length ? { [Op.and]: [...baseFilters, ...(searchFilters.length ? [{ [Op.or]: searchFilters }] : [])] } : {},
-      include: [buildOrderInclude(trimmedSearch)]
+      where:
+        baseFilters.length || searchFilters.length
+          ? { [Op.and]: [...baseFilters, ...(searchFilters.length ? [{ [Op.or]: searchFilters }] : [])] }
+          : {},
+      include: [buildOrderInclude(trimmedSearch, context)]
     }).then((value) => Number.parseFloat(value ?? 0) || 0),
     Escrow.count({
       where: {
@@ -324,7 +424,7 @@ export async function listEscrows({
           { onHold: true }
         ]
       },
-      include: [buildOrderInclude(trimmedSearch)],
+      include: [buildOrderInclude(trimmedSearch, context)],
       distinct: true
     }),
     Escrow.count({
@@ -335,7 +435,7 @@ export async function listEscrows({
           { status: 'disputed' }
         ]
       },
-      include: [buildOrderInclude(trimmedSearch)],
+      include: [buildOrderInclude(trimmedSearch, context)],
       distinct: true
     }),
     Escrow.count({
@@ -347,7 +447,7 @@ export async function listEscrows({
           { onHold: false }
         ]
       },
-      include: [buildOrderInclude(trimmedSearch)],
+      include: [buildOrderInclude(trimmedSearch, context)],
       distinct: true
     })
   ]);
@@ -378,14 +478,16 @@ export async function listEscrows({
   };
 }
 
-export async function getEscrowById(id, { transaction } = {}) {
+export async function getEscrowById(id, options = {}) {
   if (!id) {
     throw validationError('Escrow id is required.');
   }
 
+  const { transaction, context } = options;
+
   const escrow = await Escrow.findByPk(id, {
     include: [
-      buildOrderInclude(null),
+      buildOrderInclude(null, context),
       {
         model: Dispute,
         attributes: ['id', 'status', 'reason', 'createdAt', 'updatedAt'],
@@ -411,14 +513,14 @@ export async function getEscrowById(id, { transaction } = {}) {
     transaction
   });
 
-  if (!escrow) {
+  if (!escrow || !escrowMatchesContext(escrow, context)) {
     throw validationError('Escrow not found.');
   }
 
   return serialiseEscrow(escrow, { includeRelated: true });
 }
 
-export async function createManualEscrow(payload = {}, actorId = 'system') {
+export async function createManualEscrow(payload = {}, actorId = 'system', options = {}) {
   const amount = parseAmount(payload.amount, null);
   if (amount === null) {
     throw validationError('A numeric amount is required for manual escrows.');
@@ -506,11 +608,11 @@ export async function createManualEscrow(payload = {}, actorId = 'system') {
       );
     }
 
-    return getEscrowById(escrow.id, { transaction });
+    return getEscrowById(escrow.id, { transaction, context: options.context });
   });
 }
 
-export async function updateEscrow(id, updates = {}, actorId = 'system') {
+export async function updateEscrow(id, updates = {}, actorId = 'system', options = {}) {
   if (!id) {
     throw validationError('Escrow id is required.');
   }
@@ -676,7 +778,7 @@ export async function updateEscrow(id, updates = {}, actorId = 'system') {
       }
     }
 
-    return getEscrowById(id, { transaction });
+    return getEscrowById(id, { transaction, context: options.context });
   });
 }
 
@@ -784,13 +886,15 @@ export async function deleteReleasePolicy(policyId, actorId = 'system') {
   return { policies };
 }
 
-export async function addEscrowNote(id, body, { authorId = 'system', pinned = false } = {}) {
+export async function addEscrowNote(id, body, { authorId = 'system', pinned = false, context = null } = {}) {
   if (!id) {
     throw validationError('Escrow id is required.');
   }
   if (typeof body !== 'string' || !body.trim()) {
     throw validationError('Note body is required.');
   }
+
+  await getEscrowById(id, { context });
 
   await EscrowNote.create({
     escrowId: id,
@@ -799,26 +903,31 @@ export async function addEscrowNote(id, body, { authorId = 'system', pinned = fa
     pinned: Boolean(pinned)
   });
 
-  return getEscrowById(id);
+  return getEscrowById(id, { context });
 }
 
-export async function deleteEscrowNote(id, noteId) {
+export async function deleteEscrowNote(id, noteId, { context = null } = {}) {
   if (!id || !noteId) {
     throw validationError('Escrow id and note id are required.');
   }
 
+  await getEscrowById(id, { context });
+
   await EscrowNote.destroy({ where: { id: noteId, escrowId: id } });
-  return getEscrowById(id);
+  return getEscrowById(id, { context });
 }
 
-export async function upsertEscrowMilestone(id, milestone = {}) {
+export async function upsertEscrowMilestone(id, milestone = {}, { context = null } = {}) {
   if (!id) {
     throw validationError('Escrow id is required.');
   }
 
   return sequelize.transaction(async (transaction) => {
-    const escrow = await Escrow.findByPk(id, { transaction });
-    if (!escrow) {
+    const escrow = await Escrow.findByPk(id, {
+      include: [buildOrderInclude(null, context)],
+      transaction
+    });
+    if (!escrow || !escrowMatchesContext(escrow, context)) {
       throw validationError('Escrow not found.');
     }
 
@@ -868,15 +977,22 @@ export async function upsertEscrowMilestone(id, milestone = {}) {
       );
     }
 
-    return getEscrowById(id, { transaction });
+    return getEscrowById(id, { transaction, context });
   });
 }
 
-export async function deleteEscrowMilestone(id, milestoneId) {
+export async function deleteEscrowMilestone(id, milestoneId, { context = null } = {}) {
   if (!id || !milestoneId) {
     throw validationError('Escrow id and milestone id are required.');
   }
 
+  const escrow = await Escrow.findByPk(id, {
+    include: [buildOrderInclude(null, context)]
+  });
+  if (!escrow || !escrowMatchesContext(escrow, context)) {
+    throw validationError('Escrow not found.');
+  }
+
   await EscrowMilestone.destroy({ where: { id: milestoneId, escrowId: id } });
-  return getEscrowById(id);
+  return getEscrowById(id, { context });
 }

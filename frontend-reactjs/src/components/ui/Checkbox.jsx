@@ -3,9 +3,13 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import './ui.css';
 
-const Checkbox = forwardRef(function Checkbox({ id, label, className, description, ...rest }, ref) {
+const Checkbox = forwardRef(function Checkbox(
+  { id, label, children, className, description, ...rest },
+  ref
+) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
+  const labelContent = label ?? children;
 
   return (
     <label htmlFor={fieldId} className={clsx('fx-checkbox', className)}>
@@ -17,7 +21,7 @@ const Checkbox = forwardRef(function Checkbox({ id, label, className, descriptio
         className="fx-checkbox__input"
       />
       <span>
-        {label}
+        {labelContent}
         {description ? (
           <span className="block text-xs font-normal text-slate-500">{description}</span>
         ) : null}
@@ -28,13 +32,16 @@ const Checkbox = forwardRef(function Checkbox({ id, label, className, descriptio
 
 Checkbox.propTypes = {
   id: PropTypes.string,
-  label: PropTypes.node.isRequired,
+  label: PropTypes.node,
+  children: PropTypes.node,
   className: PropTypes.string,
   description: PropTypes.node
 };
 
 Checkbox.defaultProps = {
   id: undefined,
+  label: undefined,
+  children: undefined,
   className: undefined,
   description: undefined
 };
