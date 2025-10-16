@@ -33,6 +33,8 @@ vi.mock('../../hooks/usePersonaAccess.js', () => ({
 const fetchDashboardMock = vi.fn();
 const buildExportUrlMock = vi.fn(() => '/export.csv');
 const fetchDashboardBlogPostsMock = vi.fn(async () => []);
+const fetchOrdersMock = vi.fn(async () => []);
+const fetchOrderHistoryMock = vi.fn(async () => ({ total: 0, entries: [] }));
 
 vi.mock('../../api/analyticsDashboardClient.js', () => ({
   fetchDashboard: (...args) => fetchDashboardMock(...args),
@@ -41,6 +43,14 @@ vi.mock('../../api/analyticsDashboardClient.js', () => ({
 
 vi.mock('../../api/blogClient.js', () => ({
   fetchDashboardBlogPosts: (...args) => fetchDashboardBlogPostsMock(...args)
+}));
+
+vi.mock('../../api/orderHistoryClient.js', () => ({
+  fetchOrders: (...args) => fetchOrdersMock(...args),
+  fetchOrderHistory: (...args) => fetchOrderHistoryMock(...args),
+  createOrderHistoryEntry: vi.fn(),
+  updateOrderHistoryEntry: vi.fn(),
+  deleteOrderHistoryEntry: vi.fn()
 }));
 
 const featureToggleMock = vi.fn();
@@ -83,6 +93,8 @@ describe('RoleDashboard', () => {
     fetchDashboardMock.mockReset();
     buildExportUrlMock.mockClear();
     fetchDashboardBlogPostsMock.mockReset();
+    fetchOrdersMock.mockReset();
+    fetchOrderHistoryMock.mockReset();
     featureToggleMock.mockReset();
     refreshPersonaAccess.mockReset();
   });
@@ -90,7 +102,8 @@ describe('RoleDashboard', () => {
   it('renders the dashboard layout when access is granted', async () => {
     renderDashboard();
 
-    await waitFor(() => expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument());
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(fetchDashboardMock).toHaveBeenCalled();
     expect(fetchDashboardMock).toHaveBeenCalledWith('admin', expect.any(Object), expect.objectContaining({ signal: expect.any(Object) }));
     expect(buildExportUrlMock).toHaveBeenCalledWith('admin', expect.any(Object));
   });
@@ -107,7 +120,7 @@ describe('RoleDashboard', () => {
 
     renderDashboard();
 
-    await waitFor(() => expect(screen.getByTestId('access-gate')).toBeInTheDocument());
+    expect(screen.getByTestId('access-gate')).toBeInTheDocument();
     expect(fetchDashboardMock).not.toHaveBeenCalled();
   });
 

@@ -163,9 +163,44 @@ describe('Inventory and rental lifecycle', () => {
     expect(inspectionResponse.body.depositStatus).toBe('partially_released');
     expect(inspectionResponse.body.meta.charges.total).toBeGreaterThan(0);
 
+    const depositUpdate = await request(app)
+      .post(`/api/rentals/${rentalId}/deposit`)
+      .send({
+        actorId: admin.id,
+        actorRole: 'provider',
+        status: 'released',
+        reason: 'Manual release after review',
+        amountReleased: 130
+      })
+      .expect(200);
+
+    expect(depositUpdate.body.depositStatus).toBe('released');
+
+    const disputeResponse = await request(app)
+      .post(`/api/rentals/${rentalId}/dispute`)
+      .send({
+        actorId: renter.id,
+        actorRole: 'customer',
+        reason: 'Damage discovered on site',
+        evidenceUrl: 'https://example.com/evidence.jpg'
+      })
+      .expect(200);
+
+    expect(disputeResponse.body.status).toBe('disputed');
+    expect(disputeResponse.body.depositStatus).toBe('held');
+    expect(disputeResponse.body.meta.dispute.reason).toBe('Damage discovered on site');
+    const adjustments = disputeResponse.body.meta.depositAdjustments;
+    expect(Array.isArray(adjustments)).toBe(true);
+    expect(adjustments.length).toBeGreaterThan(0);
+    const latestAdjustment = adjustments[adjustments.length - 1];
+    expect(latestAdjustment.reason).toContain('Dispute opened');
+
     const rentalDetail = await request(app).get(`/api/rentals/${rentalId}`).expect(200);
-    expect(rentalDetail.body.timeline).toHaveLength(6);
+    expect(rentalDetail.body.status).toBe('disputed');
+    expect(rentalDetail.body.depositStatus).toBe('held');
+    expect(rentalDetail.body.timeline).toHaveLength(8);
     expect(rentalDetail.body.timeline[0].type).toBe('status_change');
+    expect(rentalDetail.body.timeline.some((event) => event.type === 'dispute')).toBe(true);
 
     const itemHealth = await request(app)
       .get(`/api/inventory/items/${itemId}`)
@@ -179,9 +214,20 @@ describe('Inventory and rental lifecycle', () => {
 
     const events = await AnalyticsEvent.findAll({ where: { domain: 'rentals' }, order: [['occurred_at', 'ASC']] });
     const names = events.map((event) => event.eventName);
-    expect(names).toEqual(expect.arrayContaining(['rental.requested', 'rental.status_transition', 'rental.inspection.completed']));
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'rental.requested',
+        'rental.status_transition',
+        'rental.inspection.completed',
+        'rental.deposit.updated',
+        'rental.dispute.opened'
+      ])
+    );
     const inspectionEvent = events.find((event) => event.eventName === 'rental.inspection.completed');
     expect(Number(inspectionEvent.metadata.totalCharges)).toBeGreaterThan(0);
+    const depositEvent = events.find((event) => event.eventName === 'rental.deposit.updated');
+    expect(depositEvent).toBeTruthy();
+    expect(depositEvent.metadata.nextStatus).toBe('released');
   });
 
   it('prevents rentals when insufficient stock is available and creates alerts when stockouts occur', async () => {

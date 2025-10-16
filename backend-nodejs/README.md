@@ -43,6 +43,8 @@ sql/install.sql          MySQL bootstrap script
 - `GET /api/admin/dashboard` – Admin dashboard metrics (company accounts)
 - `GET /api/admin/platform-settings` – Retrieve commission, subscription, and integration settings
 - `PUT /api/admin/platform-settings` – Update commission, subscription, and integration settings
+- `POST /api/admin/platform-settings/test` – Run connectivity diagnostics for SMTP, storage, and integrations
+- `GET /api/admin/platform-settings/audit` – Review and filter system setting diagnostic events with metadata
 
 ## Environment configuration
 
