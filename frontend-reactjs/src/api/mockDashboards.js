@@ -1254,6 +1254,51 @@ const mockDashboards = {
         }
       },
       {
+        id: 'escrows',
+        icon: 'finance',
+        label: 'Escrow Management',
+        description: 'Release readiness, notes, and work logs aligned with finance.',
+        type: 'serviceman-escrows',
+        data: {
+          summary: {
+            totalAmountFormatted: '£48.2k',
+            readyForRelease: 3,
+            onHold: 2,
+            active: 5
+          },
+          upcoming: [
+            {
+              id: 'ESC-4821',
+              title: 'Hospital sterilisation',
+              autoReleaseAt: '2025-03-18T16:00:00Z',
+              amountFormatted: '£8,200',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4794',
+              title: 'University access control',
+              autoReleaseAt: '2025-03-19T18:30:00Z',
+              amountFormatted: '£6,450',
+              status: 'pending'
+            },
+            {
+              id: 'ESC-4760',
+              title: 'Retail lighting retrofit',
+              autoReleaseAt: '2025-03-20T15:00:00Z',
+              amountFormatted: '£4,980',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4712',
+              title: 'Emergency HVAC follow-up',
+              autoReleaseAt: '2025-03-22T09:30:00Z',
+              amountFormatted: '£3,300',
+              status: 'pending'
+            }
+          ]
+        }
+      },
+      {
         id: 'calendar',
         icon: 'calendar',
         label: 'Crew Calendar',

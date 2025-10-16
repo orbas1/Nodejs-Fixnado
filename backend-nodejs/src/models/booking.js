@@ -75,7 +75,7 @@ Booking.init(
     meta: {
       type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: {}
+      defaultValue: () => ({})
     },
     lastStatusTransitionAt: {
       type: DataTypes.DATE,

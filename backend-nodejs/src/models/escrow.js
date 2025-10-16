@@ -70,7 +70,7 @@ Escrow.init(
     metadata: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {}
+      defaultValue: () => ({})
     }
   },
   {

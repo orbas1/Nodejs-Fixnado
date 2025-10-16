@@ -14,6 +14,7 @@ import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
 import EscrowMilestone from './escrowMilestone.js';
 import EscrowNote from './escrowNote.js';
+import EscrowWorkLog from './escrowWorkLog.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
@@ -290,6 +291,15 @@ EscrowMilestone.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
 
 Escrow.hasMany(EscrowNote, { foreignKey: 'escrowId', as: 'notes' });
 EscrowNote.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+
+Escrow.hasMany(EscrowWorkLog, { foreignKey: 'escrowId', as: 'workLogs' });
+EscrowWorkLog.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+
+EscrowMilestone.hasMany(EscrowWorkLog, { foreignKey: 'milestoneId', as: 'workLogs' });
+EscrowWorkLog.belongsTo(EscrowMilestone, { foreignKey: 'milestoneId', as: 'milestone' });
+
+User.hasMany(EscrowWorkLog, { foreignKey: 'authorId', as: 'escrowWorkLogs' });
+EscrowWorkLog.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 Order.hasMany(Payment, { foreignKey: 'orderId', as: 'payments' });
 Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
@@ -676,6 +686,9 @@ Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
 BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
 
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
 Booking.hasMany(BookingBid, { foreignKey: 'bookingId' });
 BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 
@@ -806,7 +819,8 @@ export {
   OrderNote,
   Escrow,
   EscrowMilestone,
-  EscrowNote,
+    EscrowNote,
+    EscrowWorkLog,
   Dispute,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,

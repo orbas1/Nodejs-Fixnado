@@ -37,8 +37,8 @@ export const RBAC_MATRIX = {
       Permissions.WALLET_VIEW,
       Permissions.WALLET_MANAGE,
       Permissions.WALLET_TRANSACT,
-      Permissions.WALLET_METHOD_MANAGE
-      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.WALLET_METHOD_MANAGE,
+      Permissions.CUSTOMER_CONTROL_MANAGE,
       Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
@@ -63,7 +63,9 @@ export const RBAC_MATRIX = {
       Permissions.MATERIALS_VIEW,
       Permissions.INVENTORY_READ,
       Permissions.SERVICES_MANAGE,
-      Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_ESCROW_VIEW,
+      Permissions.SERVICEMAN_ESCROW_MANAGE
     ],
     navigation: {
       landing: '/app/workqueue',
