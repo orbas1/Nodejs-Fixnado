@@ -180,6 +180,9 @@ export const RBAC_MATRIX = {
       'Central operations staff handling escalations, provider approvals, and compliance audits.',
     inherits: [CanonicalRoles.PROVIDER_ADMIN],
     permissions: [
+      Permissions.ZONES_READ,
+      Permissions.ZONES_MANAGE,
+      Permissions.ZONES_COVERAGE,
       Permissions.ZONES_MATCH,
       Permissions.ZONES_PREVIEW,
       Permissions.COMPLIANCE_EXPORT,

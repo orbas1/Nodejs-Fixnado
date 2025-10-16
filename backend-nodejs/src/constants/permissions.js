@@ -62,6 +62,9 @@ export const Permissions = Object.freeze({
   SUPPORT_TICKETS: 'support:tickets:manage',
   CUSTOMER_CONTROL_MANAGE: 'customer:control:manage',
   USER_DIRECTORY: 'user:directory:view',
+  ZONES_READ: 'zones:read',
+  ZONES_MANAGE: 'zones:manage',
+  ZONES_COVERAGE: 'zones:coverage',
   ZONES_MATCH: 'zones:match',
   ZONES_PREVIEW: 'zones:preview'
 });

@@ -1230,6 +1230,13 @@ export default function AdminDashboard() {
   ]);
 
   const navigation = useMemo(() => {
+    const sections = state.data ? buildAdminNavigation(state.data) : [];
+    sections.push({
+      id: 'zone-management-link',
+      label: 'Zone management workspace',
+      description: 'Launch the geo-zonal governance tools in a dedicated workspace.',
+      href: '/admin/zones'
+    });
     const sections = state.data ? buildAdminNavigation(state.data, complianceSectionContext) : [];
     if (affiliateSection) {
       sections.push(affiliateSection);
