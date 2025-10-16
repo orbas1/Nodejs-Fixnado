@@ -250,9 +250,6 @@ export default function Header() {
           ) : null}
           <Link to="/" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
-            <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-slate-500 lg:inline">
-              Fixnado
-            </span>
           </Link>
         </div>
 
@@ -486,7 +483,6 @@ export default function Header() {
                 <div className="flex items-center justify-between">
                   <Link to="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
                     <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Fixnado</span>
                   </Link>
                   <button
                     type="button"
