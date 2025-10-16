@@ -118,7 +118,8 @@ const resultBadge = {
   item: 'Work Item',
   record: 'Record',
   configuration: 'Setting',
-  panel: 'Setting'
+  panel: 'Setting',
+  route: 'Workspace'
 };
 
 const navIconMap = {
@@ -163,6 +164,18 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.type === 'route') {
+      return [
+        {
+          id: section.id,
+          type: 'route',
+          label: section.label,
+          description: section.description ?? '',
+          href: section.href
+        }
+      ];
+    }
+
     const entries = [
       {
         id: section.id,
@@ -340,7 +353,11 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const firstSectionId = useMemo(() => {
+    const first = navigation.find((item) => item.type !== 'route');
+    return first?.id ?? navigation[0]?.id ?? 'overview';
+  }, [navigation]);
+  const [selectedSection, setSelectedSection] = useState(firstSectionId);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -348,10 +365,16 @@ const DashboardLayout = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
+    setSelectedSection((current) => {
+      const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
+      if (stillValid) {
+        return current;
+      }
+      return firstSectionId;
+    });
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigation]);
+  }, [navigation, firstSectionId]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -371,7 +394,10 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
-  const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const activeSection =
+    navigation.find((item) => item.id === selectedSection && item.type !== 'route') ??
+    navigation.find((item) => item.type !== 'route') ??
+    navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
@@ -443,20 +469,11 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
-                    const isActive = item.id === activeSection?.id;
+                    const isRoute = item.type === 'route' && item.href;
+                    const isActive = !isRoute && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive}
-                      >
+                    const content = (
+                      <>
                         <span
                           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                             isActive
@@ -472,6 +489,35 @@ const DashboardLayout = ({
                             <p className="text-xs text-slate-500">{item.description}</p>
                           ) : null}
                         </div>
+                      </>
+                    );
+
+                    if (isRoute) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          {content}
+                        </Link>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedSection(item.id)}
+                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          isActive
+                            ? 'border-accent bg-accent text-white shadow-glow'
+                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        }`}
+                        aria-pressed={isActive}
+                      >
+                        {content}
                       </button>
                     );
                   })}
@@ -526,8 +572,42 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
-            const isActive = item.id === activeSection?.id;
+            const isRoute = item.type === 'route' && item.href;
+            const isActive = !isRoute && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
+            const content = (
+              <>
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                {!navCollapsed && (
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{item.label}</p>
+                    {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
+                  </div>
+                )}
+              </>
+            );
+
+            if (isRoute) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
+                  title={navCollapsed ? item.label : undefined}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
             return (
               <button
                 key={item.id}
@@ -541,23 +621,7 @@ const DashboardLayout = ({
                 title={navCollapsed ? item.label : undefined}
                 aria-pressed={isActive}
               >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                </span>
-                {!navCollapsed && (
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description ? (
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                    ) : null}
-                  </div>
-                )}
+                {content}
               </button>
             );
           })}
@@ -626,7 +690,11 @@ const DashboardLayout = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedSection(result.targetSection);
+                              if (result.type === 'route' && result.href) {
+                                navigate(result.href);
+                              } else if (result.targetSection) {
+                                setSelectedSection(result.targetSection);
+                              }
                               setSearchQuery('');
                               setSearchResults([]);
                             }}

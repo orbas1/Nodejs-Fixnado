@@ -7,13 +7,14 @@ vi.mock('../../../utils/errorReporting.js', () => ({
   reportClientError: vi.fn().mockResolvedValue(true)
 }));
 
+// eslint-disable-next-line react/prop-types -- helper wrapper for provider context in tests
 function Wrapper({ children }) {
   return <LocaleProvider>{children}</LocaleProvider>;
 }
 
 describe('AppErrorBoundary', () => {
   beforeEach(() => {
-    Object.defineProperty(global, 'navigator', {
+    Object.defineProperty(globalThis, 'navigator', {
       value: {
         clipboard: {
           writeText: vi.fn().mockResolvedValue(undefined)
@@ -22,7 +23,7 @@ describe('AppErrorBoundary', () => {
       configurable: true
     });
 
-    Object.defineProperty(global, 'crypto', {
+    Object.defineProperty(globalThis, 'crypto', {
       value: {
         randomUUID: vi.fn().mockReturnValue('test-reference')
       },

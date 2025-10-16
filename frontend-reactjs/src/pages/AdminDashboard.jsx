@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, CubeIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -445,7 +445,7 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  return [
+  const navigation = [
     overview,
     commandMetrics,
     securitySection,
@@ -455,6 +455,17 @@ function buildAdminNavigation(payload) {
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  navigation.push({
+    id: 'admin-rentals-link',
+    label: 'Rental management',
+    description: 'Open the dedicated rental operations workspace.',
+    type: 'route',
+    icon: 'assets',
+    href: '/admin/rentals'
+  });
+
+  return navigation;
 }
 
 export default function AdminDashboard() {
@@ -583,6 +594,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Monetisation controls
+      </Button>
+      <Button
+        to="/admin/rentals"
+        size="sm"
+        variant="secondary"
+        icon={CubeIcon}
+        iconPosition="start"
+      >
+        Rental management
       </Button>
       <Button
         to="/admin/zones"

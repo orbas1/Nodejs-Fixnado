@@ -27,6 +27,14 @@ export const DASHBOARD_ROLES = [
       { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
       { id: 'availability', label: 'Serviceman Management', icon: 'crew' },
       { id: 'assets', label: 'Asset & Rental Control', icon: 'assets' },
+      {
+        id: 'admin-rentals-link',
+        label: 'Rental management',
+        description: 'Open the dedicated rental operations workspace.',
+        icon: 'assets',
+        type: 'route',
+        href: '/admin/rentals'
+      },
       { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
       { id: 'settings', label: 'Platform Settings', icon: 'settings' }
     ]

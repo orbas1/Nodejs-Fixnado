@@ -169,6 +169,36 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.rentals.read': {
+    id: 'admin.rentals.read',
+    version: '1.0.0',
+    resource: 'admin.rentals',
+    action: 'admin.rentals:read',
+    description: 'Allow admin operators to review rental agreements, deposits, and checkpoints.',
+    requirements: [Permissions.ADMIN_RENTAL_READ],
+    tags: ['admin', 'rentals', 'inventory'],
+    severity: 'high',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      companyId: req.query?.companyId || null,
+      search: req.query?.search || null
+    })
+  },
+  'admin.rentals.write': {
+    id: 'admin.rentals.write',
+    version: '1.0.0',
+    resource: 'admin.rentals',
+    action: 'admin.rentals:write',
+    description: 'Allow admin operators to manage rental lifecycle events and checkpoints.',
+    requirements: [Permissions.ADMIN_RENTAL_WRITE],
+    tags: ['admin', 'rentals', 'inventory'],
+    severity: 'critical',
+    metadata: (req) => ({
+      rentalId: req.params?.rentalId || null,
+      action: req.method,
+      endpoint: req.originalUrl || req.baseUrl || null
+    })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',
