@@ -5,6 +5,7 @@ import {
   MarketplaceModerationAction,
   sequelize
 } from '../models/index.js';
+import { toPlain } from '../utils/serializers.js';
 
 const REQUIRED_DOCUMENTS = [
   {
@@ -455,23 +456,25 @@ export async function evaluateInsuredSellerStatus(companyId, { transaction, over
 
 export async function getCompanyComplianceSummary(companyId) {
   const [application, documents] = await Promise.all([
-    InsuredSellerApplication.findOne({ where: { companyId } }),
+    ensureApplication(companyId),
     ComplianceDocument.findAll({
       where: { companyId },
       order: [['submittedAt', 'DESC']]
     })
   ]);
 
-  if (!application) {
+  const plainApplication = application ? toPlain(application) : null;
+  const plainDocuments = documents.map((doc) => {
+    const payload = toPlain(doc);
     return {
-      application: null,
-      documents: []
+      ...payload,
+      downloadUrl: `/api/v1/compliance/documents/${payload.id}/download`
     };
-  }
+  });
 
   return {
-    application,
-    documents
+    application: plainApplication,
+    documents: plainDocuments
   };
 }
 
