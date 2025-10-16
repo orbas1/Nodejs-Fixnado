@@ -32,6 +32,7 @@ import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 import DashboardBlogRail from './DashboardBlogRail.jsx';
+import CustomerOverviewControl from './CustomerOverviewControl.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -126,6 +127,7 @@ const navIconMap = {
   calendar: CalendarDaysIcon,
   pipeline: ClipboardDocumentListIcon,
   availability: UsersIcon,
+  control: Squares2X2Icon,
   assets: CubeIcon,
   support: InboxStackIcon,
   settings: Cog8ToothIcon,
@@ -379,7 +381,18 @@ const DashboardLayout = ({
   const renderSection = () => {
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
+      if (persona === 'user') {
+        return (
+          <div className="space-y-10">
+            <DashboardOverview analytics={activeSection.analytics} />
+            <CustomerOverviewControl />
+          </div>
+        );
+      }
       return <DashboardOverview analytics={activeSection.analytics} />;
+    }
+    if (activeSection.id === 'customer-control') {
+      return <CustomerOverviewControl />;
     }
     return (
       <DashboardSection
