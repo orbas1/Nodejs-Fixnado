@@ -310,6 +310,7 @@
 
 .fx-textarea {
   width: 100%;
+  min-height: 140px;
   min-height: 128px;
   border-radius: var(--fx-radius-lg);
   border: 1px solid var(--fx-color-border-subtle);

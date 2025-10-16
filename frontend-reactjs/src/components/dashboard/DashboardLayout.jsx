@@ -168,6 +168,7 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.to) {
     if (section.type === 'link') {
     if (section.route || section.href) {
       return [];
@@ -531,13 +532,23 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const isActive = !item.to && item.id === activeSection?.id;
                     const isLink = item.type === 'link';
                     const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
+                    const handleClick = () => {
+                      if (item.to) {
+                        navigate(item.to);
+                        setMobileNavOpen(false);
+                        return;
+                      }
+                      setSelectedSection(item.id);
+                    };
                     return (
                       <button
                         key={item.id}
                         type="button"
+                        onClick={handleClick}
                         onClick={() => {
                           handleNavItemSelect(item);
                           if (item.type === 'link') {
@@ -549,6 +560,7 @@ const DashboardLayout = ({
                             ? 'border-accent bg-accent text-white shadow-glow'
                             : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                         }`}
+                        aria-pressed={isActive || undefined}
                         aria-pressed={!isLink && isActive}
                       >
                         <span
@@ -689,13 +701,22 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const isActive = !item.to && item.id === activeSection?.id;
             const isLink = item.type === 'link';
             const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
+            const handleClick = () => {
+              if (item.to) {
+                navigate(item.to);
+                return;
+              }
+              setSelectedSection(item.id);
+            };
             return (
               <button
                 key={item.id}
                 type="button"
+                onClick={handleClick}
                 onClick={() => handleNavItemSelect(item)}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
@@ -703,6 +724,7 @@ const DashboardLayout = ({
                     : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
                 } ${navCollapsed ? 'justify-center px-2' : ''}`}
                 title={navCollapsed ? item.label : undefined}
+                aria-pressed={isActive || undefined}
                 aria-pressed={!isLink && isActive}
               >
                 <span
