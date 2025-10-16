@@ -36,6 +36,7 @@ import {
 } from '../controllers/toolSalesController.js';
 import { authenticate, maybeAuthenticate, requireStorefrontRole } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
+import providerCampaignRoutes from './providerCampaignRoutes.js';
 import {
   validateStorefrontWorkspace,
   getStorefrontWorkspaceHandler,
@@ -250,6 +251,7 @@ router.get(
   getEnterprisePanelHandler
 );
 router.get('/provider/storefront', maybeAuthenticate, requireStorefrontRole, getProviderStorefrontHandler);
+router.use('/provider/campaigns', providerCampaignRoutes);
 
 router.get(
   '/provider/storefront/workspace',

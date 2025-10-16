@@ -73,6 +73,9 @@ const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CustomerSettingsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
   : null;
+const ProviderAdsDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
+  : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
@@ -442,6 +445,9 @@ function App() {
               <Route path="/legal/:slug" element={<Terms />} />
               {import.meta.env.DEV && CustomerSettingsDevPreview ? (
                 <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
+              ) : null}
+              {import.meta.env.DEV && ProviderAdsDevPreview ? (
+                <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>

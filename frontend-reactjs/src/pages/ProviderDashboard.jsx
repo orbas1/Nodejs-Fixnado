@@ -23,6 +23,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
 import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
 import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
 import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
@@ -570,6 +571,9 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const adsWorkspace = state.data?.ads || null;
+  const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
+  const hasAdsWorkspace = Boolean(adsWorkspace);
   const companyId = state.meta?.companyId || provider?.id || null;
 
   const heroStatusTone = useMemo(() => {
@@ -664,6 +668,13 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      hasAdsWorkspace
+        ? {
+            id: 'provider-dashboard-ads',
+            label: 'Gigvora ads',
+            description: 'Campaigns, creatives, and targeting'
+          }
+        : null,
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -675,6 +686,7 @@ export default function ProviderDashboard() {
   }, [
     alerts.length,
     deliveryBoard.length,
+    hasAdsWorkspace,
     hasCalendarAccess,
     serviceCatalogue.length,
     serviceCategories.length,
@@ -1050,6 +1062,22 @@ export default function ProviderDashboard() {
                 <ServiceCatalogueCard key={service.id} service={service} />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {hasAdsWorkspace ? (
+          <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 id="provider-dashboard-ads-heading" className="text-lg font-semibold text-primary">
+                  Gigvora ads & campaigns
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Build campaigns, curate creatives, and manage placement strategy without leaving the provider workspace.
+                </p>
+              </div>
+            </header>
+            <ProviderAdsWorkspace companyId={adsCompanyId} initialData={adsWorkspace} />
           </section>
         ) : null}
 

@@ -262,6 +262,164 @@ function normaliseQueueAttachments(rawAttachments) {
     .filter(Boolean);
 }
 
+function normaliseCampaignCreative(rawCreative = {}) {
+  return {
+    id: rawCreative.id || rawCreative.campaignCreativeId || null,
+    campaignId: rawCreative.campaignId || null,
+    campaignName: rawCreative.campaignName || null,
+    flightId: rawCreative.flightId || null,
+    flightName: rawCreative.flightName || null,
+    name: rawCreative.name || 'Creative asset',
+    format: rawCreative.format || 'image',
+    status: rawCreative.status || 'draft',
+    headline: rawCreative.headline || '',
+    description: rawCreative.description || '',
+    callToAction: rawCreative.callToAction || '',
+    assetUrl: rawCreative.assetUrl || '',
+    thumbnailUrl: rawCreative.thumbnailUrl || null,
+    metadata: rawCreative.metadata || {},
+    updatedAt: rawCreative.updatedAt || null
+  };
+}
+
+function normaliseCampaignSegment(rawSegment = {}) {
+  return {
+    id: rawSegment.id || null,
+    campaignId: rawSegment.campaignId || null,
+    campaignName: rawSegment.campaignName || null,
+    name: rawSegment.name || 'Audience segment',
+    segmentType: rawSegment.segmentType || 'custom',
+    status: rawSegment.status || 'draft',
+    sizeEstimate: rawSegment.sizeEstimate ?? null,
+    engagementRate: rawSegment.engagementRate ?? null,
+    syncedAt: rawSegment.syncedAt || null,
+    metadata: rawSegment.metadata || {}
+  };
+}
+
+function normaliseCampaignPlacement(rawPlacement = {}) {
+  return {
+    id: rawPlacement.id || null,
+    campaignId: rawPlacement.campaignId || null,
+    campaignName: rawPlacement.campaignName || null,
+    flightId: rawPlacement.flightId || null,
+    flightName: rawPlacement.flightName || null,
+    channel: rawPlacement.channel || 'marketplace',
+    format: rawPlacement.format || 'native',
+    status: rawPlacement.status || 'planned',
+    bidAmount: rawPlacement.bidAmount != null ? Number(rawPlacement.bidAmount) : null,
+    bidCurrency: rawPlacement.bidCurrency || 'GBP',
+    cpm: rawPlacement.cpm != null ? Number(rawPlacement.cpm) : null,
+    inventorySource: rawPlacement.inventorySource || null,
+    metadata: rawPlacement.metadata || {},
+    updatedAt: rawPlacement.updatedAt || null
+  };
+}
+
+function normaliseCampaignInvoice(rawInvoice = {}) {
+  return {
+    id: rawInvoice.id || null,
+    campaignId: rawInvoice.campaignId || null,
+    campaignName: rawInvoice.campaignName || null,
+    invoiceNumber: rawInvoice.invoiceNumber || rawInvoice.id || 'Invoice',
+    status: rawInvoice.status || 'draft',
+    currency: rawInvoice.currency || 'GBP',
+    amountDue: rawInvoice.amountDue != null ? Number(rawInvoice.amountDue) : null,
+    amountPaid: rawInvoice.amountPaid != null ? Number(rawInvoice.amountPaid) : null,
+    dueDate: rawInvoice.dueDate || null,
+    issuedAt: rawInvoice.issuedAt || null,
+    periodStart: rawInvoice.periodStart || null,
+    periodEnd: rawInvoice.periodEnd || null,
+    metadata: rawInvoice.metadata || {}
+  };
+}
+
+function normaliseCampaignFraudSignal(rawSignal = {}) {
+  return {
+    id: rawSignal.id || null,
+    campaignId: rawSignal.campaignId || null,
+    flightId: rawSignal.flightId || null,
+    title: rawSignal.title || 'Campaign alert',
+    signalType: rawSignal.signalType || 'insight',
+    severity: rawSignal.severity || 'medium',
+    detectedAt: rawSignal.detectedAt || null,
+    metadata: rawSignal.metadata || {}
+  };
+}
+
+function normaliseProviderAds(rawAds = {}) {
+  const overview = rawAds.overview || {};
+  const company = rawAds.company || {};
+
+  return {
+    generatedAt: rawAds.generatedAt || null,
+    company: {
+      id: company.id || null,
+      name: company.name || company.contactName || 'Gigvora provider'
+    },
+    overview: {
+      spendMonthToDate: overview.spendMonthToDate != null ? Number(overview.spendMonthToDate) : 0,
+      revenueMonthToDate: overview.revenueMonthToDate != null ? Number(overview.revenueMonthToDate) : 0,
+      impressions: overview.impressions ?? 0,
+      clicks: overview.clicks ?? 0,
+      conversions: overview.conversions ?? 0,
+      ctr: overview.ctr ?? 0,
+      cvr: overview.cvr ?? 0,
+      roas: overview.roas ?? 0,
+      lastMetricAt: overview.lastMetricAt || null
+    },
+    campaigns: ensureArray(rawAds.campaigns).map((campaign, index) => ({
+      id: campaign.id || `campaign-${index}`,
+      name: campaign.name || 'Campaign',
+      status: campaign.status || 'draft',
+      objective: campaign.objective || 'Awareness',
+      campaignType: campaign.campaignType || 'ppc',
+      pacingStrategy: campaign.pacingStrategy || 'even',
+      bidStrategy: campaign.bidStrategy || 'cpc',
+      currency: campaign.currency || 'GBP',
+      totalBudget: campaign.totalBudget != null ? Number(campaign.totalBudget) : null,
+      dailySpendCap: campaign.dailySpendCap != null ? Number(campaign.dailySpendCap) : null,
+      spend: campaign.spend != null ? Number(campaign.spend) : 0,
+      revenue: campaign.revenue != null ? Number(campaign.revenue) : 0,
+      impressions: campaign.impressions ?? 0,
+      clicks: campaign.clicks ?? 0,
+      conversions: campaign.conversions ?? 0,
+      ctr: campaign.ctr ?? 0,
+      cvr: campaign.cvr ?? 0,
+      roas: campaign.roas ?? 0,
+      pacing: campaign.pacing ?? null,
+      startAt: campaign.startAt || null,
+      endAt: campaign.endAt || null,
+      metadata: campaign.metadata || {},
+      flights: ensureArray(campaign.flights).map((flight, flightIndex) => ({
+        id: flight.id || `flight-${index}-${flightIndex}`,
+        name: flight.name || 'Flight',
+        status: flight.status || 'scheduled',
+        startAt: flight.startAt || null,
+        endAt: flight.endAt || null,
+        budget: flight.budget != null ? Number(flight.budget) : null,
+        dailySpendCap: flight.dailySpendCap != null ? Number(flight.dailySpendCap) : null
+      })),
+      creatives: ensureArray(campaign.creatives).map(normaliseCampaignCreative),
+      audienceSegments: ensureArray(campaign.audienceSegments).map(normaliseCampaignSegment),
+      placements: ensureArray(campaign.placements).map(normaliseCampaignPlacement),
+      invoices: ensureArray(campaign.invoices).map(normaliseCampaignInvoice),
+      fraudSignals: ensureArray(campaign.fraudSignals).map(normaliseCampaignFraudSignal),
+      targetingRules: ensureArray(campaign.targetingRules).map((rule, ruleIndex) => ({
+        id: rule.id || `targeting-${index}-${ruleIndex}`,
+        ruleType: rule.ruleType || 'zone',
+        operator: rule.operator || 'include',
+        payload: rule.payload || {}
+      }))
+    })),
+    creatives: ensureArray(rawAds.creatives).map(normaliseCampaignCreative),
+    audienceSegments: ensureArray(rawAds.audienceSegments).map(normaliseCampaignSegment),
+    placements: ensureArray(rawAds.placements).map(normaliseCampaignPlacement),
+    invoices: ensureArray(rawAds.invoices).map(normaliseCampaignInvoice),
+    fraudSignals: ensureArray(rawAds.fraudSignals).map(normaliseCampaignFraudSignal)
+  };
+}
+
 function normaliseQueueUpdate(update, boardId, index) {
   if (!update || typeof update !== 'object') {
     const fallbackHeadline = typeof update === 'string' && update.trim().length ? update.trim() : `Update ${index + 1}`;
@@ -425,6 +583,7 @@ function normaliseProviderDashboard(payload = {}) {
   const finances = root.finances || root.finance || {};
   const serviceDelivery = root.serviceDelivery || root.delivery || {};
   const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
+  const ads = normaliseProviderAds(root.ads || {});
 
   return {
     provider: {
@@ -558,6 +717,7 @@ function normaliseProviderDashboard(payload = {}) {
         coverage: ensureArray(service.coverage)
       }))
     },
+    ads
     calendar: normaliseCalendarSnapshot(root.calendar)
   };
 }
@@ -3429,7 +3589,207 @@ const providerFallback = normaliseProviderDashboard({
       tags: ['IoT', 'Analytics', 'Sustainability'],
       coverage: ['Docklands', 'Canary Wharf']
     }
-  ]
+  ],
+  ads: {
+    company: {
+      id: 'gigvora-company-001',
+      name: 'Gigvora Facilities Ltd'
+    },
+    overview: {
+      spendMonthToDate: 18400,
+      revenueMonthToDate: 46800,
+      impressions: 128000,
+      clicks: 6400,
+      conversions: 420,
+      ctr: 0.05,
+      cvr: 0.065,
+      roas: 2.54,
+      lastMetricAt: new Date().toISOString()
+    },
+    campaigns: [
+      {
+        id: 'gigvora-q2-surge',
+        name: 'Gigvora Q2 surge',
+        status: 'active',
+        objective: 'Lead generation',
+        campaignType: 'ppc',
+        pacingStrategy: 'even',
+        bidStrategy: 'cpc',
+        currency: 'GBP',
+        totalBudget: 35000,
+        dailySpendCap: 1800,
+        spend: 18400,
+        revenue: 46800,
+        impressions: 128000,
+        clicks: 6400,
+        conversions: 420,
+        ctr: 0.05,
+        cvr: 0.0656,
+        roas: 2.5435,
+        pacing: 0.525,
+        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        metadata: { goal: 'Grow enterprise bookings' },
+        flights: [
+          {
+            id: 'gigvora-flight-enterprise',
+            name: 'Enterprise facilities',
+            status: 'active',
+            startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+            endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            budget: 20000,
+            dailySpendCap: 1000
+          }
+        ],
+        creatives: [
+          {
+            id: 'gigvora-creative-hero',
+            name: 'Hero marketplace display',
+            format: 'image',
+            status: 'active',
+            assetUrl: '/media/campaigns/gigvora-hero.jpg',
+            thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+            headline: 'Telemetry-secured facility response',
+            description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+            callToAction: 'Book a walkthrough',
+            metadata: { variant: 'A' }
+          }
+        ],
+        audienceSegments: [
+          {
+            id: 'gigvora-segment-enterprise',
+            name: 'Enterprise FM leads',
+            segmentType: 'lookalike',
+            status: 'active',
+            sizeEstimate: 5400,
+            engagementRate: 0.082,
+            syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            metadata: { source: 'CRM sync' }
+          }
+        ],
+        placements: [
+          {
+            id: 'gigvora-placement-marketplace',
+            channel: 'marketplace',
+            format: 'native',
+            status: 'active',
+            bidAmount: 4.5,
+            bidCurrency: 'GBP',
+            cpm: 36.2,
+            inventorySource: 'Gigvora marketplace hero',
+            metadata: { position: 'homepage-top' }
+          }
+        ],
+        invoices: [
+          {
+            id: 'gigvora-invoice-ads-001',
+            invoiceNumber: 'ADS-001',
+            status: 'issued',
+            currency: 'GBP',
+            amountDue: 7200,
+            amountPaid: 3600,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            issuedAt: new Date().toISOString(),
+            metadata: { period: '2025-04' }
+          }
+        ],
+        fraudSignals: [
+          {
+            id: 'gigvora-signal-overspend',
+            signalType: 'overspend',
+            severity: 'medium',
+            detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            metadata: { variance: 0.18 }
+          }
+        ],
+        targetingRules: [
+          {
+            id: 'gigvora-target-zone',
+            ruleType: 'zone',
+            operator: 'include',
+            payload: { zones: ['City of London', 'Docklands'] }
+          },
+          {
+            id: 'gigvora-target-role',
+            ruleType: 'audience',
+            operator: 'include',
+            payload: { roles: ['Facilities director', 'Operations lead'] }
+          }
+        ]
+      }
+    ],
+    creatives: [
+      {
+        id: 'gigvora-creative-hero',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Hero marketplace display',
+        format: 'image',
+        status: 'active',
+        assetUrl: '/media/campaigns/gigvora-hero.jpg',
+        thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+        headline: 'Telemetry-secured facility response',
+        description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+        callToAction: 'Book a walkthrough',
+        updatedAt: new Date().toISOString()
+      }
+    ],
+    audienceSegments: [
+      {
+        id: 'gigvora-segment-enterprise',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Enterprise FM leads',
+        segmentType: 'lookalike',
+        status: 'active',
+        sizeEstimate: 5400,
+        engagementRate: 0.082,
+        syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        metadata: { source: 'CRM sync' }
+      }
+    ],
+    placements: [
+      {
+        id: 'gigvora-placement-marketplace',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        channel: 'marketplace',
+        format: 'native',
+        status: 'active',
+        bidAmount: 4.5,
+        bidCurrency: 'GBP',
+        cpm: 36.2,
+        inventorySource: 'Gigvora marketplace hero',
+        updatedAt: new Date().toISOString(),
+        metadata: { position: 'homepage-top' }
+      }
+    ],
+    invoices: [
+      {
+        id: 'gigvora-invoice-ads-001',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        invoiceNumber: 'ADS-001',
+        status: 'issued',
+        currency: 'GBP',
+        amountDue: 7200,
+        amountPaid: 3600,
+        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        issuedAt: new Date().toISOString(),
+        metadata: { period: '2025-04' }
+      }
+    ],
+    fraudSignals: [
+      {
+        id: 'gigvora-signal-overspend',
+        campaignId: 'gigvora-q2-surge',
+        signalType: 'overspend',
+        severity: 'medium',
+        detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        metadata: { variance: 0.18 }
+      }
+    ]
+  }
 });
 
 const storefrontFallback = normaliseProviderStorefront({

@@ -22,6 +22,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
 import { getProviderCalendar } from './providerCalendarService.js';
 import {
   getWalletOverview as getCompanyWalletOverview,
@@ -484,6 +485,28 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     serviceZones,
     marketplaceItems,
     rentals,
+    adsWorkspace
+  ] = await Promise.all([
+    Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
+    InventoryItem.findAll({ where: { companyId }, raw: true }),
+    InventoryAlert.findAll({
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['id', 'name', 'companyId'],
+          required: true,
+          where: { companyId }
+        }
+      ],
+      order: [['triggeredAt', 'DESC']],
+      limit: 10
+    }),
+    ComplianceDocument.findAll({ where: { companyId } }),
+    ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
+    MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
+    RentalAgreement.findAll({ where: { companyId } }),
+    buildProviderCampaignWorkspace({ company, actor })
+  ]);
     toolSaleProfiles
   ] =
     await Promise.all([
@@ -686,6 +709,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       })),
       deals: buildDeals(marketplaceItems, now)
     },
+    ads: adsWorkspace,
     toolSales: buildToolSalesOverview(toolSaleProfiles),
     crews,
     rentals: {
