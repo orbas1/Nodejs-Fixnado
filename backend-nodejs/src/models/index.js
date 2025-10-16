@@ -1,5 +1,6 @@
 import sequelize from '../config/database.js';
 import User from './user.js';
+import UserProfileSetting from './userProfileSetting.js';
 import Company from './company.js';
 import Service from './service.js';
 import Post from './post.js';
@@ -66,6 +67,9 @@ import WarehouseExportRun from './warehouseExportRun.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
+UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -402,6 +406,7 @@ BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 export {
   sequelize,
   User,
+  UserProfileSetting,
   Company,
   Service,
   Post,

@@ -1,77 +1,101 @@
-import { useCallback, useEffect, useState } from 'react';
-import {
-  SECURITY_EVENT,
-  SECURITY_STORAGE_KEY,
-  LEGACY_TWO_FACTOR_KEY,
-  commitSecurityPreferences,
-  readSecurityPreferences
-} from '../utils/securityPreferences.js';
+import { useCallback, useMemo } from 'react';
+import { useCustomerProfileSettings } from './useCustomerProfileSettings.js';
 
-const noop = () => {};
+const normaliseMethods = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const next = [];
+  const seen = new Set();
+  value.forEach((entry) => {
+    if (typeof entry !== 'string') {
+      return;
+    }
+    const trimmed = entry.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      return;
+    }
+    seen.add(trimmed);
+    next.push(trimmed);
+  });
+  return next;
+};
 
 export function useSecurityPreferences() {
-  const [preferences, setPreferences] = useState(() => readSecurityPreferences());
+  const {
+    data,
+    loading,
+    error,
+    saving,
+    refresh,
+    saveSecurity
+  } = useCustomerProfileSettings();
 
-  const refresh = useCallback(() => {
-    setPreferences(readSecurityPreferences());
-  }, []);
+  const security = data?.security?.twoFactor ?? {};
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return noop;
-    }
+  const state = useMemo(
+    () => ({
+      app: Boolean(security.app),
+      email: Boolean(security.email),
+      enabled: Boolean(security.enabled ?? security.app ?? security.email),
+      methods: normaliseMethods(security.methods),
+      lastUpdated: security.lastUpdated ?? null
+    }),
+    [security]
+  );
 
-    const handleStorage = (event) => {
-      if (!event?.key || [SECURITY_STORAGE_KEY, LEGACY_TWO_FACTOR_KEY].includes(event.key)) {
-        refresh();
-      }
-    };
+  const persist = useCallback(
+    async (updates = {}) => {
+      const payload = {
+        twoFactorApp: updates.twoFactorApp ?? state.app,
+        twoFactorEmail: updates.twoFactorEmail ?? state.email,
+        methods: normaliseMethods(updates.methods ?? state.methods)
+      };
+      const result = await saveSecurity(payload);
+      return result?.security?.twoFactor ?? payload;
+    },
+    [saveSecurity, state.app, state.email, state.methods]
+  );
 
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener(SECURITY_EVENT, refresh);
-    window.addEventListener('fixnado:session:update', refresh);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener(SECURITY_EVENT, refresh);
-      window.removeEventListener('fixnado:session:update', refresh);
-    };
-  }, [refresh]);
-
-  const commit = useCallback((updater) => {
-    const result = commitSecurityPreferences(updater);
-    setPreferences(result);
-    return result;
-  }, []);
-
-  const setTwoFactorEnabled = useCallback((value) => {
-    return commit((current) => ({
-      ...current,
-      twoFactorEnabled: Boolean(value)
-    }));
-  }, [commit]);
+  const setTwoFactorEnabled = useCallback(
+    async (value) => {
+      const nextEnabled = Boolean(value);
+      const nextState = nextEnabled
+        ? {
+            twoFactorApp: true,
+            twoFactorEmail: state.email
+          }
+        : {
+            twoFactorApp: false,
+            twoFactorEmail: false
+          };
+      return persist(nextState);
+    },
+    [persist, state.email]
+  );
 
   const enableTwoFactor = useCallback(() => setTwoFactorEnabled(true), [setTwoFactorEnabled]);
 
   const disableTwoFactor = useCallback(() => setTwoFactorEnabled(false), [setTwoFactorEnabled]);
 
   const updateMethods = useCallback(
-    (methodsOrUpdater) =>
-      commit((current) => {
-        const nextMethods =
-          typeof methodsOrUpdater === 'function'
-            ? methodsOrUpdater(current.methods ?? [])
-            : methodsOrUpdater;
-        return {
-          ...current,
-          methods: Array.isArray(nextMethods) ? nextMethods : []
-        };
-      }),
-    [commit]
+    async (methodsOrUpdater) => {
+      const candidate =
+        typeof methodsOrUpdater === 'function'
+          ? methodsOrUpdater([...state.methods])
+          : methodsOrUpdater;
+      return persist({ methods: candidate });
+    },
+    [persist, state.methods]
   );
 
   return {
-    ...preferences,
+    twoFactorEnabled: state.enabled,
+    methods: state.methods,
+    lastUpdated: state.lastUpdated,
+    loading,
+    saving: saving.security,
+    error,
     refresh,
     setTwoFactorEnabled,
     enableTwoFactor,

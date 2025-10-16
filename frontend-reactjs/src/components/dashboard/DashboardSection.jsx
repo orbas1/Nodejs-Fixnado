@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import CustomerSettingsSection from './CustomerSettingsSection.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1638,7 +1639,11 @@ const DashboardSection = ({ section, features = {}, persona }) => {
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
     case 'settings':
-      return <SettingsSection section={section} />;
+      return persona === 'user' ? (
+        <CustomerSettingsSection section={section} />
+      ) : (
+        <SettingsSection section={section} />
+      );
     case 'calendar':
       return <CalendarSection section={section} />;
     case 'availability':
