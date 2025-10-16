@@ -278,6 +278,18 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (Array.isArray(section.searchable)) {
+      entries.push(
+        ...section.searchable.map((item) => ({
+          id: `${section.id}-${item.id}`,
+          type: 'configuration',
+          label: item.label,
+          description: item.description ?? '',
+          targetSection: item.targetSection ?? section.id
+        }))
+      );
+    }
+
     return entries;
   });
 
@@ -380,6 +392,13 @@ const DashboardLayout = ({
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
+    }
+    if (typeof activeSection.render === 'function') {
+      return activeSection.render();
+    }
+    if (activeSection.component) {
+      const Component = activeSection.component;
+      return <Component {...(activeSection.componentProps ?? {})} />;
     }
     return (
       <DashboardSection

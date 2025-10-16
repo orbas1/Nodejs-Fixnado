@@ -22,7 +22,8 @@ export const DASHBOARD_ROLES = [
     headline: 'Command multi-tenant operations, compliance, and SLA performance in real time.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'admin-profile', label: 'Admin profile centre', icon: 'profile' },
+      { id: 'overview', label: 'Profile & preferences', icon: 'profile' },
       { id: 'calendar', label: 'Network Calendar', icon: 'calendar' },
       { id: 'operations', label: 'Operations Pipeline', icon: 'pipeline' },
       { id: 'availability', label: 'Serviceman Management', icon: 'crew' },

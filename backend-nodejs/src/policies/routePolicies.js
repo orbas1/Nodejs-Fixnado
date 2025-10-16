@@ -149,6 +149,28 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.profile.read': {
+    id: 'admin.profile.read',
+    version: '1.0.0',
+    resource: 'admin.profile',
+    action: 'admin.profile:read',
+    description: 'Allow administrators to review their control tower profile and preferences.',
+    requirements: [Permissions.ADMIN_PROFILE_READ],
+    tags: ['admin', 'profile'],
+    severity: 'medium',
+    metadata: (req) => ({ persona: req.headers['x-fixnado-persona'] || null })
+  },
+  'admin.profile.write': {
+    id: 'admin.profile.write',
+    version: '1.0.0',
+    resource: 'admin.profile',
+    action: 'admin.profile:write',
+    description: 'Allow administrators to update contact, security, and notification preferences.',
+    requirements: [Permissions.ADMIN_PROFILE_WRITE],
+    tags: ['admin', 'profile'],
+    severity: 'high',
+    metadata: (req) => ({ persona: req.headers['x-fixnado-persona'] || null })
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

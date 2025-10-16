@@ -17,6 +17,7 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import { fetchAdminProfile, saveAdminProfile } from '../controllers/adminProfileController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -27,6 +28,18 @@ router.get(
   authenticate,
   enforcePolicy('admin.dashboard.view', { metadata: () => ({ section: 'dashboard' }) }),
   dashboard
+);
+router.get(
+  '/profile',
+  authenticate,
+  enforcePolicy('admin.profile.read', { metadata: () => ({ section: 'profile' }) }),
+  fetchAdminProfile
+);
+router.put(
+  '/profile',
+  authenticate,
+  enforcePolicy('admin.profile.write', { metadata: () => ({ section: 'profile' }) }),
+  saveAdminProfile
 );
 router.get(
   '/feature-toggles',
