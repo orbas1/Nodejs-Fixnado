@@ -25,8 +25,8 @@ import {
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
   CubeIcon,
-  QueueListIcon
-  PaintBrushIcon
+  QueueListIcon,
+  PaintBrushIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
@@ -123,8 +123,12 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting',
-  bucket: 'Bucket'
-  route: 'Workspace'
+  bucket: 'Bucket',
+  route: 'Workspace',
+  board: 'Board',
+  listing: 'Listing',
+  category: 'Category',
+  package: 'Package'
 };
 
 const navIconMap = {
@@ -147,12 +151,11 @@ const navIconMap = {
   automation: BoltIcon,
   map: MapIcon,
   documents: ClipboardDocumentCheckIcon,
-  operations: QueueListIcon
-  marketplace: WrenchScrewdriverIcon
+  operations: QueueListIcon,
+  marketplace: WrenchScrewdriverIcon,
+  builder: PaintBrushIcon,
   seo: TagIcon
 };
-
-navIconMap.builder = PaintBrushIcon;
 
 const getNavIcon = (item) => {
   if (!item?.icon) {
@@ -176,17 +179,25 @@ const formatRelativeTime = (timestamp) => {
   return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 };
 
-const buildSearchIndex = (navigation) =>
-  navigation
-    .filter((section) => !section.href)
-    .flatMap((section) => {
+const buildSearchIndex = (navigation = []) =>
   navigation.flatMap((section) => {
-    if (section.type === 'link') {
-    if (section.href) {
+    if (!section) {
       return [];
     }
 
-    if (section.type === 'route') {
+    if (section.type === 'route' && (section.href || section.route)) {
+      return [
+        {
+          id: section.id,
+          type: 'route',
+          label: section.label,
+          description: section.description ?? '',
+          href: section.route || section.href
+        }
+      ];
+    }
+
+    if (section.type === 'link' && section.href) {
       return [
         {
           id: section.id,
@@ -199,11 +210,9 @@ const buildSearchIndex = (navigation) =>
     }
 
     if (section.href) {
-    if (section.to) {
-    if (section.type === 'link') {
-    if (section.route || section.href) {
       return [];
     }
+
     const entries = [
       {
         id: section.id,
@@ -213,6 +222,18 @@ const buildSearchIndex = (navigation) =>
         targetSection: section.id
       }
     ];
+
+    if (Array.isArray(section.searchable)) {
+      entries.push(
+        ...section.searchable.map((item) => ({
+          id: `${section.id}-${item.id ?? item.label}`,
+          type: item.type ?? 'configuration',
+          label: item.label,
+          description: item.description ?? '',
+          targetSection: item.targetSection ?? section.id
+        }))
+      );
+    }
 
     if (section.type === 'grid' && Array.isArray(section.data?.cards)) {
       entries.push(
@@ -252,11 +273,13 @@ const buildSearchIndex = (navigation) =>
         entries.push({
           id: `${section.id}-${bucket.id ?? bucket.label}`,
           type: 'bucket',
-          label: `${bucket.label} • Dispute cadence`,
+          label: `${bucket.label} • Disputes`,
           description: bucket.commentary ?? '',
           targetSection: section.id
         });
       });
+    }
+
     if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
       entries.push(
         ...section.data.controls.map((control) => ({
@@ -375,37 +398,9 @@ const buildSearchIndex = (navigation) =>
             .join(' • '),
           targetSection: section.id
         }))
-    if (Array.isArray(section.searchable)) {
-      entries.push(
-        ...section.searchable.map((item) => ({
-          id: `${section.id}-${item.id}`,
-          type: 'configuration',
-          label: item.label,
-          description: item.description ?? '',
-          targetSection: item.targetSection ?? section.id
-        }))
-    if (section.type === 'marketplace-workspace' && section.data?.summary) {
-      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
-      entries.push(
-        {
-          id: `${section.id}-tools-summary`,
-          type: 'record',
-          label: `${tools.count ?? 0} tools catalogued`,
-          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-materials-summary`,
-          type: 'record',
-          label: `${materials.count ?? 0} materials tracked`,
-          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-moderation-summary`,
-          type: 'record',
-          label: `${moderationQueue} listings pending review`,
-          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
+      );
+    }
+
     if (section.type === 'service-management') {
       const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
       const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
@@ -442,6 +437,35 @@ const buildSearchIndex = (navigation) =>
           targetSection: section.id
         });
       });
+    }
+
+    if (section.type === 'marketplace-workspace' && section.data?.summary) {
+      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
+      entries.push(
+        {
+          id: `${section.id}-tools-summary`,
+          type: 'record',
+          label: `${tools.count ?? 0} tools catalogued`,
+          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-materials-summary`,
+          type: 'record',
+          label: `${materials.count ?? 0} materials tracked`,
+          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-moderation-summary`,
+          type: 'record',
+          label: `${moderationQueue} listings pending review`,
+          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
+          targetSection: section.id
+        }
+      );
+    }
+
     if (section.type === 'wallet') {
       entries.push(
         {
@@ -468,10 +492,34 @@ const buildSearchIndex = (navigation) =>
       );
     }
 
+    if (section.type === 'provider-inbox') {
+      entries.push(
+        {
+          id: `${section.id}-routing`,
+          type: 'configuration',
+          label: 'Routing controls',
+          description: 'Live routing, quiet hours, and timezone',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-entry-points`,
+          type: 'record',
+          label: 'Entry points',
+          description: 'Channels and widgets connected to the inbox',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-escalations`,
+          type: 'record',
+          label: 'Escalation guardrails',
+          description: 'Automation rules that notify specialists',
+          targetSection: section.id
+        }
+      );
+    }
+
     return entries;
   });
-
-const resolveInitialSection = (navigation) => navigation.find((item) => !item.href)?.id ?? navigation[0]?.id ?? 'overview';
 
 const Skeleton = () => (
   <div className="px-6 py-10">
@@ -519,7 +567,6 @@ ErrorState.propTypes = {
 
 const DashboardLayout = ({
   roleMeta,
-  registeredRoles,
   dashboard = null,
   loading = false,
   error = null,
@@ -530,52 +577,23 @@ const DashboardLayout = ({
   toggleReason = null,
   onLogout,
   blogPosts = [],
-  initialSectionId = null
-}) => {
-  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const navigationSections = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const [selectedSection, setSelectedSection] = useState(navigationSections[0]?.id ?? 'overview');
-  const firstInteractiveSection = useMemo(() => {
-    const interactive = navigation.find((item) => item.type !== 'link');
-    return interactive?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstInteractiveSection);
-  const [selectedSection, setSelectedSection] = useState(
-    initialSectionId && navigation.some((item) => item.id === initialSectionId)
-      ? initialSectionId
-      : navigation[0]?.id ?? 'overview'
-  );
   initialSectionId = null,
   onSectionChange = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation));
-  const [selectedSection, setSelectedSection] = useState(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
+  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
+  const contentSections = useMemo(
+    () => navigation.filter((item) => !item?.href && item?.type !== 'route'),
+    [navigation]
+  );
+  const resolvedInitialSection = useMemo(() => {
+    if (initialSectionId && contentSections.some((item) => item.id === initialSectionId)) {
       return initialSectionId;
     }
-    return navigation[0]?.id ?? 'overview';
-  });
-  const firstSectionId = useMemo(() => {
-    const first = navigation.find((item) => item.type !== 'route');
-    return first?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstSectionId);
-  const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const initialSectionId = navigableItems[0]?.id ?? null;
-  const [selectedSection, setSelectedSection] = useState(initialSectionId);
-  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
-  const contentSections = useMemo(
-    () => navigation.filter((item) => item.type !== 'link'),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(contentSections[0]?.id ?? null);
-  const navSections = useMemo(
-    () => navigation.filter((item) => !item.route && !item.href),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(navSections[0]?.id ?? 'overview');
+    return contentSections[0]?.id ?? navigation.find((item) => !item?.href)?.id ?? navigation[0]?.id ?? 'overview';
+  }, [initialSectionId, contentSections, navigation]);
+
+  const [selectedSection, setSelectedSection] = useState(resolvedInitialSection);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -583,112 +601,18 @@ const DashboardLayout = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNavClick = useCallback(
-    (item) => {
-      if (item.href) {
-        if (item.target === '_blank') {
-          window.open(item.href, '_blank', 'noopener');
-        } else {
-          navigate(item.href);
-        }
-        setMobileNavOpen(false);
-  const handleNavItemSelect = useCallback(
-    (item) => {
-      if (item.type === 'link') {
-        if (item.routeTo) {
-          navigate(item.routeTo);
-        }
-        return;
-      }
-      setSelectedSection(item.id);
-    },
-    [navigate]
-  );
-
   useEffect(() => {
-    if (navigationSections.length === 0) {
-      setSelectedSection('overview');
-      setSearchQuery('');
-      setSearchResults([]);
-      return;
-    }
-    setSelectedSection((current) => {
-      if (navigationSections.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigationSections[0]?.id ?? 'overview';
-    });
+    setSelectedSection(resolvedInitialSection);
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigationSections]);
-    setSelectedSection(firstInteractiveSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstInteractiveSection]);
-    setSelectedSection(resolveInitialSection(navigation));
-    if (!navigation.length) return;
-    setSelectedSection((current) => {
-      const preferred =
-        initialSectionId && navigation.some((item) => item.id === initialSectionId)
-          ? initialSectionId
-          : navigation[0]?.id ?? 'overview';
-      const hasCurrent = navigation.some((item) => item.id === current);
-      if (!hasCurrent) {
-        return preferred;
-      }
-      if (initialSectionId && current !== preferred) {
-        return preferred;
-      }
-      return current;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, initialSectionId]);
-    setSelectedSection((current) => {
-      const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
-      if (stillValid) {
-        return current;
-      }
-      return firstSectionId;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstSectionId]);
-      if (current && navigableItems.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigableItems[0]?.id ?? null;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, navigableItems]);
-    const defaultSection = contentSections[0]?.id ?? null;
-    setSelectedSection(defaultSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [contentSections]);
-    setSelectedSection(navSections[0]?.id ?? 'overview');
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navSections]);
-
-  useEffect(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
-      setSelectedSection((current) => (current === initialSectionId ? current : initialSectionId));
-      return;
-    }
-
-    if (navigation.length > 0 && !navigation.some((item) => item.id === selectedSection)) {
-      setSelectedSection(navigation[0]?.id ?? 'overview');
-    }
-  }, [initialSectionId, navigation, selectedSection]);
+  }, [resolvedInitialSection]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
     setMobileNavOpen(false);
   }, [selectedSection, mobileNavOpen]);
 
-  const searchIndex = useMemo(() => buildSearchIndex(navSections), [navSections]);
+  const searchIndex = useMemo(() => buildSearchIndex(navigation), [navigation]);
 
   useEffect(() => {
     if (!searchQuery) {
@@ -697,24 +621,16 @@ const DashboardLayout = ({
     }
     const lowered = searchQuery.toLowerCase();
     setSearchResults(
-      searchIndex.filter((entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)).slice(0, 8)
+      searchIndex
+        .filter(
+          (entry) =>
+            entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)
+        )
+        .slice(0, 8)
     );
   }, [searchQuery, searchIndex]);
 
-  const activeSection = navigationSections.find((item) => item.id === selectedSection) ?? navigationSections[0];
-  const activeSection = navigation.find((item) => item.id === selectedSection && item.type !== 'link')
-    ?? navigation.find((item) => item.type !== 'link')
-    ?? navigation[0];
-  const activeSection =
-    navigation.find((item) => item.id === selectedSection && !item.href) ??
-    navigation.find((item) => !item.href) ??
-    navigation[0];
-    navigation.find((item) => item.id === selectedSection && item.type !== 'route') ??
-    navigation.find((item) => item.type !== 'route') ??
-    navigation[0];
-  const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
-  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
-  const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
+  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0] ?? null;
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
@@ -722,6 +638,7 @@ const DashboardLayout = ({
   const handleSectionSelect = useCallback(
     (sectionId) => {
       setSelectedSection(sectionId);
+      setMobileNavOpen(false);
       if (onSectionChange) {
         onSectionChange(sectionId);
       }
@@ -729,29 +646,47 @@ const DashboardLayout = ({
     [onSectionChange]
   );
 
+  const handleNavActivate = useCallback(
+    (item) => {
+      if (!item) return;
+      const destination = item.route || item.href;
+      if ((item.type === 'route' || item.type === 'link' || destination) && destination) {
+        navigate(destination);
+        setMobileNavOpen(false);
+        return;
+      }
+      handleSectionSelect(item.id);
+    },
+    [handleSectionSelect, navigate]
+  );
+
+  const handleSearchActivate = useCallback(
+    (result) => {
+      if (!result) return;
+      if (result.href) {
+        navigate(result.href);
+        setSearchQuery('');
+        setSearchResults([]);
+        return;
+      }
+      if (result.targetSection) {
+        handleSectionSelect(result.targetSection);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    },
+    [handleSectionSelect, navigate]
+  );
+
   const renderSection = () => {
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
-      if (persona === 'user') {
-        return (
-          <div className="space-y-10">
-            <DashboardOverview analytics={activeSection.analytics} />
-            <CustomerOverviewControl />
-          </div>
-        );
-      }
-      return <DashboardOverview analytics={activeSection.analytics} />;
-    }
-    if (typeof activeSection.render === 'function') {
-      return activeSection.render();
-    }
-    if (activeSection.component) {
-      const Component = activeSection.component;
-      return <Component {...(activeSection.componentProps ?? {})} />;
-    if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
-      return activeSection.render();
-    if (activeSection.id === 'customer-control') {
-      return <CustomerOverviewControl />;
+      return (
+        <div className="space-y-10">
+          <DashboardOverview analytics={activeSection.analytics} />
+          {persona === 'user' ? <CustomerOverviewControl /> : null}
+        </div>
+      );
     }
     return (
       <DashboardSection
@@ -762,8 +697,6 @@ const DashboardLayout = ({
       />
     );
   };
-
-  const registeredOptions = registeredRoles.filter((role) => role.registered);
 
   if (error && !dashboard) {
     return <ErrorState message={error} onRetry={onRefresh} />;
@@ -817,172 +750,32 @@ const DashboardLayout = ({
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
                     const Icon = getNavIcon(item);
-                    const baseContent = (
-                      <>
-                    if (item.href) {
-                      const isActiveLink = location.pathname === item.href;
-                    const isLink = item.type === 'link' && item.href;
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const handleItemClick = () => {
-                      if (isLink) {
-                        setMobileNavOpen(false);
-                        navigate(item.href);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isRoute = item.type === 'route' && item.href;
-                    const isActive = !isRoute && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const content = (
-                      <>
-                    const isActive = !item.to && item.id === activeSection?.id;
-                    const isLink = item.type === 'link';
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const commonClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
+                    const destination = item.route || item.href;
+                    const isLink = Boolean(destination);
+                    const isLinkActive = isLink && location.pathname === destination;
+                    const isSectionActive = !isLink && item.id === activeSection?.id;
+                    const active = isLink ? isLinkActive : isSectionActive;
+                    const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      active
                         ? 'border-accent bg-accent text-white shadow-glow'
                         : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                     }`;
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
 
-                    if (isLink) {
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                            isActiveLink
-                              ? 'border-accent bg-accent text-white shadow-glow'
-                              : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                          }`}
-                        >
-                          <span
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                              isActiveLink
-                                ? 'bg-white/20 text-white'
-                                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                            }`}
-                          >
-                          className={baseClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconWrapperClass}>
-                          className={commonClasses}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconClasses}>
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold">{item.label}</p>
-                            {item.description ? (
-                              <p className="text-xs text-slate-500">{item.description}</p>
-                            ) : null}
-                          </div>
-                        </Link>
-                      );
-                    }
-                    const isActive = item.id === activeSection?.id;
-
-                    const baseClasses =
-                      'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
-                    const stateClasses = isActive
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary';
-                    const iconClasses = isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-                    const content = (
-                      <>
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-                    const handleClick = () => {
-                      if (item.to) {
-                        navigate(item.to);
-                        setMobileNavOpen(false);
-                        return;
-                      }
-                      setSelectedSection(item.id);
-                    };
                     return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={handleItemClick}
-                        onClick={() => {
-                          if (isLink) {
-                            setMobileNavOpen(false);
-                            navigate(item.href);
-                            return;
-                          }
-                          setSelectedSection(item.id);
-                        onClick={() => handleSectionSelect(item.id)}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={baseClass}
-                        aria-pressed={isActive}
-                      >
-                        className={commonClasses}
-                        aria-pressed={isActive}
-                      >
-                        <span className={iconClasses}>
-                        onClick={() => handleNavClick(item)}
-                        onClick={handleClick}
-                        onClick={() => {
-                          handleNavItemSelect(item);
-                          if (item.type === 'link') {
-                            setMobileNavOpen(false);
-                          }
-                        }}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive || undefined}
-                        aria-pressed={!isLink && isActive}
+                        onClick={() => handleNavActivate(item)}
+                        className={baseClasses}
+                        aria-pressed={active || undefined}
                       >
                         <span
                           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                            isActive
+                            active
                               ? 'bg-white/20 text-white'
                               : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
                           }`}
                         >
-                    const isActive = !item.href && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const sharedClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isSection = !item.route && !item.href;
-                    const isActive = isSection && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const navItemClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
-                        ? 'border-accent bg-accent text-white shadow-glow'
-                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                    }`;
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
-
-                    const content = (
-                      <>
-                        <span className={iconClasses}>
-                    const content = (
-                      <>
-                        <span className={iconWrapperClass}>
                           <Icon className="h-5 w-5" />
                         </span>
                         <div className="flex-1">
@@ -996,93 +789,26 @@ const DashboardLayout = ({
                             <p className="text-xs text-slate-500">{item.description}</p>
                           ) : null}
                         </div>
-                      </>
-                    );
-
-                    if (item.type === 'link' && item.href) {
-                    if (isRoute) {
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {baseContent}
-                          className={`${baseClasses} ${stateClasses}`}
-                          onClick={() => setMobileNavOpen(false)}
-                          aria-label={item.label}
-                          className={sharedClasses}
-                    if (item.route) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.route}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
-                        </Link>
-                      );
-                    }
-
-                    if (item.href) {
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
-                        </a>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSection(item.id);
-                          setMobileNavOpen(false);
-                        }}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive}
-                      >
-                        {baseContent}
-                        className={`${baseClasses} ${stateClasses}`}
-                        className={sharedClasses}
-                        className={navItemClass}
-                        aria-pressed={isActive}
-                      >
-                        {content}
                       </button>
                     );
                   })}
+                  {sidebarLinks.length ? (
+                    <div className="mt-6 space-y-2">
+                      <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
+                      {sidebarLinks.map((link) => (
+                        <Link
+                          key={link.id}
+                          to={link.href}
+                          onClick={() => setMobileNavOpen(false)}
+                          className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
+                        >
+                          <span>{link.label}</span>
+                          <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
                 </nav>
-                {sidebarLinks.length ? (
-                  <div className="mt-6 space-y-2">
-                    <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-                    {sidebarLinks.map((link) => (
-                      <Link
-                        key={link.id}
-                        to={link.href}
-                        onClick={() => setMobileNavOpen(false)}
-                        className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
-                      >
-                        <span>{link.label}</span>
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
                 <div className="mt-6 space-y-3">
                   <Link
                     to="/"
@@ -1134,179 +860,33 @@ const DashboardLayout = ({
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
             const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              navCollapsed ? 'justify-center px-2' : ''
-            }`;
-            if (item.href) {
-              const isActiveLink = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`${baseClasses} ${
-                    isActiveLink
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                  }`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActiveLink
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </Link>
-              );
-            }
-            const isActive = item.id === activeSection?.id;
-            const isLink = item.type === 'link' && item.href;
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const handleItemClick = () => {
-              if (isLink) {
-                navigate(item.href);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
+            const destination = item.route || item.href;
+            const isLink = Boolean(destination);
+            const isLinkActive = isLink && location.pathname === destination;
+            const isSectionActive = !isLink && item.id === activeSection?.id;
+            const active = isLink ? isLinkActive : isSectionActive;
             const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
+              active
                 ? 'border-accent bg-accent text-white shadow-glow'
                 : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
             } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
 
-            if (isLink) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={baseClass}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  <span className={iconWrapperClass}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </Link>
-              );
-            }
-
-            const isRoute = item.type === 'route' && item.href;
-            const isActive = !isRoute && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const content = (
-              <>
-            const isActive = !item.to && item.id === activeSection?.id;
-            const isLink = item.type === 'link';
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const baseClasses =
-              'group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition';
-            const stateClasses = isActive
-              ? 'border-accent bg-accent text-white shadow-glow'
-              : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary';
-            const spacingClasses = navCollapsed ? 'justify-center px-2' : '';
-            const iconClasses = isActive
-              ? 'bg-white/20 text-white'
-              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-            const content = (
-              <>
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-            const handleClick = () => {
-              if (item.to) {
-                navigate(item.to);
-                return;
-              }
-              setSelectedSection(item.id);
-            };
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={handleItemClick}
-                onClick={() => {
-                  if (isLink) {
-                    navigate(item.href);
-                    return;
-                  }
-                  setSelectedSection(item.id);
-                }}
-                onClick={() => handleSectionSelect(item.id)}
-                onClick={() => setSelectedSection(item.id)}
-                className={`${baseClasses} ${
+                onClick={() => handleNavActivate(item)}
                 className={baseClass}
-                onClick={() => handleNavClick(item)}
-                onClick={handleClick}
-                onClick={() => handleNavItemSelect(item)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                }`}
                 title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive || undefined}
-                aria-pressed={!isLink && isActive}
+                aria-pressed={active || undefined}
               >
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
+                    active
                       ? 'bg-white/20 text-white'
                       : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
                   }`}
                 >
-            const isActive = !item.href && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const isSection = !item.route && !item.href;
-            const isActive = isSection && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
-                ? 'border-accent bg-accent text-white shadow-glow'
-                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-            } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
-            const content = (
-              <>
-                <span className={iconClasses}>
-
-            const content = (
-              <>
-                <span className={iconClasses}>
-            const content = (
-              <>
-                <span className={iconWrapperClass}>
                   <Icon className="h-5 w-5" />
                 </span>
                 {!navCollapsed && (
@@ -1320,164 +900,89 @@ const DashboardLayout = ({
                     {item.description ? (
                       <p className="text-xs text-slate-500">{item.description}</p>
                     ) : null}
-                    <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
                   </div>
                 )}
-              </>
-            );
-
-            if (item.type === 'link' && item.href) {
-            if (isRoute) {
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                  title={navCollapsed ? item.label : undefined}
-                  aria-label={item.label}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-            if (item.route) {
-              return (
-                <Link key={item.id} to={item.route} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </Link>
-              );
-            }
-
-            if (item.href) {
-              return (
-                <a key={item.id} href={item.href} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </a>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
-                className={baseClasses}
-                className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                className={baseClasses}
-                className={baseClass}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
-                {content}
               </button>
             );
           })}
         </nav>
         {!navCollapsed && sidebarLinks.length ? (
-          <div className="px-6 pb-6">
+          <div className="border-t border-accent/10 px-6 py-5 space-y-2">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-            <ul className="mt-3 space-y-2">
-              {sidebarLinks.map((link) => (
-                <li key={link.id}>
-                  <Link
-                    to={link.href}
-                    className="flex flex-col rounded-xl border border-accent/20 bg-white/90 px-4 py-3 text-sm text-primary transition hover:border-accent hover:text-accent"
-                  >
-                    <span className="font-semibold">{link.label}</span>
-                    {link.description ? (
-                      <span className="text-xs text-slate-500">{link.description}</span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {sidebarLinks.map((link) => (
+              <Link
+                key={link.id}
+                to={link.href}
+                className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
+              >
+                <span>{link.label}</span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
+              </Link>
+            ))}
           </div>
         ) : null}
+        <div className="border-t border-accent/10 px-6 py-5 space-y-3">
+          <Link
+            to="/"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
+          >
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
+          </Link>
+          {onLogout ? (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+            >
+              <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+            </button>
+          ) : null}
+        </div>
       </aside>
-
-      <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-6 py-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center justify-between gap-3 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm transition hover:border-accent hover:text-primary"
-              >
-                <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
-              </button>
-              {lastRefreshed && (
-                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
-                <span className="rounded-full border border-slate-200 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  {roleMeta.persona}
-                </span>
+      <main className="flex-1 overflow-y-auto">
+        <div className="border-b border-accent/10 bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{roleMeta.headline ?? 'Control centre'}</p>
+                <h1 className="text-3xl font-semibold text-primary">{dashboard?.title ?? `${roleMeta.name} dashboard`}</h1>
+                {dashboard?.description ? (
+                  <p className="mt-1 max-w-2xl text-sm text-slate-600">{dashboard.description}</p>
+                ) : null}
               </div>
-              {lastRefreshed && (
-                <p className="hidden text-xs text-primary/60 lg:block">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-              <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                {dashboard?.window?.label ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-secondary px-3 py-1 font-semibold text-primary/70">
+                    <CalendarDaysIcon className="h-4 w-4 text-accent" /> {dashboard.window.label}
+                  </span>
+                ) : null}
+                {lastRefreshed ? <span>Updated {formatRelativeTime(lastRefreshed)}</span> : null}
+                {toggleMeta ? <ToggleSummary toggle={toggleMeta} reason={toggleReason} /> : null}
+              </div>
             </div>
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex w-full flex-col gap-2 sm:w-64">
-                <label className="text-xs uppercase tracking-wide text-primary/60" htmlFor="roleSwitcher">
-                  Switch workspace
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end sm:gap-6">
+              <div className="relative max-w-md flex-1">
+                <label htmlFor="dashboard-search" className="sr-only">
+                  Search dashboard
                 </label>
-                <select
-                  id="roleSwitcher"
-                  value={roleMeta.id}
-                  onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-                  className="rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {registeredOptions.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-accent/20 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
-                />
+                <div className="relative">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="dashboard-search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search sections, cards, and records"
+                    className="w-full rounded-full border border-accent/20 bg-white py-2 pl-10 pr-4 text-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                </div>
                 {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-accent/10 bg-white shadow-glow">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                  <div className="absolute left-0 right-0 top-full z-10 mt-2 rounded-2xl border border-accent/10 bg-white/95 p-2 shadow-xl">
+                    <ul className="max-h-72 space-y-1 overflow-y-auto">
                       {searchResults.map((result) => (
                         <li key={result.id}>
                           <button
                             type="button"
-                            onClick={() => {
-                              handleSectionSelect(result.targetSection);
-                              if (result.type === 'route' && result.href) {
-                                navigate(result.href);
-                              } else if (result.targetSection) {
-                                setSelectedSection(result.targetSection);
-                              }
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
+                            onClick={() => handleSearchActivate(result)}
                             className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
                           >
                             <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-primary/80">
@@ -1556,16 +1061,14 @@ DashboardLayout.propTypes = {
     persona: PropTypes.string,
     headline: PropTypes.string
   }).isRequired,
-  registeredRoles: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      registered: PropTypes.bool
-    })
-  ).isRequired,
   dashboard: PropTypes.shape({
     navigation: PropTypes.array,
-    window: PropTypes.object
+    sidebarLinks: PropTypes.array,
+    window: PropTypes.object,
+    metadata: PropTypes.object,
+    persona: PropTypes.string,
+    title: PropTypes.string,
+    description: PropTypes.string
   }),
   loading: PropTypes.bool,
   error: PropTypes.string,
@@ -1586,7 +1089,6 @@ DashboardLayout.propTypes = {
       id: PropTypes.string.isRequired
     })
   ),
-  initialSectionId: PropTypes.string
   initialSectionId: PropTypes.string,
   onSectionChange: PropTypes.func
 };

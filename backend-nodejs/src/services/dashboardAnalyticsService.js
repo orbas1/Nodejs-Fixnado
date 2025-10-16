@@ -30,6 +30,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getInboxSettings } from './communicationsInboxService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -1909,6 +1910,8 @@ async function loadProviderData(context) {
   const { providerId, companyId, window } = context;
 
   const campaignFilter = companyId ? { companyId } : undefined;
+  const tenantId = companyId ?? providerId ?? null;
+  let inboxSnapshotError = null;
 
   const [
     assignments,
@@ -1920,7 +1923,8 @@ async function loadProviderData(context) {
     campaignMetrics,
     previousCampaignMetrics,
     campaignInvoices,
-    campaignSignals
+    campaignSignals,
+    inboxSnapshot
   ] = await Promise.all([
     BookingAssignment.findAll({
       where: {
@@ -2047,7 +2051,17 @@ async function loadProviderData(context) {
       },
       order: [['detectedAt', 'DESC']],
       limit: EXPORT_ROW_LIMIT
-    })
+    }),
+    tenantId
+      ? getInboxSettings(tenantId).catch((error) => {
+          inboxSnapshotError = error;
+          console.warn('Failed to load provider inbox settings', {
+            tenantId,
+            message: error?.message
+          });
+          return null;
+        })
+      : Promise.resolve(null)
   ]);
 
   const totalAssignments = assignments.length;
@@ -2194,6 +2208,46 @@ async function loadProviderData(context) {
     description: alert.metadata?.note || 'Resolve alert to restore asset health.',
     status: alert.status
   }));
+
+  const inboxSummary = inboxSnapshot
+    ? {
+        entryPoints: inboxSnapshot.entryPoints?.length ?? 0,
+        quickReplies: inboxSnapshot.quickReplies?.length ?? 0,
+        escalationRules: inboxSnapshot.escalationRules?.length ?? 0,
+        liveRoutingEnabled: Boolean(inboxSnapshot.configuration?.liveRoutingEnabled),
+        timezone: inboxSnapshot.configuration?.timezone ?? DEFAULT_TIMEZONE,
+        updatedAt: toIso(inboxSnapshot.configuration?.updatedAt)
+      }
+    : null;
+
+  const inboxSectionData = {
+    tenantId,
+    summary: inboxSummary,
+    snapshot: inboxSnapshot,
+    error: null,
+    capabilities: {
+      allowManage: Boolean(tenantId),
+      allowTemplates: Boolean(tenantId),
+      allowEscalations: Boolean(tenantId)
+    }
+  };
+
+  if (!tenantId) {
+    inboxSectionData.error = 'Assign this provider to a company to unlock inbox controls.';
+    inboxSectionData.snapshot = null;
+  } else if (inboxSnapshotError) {
+    inboxSectionData.error = 'Unable to load inbox configuration. Try refreshing the dashboard.';
+  }
+
+  const inboxSection = {
+    id: 'full-inbox',
+    label: 'Full inbox',
+    description:
+      'Manage routing, quick replies, and escalation guardrails for provider communications.',
+    type: 'provider-inbox',
+    icon: 'support',
+    data: inboxSectionData
+  };
 
   const rentalsByItem = rentals.reduce((acc, rental) => {
     const activeStatuses = new Set([
@@ -2922,7 +2976,8 @@ async function loadProviderData(context) {
           { id: 'tools', label: 'Tools', items: toolsInventory }
         ]
       }
-    }
+    },
+    inboxSection
   ];
 
   const adsSection = annotateAdsSection('provider', {
@@ -2972,10 +3027,26 @@ async function loadProviderData(context) {
           conversions: currentCampaignTotals.conversions,
           share: adsShare,
           jobs: adsSourcedCount
-        }
+        },
+        inbox: inboxSummary
+          ? {
+              entryPoints: inboxSummary.entryPoints,
+              quickReplies: inboxSummary.quickReplies,
+              escalationRules: inboxSummary.escalationRules,
+              liveRoutingEnabled: inboxSummary.liveRoutingEnabled,
+              timezone: inboxSummary.timezone,
+              updatedAt: inboxSummary.updatedAt
+            }
+          : null
       },
       features: {
-        ads: buildAdsFeatureMetadata('provider')
+        ads: buildAdsFeatureMetadata('provider'),
+        inbox: {
+          available: Boolean(tenantId && !inboxSnapshotError),
+          level: 'manage',
+          label: 'Full inbox',
+          actions: ['routing', 'templates', 'escalations']
+        }
       }
     },
     navigation
