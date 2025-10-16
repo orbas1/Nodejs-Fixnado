@@ -19,6 +19,10 @@ import {
   listBookingAssignmentsHandler,
   updateBookingAssignmentHandler,
   deleteBookingAssignmentHandler
+  listBookingHistoryHandler,
+  createBookingHistoryEntryHandler,
+  updateBookingHistoryEntryHandler,
+  deleteBookingHistoryEntryHandler
 } from '../controllers/bookingController.js';
 import { getBookingCalendarHandler } from '../controllers/bookingCalendarController.js';
 
@@ -132,5 +136,9 @@ router.post('/:bookingId/bids', submitBidHandler);
 router.patch('/:bookingId/bids/:bidId/status', updateBidStatusHandler);
 router.post('/:bookingId/bids/:bidId/comments', addBidCommentHandler);
 router.post('/:bookingId/disputes', triggerDisputeHandler);
+router.get('/:bookingId/history', listBookingHistoryHandler);
+router.post('/:bookingId/history', createBookingHistoryEntryHandler);
+router.patch('/:bookingId/history/:entryId', updateBookingHistoryEntryHandler);
+router.delete('/:bookingId/history/:entryId', deleteBookingHistoryEntryHandler);
 
 export default router;
