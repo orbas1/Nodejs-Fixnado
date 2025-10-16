@@ -38,6 +38,27 @@ import {
   getDisputeHealthBucketHistoryHandler,
   deleteDisputeHealthEntryHandler
 } from '../controllers/disputeHealthController.js';
+  getCommandMetricsConfiguration,
+  saveCommandMetricSettings,
+  createCommandMetricCardHandler,
+  updateCommandMetricCardHandler,
+  deleteCommandMetricCardHandler
+} from '../controllers/commandMetricsController.js';
+  listQueuesHandler,
+  getQueueHandler,
+  createQueueHandler,
+  updateQueueHandler,
+  archiveQueueHandler,
+  createQueueUpdateHandler,
+  updateQueueUpdateHandler,
+  deleteQueueUpdateHandler,
+  createQueueValidators,
+  updateQueueValidators,
+  queueIdValidator,
+  createUpdateValidators,
+  patchUpdateValidators,
+  updateIdValidator
+} from '../controllers/operationsQueueController.js';
   listAutomationBacklogHandler,
   createAutomationBacklogHandler,
   updateAutomationBacklogHandler,
@@ -638,6 +659,130 @@ router.delete(
   authenticate,
   enforcePolicy('finance.disputes.manage'),
   deleteDisputeHealthEntryHandler
+  '/command-metrics/config',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.read', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'configuration' })
+  }),
+  getCommandMetricsConfiguration
+);
+router.put(
+  '/command-metrics/settings',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'settings' })
+  }),
+  saveCommandMetricSettings
+);
+router.post(
+  '/command-metrics/cards',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'cards', method: 'create' })
+  }),
+  createCommandMetricCardHandler
+);
+router.patch(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  updateCommandMetricCardHandler
+);
+router.delete(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  deleteCommandMetricCardHandler
+  '/operations/queues',
+  authenticate,
+  enforcePolicy('admin.operations.queues.read', {
+    metadata: () => ({ section: 'operations-queues', action: 'list' })
+  }),
+  listQueuesHandler
+);
+
+router.post(
+  '/operations/queues',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: () => ({ section: 'operations-queues', action: 'create' })
+  }),
+  createQueueValidators,
+  createQueueHandler
+);
+
+router.get(
+  '/operations/queues/:id',
+  authenticate,
+  enforcePolicy('admin.operations.queues.read', {
+    metadata: (req) => ({ section: 'operations-queues', action: 'get', queueId: req.params.id })
+  }),
+  queueIdValidator,
+  getQueueHandler
+);
+
+router.patch(
+  '/operations/queues/:id',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: (req) => ({ section: 'operations-queues', action: 'update', queueId: req.params.id })
+  }),
+  updateQueueValidators,
+  updateQueueHandler
+);
+
+router.delete(
+  '/operations/queues/:id',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: (req) => ({ section: 'operations-queues', action: 'archive', queueId: req.params.id })
+  }),
+  queueIdValidator,
+  archiveQueueHandler
+);
+
+router.post(
+  '/operations/queues/:id/updates',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: (req) => ({ section: 'operations-queues', action: 'create-update', queueId: req.params.id })
+  }),
+  createUpdateValidators,
+  createQueueUpdateHandler
+);
+
+router.patch(
+  '/operations/queues/:id/updates/:updateId',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: (req) => ({
+      section: 'operations-queues',
+      action: 'update-update',
+      queueId: req.params.id,
+      updateId: req.params.updateId
+    })
+  }),
+  patchUpdateValidators,
+  updateQueueUpdateHandler
+);
+
+router.delete(
+  '/operations/queues/:id/updates/:updateId',
+  authenticate,
+  enforcePolicy('admin.operations.queues.write', {
+    metadata: (req) => ({
+      section: 'operations-queues',
+      action: 'delete-update',
+      queueId: req.params.id,
+      updateId: req.params.updateId
+    })
+  }),
+  updateIdValidator,
+  deleteQueueUpdateHandler
   '/appearance/profiles',
   authenticate,
   enforcePolicy('admin.appearance.read', {
