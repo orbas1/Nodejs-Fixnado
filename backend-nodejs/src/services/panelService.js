@@ -22,6 +22,10 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import {
+  getWalletOverview as getCompanyWalletOverview,
+  listWalletTransactions as listCompanyWalletTransactions
+} from './walletService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -464,7 +468,10 @@ function identifySupportChannels(company) {
 }
 
 export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
-  const { company } = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const { company, actor: resolvedActor } = await resolveCompanyForActor({
+    companyId: inputCompanyId,
+    actor
+  });
   const companyId = company.id;
   const now = DateTime.now();
 
@@ -549,6 +556,87 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     sentimentScore: reviewAverage / 5
   });
 
+  const walletPolicy = {
+    canManage: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
+    canTransact: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
+    canEditMethods: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin'
+  };
+
+  let walletSection = null;
+  try {
+    const walletOverview = await getCompanyWalletOverview({ companyId });
+    if (walletOverview) {
+      let transactions = null;
+      if (walletOverview.account?.id) {
+        try {
+          transactions = await listCompanyWalletTransactions(walletOverview.account.id, { limit: 10 });
+        } catch (transactionError) {
+          transactions = {
+            items: walletOverview.summary?.recentTransactions ?? [],
+            total: walletOverview.summary?.recentTransactions?.length ?? 0,
+            limit: 10,
+            offset: 0,
+            error: transactionError instanceof Error ? transactionError.message : 'Unable to load transactions'
+          };
+        }
+      }
+
+      walletSection = {
+        id: 'provider-dashboard-wallet',
+        data: {
+          account: walletOverview.account ?? null,
+          accountId: walletOverview.account?.id ?? null,
+          summary: walletOverview.summary ?? null,
+          methods: walletOverview.methods ?? [],
+          autopayout: walletOverview.autopayout ?? null,
+          currency: walletOverview.account?.currency || walletOverview.summary?.currency || 'GBP',
+          policy: walletPolicy,
+          company: walletOverview.company ?? { id: companyId, name: company.contactName },
+          user: walletOverview.user ?? null,
+          transactions
+        }
+      };
+    } else {
+      walletSection = {
+        id: 'provider-dashboard-wallet',
+        data: {
+          account: null,
+          accountId: null,
+          summary: null,
+          methods: [],
+          autopayout: null,
+          currency: 'GBP',
+          policy: walletPolicy,
+          company: { id: companyId, name: company.contactName },
+          user: null,
+          transactions: null
+        }
+      };
+    }
+  } catch (walletError) {
+    walletSection = {
+      id: 'provider-dashboard-wallet',
+      data: {
+        account: null,
+        accountId: null,
+        summary: null,
+        methods: [],
+        autopayout: null,
+        currency: 'GBP',
+        policy: walletPolicy,
+        company: { id: companyId, name: company.contactName },
+        user: null,
+        transactions: {
+          items: [],
+          total: 0,
+          limit: 10,
+          offset: 0,
+          error: walletError instanceof Error ? walletError.message : 'Unable to load wallet overview'
+        }
+      }
+    };
+  }
+
   const data = {
     provider: {
       id: companyId,
@@ -618,7 +706,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       }
     },
     trust: trustScore,
-    alerts
+    alerts,
+    wallet: walletSection
   };
 
   const meta = {

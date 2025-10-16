@@ -37,8 +37,8 @@ export const RBAC_MATRIX = {
       Permissions.WALLET_VIEW,
       Permissions.WALLET_MANAGE,
       Permissions.WALLET_TRANSACT,
-      Permissions.WALLET_METHOD_MANAGE
-      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.WALLET_METHOD_MANAGE,
+      Permissions.CUSTOMER_CONTROL_MANAGE,
       Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
@@ -63,7 +63,13 @@ export const RBAC_MATRIX = {
       Permissions.MATERIALS_VIEW,
       Permissions.INVENTORY_READ,
       Permissions.SERVICES_MANAGE,
+      Permissions.SERVICEMAN_BOOKINGS_VIEW,
+      Permissions.SERVICEMAN_BOOKINGS_MANAGE,
       Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_ESCROW_VIEW,
+      Permissions.SERVICEMAN_ESCROW_MANAGE
+      Permissions.SERVICEMAN_CONTROL_MANAGE
     ],
     navigation: {
       landing: '/app/workqueue',
@@ -90,6 +96,7 @@ export const RBAC_MATRIX = {
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
+      Permissions.PROVIDER_ESCROW_READ,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.REPORTING_DOWNLOAD
@@ -154,6 +161,8 @@ export const RBAC_MATRIX = {
       Permissions.FINANCE_PAYOUT_MANAGE,
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.DISPUTE_MANAGE,
+      Permissions.PROVIDER_ESCROW_READ,
+      Permissions.PROVIDER_ESCROW_WRITE,
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
       Permissions.PROVIDER_ONBOARD,

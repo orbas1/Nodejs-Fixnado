@@ -165,6 +165,8 @@ export const enGB = {
     'providerDashboard.servicemenHeadline': 'Servicemen availability',
     'providerDashboard.alertsHeadline': 'Alerts and compliance actions',
     'providerDashboard.revenueHeadline': 'Revenue snapshot',
+    'providerDashboard.walletHeadline': 'Wallet & payments',
+    'providerDashboard.nav.wallet': 'Configure balances, payout routing, and ledger history.',
     'providerDashboard.pipelineBookings': 'Upcoming bookings',
     'providerDashboard.pipelineCompliance': 'Expiring compliance',
     'providerDashboard.servicemenList': 'Team roster',

@@ -20,6 +20,8 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
+const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -136,6 +138,14 @@ function App() {
               <Route path="/feed" element={<Feed />} />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
               <Route
+                path="/provider/custom-jobs"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderCustomJobs />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
                 path="/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
@@ -169,6 +179,222 @@ function App() {
                   }
                 />
               ))}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDashboard />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/profile"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminProfile />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/disputes/health/:bucketId/history"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDisputeHealthHistory />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/home-builder"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminHomeBuilder />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/blog"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminBlog />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/rentals"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminRentals />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/monetisation"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminMonetization />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/escrows"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminEscrow />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/bookings"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminBookings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/wallets"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminWallets />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/custom-jobs"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminCustomJobs />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/roles"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminRoles />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/preferences"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminPreferences />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/enterprise"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminEnterprise />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/marketplace"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminMarketplace />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/appearance"
+                element={
+                  <AdminProtectedRoute>
+                    <AppearanceManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/inbox"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminInbox />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/purchases"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminPurchaseManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/website-management"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminWebsiteManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/live-feed/auditing"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminLiveFeedAuditing />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/system-settings"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSystemSettings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/taxonomy"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminTaxonomy />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/seo"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSeo />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/theme-studio"
+                element={
+                  <AdminProtectedRoute>
+                    <ThemeStudio />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/telemetry"
+                element={
+                  <AdminProtectedRoute>
+                    <TelemetryDashboard />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/zones"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminZones />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/legal/:slug?"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminLegal />
+                  </AdminProtectedRoute>
+                }
+              />
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />
@@ -176,6 +402,14 @@ function App() {
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
+              <Route
+                path="/dashboards/provider/storefront"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderStorefrontControl />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="/legal/:slug" element={<Terms />} />

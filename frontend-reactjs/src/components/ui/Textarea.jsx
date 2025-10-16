@@ -32,8 +32,8 @@ const Textarea = forwardRef(function Textarea(
         id={fieldId}
         rows={rows}
         className={clsx('fx-text-input fx-textarea', error && 'fx-text-input--error', textareaClassName)}
-        aria-invalid={Boolean(error)}
         aria-describedby={describedBy.join(' ') || undefined}
+        aria-invalid={Boolean(error)}
         {...rest}
       />
       {hint ? (
@@ -61,6 +61,7 @@ Textarea.propTypes = {
   className: PropTypes.string,
   textareaClassName: PropTypes.string,
   rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+  rows: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 Textarea.defaultProps = {
