@@ -3656,6 +3656,13 @@ async function loadServicemanData(context) {
         data: { items: automationItems }
       },
       {
+        id: 'profile-settings',
+        label: 'Profile Settings',
+        description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
+        }
         id: 'serviceman-disputes',
         label: 'Dispute Management',
         description: 'Open and track dispute cases, assignments, and supporting evidence.',

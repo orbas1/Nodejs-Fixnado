@@ -27,6 +27,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
 import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
 import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index.js';
 import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
@@ -1656,6 +1657,8 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       );
     case 'component':
       return <ComponentSection section={section} />;
+    case 'serviceman-profile-settings':
+      return <ServicemanProfileSettingsSection section={section} />;
     case 'settings': {
       if (persona === 'user') {
         return <CustomerSettingsSection section={section} />;

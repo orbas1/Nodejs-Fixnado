@@ -66,6 +66,7 @@ export const Permissions = Object.freeze({
   ANALYTICS_OVERVIEW: 'analytics:overview:view',
   ANALYTICS_EXPORT: 'analytics:export:run',
   ACCOUNT_SETTINGS_MANAGE: 'account:settings:manage',
+  SERVICEMAN_PROFILE_MANAGE: 'serviceman:profile:manage',
   CAMPAIGN_MANAGE: 'campaign:manage',
   CAMPAIGN_REVIEW: 'campaign:review',
   COMPLIANCE_PORTAL: 'compliance:portal:access',

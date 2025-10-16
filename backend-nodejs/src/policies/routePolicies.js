@@ -45,6 +45,20 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'serviceman.profile.manage': {
+    id: 'serviceman.profile.manage',
+    version: '1.0.0',
+    resource: 'serviceman.profile',
+    action: 'serviceman.profile:manage',
+    description: 'Allow crew members to update their profile, emergency contacts, availability, and issued gear.',
+    requirements: [Permissions.SERVICEMAN_PROFILE_MANAGE],
+    tags: ['serviceman', 'profile', 'dashboard'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
   'feed.live.read': {
     id: 'feed.live.read',
     version: '1.0.0',

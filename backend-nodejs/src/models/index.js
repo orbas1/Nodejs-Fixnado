@@ -1,6 +1,7 @@
 import sequelize from '../config/database.js';
 import User from './user.js';
 import UserProfileSetting from './userProfileSetting.js';
+import ServicemanProfileSetting from './servicemanProfileSetting.js';
 import Company from './company.js';
 import UserPreference from './userPreference.js';
 import Service from './service.js';
@@ -172,6 +173,8 @@ User.hasOne(UserPreference, { foreignKey: 'userId', as: 'preferences' });
 UserPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
 UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasOne(ServicemanProfileSetting, { foreignKey: 'userId', as: 'servicemanProfile' });
+ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -906,6 +909,7 @@ export {
   sequelize,
   User,
   UserProfileSetting,
+  ServicemanProfileSetting,
   Company,
   UserPreference,
   Service,
