@@ -158,6 +158,7 @@ export async function createLiveFeedPostHandler(req, res, next) {
 
     const post = await createLiveFeedPost({
       userId: req.user?.id,
+      actorContext: req.auth?.actor ?? null,
       title: req.body.title,
       description: req.body.description,
       budgetLabel: req.body.budgetLabel,
@@ -190,6 +191,7 @@ export async function submitCustomJobBidHandler(req, res, next) {
       postId: req.params.postId,
       providerId: req.user?.id,
       providerRole: req.user?.type,
+      actorContext: req.auth?.actor ?? null,
       amount: req.body.amount,
       currency: req.body.currency,
       message: req.body.message,
@@ -214,6 +216,7 @@ export async function addCustomJobBidMessageHandler(req, res, next) {
       bidId: req.params.bidId,
       authorId: req.user?.id,
       authorRole: req.user?.type,
+      actorContext: req.auth?.actor ?? null,
       body: req.body.body,
       attachments: req.body.attachments
     });

@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import { render, screen } from '@testing-library/react';
+import PropTypes from 'prop-types';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import PropTypes from 'prop-types';
 import AppErrorBoundary from '../AppErrorBoundary.jsx';
 import { LocaleProvider } from '../../../providers/LocaleProvider.jsx';
 
@@ -8,6 +10,7 @@ vi.mock('../../../utils/errorReporting.js', () => ({
   reportClientError: vi.fn().mockResolvedValue(true)
 }));
 
+// eslint-disable-next-line react/prop-types -- helper wrapper for provider context in tests
 function Wrapper({ children }) {
   return <LocaleProvider>{children}</LocaleProvider>;
 }
