@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -445,6 +445,15 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
+  const escrowConsoleLink = {
+    id: 'escrow-console-link',
+    label: 'Escrow management',
+    description: 'Manual overrides, release approvals, and dispute controls.',
+    type: 'link',
+    href: '/admin/escrows',
+    icon: 'finance'
+  };
+
   return [
     overview,
     commandMetrics,
@@ -453,7 +462,8 @@ function buildAdminNavigation(payload) {
     disputeSection,
     complianceSection,
     automationSection,
-    auditSection
+    auditSection,
+    escrowConsoleLink
   ].filter(Boolean);
 }
 
@@ -592,6 +602,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/escrows"
+        size="sm"
+        variant="secondary"
+        icon={ShieldCheckIcon}
+        iconPosition="start"
+      >
+        Escrow management
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"

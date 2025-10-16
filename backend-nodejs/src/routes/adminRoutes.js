@@ -17,6 +17,20 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  addEscrowNoteHandler,
+  createEscrowHandler,
+  deleteEscrowMilestoneHandler,
+  deleteEscrowNoteHandler,
+  getEscrowHandler,
+  listReleasePoliciesHandler,
+  listEscrowsHandler,
+  updateEscrowHandler,
+  upsertEscrowMilestoneHandler,
+  createReleasePolicyHandler,
+  updateReleasePolicyHandler,
+  deleteReleasePolicyHandler
+} from '../controllers/adminEscrowController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +118,124 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/escrows',
+  authenticate,
+  enforcePolicy('admin.escrows.read', {
+    metadata: (req) => ({
+      scope: 'list',
+      status: req.query?.status || 'all'
+    })
+  }),
+  listEscrowsHandler
+);
+
+router.post(
+  '/escrows',
+  authenticate,
+  enforcePolicy('admin.escrows.write', { metadata: () => ({ action: 'create' }) }),
+  createEscrowHandler
+);
+
+router.get(
+  '/escrows/:id',
+  authenticate,
+  enforcePolicy('admin.escrows.read', {
+    metadata: (req) => ({ scope: 'single', escrowId: req.params.id })
+  }),
+  getEscrowHandler
+);
+
+router.patch(
+  '/escrows/:id',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'update', escrowId: req.params.id })
+  }),
+  updateEscrowHandler
+);
+
+router.post(
+  '/escrows/:id/notes',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'add-note', escrowId: req.params.id })
+  }),
+  addEscrowNoteHandler
+);
+
+router.delete(
+  '/escrows/:id/notes/:noteId',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'delete-note', escrowId: req.params.id, noteId: req.params.noteId })
+  }),
+  deleteEscrowNoteHandler
+);
+
+router.post(
+  '/escrows/:id/milestones',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'create-milestone', escrowId: req.params.id })
+  }),
+  upsertEscrowMilestoneHandler
+);
+
+router.patch(
+  '/escrows/:id/milestones/:milestoneId',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'update-milestone', escrowId: req.params.id, milestoneId: req.params.milestoneId })
+  }),
+  upsertEscrowMilestoneHandler
+);
+
+router.delete(
+  '/escrows/:id/milestones/:milestoneId',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'delete-milestone', escrowId: req.params.id, milestoneId: req.params.milestoneId })
+  }),
+  deleteEscrowMilestoneHandler
+);
+
+router.get(
+  '/escrows/policies',
+  authenticate,
+  enforcePolicy('admin.escrows.read', {
+    metadata: () => ({ scope: 'policies' })
+  }),
+  listReleasePoliciesHandler
+);
+
+router.post(
+  '/escrows/policies',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: () => ({ action: 'create-policy' })
+  }),
+  createReleasePolicyHandler
+);
+
+router.patch(
+  '/escrows/policies/:policyId',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'update-policy', policyId: req.params.policyId })
+  }),
+  updateReleasePolicyHandler
+);
+
+router.delete(
+  '/escrows/policies/:policyId',
+  authenticate,
+  enforcePolicy('admin.escrows.write', {
+    metadata: (req) => ({ action: 'delete-policy', policyId: req.params.policyId })
+  }),
+  deleteReleasePolicyHandler
 );
 
 export default router;

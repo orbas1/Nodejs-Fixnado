@@ -163,6 +163,9 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.type === 'link') {
+      return [];
+    }
     const entries = [
       {
         id: section.id,
@@ -445,18 +448,8 @@ const DashboardLayout = ({
                   {navigation.map((item) => {
                     const isActive = item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive}
-                      >
+                    const baseContent = (
+                      <>
                         <span
                           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                             isActive
@@ -472,6 +465,38 @@ const DashboardLayout = ({
                             <p className="text-xs text-slate-500">{item.description}</p>
                           ) : null}
                         </div>
+                      </>
+                    );
+
+                    if (item.type === 'link' && item.href) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          {baseContent}
+                        </Link>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSection(item.id);
+                          setMobileNavOpen(false);
+                        }}
+                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          isActive
+                            ? 'border-accent bg-accent text-white shadow-glow'
+                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        }`}
+                        aria-pressed={isActive}
+                      >
+                        {baseContent}
                       </button>
                     );
                   })}
@@ -528,19 +553,8 @@ const DashboardLayout = ({
           {navigation.map((item) => {
             const isActive = item.id === activeSection?.id;
             const Icon = getNavIcon(item);
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
+            const content = (
+              <>
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                     isActive
@@ -558,6 +572,36 @@ const DashboardLayout = ({
                     ) : null}
                   </div>
                 )}
+              </>
+            );
+
+            if (item.type === 'link' && item.href) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
+                  title={navCollapsed ? item.label : undefined}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedSection(item.id)}
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                } ${navCollapsed ? 'justify-center px-2' : ''}`}
+                title={navCollapsed ? item.label : undefined}
+                aria-pressed={isActive}
+              >
+                {content}
               </button>
             );
           })}

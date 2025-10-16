@@ -63,6 +63,154 @@ const defaultCommissionRates = (() => {
   };
 })();
 
+function toSlug(value, fallback) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return slug || fallback;
+}
+
+function parseIntegerInRange(value, fallback, { min = 0, max = 365 } = {}) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  if (parsed < min) {
+    return min;
+  }
+  if (parsed > max) {
+    return max;
+  }
+  return parsed;
+}
+
+function parseAmount(value, fallback) {
+  if (value === null || value === undefined || value === '') {
+    return fallback;
+  }
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return fallback;
+  }
+  return Number.parseFloat(parsed.toFixed(2));
+}
+
+function normaliseNotificationRecipients(update = {}, current = {}) {
+  const result = { ...current };
+  if (!isPlainObject(update)) {
+    return result;
+  }
+  for (const [key, value] of Object.entries(update)) {
+    if (Array.isArray(value)) {
+      result[key] = uniqueStrings(value);
+    } else if (typeof value === 'string') {
+      result[key] = uniqueStrings(value.split(','));
+    }
+  }
+  return result;
+}
+
+function normalisePolicy(policy, fallback, index = 0) {
+  if (!policy || typeof policy !== 'object') {
+    return null;
+  }
+
+  const baseDays = fallback?.autoReleaseDays ?? 3;
+  const fallbackChecklist = Array.isArray(fallback?.documentChecklist) ? fallback.documentChecklist : [];
+  const name = typeof policy.name === 'string' && policy.name.trim() ? policy.name.trim() : null;
+  const description = typeof policy.description === 'string' ? policy.description.trim() : '';
+  const id = toSlug(policy.id || name || `policy-${index + 1}`, `policy-${index + 1}`);
+  const autoReleaseDays = parseIntegerInRange(policy.autoReleaseDays ?? baseDays, baseDays, {
+    min: 0,
+    max: 180
+  });
+  const maxAmount = parseAmount(policy.maxAmount, null);
+  const notifyRoles = Array.isArray(policy.notifyRoles)
+    ? uniqueStrings(policy.notifyRoles)
+    : typeof policy.notifyRoles === 'string'
+      ? uniqueStrings(policy.notifyRoles.split(','))
+      : [];
+  const documentChecklist = Array.isArray(policy.documentChecklist)
+    ? uniqueStrings(policy.documentChecklist)
+    : typeof policy.documentChecklist === 'string'
+      ? uniqueStrings(policy.documentChecklist.split(','))
+      : fallbackChecklist;
+  const releaseConditions = Array.isArray(policy.releaseConditions)
+    ? policy.releaseConditions.map((condition) => `${condition}`.trim()).filter(Boolean)
+    : [];
+
+  return {
+    id,
+    name: name || `Policy ${index + 1}`,
+    description,
+    autoReleaseDays,
+    requiresDualApproval: Boolean(policy.requiresDualApproval),
+    maxAmount,
+    notifyRoles,
+    documentChecklist: documentChecklist.length > 0 ? documentChecklist : fallbackChecklist,
+    releaseConditions
+  };
+}
+
+const defaultEscrowSettings = (() => {
+  const escrowConfig = config.payments?.escrow ?? {};
+  const autoReleaseDays = parseIntegerInRange(escrowConfig.autoReleaseDays ?? 3, 3, { min: 0, max: 180 });
+  const manualApprovalThreshold = parseAmount(escrowConfig.manualApprovalThreshold ?? 2500, 2500);
+  const allowedCurrencies = Array.isArray(escrowConfig.allowedCurrencies)
+    ? uniqueStrings(escrowConfig.allowedCurrencies)
+    : uniqueStrings(['GBP', 'USD', 'EUR']);
+  const documentChecklist = Array.isArray(escrowConfig.documentChecklist)
+    ? uniqueStrings(escrowConfig.documentChecklist)
+    : ['Completion photos', 'Client sign-off form'];
+  const notificationRecipients = normaliseNotificationRecipients(escrowConfig.notificationRecipients, {
+    finance: ['finance@fixnado.com'],
+    operations: []
+  });
+  const fallback = {
+    autoReleaseDays,
+    documentChecklist
+  };
+  const policySource = Array.isArray(escrowConfig.releasePolicies) && escrowConfig.releasePolicies.length > 0
+    ? escrowConfig.releasePolicies
+    : [
+        {
+          id: 'standard',
+          name: 'Standard release',
+          description: 'Auto release once buyer signs off with a three-day inspection buffer.',
+          autoReleaseDays: autoReleaseDays,
+          requiresDualApproval: false,
+          maxAmount: 25000,
+          notifyRoles: ['finance']
+        },
+        {
+          id: 'high-value',
+          name: 'High value works',
+          description: 'Dual approval with finance + operations alerts for high value or regulated jobs.',
+          autoReleaseDays: Math.max(autoReleaseDays, 7),
+          requiresDualApproval: true,
+          notifyRoles: ['finance', 'operations'],
+          releaseConditions: ['Escalate to finance for manual payout approval']
+        }
+      ];
+  const releasePolicies = policySource
+    .map((policy, index) => normalisePolicy(policy, fallback, index))
+    .filter(Boolean);
+
+  return {
+    autoReleaseDays,
+    manualApprovalThreshold,
+    allowedCurrencies: allowedCurrencies.length > 0 ? allowedCurrencies : ['GBP'],
+    documentChecklist,
+    notificationRecipients,
+    releasePolicies
+  };
+})();
+
 const DEFAULT_SETTINGS = {
   commissions: {
     enabled: config.finance?.commissionsEnabled !== false,
@@ -78,6 +226,7 @@ const DEFAULT_SETTINGS = {
       ? uniqueStrings(config.subscriptions.restrictedFeatures)
       : []
   },
+  escrow: defaultEscrowSettings,
   integrations: {
     stripe: {
       publishableKey: config.integrations?.stripe?.publishableKey || '',
@@ -146,6 +295,9 @@ function applyRuntimeSideEffects(settings) {
   };
 
   config.integrations = deepMerge(config.integrations || {}, settings.integrations || {});
+
+  config.payments = config.payments || {};
+  config.payments.escrow = clone(settings.escrow ?? DEFAULT_SETTINGS.escrow);
 }
 
 async function refreshCache() {
@@ -266,6 +418,54 @@ function sanitiseStrings(map = {}, template = {}) {
   return result;
 }
 
+function sanitiseEscrow(update = {}, current = DEFAULT_SETTINGS.escrow) {
+  const next = clone(current);
+  if (Object.hasOwn(update, 'autoReleaseDays')) {
+    next.autoReleaseDays = parseIntegerInRange(update.autoReleaseDays, current.autoReleaseDays, {
+      min: 0,
+      max: 180
+    });
+  }
+  if (Object.hasOwn(update, 'manualApprovalThreshold')) {
+    next.manualApprovalThreshold = parseAmount(update.manualApprovalThreshold, current.manualApprovalThreshold);
+  }
+  if (Object.hasOwn(update, 'allowedCurrencies')) {
+    if (Array.isArray(update.allowedCurrencies)) {
+      next.allowedCurrencies = uniqueStrings(update.allowedCurrencies);
+    } else if (typeof update.allowedCurrencies === 'string') {
+      next.allowedCurrencies = uniqueStrings(update.allowedCurrencies.split(','));
+    }
+    if (!next.allowedCurrencies.length) {
+      next.allowedCurrencies = current.allowedCurrencies;
+    }
+  }
+  if (Object.hasOwn(update, 'documentChecklist')) {
+    if (Array.isArray(update.documentChecklist)) {
+      next.documentChecklist = uniqueStrings(update.documentChecklist);
+    } else if (typeof update.documentChecklist === 'string') {
+      next.documentChecklist = uniqueStrings(update.documentChecklist.split(','));
+    }
+    if (!next.documentChecklist.length) {
+      next.documentChecklist = current.documentChecklist;
+    }
+  }
+  if (Object.hasOwn(update, 'notificationRecipients')) {
+    next.notificationRecipients = normaliseNotificationRecipients(
+      update.notificationRecipients,
+      current.notificationRecipients
+    );
+  }
+  if (Object.hasOwn(update, 'releasePolicies') && Array.isArray(update.releasePolicies)) {
+    const cleaned = update.releasePolicies
+      .map((policy, index) => normalisePolicy(policy, next, index))
+      .filter(Boolean);
+    if (cleaned.length > 0) {
+      next.releasePolicies = cleaned;
+    }
+  }
+  return next;
+}
+
 function sanitiseIntegrations(update = {}, current = DEFAULT_SETTINGS.integrations) {
   const next = clone(current);
   if (update.stripe && typeof update.stripe === 'object') {
@@ -337,6 +537,11 @@ export async function updatePlatformSettings(updates = {}, actor = 'system') {
   if (Object.hasOwn(updates, 'subscriptions')) {
     next.subscriptions = sanitiseSubscriptions(updates.subscriptions, current.subscriptions);
     changedKeys.add('subscriptions');
+  }
+
+  if (Object.hasOwn(updates, 'escrow')) {
+    next.escrow = sanitiseEscrow(updates.escrow, current.escrow);
+    changedKeys.add('escrow');
   }
 
   if (Object.hasOwn(updates, 'integrations')) {
