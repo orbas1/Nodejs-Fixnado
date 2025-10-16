@@ -75,6 +75,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import LiveFeedAuditEvent from './liveFeedAuditEvent.js';
+import LiveFeedAuditNote from './liveFeedAuditNote.js';
 import SystemSettingAudit from './systemSettingAudit.js';
 import ServiceTaxonomyType from './serviceTaxonomyType.js';
 import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
@@ -259,6 +261,20 @@ StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
 
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'actor_id', as: 'actor' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'actor_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'assignee_id', as: 'assignee' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'assignee_id', as: 'assignedLiveFeedAudits' });
+LiveFeedAuditEvent.belongsTo(Post, { foreignKey: 'post_id', as: 'post' });
+Post.hasMany(LiveFeedAuditEvent, { foreignKey: 'post_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(ServiceZone, { foreignKey: 'zone_id', as: 'zone' });
+ServiceZone.hasMany(LiveFeedAuditEvent, { foreignKey: 'zone_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+Company.hasMany(LiveFeedAuditEvent, { foreignKey: 'company_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.hasMany(LiveFeedAuditNote, { foreignKey: 'audit_id', as: 'notes' });
+LiveFeedAuditNote.belongsTo(LiveFeedAuditEvent, { foreignKey: 'audit_id', as: 'audit' });
+LiveFeedAuditNote.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+User.hasMany(LiveFeedAuditNote, { foreignKey: 'author_id', as: 'liveFeedAuditNotes' });
 ServiceTaxonomyType.hasMany(ServiceTaxonomyCategory, { foreignKey: 'typeId', as: 'categories' });
 ServiceTaxonomyCategory.belongsTo(ServiceTaxonomyType, { foreignKey: 'typeId', as: 'type' });
 SecuritySignalConfig.hasMany(SecurityAutomationTask, {
@@ -598,6 +614,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  LiveFeedAuditEvent,
+  LiveFeedAuditNote
   SystemSettingAudit
   ServiceTaxonomyType,
   ServiceTaxonomyCategory

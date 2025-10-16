@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, EyeIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
@@ -1770,6 +1771,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/live-feed/auditing"
+        size="sm"
+        variant="secondary"
+        icon={EyeIcon}
+        iconPosition="start"
+      >
+        Live feed auditing
         to="/admin/taxonomy"
         size="sm"
         variant="secondary"

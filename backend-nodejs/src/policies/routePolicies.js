@@ -216,6 +216,31 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.live-feed.audit.read': {
+    id: 'admin.live-feed.audit.read',
+    version: '1.0.0',
+    resource: 'admin.live-feed',
+    action: 'admin.live-feed:audit:read',
+    description: 'Allow administrators to inspect live feed audit events, filters, and summaries.',
+    requirements: [Permissions.ADMIN_LIVE_FEED_AUDIT_READ],
+    tags: ['admin', 'live-feed', 'audit'],
+    severity: 'high',
+    metadata: (req) => ({ query: req.query ?? {} })
+  },
+  'admin.live-feed.audit.write': {
+    id: 'admin.live-feed.audit.write',
+    version: '1.0.0',
+    resource: 'admin.live-feed',
+    action: 'admin.live-feed:audit:write',
+    description: 'Allow administrators to annotate, assign, and create live feed audit entries.',
+    requirements: [Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE],
+    tags: ['admin', 'live-feed', 'audit'],
+    severity: 'critical',
+    metadata: (req) => ({
+      auditId: req.params?.auditId || null,
+      noteId: req.params?.noteId || null,
+      method: req.method
+    })
   'admin.audit.read': {
     id: 'admin.audit.read',
     version: '1.0.0',
