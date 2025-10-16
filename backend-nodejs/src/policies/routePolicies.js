@@ -181,6 +181,39 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'serviceman.escrows.view': {
+    id: 'serviceman.escrows.view',
+    version: '1.0.0',
+    resource: 'serviceman.escrows',
+    action: 'serviceman.escrows:view',
+    description: 'Allow crew members to review escrow records linked to their active bookings.',
+    requirements: [Permissions.SERVICEMAN_ESCROW_VIEW],
+    tags: ['serviceman', 'escrow', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      onHold: req.query?.onHold || 'all',
+      policyId: req.query?.policyId || 'all'
+    })
+  },
+  'serviceman.escrows.manage': {
+    id: 'serviceman.escrows.manage',
+    version: '1.0.0',
+    resource: 'serviceman.escrows',
+    action: 'serviceman.escrows:manage',
+    description:
+      'Allow authorised crew members to update escrow status, milestones, notes, and work logs for their assignments.',
+    requirements: [Permissions.SERVICEMAN_ESCROW_MANAGE],
+    tags: ['serviceman', 'escrow', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      escrowId: req.params?.id || null,
+      milestoneId: req.params?.milestoneId || null,
+      workLogId: req.params?.workLogId || null,
+      noteId: req.params?.noteId || null
+    })
+  },
   'service.orders.read': {
     id: 'service.orders.read',
     version: '1.0.0',
