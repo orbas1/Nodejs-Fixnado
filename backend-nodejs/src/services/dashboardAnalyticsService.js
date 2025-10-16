@@ -7,6 +7,7 @@ import {
   Booking,
   BookingAssignment,
   BookingBid,
+  BookingHistoryEntry,
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignFlight,
@@ -29,6 +30,44 @@ const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28,
 const UPCOMING_LIMIT = Math.max(config.dashboards?.upcomingLimit ?? 8, 3);
 const EXPORT_ROW_LIMIT = Math.max(config.dashboards?.exportRowLimit ?? 5000, 500);
 const PERSONA_DEFAULTS = Object.freeze(config.dashboards?.defaults ?? {});
+const ORDER_HISTORY_ENTRY_TYPES = Object.freeze([
+  { value: 'note', label: 'Note' },
+  { value: 'status_update', label: 'Status update' },
+  { value: 'milestone', label: 'Milestone' },
+  { value: 'handoff', label: 'Handoff' },
+  { value: 'document', label: 'Document' }
+]);
+const ORDER_HISTORY_ACTOR_ROLES = Object.freeze([
+  { value: 'customer', label: 'Customer' },
+  { value: 'provider', label: 'Provider' },
+  { value: 'operations', label: 'Operations' },
+  { value: 'support', label: 'Support' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'system', label: 'System' }
+]);
+const ORDER_HISTORY_ATTACHMENT_TYPES = Object.freeze(['image', 'document', 'link']);
+const ORDER_HISTORY_TIMELINE_LIMIT = Math.max(config.dashboards?.historyTimelineLimit ?? 50, 10);
+const ORDER_HISTORY_ACCESS = Object.freeze({
+  level: 'manage',
+  features: ['order-history:write', 'history:write']
+});
+
+const toIsoString = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  try {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  } catch (error) {
+    return null;
+  }
+};
 
 const CURRENCY_FORMATTER = (currency = 'GBP', locale = 'en-GB') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -398,6 +437,20 @@ async function loadUserData(context) {
     ConversationParticipant.findAll({ where: conversationWhere })
   ]);
 
+  const bookingIds = bookings.map((booking) => booking.id);
+  let historyEntries = [];
+
+  if (bookingIds.length > 0) {
+    historyEntries = await BookingHistoryEntry.findAll({
+      where: { bookingId: { [Op.in]: bookingIds } },
+      order: [
+        ['occurredAt', 'DESC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: ORDER_HISTORY_TIMELINE_LIMIT
+    });
+  }
+
   const totalBookings = bookings.length;
   const previousTotalBookings = previousBookings.length;
   const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
@@ -671,6 +724,110 @@ async function loadUserData(context) {
     ]
   };
 
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const escalatedBookings = bookings.filter((booking) => ['disputed', 'cancelled'].includes(booking.status)).length;
+  const latestHistoryTransition = bookings.reduce((latest, booking) => {
+    if (booking.lastStatusTransitionAt instanceof Date && !Number.isNaN(booking.lastStatusTransitionAt.getTime())) {
+      return latest && latest > booking.lastStatusTransitionAt ? latest : booking.lastStatusTransitionAt;
+    }
+    return latest;
+  }, null);
+  const latestTimelineUpdate = historyEntries.reduce((latest, entry) => {
+    const candidate = entry.occurredAt instanceof Date ? entry.occurredAt : entry.createdAt;
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return latest && latest > candidate ? latest : candidate;
+    }
+    return latest;
+  }, null);
+  const latestHistory = [latestHistoryTransition, latestTimelineUpdate].reduce((resolved, candidate) => {
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return resolved && resolved > candidate ? resolved : candidate;
+    }
+    return resolved;
+  }, null);
+  const lastUpdatedLabel = latestHistory
+    ? DateTime.fromJSDate(latestHistory).setZone(window.timezone).toRelative({ base: window.end })
+    : '—';
+
+  const historySidebar = {
+    badge: `${formatNumber(totalBookings)} records`,
+    status:
+      escalatedBookings > 0
+        ? { label: `${formatNumber(escalatedBookings)} escalated`, tone: 'danger' }
+        : { label: 'No escalations', tone: 'success' },
+    highlights: [
+      { label: 'Completed', value: formatNumber(completedBookingsCount) },
+      { label: 'In flight', value: formatNumber(totalBookings - completedBookingsCount) }
+    ],
+    meta: [{ label: 'Last update', value: lastUpdatedLabel || '—' }]
+  };
+
+  const orderSummaries = bookings
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, EXPORT_ROW_LIMIT)
+    .map((order) => ({
+      id: order.id,
+      reference: order.id.slice(0, 8).toUpperCase(),
+      status: order.status,
+      serviceTitle: order.meta?.service || order.meta?.title || 'Service order',
+      serviceCategory: order.meta?.category || null,
+      totalAmount: Number.parseFloat(order.totalAmount ?? 0) || 0,
+      currency: order.currency || 'GBP',
+      scheduledFor: order.scheduledStart instanceof Date
+        ? DateTime.fromJSDate(order.scheduledStart).setZone(window.timezone).toISO()
+        : null,
+      createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : null,
+      updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : null,
+      lastStatusTransitionAt:
+        order.lastStatusTransitionAt instanceof Date ? order.lastStatusTransitionAt.toISOString() : null,
+      zoneId: order.zoneId || null,
+      companyId: order.companyId || null,
+      meta: order.meta || {}
+    }));
+
+  const statusOptions = Array.from(new Set(orderSummaries.map((order) => order.status).filter(Boolean))).map(
+    (status) => ({ value: status, label: humanise(status) })
+  );
+
+  if (!statusOptions.some((option) => option.value === 'all')) {
+    statusOptions.unshift({ value: 'all', label: 'All statuses' });
+  }
+
+  const historyEntriesPayload = historyEntries.map((entry) => ({
+    id: entry.id,
+    bookingId: entry.bookingId,
+    title: entry.title,
+    entryType: entry.entryType,
+    status: entry.status,
+    summary: entry.summary,
+    actorRole: entry.actorRole,
+    actorId: entry.actorId,
+    occurredAt: toIsoString(entry.occurredAt),
+    createdAt: toIsoString(entry.createdAt),
+    updatedAt: toIsoString(entry.updatedAt),
+    attachments: Array.isArray(entry.attachments) ? entry.attachments : [],
+    meta:
+      entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta)
+        ? entry.meta
+        : {}
+  }));
+
+  const historyData = {
+    statusOptions,
+    entryTypes: ORDER_HISTORY_ENTRY_TYPES,
+    actorRoles: ORDER_HISTORY_ACTOR_ROLES,
+    defaultFilters: { status: 'all', sort: 'desc', limit: 25 },
+    attachments: { acceptedTypes: ORDER_HISTORY_ATTACHMENT_TYPES, maxPerEntry: 6 },
+    context: {
+      customerId: userId ?? null,
+      companyId: companyId ?? null
+    },
+    orders: orderSummaries,
+    entries: historyEntriesPayload,
+    access: ORDER_HISTORY_ACCESS
+  };
+
   const rentalsSidebar = {
     badge: `${formatNumber(rentals.length)} rentals`,
     status:
@@ -881,6 +1038,15 @@ async function loadUserData(context) {
         type: 'board',
         sidebar: ordersSidebar,
         data: { columns: orderBoardColumns }
+      },
+      {
+        id: 'history',
+        label: 'Order History',
+        description: 'Detailed audit trail for every service order.',
+        type: 'history',
+        access: ORDER_HISTORY_ACCESS,
+        sidebar: historySidebar,
+        data: historyData
       },
       {
         id: 'rentals',
@@ -1200,6 +1366,14 @@ async function loadAdminData(context) {
             }
           ]
         }
+      },
+      {
+        id: 'tags-seo',
+        label: 'Tags & SEO',
+        description: 'Manage metadata defaults, indexing controls, and tag governance.',
+        type: 'route',
+        icon: 'seo',
+        route: '/admin/seo'
       }
     ]
   };

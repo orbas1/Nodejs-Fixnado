@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import PropTypes from 'prop-types';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import PropTypes from 'prop-types';
 import AppErrorBoundary from '../AppErrorBoundary.jsx';
