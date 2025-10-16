@@ -296,6 +296,22 @@ export default function Header() {
 
           <LanguageSelector />
 
+          {showAuthenticatedNavigation ? (
+            <NavLink
+              to="/account/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'hidden items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition lg:inline-flex',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              Profile
+            </NavLink>
+          ) : null}
+
           <NavLink
             to={accountLink}
             className={({ isActive }) =>

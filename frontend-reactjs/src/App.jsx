@@ -45,6 +45,7 @@ const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 function App() {
@@ -97,6 +98,7 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
               <Route path="/settings/security" element={<SecuritySettings />} />
+              <Route path="/account/profile" element={<Profile />} />
               <Route path="/compliance/data-requests" element={<CompliancePortal />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />

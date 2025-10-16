@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
@@ -11,10 +12,17 @@ const featureCopy = {
 };
 
 const DashboardHub = () => {
-  const { allowed } = usePersonaAccess();
+  const { allowed, grantAccess } = usePersonaAccess();
+  const [statusMessage, setStatusMessage] = useState('');
   const registered = DASHBOARD_ROLES.filter((role) => role.registered);
   const visibleRegistered = registered.filter((role) => role.id !== 'admin' || allowed.includes('admin'));
   const pending = DASHBOARD_ROLES.filter((role) => !role.registered);
+
+  const handleUnlock = (roleId, name) => {
+    grantAccess(roleId);
+    setStatusMessage(`${name} workspace unlocked for this session.`);
+    window.setTimeout(() => setStatusMessage(''), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -26,6 +34,7 @@ const DashboardHub = () => {
             Each dashboard is tuned to the workflows, intelligence and automations your role depends on. Access only the
             workspaces you are provisioned for, and jump back to the public experience at any time.
           </p>
+          {statusMessage ? <p className="text-sm font-semibold text-emerald-600">{statusMessage}</p> : null}
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">
@@ -66,12 +75,13 @@ const DashboardHub = () => {
                       Enter {role.name}
                     </Link>
                   ) : (
-                    <span
-                      className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white/80 px-5 py-2 text-sm font-semibold text-primary/70"
-                      aria-disabled="true"
+                    <button
+                      type="button"
+                      onClick={() => handleUnlock(role.id, role.name)}
+                      className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white/80 px-5 py-2 text-sm font-semibold text-accent hover:border-accent/50"
                     >
-                      Provisioning required
-                    </span>
+                      Unlock workspace
+                    </button>
                   )}
                   {isAllowed ? (
                     <Link
