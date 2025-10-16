@@ -23,6 +23,7 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingTemplate from './bookingTemplate.js';
 import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
@@ -799,6 +800,7 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingTemplate,
   BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,

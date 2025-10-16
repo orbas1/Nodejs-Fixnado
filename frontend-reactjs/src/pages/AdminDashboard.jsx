@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, WalletIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
@@ -3483,12 +3484,14 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/bookings"
         to="/admin/custom-jobs"
         size="sm"
         variant="secondary"
         icon={ClipboardDocumentListIcon}
         iconPosition="start"
       >
+        Booking management
         Custom job management
         to="/admin/roles"
         size="sm"
