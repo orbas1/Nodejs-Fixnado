@@ -1357,6 +1357,14 @@ async function loadAdminData(context) {
             }
           ]
         }
+      },
+      {
+        id: 'tags-seo',
+        label: 'Tags & SEO',
+        description: 'Manage metadata defaults, indexing controls, and tag governance.',
+        type: 'route',
+        icon: 'seo',
+        route: '/admin/seo'
       }
     ]
   };

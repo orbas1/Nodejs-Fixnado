@@ -48,6 +48,7 @@ const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -125,6 +126,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminMonetization />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/seo"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSeo />
                   </AdminProtectedRoute>
                 }
               />
