@@ -20,6 +20,7 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -110,6 +111,14 @@ function App() {
                 element={
                   <ProviderProtectedRoute>
                     <ProviderStorefront />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
+                path="/provider/inventory"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderInventory />
                   </ProviderProtectedRoute>
                 }
               />

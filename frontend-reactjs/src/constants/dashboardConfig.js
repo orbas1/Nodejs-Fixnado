@@ -72,6 +72,12 @@ export const DASHBOARD_ROLES = [
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
+      {
+        id: 'inventory-management',
+        label: 'Inventory management',
+        icon: 'assets',
+        href: '/provider/inventory'
+      },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }

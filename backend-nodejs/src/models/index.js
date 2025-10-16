@@ -30,6 +30,12 @@ import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
+import InventoryCategory from './inventoryCategory.js';
+import InventoryTag from './inventoryTag.js';
+import InventoryItemTag from './inventoryItemTag.js';
+import InventoryItemMedia from './inventoryItemMedia.js';
+import InventoryItemSupplier from './inventoryItemSupplier.js';
+import InventoryLocationZone from './inventoryLocationZone.js';
 import RentalAgreement from './rentalAgreement.js';
 import RentalCheckpoint from './rentalCheckpoint.js';
 import ComplianceDocument from './complianceDocument.js';
@@ -573,11 +579,38 @@ ConsentEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Company.hasMany(InventoryItem, { foreignKey: 'companyId' });
 InventoryItem.belongsTo(Company, { foreignKey: 'companyId' });
 
+InventoryCategory.hasMany(InventoryItem, { foreignKey: 'categoryId', as: 'items' });
+InventoryItem.belongsTo(InventoryCategory, { foreignKey: 'categoryId', as: 'categoryRef' });
+
+InventoryLocationZone.hasMany(InventoryItem, { foreignKey: 'locationZoneId', as: 'items' });
+InventoryItem.belongsTo(InventoryLocationZone, { foreignKey: 'locationZoneId', as: 'locationZone' });
+
 InventoryItem.hasMany(InventoryLedgerEntry, { foreignKey: 'itemId' });
 InventoryLedgerEntry.belongsTo(InventoryItem, { foreignKey: 'itemId' });
 
 InventoryItem.hasMany(InventoryAlert, { foreignKey: 'itemId' });
 InventoryAlert.belongsTo(InventoryItem, { foreignKey: 'itemId' });
+
+InventoryItem.belongsToMany(InventoryTag, {
+  through: InventoryItemTag,
+  foreignKey: 'itemId',
+  otherKey: 'tagId',
+  as: 'tags'
+});
+InventoryTag.belongsToMany(InventoryItem, {
+  through: InventoryItemTag,
+  foreignKey: 'tagId',
+  otherKey: 'itemId',
+  as: 'items'
+});
+
+InventoryItem.hasMany(InventoryItemMedia, { foreignKey: 'itemId', as: 'media' });
+InventoryItemMedia.belongsTo(InventoryItem, { foreignKey: 'itemId', as: 'item' });
+
+InventoryItem.hasMany(InventoryItemSupplier, { foreignKey: 'itemId', as: 'supplierLinks' });
+InventoryItemSupplier.belongsTo(InventoryItem, { foreignKey: 'itemId', as: 'item' });
+InventoryItemSupplier.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+Supplier.hasMany(InventoryItemSupplier, { foreignKey: 'supplierId', as: 'inventoryLinks' });
 
 InventoryItem.hasMany(RentalAgreement, { foreignKey: 'itemId' });
 RentalAgreement.belongsTo(InventoryItem, { foreignKey: 'itemId' });
@@ -822,6 +855,12 @@ export {
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
+  InventoryCategory,
+  InventoryTag,
+  InventoryItemTag,
+  InventoryItemMedia,
+  InventoryItemSupplier,
+  InventoryLocationZone,
   RentalAgreement,
   RentalCheckpoint,
   ComplianceDocument,

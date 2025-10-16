@@ -150,6 +150,199 @@ $$;
 
 \echo 'Postgres bootstrap complete. Role privileges and extensions are configured.'
 
+CREATE TABLE IF NOT EXISTS "InventoryCategory" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  slug TEXT,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'archived')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_category_company_name
+  ON "InventoryCategory" (company_id, lower(name));
+
+CREATE TABLE IF NOT EXISTS "InventoryTag" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  slug TEXT,
+  color TEXT,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_tag_company_name
+  ON "InventoryTag" (company_id, lower(name));
+
+CREATE TABLE IF NOT EXISTS "InventoryLocationZone" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  code TEXT,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_zone_company_name
+  ON "InventoryLocationZone" (company_id, lower(name));
+
+CREATE TABLE IF NOT EXISTS "InventoryItem" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  marketplace_item_id UUID REFERENCES "MarketplaceItem"(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  sku TEXT NOT NULL,
+  category TEXT,
+  unit_type TEXT NOT NULL DEFAULT 'unit',
+  quantity_on_hand INTEGER NOT NULL DEFAULT 0,
+  quantity_reserved INTEGER NOT NULL DEFAULT 0,
+  safety_stock INTEGER NOT NULL DEFAULT 0,
+  location_zone_id UUID REFERENCES "InventoryLocationZone"(id) ON DELETE SET NULL,
+  category_id UUID REFERENCES "InventoryCategory"(id) ON DELETE SET NULL,
+  item_type TEXT NOT NULL DEFAULT 'tool' CHECK (item_type IN ('tool', 'material')),
+  fulfilment_type TEXT NOT NULL DEFAULT 'purchase' CHECK (fulfilment_type IN ('purchase', 'rental', 'hybrid')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'inactive', 'retired')),
+  tagline TEXT,
+  description TEXT,
+  rental_rate NUMERIC(12,2),
+  rental_rate_currency CHAR(3),
+  deposit_amount NUMERIC(12,2),
+  deposit_currency CHAR(3),
+  purchase_price NUMERIC(12,2),
+  purchase_price_currency CHAR(3),
+  replacement_cost NUMERIC(12,2),
+  insurance_required BOOLEAN NOT NULL DEFAULT false,
+  condition_rating TEXT NOT NULL DEFAULT 'good' CHECK (condition_rating IN ('new', 'excellent', 'good', 'fair', 'needs_service')),
+  primary_supplier_id UUID REFERENCES "Supplier"(id) ON DELETE SET NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS inventory_item_company_sku
+  ON "InventoryItem" (company_id, lower(sku));
+
+CREATE INDEX IF NOT EXISTS inventory_item_company_status
+  ON "InventoryItem" (company_id, status);
+
+CREATE INDEX IF NOT EXISTS inventory_item_company_category
+  ON "InventoryItem" (company_id, category_id);
+
+CREATE TABLE IF NOT EXISTS "InventoryItemTag" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL,
+  tag_id UUID NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT inventory_item_tag_unique UNIQUE (item_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_item_tag_item
+  ON "InventoryItemTag" (item_id);
+
+CREATE TABLE IF NOT EXISTS "InventoryItemMedia" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL,
+  url TEXT NOT NULL,
+  alt_text TEXT,
+  caption TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_item_media_item
+  ON "InventoryItemMedia" (item_id, sort_order);
+
+CREATE TABLE IF NOT EXISTS "InventoryItemSupplier" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL,
+  supplier_id UUID NOT NULL,
+  unit_price NUMERIC(12,2) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'GBP',
+  minimum_order_quantity INTEGER NOT NULL DEFAULT 1,
+  lead_time_days INTEGER,
+  is_primary BOOLEAN NOT NULL DEFAULT false,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  last_quoted_at TIMESTAMPTZ,
+  notes TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT inventory_item_supplier_unique UNIQUE (item_id, supplier_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_item_supplier_item
+  ON "InventoryItemSupplier" (item_id);
+
+CREATE TABLE IF NOT EXISTS "InventoryLedgerEntry" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('adjustment', 'reservation', 'reservation_release', 'checkout', 'return', 'write_off', 'restock')),
+  quantity INTEGER NOT NULL,
+  balance_after INTEGER NOT NULL,
+  reference_id UUID,
+  reference_type TEXT,
+  source TEXT NOT NULL DEFAULT 'system' CHECK (source IN ('system', 'provider', 'automation')),
+  note TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_ledger_item_time
+  ON "InventoryLedgerEntry" (item_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_ledger_reference
+  ON "InventoryLedgerEntry" (reference_id, reference_type);
+
+CREATE TABLE IF NOT EXISTS "InventoryAlert" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('low_stock', 'overdue_return', 'damage_reported', 'manual')),
+  severity TEXT NOT NULL DEFAULT 'warning' CHECK (severity IN ('info', 'warning', 'critical')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'acknowledged', 'resolved')),
+  triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ,
+  resolution_note TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_alert_item_status
+  ON "InventoryAlert" (item_id, status);
+
+ALTER TABLE "InventoryItemTag"
+  ADD CONSTRAINT inventory_item_tag_item_fk FOREIGN KEY (item_id) REFERENCES "InventoryItem"(id) ON DELETE CASCADE,
+  ADD CONSTRAINT inventory_item_tag_tag_fk FOREIGN KEY (tag_id) REFERENCES "InventoryTag"(id) ON DELETE CASCADE;
+
+ALTER TABLE "InventoryItemMedia"
+  ADD CONSTRAINT inventory_item_media_item_fk FOREIGN KEY (item_id) REFERENCES "InventoryItem"(id) ON DELETE CASCADE;
+
+ALTER TABLE "InventoryItemSupplier"
+  ADD CONSTRAINT inventory_item_supplier_item_fk FOREIGN KEY (item_id) REFERENCES "InventoryItem"(id) ON DELETE CASCADE,
+  ADD CONSTRAINT inventory_item_supplier_supplier_fk FOREIGN KEY (supplier_id) REFERENCES "Supplier"(id) ON DELETE CASCADE;
+
+ALTER TABLE "InventoryLedgerEntry"
+  ADD CONSTRAINT inventory_ledger_item_fk FOREIGN KEY (item_id) REFERENCES "InventoryItem"(id) ON DELETE CASCADE;
+
+ALTER TABLE "InventoryAlert"
+  ADD CONSTRAINT inventory_alert_item_fk FOREIGN KEY (item_id) REFERENCES "InventoryItem"(id) ON DELETE CASCADE;
+
 -- ---------------------------------------------------------------------------
 -- Command metrics configuration tables
 -- These tables back the admin control centre's configurable operating window
