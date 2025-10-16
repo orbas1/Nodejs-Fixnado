@@ -249,6 +249,7 @@ function buildAdminNavigation(payload) {
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
   const auditTimeline = payload.audit?.timeline ?? [];
+  const servicemanManagement = payload.servicemanManagement ?? null;
 
   const overview = {
     id: 'overview',
@@ -445,9 +446,20 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
+  const servicemanSection = servicemanManagement
+    ? {
+        id: 'servicemen',
+        label: 'Serviceman Management',
+        description: 'Crew roster, availability, and certification follow-ups.',
+        type: 'serviceman-management',
+        data: servicemanManagement
+      }
+    : null;
+
   return [
     overview,
     commandMetrics,
+    servicemanSection,
     securitySection,
     operationsSection,
     disputeSection,

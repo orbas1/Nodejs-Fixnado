@@ -180,7 +180,8 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
       Permissions.INTEGRATION_CONSOLE,
-      Permissions.SUPPORT_TICKETS
+      Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_SERVICEMAN_MANAGE
     ],
     navigation: {
       landing: '/app/operations/overview',
@@ -213,6 +214,7 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_PLATFORM_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_SERVICEMAN_MANAGE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.SUPPORT_TICKETS

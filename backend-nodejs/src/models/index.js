@@ -63,6 +63,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import ServicemanProfile from './servicemanProfile.js';
+import ServicemanShift from './servicemanShift.js';
+import ServicemanCertification from './servicemanCertification.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -94,6 +97,15 @@ CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
+
+Company.hasMany(ServicemanProfile, { foreignKey: 'companyId', as: 'servicemanProfiles' });
+ServicemanProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ServicemanProfile.hasMany(ServicemanShift, { foreignKey: 'profileId', as: 'shifts' });
+ServicemanShift.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+
+ServicemanProfile.hasMany(ServicemanCertification, { foreignKey: 'profileId', as: 'certifications' });
+ServicemanCertification.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
 
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
@@ -464,5 +476,8 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  ServicemanProfile,
+  ServicemanShift,
+  ServicemanCertification
 };

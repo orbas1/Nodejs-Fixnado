@@ -1524,6 +1524,34 @@ function normaliseAdminDashboard(payload = {}) {
     status: item.status || 'Scheduled'
   }));
 
+  const rawServicemanManagement = payload.servicemanManagement;
+  const servicemanManagement = rawServicemanManagement
+    ? {
+        summary: rawServicemanManagement.summary ?? {},
+        roster: ensureArray(rawServicemanManagement.roster),
+        schedule: {
+          days: ensureArray(rawServicemanManagement.schedule?.days),
+          timezone:
+            rawServicemanManagement.schedule?.timezone ||
+            rawServicemanManagement.context?.timezone ||
+            'Europe/London',
+          shifts: ensureArray(rawServicemanManagement.schedule?.shifts)
+        },
+        certifications: ensureArray(rawServicemanManagement.certifications),
+        coverage: {
+          regions: ensureArray(rawServicemanManagement.coverage?.regions),
+          actions: ensureArray(rawServicemanManagement.coverage?.actions)
+        },
+        formOptions: {
+          statuses: ensureArray(rawServicemanManagement.formOptions?.statuses),
+          employmentTypes: ensureArray(rawServicemanManagement.formOptions?.employmentTypes),
+          shiftStatuses: ensureArray(rawServicemanManagement.formOptions?.shiftStatuses),
+          certificationStatuses: ensureArray(rawServicemanManagement.formOptions?.certificationStatuses)
+        },
+        context: rawServicemanManagement.context ?? {}
+      }
+    : null;
+
   return {
     timeframe,
     timeframeLabel: payload.timeframeLabel || '7 days',
@@ -1560,9 +1588,118 @@ function normaliseAdminDashboard(payload = {}) {
     },
     audit: {
       timeline: auditTimeline
-    }
+    },
+    servicemanManagement
   };
 }
+
+const SERVICEMAN_FALLBACK_NOW = Date.now();
+const SERVICEMAN_FALLBACK_DAYS = Array.from({ length: 7 }, (_, index) => {
+  const day = new Date(SERVICEMAN_FALLBACK_NOW + index * 86400000);
+  return {
+    date: day.toISOString().slice(0, 10),
+    label: day.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })
+  };
+});
+
+function createServicemanFallbackShift(profileId, profileName, offsetDays, {
+  startTime = '08:00',
+  endTime = '16:00',
+  status = 'available',
+  location = 'London',
+  assignmentTitle = null
+} = {}) {
+  const day = new Date(SERVICEMAN_FALLBACK_NOW + offsetDays * 86400000);
+  const shiftDate = day.toISOString().slice(0, 10);
+  const label = `${startTime} → ${endTime}`;
+  const dayLabel = day.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+  return {
+    id: `${profileId}-shift-${offsetDays}`,
+    profileId,
+    profileName,
+    shiftDate,
+    startTime,
+    endTime,
+    status,
+    location,
+    assignmentTitle,
+    notes: null,
+    label,
+    dayLabel
+  };
+}
+
+const SERVICEMAN_FALLBACK_SHIFT_PRIMARY = createServicemanFallbackShift(
+  'serviceman-fallback-1',
+  'Amina Khan',
+  1,
+  {
+    status: 'booked',
+    location: 'City of London',
+    assignmentTitle: 'UPS maintenance'
+  }
+);
+
+const SERVICEMAN_FALLBACK_SHIFT_SECONDARY = createServicemanFallbackShift(
+  'serviceman-fallback-2',
+  'Owen Davies',
+  2,
+  {
+    status: 'standby',
+    location: 'Westminster',
+    assignmentTitle: 'HVAC rapid response'
+  }
+);
+
+const SERVICEMAN_FALLBACK_SHIFT_TERTIARY = createServicemanFallbackShift(
+  'serviceman-fallback-3',
+  'Sophie Chen',
+  3,
+  {
+    status: 'available',
+    location: 'Docklands',
+    assignmentTitle: 'Compliance file review'
+  }
+);
+
+const SERVICEMAN_FALLBACK_CERT_PRIMARY = {
+  id: 'serviceman-fallback-cert-1',
+  profileId: 'serviceman-fallback-1',
+  profileName: 'Amina Khan',
+  name: 'NICEIC Electrical',
+  issuer: 'NICEIC',
+  status: 'valid',
+  issuedAt: new Date(SERVICEMAN_FALLBACK_NOW - 31536000000).toISOString().slice(0, 10),
+  expiresAt: new Date(SERVICEMAN_FALLBACK_NOW + 31536000000).toISOString().slice(0, 10),
+  documentUrl: null,
+  notes: null
+};
+
+const SERVICEMAN_FALLBACK_CERT_SECONDARY = {
+  id: 'serviceman-fallback-cert-2',
+  profileId: 'serviceman-fallback-2',
+  profileName: 'Owen Davies',
+  name: 'F-Gas Level 1',
+  issuer: 'REFCOM',
+  status: 'expiring',
+  issuedAt: new Date(SERVICEMAN_FALLBACK_NOW - 47304000000).toISOString().slice(0, 10),
+  expiresAt: new Date(SERVICEMAN_FALLBACK_NOW + 1209600000).toISOString().slice(0, 10),
+  documentUrl: null,
+  notes: 'Schedule renewal visit'
+};
+
+const SERVICEMAN_FALLBACK_CERT_TERTIARY = {
+  id: 'serviceman-fallback-cert-3',
+  profileId: 'serviceman-fallback-3',
+  profileName: 'Sophie Chen',
+  name: 'IOSH Managing Safely',
+  issuer: 'IOSH',
+  status: 'valid',
+  issuedAt: new Date(SERVICEMAN_FALLBACK_NOW - 2628000000).toISOString().slice(0, 10),
+  expiresAt: new Date(SERVICEMAN_FALLBACK_NOW + 5232600000).toISOString().slice(0, 10),
+  documentUrl: null,
+  notes: null
+};
 
 const adminFallback = normaliseAdminDashboard({
   timeframe: '7d',
@@ -1738,6 +1875,97 @@ const adminFallback = normaliseAdminDashboard({
       { time: '11:00', event: 'Provider onboarding review', owner: 'Compliance Ops', status: 'Scheduled' },
       { time: '14:30', event: 'Pen-test retest results review', owner: 'Security', status: 'Scheduled' }
     ]
+  },
+  servicemanManagement: {
+    summary: {
+      openSlots: 6,
+      standbyCrews: 2,
+      followUps: 1
+    },
+    roster: [
+      {
+        id: 'serviceman-fallback-1',
+        displayName: 'Amina Khan',
+        role: 'Lead Electrical Engineer',
+        status: 'active',
+        employmentType: 'full_time',
+        primaryZone: 'City of London',
+        contactEmail: 'amina.khan@example.com',
+        contactPhone: '+44 20 5550 1000',
+        avatarUrl: null,
+        notes: null,
+        skills: ['High voltage', 'UPS maintenance'],
+        certifications: [SERVICEMAN_FALLBACK_CERT_PRIMARY],
+        nextShift: SERVICEMAN_FALLBACK_SHIFT_PRIMARY
+      },
+      {
+        id: 'serviceman-fallback-2',
+        displayName: 'Owen Davies',
+        role: 'HVAC Specialist',
+        status: 'active',
+        employmentType: 'full_time',
+        primaryZone: 'Westminster',
+        contactEmail: 'owen.davies@example.com',
+        contactPhone: '+44 20 5550 2000',
+        avatarUrl: null,
+        notes: null,
+        skills: ['F-Gas', 'Telemetry'],
+        certifications: [SERVICEMAN_FALLBACK_CERT_SECONDARY],
+        nextShift: SERVICEMAN_FALLBACK_SHIFT_SECONDARY
+      },
+      {
+        id: 'serviceman-fallback-3',
+        displayName: 'Sophie Chen',
+        role: 'Compliance Coordinator',
+        status: 'standby',
+        employmentType: 'part_time',
+        primaryZone: 'Docklands',
+        contactEmail: 'sophie.chen@example.com',
+        contactPhone: '+44 20 5550 3000',
+        avatarUrl: null,
+        notes: null,
+        skills: ['Audit readiness', 'Document control'],
+        certifications: [SERVICEMAN_FALLBACK_CERT_TERTIARY],
+        nextShift: SERVICEMAN_FALLBACK_SHIFT_TERTIARY
+      }
+    ],
+    schedule: {
+      timezone: 'Europe/London',
+      days: SERVICEMAN_FALLBACK_DAYS,
+      shifts: [
+        SERVICEMAN_FALLBACK_SHIFT_PRIMARY,
+        SERVICEMAN_FALLBACK_SHIFT_SECONDARY,
+        SERVICEMAN_FALLBACK_SHIFT_TERTIARY
+      ]
+    },
+    certifications: [
+      SERVICEMAN_FALLBACK_CERT_PRIMARY,
+      SERVICEMAN_FALLBACK_CERT_SECONDARY,
+      SERVICEMAN_FALLBACK_CERT_TERTIARY
+    ],
+    coverage: {
+      regions: [
+        { id: 'city-of-london', label: 'City of London', crews: 3, standbyCrews: 1, availableSlots: 2, status: 'Healthy' },
+        { id: 'westminster', label: 'Westminster', crews: 2, standbyCrews: 0, availableSlots: 1, status: 'Needs standby' },
+        { id: 'docklands', label: 'Docklands', crews: 1, standbyCrews: 1, availableSlots: 1, status: 'Healthy' }
+      ],
+      actions: [
+        'Backfill Westminster standby coverage before Friday.',
+        'Schedule compliance renewals flagged this week.'
+      ]
+    },
+    formOptions: {
+      statuses: ['active', 'standby', 'on_leave', 'training'],
+      employmentTypes: ['full_time', 'part_time', 'contractor'],
+      shiftStatuses: ['available', 'booked', 'standby', 'travel', 'off'],
+      certificationStatuses: ['valid', 'expiring', 'expired', 'revoked']
+    },
+    context: {
+      companyId: null,
+      timezone: 'Europe/London',
+      windowStart: new Date(SERVICEMAN_FALLBACK_NOW).toISOString(),
+      windowEnd: new Date(SERVICEMAN_FALLBACK_NOW + 6 * 86400000).toISOString()
+    }
   }
 });
 

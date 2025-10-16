@@ -149,6 +149,20 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.servicemen.manage': {
+    id: 'admin.servicemen.manage',
+    version: '1.0.0',
+    resource: 'admin.servicemen',
+    action: 'admin.servicemen:manage',
+    description: 'Allow platform administrators to manage serviceman rosters, shifts, and certifications.',
+    requirements: [Permissions.ADMIN_SERVICEMAN_MANAGE],
+    tags: ['admin', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      method: req.method
+    })
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

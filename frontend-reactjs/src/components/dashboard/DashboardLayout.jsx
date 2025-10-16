@@ -386,6 +386,7 @@ const DashboardLayout = ({
         section={activeSection}
         persona={persona}
         features={dashboard?.metadata?.features ?? {}}
+        onSectionUpdate={onRefresh}
       />
     );
   };

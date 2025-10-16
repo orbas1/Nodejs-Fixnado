@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import ServicemanManagementSection from '../servicemanManagement/ServicemanManagementSection.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -338,6 +339,9 @@ AvailabilitySection.propTypes = {
     })
   }).isRequired
 };
+
+/* Serviceman management section now lives in ../servicemanManagement */
+
 
 const TableSection = ({ section }) => {
   const headers = section.data?.headers ?? [];
@@ -1623,7 +1627,7 @@ ZonePlannerSection.propTypes = {
   }).isRequired
 };
 
-const DashboardSection = ({ section, features = {}, persona }) => {
+const DashboardSection = ({ section, features = {}, persona, onSectionUpdate }) => {
   switch (section.type) {
     case 'grid':
       return <GridSection section={section} />;
@@ -1643,6 +1647,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <CalendarSection section={section} />;
     case 'availability':
       return <AvailabilitySection section={section} />;
+    case 'serviceman-management':
+      return <ServicemanManagementSection section={section} onRefresh={onSectionUpdate} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
     default:
@@ -1661,7 +1667,8 @@ DashboardSection.propTypes = {
     data: PropTypes.object
   }).isRequired,
   features: PropTypes.object,
-  persona: PropTypes.string
+  persona: PropTypes.string,
+  onSectionUpdate: PropTypes.func
 };
 
 export default DashboardSection;

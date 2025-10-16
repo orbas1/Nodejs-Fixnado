@@ -23,6 +23,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { getServicemanManagementSnapshot } from './servicemanManagementService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -1125,6 +1126,11 @@ async function loadAdminData(context) {
     insights
   };
 
+  const servicemanManagement = await getServicemanManagementSnapshot({
+    companyId,
+    window
+  });
+
   return {
     persona: 'admin',
     name: PERSONA_METADATA.admin.name,
@@ -1156,6 +1162,14 @@ async function loadAdminData(context) {
         description: 'Monitor intake through delivery and risk queues.',
         type: 'board',
         data: { columns: boardColumns }
+      },
+      {
+        id: 'servicemen',
+        label: 'Serviceman Management',
+        description: 'Crew roster, availability, and certification follow-ups.',
+        icon: 'crew',
+        type: 'serviceman-management',
+        data: servicemanManagement
       },
       {
         id: 'compliance',
