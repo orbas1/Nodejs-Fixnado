@@ -8,6 +8,8 @@ import {
   stableHash
 } from '../utils/security/fieldEncryption.js';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function transformEmailConditions(whereClause) {
   if (!whereClause || typeof whereClause !== 'object') {
     return;
@@ -129,13 +131,23 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
-        isEmail: true
+        isEmail(value) {
+          const decrypted = typeof value === 'string' && value ? decryptString(value, 'user:email') : null;
+          const candidate = (decrypted ?? this.email ?? '').trim();
+          if (!EMAIL_PATTERN.test(candidate)) {
+            throw new Error('Validation isEmail on email failed');
+          }
+        }
       },
       set(value) {
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
         }
-        const { encrypted, hash } = protectEmail(value);
+        const trimmed = value.trim();
+        if (!EMAIL_PATTERN.test(trimmed)) {
+          throw new Error('Validation isEmail on email failed');
+        }
+        const { encrypted, hash } = protectEmail(trimmed);
         this.setDataValue('email', encrypted);
         this.setDataValue('emailHash', hash);
       },

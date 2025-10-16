@@ -22,6 +22,7 @@ import adminBlogRoutes from './adminBlogRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import financeRoutes from './financeRoutes.js';
+import adminMarketplaceRoutes from './adminMarketplaceRoutes.js';
 
 const v1Router = Router();
 
@@ -38,6 +39,7 @@ v1Router.use('/rentals', rentalRoutes);
 v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/marketplace', marketplaceRoutes);
 v1Router.use('/materials', materialsRoutes);
+v1Router.use('/admin/marketplace', adminMarketplaceRoutes);
 v1Router.use('/campaigns', campaignRoutes);
 v1Router.use('/communications', communicationsRoutes);
 v1Router.use('/analytics', analyticsPipelineRoutes);

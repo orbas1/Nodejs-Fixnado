@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -136,7 +136,8 @@ const navIconMap = {
   analytics: ChartPieIcon,
   automation: BoltIcon,
   map: MapIcon,
-  documents: ClipboardDocumentCheckIcon
+  documents: ClipboardDocumentCheckIcon,
+  marketplace: WrenchScrewdriverIcon
 };
 
 const getNavIcon = (item) => {
@@ -278,6 +279,33 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'marketplace-workspace' && section.data?.summary) {
+      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
+      entries.push(
+        {
+          id: `${section.id}-tools-summary`,
+          type: 'record',
+          label: `${tools.count ?? 0} tools catalogued`,
+          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-materials-summary`,
+          type: 'record',
+          label: `${materials.count ?? 0} materials tracked`,
+          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-moderation-summary`,
+          type: 'record',
+          label: `${moderationQueue} listings pending review`,
+          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
+          targetSection: section.id
+        }
+      );
+    }
+
     return entries;
   });
 
@@ -337,10 +365,17 @@ const DashboardLayout = ({
   toggleMeta = null,
   toggleReason = null,
   onLogout,
-  blogPosts = []
+  blogPosts = [],
+  initialSectionId = null,
+  onSectionChange = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const [selectedSection, setSelectedSection] = useState(() => {
+    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
+      return initialSectionId;
+    }
+    return navigation[0]?.id ?? 'overview';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -348,10 +383,20 @@ const DashboardLayout = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
     setSearchQuery('');
     setSearchResults([]);
   }, [navigation]);
+
+  useEffect(() => {
+    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
+      setSelectedSection((current) => (current === initialSectionId ? current : initialSectionId));
+      return;
+    }
+
+    if (navigation.length > 0 && !navigation.some((item) => item.id === selectedSection)) {
+      setSelectedSection(navigation[0]?.id ?? 'overview');
+    }
+  }, [initialSectionId, navigation, selectedSection]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -375,6 +420,16 @@ const DashboardLayout = ({
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
+
+  const handleSectionSelect = useCallback(
+    (sectionId) => {
+      setSelectedSection(sectionId);
+      if (onSectionChange) {
+        onSectionChange(sectionId);
+      }
+    },
+    [onSectionChange]
+  );
 
   const renderSection = () => {
     if (!activeSection) return null;
@@ -449,7 +504,7 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedSection(item.id)}
+                        onClick={() => handleSectionSelect(item.id)}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
@@ -532,7 +587,7 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedSection(item.id)}
+                onClick={() => handleSectionSelect(item.id)}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'
@@ -626,7 +681,7 @@ const DashboardLayout = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedSection(result.targetSection);
+                              handleSectionSelect(result.targetSection);
                               setSearchQuery('');
                               setSearchResults([]);
                             }}
@@ -737,7 +792,9 @@ DashboardLayout.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired
     })
-  )
+  ),
+  initialSectionId: PropTypes.string,
+  onSectionChange: PropTypes.func
 };
 
 DashboardLayout.defaultProps = {
@@ -749,7 +806,9 @@ DashboardLayout.defaultProps = {
   toggleMeta: null,
   toggleReason: null,
   onLogout: null,
-  blogPosts: []
+  blogPosts: [],
+  initialSectionId: null,
+  onSectionChange: null
 };
 
 export default DashboardLayout;

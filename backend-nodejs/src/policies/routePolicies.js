@@ -169,6 +169,17 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.marketplace.manage': {
+    id: 'admin.marketplace.manage',
+    version: '1.0.0',
+    resource: 'admin.marketplace',
+    action: 'admin.marketplace:manage',
+    description: 'Allow platform administrators to govern marketplace tools, materials, and listing approvals.',
+    requirements: [Permissions.ADMIN_DASHBOARD, Permissions.INVENTORY_WRITE],
+    tags: ['admin', 'marketplace', 'inventory'],
+    severity: 'high',
+    metadata: (req) => ({ method: req.method, path: req.path })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',
