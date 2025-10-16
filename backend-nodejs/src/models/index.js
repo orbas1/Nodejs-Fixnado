@@ -68,6 +68,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import WalletAccount from './walletAccount.js';
+import WalletTransaction from './walletTransaction.js';
+import WalletPaymentMethod from './walletPaymentMethod.js';
 import CustomerProfile from './customerProfile.js';
 import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
@@ -404,6 +407,20 @@ WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
 WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
+User.hasMany(WalletAccount, { foreignKey: 'userId', as: 'walletAccounts' });
+WalletAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Company.hasMany(WalletAccount, { foreignKey: 'companyId', as: 'walletAccounts' });
+WalletAccount.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+WalletAccount.hasMany(WalletTransaction, { foreignKey: 'walletAccountId', as: 'transactions' });
+WalletTransaction.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
+
+WalletAccount.hasMany(WalletPaymentMethod, { foreignKey: 'walletAccountId', as: 'paymentMethods' });
+WalletPaymentMethod.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
+
+WalletAccount.belongsTo(WalletPaymentMethod, { foreignKey: 'autopayoutMethodId', as: 'autopayoutMethod' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -525,6 +542,9 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  WalletAccount,
+  WalletTransaction,
+  WalletPaymentMethod
   CustomerProfile,
   CustomerContact,
   CustomerLocation,

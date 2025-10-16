@@ -34,6 +34,10 @@ export const RBAC_MATRIX = {
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
       Permissions.SCHEDULE_MANAGE,
+      Permissions.WALLET_VIEW,
+      Permissions.WALLET_MANAGE,
+      Permissions.WALLET_TRANSACT,
+      Permissions.WALLET_METHOD_MANAGE
       Permissions.CUSTOMER_CONTROL_MANAGE
       Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
