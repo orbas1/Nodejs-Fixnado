@@ -17,6 +17,12 @@
 - **Notification preferences:** Toggle updates propagate to push notification service and email marketing platform with 15-minute sync window; user receives confirmation toast.
 - **Saved payment logic:** Expiring cards prompt reminder 30 days in advance; if card becomes invalid during active booking, user is guided through update before completion.
 
+## Workspace Hub & Access Control
+- Workspaces screen composes its cards from the shared descriptor registry, mirroring the React `dashboardConfig`; Riverpod providers expose capability metadata, escalation contacts, and access states so Flutter stays in parity without duplicating config.
+- Tapping a workspace opens a bottom sheet preview with service overview, capability highlights, and SLA badges; closing the sheet restores scroll position and analytics log `workspace_preview_viewed` with persona and capability payloads.
+- Restricted workspaces route users through the request-access dialog which preloads justification hints, surfaces escalation contact mailto links, and on submission emits an action to the access requests controller that queues backend follow-up while updating UI state to `pending`.
+- Capability previews surface quick actions for eligible users (e.g., "Open analytics", "Manage campaigns"); interactions dispatch to the navigation router and log telemetry while the sheet gracefully collapses to maintain context.
+
 ## Error Handling & Offline Support
 - Booking wizard caches form data locally; if user loses connection, they can resume without re-entering information once online.
 - Fatal crash boundary intercepts uncaught exceptions, logs diagnostics via `AppDiagnosticsReporter`, prompts users to restart, and on success reinitialises bootstrap services without duplicating Riverpod providers.

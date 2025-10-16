@@ -23,6 +23,9 @@
 - Live feed header adopts a status pill with animated glow when connected, amber pulse when reconnecting, and slate outline when paused; timestamp labels use `Inter 12/16` with grey-600 colour tokens and switch to warning red when staleness exceeds 90 seconds.
 - Error boundary fallback canvas uses gradient overlay from Primary 900 to Slate 800 with white text, 40px headline, and secondary action buttons styled as ghost links; correlation ID pill adopts monospace font and subtle glow to highlight copyable telemetry.
 - NotFound screen hero adopts illustrated empty state with 24px gap, quick-action buttons styled as primary/secondary pair, and breadcrumb chips to reinforce navigation context while maintaining 3:1 contrast.
+- Workspace hub cards employ 20px radius, elevated surface tokens, and dual-tone status rails that match capability state (GA/Preview/Pilot) while embedding service-level badges in the top-right corner; escalation chips use gradient outlines referencing the navigation escalation palette defined in `Web_Application_Design_Update`.
+- Capability preview dialog mirrors card styling with split-column layout: left column showcases bullet descriptors with `Manrope 16/24`, right column stacks integration, SLA, and escalation blocks separated by 16px dividers to prevent scan fatigue on dense metadata.
+- Request access modal inherits modal tokens but adds emphasised primary CTA spanning full width on mobile, includes secondary copy styled with `Inter 14/20` muted slate tone, and anchors escalation mailto link as tertiary text button for keyboard navigation.
 
 ## Interaction & Motion
 - Standard animation curve `cubic-bezier(0.4, 0.0, 0.2, 1)` for transitions; durations: 150ms (micro), 250ms (modal), 350ms (page).

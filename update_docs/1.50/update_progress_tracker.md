@@ -5,7 +5,7 @@
 | 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
 | 2 | Compliance & Data Governance | 94 | 100 | 94 | 95 | 88 | 92 | 94 |
 | 3 | Payments, Escrow & Finance Orchestration | 92 | 100 | 92 | 94 | 88 | 92 | 93 |
-| 4 | Experience & Navigation Overhaul | 62 | 80 | 72 | 78 | 70 | 76 | 73 |
+| 4 | Experience & Navigation Overhaul | 72 | 92 | 86 | 90 | 84 | 88 | 85 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 6 | Mobile Parity & Stabilisation | 30 | 40 | 34 | 42 | 34 | 38 | 36 |
 | 7 | Observability, Testing & Quality Automation | 12 | 14 | 12 | 14 | 12 | 12 | 13 |
@@ -42,6 +42,8 @@
 > - Explorer ranking now weights compliance, demand, and availability across React and Flutter with shared heuristics, parity unit tests, and mobile zoning filters so marketplace and dashboard journeys surface the strongest providers, increasing Task 4 security, integration, functionality, and production scores.
 > - Real-time live feed streaming now publishes SSE snapshots, filter-aware reconnections, and status telemetry across React and Flutter while adding backend policy guards and controller tests, lifting Task 4 completion/integration/functionality, Task 6 parity, and Task 7 error-free and production readiness metrics.
 > - Router-level error boundaries, telemetry reporting, and a dedicated 404 page now wrap the React navigation shell so loader failures surface recovery UI while shipping crash diagnostics to observability pipelines, raising Task 4 functionality, error-free, and production readiness scores.
+> - Workspace hub redesign introduces status-aware cards, escalation links, and capability previews on web with Flutter parity via Riverpod-backed workspaces, boosting Task 4 integration, functionality, and production readiness metrics while resolving duplicate CTA friction highlighted in the pre-update evaluation.
+> - Workspace hub documentation sweep now aligns IA, styling, and QA artefacts across web and Flutter, moving Task 4 completion to 92% while locking request-access telemetry and escalation governance into the shared trackers for release management.
 > - Mobile creation studio parity, localisation checks, and controller tests increased Task 6 security, completion, integration, and functionality scores as providers can now publish offerings from Flutter with the same compliance guardrails as web.
 > - Flutter's fatal error boundary and diagnostics reporter now guard the mobile shell, capturing crash payloads, presenting restart loops, and disposing bootstrap resources so Task 6 security, error-free, and production readiness scores climb while operations gain actionable telemetry.
 > - GDPR metrics endpoint, migration, and SLA instrumentation now drive real backlog/due-date telemetry across backend, React, and Flutter clients; Vitest/Supertest coverage plus design artefact updates elevate Task 2 completion, functionality, and production readiness to the 90s.
