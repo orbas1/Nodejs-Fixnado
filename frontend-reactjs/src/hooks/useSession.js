@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isRolePermitted, normaliseRole } from '../constants/accessControl.js';
 
-const SESSION_STORAGE_KEY = 'fx.session';
+export const SESSION_STORAGE_KEY = 'fx.session';
 
-const FALLBACK_SESSION = Object.freeze({
+export const FALLBACK_SESSION = Object.freeze({
   tenantId: 'fixnado-demo',
   role: 'guest',
   userId: null,
@@ -16,11 +16,13 @@ const FALLBACK_SESSION = Object.freeze({
   isAuthenticated: false
 });
 
-const ROLE_DASHBOARD_MAP = {
-  admin: ['admin', 'user'],
-  company: ['provider', 'enterprise', 'user'],
-  enterprise: ['enterprise', 'user'],
-  provider: ['provider', 'user'],
+export const ROLE_DASHBOARD_MAP = {
+  guest: [],
+  admin: ['admin', 'provider', 'enterprise', 'finance', 'serviceman', 'user'],
+  company: ['provider', 'enterprise', 'finance', 'user'],
+  enterprise: ['enterprise', 'finance', 'user'],
+  finance: ['finance', 'user'],
+  provider: ['provider', 'finance', 'user'],
   servicemen: ['serviceman', 'user'],
   serviceman: ['serviceman', 'user'],
   user: ['user']

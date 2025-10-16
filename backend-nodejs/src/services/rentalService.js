@@ -14,10 +14,31 @@ const RENTAL_STATUS_TRANSITIONS = {
   pickup_scheduled: ['in_use', 'cancelled'],
   in_use: ['inspection_pending', 'disputed'],
   inspection_pending: ['settled', 'disputed'],
-  settled: [],
+  settled: ['disputed'],
   cancelled: [],
   disputed: []
 };
+
+const RENTAL_DETAIL_INCLUDE = [
+  {
+    model: InventoryItem,
+    attributes: [
+      'id',
+      'name',
+      'sku',
+      'rentalRate',
+      'rentalRateCurrency',
+      'depositAmount',
+      'depositCurrency',
+      'quantityOnHand',
+      'quantityReserved',
+      'safetyStock'
+    ],
+    required: false
+  },
+  { model: Booking, required: false },
+  { model: RentalCheckpoint, separate: true, order: [['occurredAt', 'ASC']] }
+];
 
 function rentalError(message, statusCode = 400) {
   const error = new Error(message);
@@ -243,7 +264,7 @@ export async function requestRentalAgreement({
       transaction
     );
 
-    return rental.reload({ transaction });
+    return rental.reload({ transaction, include: RENTAL_DETAIL_INCLUDE });
   });
 }
 
@@ -645,6 +666,207 @@ export async function completeRentalInspection(rentalId, { actorId, actorRole = 
   });
 }
 
+export async function updateRentalDepositStatus(
+  rentalId,
+  { actorId, actorRole = 'provider', status, reason = null, amountReleased = null }
+) {
+  const allowedStatuses = ['pending', 'held', 'released', 'partially_released', 'forfeited'];
+  if (!status || !allowedStatuses.includes(status)) {
+    throw rentalError('Deposit status must be pending, held, released, partially_released, or forfeited');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const rental = await RentalAgreement.findByPk(rentalId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!rental) {
+      throw rentalError('Rental agreement not found', 404);
+    }
+
+    const previousStatus = rental.depositStatus;
+    const now = new Date();
+    const numericAmount = Number.isFinite(Number(amountReleased)) ? Number(amountReleased) : null;
+
+    await rental.update(
+      {
+        depositStatus: status,
+        meta: {
+          ...rental.meta,
+          depositAdjustments: [
+            ...((Array.isArray(rental.meta?.depositAdjustments) ? rental.meta.depositAdjustments : []).slice(-19)),
+            {
+              status,
+              reason: reason || null,
+              amountReleased: numericAmount,
+              actorId: actorId || null,
+              actorRole,
+              occurredAt: now.toISOString()
+            }
+          ]
+        }
+      },
+      { transaction }
+    );
+
+    await addCheckpoint(
+      rental,
+      {
+        type: 'deposit',
+        description: `Deposit ${status.replace(/_/g, ' ')}`,
+        recordedBy: actorId || rental.renterId,
+        recordedByRole: actorRole,
+        payload: {
+          status,
+          reason: reason || null,
+          amountReleased: numericAmount
+        }
+      },
+      transaction
+    );
+
+    await recordAnalyticsEvent(
+      {
+        name: 'rental.deposit.updated',
+        entityId: rental.id,
+        actor: resolveRentalActor(actorId, actorRole),
+        tenantId: rental.companyId,
+        occurredAt: now,
+        metadata: {
+          rentalId: rental.id,
+          companyId: rental.companyId,
+          bookingId: rental.bookingId,
+          previousStatus,
+          nextStatus: status,
+          amountReleased: numericAmount,
+          depositAmount: rental.depositAmount ? Number(rental.depositAmount) : null,
+          reason: reason || null
+        }
+      },
+      { transaction }
+    );
+
+    return rental;
+  });
+}
+
+export async function raiseRentalDispute(
+  rentalId,
+  { actorId, actorRole = 'customer', reason, evidenceUrl = null }
+) {
+  if (!reason || !reason.trim()) {
+    throw rentalError('Reason is required to open a dispute');
+  }
+
+  const allowedStatuses = ['in_use', 'inspection_pending', 'settled'];
+
+  return sequelize.transaction(async (transaction) => {
+    const rental = await RentalAgreement.findByPk(rentalId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+    if (!rental) {
+      throw rentalError('Rental agreement not found', 404);
+    }
+
+    if (rental.status === 'disputed') {
+      return rental.reload({ transaction, include: RENTAL_DETAIL_INCLUDE });
+    }
+
+    if (!allowedStatuses.includes(rental.status)) {
+      throw rentalError('Rental can only be disputed while active or after return', 409);
+    }
+
+    assertStatusTransition(rental.status, 'disputed');
+
+    const previousStatus = rental.status;
+    const now = new Date();
+    const depositStatus = rental.depositAmount ? 'held' : rental.depositStatus;
+    const adjustments = Array.isArray(rental.meta?.depositAdjustments)
+      ? rental.meta.depositAdjustments.slice(-19)
+      : [];
+
+    const trimmedReason = reason.trim();
+
+    await rental.update(
+      {
+        status: 'disputed',
+        depositStatus,
+        lastStatusTransitionAt: now,
+        meta: {
+          ...rental.meta,
+          dispute: {
+            reason: trimmedReason,
+            raisedBy: actorId || null,
+            raisedAt: now.toISOString(),
+            evidenceUrl: evidenceUrl || null,
+            status: 'open'
+          },
+          depositAdjustments: [
+            ...adjustments,
+            {
+              status: depositStatus,
+              reason: `Dispute opened: ${trimmedReason}`,
+              amountReleased: null,
+              actorId: actorId || null,
+              actorRole,
+              occurredAt: now.toISOString()
+            }
+          ]
+        }
+      },
+      { transaction }
+    );
+
+    await emitRentalStatusTransition({
+      rental,
+      previousStatus,
+      nextStatus: 'disputed',
+      actorId,
+      actorRole,
+      occurredAt: now,
+      metadata: {
+        reason: trimmedReason,
+        depositStatus
+      },
+      transaction
+    });
+
+    await addCheckpoint(
+      rental,
+      {
+        type: 'dispute',
+        description: 'Dispute opened',
+        recordedBy: actorId || rental.renterId,
+        recordedByRole: actorRole,
+        payload: {
+          reason: trimmedReason,
+          evidenceUrl: evidenceUrl || null
+        }
+      },
+      transaction
+    );
+
+    await recordAnalyticsEvent(
+      {
+        name: 'rental.dispute.opened',
+        entityId: rental.id,
+        actor: resolveRentalActor(actorId, actorRole),
+        tenantId: rental.companyId,
+        occurredAt: now,
+        metadata: {
+          rentalId: rental.id,
+          companyId: rental.companyId,
+          bookingId: rental.bookingId,
+          reason: trimmedReason,
+          previousStatus,
+          depositStatus
+        }
+      },
+      { transaction }
+    );
+
+    return rental.reload({ transaction, include: RENTAL_DETAIL_INCLUDE });
+  });
+}
+
 export async function cancelRentalAgreement(rentalId, { actorId, actorRole = 'provider', reason = null }) {
   return sequelize.transaction(async (transaction) => {
     const rental = await RentalAgreement.findByPk(rentalId, { transaction, lock: transaction.LOCK.UPDATE });
@@ -735,21 +957,13 @@ export function listRentalAgreements({ companyId, renterId, status, limit = 50, 
     order: [['createdAt', 'DESC']],
     limit,
     offset,
-    include: [
-      InventoryItem,
-      { model: Booking, required: false },
-      { model: RentalCheckpoint, separate: true, order: [['occurredAt', 'ASC']] }
-    ]
+    include: RENTAL_DETAIL_INCLUDE
   });
 }
 
 export function getRentalAgreementById(rentalId) {
   return RentalAgreement.findByPk(rentalId, {
-    include: [
-      InventoryItem,
-      { model: Booking, required: false },
-      { model: RentalCheckpoint, separate: true, order: [['occurredAt', 'ASC']] }
-    ]
+    include: RENTAL_DETAIL_INCLUDE
   });
 }
 

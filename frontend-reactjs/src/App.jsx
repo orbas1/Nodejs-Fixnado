@@ -29,12 +29,15 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const AdminLiveFeedAuditing = lazy(() => import('./pages/AdminLiveFeedAuditing.jsx'));
+const AdminSystemSettings = lazy(() => import('./pages/AdminSystemSettings.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
+const AdminTaxonomy = lazy(() => import('./pages/AdminTaxonomy.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const CreationStudio = lazy(() => import('./pages/CreationStudio.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
+const OrderWorkspace = lazy(() => import('./pages/OrderWorkspace.jsx'));
 const FinanceOverview = lazy(() => import('./pages/FinanceOverview.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 const Blog = lazy(() => import('./pages/Blog.jsx'));
@@ -45,8 +48,13 @@ const Terms = lazy(() => import('./pages/Terms.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
+const CustomerSettingsDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
+  : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
 
 function App() {
   const { t } = useLocale();
@@ -98,6 +106,7 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
               <Route path="/settings/security" element={<SecuritySettings />} />
+              <Route path="/account/profile" element={<Profile />} />
               <Route path="/compliance/data-requests" element={<CompliancePortal />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
@@ -131,6 +140,18 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminLiveFeedAuditing />
+                path="/admin/system-settings"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSystemSettings />
+                path="/admin/taxonomy"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminTaxonomy />
+                path="/admin/seo"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSeo />
                   </AdminProtectedRoute>
                 }
               />
@@ -164,17 +185,19 @@ function App() {
               <Route path="/dashboards" element={<DashboardHub />} />
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
+              <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
+              {import.meta.env.DEV && CustomerSettingsDevPreview ? (
+                <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
+              ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </RouteErrorBoundary>
         </Suspense>
       </main>
       {!isDashboardExperience && <Footer />}
-      {!isDashboardExperience && (
-        <FloatingChatLauncher isAuthenticated={isAuthenticated} />
-      )}
+      <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       <ConsentBanner />
     </div>
   );

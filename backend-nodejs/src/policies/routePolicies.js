@@ -1,6 +1,33 @@
 import { Permissions } from '../services/accessControlService.js';
 
 const ROUTE_POLICIES = {
+  'customer.control.manage': {
+    id: 'customer.control.manage',
+    version: '1.0.0',
+    resource: 'customer.control',
+    action: 'customer.control:manage',
+    description:
+      'Allow customer personas to view and update their control centre profile, escalation contacts, and service locations.',
+    requirements: [Permissions.CUSTOMER_CONTROL_MANAGE],
+    tags: ['customer', 'workspace', 'profile'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      surface: req.route?.path || null
+  'account.settings.manage': {
+    id: 'account.settings.manage',
+    version: '1.0.0',
+    resource: 'account.settings',
+    action: 'account.settings:manage',
+    description: 'Allow authenticated users to manage their Fixnado account workspace preferences.',
+    requirements: [Permissions.ACCOUNT_SETTINGS_MANAGE],
+    tags: ['account', 'preferences'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
   'feed.live.read': {
     id: 'feed.live.read',
     version: '1.0.0',
@@ -99,6 +126,36 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'service.orders.read': {
+    id: 'service.orders.read',
+    version: '1.0.0',
+    resource: 'service.orders',
+    action: 'service.orders:read',
+    description: 'Allow authenticated customers to view and search their service orders.',
+    requirements: [Permissions.SERVICE_ORDERS_VIEW],
+    tags: ['orders', 'service', 'dashboard'],
+    severity: 'medium',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      priority: req.query?.priority || 'all',
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'service.orders.manage': {
+    id: 'service.orders.manage',
+    version: '1.0.0',
+    resource: 'service.orders',
+    action: 'service.orders:manage',
+    description: 'Allow eligible personas to create, update, and annotate service orders.',
+    requirements: [Permissions.SERVICE_ORDERS_MANAGE],
+    tags: ['orders', 'service', 'dashboard'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      orderId: req.params?.orderId || null,
+      status: req.body?.status || null
+    })
+  },
   'admin.dashboard.view': {
     id: 'admin.dashboard.view',
     version: '1.0.0',
@@ -108,6 +165,16 @@ const ROUTE_POLICIES = {
     requirements: [Permissions.ADMIN_DASHBOARD],
     tags: ['admin', 'analytics'],
     severity: 'high'
+  },
+  'admin.dashboard.configure': {
+    id: 'admin.dashboard.configure',
+    version: '1.0.0',
+    resource: 'admin.dashboard',
+    action: 'admin.dashboard:configure',
+    description: 'Allow platform administrators to configure dashboard overview thresholds and insights.',
+    requirements: [Permissions.ADMIN_DASHBOARD_WRITE],
+    tags: ['admin', 'analytics'],
+    severity: 'critical'
   },
   'admin.features.read': {
     id: 'admin.features.read',
@@ -174,6 +241,52 @@ const ROUTE_POLICIES = {
       noteId: req.params?.noteId || null,
       method: req.method
     })
+  'admin.audit.read': {
+    id: 'admin.audit.read',
+    version: '1.0.0',
+    resource: 'admin.audit',
+    action: 'admin.audit:read',
+    description: 'Allow administrators to review audit timeline events and evidence.',
+    requirements: [Permissions.ADMIN_AUDIT_READ],
+    tags: ['admin', 'audit'],
+    severity: 'high',
+    metadata: (req) => ({
+      timeframe: req.query?.timeframe || '7d',
+      category: req.query?.category || 'all'
+    })
+  },
+  'admin.audit.write': {
+    id: 'admin.audit.write',
+    version: '1.0.0',
+    resource: 'admin.audit',
+    action: 'admin.audit:write',
+    description: 'Allow administrators to curate audit timeline events, attachments, and owners.',
+    requirements: [Permissions.ADMIN_AUDIT_WRITE],
+    tags: ['admin', 'audit'],
+    severity: 'critical',
+    metadata: (req) => ({
+      method: req.method,
+      eventId: req.params?.id || null
+    })
+  'admin.security.posture.read': {
+    id: 'admin.security.posture.read',
+    version: '1.0.0',
+    resource: 'admin.security.posture',
+    action: 'admin.security.posture:read',
+    description: 'Allow administrators to view security posture and telemetry insights.',
+    requirements: [Permissions.ADMIN_SECURITY_POSTURE_READ],
+    tags: ['admin', 'security'],
+    severity: 'high'
+  },
+  'admin.security.posture.write': {
+    id: 'admin.security.posture.write',
+    version: '1.0.0',
+    resource: 'admin.security.posture',
+    action: 'admin.security.posture:write',
+    description: 'Allow administrators to manage security posture signals, automation, and connectors.',
+    requirements: [Permissions.ADMIN_SECURITY_POSTURE_WRITE],
+    tags: ['admin', 'security'],
+    severity: 'critical'
   },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
@@ -194,6 +307,92 @@ const ROUTE_POLICIES = {
     requirements: [Permissions.ADMIN_AFFILIATE_WRITE],
     tags: ['admin', 'affiliate'],
     severity: 'high'
+  },
+  'zones.read': {
+    id: 'zones.read',
+    version: '1.0.0',
+    resource: 'zones',
+    action: 'zones:read',
+    description: 'Allow operations staff to inspect geo-zone definitions, compliance, and analytics.',
+    requirements: [Permissions.ZONES_READ],
+    tags: ['zones', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      includeAnalytics: req.query?.includeAnalytics === 'true'
+    })
+  },
+  'zones.manage': {
+    id: 'zones.manage',
+    version: '1.0.0',
+    resource: 'zones',
+    action: 'zones:manage',
+    description: 'Allow operations administrators to create, update, import, and delete service zones.',
+    requirements: [Permissions.ZONES_MANAGE],
+    tags: ['zones', 'operations'],
+    severity: 'critical',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      replace: Boolean(req.body?.replace),
+      coverageCount: Array.isArray(req.body?.coverages) ? req.body.coverages.length : null
+    })
+  },
+  'zones.coverage': {
+    id: 'zones.coverage',
+    version: '1.0.0',
+    resource: 'zones.coverage',
+    action: 'zones:coverage',
+    description: 'Allow operations administrators to manage zone-to-service coverage assignments.',
+    requirements: [Permissions.ZONES_COVERAGE],
+    tags: ['zones', 'operations'],
+    severity: 'critical',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      coverageId: req.params?.coverageId || null,
+      coverageCount: Array.isArray(req.body?.coverages) ? req.body.coverages.length : null
+    })
+  'admin.compliance.read': {
+    id: 'admin.compliance.read',
+    version: '1.0.0',
+    resource: 'admin.compliance',
+    action: 'admin.compliance:read',
+    description: 'Allow compliance operators to view and monitor control libraries.',
+    requirements: [Permissions.ADMIN_COMPLIANCE_READ],
+    tags: ['admin', 'compliance'],
+    severity: 'high'
+  },
+  'admin.compliance.write': {
+    id: 'admin.compliance.write',
+    version: '1.0.0',
+    resource: 'admin.compliance',
+    action: 'admin.compliance:write',
+    description: 'Allow compliance operators to manage control libraries and automation guardrails.',
+    requirements: [Permissions.ADMIN_COMPLIANCE_WRITE],
+    tags: ['admin', 'compliance'],
+    severity: 'critical'
+  'admin.taxonomy.read': {
+    id: 'admin.taxonomy.read',
+    version: '1.0.0',
+    resource: 'admin.taxonomy',
+    action: 'admin.taxonomy:read',
+    description: 'Allow platform administrators to review service taxonomy types and categories.',
+    requirements: [Permissions.ADMIN_TAXONOMY_READ],
+    tags: ['admin', 'taxonomy'],
+    severity: 'medium',
+    metadata: (req) => ({ includeArchived: req.query?.includeArchived === 'true' })
+  },
+  'admin.taxonomy.write': {
+    id: 'admin.taxonomy.write',
+    version: '1.0.0',
+    resource: 'admin.taxonomy',
+    action: 'admin.taxonomy:write',
+    description: 'Allow platform administrators to create, update, and archive service taxonomy entries.',
+    requirements: [Permissions.ADMIN_TAXONOMY_WRITE],
+    tags: ['admin', 'taxonomy'],
+    severity: 'high',
+    metadata: (req) => ({ method: req.method, path: req.path })
   },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
@@ -266,6 +465,117 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       regionId: req.query?.regionId || null,
       providerId: req.query?.providerId || null
+    })
+  },
+  'wallet.accounts.read': {
+    id: 'wallet.accounts.read',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:read',
+    description: 'Allow customers and operators to view wallet balances and settings.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.query?.userId || req.user?.id || null,
+      companyId: req.query?.companyId || null
+    })
+  },
+  'wallet.accounts.create': {
+    id: 'wallet.accounts.create',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:create',
+    description: 'Allow authorised roles to create wallet accounts for customers or organisations.',
+    requirements: [Permissions.WALLET_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      userId: req.body?.userId || req.user?.id || null,
+      companyId: req.body?.companyId || null
+    })
+  },
+  'wallet.accounts.update': {
+    id: 'wallet.accounts.update',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:update',
+    description: 'Allow authorised actors to update wallet settings and thresholds.',
+    requirements: [Permissions.WALLET_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null
+    })
+  },
+  'wallet.transactions.read': {
+    id: 'wallet.transactions.read',
+    version: '1.0.0',
+    resource: 'wallet.transactions',
+    action: 'wallet.transactions:read',
+    description: 'Allow wallet owners to review transaction history and holds.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      type: req.query?.type || null
+    })
+  },
+  'wallet.transactions.create': {
+    id: 'wallet.transactions.create',
+    version: '1.0.0',
+    resource: 'wallet.transactions',
+    action: 'wallet.transactions:create',
+    description: 'Allow authorised actors to credit, debit, or hold wallet balances.',
+    requirements: [Permissions.WALLET_TRANSACT],
+    tags: ['wallet', 'finance'],
+    severity: 'critical',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      type: req.body?.type || null,
+      amount: req.body?.amount || null
+    })
+  },
+  'wallet.payment-methods.read': {
+    id: 'wallet.payment-methods.read',
+    version: '1.0.0',
+    resource: 'wallet.payment-methods',
+    action: 'wallet.payment-methods:read',
+    description: 'Allow wallet owners to view payout destinations and funding instruments.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null
+    })
+  },
+  'wallet.payment-methods.manage': {
+    id: 'wallet.payment-methods.manage',
+    version: '1.0.0',
+    resource: 'wallet.payment-methods',
+    action: 'wallet.payment-methods:manage',
+    description: 'Allow authorised roles to register or update wallet payment methods.',
+    requirements: [Permissions.WALLET_METHOD_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      methodId: req.params?.methodId || null
+    })
+  },
+  'wallet.summary.read': {
+    id: 'wallet.summary.read',
+    version: '1.0.0',
+    resource: 'wallet.summary',
+    action: 'wallet.summary:read',
+    description: 'Allow wallet owners to retrieve dashboard-ready wallet summaries.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance', 'reporting'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.query?.userId || req.user?.id || null,
+      companyId: req.query?.companyId || null
     })
   },
   'compliance.data-requests.create': {
