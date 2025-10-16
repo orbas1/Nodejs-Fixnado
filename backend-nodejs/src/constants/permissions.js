@@ -5,6 +5,8 @@ export const Permissions = Object.freeze({
   ADMIN_FEATURE_WRITE: 'admin:feature-toggle:write',
   ADMIN_PLATFORM_READ: 'admin:platform-settings:read',
   ADMIN_PLATFORM_WRITE: 'admin:platform-settings:write',
+  ADMIN_SETTINGS_READ: 'admin:preferences:read',
+  ADMIN_SETTINGS_WRITE: 'admin:preferences:write',
   ADMIN_AUTOMATION_READ: 'admin:automation:read',
   ADMIN_AUTOMATION_WRITE: 'admin:automation:write',
   ADMIN_APPEARANCE_READ: 'admin:appearance:read',

@@ -216,6 +216,24 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.preferences.read': {
+    id: 'admin.preferences.read',
+    version: '1.0.0',
+    resource: 'admin.preferences',
+    action: 'admin.preferences:read',
+    description: 'Allow platform administrators to inspect control centre preferences.',
+    requirements: [Permissions.ADMIN_SETTINGS_READ],
+    tags: ['admin', 'settings'],
+    severity: 'high'
+  },
+  'admin.preferences.write': {
+    id: 'admin.preferences.write',
+    version: '1.0.0',
+    resource: 'admin.preferences',
+    action: 'admin.preferences:write',
+    description: 'Allow platform administrators to update control centre preferences.',
+    requirements: [Permissions.ADMIN_SETTINGS_WRITE],
+    tags: ['admin', 'settings'],
   'admin.automation.read': {
     id: 'admin.automation.read',
     version: '1.0.0',

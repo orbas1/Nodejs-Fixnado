@@ -30,6 +30,9 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  fetchAdminPreferences,
+  saveAdminPreferences
+} from '../controllers/adminPreferencesController.js';
   getDisputeHealthWorkspaceHandler,
   createDisputeHealthBucketHandler,
   updateDisputeHealthBucketHandler,
@@ -562,6 +565,20 @@ router.delete(
   authenticate,
   enforcePolicy('admin.automation.write', { metadata: (req) => ({ action: 'archive', initiativeId: req.params.id }) }),
   archiveAutomationBacklogHandler
+);
+
+router.get(
+  '/preferences',
+  authenticate,
+  enforcePolicy('admin.preferences.read', { metadata: () => ({ section: 'admin-preferences' }) }),
+  fetchAdminPreferences
+);
+
+router.put(
+  '/preferences',
+  authenticate,
+  enforcePolicy('admin.preferences.write', { metadata: () => ({ section: 'admin-preferences' }) }),
+  saveAdminPreferences
 );
 
 router.get(

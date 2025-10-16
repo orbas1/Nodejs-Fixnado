@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 export async function up({ context: queryInterface }) {
   const userId = '11111111-1111-1111-1111-111111111111';
   const providerId = '22222222-2222-2222-2222-222222222222';
@@ -159,6 +161,58 @@ export async function up({ context: queryInterface }) {
     }
   ]);
 
+  const now = new Date();
+  await queryInterface.bulkDelete('PlatformSetting', { key: 'admin_preferences' });
+  await queryInterface.bulkInsert('PlatformSetting', [
+    {
+      id: randomUUID(),
+      key: 'admin_preferences',
+      value: JSON.stringify({
+        general: {
+          platformName: 'Fixnado',
+          supportEmail: 'support@fixnado.com',
+          defaultLocale: 'en-GB',
+          defaultTimezone: 'Europe/London',
+          brandColor: '#1D4ED8',
+          loginUrl: 'https://app.fixnado.com/admin'
+        },
+        notifications: {
+          emailEnabled: true,
+          smsEnabled: false,
+          pushEnabled: true,
+          dailyDigestHour: 8,
+          digestTimezone: 'Europe/London',
+          escalationEmails: ['security@fixnado.com'],
+          incidentWebhookUrl: ''
+        },
+        security: {
+          requireMfa: true,
+          sessionTimeoutMinutes: 30,
+          passwordRotationDays: 90,
+          allowPasswordless: false,
+          ipAllowlist: [],
+          loginAlertEmails: ['security@fixnado.com']
+        },
+        workspace: {
+          maintenanceMode: false,
+          maintenanceMessage: '',
+          defaultLandingPage: '/admin/dashboard',
+          theme: 'system',
+          enableBetaFeatures: false,
+          allowedAdminRoles: ['admin', 'operations'],
+          quickLinks: [
+            { label: 'Security centre', href: '/admin/dashboard#security-posture' },
+            { label: 'Monetisation controls', href: '/admin/monetisation' }
+          ]
+        },
+        __meta: {
+          changedSections: [],
+          version: 0
+        }
+      }),
+      updated_by: 'system-bootstrap',
+      created_at: now,
+      updated_at: now
   await queryInterface.bulkInsert('ComplianceControl', [
     {
       id: '88888888-8888-8888-8888-888888888888',
@@ -248,4 +302,5 @@ export async function down({ context: queryInterface }) {
   await queryInterface.bulkDelete('Service', null, {});
   await queryInterface.bulkDelete('Company', null, {});
   await queryInterface.bulkDelete('User', null, {});
+  await queryInterface.bulkDelete('PlatformSetting', { key: 'admin_preferences' });
 }

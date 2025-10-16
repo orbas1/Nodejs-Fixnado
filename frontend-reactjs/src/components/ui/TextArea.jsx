@@ -45,6 +45,8 @@ const TextArea = forwardRef(function TextArea(
       <textarea
         ref={ref}
         id={fieldId}
+        className={clsx('fx-text-input fx-textarea', error && 'fx-text-input--error', textareaClassName)}
+        rows={rows}
         rows={rows}
         className={clsx('fx-text-input fx-text-area', error && 'fx-text-input--error', textareaClassName)}
         className={clsx('fx-textarea', error && 'fx-textarea--error', inputClassName)}

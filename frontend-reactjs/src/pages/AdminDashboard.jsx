@@ -1357,6 +1357,8 @@ function buildAdminNavigation(payload, complianceContext = null) {
     : null;
 
   const navigation = [
+    overview,
+    commandMetrics,
   const inboxSection = inboxSummary
     ? {
         id: 'inbox',
@@ -1501,6 +1503,15 @@ function buildAdminNavigation(payload, complianceContext = null) {
   ].filter(Boolean);
 
   navigation.push({
+    id: 'settings-preferences-link',
+    label: 'Settings & preferences',
+    description: 'Configure admin workspace defaults and escalation controls.',
+    type: 'link',
+    icon: 'settings',
+    href: '/admin/preferences'
+  });
+
+  return navigation;
     id: 'appearance-management',
     label: 'Appearance management',
     description: 'Govern admin look & feel, brand assets, and marketing variants.',
@@ -2720,6 +2731,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/preferences"
+        size="sm"
+        variant="secondary"
+        icon={Cog8ToothIcon}
+        iconPosition="start"
+      >
+        Settings preferences
         to="/admin/appearance"
         size="sm"
         variant="secondary"
