@@ -18,6 +18,9 @@ import {
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  getAdminDashboardOverviewSettings,
+  updateAdminDashboardOverviewSettings
+} from '../controllers/adminDashboardSettingsController.js';
   getSecurityPostureHandler,
   upsertSecuritySignalHandler,
   deactivateSecuritySignalHandler,
@@ -37,6 +40,22 @@ router.get(
   authenticate,
   enforcePolicy('admin.dashboard.view', { metadata: () => ({ section: 'dashboard' }) }),
   dashboard
+);
+router.get(
+  '/dashboard/overview-settings',
+  authenticate,
+  enforcePolicy('admin.dashboard.view', {
+    metadata: () => ({ section: 'dashboard', surface: 'overview-settings' })
+  }),
+  getAdminDashboardOverviewSettings
+);
+router.put(
+  '/dashboard/overview-settings',
+  authenticate,
+  enforcePolicy('admin.dashboard.configure', {
+    metadata: () => ({ section: 'dashboard', surface: 'overview-settings' })
+  }),
+  updateAdminDashboardOverviewSettings
 );
 router.get(
   '/feature-toggles',
