@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { BanknotesIcon, MapIcon, Cog6ToothIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -879,6 +880,7 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
+  const sections = [
   const upcomingManualEntries = manualUpcoming.slice(0, 4).map((entry) => ({
     title: entry.title,
     when: entry.when,
@@ -899,6 +901,17 @@ function buildAdminNavigation(payload) {
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  sections.push({
+    id: 'system-settings-link',
+    label: 'System settings',
+    description: 'Configure email, storage, and integration credentials.',
+    type: 'link',
+    icon: 'settings',
+    routeTo: '/admin/system-settings'
+  });
+
+  return sections;
 }
 
 export default function AdminDashboard() {
@@ -1572,6 +1585,13 @@ export default function AdminDashboard() {
         Geo-zonal builder
       </Button>
       <Button
+        to="/admin/system-settings"
+        size="sm"
+        variant="secondary"
+        icon={Cog8ToothIcon}
+        iconPosition="start"
+      >
+        System settings
         type="button"
         size="sm"
         variant="secondary"

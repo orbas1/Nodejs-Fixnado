@@ -73,6 +73,7 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import SystemSettingAudit from './systemSettingAudit.js';
 import ServiceTaxonomyType from './serviceTaxonomyType.js';
 import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
 import WalletAccount from './walletAccount.js';
@@ -585,6 +586,7 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  SystemSettingAudit
   ServiceTaxonomyType,
   ServiceTaxonomyCategory
   WalletAccount,

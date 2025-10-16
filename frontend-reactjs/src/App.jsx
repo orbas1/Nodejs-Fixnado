@@ -28,6 +28,7 @@ const Materials = lazy(() => import('./pages/Materials.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
+const AdminSystemSettings = lazy(() => import('./pages/AdminSystemSettings.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const AdminTaxonomy = lazy(() => import('./pages/AdminTaxonomy.jsx'));
@@ -134,6 +135,10 @@ function App() {
                 }
               />
               <Route
+                path="/admin/system-settings"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminSystemSettings />
                 path="/admin/taxonomy"
                 element={
                   <AdminProtectedRoute>

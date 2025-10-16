@@ -3,11 +3,10 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import './ui.css';
 
-const Select = forwardRef(function Select(
-  { id, label, optionalLabel, hint, error, options, className, selectClassName, ...rest },
+const TextArea = forwardRef(function TextArea(
+  { id, label, optionalLabel, hint, error, rows, className, inputClassName, ...rest },
   ref
 ) {
-const Select = forwardRef(({ id, label, hint, error, className, children, ...rest }, ref) => {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const describedBy = [];
@@ -28,22 +27,15 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
           {optionalLabel ? <span className="fx-field__optional">{optionalLabel}</span> : null}
         </label>
       ) : null}
-      <select
+      <textarea
         ref={ref}
         id={fieldId}
-        className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
-        className={clsx('fx-text-input', error && 'fx-text-input--error')}
+        rows={rows}
+        className={clsx('fx-textarea', error && 'fx-textarea--error', inputClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
-        {children}
-      </select>
+      />
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
           {hint}
@@ -58,44 +50,26 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
   );
 });
 
-Select.propTypes = {
+TextArea.propTypes = {
   id: PropTypes.string,
   label: PropTypes.string,
   optionalLabel: PropTypes.string,
   hint: PropTypes.string,
   error: PropTypes.string,
-  options: PropTypes.arrayOf(
-    PropTypes.shape({
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      label: PropTypes.node.isRequired,
-      disabled: PropTypes.bool
-    })
-  ),
+  rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   className: PropTypes.string,
-  selectClassName: PropTypes.string
-Select.displayName = 'Select';
-
-Select.propTypes = {
-  id: PropTypes.string,
-  label: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
-  className: PropTypes.string,
-  children: PropTypes.node.isRequired
+  inputClassName: PropTypes.string
 };
 
-Select.defaultProps = {
+TextArea.defaultProps = {
   id: undefined,
   label: undefined,
   optionalLabel: undefined,
   hint: undefined,
   error: undefined,
-  options: [],
+  rows: 4,
   className: undefined,
-  selectClassName: undefined
-  hint: undefined,
-  error: undefined,
-  className: undefined
+  inputClassName: undefined
 };
 
-export default Select;
+export default TextArea;

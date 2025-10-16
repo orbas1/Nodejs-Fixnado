@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -168,6 +168,7 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.type === 'link') {
     if (section.route || section.href) {
       return [];
     }
@@ -374,6 +375,11 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const contentSections = useMemo(
+    () => navigation.filter((item) => item.type !== 'link'),
+    [navigation]
+  );
+  const [selectedSection, setSelectedSection] = useState(contentSections[0]?.id ?? null);
   const navSections = useMemo(
     () => navigation.filter((item) => !item.route && !item.href),
     [navigation]
@@ -385,7 +391,25 @@ const DashboardLayout = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleNavItemSelect = useCallback(
+    (item) => {
+      if (item.type === 'link') {
+        if (item.routeTo) {
+          navigate(item.routeTo);
+        }
+        return;
+      }
+      setSelectedSection(item.id);
+    },
+    [navigate]
+  );
+
   useEffect(() => {
+    const defaultSection = contentSections[0]?.id ?? null;
+    setSelectedSection(defaultSection);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [contentSections]);
     setSelectedSection(navSections[0]?.id ?? 'overview');
     setSearchQuery('');
     setSearchResults([]);
@@ -409,6 +433,7 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
+  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
   const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
@@ -492,6 +517,33 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const isLink = item.type === 'link';
+                    const isActive = !isLink && item.id === activeSection?.id;
+                    const Icon = getNavIcon(item);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          handleNavItemSelect(item);
+                          if (item.type === 'link') {
+                            setMobileNavOpen(false);
+                          }
+                        }}
+                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          isActive
+                            ? 'border-accent bg-accent text-white shadow-glow'
+                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        }`}
+                        aria-pressed={!isLink && isActive}
+                      >
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                          }`}
+                        >
                     const isActive = !item.href && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
                     const sharedClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
@@ -623,6 +675,29 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const isLink = item.type === 'link';
+            const isActive = !isLink && item.id === activeSection?.id;
+            const Icon = getNavIcon(item);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNavItemSelect(item)}
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                } ${navCollapsed ? 'justify-center px-2' : ''}`}
+                title={navCollapsed ? item.label : undefined}
+                aria-pressed={!isLink && isActive}
+              >
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                  }`}
+                >
             const isActive = !item.href && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
             const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${

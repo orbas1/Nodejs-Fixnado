@@ -11,6 +11,10 @@ import {
   savePlatformSettings
 } from '../controllers/platformSettingsController.js';
 import {
+  listPlatformSettingDiagnostics,
+  triggerPlatformSettingDiagnostic
+} from '../controllers/platformSettingsDiagnosticsController.js';
+import {
   getAffiliateSettingsHandler,
   saveAffiliateSettingsHandler,
   listAffiliateCommissionRulesHandler,
@@ -98,6 +102,22 @@ router.put(
   authenticate,
   enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
+);
+router.post(
+  '/platform-settings/test',
+  authenticate,
+  enforcePolicy('admin.platform.write', {
+    metadata: () => ({ section: 'platform-settings', action: 'diagnostic' })
+  }),
+  triggerPlatformSettingDiagnostic
+);
+router.get(
+  '/platform-settings/audit',
+  authenticate,
+  enforcePolicy('admin.platform.read', {
+    metadata: () => ({ section: 'platform-settings', action: 'audit' })
+  }),
+  listPlatformSettingDiagnostics
 );
 
 router.get(
