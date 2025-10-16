@@ -7,7 +7,7 @@ export default function SegmentedControl({
   value,
   options,
   onChange,
-  size,
+  size = 'md',
   className,
   qa
 }) {
@@ -75,8 +75,3 @@ SegmentedControl.propTypes = {
   })
 };
 
-SegmentedControl.defaultProps = {
-  size: 'md',
-  className: undefined,
-  qa: undefined
-};

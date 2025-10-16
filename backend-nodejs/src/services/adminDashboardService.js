@@ -6,12 +6,22 @@ import {
   Order,
   Booking,
   ComplianceDocument,
+  ComplianceControl,
   InventoryAlert,
   AnalyticsPipelineRun,
   InsuredSellerApplication,
   Company,
-  User
+  AnalyticsPipelineRun,
+  InsuredSellerApplication
 } from '../models/index.js';
+import { listAutomationInitiativesForDashboard } from './automationBacklogService.js';
+import { summariseInboxForDashboard } from './adminInboxService.js';
+import { getServiceManagementSnapshot } from './adminServiceManagementService.js';
+import { listLegalDocumentsSummary } from './legalDocumentService.js';
+import { listAdminAuditEvents } from './adminAuditEventService.js';
+import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getOverviewSettings } from './adminDashboardSettingsService.js';
+import { getSecurityPosture } from './securityPostureService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -123,6 +133,20 @@ function determineDeltaTone(change) {
   return 'warning';
 }
 
+function applyTemplate(template, context = {}) {
+  if (typeof template !== 'string') {
+    return null;
+  }
+  const trimmed = template.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.replace(/\{\{(\w+)\}\}/g, (match, token) => {
+    const value = context[token];
+    return value ?? value === 0 ? String(value) : match;
+  });
+}
+
 function determineMetricStatus(metricId, value, context = {}) {
   if (metricId === 'escrow') {
     if (value >= context.targetHigh) {
@@ -155,10 +179,14 @@ function determineMetricStatus(metricId, value, context = {}) {
   }
 
   if (metricId === 'sla') {
-    if (value >= 97) {
+    const goal = Number.isFinite(context.goal) ? context.goal : 97;
+    const warningThreshold = Number.isFinite(context.warningThreshold)
+      ? context.warningThreshold
+      : Math.max(goal - 3, 0);
+    if (value >= goal) {
       return { tone: 'success', label: 'On target' };
     }
-    if (value >= 94) {
+    if (value >= warningThreshold) {
       return { tone: 'warning', label: 'Guarded' };
     }
     return { tone: 'danger', label: 'Breach risk' };
@@ -308,128 +336,150 @@ async function computeDisputeSeries(buckets) {
   return results;
 }
 
-async function computeSecuritySignals(timezone) {
-  const activeUsers = await User.count({ where: { type: { [Op.in]: ['company', 'servicemen'] } } });
-  const usersWithMfa = await User.count({
-    where: {
-      type: { [Op.in]: ['company', 'servicemen'] },
-      [Op.or]: [{ twoFactorApp: true }, { twoFactorEmail: true }]
-    }
-  });
-  const mfaRate = activeUsers > 0 ? (usersWithMfa / activeUsers) * 100 : 0;
+function automationTaskStatusLabel(status) {
+  switch (status) {
+    case 'completed':
+      return 'Completed';
+    case 'in_progress':
+      return 'In progress';
+    case 'blocked':
+      return 'Blocked';
+    default:
+      return 'Planned';
+  }
+}
 
-  const criticalAlerts = await InventoryAlert.count({
-    where: {
-      severity: 'critical',
-      status: { [Op.ne]: 'resolved' },
-      triggeredAt: { [Op.gte]: DateTime.now().setZone(timezone).minus({ hours: 24 }).toJSDate() }
-    }
-  });
+function automationTaskTone(task, timezone) {
+  if (task.status === 'completed') {
+    return 'success';
+  }
+  if (task.status === 'blocked') {
+    return 'danger';
+  }
 
-  const pipelineRuns = await AnalyticsPipelineRun.findAll({
-    where: {
-      startedAt: {
-        [Op.gte]: DateTime.now().setZone(timezone).minus({ hours: 24 }).toJSDate()
-      }
-    },
-    attributes: ['eventsProcessed', 'eventsFailed']
-  });
+  const now = DateTime.now().setZone(timezone);
+  const dueDate = task.dueAt ? DateTime.fromISO(task.dueAt).setZone(timezone) : null;
+  if (dueDate && dueDate < now) {
+    return 'danger';
+  }
 
-  const totals = pipelineRuns.reduce(
-    (acc, run) => {
-      acc.processed += toNumber(run.eventsProcessed);
-      acc.failed += toNumber(run.eventsFailed);
-      return acc;
-    },
-    { processed: 0, failed: 0 }
-  );
+  if (task.priority === 'urgent') {
+    return 'warning';
+  }
 
-  const ingestionRate = totals.processed + totals.failed > 0
-    ? (totals.processed / (totals.processed + totals.failed)) * 100
-    : 100;
+  if (dueDate && dueDate.diff(now, 'days').days <= 2) {
+    return 'warning';
+  }
+
+  return 'info';
+}
+
+function mapAutomationTask(task, timezone) {
+  const dueDate = task.dueAt ? DateTime.fromISO(task.dueAt).setZone(timezone) : null;
+  const dueLabel = dueDate ? dueDate.toFormat('dd LLL yyyy') : 'No due date';
+  const ownerLabel = task.owner ? `Owner: ${task.owner}` : null;
+  const priorityLabel = task.priority ? `Priority: ${task.priority}` : null;
+  const runbookLabel = task.runbookUrl ? 'Runbook available' : null;
+  const notes = [task.notes, dueDate ? `Due ${dueLabel}` : 'Scheduling pending', ownerLabel, priorityLabel, runbookLabel]
+    .filter(Boolean)
+    .join(' • ');
+
+  const tone = automationTaskTone(task, timezone);
 
   return {
-    signals: [
-      {
-        label: 'MFA adoption',
-        valueLabel: `${mfaRate.toFixed(1)}%`,
-        caption: 'Enterprise + provider portals',
-        tone: mfaRate >= 90 ? 'success' : mfaRate >= 75 ? 'warning' : 'danger'
-      },
-      {
-        label: 'Critical alerts',
-        valueLabel: numberFormatter.format(criticalAlerts),
-        caption: 'Inventory + compliance monitors',
-        tone: criticalAlerts === 0 ? 'success' : criticalAlerts <= 3 ? 'warning' : 'danger'
-      },
-      {
-        label: 'Audit log ingestion',
-        valueLabel: `${ingestionRate.toFixed(1)}%`,
-        caption: 'Pipeline delivery completeness (24h)',
-        tone: ingestionRate >= 98 ? 'success' : ingestionRate >= 95 ? 'info' : 'warning'
-      }
-    ],
-    pipelineTotals: totals
+    id: task.id,
+    name: task.name,
+    status: automationTaskStatusLabel(task.status),
+    notes,
+    tone,
+    owner: task.owner ?? null,
+    runbookUrl: task.runbookUrl ?? null,
+    dueAt: task.dueAt,
+    priority: task.priority,
+    signalKey: task.signalKey ?? null
   };
 }
 
 async function computeAutomationBacklog(ingestionTotals, timezone) {
-  const now = DateTime.now().setZone(timezone);
-
-  const pendingDocuments = await ComplianceDocument.count({
-    where: { status: { [Op.in]: ['submitted', 'under_review'] } }
-  });
-
-  const applications = await InsuredSellerApplication.count({
-    where: { status: { [Op.in]: ['pending_documents', 'in_review'] } }
-  });
-
-  const alertsInBuild = await InventoryAlert.count({
-    where: {
-      status: 'active',
-      severity: { [Op.in]: ['warning', 'critical'] },
-      triggeredAt: { [Op.gte]: now.minus({ days: 7 }).toJSDate() }
-    }
-  });
-
-  const totalEvents = ingestionTotals.processed + ingestionTotals.failed;
-  const ingestionHealth = totalEvents > 0 ? (ingestionTotals.failed / totalEvents) * 100 : 0;
-
-  return [
-    {
-      name: 'Escrow ledger reconciliation',
-      status: ingestionHealth <= 1 ? 'Stable' : ingestionHealth <= 5 ? 'Monitor' : 'Investigate',
-      notes: `Processed ${numberFormatter.format(ingestionTotals.processed)} events in the last 24h with ${numberFormatter.format(
-        ingestionTotals.failed
-      )} failures.`,
-      tone: ingestionHealth <= 1 ? 'success' : ingestionHealth <= 5 ? 'info' : 'warning'
-    },
-    {
-      name: 'Compliance webhook retries',
-      status: pendingDocuments > 25 ? 'Backlog' : pendingDocuments > 10 ? 'Scaling' : 'Healthy',
-      notes: `${numberFormatter.format(pendingDocuments)} documents awaiting reviewer input across providers.`,
-      tone: pendingDocuments > 25 ? 'warning' : 'info'
-    },
-    {
-      name: 'Dispute document summarisation',
-      status: applications > 0 ? 'Pilot' : 'Ideation',
-      notes: applications
-        ? `${numberFormatter.format(applications)} insured seller applications queued for AI-assisted summary checks.`
-        : 'Awaiting additional use-cases before rollout.',
-      tone: applications > 0 ? 'success' : 'info'
-    },
-    {
-      name: 'Field alert triage bots',
-      status: alertsInBuild > 5 ? 'Load shedding' : 'Learning',
-      notes: `${numberFormatter.format(alertsInBuild)} alerts analysed by automation in the last week.`,
-      tone: alertsInBuild > 5 ? 'warning' : 'info'
-    }
-  ];
+  const persisted = await listAutomationInitiativesForDashboard();
+  if (persisted.length) {
+    return persisted;
+  }
+  return buildFallbackAutomationBacklog(ingestionTotals, timezone);
 }
 
+async function buildFallbackAutomationBacklog(ingestionTotals, timezone) {
 async function computeComplianceControls(timezone) {
   const now = DateTime.now().setZone(timezone);
-  const upcoming = await ComplianceDocument.findAll({
+  const upcomingControls = await ComplianceControl.findAll({
+    where: {
+      status: { [Op.ne]: 'retired' },
+      nextReviewAt: {
+        [Op.not]: null,
+        [Op.lte]: now.plus({ days: 14 }).toJSDate()
+      }
+    },
+    include: [
+      { model: Company, as: 'company', attributes: ['id', 'contactName', 'legalStructure'], required: false },
+      { model: User, as: 'owner', attributes: ['firstName', 'lastName'], required: false }
+    ],
+    order: [['nextReviewAt', 'ASC']],
+    limit: 6
+  });
+
+  if (upcomingControls.length) {
+    return upcomingControls.map((control) => {
+      const dueAt = control.nextReviewAt ? DateTime.fromJSDate(control.nextReviewAt).setZone(timezone) : null;
+      const diffDays = dueAt ? Math.round(dueAt.diff(now, 'days').days) : null;
+      let due = 'No review scheduled';
+      if (diffDays != null) {
+        if (diffDays < 0) {
+          due = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+        } else if (diffDays === 0) {
+          due = 'Due today';
+        } else if (diffDays === 1) {
+          due = 'Due tomorrow';
+        } else {
+          due = `Due in ${diffDays} days`;
+        }
+      }
+
+      let tone = 'info';
+      if (diffDays != null) {
+        if (diffDays < 0 || diffDays <= 1) {
+          tone = 'danger';
+        } else if (diffDays <= 3) {
+          tone = 'warning';
+        } else if (diffDays > 7) {
+          tone = 'success';
+        }
+      }
+
+      const ownerName = control.owner
+        ? [control.owner.firstName, control.owner.lastName].filter(Boolean).join(' ').trim()
+        : null;
+      const ownerLabel = ownerName ? `${ownerName} • ${control.ownerTeam}` : control.ownerTeam;
+      const company = control.company;
+      const detailParts = [
+        `${control.category.replace(/_/g, ' ')} • ${control.controlType}`,
+        company?.contactName || company?.legalStructure || 'multi-provider scope'
+      ];
+      if (control.evidenceRequired) {
+        detailParts.push('Evidence required');
+      }
+
+      return {
+        id: control.id,
+        name: control.title,
+        detail: detailParts.join(' • '),
+        due,
+        owner: ownerLabel,
+        tone
+      };
+    });
+  }
+
+  const upcomingDocuments = await ComplianceDocument.findAll({
     where: {
       expiryAt: {
         [Op.not]: null,
@@ -441,51 +491,52 @@ async function computeComplianceControls(timezone) {
     limit: 4
   });
 
-  if (!upcoming.length) {
-    return [
-      {
-        id: 'fallback-policy',
-        name: 'Scheduled compliance sweep',
-        detail: 'No expiring documentation detected in the next 14 days. Automated reminders remain armed for new submissions.',
-        due: 'Next window',
-        owner: 'Compliance Ops',
-        tone: 'success'
+  if (upcomingDocuments.length) {
+    return upcomingDocuments.map((doc) => {
+      const expiry = DateTime.fromJSDate(doc.expiryAt).setZone(timezone);
+      const diffDays = Math.max(0, Math.round(expiry.diff(now, 'days').days));
+      let due;
+      if (diffDays === 0) {
+        due = 'Due today';
+      } else if (diffDays === 1) {
+        due = 'Due tomorrow';
+      } else {
+        due = `Due in ${diffDays} days`;
       }
-    ];
+
+      let tone = 'info';
+      if (diffDays <= 1) {
+        tone = 'danger';
+      } else if (diffDays <= 3) {
+        tone = 'warning';
+      }
+
+      const company = doc.Company;
+      const owner = company?.contactName ? `${company.contactName} team` : 'Compliance Ops';
+      const detail = `Certificate ${doc.type} for ${company?.legalStructure ?? 'provider'} expiring ${expiry.toFormat('dd LLL')}.`;
+
+      return {
+        id: doc.id,
+        name: doc.fileName,
+        detail,
+        due,
+        owner,
+        tone
+      };
+    });
   }
 
-  return upcoming.map((doc) => {
-    const expiry = DateTime.fromJSDate(doc.expiryAt).setZone(timezone);
-    const diffDays = Math.max(0, Math.round(expiry.diff(now, 'days').days));
-    let due;
-    if (diffDays === 0) {
-      due = 'Due today';
-    } else if (diffDays === 1) {
-      due = 'Due tomorrow';
-    } else {
-      due = `Due in ${diffDays} days`;
+  return [
+    {
+      id: 'fallback-policy',
+      name: 'Scheduled compliance sweep',
+      detail:
+        'No expiring documentation detected in the next 14 days. Automated reminders remain armed for new submissions.',
+      due: 'Next window',
+      owner: 'Compliance Ops',
+      tone: 'success'
     }
-
-    let tone = 'info';
-    if (diffDays <= 1) {
-      tone = 'danger';
-    } else if (diffDays <= 3) {
-      tone = 'warning';
-    }
-
-    const company = doc.Company;
-    const owner = company?.contactName ? `${company.contactName} team` : 'Compliance Ops';
-    const detail = `Certificate ${doc.type} for ${company?.legalStructure ?? 'provider'} expiring ${expiry.toFormat('dd LLL')}.`;
-
-    return {
-      id: doc.id,
-      name: doc.fileName,
-      detail,
-      due,
-      owner,
-      tone
-    };
-  });
+  ];
 }
 
 async function computeQueueInsights(range, timezone) {
@@ -569,8 +620,48 @@ async function computeQueueInsights(range, timezone) {
   ];
 }
 
-async function buildAuditTimeline(range, timezone) {
+async function buildAuditTimeline(range, timezone, timeframeKey) {
   const now = DateTime.now().setZone(timezone);
+  let manualPayload;
+
+  try {
+    manualPayload = await listAdminAuditEvents({ timeframe: timeframeKey, timezone });
+  } catch (error) {
+    manualPayload = {
+      events: [],
+      meta: {
+        timeframe: timeframeKey,
+        timeframeLabel: TIMEFRAMES[timeframeKey]?.label ?? timeframeKey,
+        timezone,
+        range: { start: range.start.toISO(), end: range.end.toISO() },
+        countsByCategory: {},
+        countsByStatus: {},
+        lastUpdated: now.toISO()
+      }
+    };
+  }
+
+  const manualEvents = manualPayload.events.map((event) => {
+    const occurred = event.occurredAt
+      ? DateTime.fromISO(event.occurredAt).setZone(timezone)
+      : now;
+    const due = event.dueAt ? DateTime.fromISO(event.dueAt).setZone(timezone) : null;
+    return {
+      id: event.id,
+      event: event.title,
+      summary: event.summary,
+      owner: event.ownerName,
+      ownerTeam: event.ownerTeam,
+      status: event.status,
+      category: event.category,
+      attachments: event.attachments ?? [],
+      occurredAt: occurred,
+      occurredAtLabel: occurred.toFormat('HH:mm'),
+      dueAt: due,
+      source: 'manual',
+      metadata: event.metadata ?? {}
+    };
+  });
 
   const latestPipeline = await AnalyticsPipelineRun.findOne({
     order: [['startedAt', 'DESC']]
@@ -583,57 +674,167 @@ async function buildAuditTimeline(range, timezone) {
 
   const latestDispute = await Dispute.findOne({ order: [['updatedAt', 'DESC']] });
 
-  const timeline = [];
+  const derivedEvents = [];
 
   if (latestPipeline) {
     const timestamp = DateTime.fromJSDate(latestPipeline.finishedAt ?? latestPipeline.startedAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `pipeline-${latestPipeline.id}`,
       event: 'Analytics pipeline run',
+      summary: `${numberFormatter.format(latestPipeline.eventsProcessed ?? 0)} events processed • ${numberFormatter.format(
+        latestPipeline.eventsFailed ?? 0
+      )} failed`,
       owner: latestPipeline.triggeredBy ?? 'Data Platform',
-      status: latestPipeline.status === 'failed' ? 'Attention' : 'Completed'
+      ownerTeam: 'Data Platform',
+      status: latestPipeline.status === 'failed' ? 'blocked' : 'completed',
+      category: 'pipeline',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        runId: latestPipeline.id,
+        status: latestPipeline.status,
+        eventsProcessed: latestPipeline.eventsProcessed,
+        eventsFailed: latestPipeline.eventsFailed
+      }
     });
   }
 
   if (latestCompliance) {
     const timestamp = DateTime.fromJSDate(latestCompliance.updatedAt ?? latestCompliance.submittedAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `compliance-${latestCompliance.id}`,
       event: `${latestCompliance.type} review`,
+      summary: latestCompliance.notes ?? latestCompliance.metadata?.summary ?? 'Latest compliance review update',
       owner: latestCompliance.Company?.contactName ?? 'Compliance Ops',
-      status: latestCompliance.status === 'approved' ? 'Completed' : 'In progress'
+      ownerTeam: 'Compliance',
+      status: latestCompliance.status === 'approved' ? 'completed' : 'in_progress',
+      category: 'compliance',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        complianceId: latestCompliance.id,
+        status: latestCompliance.status
+      }
     });
   }
 
   if (latestDispute) {
     const timestamp = DateTime.fromJSDate(latestDispute.updatedAt ?? latestDispute.createdAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `dispute-${latestDispute.id}`,
       event: 'Dispute status review',
+      summary: `Current status ${latestDispute.status}`,
       owner: 'Support',
-      status: latestDispute.status === 'resolved' ? 'Completed' : 'In progress'
+      ownerTeam: 'Support',
+      status: latestDispute.status === 'resolved' ? 'completed' : 'in_progress',
+      category: 'dispute',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        disputeId: latestDispute.id,
+        status: latestDispute.status
+      }
     });
   }
 
-  if (!timeline.length) {
-    timeline.push({
-      time: now.toFormat('HH:mm'),
+  const combined = [...manualEvents, ...derivedEvents];
+
+  if (!combined.length) {
+    combined.push({
+      id: 'audit-placeholder',
       event: 'No audit activity recorded',
+      summary: 'Create a task or investigate upcoming checkpoints to populate the audit trail.',
       owner: 'Systems',
-      status: 'Scheduled'
+      ownerTeam: 'Operations',
+      status: 'scheduled',
+      category: 'other',
+      attachments: [],
+      occurredAt: now,
+      occurredAtLabel: now.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {}
     });
   }
 
-  return timeline.sort((a, b) => a.time.localeCompare(b.time));
+  const sorted = combined.sort((a, b) => {
+    const aTime = a.occurredAt ?? now;
+    const bTime = b.occurredAt ?? now;
+    return bTime.toMillis() - aTime.toMillis();
+  });
+
+  const countsByCategory = sorted.reduce((acc, entry) => {
+    acc[entry.category] = (acc[entry.category] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const countsByStatus = sorted.reduce((acc, entry) => {
+    acc[entry.status] = (acc[entry.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    events: sorted.map((entry) => ({
+      id: entry.id,
+      time: entry.occurredAtLabel,
+      event: entry.event,
+      owner: entry.owner,
+      ownerTeam: entry.ownerTeam,
+      status: entry.status,
+      category: entry.category,
+      summary: entry.summary,
+      attachments: entry.attachments,
+      occurredAt: entry.occurredAt.toISO(),
+      dueAt: entry.dueAt ? entry.dueAt.toISO() : null,
+      source: entry.source,
+      metadata: entry.metadata
+    })),
+    summary: {
+      countsByCategory,
+      countsByStatus,
+      manualCounts: manualPayload.meta?.countsByCategory ?? {},
+      manualStatusCounts: manualPayload.meta?.countsByStatus ?? {},
+      timeframe: manualPayload.meta?.timeframe ?? timeframeKey,
+      timeframeLabel: manualPayload.meta?.timeframeLabel ?? TIMEFRAMES[timeframeKey]?.label ?? timeframeKey,
+      timezone: manualPayload.meta?.timezone ?? timezone,
+      range: manualPayload.meta?.range ?? { start: range.start.toISO(), end: range.end.toISO() },
+      lastUpdated: manualPayload.meta?.lastUpdated ?? now.toISO()
+    }
+  };
 }
 
-export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe/London' } = {}) {
+export async function buildAdminDashboard({
+  timeframe = '7d',
+  timezone = 'Europe/London',
+  securityCapabilities = null
+} = {}) {
   const { key, label, bucket, now, range, previous } = resolveTimeframe(timeframe, timezone);
   const currentBuckets = createBuckets(range.start, range.end, bucket, timezone);
   const previousBuckets = createBuckets(previous.start, previous.end, bucket, timezone);
 
-  const [currentEscrow, previousEscrow, openDisputes, previousOpenDisputes, liveOrders, previousLiveOrders, activeZones, sla,
-    previousSla, disputeMedianResponse] = await Promise.all([
+  const overviewSettingsPromise = getOverviewSettings();
+  const [
+    currentEscrow,
+    previousEscrow,
+    openDisputes,
+    previousOpenDisputes,
+    liveOrders,
+    previousLiveOrders,
+    activeZones,
+    sla,
+    previousSla,
+    disputeMedianResponse,
+    overviewSettings
+  ] = await Promise.all([
     sumEscrow(range),
     sumEscrow(previous),
     countDisputes(range, ['open', 'under_review']),
@@ -643,7 +844,8 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     countActiveZones(range),
     computeSla(range),
     computeSla(previous),
-    computeDisputeMedianResponse(range)
+    computeDisputeMedianResponse(range),
+    overviewSettingsPromise
   ]);
 
   const escrowChange = percentageChange(currentEscrow.totalAmount, previousEscrow.totalAmount);
@@ -653,11 +855,94 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
 
   const currency = currentEscrow.totalAmount > 0 ? 'GBP' : 'GBP';
   const formatter = currencyFormatter(currency);
+  const metricSettings = overviewSettings?.metrics ?? {};
+  const chartSettings = overviewSettings?.charts ?? {};
+  const insightSettings = overviewSettings?.insights ?? {};
+  const timelineSettings = overviewSettings?.timeline ?? {};
+  const securitySettings = overviewSettings?.security ?? {};
+  const automationSettings = overviewSettings?.automation ?? {};
+  const queueSettings = overviewSettings?.queues ?? {};
+  const auditSettings = overviewSettings?.audit ?? {};
+
+  const escrowConfig = metricSettings.escrow ?? {};
+  const disputesConfig = metricSettings.disputes ?? {};
+  const jobsConfig = metricSettings.jobs ?? {};
+  const slaConfig = metricSettings.sla ?? {};
+
+  const escrowHighMultiplier = Number.isFinite(escrowConfig.targetHighMultiplier)
+    ? escrowConfig.targetHighMultiplier
+    : 1.05;
+  const escrowMediumMultiplier = Number.isFinite(escrowConfig.targetMediumMultiplier)
+    ? escrowConfig.targetMediumMultiplier
+    : 0.9;
+  const disputesLowMultiplier = Number.isFinite(disputesConfig.thresholdLowMultiplier)
+    ? disputesConfig.thresholdLowMultiplier
+    : 0.7;
+  const disputesMediumMultiplier = Number.isFinite(disputesConfig.thresholdMediumMultiplier)
+    ? disputesConfig.thresholdMediumMultiplier
+    : 1.1;
+  const jobsHighMultiplier = Number.isFinite(jobsConfig.targetHighMultiplier)
+    ? jobsConfig.targetHighMultiplier
+    : 1.2;
+  const jobsMediumMultiplier = Number.isFinite(jobsConfig.targetMediumMultiplier)
+    ? jobsConfig.targetMediumMultiplier
+    : 0.9;
+  const slaGoal = Number.isFinite(slaConfig.goal) ? slaConfig.goal : 97;
+  const slaWarning = Number.isFinite(slaConfig.warningThreshold) ? slaConfig.warningThreshold : Math.max(slaGoal - 3, 0);
+
+  const escrowCaption =
+    applyTemplate(escrowConfig.caption, {
+      count: numberFormatter.format(currentEscrow.count),
+      total: formatter.format(currentEscrow.totalAmount),
+      currency
+    }) || `Across ${numberFormatter.format(currentEscrow.count)} funded engagements`;
+  const disputesCaption =
+    applyTemplate(disputesConfig.caption, {
+      count: numberFormatter.format(openDisputes),
+      medianResponse: disputeMedianResponse
+        ? `${numberFormatter.format(disputeMedianResponse)} minutes`
+        : 'within 1 hour'
+    }) ||
+    (disputeMedianResponse
+      ? `Median response ${numberFormatter.format(disputeMedianResponse)} minutes`
+      : 'Median response within 1 hour');
+  const jobsCaption =
+    applyTemplate(jobsConfig.caption, {
+      count: numberFormatter.format(liveOrders),
+      zones: numberFormatter.format(activeZones)
+    }) || `Coverage across ${numberFormatter.format(activeZones)} zones`;
+  const slaCaption =
+    applyTemplate(slaConfig.caption, {
+      goal: slaGoal,
+      completed: numberFormatter.format(sla.completed),
+      value: sla.value.toFixed(1)
+    }) || `Goal ≥ ${slaGoal}% • ${numberFormatter.format(sla.completed)} completed`;
+
+  const escrowTargetHighBase = Number.isFinite(previousEscrow.totalAmount) && previousEscrow.totalAmount > 0
+    ? previousEscrow.totalAmount
+    : Math.max(currentEscrow.totalAmount, 1);
+  const escrowTargetMediumBase = Number.isFinite(previousEscrow.totalAmount) && previousEscrow.totalAmount > 0
+    ? previousEscrow.totalAmount
+    : Math.max(currentEscrow.totalAmount, 1);
+
+  const jobsTargetHighBase = Number.isFinite(previousLiveOrders) && previousLiveOrders > 0
+    ? previousLiveOrders
+    : Math.max(liveOrders, 1);
+  const jobsTargetMediumBase = Number.isFinite(previousLiveOrders) && previousLiveOrders > 0
+    ? previousLiveOrders
+    : Math.max(liveOrders, 1);
+
+  const disputesLowBase = Number.isFinite(previousOpenDisputes) && previousOpenDisputes > 0
+    ? previousOpenDisputes
+    : Math.max(openDisputes, 1);
+  const disputesMediumBase = Number.isFinite(previousOpenDisputes) && previousOpenDisputes > 0
+    ? previousOpenDisputes
+    : Math.max(openDisputes, 1);
 
   const commandTiles = [
     {
       id: 'escrow',
-      label: 'Escrow under management',
+      label: escrowConfig.label || 'Escrow under management',
       value: {
         amount: currentEscrow.totalAmount,
         currency
@@ -665,75 +950,202 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
       valueLabel: formatter.format(currentEscrow.totalAmount),
       delta: percentFormatter.format(escrowChange),
       deltaTone: determineDeltaTone(escrowChange),
-      caption: `Across ${numberFormatter.format(currentEscrow.count)} funded engagements`,
+      caption: escrowCaption,
       status: determineMetricStatus('escrow', currentEscrow.totalAmount, {
-        targetHigh: previousEscrow.totalAmount * 1.05,
-        targetMedium: previousEscrow.totalAmount * 0.9
+        targetHigh: escrowTargetHighBase * escrowHighMultiplier,
+        targetMedium: escrowTargetMediumBase * escrowMediumMultiplier
       })
     },
     {
       id: 'disputes',
-      label: 'Disputes requiring action',
+      label: disputesConfig.label || 'Disputes requiring action',
       value: { amount: openDisputes, currency: null },
       valueLabel: numberFormatter.format(openDisputes),
       delta: percentFormatter.format(disputesChange),
       deltaTone: determineDeltaTone(-disputesChange),
-      caption: disputeMedianResponse
-        ? `Median response ${numberFormatter.format(disputeMedianResponse)} minutes`
-        : 'Median response within 1 hour',
+      caption: disputesCaption,
       status: determineMetricStatus('disputes', openDisputes, {
-        thresholdLow: Math.max(2, Math.round(previousOpenDisputes * 0.7)),
-        thresholdMedium: Math.max(5, Math.round(previousOpenDisputes * 1.1))
+        thresholdLow: Math.max(2, Math.round(disputesLowBase * disputesLowMultiplier)),
+        thresholdMedium: Math.max(5, Math.round(disputesMediumBase * disputesMediumMultiplier))
       })
     },
     {
       id: 'jobs',
-      label: 'Live jobs',
+      label: jobsConfig.label || 'Live jobs',
       value: { amount: liveOrders, currency: null },
       valueLabel: numberFormatter.format(liveOrders),
       delta: percentFormatter.format(liveJobsChange),
       deltaTone: determineDeltaTone(liveJobsChange),
-      caption: `Coverage across ${numberFormatter.format(activeZones)} zones`,
+      caption: jobsCaption,
       status: determineMetricStatus('jobs', liveOrders, {
-        targetHigh: Math.max(20, previousLiveOrders * 1.2),
-        targetMedium: Math.max(10, previousLiveOrders * 0.9)
+        targetHigh: Math.max(20, Math.round(jobsTargetHighBase * jobsHighMultiplier)),
+        targetMedium: Math.max(10, Math.round(jobsTargetMediumBase * jobsMediumMultiplier))
       })
     },
     {
       id: 'sla',
-      label: 'SLA compliance',
+      label: slaConfig.label || 'SLA compliance',
       value: { amount: sla.value, currency: null },
       valueLabel: `${sla.value.toFixed(1)}%`,
       delta: percentFormatter.format(slaChange),
       deltaTone: determineDeltaTone(slaChange),
-      caption: `Goal ≥ 97% • ${numberFormatter.format(sla.completed)} completed`,
-      status: determineMetricStatus('sla', sla.value)
+      caption: slaCaption,
+      status: determineMetricStatus('sla', sla.value, { goal: slaGoal, warningThreshold: slaWarning })
     }
   ];
 
-  const [escrowSeries, disputeSeries, complianceControls, queueInsights, auditTimeline, security] = await Promise.all([
+  const [
+    escrowSeries,
+    disputeSeries,
+    complianceControls,
+    queueInsights,
+    auditTimeline,
+    security,
+    serviceSnapshot
+    legalSummary
+    complianceControlsComputed,
+    queueInsights,
+    auditTimelineComputed,
+    security
+    complianceControls,
+    queueInsights,
+    auditTimeline,
+    securityPosture
+  ] = await Promise.all([
     computeEscrowSeries(currentBuckets),
     computeDisputeSeries(currentBuckets),
     computeComplianceControls(timezone),
     computeQueueInsights(range, timezone),
     buildAuditTimeline(range, timezone),
+    computeSecuritySignals(timezone),
+    getServiceManagementSnapshot({ listingLimit: 12, packageLimit: 6 })
+    listLegalDocumentsSummary({ timezone })
+    buildAuditTimeline(range, timezone, key),
     computeSecuritySignals(timezone)
+    buildAuditTimeline(range, timezone),
+    getSecurityPosture({ timezone, includeInactive: true })
   ]);
 
-  const automationBacklog = await computeAutomationBacklog(security.pipelineTotals, timezone);
-  const securitySignals = security.signals;
+  const automationBacklogComputed = await computeAutomationBacklog(security.pipelineTotals, timezone);
+
+  const manualSecuritySignals = Array.isArray(securitySettings.manualSignals)
+    ? securitySettings.manualSignals.map((entry) => ({
+        label: entry.label,
+        caption: entry.caption,
+        valueLabel: entry.valueLabel,
+        tone: entry.tone ?? 'info'
+      }))
+    : [];
+
+  const manualAutomationBacklog = Array.isArray(automationSettings.manualBacklog)
+    ? automationSettings.manualBacklog.map((entry) => ({
+        name: entry.name,
+        status: entry.status,
+        notes: entry.notes,
+        tone: entry.tone ?? 'info'
+      }))
+    : [];
+
+  const manualQueueBoards = Array.isArray(queueSettings.manualBoards)
+    ? queueSettings.manualBoards.map((entry, index) => ({
+        id: `manual-board-${index}`,
+        title: entry.title,
+        summary: entry.summary,
+        updates: Array.isArray(entry.updates) ? entry.updates : [],
+        owner: entry.owner
+      }))
+    : [];
+
+  const manualComplianceControls = Array.isArray(queueSettings.manualComplianceControls)
+    ? queueSettings.manualComplianceControls.map((entry, index) => ({
+        id: `manual-control-${index}`,
+        name: entry.name,
+        detail: entry.detail,
+        due: entry.due,
+        owner: entry.owner,
+        tone: entry.tone ?? 'info'
+      }))
+    : [];
+
+  const manualAuditTimeline = Array.isArray(auditSettings.manualTimeline)
+    ? auditSettings.manualTimeline.map((entry) => ({
+        time: entry.time,
+        event: entry.event,
+        owner: entry.owner,
+        status: entry.status
+      }))
+    : [];
+
+  const automationBacklog = [...automationBacklogComputed, ...manualAutomationBacklog];
+  const securitySignals = [...security.signals, ...manualSecuritySignals];
+  const complianceControls = [...complianceControlsComputed, ...manualComplianceControls];
+  const auditTimeline = [...auditTimelineComputed, ...manualAuditTimeline];
+  const queueBoards = [...queueInsights, ...manualQueueBoards];
+  const securitySignals = securityPosture.signals.map((signal) => ({
+    label: signal.label,
+    valueLabel: signal.valueLabel,
+    caption: signal.caption,
+    tone: signal.tone,
+    statusLabel: signal.statusLabel,
+    ownerRole: signal.ownerRole,
+    runbookUrl: signal.runbookUrl,
+    metricKey: signal.metricKey
+  }));
+  const automationBacklog = securityPosture.automationTasks.map((task) => mapAutomationTask(task, timezone));
+  const securityConnectors = securityPosture.connectors;
+  const securitySummary = securityPosture.summary;
+  const resolvedSecurityCapabilities =
+    securityCapabilities ?? {
+      canManageSignals: false,
+      canManageAutomation: false,
+      canManageConnectors: false
+    };
 
   const previousEscrowAverage = previousBuckets.length
     ? previousEscrow.totalAmount / previousBuckets.length
     : previousEscrow.totalAmount;
+  const escrowChartConfig = chartSettings.escrow ?? {};
+  const escrowTargetDivisor = Number.isFinite(escrowChartConfig.targetDivisor)
+    ? escrowChartConfig.targetDivisor
+    : 1_000_000;
 
   const trendSeries = escrowSeries.map((entry) => ({
     label: entry.label,
     value: Number.isFinite(entry.value) ? entry.value : 0,
     target: Number.isFinite(previousEscrowAverage)
-      ? previousEscrowAverage / 1_000_000
+      ? previousEscrowAverage / escrowTargetDivisor
       : 0
   }));
+
+  const inboxSummary = await summariseInboxForDashboard();
+  const platformSettings = getCachedPlatformSettings();
+  const commissionSettings = platformSettings?.commissions ?? {};
+  const subscriptionSettings = platformSettings?.subscriptions ?? {};
+  const integrationSettings = platformSettings?.integrations ?? {};
+  const monetisationSummary = {
+    commissionsEnabled: commissionSettings.enabled !== false,
+    baseRate: commissionSettings.baseRate ?? 0.025,
+    baseRateLabel: `${((commissionSettings.baseRate ?? 0) * 100).toFixed(2)}%`,
+    subscriptionEnabled: subscriptionSettings.enabled !== false,
+    subscriptionCount: Array.isArray(subscriptionSettings.tiers)
+      ? subscriptionSettings.tiers.length
+      : Array.isArray(subscriptionSettings.packages)
+        ? subscriptionSettings.packages.length
+        : 0,
+    defaultTier: subscriptionSettings.defaultTier ?? '',
+    stripeConnected: Boolean(integrationSettings?.stripe?.secretKey),
+    escrowConnected: Boolean(integrationSettings?.escrow?.apiKey && integrationSettings?.escrow?.apiSecret),
+    smtpReady: Boolean(integrationSettings?.smtp?.host) && Boolean(integrationSettings?.smtp?.username),
+    storageConfigured: Boolean(integrationSettings?.cloudflareR2?.bucket)
+  };
+  const manualInsights = Array.isArray(insightSettings.manual) ? insightSettings.manual : [];
+  const manualUpcoming = Array.isArray(timelineSettings.manual)
+    ? timelineSettings.manual.map((item) => ({
+        title: item.title,
+        when: item.when,
+        status: item.status || 'Scheduled'
+      }))
+    : [];
 
   return {
     timeframe: key,
@@ -758,7 +1170,8 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     },
     charts: {
       escrowTrend: {
-        buckets: trendSeries
+        buckets: trendSeries,
+        targetLabel: escrowChartConfig.targetLabel || 'Baseline target'
       },
       disputeBreakdown: {
         buckets: disputeSeries
@@ -766,14 +1179,26 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     },
     security: {
       signals: securitySignals,
-      automationBacklog
+      automationBacklog,
+      connectors: securityConnectors,
+      summary: securitySummary,
+      capabilities: resolvedSecurityCapabilities
     },
     queues: {
-      boards: queueInsights,
+      boards: queueBoards,
       complianceControls
     },
     audit: {
       timeline: auditTimeline
+    },
+    inbox: inboxSummary
+    serviceManagement: serviceSnapshot
+    legal: legalSummary
+    platform: {
+      monetisation: monetisationSummary
+    overview: {
+      manualInsights,
+      manualUpcoming
     }
   };
 }
