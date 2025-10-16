@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import RentalManagementSection from './rentals/RentalManagementSection.jsx';
 import CustomerSettingsSection from './CustomerSettingsSection.jsx';
 import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
@@ -1641,6 +1642,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <TableSection section={section} />;
     case 'list':
       return <ListSection section={section} />;
+    case 'rentals':
+      return <RentalManagementSection section={section} />;
     case 'inventory':
       return <InventorySection section={section} />;
     case 'ads':
