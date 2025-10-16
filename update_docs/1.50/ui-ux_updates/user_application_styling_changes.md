@@ -25,6 +25,9 @@
 ## Motion & Feedback
 - Screen transitions adopt native navigation patterns with 200ms duration; modals slide up from bottom with overshoot suppressed to reduce motion sickness.
 - Workspaces cards use Material 3 tonal fills, neon accent chips, and Riverpod-driven state labels to communicate active role, matching React mega menu styling tokens.
+- Workspace capability sheet lifts on a frosted glass surface with 24px radius corners, accent-coloured drag handle, and stacked typography pairing (`Manrope 16/24` headings, `Inter 14/20` body) so metadata remains scannable even on compact phones.
+- Request access dialog introduces compliance accent banner, safe-area aware primary CTA, and tertiary escalation link styled as underlined text button that respects dark-mode contrast and larger text sizes.
+- Status badges embedded in workspace cards follow semantic colour ramps (Success `#1AAE70`, Pilot `#FFB300`, Restricted `#EF5350`) paired with glyph overlays from the shared icon set, enabling colourblind-safe differentiation across Flutter and React parity states.
 - Live feed reconnect spinner uses adaptive theming to remain legible in dark mode, while offline cache banner slides in with 220ms curve and respects reduced motion settings by swapping to fade transitions.
 - Loading states rely on skeleton placeholders for lists and shimmering progress bars for timeline updates; avoid spinner loops longer than 8 seconds.
 - Toast notifications appear top-right with auto-dismiss after 6 seconds; accessible alternative ensures screen reader announces context and action.

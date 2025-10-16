@@ -4,11 +4,15 @@
 - Implement unified navigation service that updates breadcrumbs, header highlights, and dock states based on route metadata; ensures deep links maintain context.
 - Role-based guards redirect unauthorised users to request access modal while logging attempts for security audit.
 - Quick search command palette fetches entities (jobs, providers, resources) with typeahead suggestions; selecting result opens modal or new tab depending on entity type.
+- Workspace hub derives card content from the enriched `dashboardConfig` descriptors, grouping dashboards by capability tiers, region coverage, and service levels; request-only workspaces surface inline escalation contacts and automatically launch the request-access modal with prefilled context for audit logging.
+- Mega menu entries hydrate from the same descriptors so IA parity is maintained—badge metadata, feature highlights, and capability preview excerpts remain synchronised when dashboard definitions evolve.
+- Escalation links honour per-workspace configuration, opening secure `mailto:` payloads that embed tenant, capability, and requester details captured from the navigation service before dispatching to the escalation roster.
 
 ## Dashboard Logic
 - Dashboard widgets now lazy-load data streams; each widget emits loading, success, and error states to central store for consistent skeleton handling.
 - Action queue prioritisation algorithm factors SLA breaches, compliance deadlines, and unread approvals; items escalate to "Critical" column when thresholds met.
 - Operations Timeline merges job, maintenance, and audit events sorted by start time; clicking event opens detail drawer pre-populated with relevant actions.
+- Workspace hub preview drawer renders capability overviews by reading the same descriptor record powering each card; selecting "View capabilities" opens a dialog showing service level objectives, integrations, and key contacts without leaving the hub while persisting scroll position.
 
 ## Marketplace Flows
 - Marketplace search filters sync with URL query params enabling shareable states; clearing filters resets to persona defaults (e.g., procurement vs. operations).

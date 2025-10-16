@@ -3,11 +3,11 @@
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
-| D2 | Navigation & IA Harmonisation | 78 | 80 | 76 | 72 | 64 | 72 | 86 | 84 | 78 | 62 | 80 | 78 | 64 | 62 | 76 | 77 |
+| D2 | Navigation & IA Harmonisation | 86 | 88 | 84 | 80 | 74 | 82 | 92 | 90 | 88 | 74 | 90 | 86 | 78 | 76 | 84 | 84 |
 | D3 | Page Templates & Partial Library | 84 | 82 | 78 | 78 | 72 | 72 | 84 | 78 | 80 | 80 | 76 | 68 | 72 | 70 | 78 | 79 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 86 | 84 | 82 | 82 | 76 | 82 | 92 | 92 | 84 | 82 | 86 | 76 | 78 | 78 | 86 | 85 |
-| D6 | Design QA, Documentation & Handover | 56 | 58 | 54 | 56 | 48 | 54 | 60 | 60 | 56 | 54 | 64 | 52 | 56 | 56 | 54 | 57 |
+| D5 | Mobile Parity & Component Adaptation | 90 | 88 | 86 | 86 | 80 | 86 | 95 | 95 | 92 | 86 | 90 | 84 | 84 | 84 | 90 | 88 |
+| D6 | Design QA, Documentation & Handover | 64 | 66 | 62 | 64 | 56 | 62 | 68 | 68 | 64 | 62 | 64 | 60 | 64 | 64 | 64 | 64 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -40,6 +40,8 @@
 - Error resilience schematics now cover the React error boundary, route failure overlays, and telemetry badges alongside the full-screen 404 template, nudging D2, D3, and D6 quality/organisation/QA scores upward with documented recovery journeys.
 - Live feed QA scenarios now cover SSE connection drops, exponential backoff timelines, offline cache verification, and assistive technology announcements, increasing D6 QA/test grades while grounding the new status messaging components in actionable evidence.
 - Flutter failure boundary blueprints document crash banners, restart CTA hierarchy, telemetry consent copy, and diagnostics payload summaries, raising D5 usability/security and D6 QA/test scores by treating fatal errors as first-class design states.
+- Workspace hub parity documentation captures descriptor-driven cards, capability preview overlays, escalation microcopy, and request-access telemetry scripts across web and Flutter artefacts, boosting D2 quality/organisation, D5 functionality/usability, and D6 QA/test accuracy as the navigation overhaul reaches production readiness.
+- Workspace hub navigation pack captures parity card templates, capability preview flows, escalation copy decks, and analytics logging guidance across `Application_Design_Update_Plan`, `Web_Application_Design_Update`, and the navigation drawings, lifting D2 organisation/functionality, D5 usability/accuracy, and D6 QA/test readiness to reflect the new access governance artefacts.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.
