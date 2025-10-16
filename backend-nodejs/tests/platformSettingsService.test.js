@@ -9,14 +9,51 @@ const {
 } = await import('../src/services/platformSettingsService.js');
 
 const ORIGINAL_FINANCE = JSON.parse(JSON.stringify(config.finance));
+const ORIGINAL_INTEGRATIONS = JSON.parse(JSON.stringify(config.integrations));
+const ORIGINAL_APP = config.app ? JSON.parse(JSON.stringify(config.app)) : null;
+const ORIGINAL_SYSTEM = config.system ? JSON.parse(JSON.stringify(config.system)) : null;
+const ORIGINAL_SOCIAL = config.social ? JSON.parse(JSON.stringify(config.social)) : null;
+const ORIGINAL_SUPPORT = config.support ? JSON.parse(JSON.stringify(config.support)) : null;
+const ORIGINAL_AI = config.ai ? JSON.parse(JSON.stringify(config.ai)) : null;
 
 async function resetDatabase() {
   await sequelize.truncate({ cascade: true, restartIdentity: true });
   await PlatformSetting.destroy({ where: {} });
 }
 
-function resetFinanceConfig() {
+function resetRuntimeConfig() {
   config.finance = JSON.parse(JSON.stringify(ORIGINAL_FINANCE));
+  config.integrations = JSON.parse(JSON.stringify(ORIGINAL_INTEGRATIONS));
+
+  if (ORIGINAL_APP) {
+    config.app = JSON.parse(JSON.stringify(ORIGINAL_APP));
+  } else {
+    delete config.app;
+  }
+
+  if (ORIGINAL_SYSTEM) {
+    config.system = JSON.parse(JSON.stringify(ORIGINAL_SYSTEM));
+  } else {
+    delete config.system;
+  }
+
+  if (ORIGINAL_SOCIAL) {
+    config.social = JSON.parse(JSON.stringify(ORIGINAL_SOCIAL));
+  } else {
+    delete config.social;
+  }
+
+  if (ORIGINAL_SUPPORT) {
+    config.support = JSON.parse(JSON.stringify(ORIGINAL_SUPPORT));
+  } else {
+    delete config.support;
+  }
+
+  if (ORIGINAL_AI) {
+    config.ai = JSON.parse(JSON.stringify(ORIGINAL_AI));
+  } else {
+    delete config.ai;
+  }
 }
 
 beforeAll(async () => {
@@ -26,13 +63,13 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetDatabase();
-  resetFinanceConfig();
+  resetRuntimeConfig();
   await getPlatformSettings({ forceRefresh: true });
 });
 
 afterAll(async () => {
   await sequelize.close();
-  resetFinanceConfig();
+  resetRuntimeConfig();
 });
 
 describe('platformSettingsService commission defaults', () => {
@@ -77,5 +114,96 @@ describe('platformSettingsService commission defaults', () => {
     const cached = await getPlatformSettings();
     expect(cached.commissions.baseRate).toBeCloseTo(0.18, 5);
     expect(cached.commissions.customRates['scheduled:high']).toBeCloseTo(0.25, 5);
+  });
+});
+
+describe('platformSettingsService system settings', () => {
+  it('persists and normalises system settings payloads', async () => {
+    const updated = await updatePlatformSettings(
+      {
+        system: {
+          site: {
+            name: ' Fixnado Control ',
+            supportEmail: ' ops@fixnado.test ',
+            defaultLocale: ' en-GB ',
+            defaultTimezone: ' America/New_York ',
+            tagline: ' Powering every job ',
+            logoUrl: ' https://cdn.fixnado.test/logo.svg '
+          },
+          socialLinks: [
+            { id: 'twitter', label: ' Twitter ', url: ' https://x.com/fixnado ', handle: '@fixnado' },
+            { label: 'Twitter', url: 'https://duplicate.example.com' },
+            { label: '', url: 'https://invalid.example.com' }
+          ],
+          supportLinks: [
+            { label: 'Help centre', url: ' https://help.fixnado.test ', type: 'docs' },
+            { label: 'Email support', url: 'mailto:support@fixnado.test', id: ' support-email ' }
+          ],
+          chatwoot: {
+            baseUrl: ' https://chat.example.com ',
+            websiteToken: ' token123 ',
+            inboxIdentifier: ' primary '
+          },
+          openai: {
+            apiKey: ' sk-123 ',
+            baseUrl: ' https://openai.fixnado.test ',
+            organizationId: ' org-789 ',
+            defaultModel: ' gpt-4.1 ',
+            byokEnabled: false
+          },
+          slack: {
+            botToken: ' xoxb-456 ',
+            signingSecret: ' secret ',
+            defaultChannel: ' #ops ',
+            byokEnabled: true
+          },
+          github: {
+            appId: ' 987 ',
+            clientId: ' client-123 ',
+            organization: ' Fixnado '
+          },
+          googleDrive: {
+            clientId: ' drive-client ',
+            rootFolderId: ' root-folder '
+          },
+          storage: {
+            provider: ' s3 ',
+            accountId: ' acc-123 ',
+            bucket: ' fixnado-bucket ',
+            useCdn: true
+          }
+        }
+      },
+      'ops'
+    );
+
+    expect(updated.system.site.name).toBe('Fixnado Control');
+    expect(updated.system.site.supportEmail).toBe('ops@fixnado.test');
+    expect(updated.system.site.defaultLocale).toBe('en-GB');
+    expect(updated.system.site.defaultTimezone).toBe('America/New_York');
+    expect(updated.system.site.tagline).toBe('Powering every job');
+    expect(updated.system.socialLinks).toHaveLength(1);
+    expect(updated.system.socialLinks[0]).toMatchObject({ id: 'twitter', url: 'https://x.com/fixnado' });
+    expect(updated.system.supportLinks).toHaveLength(2);
+    expect(updated.system.supportLinks[1].id).toBe('support-email');
+    expect(updated.system.chatwoot.baseUrl).toBe('https://chat.example.com');
+    expect(updated.system.openai.apiKey).toBe('sk-123');
+    expect(updated.system.openai.byokEnabled).toBe(false);
+    expect(updated.system.slack.byokEnabled).toBe(true);
+    expect(updated.system.storage.provider).toBe('s3');
+    expect(updated.system.storage.accountId).toBe('acc-123');
+    expect(updated.system.storage.useCdn).toBe(true);
+
+    expect(config.system.site.name).toBe('Fixnado Control');
+    expect(config.app.name).toBe('Fixnado Control');
+    expect(config.integrations.chatwoot.baseUrl).toBe('https://chat.example.com');
+    expect(config.integrations.slack.botToken).toBe('xoxb-456');
+    expect(config.ai.openai.apiKey).toBe('sk-123');
+
+    const rows = await PlatformSetting.findAll({ where: { key: 'system' }, raw: true });
+    expect(rows).toHaveLength(1);
+    const stored = typeof rows[0].value === 'string' ? JSON.parse(rows[0].value) : rows[0].value;
+    expect(stored.site.name).toBe('Fixnado Control');
+    expect(stored.supportLinks).toHaveLength(2);
   });
 });

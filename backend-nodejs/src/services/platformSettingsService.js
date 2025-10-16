@@ -63,6 +63,72 @@ const defaultCommissionRates = (() => {
   };
 })();
 
+const DEFAULT_SYSTEM_SETTINGS = {
+  site: {
+    name: config.integrations?.app?.name || process.env.APP_NAME || 'Fixnado',
+    url: config.integrations?.app?.url || process.env.APP_URL || '',
+    supportEmail: config.integrations?.app?.supportEmail || process.env.SUPPORT_EMAIL || '',
+    defaultLocale: process.env.DEFAULT_LOCALE || 'en-GB',
+    defaultTimezone: config.dashboards?.defaultTimezone || 'Europe/London',
+    logoUrl: '',
+    faviconUrl: '',
+    tagline: ''
+  },
+  storage: {
+    provider: config.integrations?.cloudflareR2?.accountId ? 'cloudflare-r2' : '',
+    accountId: config.integrations?.cloudflareR2?.accountId || '',
+    bucket: config.integrations?.cloudflareR2?.bucket || '',
+    region: process.env.STORAGE_REGION || '',
+    endpoint: config.integrations?.cloudflareR2?.endpoint || '',
+    publicUrl: config.integrations?.cloudflareR2?.publicUrl || '',
+    accessKeyId: config.integrations?.cloudflareR2?.accessKeyId || '',
+    secretAccessKey: config.integrations?.cloudflareR2?.secretAccessKey || '',
+    useCdn: false
+  },
+  socialLinks: [],
+  supportLinks: [],
+  chatwoot: {
+    baseUrl: process.env.CHATWOOT_BASE_URL || '',
+    websiteToken: process.env.CHATWOOT_WEBSITE_TOKEN || '',
+    inboxIdentifier: process.env.CHATWOOT_INBOX_IDENTIFIER || ''
+  },
+  openai: {
+    provider: process.env.OPENAI_PROVIDER || 'openai',
+    baseUrl: process.env.OPENAI_BASE_URL || '',
+    apiKey: process.env.OPENAI_API_KEY || '',
+    organizationId: process.env.OPENAI_ORG_ID || '',
+    defaultModel: process.env.OPENAI_DEFAULT_MODEL || '',
+    byokEnabled: true
+  },
+  slack: {
+    byokEnabled: true,
+    botToken: process.env.SLACK_BOT_TOKEN || '',
+    signingSecret: process.env.SLACK_SIGNING_SECRET || '',
+    defaultChannel: process.env.SLACK_DEFAULT_CHANNEL || '',
+    appId: process.env.SLACK_APP_ID || '',
+    teamId: process.env.SLACK_TEAM_ID || ''
+  },
+  github: {
+    appId: process.env.GITHUB_APP_ID || '',
+    clientId: process.env.GITHUB_CLIENT_ID || '',
+    clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+    privateKey: process.env.GITHUB_PRIVATE_KEY || '',
+    webhookSecret: process.env.GITHUB_WEBHOOK_SECRET || '',
+    organization: process.env.GITHUB_ORGANIZATION || '',
+    installationId: process.env.GITHUB_INSTALLATION_ID || ''
+  },
+  googleDrive: {
+    clientId: process.env.GOOGLE_DRIVE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_DRIVE_CLIENT_SECRET || '',
+    redirectUri: process.env.GOOGLE_DRIVE_REDIRECT_URI || '',
+    refreshToken: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '',
+    serviceAccountEmail: process.env.GOOGLE_DRIVE_SERVICE_EMAIL || '',
+    serviceAccountKey: process.env.GOOGLE_DRIVE_SERVICE_KEY || '',
+    rootFolderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '',
+    sharedDriveId: process.env.GOOGLE_DRIVE_SHARED_DRIVE_ID || ''
+  }
+};
+
 const DEFAULT_SETTINGS = {
   commissions: {
     enabled: config.finance?.commissionsEnabled !== false,
@@ -119,7 +185,8 @@ const DEFAULT_SETTINGS = {
       password: process.env.DB_PASSWORD || '',
       ssl: Boolean(config.database?.ssl)
     }
-  }
+  },
+  system: DEFAULT_SYSTEM_SETTINGS
 };
 
 let cachedSettings = clone(DEFAULT_SETTINGS);
@@ -144,6 +211,35 @@ function applyRuntimeSideEffects(settings) {
     tiers: clone(settings.subscriptions?.tiers ?? []),
     restrictedFeatures: clone(settings.subscriptions?.restrictedFeatures ?? [])
   };
+
+  if (settings.system) {
+    config.system = clone(settings.system);
+    config.app = {
+      ...(config.app || {}),
+      name: settings.system.site?.name || config.integrations?.app?.name || DEFAULT_SYSTEM_SETTINGS.site.name,
+      url: settings.system.site?.url || config.integrations?.app?.url || '',
+      supportEmail:
+        settings.system.site?.supportEmail || config.integrations?.app?.supportEmail || DEFAULT_SYSTEM_SETTINGS.site.supportEmail,
+      defaultLocale: settings.system.site?.defaultLocale || DEFAULT_SYSTEM_SETTINGS.site.defaultLocale,
+      defaultTimezone: settings.system.site?.defaultTimezone || DEFAULT_SYSTEM_SETTINGS.site.defaultTimezone,
+      logoUrl: settings.system.site?.logoUrl || '',
+      faviconUrl: settings.system.site?.faviconUrl || '',
+      tagline: settings.system.site?.tagline || ''
+    };
+    config.social = { links: clone(settings.system.socialLinks ?? []) };
+    config.support = { links: clone(settings.system.supportLinks ?? []) };
+    config.integrations = deepMerge(config.integrations || {}, {
+      chatwoot: settings.system.chatwoot || {},
+      slack: settings.system.slack || {},
+      github: settings.system.github || {},
+      googleDrive: settings.system.googleDrive || {},
+      storage: settings.system.storage || {}
+    });
+    config.ai = {
+      ...(config.ai || {}),
+      openai: settings.system.openai || {}
+    };
+  }
 
   config.integrations = deepMerge(config.integrations || {}, settings.integrations || {});
 }
@@ -266,6 +362,104 @@ function sanitiseStrings(map = {}, template = {}) {
   return result;
 }
 
+function slugify(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function sanitiseLinkArray(entries = [], fallback = []) {
+  if (!Array.isArray(entries)) {
+    return fallback;
+  }
+  const cleaned = [];
+  const seen = new Set();
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') {
+      continue;
+    }
+    const label = typeof entry.label === 'string' ? entry.label.trim() : '';
+    const url = typeof entry.url === 'string' ? entry.url.trim() : '';
+    if (!label || !url) {
+      continue;
+    }
+    const idSource = typeof entry.id === 'string' && entry.id.trim() ? entry.id : label;
+    const id = slugify(idSource);
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    const handle = typeof entry.handle === 'string' ? entry.handle.trim() : '';
+    const type = typeof entry.type === 'string' ? entry.type.trim().toLowerCase() : '';
+    const icon = typeof entry.icon === 'string' ? entry.icon.trim() : '';
+    const description = typeof entry.description === 'string' ? entry.description.trim() : '';
+    cleaned.push({ id, label, url, handle, type, icon, description });
+  }
+  return cleaned;
+}
+
+function sanitiseSystem(update = {}, current = DEFAULT_SYSTEM_SETTINGS) {
+  const next = clone(current);
+
+  if (update.site && typeof update.site === 'object') {
+    next.site = sanitiseStrings(update.site, next.site);
+    if (Object.hasOwn(update.site, 'defaultLocale') && typeof update.site.defaultLocale === 'string') {
+      next.site.defaultLocale = update.site.defaultLocale.trim() || next.site.defaultLocale;
+    }
+    if (Object.hasOwn(update.site, 'defaultTimezone') && typeof update.site.defaultTimezone === 'string') {
+      next.site.defaultTimezone = update.site.defaultTimezone.trim() || next.site.defaultTimezone;
+    }
+  }
+
+  if (update.storage && typeof update.storage === 'object') {
+    next.storage = sanitiseStrings(update.storage, next.storage);
+    if (Object.hasOwn(update.storage, 'useCdn')) {
+      next.storage.useCdn = Boolean(update.storage.useCdn);
+    }
+  }
+
+  if (Object.hasOwn(update, 'socialLinks')) {
+    next.socialLinks = sanitiseLinkArray(update.socialLinks, next.socialLinks);
+  }
+
+  if (Object.hasOwn(update, 'supportLinks')) {
+    next.supportLinks = sanitiseLinkArray(update.supportLinks, next.supportLinks);
+  }
+
+  if (update.chatwoot && typeof update.chatwoot === 'object') {
+    next.chatwoot = sanitiseStrings(update.chatwoot, next.chatwoot);
+  }
+
+  if (update.openai && typeof update.openai === 'object') {
+    next.openai = sanitiseStrings(update.openai, next.openai);
+    if (Object.hasOwn(update.openai, 'byokEnabled')) {
+      next.openai.byokEnabled = Boolean(update.openai.byokEnabled);
+    }
+  }
+
+  if (update.slack && typeof update.slack === 'object') {
+    next.slack = sanitiseStrings(update.slack, next.slack);
+    if (Object.hasOwn(update.slack, 'byokEnabled')) {
+      next.slack.byokEnabled = Boolean(update.slack.byokEnabled);
+    }
+  }
+
+  if (update.github && typeof update.github === 'object') {
+    next.github = sanitiseStrings(update.github, next.github);
+  }
+
+  if (update.googleDrive && typeof update.googleDrive === 'object') {
+    next.googleDrive = sanitiseStrings(update.googleDrive, next.googleDrive);
+  }
+
+  return next;
+}
+
 function sanitiseIntegrations(update = {}, current = DEFAULT_SETTINGS.integrations) {
   const next = clone(current);
   if (update.stripe && typeof update.stripe === 'object') {
@@ -342,6 +536,11 @@ export async function updatePlatformSettings(updates = {}, actor = 'system') {
   if (Object.hasOwn(updates, 'integrations')) {
     next.integrations = sanitiseIntegrations(updates.integrations, current.integrations);
     changedKeys.add('integrations');
+  }
+
+  if (Object.hasOwn(updates, 'system')) {
+    next.system = sanitiseSystem(updates.system, current.system);
+    changedKeys.add('system');
   }
 
   if (changedKeys.size === 0) {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -163,6 +163,9 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.type === 'link') {
+      return [];
+    }
     const entries = [
       {
         id: section.id,
@@ -340,18 +343,36 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const contentSections = useMemo(
+    () => navigation.filter((item) => item.type !== 'link'),
+    [navigation]
+  );
+  const [selectedSection, setSelectedSection] = useState(contentSections[0]?.id ?? null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleNavItemSelect = useCallback(
+    (item) => {
+      if (item.type === 'link') {
+        if (item.routeTo) {
+          navigate(item.routeTo);
+        }
+        return;
+      }
+      setSelectedSection(item.id);
+    },
+    [navigate]
+  );
+
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
+    const defaultSection = contentSections[0]?.id ?? null;
+    setSelectedSection(defaultSection);
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigation]);
+  }, [contentSections]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -371,7 +392,7 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
-  const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
@@ -443,19 +464,25 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
-                    const isActive = item.id === activeSection?.id;
+                    const isLink = item.type === 'link';
+                    const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
                     return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedSection(item.id)}
+                        onClick={() => {
+                          handleNavItemSelect(item);
+                          if (item.type === 'link') {
+                            setMobileNavOpen(false);
+                          }
+                        }}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
                             : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                         }`}
-                        aria-pressed={isActive}
+                        aria-pressed={!isLink && isActive}
                       >
                         <span
                           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
@@ -526,20 +553,21 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
-            const isActive = item.id === activeSection?.id;
+            const isLink = item.type === 'link';
+            const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedSection(item.id)}
+                onClick={() => handleNavItemSelect(item)}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'
                     : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
                 } ${navCollapsed ? 'justify-center px-2' : ''}`}
                 title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
+                aria-pressed={!isLink && isActive}
               >
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${

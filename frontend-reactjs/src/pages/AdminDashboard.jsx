@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -445,7 +445,7 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  return [
+  const sections = [
     overview,
     commandMetrics,
     securitySection,
@@ -455,6 +455,17 @@ function buildAdminNavigation(payload) {
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  sections.push({
+    id: 'system-settings-link',
+    label: 'System settings',
+    description: 'Configure email, storage, and integration credentials.',
+    type: 'link',
+    icon: 'settings',
+    routeTo: '/admin/system-settings'
+  });
+
+  return sections;
 }
 
 export default function AdminDashboard() {
@@ -592,6 +603,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/system-settings"
+        size="sm"
+        variant="secondary"
+        icon={Cog8ToothIcon}
+        iconPosition="start"
+      >
+        System settings
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"
