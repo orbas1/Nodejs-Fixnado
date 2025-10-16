@@ -4,7 +4,7 @@ import './ui.css';
 
 const TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 
-export default function StatusPill({ tone, icon: Icon, children }) {
+export default function StatusPill({ tone = 'neutral', icon: Icon, children }) {
   return (
     <span className={clsx('fx-status-pill', `fx-status-pill--${tone}`)} role="status">
       {Icon ? <Icon aria-hidden="true" className="h-3.5 w-3.5" /> : null}
@@ -19,7 +19,3 @@ StatusPill.propTypes = {
   children: PropTypes.node.isRequired
 };
 
-StatusPill.defaultProps = {
-  tone: 'neutral',
-  icon: undefined
-};

@@ -109,8 +109,14 @@ export async function deleteAdminBlogCategory(categoryId) {
   return request(`${ADMIN_BLOG_ROOT}/categories/${categoryId}`, { method: 'DELETE' });
 }
 
-export async function listAdminBlogTags() {
-  return request(`${ADMIN_BLOG_ROOT}/tags`);
+export async function listAdminBlogTags(params = {}) {
+  const query = buildQuery(params);
+  const payload = await request(`${ADMIN_BLOG_ROOT}/tags${query}`);
+  return {
+    data: payload?.data ?? [],
+    pagination: payload?.pagination ?? null,
+    stats: payload?.stats ?? null
+  };
 }
 
 export async function upsertAdminBlogTag(payload) {
