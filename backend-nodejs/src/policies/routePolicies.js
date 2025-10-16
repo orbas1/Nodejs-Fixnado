@@ -399,6 +399,16 @@ const ROUTE_POLICIES = {
     tags: ['services', 'catalogue'],
     severity: 'high'
   },
+  'customer.services.manage': {
+    id: 'customer.services.manage',
+    version: '1.0.0',
+    resource: 'customer.services',
+    action: 'customer:services:manage',
+    description: 'Allow customers to manage their service orders, escrow releases, and disputes.',
+    requirements: [Permissions.SERVICES_BOOK, Permissions.SCHEDULE_MANAGE],
+    tags: ['services', 'customer', 'escrow'],
+    severity: 'medium'
+  },
   'services.book': {
     id: 'services.book',
     version: '1.0.0',

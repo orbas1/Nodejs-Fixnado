@@ -23,6 +23,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { listCustomerServiceManagement } from './customerServiceManagementService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -355,7 +356,8 @@ async function loadUserData(context) {
     previousOrders,
     rentals,
     disputes,
-    conversations
+    conversations,
+    serviceManagement
   ] = await Promise.all([
     userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
     Booking.findAll({ where: bookingWhere }),
@@ -395,7 +397,13 @@ async function loadUserData(context) {
         }
       ]
     }),
-    ConversationParticipant.findAll({ where: conversationWhere })
+    ConversationParticipant.findAll({ where: conversationWhere }),
+    userId
+      ? listCustomerServiceManagement({ customerId: userId }).catch((error) => {
+          console.warn('Failed to load customer services management data', error);
+          return null;
+        })
+      : Promise.resolve(null)
   ]);
 
   const totalBookings = bookings.length;
@@ -405,6 +413,13 @@ async function loadUserData(context) {
   const activeBookings = bookings.filter((booking) =>
     ['pending', 'awaiting_assignment', 'scheduled', 'in_progress'].includes(booking.status)
   );
+
+  const serviceManagementData =
+    serviceManagement ?? {
+      metrics: { activeOrders: 0, fundedEscrows: 0, disputedOrders: 0, totalOrders: 0, totalSpend: 0 },
+      orders: [],
+      catalogue: { services: [], zones: [] }
+    };
 
   const bookingsMetric = computeTrend(totalBookings, previousTotalBookings, formatNumber, ' jobs');
 
@@ -662,6 +677,26 @@ async function loadUserData(context) {
     ]
   };
 
+  const servicesManagementSidebar = {
+    badge: `${formatNumber(serviceManagementData.metrics.totalOrders ?? 0)} managed`,
+    status:
+      (serviceManagementData.metrics.disputedOrders ?? 0) > 0
+        ? {
+            label: `${formatNumber(serviceManagementData.metrics.disputedOrders)} in dispute`,
+            tone: 'warning'
+          }
+        : (serviceManagementData.metrics.activeOrders ?? 0) > 0
+        ? {
+            label: `${formatNumber(serviceManagementData.metrics.activeOrders)} in delivery`,
+            tone: 'info'
+          }
+        : { label: 'No active orders', tone: 'success' },
+    highlights: [
+      { label: 'Active orders', value: formatNumber(serviceManagementData.metrics.activeOrders ?? 0) },
+      { label: 'Funded escrows', value: formatNumber(serviceManagementData.metrics.fundedEscrows ?? 0) }
+    ]
+  };
+
   const rentalsSidebar = {
     badge: `${formatNumber(rentals.length)} rentals`,
     status:
@@ -872,6 +907,14 @@ async function loadUserData(context) {
         type: 'board',
         sidebar: ordersSidebar,
         data: { columns: orderBoardColumns }
+      },
+      {
+        id: 'services-management',
+        label: 'Services Management',
+        description: 'Create service orders, manage escrow, and launch disputes.',
+        type: 'services-management',
+        sidebar: servicesManagementSidebar,
+        data: serviceManagementData
       },
       {
         id: 'rentals',

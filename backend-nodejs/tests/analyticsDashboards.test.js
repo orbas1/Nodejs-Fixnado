@@ -582,11 +582,17 @@ describe('Persona analytics dashboards', () => {
       .query({ companyId: company.id, timezone: 'Europe/London' })
       .expect(200);
 
+    const { navigation, exports: exportLinks } = response.body;
     expect(response.body.persona).toBe('admin');
-    expect(response.body.navigation).toBeInstanceOf(Array);
-    expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Jobs Received');
-    expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
-    expect(response.body.exports.csv.href).toContain('/api/analytics/dashboards/admin/export');
+    expect(Array.isArray(navigation)).toBe(true);
+
+    const overviewSection = navigation.find((section) => section.id === 'overview');
+    expect(overviewSection?.analytics?.metrics?.[0]?.label).toBe('Jobs Received');
+
+    const complianceSection = navigation.find((section) => section.id === 'compliance');
+    expect(complianceSection?.data?.rows?.length ?? 0).toBeGreaterThan(0);
+
+    expect(exportLinks.csv.href).toContain('/api/analytics/dashboards/admin/export');
   });
 
   it('supports provider persona with acceptance and rental metrics', async () => {
@@ -601,9 +607,14 @@ describe('Persona analytics dashboards', () => {
       .expect(200);
 
     expect(response.body.persona).toBe('provider');
-    expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Assignments Received');
-    expect(response.body.navigation[2].data.rows[0][0]).toBe('RA-001');
-    const inventorySection = response.body.navigation.find((section) => section.id === 'inventory');
+    const providerNavigation = response.body.navigation;
+    const providerOverview = providerNavigation.find((section) => section.id === 'overview');
+    expect(providerOverview?.analytics?.metrics?.[0]?.label).toBe('Assignments Received');
+
+    const rentalsTable = providerNavigation.find((section) => section.id === 'rentals');
+    expect(rentalsTable?.data?.rows?.[0]?.[0]).toBe('RA-001');
+
+    const inventorySection = providerNavigation.find((section) => section.id === 'inventory');
     expect(inventorySection).toBeTruthy();
     expect(inventorySection.data.summary[0].label).toBe('Available units');
     expect(inventorySection.data.groups[0].items.length).toBeGreaterThan(0);
@@ -622,13 +633,27 @@ describe('Persona analytics dashboards', () => {
       .expect(200);
 
     expect(response.body.persona).toBe('user');
-    expect(response.body.navigation[0].analytics.metrics).toHaveLength(4);
-    expect(response.body.navigation[1].data.columns).toHaveLength(4);
-    expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
-    expect(response.body.navigation[3].data.items.length).toBeGreaterThan(0);
-    expect(response.body.navigation[0].sidebar.badge).toContain('jobs');
-    expect(response.body.navigation[4].id).toBe('settings');
-    expect(response.body.navigation[4].data.panels.length).toBeGreaterThan(0);
+
+    const userNav = response.body.navigation;
+    const overview = userNav.find((section) => section.id === 'overview');
+    expect(overview?.analytics?.metrics ?? []).toHaveLength(4);
+    expect(overview?.sidebar?.badge ?? '').toContain('jobs');
+
+    const ordersBoard = userNav.find((section) => section.id === 'orders');
+    expect(ordersBoard?.data?.columns ?? []).toHaveLength(4);
+
+    const servicesManagement = userNav.find((section) => section.id === 'services-management');
+    expect((servicesManagement?.data?.orders ?? []).length).toBeGreaterThan(0);
+
+    const rentalsTable = userNav.find((section) => section.id === 'rentals');
+    expect((rentalsTable?.data?.rows ?? []).length).toBeGreaterThan(0);
+
+    const accountList = userNav.find((section) => section.id === 'account');
+    expect((accountList?.data?.items ?? []).length).toBeGreaterThan(0);
+
+    const settingsSection = userNav.find((section) => section.id === 'settings');
+    expect(settingsSection).toBeTruthy();
+    expect((settingsSection.data.panels ?? []).length).toBeGreaterThan(0);
   });
 
   it('streams governed CSV exports for persona dashboards', async () => {
@@ -660,7 +685,9 @@ describe('Persona analytics dashboards', () => {
       .expect(200);
 
     expect(response.body.persona).toBe('enterprise');
-    expect(response.body.navigation[1].data.headers[0]).toBe('Document');
+    const adminNav = response.body.navigation;
+    const complianceSection = adminNav.find((section) => section.id === 'compliance');
+    expect(complianceSection?.data?.headers?.[0]).toBe('Document');
   });
 
   it('rejects persona access when actor lacks role alignment', async () => {

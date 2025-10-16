@@ -1,4 +1,5 @@
 import { DataTypes, Model, Op } from 'sequelize';
+import isEmail from 'validator/lib/isEmail.js';
 import sequelize from '../config/database.js';
 import {
   decryptString,
@@ -129,13 +130,26 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
-        isEmail: true
+        isEncryptedEmail(value) {
+          if (typeof value !== 'string' || value.trim() === '') {
+            throw new Error('Encrypted email payload must be present.');
+          }
+        }
       },
       set(value) {
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
         }
-        const { encrypted, hash } = protectEmail(value);
+        const trimmed = value.trim();
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+
+        if (!isEmail(trimmed)) {
+          throw new Error('email must be a valid email address');
+        }
+
+        const { encrypted, hash } = protectEmail(trimmed);
         this.setDataValue('email', encrypted);
         this.setDataValue('emailHash', hash);
       },

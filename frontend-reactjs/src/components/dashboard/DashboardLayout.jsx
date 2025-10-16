@@ -278,6 +278,20 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'services-management' && Array.isArray(section.data?.orders)) {
+      entries.push(
+        ...section.data.orders.map((order) => ({
+          id: `${section.id}-${order.id}`,
+          type: 'record',
+          label: order.service?.title ?? `Order ${order.id?.slice?.(0, 6) ?? ''}`,
+          description: [order.status, order.escrow?.status, order.booking?.zoneId]
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
     return entries;
   });
 

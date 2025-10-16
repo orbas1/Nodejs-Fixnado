@@ -210,6 +210,126 @@ const mockDashboards = {
         }
       },
       {
+        id: 'services-management',
+        icon: 'automation',
+        label: 'Services Management',
+        description: 'Create service orders, manage escrow, and launch disputes.',
+        type: 'services-management',
+        data: {
+          metrics: {
+            activeOrders: 3,
+            fundedEscrows: 2,
+            disputedOrders: 1,
+            totalOrders: 5,
+            totalSpend: 18950
+          },
+          orders: [
+            {
+              id: 'ORD-1001',
+              status: 'in_progress',
+              totalAmount: 6400,
+              currency: 'GBP',
+              service: { id: 'SVC-201', title: 'Concierge preventative maintenance' },
+              booking: {
+                scheduledStart: '2025-03-19T08:00:00Z',
+                scheduledEnd: '2025-03-19T16:30:00Z',
+                zoneId: 'Zone North',
+                status: 'in_progress'
+              },
+              escrow: { status: 'funded', disputes: [] },
+              metrics: { disputesOpen: 0, escrowStatus: 'funded' }
+            },
+            {
+              id: 'ORD-1002',
+              status: 'completed',
+              totalAmount: 8400,
+              currency: 'GBP',
+              service: { id: 'SVC-305', title: 'Escrow-backed tenant fit-out' },
+              booking: {
+                scheduledStart: '2025-03-16T09:30:00Z',
+                scheduledEnd: '2025-03-17T17:30:00Z',
+                zoneId: 'Zone East',
+                status: 'completed'
+              },
+              escrow: {
+                status: 'released',
+                disputes: [
+                  {
+                    id: 'DSP-411',
+                    status: 'resolved',
+                    reason: 'Punch list follow-up',
+                    openedBy: 'USR-2488',
+                    createdAt: '2025-03-15T12:00:00Z',
+                    updatedAt: '2025-03-16T09:00:00Z'
+                  }
+                ]
+              },
+              metrics: { disputesOpen: 0, escrowStatus: 'released' }
+            },
+            {
+              id: 'ORD-1003',
+              status: 'disputed',
+              totalAmount: 4150,
+              currency: 'GBP',
+              service: { id: 'SVC-122', title: 'After-hours emergency repair' },
+              booking: {
+                scheduledStart: '2025-03-14T22:00:00Z',
+                scheduledEnd: '2025-03-15T02:30:00Z',
+                zoneId: 'Zone Central',
+                status: 'completed'
+              },
+              escrow: {
+                status: 'disputed',
+                disputes: [
+                  {
+                    id: 'DSP-509',
+                    status: 'open',
+                    reason: 'Post-repair inspection flagged issues',
+                    openedBy: 'USR-2488',
+                    createdAt: '2025-03-15T07:45:00Z',
+                    updatedAt: '2025-03-15T07:45:00Z'
+                  }
+                ]
+              },
+              metrics: { disputesOpen: 1, escrowStatus: 'disputed' }
+            }
+          ],
+          catalogue: {
+            services: [
+              {
+                id: 'SVC-201',
+                title: 'Concierge preventative maintenance',
+                category: 'Facilities',
+                price: 1200,
+                currency: 'GBP',
+                companyName: 'Stone Facilities Co-op'
+              },
+              {
+                id: 'SVC-305',
+                title: 'Escrow-backed tenant fit-out',
+                category: 'Projects',
+                price: 8400,
+                currency: 'GBP',
+                companyName: 'Apex Build Partners'
+              },
+              {
+                id: 'SVC-122',
+                title: 'After-hours emergency repair',
+                category: 'Emergency',
+                price: 450,
+                currency: 'GBP',
+                companyName: 'Rapid Response Ops'
+              }
+            ],
+            zones: [
+              { id: 'ZONE-N', name: 'Zone North', companyId: 'COMP-01', demandLevel: 'high', metadata: {} },
+              { id: 'ZONE-E', name: 'Zone East', companyId: 'COMP-01', demandLevel: 'medium', metadata: {} },
+              { id: 'ZONE-C', name: 'Zone Central', companyId: 'COMP-01', demandLevel: 'low', metadata: {} }
+            ]
+          }
+        }
+      },
+      {
         id: 'availability',
         icon: 'availability',
         label: 'Availability Planner',
