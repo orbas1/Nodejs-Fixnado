@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import ProviderManagementSection from '../../features/admin/providers/ProviderManagementSection.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1645,6 +1646,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'provider-management':
+      return <ProviderManagementSection section={section} />;
     default:
       return null;
   }

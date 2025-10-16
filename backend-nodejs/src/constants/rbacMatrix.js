@@ -179,6 +179,7 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
+      Permissions.ADMIN_PROVIDER_ARCHIVE,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS
     ],
@@ -213,6 +214,9 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_PLATFORM_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_PROVIDER_READ,
+      Permissions.ADMIN_PROVIDER_WRITE,
+      Permissions.ADMIN_PROVIDER_ARCHIVE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.SUPPORT_TICKETS

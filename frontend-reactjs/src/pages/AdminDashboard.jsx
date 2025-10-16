@@ -3,7 +3,19 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
-import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
+import {
+  getAdminDashboard,
+  PanelApiError,
+  getAdminProviderDirectory,
+  getAdminProviderDetail,
+  createAdminProvider,
+  updateAdminProvider,
+  archiveAdminProvider,
+  upsertAdminProviderContact,
+  deleteAdminProviderContact,
+  upsertAdminProviderCoverage,
+  deleteAdminProviderCoverage
+} from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
@@ -468,6 +480,18 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [providerState, setProviderState] = useState({
+    loading: false,
+    error: null,
+    list: [],
+    summary: null,
+    enums: {},
+    pagination: null,
+    detailLoading: false,
+    detailError: null,
+    selectedId: null,
+    selected: null
+  });
 
   useEffect(() => {
     if (timeframeParam !== timeframe) {
@@ -505,6 +529,91 @@ export default function AdminDashboard() {
     [timeframe, logout, navigate]
   );
 
+  const handleProviderAuthError = useCallback(
+    async (error) => {
+      if (error instanceof PanelApiError && (error.status === 401 || error.status === 403)) {
+        await logout();
+        navigate('/admin', {
+          replace: true,
+          state: { reason: 'sessionExpired', from: { pathname: '/admin/dashboard' } }
+        });
+        return true;
+      }
+      return false;
+    },
+    [logout, navigate]
+  );
+
+  const loadProviderDirectory = useCallback(
+    async ({ signal, forceRefresh = false } = {}) => {
+      setProviderState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const directory = await getAdminProviderDirectory({ signal, forceRefresh });
+        setProviderState((current) => ({
+          ...current,
+          loading: false,
+          error: null,
+          list: directory.providers ?? [],
+          summary: directory.summary ?? null,
+          enums: directory.enums ?? {},
+          pagination: directory.pagination ?? null
+        }));
+        return directory;
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          setProviderState((current) => ({ ...current, loading: false }));
+          return null;
+        }
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to load providers', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        setProviderState((current) => ({ ...current, loading: false, error: panelError }));
+        return null;
+      }
+    },
+    [handleProviderAuthError]
+  );
+
+  const loadProviderDetail = useCallback(
+    async (companyId, { signal, forceRefresh = false } = {}) => {
+      if (!companyId) {
+        return null;
+      }
+      setProviderState((current) => ({ ...current, detailLoading: true, detailError: null, selectedId: companyId }));
+      try {
+        const detail = await getAdminProviderDetail({ companyId, signal, forceRefresh });
+        setProviderState((current) => ({
+          ...current,
+          detailLoading: false,
+          detailError: null,
+          selectedId: companyId,
+          selected: detail
+        }));
+        return detail;
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          setProviderState((current) => ({ ...current, detailLoading: false }));
+          return null;
+        }
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to load provider detail', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        setProviderState((current) => ({
+          ...current,
+          detailLoading: false,
+          detailError: panelError,
+          selectedId: companyId
+        }));
+        return null;
+      }
+    },
+    [handleProviderAuthError]
+  );
+
   useEffect(() => {
     const controller = new AbortController();
     loadDashboard({ signal: controller.signal, timeframe });
@@ -526,16 +635,299 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      const directory = await loadProviderDirectory({ signal: controller.signal });
+      if (!directory?.providers?.length) {
+        return;
+      }
+      const firstId = directory.providers[0]?.id;
+      if (!firstId) {
+        return;
+      }
+      let shouldFetchDetail = false;
+      setProviderState((current) => {
+        if (current.selectedId) {
+          return current;
+        }
+        shouldFetchDetail = true;
+        return { ...current, selectedId: firstId };
+      });
+      if (shouldFetchDetail) {
+        await loadProviderDetail(firstId, { signal: controller.signal });
+      }
+    })();
+    return () => controller.abort();
+  }, [loadProviderDirectory, loadProviderDetail]);
+
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
+
+  const handleSelectProvider = useCallback(
+    async (companyId) => {
+      if (!companyId) {
+        return;
+      }
+      let shouldFetch = true;
+      setProviderState((current) => {
+        if (current.selectedId === companyId && current.selected && !current.detailError) {
+          shouldFetch = false;
+          return current;
+        }
+        return { ...current, selectedId: companyId };
+      });
+      if (shouldFetch) {
+        await loadProviderDetail(companyId);
+      }
+    },
+    [loadProviderDetail]
+  );
+
+  const handleRefreshProviderDirectory = useCallback(
+    async () => {
+      const directory = await loadProviderDirectory({ forceRefresh: true });
+      if (!directory) {
+        return;
+      }
+      let nextSelectedId = null;
+      setProviderState((current) => {
+        const providerIds = new Set((directory.providers ?? []).map((provider) => provider.id));
+        const fallbackId = directory.providers?.[0]?.id ?? null;
+        nextSelectedId = current.selectedId && providerIds.has(current.selectedId) ? current.selectedId : fallbackId;
+        if (!nextSelectedId) {
+          return { ...current, selectedId: null, selected: null, detailError: null };
+        }
+        return { ...current, selectedId: nextSelectedId };
+      });
+      if (nextSelectedId) {
+        await loadProviderDetail(nextSelectedId, { forceRefresh: true });
+      }
+    },
+    [loadProviderDirectory, loadProviderDetail]
+  );
+
+  const handleCreateProvider = useCallback(
+    async (payload) => {
+      try {
+        const detail = await createAdminProvider(payload);
+        const companyId = detail?.company?.id ?? null;
+        if (companyId) {
+          setProviderState((current) => ({ ...current, selectedId: companyId, selected: detail, detailError: null }));
+        }
+        await loadProviderDirectory({ forceRefresh: true });
+        if (companyId) {
+          await loadProviderDetail(companyId, { forceRefresh: true });
+        }
+        return detail;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to create provider', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDirectory, loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleUpdateProvider = useCallback(
+    async (companyId, payload) => {
+      try {
+        const detail = await updateAdminProvider(companyId, payload);
+        setProviderState((current) => {
+          if (current.selectedId !== companyId) {
+            return current;
+          }
+          return { ...current, selected: detail, detailError: null };
+        });
+        await loadProviderDirectory({ forceRefresh: true });
+        return detail;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update provider', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleUpsertProviderContact = useCallback(
+    async (companyId, contactId, payload) => {
+      try {
+        const result = await upsertAdminProviderContact(companyId, contactId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        await loadProviderDirectory({ forceRefresh: true });
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to save contact', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleDeleteProviderContact = useCallback(
+    async (companyId, contactId) => {
+      try {
+        await deleteAdminProviderContact(companyId, contactId);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        await loadProviderDirectory({ forceRefresh: true });
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to delete contact', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleUpsertProviderCoverage = useCallback(
+    async (companyId, coverageId, payload) => {
+      try {
+        const result = await upsertAdminProviderCoverage(companyId, coverageId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        await loadProviderDirectory({ forceRefresh: true });
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to save coverage', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleDeleteProviderCoverage = useCallback(
+    async (companyId, coverageId) => {
+      try {
+        await deleteAdminProviderCoverage(companyId, coverageId);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        await loadProviderDirectory({ forceRefresh: true });
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to delete coverage', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleArchiveProvider = useCallback(
+    async (companyId, payload) => {
+      try {
+        const result = await archiveAdminProvider(companyId, payload);
+        await loadProviderDirectory({ forceRefresh: true });
+        setProviderState((current) => ({
+          ...current,
+          selectedId: companyId,
+          selected: result,
+          detailError: null,
+          detailLoading: false
+        }));
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to archive provider', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const providerHandlers = useMemo(
+    () => ({
+      onRefreshDirectory: handleRefreshProviderDirectory,
+      onSelectProvider: handleSelectProvider,
+      onCreateProvider: handleCreateProvider,
+      onUpdateProvider: handleUpdateProvider,
+      onUpsertContact: handleUpsertProviderContact,
+      onDeleteContact: handleDeleteProviderContact,
+      onUpsertCoverage: handleUpsertProviderCoverage,
+      onDeleteCoverage: handleDeleteProviderCoverage,
+      onArchiveProvider: handleArchiveProvider
+    }),
+    [
+      handleRefreshProviderDirectory,
+      handleSelectProvider,
+      handleCreateProvider,
+      handleUpdateProvider,
+      handleUpsertProviderContact,
+      handleDeleteProviderContact,
+      handleUpsertProviderCoverage,
+      handleDeleteProviderCoverage,
+      handleArchiveProvider
+    ]
+  );
+
+  const providerSection = useMemo(() => {
+    const directoryEnums = providerState.enums ?? {};
+    const detailEnums = providerState.selected?.enums ?? {};
+    const mergedEnums = {
+      ...directoryEnums,
+      ...detailEnums,
+      statuses: detailEnums.statuses ?? directoryEnums.statuses ?? [],
+      onboardingStages: detailEnums.onboardingStages ?? directoryEnums.onboardingStages ?? [],
+      tiers: detailEnums.tiers ?? directoryEnums.tiers ?? [],
+      riskLevels: detailEnums.riskLevels ?? directoryEnums.riskLevels ?? [],
+      coverageTypes: detailEnums.coverageTypes ?? directoryEnums.coverageTypes ?? [],
+      insuredStatuses: detailEnums.insuredStatuses ?? directoryEnums.insuredStatuses ?? [],
+      regions: directoryEnums.regions ?? [],
+      zones: detailEnums.zones ?? []
+    };
+
+    return {
+      id: 'provider-management',
+      label: 'SME / provider management',
+      description:
+        'Onboard, update, and monitor Fixnado SMEs with live coverage, contact ownership, and compliance records.',
+      icon: 'provider',
+      type: 'provider-management',
+      data: {
+        loading: providerState.loading,
+        list: providerState.list,
+        summary: providerState.summary,
+        enums: mergedEnums,
+        error: providerState.error,
+        detailLoading: providerState.detailLoading,
+        detailError: providerState.detailError,
+        selected: providerState.selected,
+        selectedId: providerState.selectedId,
+        handlers: providerHandlers
+      }
+    };
+  }, [providerState, providerHandlers]);
 
   const navigation = useMemo(() => {
     const sections = state.data ? buildAdminNavigation(state.data) : [];
+    if (providerSection) {
+      sections.push(providerSection);
+    }
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
-  const dashboardPayload = state.data ? { navigation } : null;
+  }, [state.data, providerSection, affiliateSection]);
+  const dashboardPayload = navigation.length ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
   const servedFromCache = Boolean(state.meta?.fromCache && !state.meta?.fallback);
