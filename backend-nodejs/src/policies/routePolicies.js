@@ -16,6 +16,21 @@ const ROUTE_POLICIES = {
       surface: req.route?.path || null
     })
   },
+  'serviceman.control.manage': {
+    id: 'serviceman.control.manage',
+    version: '1.0.0',
+    resource: 'serviceman.control',
+    action: 'serviceman.control:manage',
+    description:
+      'Allow crew personas to manage dispute cases, evidence, and follow-up actions from the serviceman control centre.',
+    requirements: [Permissions.SERVICEMAN_CONTROL_MANAGE],
+    tags: ['serviceman', 'workspace', 'disputes'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      surface: req.route?.path || null
+    })
+  },
   'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
@@ -24,6 +39,20 @@ const ROUTE_POLICIES = {
     description: 'Allow authenticated users to manage their Fixnado account workspace preferences.',
     requirements: [Permissions.ACCOUNT_SETTINGS_MANAGE],
     tags: ['account', 'preferences'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'serviceman.profile.manage': {
+    id: 'serviceman.profile.manage',
+    version: '1.0.0',
+    resource: 'serviceman.profile',
+    action: 'serviceman.profile:manage',
+    description: 'Allow crew members to update their profile, emergency contacts, availability, and issued gear.',
+    requirements: [Permissions.SERVICEMAN_PROFILE_MANAGE],
+    tags: ['serviceman', 'profile', 'dashboard'],
     severity: 'medium',
     metadata: (req) => ({
       userId: req.user?.id ?? null,
@@ -89,6 +118,44 @@ const ROUTE_POLICIES = {
       hasAttachments: Array.isArray(req.body?.attachments) ? req.body.attachments.length : 0
     })
   },
+  'fixnado.ads.read': {
+    id: 'fixnado.ads.read',
+    version: '1.0.0',
+    resource: 'fixnado.ads',
+    action: 'fixnado.ads:read',
+    description: 'Allow Serviceman personas to access the Fixnado ads workspace and read campaign data.',
+    requirements: [Permissions.CAMPAIGN_REVIEW],
+    tags: ['ads', 'fixnado', 'serviceman'],
+    severity: 'medium',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId ?? null,
+      entity: req.params?.creativeId
+        ? 'creative'
+        : req.params?.signalId
+          ? 'fraud-signal'
+          : 'campaign',
+      method: req.method
+    })
+  },
+  'fixnado.ads.write': {
+    id: 'fixnado.ads.write',
+    version: '1.0.0',
+    resource: 'fixnado.ads',
+    action: 'fixnado.ads:write',
+    description: 'Allow authorised personas to create and manage Fixnado ads campaigns, flights, creatives, and metrics.',
+    requirements: [Permissions.CAMPAIGN_MANAGE],
+    tags: ['ads', 'fixnado', 'serviceman'],
+    severity: 'high',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId ?? null,
+      entity: req.params?.creativeId
+        ? 'creative'
+        : req.params?.signalId
+          ? 'fraud-signal'
+          : 'campaign',
+      method: req.method
+    })
+  },
   'affiliate.dashboard.view': {
     id: 'affiliate.dashboard.view',
     version: '1.0.0',
@@ -126,6 +193,96 @@ const ROUTE_POLICIES = {
     severity: 'high',
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'provider.calendar.read': {
+    id: 'provider.calendar.read',
+    version: '1.0.0',
+    resource: 'provider.calendar',
+    action: 'provider.calendar:view',
+    description: 'Allow provider operators to inspect booking calendars, utilisation, and holds.',
+    requirements: [Permissions.PROVIDER_CALENDAR_VIEW],
+    tags: ['provider', 'calendar', 'operations'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'provider.calendar.manage': {
+    id: 'provider.calendar.manage',
+    version: '1.0.0',
+    resource: 'provider.calendar',
+    action: 'provider.calendar:manage',
+    description: 'Allow authorised provider admins to create bookings, manage holds, and update calendar settings.',
+    requirements: [Permissions.PROVIDER_CALENDAR_MANAGE],
+    tags: ['provider', 'calendar', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      persona: req.headers['x-fixnado-persona'] || null
+  'provider.escrows.read': {
+    id: 'provider.escrows.read',
+    version: '1.0.0',
+    resource: 'provider.escrows',
+    action: 'provider.escrows:read',
+    description: 'Allow provider organisations to review escrow records tied to their service orders.',
+    requirements: [Permissions.PROVIDER_ESCROW_READ],
+    tags: ['provider', 'escrow', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      providerId: req.user?.id ?? null,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      escrowId: req.params?.id || null
+    })
+  },
+  'provider.escrows.write': {
+    id: 'provider.escrows.write',
+    version: '1.0.0',
+    resource: 'provider.escrows',
+    action: 'provider.escrows:write',
+    description: 'Allow provider finance teams to update escrow metadata, milestones, and release policies.',
+    requirements: [Permissions.PROVIDER_ESCROW_WRITE],
+    tags: ['provider', 'escrow', 'finance'],
+    severity: 'critical',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      providerId: req.user?.id ?? null,
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      escrowId: req.params?.id || null
+  'serviceman.escrows.view': {
+    id: 'serviceman.escrows.view',
+    version: '1.0.0',
+    resource: 'serviceman.escrows',
+    action: 'serviceman.escrows:view',
+    description: 'Allow crew members to review escrow records linked to their active bookings.',
+    requirements: [Permissions.SERVICEMAN_ESCROW_VIEW],
+    tags: ['serviceman', 'escrow', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      onHold: req.query?.onHold || 'all',
+      policyId: req.query?.policyId || 'all'
+    })
+  },
+  'serviceman.escrows.manage': {
+    id: 'serviceman.escrows.manage',
+    version: '1.0.0',
+    resource: 'serviceman.escrows',
+    action: 'serviceman.escrows:manage',
+    description:
+      'Allow authorised crew members to update escrow status, milestones, notes, and work logs for their assignments.',
+    requirements: [Permissions.SERVICEMAN_ESCROW_MANAGE],
+    tags: ['serviceman', 'escrow', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      escrowId: req.params?.id || null,
+      milestoneId: req.params?.milestoneId || null,
+      workLogId: req.params?.workLogId || null,
+      noteId: req.params?.noteId || null
     })
   },
   'service.orders.read': {
@@ -184,6 +341,33 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       actorId: req.user?.id ?? null,
       persona: req.headers['x-fixnado-persona'] || null
+  'serviceman.bookings.view': {
+    id: 'serviceman.bookings.view',
+    version: '1.0.0',
+    resource: 'serviceman.bookings',
+    action: 'serviceman.bookings:view',
+    description: 'Allow crew members to review assigned bookings, schedules, and notes.',
+    requirements: [Permissions.SERVICEMAN_BOOKINGS_VIEW],
+    tags: ['serviceman', 'bookings', 'workspace'],
+    severity: 'medium',
+    metadata: (req) => ({
+      servicemanId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'serviceman.bookings.manage': {
+    id: 'serviceman.bookings.manage',
+    version: '1.0.0',
+    resource: 'serviceman.bookings',
+    action: 'serviceman.bookings:manage',
+    description: 'Allow crew members to update booking status, schedules, notes, and workspace preferences.',
+    requirements: [Permissions.SERVICEMAN_BOOKINGS_MANAGE],
+    tags: ['serviceman', 'bookings', 'workspace'],
+    severity: 'high',
+    metadata: (req) => ({
+      servicemanId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null,
+      method: req.method
     })
   },
   'admin.dashboard.view': {
@@ -1318,6 +1502,81 @@ const ROUTE_POLICIES = {
     description: 'Allow provider managers to view their operational dashboard.',
     requirements: [Permissions.PANEL_PROVIDER],
     tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
+  'panel.provider.tools.read': {
+    id: 'panel.provider.tools.read',
+    version: '1.0.0',
+    resource: 'panel.provider.tools',
+    action: 'panel.provider.tools:view',
+    description: 'Allow provider managers to view tool sale management data.',
+    requirements: [Permissions.PANEL_PROVIDER_TOOLS],
+    tags: ['panel', 'provider', 'inventory'],
+    severity: 'medium'
+  },
+  'panel.provider.tools.manage': {
+    id: 'panel.provider.tools.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.tools',
+    action: 'panel.provider.tools:manage',
+    description: 'Allow provider managers to create and update tool sale listings and coupons.',
+    requirements: [Permissions.PANEL_PROVIDER_TOOLS],
+    tags: ['panel', 'provider', 'inventory'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      path: req.path,
+      toolSaleProfileId: req.params?.profileId || null,
+      couponId: req.params?.couponId || null
+    })
+  'panel.provider.customJobs.view': {
+    id: 'panel.provider.customJobs.view',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:view',
+    description: 'Allow providers to view custom job opportunities, bidding history, and communications.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'medium'
+  },
+  'panel.provider.customJobs.manage': {
+    id: 'panel.provider.customJobs.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:manage',
+    description: 'Allow providers to create bespoke jobs, issue invitations, and manage targeted briefs.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'high'
+  },
+  'panel.provider.customJobs.bid': {
+    id: 'panel.provider.customJobs.bid',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:bid',
+    description: 'Allow providers to create, edit, and withdraw bids on custom jobs.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'high'
+  },
+  'panel.provider.customJobs.message': {
+    id: 'panel.provider.customJobs.message',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:message',
+    description: 'Allow providers to communicate within custom job bidding threads.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'communications'],
+    severity: 'medium'
+  },
+  'panel.provider.customJobs.report': {
+    id: 'panel.provider.customJobs.report',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:report',
+    description: 'Allow providers to create and manage saved reports for custom job performance.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs', 'reports'],
     severity: 'medium'
   },
   'panel.enterprise.dashboard': {

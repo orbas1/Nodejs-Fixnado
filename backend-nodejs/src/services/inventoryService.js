@@ -164,26 +164,28 @@ async function applyInventoryAdjustment(item, type, quantity) {
   return item.save();
 }
 
-export async function createInventoryItem({
-  companyId,
-  marketplaceItemId = null,
-  name,
-  sku,
-  category,
-  unitType = 'unit',
-  quantityOnHand = 0,
-  quantityReserved = 0,
-  safetyStock = 0,
-  locationZoneId = null,
-  rentalRate = null,
-  rentalRateCurrency = null,
-  depositAmount = null,
-  depositCurrency = null,
-  replacementCost = null,
-  insuranceRequired = false,
-  conditionRating = 'good',
-  metadata = {}
-}) {
+export async function createInventoryItem(params, options = {}) {
+  const {
+    companyId,
+    marketplaceItemId = null,
+    name,
+    sku,
+    category,
+    unitType = 'unit',
+    quantityOnHand = 0,
+    quantityReserved = 0,
+    safetyStock = 0,
+    locationZoneId = null,
+    rentalRate = null,
+    rentalRateCurrency = null,
+    depositAmount = null,
+    depositCurrency = null,
+    replacementCost = null,
+    insuranceRequired = false,
+    conditionRating = 'good',
+    metadata = {}
+  } = params;
+
   if (!companyId) {
     throw inventoryError('companyId is required');
   }
@@ -207,7 +209,7 @@ export async function createInventoryItem({
     throw inventoryError('metadata must be an object when provided');
   }
 
-  return sequelize.transaction(async (transaction) => {
+  const execute = async (transaction) => {
     const item = await InventoryItem.create(
       {
         companyId,
@@ -237,10 +239,16 @@ export async function createInventoryItem({
     }
 
     return item;
-  });
+  };
+
+  if (options.transaction) {
+    return execute(options.transaction);
+  }
+
+  return sequelize.transaction(execute);
 }
 
-export async function updateInventoryItem(itemId, updates = {}) {
+export async function updateInventoryItem(itemId, updates = {}, options = {}) {
   if (!itemId) {
     throw inventoryError('itemId is required');
   }
@@ -249,10 +257,11 @@ export async function updateInventoryItem(itemId, updates = {}) {
   const integerFields = ['quantityOnHand', 'quantityReserved', 'safetyStock'];
   const decimalFields = ['rentalRate', 'depositAmount', 'replacementCost'];
 
-  return sequelize.transaction(async (transaction) => {
+  const execute = async (transaction) => {
+    const lock = transaction?.LOCK?.UPDATE ?? undefined;
     const item = await InventoryItem.findByPk(itemId, {
       transaction,
-      lock: transaction ? transaction.LOCK.UPDATE : undefined
+      lock
     });
 
     if (!item) {
@@ -333,7 +342,13 @@ export async function updateInventoryItem(itemId, updates = {}) {
     }
 
     return item;
-  });
+  };
+
+  if (options.transaction) {
+    return execute(options.transaction);
+  }
+
+  return sequelize.transaction(execute);
 }
 
 export async function deleteInventoryItem(itemId) {
