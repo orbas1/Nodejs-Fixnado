@@ -1649,6 +1649,38 @@ export default function AdminDashboard() {
   }, [overviewSettings, settingsModalOpen]);
 
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
+  const userManagementSection = useMemo(
+    () => ({
+      id: 'user-management',
+      label: 'User management',
+      description: 'Provision, audit, and secure Fixnado accounts across roles.',
+      type: 'user-management',
+      icon: 'users'
+    }),
+    []
+  );
+
+  const navigation = useMemo(() => {
+    const sections = state.data ? [...buildAdminNavigation(state.data)] : [];
+    if (affiliateSection) {
+      sections.push(affiliateSection);
+    }
+    sections.push(userManagementSection);
+    return sections;
+  }, [state.data, affiliateSection, userManagementSection]);
+  const dashboardPayload = useMemo(() => {
+    if (!navigation.length) {
+      return state.data ? { ...state.data, navigation: [] } : null;
+    }
+    if (state.data) {
+      return { ...state.data, navigation };
+    }
+    return {
+      navigation,
+      persona: roleMeta?.id ?? 'admin',
+      metadata: {}
+    };
+  }, [navigation, state.data, roleMeta]);
   const enterpriseSection = useMemo(() => buildEnterpriseLaunchpad(enterpriseSnapshot), [enterpriseSnapshot]);
 
   const handleServiceRefresh = useCallback(() => {

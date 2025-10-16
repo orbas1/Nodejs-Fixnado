@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import UserManagementSection from './userManagement/UserManagementSection.jsx';
 import MarketplaceWorkspace from '../../features/marketplace-admin/MarketplaceWorkspace.jsx';
 import { ServiceManagementSection } from '../service-management/index.js';
 import AuditTimelineSection from '../audit-timeline/AuditTimelineSection.jsx';
@@ -1701,6 +1702,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'user-management':
+      return <UserManagementSection section={section} />;
     case 'marketplace-workspace':
       return (
         <MarketplaceWorkspace

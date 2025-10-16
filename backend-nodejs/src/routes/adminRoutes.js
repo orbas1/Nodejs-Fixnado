@@ -30,6 +30,19 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  listAdminUsersHandler,
+  createAdminUserHandler,
+  updateAdminUserHandler,
+  updateAdminUserProfileHandler,
+  resetAdminUserMfaHandler,
+  revokeAdminUserSessionsHandler,
+  listAdminUsersValidators,
+  createAdminUserValidators,
+  updateAdminUserValidators,
+  updateAdminUserProfileValidators,
+  resetAdminUserMfaValidators,
+  revokeAdminUserSessionsValidators
+} from '../controllers/adminUserController.js';
   listAppearanceProfilesHandler,
   getAppearanceProfileHandler,
   createAppearanceProfileHandler,
@@ -439,6 +452,57 @@ router.delete(
     metadata: (req) => ({ entity: 'navigation-item', action: 'delete', itemId: req.params.itemId })
   }),
   deleteWebsiteNavigationItemHandler
+);
+
+router.get(
+  '/users',
+  authenticate,
+  enforcePolicy('admin.users.read', { metadata: () => ({ entity: 'user-directory' }) }),
+  listAdminUsersValidators,
+  listAdminUsersHandler
+);
+router.post(
+  '/users',
+  authenticate,
+  enforcePolicy('admin.users.invite', { metadata: () => ({ entity: 'user-directory' }) }),
+  createAdminUserValidators,
+  createAdminUserHandler
+);
+router.patch(
+  '/users/:id',
+  authenticate,
+  enforcePolicy('admin.users.write', {
+    metadata: (req) => ({ entity: 'user', userId: req.params.id })
+  }),
+  updateAdminUserValidators,
+  updateAdminUserHandler
+);
+router.patch(
+  '/users/:id/profile',
+  authenticate,
+  enforcePolicy('admin.users.write', {
+    metadata: (req) => ({ entity: 'user-profile', userId: req.params.id })
+  }),
+  updateAdminUserProfileValidators,
+  updateAdminUserProfileHandler
+);
+router.post(
+  '/users/:id/reset-mfa',
+  authenticate,
+  enforcePolicy('admin.users.write', {
+    metadata: (req) => ({ action: 'reset-mfa', userId: req.params.id })
+  }),
+  resetAdminUserMfaValidators,
+  resetAdminUserMfaHandler
+);
+router.post(
+  '/users/:id/revoke-sessions',
+  authenticate,
+  enforcePolicy('admin.users.write', {
+    metadata: (req) => ({ action: 'revoke-sessions', userId: req.params.id })
+  }),
+  revokeAdminUserSessionsValidators,
+  revokeAdminUserSessionsHandler
 );
 
 router.get(

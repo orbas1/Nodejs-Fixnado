@@ -52,6 +52,7 @@ export const DASHBOARD_ROLES = [
       },
       { id: 'assets', label: 'Hire & Rental Control', icon: 'assets' },
       { id: 'zones', label: 'Zone Design Studio', icon: 'map' },
+      { id: 'user-management', label: 'User management', icon: 'users' },
       { id: 'home-builder', label: 'Home Page Builder', icon: 'builder', href: '/admin/home-builder' },
       { id: 'live-feed-auditing', label: 'Live Feed Auditing', icon: 'analytics' },
       { id: 'settings', label: 'Platform Settings', icon: 'settings' }

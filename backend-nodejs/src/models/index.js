@@ -43,6 +43,7 @@ import Conversation from './conversation.js';
 import ConversationParticipant from './conversationParticipant.js';
 import ConversationMessage from './conversationMessage.js';
 import MessageDelivery from './messageDelivery.js';
+import AdminUserProfile from './adminUserProfile.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
 import PlatformSetting from './platformSetting.js';
@@ -141,6 +142,9 @@ CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+User.hasOne(AdminUserProfile, { foreignKey: 'userId', as: 'adminProfile' });
+AdminUserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(Company, { foreignKey: 'regionId', as: 'companies' });
 Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -772,6 +776,7 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  AdminUserProfile
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
