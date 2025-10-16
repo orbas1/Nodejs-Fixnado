@@ -27,6 +27,7 @@ import adminHomeBuilderRoutes from './adminHomeBuilderRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import financeRoutes from './financeRoutes.js';
+import walletRoutes from './walletRoutes.js';
 import customerServiceManagementRoutes from './customerServiceManagementRoutes.js';
 import accountSupportRoutes from './accountSupportRoutes.js';
 import adminWalletRoutes from './adminWalletRoutes.js';
@@ -38,6 +39,10 @@ import userSettingsRoutes from './userSettingsRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
+import servicemanEscrowRoutes from './servicemanEscrowRoutes.js';
+import servicemanControlRoutes from './servicemanControlRoutes.js';
+import fixnadoAdsRoutes from './fixnadoAdsRoutes.js';
+import providerRoutes from './providerRoutes.js';
 
 const v1Router = Router();
 
@@ -79,7 +84,11 @@ v1Router.use('/settings', userSettingsRoutes);
 v1Router.use('/wallet', walletRoutes);
 v1Router.use('/service-orders', serviceOrderRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
+v1Router.use('/serviceman-control', servicemanControlRoutes);
 v1Router.use('/account', accountRoutes);
+v1Router.use('/serviceman', servicemanEscrowRoutes);
+v1Router.use('/fixnado/ads', fixnadoAdsRoutes);
+v1Router.use('/provider', providerRoutes);
 
 const router = Router();
 

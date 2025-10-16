@@ -5,7 +5,6 @@ import {
   Bars3BottomLeftIcon,
   ArrowLeftOnRectangleIcon,
   MagnifyingGlassIcon,
-  ArrowTopRightOnSquareIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
   ExclamationTriangleIcon,
@@ -25,8 +24,8 @@ import {
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
   CubeIcon,
-  QueueListIcon
-  PaintBrushIcon
+  QueueListIcon,
+  PaintBrushIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
@@ -36,6 +35,7 @@ import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 import DashboardBlogRail from './DashboardBlogRail.jsx';
 import CustomerOverviewControl from './CustomerOverviewControl.jsx';
+import ServicemanDisputeWorkspace from '../servicemanControl/ServicemanDisputeWorkspace.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -67,37 +67,38 @@ const ToggleSummary = ({ toggle = null, reason = null }) => {
   const badgeClass = stateBadgeMap[toggle.state] ?? 'bg-slate-100 text-slate-600 border-slate-200';
   const parsedRollout = Number.parseFloat(toggle.rollout ?? 0);
   const rolloutValue = Number.isFinite(parsedRollout) ? parsedRollout : 0;
+
   return (
-    <div className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm" data-qa="dashboard-toggle-summary">
+    <div className="mt-6 max-w-lg rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-500">Feature toggle</p>
           <p className="text-sm font-semibold text-slate-900">analytics-dashboards</p>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass}`} data-qa="dashboard-toggle-chip">
+        <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass}`}>
           {toggle.state ?? 'unknown'}
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-500">
         <div>
           <dt className="font-medium text-slate-600">Owner</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-owner">{toggle.owner || '—'}</dd>
+          <dd className="mt-1">{toggle.owner || '—'}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Ticket</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-ticket">{toggle.ticket || '—'}</dd>
+          <dd className="mt-1">{toggle.ticket || '—'}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Last modified</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-modified">{formatToggleDate(toggle.lastModifiedAt)}</dd>
+          <dd className="mt-1">{formatToggleDate(toggle.lastModifiedAt)}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Rollout</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-rollout">{Math.round(rolloutValue * 100)}%</dd>
+          <dd className="mt-1">{Math.round(rolloutValue * 100)}%</dd>
         </div>
         <div className="col-span-2">
           <dt className="font-medium text-slate-600">Reason</dt>
-          <dd className="mt-1 capitalize" data-qa="dashboard-toggle-reason">{reason?.replace('-', ' ') || 'enabled'}</dd>
+          <dd className="mt-1 capitalize">{reason?.replace('-', ' ') || 'enabled'}</dd>
         </div>
       </dl>
     </div>
@@ -107,7 +108,7 @@ const ToggleSummary = ({ toggle = null, reason = null }) => {
 ToggleSummary.propTypes = {
   toggle: PropTypes.shape({
     state: PropTypes.string,
-    rollout: PropTypes.number,
+    rollout: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     owner: PropTypes.string,
     ticket: PropTypes.string,
     lastModifiedAt: PropTypes.string
@@ -122,8 +123,8 @@ const resultBadge = {
   item: 'Work Item',
   record: 'Record',
   configuration: 'Setting',
-  panel: 'Setting',
-  bucket: 'Bucket'
+  panel: 'Panel',
+  bucket: 'Bucket',
   route: 'Workspace'
 };
 
@@ -147,8 +148,8 @@ const navIconMap = {
   automation: BoltIcon,
   map: MapIcon,
   documents: ClipboardDocumentCheckIcon,
-  operations: QueueListIcon
-  marketplace: WrenchScrewdriverIcon
+  operations: QueueListIcon,
+  marketplace: WrenchScrewdriverIcon,
   seo: TagIcon
 };
 
@@ -158,320 +159,69 @@ const getNavIcon = (item) => {
   if (!item?.icon) {
     return Squares2X2Icon;
   }
-
   return navIconMap[item.icon] ?? Squares2X2Icon;
-};
-
-const formatRelativeTime = (timestamp) => {
-  if (!timestamp) return null;
-  const last = new Date(timestamp);
-  if (Number.isNaN(last.getTime())) return null;
-  const diffMs = Date.now() - last.getTime();
-  const diffMinutes = Math.round(diffMs / 60000);
-  if (diffMinutes < 1) return 'moments ago';
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 };
 
 const buildSearchIndex = (navigation) =>
   navigation
     .filter((section) => !section.href)
     .flatMap((section) => {
-  navigation.flatMap((section) => {
-    if (section.type === 'link') {
-    if (section.href) {
-      return [];
-    }
-
-    if (section.type === 'route') {
-      return [
+      const entries = [
         {
           id: section.id,
-          type: 'route',
-          label: section.label,
+          type: section.type ?? 'section',
+          label: section.label ?? section.name ?? section.id,
           description: section.description ?? '',
-          href: section.href
+          targetSection: section.id
         }
       ];
-    }
 
-    if (section.href) {
-    if (section.to) {
-    if (section.type === 'link') {
-    if (section.route || section.href) {
-      return [];
-    }
-    const entries = [
-      {
-        id: section.id,
-        type: 'section',
-        label: section.label,
-        description: section.description ?? '',
-        targetSection: section.id
+      if (Array.isArray(section.items)) {
+        section.items.forEach((item) => {
+          entries.push({
+            id: `${section.id}-${item.id ?? item.label}`,
+            type: item.type ?? 'item',
+            label: item.label ?? item.name ?? 'Item',
+            description: item.description ?? '',
+            targetSection: section.id
+          });
+        });
       }
-    ];
 
-    if (section.type === 'grid' && Array.isArray(section.data?.cards)) {
-      entries.push(
-        ...section.data.cards.map((card) => ({
-          id: `${section.id}-${card.title}`,
-          type: 'card',
-          label: card.title,
-          description: Array.isArray(card.details) ? card.details.join(' • ') : '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'board' && Array.isArray(section.data?.columns)) {
-      section.data.columns.forEach((column) => {
-        entries.push({
-          id: `${section.id}-${column.title}`,
-          type: 'column',
-          label: `${column.title} • ${section.label}`,
-          description: `${column.items?.length ?? 0} work items`,
-          targetSection: section.id
-        });
-        column.items?.forEach((item) => {
+      if (Array.isArray(section.groups)) {
+        section.groups.forEach((group) => {
           entries.push({
-            id: `${section.id}-${item.title}`,
-            type: 'item',
-            label: item.title,
-            description: [item.owner, item.value, item.eta].filter(Boolean).join(' • '),
+            id: `${section.id}-${group.id ?? group.label}`,
+            type: group.type ?? 'panel',
+            label: group.label ?? group.name ?? 'Group',
+            description: group.description ?? '',
             targetSection: section.id
           });
         });
-      });
-    }
+      }
 
-    if (section.type === 'dispute-workspace' && Array.isArray(section.data?.snapshot)) {
-      section.data.snapshot.forEach((bucket) => {
-        entries.push({
-          id: `${section.id}-${bucket.id ?? bucket.label}`,
-          type: 'bucket',
-          label: `${bucket.label} • Dispute cadence`,
-          description: bucket.commentary ?? '',
-          targetSection: section.id
-        });
-      });
-    if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
-      entries.push(
-        ...section.data.controls.map((control) => ({
-          id: `${section.id}-${control.id ?? control.title}`,
-          type: 'record',
-          label: control.title,
-          description: [control.ownerTeam || control.owner?.name || '', control.reviewFrequency || '']
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'table' && Array.isArray(section.data?.rows)) {
-      entries.push(
-        ...section.data.rows.map((row, index) => ({
-          id: `${section.id}-row-${index}`,
-          type: 'record',
-          label: row[1] ?? row[0],
-          description: Array.isArray(row) ? row.join(' • ') : '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'list' && Array.isArray(section.data?.items)) {
-      entries.push(
-        ...section.data.items.map((item) => ({
-          id: `${section.id}-${item.title}`,
-          type: 'configuration',
-          label: item.title,
-          description: item.description ?? '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'operations-queues' && Array.isArray(section.data?.boards)) {
-      section.data.boards.forEach((board) => {
-        entries.push({
-          id: `${section.id}-${board.id}`,
-          type: 'board',
-          label: `${board.title} • ${section.label}`,
-          description: [board.summary, board.owner].filter(Boolean).join(' • '),
-          targetSection: section.id
-        });
-        (board.updates ?? []).forEach((update) => {
+      if (Array.isArray(section.packages)) {
+        section.packages.forEach((pkg) => {
           entries.push({
-            id: `${section.id}-${board.id}-${update.id}`,
-            type: 'item',
-            label: update.headline,
-            description: [update.body, formatRelativeTime(update.recordedAt)].filter(Boolean).join(' • '),
+            id: `${section.id}-${pkg.id ?? pkg.name}`,
+            type: 'package',
+            label: `${pkg.name ?? pkg.title ?? 'Package'} • Package`,
+            description: pkg.description ?? '',
             targetSection: section.id
           });
         });
-      });
-    }
+      }
 
-    if (section.type === 'ads') {
-      entries.push(
-        ...(section.data?.summaryCards ?? []).map((card) => ({
-          id: `${section.id}-${card.title}`,
-          type: 'card',
-          label: `${card.title} • ${card.value}`,
-          description: card.helper ?? card.change ?? '',
-          targetSection: section.id
-        })),
-        ...(section.data?.campaigns ?? []).map((campaign) => ({
-          id: `${section.id}-${campaign.id ?? campaign.name}`,
-          type: 'record',
-          label: `${campaign.name} • ${campaign.status ?? ''}`.trim(),
-          description: [`ROAS ${campaign.roas ?? '—'}`, campaign.pacing].filter(Boolean).join(' · '),
-          targetSection: section.id
-        })),
-        ...(section.data?.alerts ?? []).map((alert) => ({
-          id: `${section.id}-alert-${alert.title ?? alert.detectedAt}`,
-          type: 'record',
-          label: alert.title ?? 'Alert',
-          description: [`${alert.severity ?? ''}`.trim(), alert.description ?? ''].filter(Boolean).join(' • '),
-          targetSection: section.id
-        }))
-      );
-    }
+      return entries;
+    });
 
-    if (section.type === 'settings' && Array.isArray(section.data?.panels)) {
-      section.data.panels.forEach((panel) => {
-        const panelId = panel.id ?? panel.title ?? 'panel';
-        entries.push({
-          id: `${section.id}-${panelId}`,
-          type: 'panel',
-          label: panel.title ?? 'Settings panel',
-          description: panel.description ?? '',
-          targetSection: section.id
-        });
-        panel.items?.forEach((item) => {
-          entries.push({
-            id: `${section.id}-${panelId}-${item.label}`,
-            type: item.type === 'toggle' ? 'configuration' : 'record',
-            label: item.label,
-            description: item.helper ?? '',
-            targetSection: section.id
-          });
-        });
-      });
-    }
-
-    if (section.type === 'services-management' && Array.isArray(section.data?.orders)) {
-      entries.push(
-        ...section.data.orders.map((order) => ({
-          id: `${section.id}-${order.id}`,
-          type: 'record',
-          label: order.service?.title ?? `Order ${order.id?.slice?.(0, 6) ?? ''}`,
-          description: [order.status, order.escrow?.status, order.booking?.zoneId]
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        }))
-    if (Array.isArray(section.searchable)) {
-      entries.push(
-        ...section.searchable.map((item) => ({
-          id: `${section.id}-${item.id}`,
-          type: 'configuration',
-          label: item.label,
-          description: item.description ?? '',
-          targetSection: item.targetSection ?? section.id
-        }))
-    if (section.type === 'marketplace-workspace' && section.data?.summary) {
-      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
-      entries.push(
-        {
-          id: `${section.id}-tools-summary`,
-          type: 'record',
-          label: `${tools.count ?? 0} tools catalogued`,
-          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-materials-summary`,
-          type: 'record',
-          label: `${materials.count ?? 0} materials tracked`,
-          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-moderation-summary`,
-          type: 'record',
-          label: `${moderationQueue} listings pending review`,
-          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
-    if (section.type === 'service-management') {
-      const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
-      const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
-      const packages = Array.isArray(section.data?.packages) ? section.data.packages : [];
-
-      categories.forEach((category) => {
-        entries.push({
-          id: `${section.id}-category-${category.id}`,
-          type: 'category',
-          label: `${category.name} • Category`,
-          description: category.description ?? '',
-          targetSection: section.id
-        });
-      });
-
-      listings.forEach((listing) => {
-        entries.push({
-          id: `${section.id}-listing-${listing.id}`,
-          type: 'listing',
-          label: listing.title,
-          description: [listing.category ?? 'Uncategorised', listing.status ?? 'draft']
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        });
-      });
-
-      packages.forEach((pkg) => {
-        entries.push({
-          id: `${section.id}-package-${pkg.id}`,
-          type: 'package',
-          label: `${pkg.name ?? pkg.title} • Package`,
-          description: pkg.description ?? '',
-          targetSection: section.id
-        });
-      });
-    if (section.type === 'wallet') {
-      entries.push(
-        {
-          id: `${section.id}-summary`,
-          type: 'panel',
-          label: 'Wallet summary',
-          description: 'Balance, holds, and autopayout status',
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-transactions`,
-          type: 'record',
-          label: 'Wallet transactions',
-          description: 'Recent manual adjustments and automation events',
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-methods`,
-          type: 'record',
-          label: 'Wallet payment methods',
-          description: 'Configured payout destinations',
-          targetSection: section.id
-        }
-      );
-    }
-
-    return entries;
-  });
-
-const resolveInitialSection = (navigation) => navigation.find((item) => !item.href)?.id ?? navigation[0]?.id ?? 'overview';
+const resolveInitialSection = (navigation, preferred) => {
+  if (preferred && navigation.some((item) => !item.href && item.id === preferred)) {
+    return preferred;
+  }
+  const first = navigation.find((item) => !item.href);
+  return first?.id ?? navigation[0]?.id ?? 'overview';
+};
 
 const Skeleton = () => (
   <div className="px-6 py-10">
@@ -530,52 +280,11 @@ const DashboardLayout = ({
   toggleReason = null,
   onLogout,
   blogPosts = [],
-  initialSectionId = null
-}) => {
-  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const navigationSections = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const [selectedSection, setSelectedSection] = useState(navigationSections[0]?.id ?? 'overview');
-  const firstInteractiveSection = useMemo(() => {
-    const interactive = navigation.find((item) => item.type !== 'link');
-    return interactive?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstInteractiveSection);
-  const [selectedSection, setSelectedSection] = useState(
-    initialSectionId && navigation.some((item) => item.id === initialSectionId)
-      ? initialSectionId
-      : navigation[0]?.id ?? 'overview'
-  );
   initialSectionId = null,
   onSectionChange = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation));
-  const [selectedSection, setSelectedSection] = useState(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
-      return initialSectionId;
-    }
-    return navigation[0]?.id ?? 'overview';
-  });
-  const firstSectionId = useMemo(() => {
-    const first = navigation.find((item) => item.type !== 'route');
-    return first?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstSectionId);
-  const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const initialSectionId = navigableItems[0]?.id ?? null;
-  const [selectedSection, setSelectedSection] = useState(initialSectionId);
-  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
-  const contentSections = useMemo(
-    () => navigation.filter((item) => item.type !== 'link'),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(contentSections[0]?.id ?? null);
-  const navSections = useMemo(
-    () => navigation.filter((item) => !item.route && !item.href),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(navSections[0]?.id ?? 'overview');
+  const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation, initialSectionId));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -583,112 +292,16 @@ const DashboardLayout = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNavClick = useCallback(
-    (item) => {
-      if (item.href) {
-        if (item.target === '_blank') {
-          window.open(item.href, '_blank', 'noopener');
-        } else {
-          navigate(item.href);
-        }
-        setMobileNavOpen(false);
-  const handleNavItemSelect = useCallback(
-    (item) => {
-      if (item.type === 'link') {
-        if (item.routeTo) {
-          navigate(item.routeTo);
-        }
-        return;
-      }
-      setSelectedSection(item.id);
-    },
-    [navigate]
-  );
+  useEffect(() => {
+    setSelectedSection((current) => resolveInitialSection(navigation, current));
+  }, [navigation]);
 
   useEffect(() => {
-    if (navigationSections.length === 0) {
-      setSelectedSection('overview');
-      setSearchQuery('');
-      setSearchResults([]);
-      return;
-    }
-    setSelectedSection((current) => {
-      if (navigationSections.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigationSections[0]?.id ?? 'overview';
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigationSections]);
-    setSelectedSection(firstInteractiveSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstInteractiveSection]);
-    setSelectedSection(resolveInitialSection(navigation));
-    if (!navigation.length) return;
-    setSelectedSection((current) => {
-      const preferred =
-        initialSectionId && navigation.some((item) => item.id === initialSectionId)
-          ? initialSectionId
-          : navigation[0]?.id ?? 'overview';
-      const hasCurrent = navigation.some((item) => item.id === current);
-      if (!hasCurrent) {
-        return preferred;
-      }
-      if (initialSectionId && current !== preferred) {
-        return preferred;
-      }
-      return current;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, initialSectionId]);
-    setSelectedSection((current) => {
-      const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
-      if (stillValid) {
-        return current;
-      }
-      return firstSectionId;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstSectionId]);
-      if (current && navigableItems.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigableItems[0]?.id ?? null;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, navigableItems]);
-    const defaultSection = contentSections[0]?.id ?? null;
-    setSelectedSection(defaultSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [contentSections]);
-    setSelectedSection(navSections[0]?.id ?? 'overview');
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navSections]);
+    if (!initialSectionId) return;
+    setSelectedSection(resolveInitialSection(navigation, initialSectionId));
+  }, [initialSectionId, navigation]);
 
-  useEffect(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
-      setSelectedSection((current) => (current === initialSectionId ? current : initialSectionId));
-      return;
-    }
-
-    if (navigation.length > 0 && !navigation.some((item) => item.id === selectedSection)) {
-      setSelectedSection(navigation[0]?.id ?? 'overview');
-    }
-  }, [initialSectionId, navigation, selectedSection]);
-
-  useEffect(() => {
-    if (!mobileNavOpen) return;
-    setMobileNavOpen(false);
-  }, [selectedSection, mobileNavOpen]);
-
-  const searchIndex = useMemo(() => buildSearchIndex(navSections), [navSections]);
+  const searchIndex = useMemo(() => buildSearchIndex(navigation), [navigation]);
 
   useEffect(() => {
     if (!searchQuery) {
@@ -697,31 +310,18 @@ const DashboardLayout = ({
     }
     const lowered = searchQuery.toLowerCase();
     setSearchResults(
-      searchIndex.filter((entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)).slice(0, 8)
+      searchIndex
+        .filter((entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered))
+        .slice(0, 8)
     );
   }, [searchQuery, searchIndex]);
-
-  const activeSection = navigationSections.find((item) => item.id === selectedSection) ?? navigationSections[0];
-  const activeSection = navigation.find((item) => item.id === selectedSection && item.type !== 'link')
-    ?? navigation.find((item) => item.type !== 'link')
-    ?? navigation[0];
-  const activeSection =
-    navigation.find((item) => item.id === selectedSection && !item.href) ??
-    navigation.find((item) => !item.href) ??
-    navigation[0];
-    navigation.find((item) => item.id === selectedSection && item.type !== 'route') ??
-    navigation.find((item) => item.type !== 'route') ??
-    navigation[0];
-  const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
-  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
-  const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
-  const persona = dashboard?.persona ?? roleMeta.id;
-  const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
-  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const handleSectionSelect = useCallback(
     (sectionId) => {
       setSelectedSection(sectionId);
+      setMobileNavOpen(false);
+      setSearchQuery('');
+      setSearchResults([]);
       if (onSectionChange) {
         onSectionChange(sectionId);
       }
@@ -729,8 +329,24 @@ const DashboardLayout = ({
     [onSectionChange]
   );
 
-  const renderSection = () => {
+  const activeSection = useMemo(() => {
+    if (!navigation.length) {
+      return null;
+    }
+    const match = navigation.find((item) => !item.href && item.id === selectedSection);
+    if (match) {
+      return match;
+    }
+    return navigation.find((item) => !item.href) ?? null;
+  }, [navigation, selectedSection]);
+
+  const persona = dashboard?.persona ?? roleMeta.id;
+  const shouldShowPersonaSummary = persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
+
+  const renderSection = useCallback(() => {
     if (!activeSection) return null;
+
     if (activeSection.type === 'overview') {
       if (persona === 'user') {
         return (
@@ -742,17 +358,24 @@ const DashboardLayout = ({
       }
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
-    if (typeof activeSection.render === 'function') {
-      return activeSection.render();
-    }
-    if (activeSection.component) {
-      const Component = activeSection.component;
-      return <Component {...(activeSection.componentProps ?? {})} />;
-    if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
-      return activeSection.render();
+
     if (activeSection.id === 'customer-control') {
       return <CustomerOverviewControl />;
     }
+
+    if (activeSection.id === 'serviceman-disputes') {
+      return <ServicemanDisputeWorkspace />;
+    }
+
+    if (activeSection.component) {
+      const Component = activeSection.component;
+      return <Component {...(activeSection.componentProps ?? {})} />;
+    }
+
+    if (typeof activeSection.render === 'function') {
+      return activeSection.render();
+    }
+
     return (
       <DashboardSection
         section={activeSection}
@@ -761,16 +384,105 @@ const DashboardLayout = ({
         context={dashboard?.metadata ?? {}}
       />
     );
+  }, [activeSection, persona, dashboard]);
+
+  const handleNavItemClick = useCallback(
+    (item) => {
+      if (item.type === 'link' && item.href) {
+        if (item.target === '_blank') {
+          window.open(item.href, '_blank', 'noopener');
+        } else {
+          navigate(item.href);
+        }
+        setMobileNavOpen(false);
+        return;
+      }
+
+      if (item.type === 'route' && item.href) {
+        navigate(item.href);
+        setMobileNavOpen(false);
+        return;
+      }
+
+      if (item.href) {
+        navigate(item.href);
+        setMobileNavOpen(false);
+        return;
+      }
+
+      handleSectionSelect(item.id);
+    },
+    [handleSectionSelect, navigate]
+  );
+
+  const renderNavItem = (item) => {
+    const Icon = getNavIcon(item);
+    const isLink = Boolean(item.href);
+    const isActive = !isLink && item.id === activeSection?.id;
+    const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+      isActive
+        ? 'border-accent bg-accent text-white shadow-glow'
+        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+    }`;
+    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
+      isActive ? 'bg-white/20 text-white' : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+    }`;
+
+    const content = (
+      <>
+        <span className={iconClasses}>
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">{item.label}</p>
+          {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
+        </div>
+      </>
+    );
+
+    if (isLink) {
+      const isActiveLink = location.pathname === item.href;
+      return (
+        <Link
+          key={item.id}
+          to={item.href}
+          className={baseClasses}
+          onClick={() => {
+            setMobileNavOpen(false);
+            if (!item.href.startsWith('http')) {
+              setSelectedSection(item.id);
+            }
+          }}
+          aria-pressed={isActiveLink}
+        >
+          {content}
+        </Link>
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        className={baseClasses}
+        aria-pressed={isActive}
+        onClick={() => handleNavItemClick(item)}
+      >
+        {content}
+      </button>
+    );
   };
 
-  const registeredOptions = registeredRoles.filter((role) => role.registered);
+  if (loading && !dashboard) {
+    return <Skeleton />;
+  }
 
   if (error && !dashboard) {
     return <ErrorState message={error} onRetry={onRefresh} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
+    <div className="flex min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary">
       <Transition.Root show={mobileNavOpen} as={Fragment}>
         <Dialog as="div" className="relative z-40 lg:hidden" onClose={setMobileNavOpen}>
           <Transition.Child
@@ -796,7 +508,7 @@ const DashboardLayout = ({
               leaveTo="-translate-x-full"
             >
               <Dialog.Panel className="relative flex w-full flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/60 to-white p-6 shadow-2xl">
-                <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
+                <Dialog.Title className="sr-only">Dashboard navigation</Dialog.Title>
                 <div className="flex items-center justify-between gap-3">
                   <Link to="/dashboards" className="flex items-center gap-2 text-primary" onClick={() => setMobileNavOpen(false)}>
                     <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
@@ -814,737 +526,175 @@ const DashboardLayout = ({
                     <Squares2X2Icon className="h-5 w-5" />
                   </button>
                 </div>
-                <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
-                  {navigation.map((item) => {
-                    const Icon = getNavIcon(item);
-                    const baseContent = (
-                      <>
-                    if (item.href) {
-                      const isActiveLink = location.pathname === item.href;
-                    const isLink = item.type === 'link' && item.href;
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const handleItemClick = () => {
-                      if (isLink) {
-                        setMobileNavOpen(false);
-                        navigate(item.href);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isRoute = item.type === 'route' && item.href;
-                    const isActive = !isRoute && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const content = (
-                      <>
-                    const isActive = !item.to && item.id === activeSection?.id;
-                    const isLink = item.type === 'link';
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const commonClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
-                        ? 'border-accent bg-accent text-white shadow-glow'
-                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                    }`;
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
-
-                    if (isLink) {
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                            isActiveLink
-                              ? 'border-accent bg-accent text-white shadow-glow'
-                              : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                          }`}
-                        >
-                          <span
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                              isActiveLink
-                                ? 'bg-white/20 text-white'
-                                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                            }`}
-                          >
-                          className={baseClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconWrapperClass}>
-                          className={commonClasses}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconClasses}>
-                            <Icon className="h-5 w-5" />
+                <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">{navigation.map((item) => renderNavItem(item))}</nav>
+                <div className="mt-6 border-t border-slate-200 pt-4 text-xs text-slate-500">
+                  <p className="font-semibold text-slate-600">Registered workspaces</p>
+                  <ul className="mt-2 space-y-1">
+                    {registeredRoles.map((role) => (
+                      <li key={role.id} className="flex items-center justify-between gap-2">
+                        <span>{role.name}</span>
+                        {role.registered ? (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-semibold text-emerald-700">
+                            Active
                           </span>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold">{item.label}</p>
-                            {item.description ? (
-                              <p className="text-xs text-slate-500">{item.description}</p>
-                            ) : null}
-                          </div>
-                        </Link>
-                      );
-                    }
-                    const isActive = item.id === activeSection?.id;
-
-                    const baseClasses =
-                      'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
-                    const stateClasses = isActive
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary';
-                    const iconClasses = isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-                    const content = (
-                      <>
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-                    const handleClick = () => {
-                      if (item.to) {
-                        navigate(item.to);
-                        setMobileNavOpen(false);
-                        return;
-                      }
-                      setSelectedSection(item.id);
-                    };
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={handleItemClick}
-                        onClick={() => {
-                          if (isLink) {
-                            setMobileNavOpen(false);
-                            navigate(item.href);
-                            return;
-                          }
-                          setSelectedSection(item.id);
-                        onClick={() => handleSectionSelect(item.id)}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={baseClass}
-                        aria-pressed={isActive}
-                      >
-                        className={commonClasses}
-                        aria-pressed={isActive}
-                      >
-                        <span className={iconClasses}>
-                        onClick={() => handleNavClick(item)}
-                        onClick={handleClick}
-                        onClick={() => {
-                          handleNavItemSelect(item);
-                          if (item.type === 'link') {
-                            setMobileNavOpen(false);
-                          }
-                        }}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive || undefined}
-                        aria-pressed={!isLink && isActive}
-                      >
-                        <span
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                          }`}
-                        >
-                    const isActive = !item.href && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const sharedClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isSection = !item.route && !item.href;
-                    const isActive = isSection && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const navItemClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
-                        ? 'border-accent bg-accent text-white shadow-glow'
-                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                    }`;
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
-
-                    const content = (
-                      <>
-                        <span className={iconClasses}>
-                    const content = (
-                      <>
-                        <span className={iconWrapperClass}>
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div className="flex-1">
-                          <p className="flex items-center gap-2 text-sm font-semibold">
-                            {item.label}
-                            {isLink ? (
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                            ) : null}
-                          </p>
-                          {item.description ? (
-                            <p className="text-xs text-slate-500">{item.description}</p>
-                          ) : null}
-                        </div>
-                      </>
-                    );
-
-                    if (item.type === 'link' && item.href) {
-                    if (isRoute) {
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {baseContent}
-                          className={`${baseClasses} ${stateClasses}`}
-                          onClick={() => setMobileNavOpen(false)}
-                          aria-label={item.label}
-                          className={sharedClasses}
-                    if (item.route) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.route}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
-                        </Link>
-                      );
-                    }
-
-                    if (item.href) {
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
-                        </a>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSection(item.id);
-                          setMobileNavOpen(false);
-                        }}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive}
-                      >
-                        {baseContent}
-                        className={`${baseClasses} ${stateClasses}`}
-                        className={sharedClasses}
-                        className={navItemClass}
-                        aria-pressed={isActive}
-                      >
-                        {content}
-                      </button>
-                    );
-                  })}
-                </nav>
-                {sidebarLinks.length ? (
-                  <div className="mt-6 space-y-2">
-                    <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-                    {sidebarLinks.map((link) => (
-                      <Link
-                        key={link.id}
-                        to={link.href}
-                        onClick={() => setMobileNavOpen(false)}
-                        className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
-                      >
-                        <span>{link.label}</span>
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
-                      </Link>
+                        ) : (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold text-slate-500">
+                            Pending
+                          </span>
+                        )}
+                      </li>
                     ))}
-                  </div>
-                ) : null}
-                <div className="mt-6 space-y-3">
-                  <Link
-                    to="/"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                    onClick={() => setMobileNavOpen(false)}
-                  >
-                    <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                  </Link>
-                  {onLogout ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileNavOpen(false);
-                        onLogout();
-                      }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                    >
-                      <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                    </button>
-                  ) : null}
+                  </ul>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>
         </Dialog>
       </Transition.Root>
+
       <aside
-        className={`hidden lg:flex ${navCollapsed ? 'w-24' : 'w-80 xl:w-96'} flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white transition-[width] duration-300`}
+        className={`hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-accent/10 lg:bg-gradient-to-b lg:from-white lg:via-secondary/40 lg:to-white lg:px-6 lg:py-8 ${
+          navCollapsed ? 'lg:w-24' : ''
+        }`}
       >
-        <div className="flex items-center justify-between border-b border-accent/10 px-6 py-5">
-          <Link to="/dashboards" className="flex items-center gap-2 text-primary" title="Dashboard hub">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-primary">
             <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
-            {!navCollapsed && (
-              <div className="leading-tight">
-                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
-                <p className="text-lg font-semibold">{roleMeta.name}</p>
-              </div>
-            )}
-          </Link>
+            <div className="leading-tight">
+              <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
+              <p className="text-lg font-semibold">{roleMeta.name}</p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setNavCollapsed((value) => !value)}
             className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
-            aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-label="Toggle navigation"
           >
-            <Squares2X2Icon className={`h-5 w-5 transition-transform ${navCollapsed ? 'rotate-180' : ''}`} />
+            <Squares2X2Icon className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
-          {navigation.map((item) => {
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              navCollapsed ? 'justify-center px-2' : ''
-            }`;
-            if (item.href) {
-              const isActiveLink = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`${baseClasses} ${
-                    isActiveLink
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                  }`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActiveLink
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </Link>
-              );
-            }
-            const isActive = item.id === activeSection?.id;
-            const isLink = item.type === 'link' && item.href;
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const handleItemClick = () => {
-              if (isLink) {
-                navigate(item.href);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
-            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
-                ? 'border-accent bg-accent text-white shadow-glow'
-                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-            } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
-
-            if (isLink) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={baseClass}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  <span className={iconWrapperClass}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </Link>
-              );
-            }
-
-            const isRoute = item.type === 'route' && item.href;
-            const isActive = !isRoute && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const content = (
-              <>
-            const isActive = !item.to && item.id === activeSection?.id;
-            const isLink = item.type === 'link';
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const baseClasses =
-              'group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition';
-            const stateClasses = isActive
-              ? 'border-accent bg-accent text-white shadow-glow'
-              : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary';
-            const spacingClasses = navCollapsed ? 'justify-center px-2' : '';
-            const iconClasses = isActive
-              ? 'bg-white/20 text-white'
-              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-            const content = (
-              <>
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-            const handleClick = () => {
-              if (item.to) {
-                navigate(item.to);
-                return;
-              }
-              setSelectedSection(item.id);
-            };
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={handleItemClick}
-                onClick={() => {
-                  if (isLink) {
-                    navigate(item.href);
-                    return;
-                  }
-                  setSelectedSection(item.id);
-                }}
-                onClick={() => handleSectionSelect(item.id)}
-                onClick={() => setSelectedSection(item.id)}
-                className={`${baseClasses} ${
-                className={baseClass}
-                onClick={() => handleNavClick(item)}
-                onClick={handleClick}
-                onClick={() => handleNavItemSelect(item)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                }`}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive || undefined}
-                aria-pressed={!isLink && isActive}
-              >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                  }`}
-                >
-            const isActive = !item.href && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const isSection = !item.route && !item.href;
-            const isActive = isSection && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
-                ? 'border-accent bg-accent text-white shadow-glow'
-                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-            } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
-            const content = (
-              <>
-                <span className={iconClasses}>
-
-            const content = (
-              <>
-                <span className={iconClasses}>
-            const content = (
-              <>
-                <span className={iconWrapperClass}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                {!navCollapsed && (
-                  <div className="flex-1">
-                    <p className="flex items-center gap-2 text-sm font-semibold">
-                      {item.label}
-                      {isLink ? (
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                      ) : null}
-                    </p>
-                    {item.description ? (
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                    ) : null}
-                    <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
-                  </div>
-                )}
-              </>
-            );
-
-            if (item.type === 'link' && item.href) {
-            if (isRoute) {
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                  title={navCollapsed ? item.label : undefined}
-                  aria-label={item.label}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-            if (item.route) {
-              return (
-                <Link key={item.id} to={item.route} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </Link>
-              );
-            }
-
-            if (item.href) {
-              return (
-                <a key={item.id} href={item.href} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </a>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
-                className={baseClasses}
-                className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                className={baseClasses}
-                className={baseClass}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
-                {content}
-              </button>
-            );
-          })}
-        </nav>
-        {!navCollapsed && sidebarLinks.length ? (
-          <div className="px-6 pb-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-            <ul className="mt-3 space-y-2">
-              {sidebarLinks.map((link) => (
-                <li key={link.id}>
-                  <Link
-                    to={link.href}
-                    className="flex flex-col rounded-xl border border-accent/20 bg-white/90 px-4 py-3 text-sm text-primary transition hover:border-accent hover:text-accent"
-                  >
-                    <span className="font-semibold">{link.label}</span>
-                    {link.description ? (
-                      <span className="text-xs text-slate-500">{link.description}</span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <p className="mt-2 text-xs text-slate-500">{roleMeta.persona}</p>
+        <nav className="mt-8 flex-1 space-y-2 overflow-y-auto pr-2">{navigation.map((item) => renderNavItem(item))}</nav>
+        {onLogout ? (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700"
+          >
+            <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Log out
+          </button>
         ) : null}
       </aside>
 
-      <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-6 py-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center justify-between gap-3 lg:hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
+          <div className="flex items-center justify-between gap-4 px-4 py-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-accent/20 bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm"
+            >
+              <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
+            </button>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-primary">{roleMeta.name}</p>
+              <p className="text-xs text-slate-500">{roleMeta.persona}</p>
+            </div>
+          </div>
+          <div className="hidden items-center justify-between gap-4 px-8 py-5 lg:flex">
+            <div>
+              <h1 className="text-2xl font-semibold text-primary">{roleMeta.name}</h1>
+              <p className="text-sm text-slate-500">{dashboard?.headline ?? roleMeta.headline}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {exportHref ? (
+                <a
+                  href={exportHref}
+                  className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-accent/50 hover:text-accent"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" /> Export
+                </a>
+              ) : null}
               <button
                 type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm transition hover:border-accent hover:text-primary"
+                onClick={onRefresh}
+                className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-accent/50 hover:text-accent"
               >
-                <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
+                <ArrowPathIcon className="h-4 w-4" /> Refresh
               </button>
-              {lastRefreshed && (
-                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
-                <span className="rounded-full border border-slate-200 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  {roleMeta.persona}
-                </span>
-              </div>
-              {lastRefreshed && (
-                <p className="hidden text-xs text-primary/60 lg:block">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-              <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
-            </div>
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex w-full flex-col gap-2 sm:w-64">
-                <label className="text-xs uppercase tracking-wide text-primary/60" htmlFor="roleSwitcher">
-                  Switch workspace
-                </label>
-                <select
-                  id="roleSwitcher"
-                  value={roleMeta.id}
-                  onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-                  className="rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {registeredOptions.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-accent/20 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-                {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-accent/10 bg-white shadow-glow">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                      {searchResults.map((result) => (
-                        <li key={result.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleSectionSelect(result.targetSection);
-                              if (result.type === 'route' && result.href) {
-                                navigate(result.href);
-                              } else if (result.targetSection) {
-                                setSelectedSection(result.targetSection);
-                              }
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
-                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
-                          >
-                            <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-primary/80">
-                              {resultBadge[result.type] ?? 'Result'}
-                            </span>
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-primary">{result.label}</p>
-                              <p className="text-xs text-slate-500">{result.description}</p>
-                            </div>
-                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 sm:self-end">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                >
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                </Link>
-                {onLogout ? (
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                  >
-                    <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-                </button>
-                {exportHref && (
-                  <a
-                    href={exportHref}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-primary/90"
-                  >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> Download CSV
-                  </a>
-                )}
-              </div>
+              {lastRefreshed ? (
+                <p className="text-xs text-slate-500">Last refreshed {formatToggleDate(lastRefreshed)}</p>
+              ) : null}
             </div>
           </div>
-        </div>
+        </header>
 
-        {loading && !dashboard ? (
-          <Skeleton />
-        ) : (
-          <div className="space-y-8 px-6 py-10">
-            {shouldShowServicemanSummary ? (
-              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
-            ) : null}
-            {renderSection()}
-            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-            {blogPosts.length > 0 ? <DashboardBlogRail posts={blogPosts} /> : null}
+        <main className="flex flex-1 flex-col overflow-y-auto">
+          <div className="flex flex-1 flex-col gap-6 px-4 pb-12 pt-6 lg:px-8">
+            <div className="flex flex-col gap-6 lg:flex-row">
+              <div className="flex-1 space-y-6">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-3 h-5 w-5 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search workspace tools and records"
+                    className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  />
+                  {searchResults.length ? (
+                    <div className="absolute inset-x-0 top-full z-20 mt-2 rounded-2xl border border-slate-200 bg-white shadow-xl">
+                      <ul className="divide-y divide-slate-100">
+                        {searchResults.map((result) => (
+                          <li key={result.id}>
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-primary hover:bg-secondary"
+                              onClick={() => {
+                                handleSectionSelect(result.targetSection ?? result.id);
+                              }}
+                            >
+                              <div>
+                                <p className="font-semibold">{result.label}</p>
+                                {result.description ? (
+                                  <p className="text-xs text-slate-500">{result.description}</p>
+                                ) : null}
+                              </div>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold text-slate-500">
+                                {resultBadge[result.type] ?? 'Result'}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+
+                {toggleMeta ? <ToggleSummary toggle={toggleMeta} reason={toggleReason} /> : null}
+
+                {shouldShowPersonaSummary ? <DashboardPersonaSummary /> : null}
+                {shouldShowServicemanSummary ? <ServicemanSummary /> : null}
+
+                <div className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                  {loading ? <Skeleton /> : renderSection()}
+                </div>
+              </div>
+
+              <aside className="w-full space-y-6 lg:w-80">
+                {lastRefreshed ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-500 shadow-sm">
+                    <p className="font-semibold text-primary">Sync status</p>
+                    <p className="mt-1">Last refreshed {formatToggleDate(lastRefreshed)}</p>
+                  </div>
+                ) : null}
+                {blogPosts?.length ? <DashboardBlogRail posts={blogPosts} /> : null}
+              </aside>
+            </div>
           </div>
-        )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
@@ -1565,7 +715,9 @@ DashboardLayout.propTypes = {
   ).isRequired,
   dashboard: PropTypes.shape({
     navigation: PropTypes.array,
-    window: PropTypes.object
+    persona: PropTypes.string,
+    headline: PropTypes.string,
+    metadata: PropTypes.object
   }),
   loading: PropTypes.bool,
   error: PropTypes.string,
@@ -1586,7 +738,6 @@ DashboardLayout.propTypes = {
       id: PropTypes.string.isRequired
     })
   ),
-  initialSectionId: PropTypes.string
   initialSectionId: PropTypes.string,
   onSectionChange: PropTypes.func
 };

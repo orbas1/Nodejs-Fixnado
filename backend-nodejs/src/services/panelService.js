@@ -87,7 +87,7 @@ function resolvePlatformCommissionRate() {
   return PLATFORM_COMMISSION_FALLBACK;
 }
 
-async function resolveCompanyForActor({ companyId, actor }) {
+export async function resolveCompanyForActor({ companyId, actor }) {
   if (!actor?.id) {
     throw buildHttpError(403, 'forbidden');
   }
