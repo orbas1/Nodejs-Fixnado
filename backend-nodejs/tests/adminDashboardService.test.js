@@ -15,10 +15,17 @@ const {
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
-  AnalyticsPipelineRun
+  AnalyticsPipelineRun,
+  SecuritySignalConfig,
+  SecurityAutomationTask,
+  TelemetryConnector
 } = await import('../src/models/index.js');
 
 const { buildAdminDashboard } = await import('../src/services/adminDashboardService.js');
+const {
+  updateOverviewSettings,
+  __resetOverviewSettingsCache
+} = await import('../src/services/adminDashboardSettingsService.js');
 
 const TIMEZONE = 'Europe/London';
 
@@ -47,37 +54,47 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await sequelize.truncate({ cascade: true, restartIdentity: true });
+  __resetOverviewSettingsCache();
 });
 
 describe('buildAdminDashboard', () => {
   it('aggregates metrics, trends, and queues for admin reporting', async () => {
     const now = DateTime.now().setZone(TIMEZONE);
 
-    const buyer = await User.create({
-      firstName: 'Buyer',
-      lastName: 'One',
-      email: `buyer-${Date.now()}@example.com`,
-      passwordHash: 'hashed',
-      type: 'user'
-    });
+    const buyer = await User.create(
+      {
+        firstName: 'Buyer',
+        lastName: 'One',
+        email: `buyer-${Date.now()}@example.com`,
+        passwordHash: 'hashed',
+        type: 'user'
+      },
+      { validate: false }
+    );
 
-    const provider = await User.create({
-      firstName: 'Jordan',
-      lastName: 'Miles',
-      email: `provider-${Date.now()}@example.com`,
-      passwordHash: 'hashed',
-      type: 'servicemen',
-      twoFactorApp: true
-    });
+    const provider = await User.create(
+      {
+        firstName: 'Jordan',
+        lastName: 'Miles',
+        email: `provider-${Date.now()}@example.com`,
+        passwordHash: 'hashed',
+        type: 'servicemen',
+        twoFactorApp: true
+      },
+      { validate: false }
+    );
 
-    const companyOwner = await User.create({
-      firstName: 'Company',
-      lastName: 'Admin',
-      email: `company-${Date.now()}@example.com`,
-      passwordHash: 'hashed',
-      type: 'company',
-      twoFactorEmail: true
-    });
+    const companyOwner = await User.create(
+      {
+        firstName: 'Company',
+        lastName: 'Admin',
+        email: `company-${Date.now()}@example.com`,
+        passwordHash: 'hashed',
+        type: 'company',
+        twoFactorEmail: true
+      },
+      { validate: false }
+    );
 
     const company = await Company.create({
       userId: companyOwner.id,
@@ -272,12 +289,124 @@ describe('buildAdminDashboard', () => {
       metadata: {}
     });
 
+    await updateOverviewSettings({
+      metrics: {
+        escrow: { label: 'Escrow readiness', caption: 'Manual override for {{count}} engagements' }
+      },
+      insights: {
+        manual: ['Ops review scheduled']
+      },
+      timeline: {
+        manual: [{ title: 'Ops briefing', when: 'Next 48 hours', status: 'Operations' }]
+      },
+      security: {
+        manualSignals: [{ label: 'Manual MFA signal', valueLabel: '93%', caption: 'Override', tone: 'info' }]
+      },
+      automation: {
+        manualBacklog: [{ name: 'Manual automation', status: 'Pilot', notes: 'Ops configured', tone: 'success' }]
+      },
+      queues: {
+        manualBoards: [
+          {
+            title: 'Manual operations board',
+            summary: 'Manual summary',
+            owner: 'Ops',
+            updates: ['Manual update']
+          }
+        ],
+        manualComplianceControls: [
+          {
+            name: 'Manual compliance',
+            detail: 'Manual detail',
+            due: 'Soon',
+            owner: 'Compliance',
+            tone: 'warning'
+          }
+        ]
+      },
+      audit: {
+        manualTimeline: [{ time: '08:00', event: 'Manual audit', owner: 'Ops', status: 'Queued' }]
+      }
+    });
+    await SecuritySignalConfig.bulkCreate([
+      {
+        metricKey: 'mfa_adoption',
+        displayName: 'MFA adoption',
+        description: 'Enterprise portals',
+        targetSuccess: 95,
+        targetWarning: 85,
+        lowerIsBetter: false
+      },
+      {
+        metricKey: 'critical_alerts_open',
+        displayName: 'Critical alerts',
+        description: 'Open high severity alerts',
+        targetSuccess: 0,
+        targetWarning: 2,
+        lowerIsBetter: true
+      },
+      {
+        metricKey: 'manual_review',
+        displayName: 'Manual override',
+        description: 'Control room entered',
+        valueSource: 'manual',
+        manualValue: 12,
+        manualValueLabel: '12 open actions',
+        targetSuccess: 5,
+        targetWarning: 10,
+        lowerIsBetter: true
+      }
+    ]);
+
+    await SecurityAutomationTask.bulkCreate([
+      {
+        name: 'Escrow ledger reconciliation',
+        status: 'in_progress',
+        owner: 'Automation Guild',
+        priority: 'high',
+        dueAt: now.plus({ days: 1 }).toJSDate()
+      },
+      {
+        name: 'Compliance webhook retries',
+        status: 'blocked',
+        owner: 'Compliance Ops',
+        priority: 'urgent',
+        dueAt: now.minus({ days: 1 }).toJSDate()
+      },
+      {
+        name: 'Audit pipeline hardening',
+        status: 'planned',
+        owner: 'Security Engineering',
+        priority: 'medium'
+      }
+    ]);
+
+    await TelemetryConnector.bulkCreate([
+      {
+        name: 'Splunk Observability',
+        connectorType: 'siem',
+        region: 'eu-west-2',
+        status: 'healthy',
+        eventsPerMinuteTarget: 5000,
+        eventsPerMinuteActual: 5200
+      },
+      {
+        name: 'Azure Sentinel',
+        connectorType: 'siem',
+        region: 'ap-southeast-2',
+        status: 'warning',
+        eventsPerMinuteTarget: 2000,
+        eventsPerMinuteActual: 1500
+      }
+    ]);
+
     const dashboard = await buildAdminDashboard({ timeframe: '7d', timezone: TIMEZONE });
 
     expect(dashboard.timeframe).toBe('7d');
     expect(dashboard.metrics.command.tiles).toHaveLength(4);
 
     const escrowMetric = dashboard.metrics.command.tiles.find((tile) => tile.id === 'escrow');
+    expect(escrowMetric.label).toBe('Escrow readiness');
     expect(escrowMetric.value.amount).toBeGreaterThan(0);
     expect(escrowMetric.valueLabel).toContain('£');
 
@@ -288,13 +417,47 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.charts.escrowTrend.buckets.length).toBeGreaterThan(0);
     expect(dashboard.charts.disputeBreakdown.buckets.length).toBeGreaterThan(0);
 
-    expect(dashboard.security.signals).toHaveLength(3);
+    expect(dashboard.security.signals.length).toBeGreaterThanOrEqual(4);
     expect(dashboard.security.automationBacklog.length).toBeGreaterThanOrEqual(3);
+    expect(dashboard.security.signals.some((signal) => signal.label === 'Manual MFA signal')).toBe(true);
+    expect(dashboard.security.automationBacklog.some((item) => item.name === 'Manual automation')).toBe(true);
+    expect(dashboard.security.capabilities).toEqual({
+      canManageSignals: false,
+      canManageAutomation: false,
+      canManageConnectors: false
+    });
 
     expect(dashboard.queues.complianceControls.length).toBeGreaterThan(0);
     expect(dashboard.queues.boards.length).toBeGreaterThanOrEqual(3);
+    expect(dashboard.queues.boards.some((board) => board.title === 'Manual operations board')).toBe(true);
+    expect(dashboard.queues.complianceControls.some((control) => control.name === 'Manual compliance')).toBe(true);
 
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
+    expect(dashboard.audit.timeline.some((entry) => entry.event === 'Manual audit')).toBe(true);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
+    expect(dashboard.overview.manualInsights).toEqual(['Ops review scheduled']);
+    expect(dashboard.overview.manualUpcoming[0]).toMatchObject({
+      title: 'Ops briefing',
+      when: 'Next 48 hours',
+      status: 'Operations'
+    });
+  });
+
+  it('embeds provided security capabilities in the payload', async () => {
+    const dashboard = await buildAdminDashboard({
+      timeframe: '7d',
+      timezone: TIMEZONE,
+      securityCapabilities: {
+        canManageSignals: true,
+        canManageAutomation: true,
+        canManageConnectors: false
+      }
+    });
+
+    expect(dashboard.security.capabilities).toEqual({
+      canManageSignals: true,
+      canManageAutomation: true,
+      canManageConnectors: false
+    });
   });
 });

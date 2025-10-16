@@ -53,6 +53,11 @@ const EVENT_DEFINITIONS = Object.freeze({
     requiredMetadata: ['bookingId', 'companyId', 'fromStatus', 'toStatus'],
     tenantKey: 'companyId'
   },
+  'booking.risk_evaluated': {
+    domain: 'bookings',
+    entityType: 'booking',
+    requiredMetadata: ['bookingId', 'customerId', 'riskScore', 'tier', 'signals']
+  },
   'booking.assignment.created': {
     domain: 'bookings',
     entityType: 'booking_assignment',

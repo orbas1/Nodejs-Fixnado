@@ -109,6 +109,11 @@ const RoleDashboard = () => {
         setUnauthorised(true);
         setLoading(false);
         setBlogPosts([]);
+        try {
+          refreshPersonaAccess();
+        } catch (caught) {
+          console.warn('Failed to refresh persona access state', caught);
+        }
         return { status: 'unauthorised' };
       }
 
@@ -148,6 +153,11 @@ const RoleDashboard = () => {
           setLastRefreshed(null);
           setError(null);
           setUnauthorised(true);
+          try {
+            refreshPersonaAccess();
+          } catch (refreshError) {
+            console.warn('Failed to refresh persona access after unauthorised response', refreshError);
+          }
           return { status: 'unauthorised' };
         }
 
@@ -164,7 +174,15 @@ const RoleDashboard = () => {
         }
       }
     },
-    [abortActiveRequest, hasAccess, hydrateBlogRail, query, roleMeta, toggleEnabled]
+    [
+      abortActiveRequest,
+      hasAccess,
+      hydrateBlogRail,
+      query,
+      refreshPersonaAccess,
+      roleMeta,
+      toggleEnabled
+    ]
   );
 
   useEffect(() => {

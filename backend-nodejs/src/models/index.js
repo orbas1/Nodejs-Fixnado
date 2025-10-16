@@ -7,6 +7,7 @@ import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
 import ServiceZoneCoverage from './serviceZoneCoverage.js';
 import Order from './order.js';
+import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
@@ -16,6 +17,7 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
@@ -51,6 +53,9 @@ import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 import SecurityAuditEvent from './securityAuditEvent.js';
+import SecuritySignalConfig from './securitySignalConfig.js';
+import SecurityAutomationTask from './securityAutomationTask.js';
+import TelemetryConnector from './telemetryConnector.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
@@ -66,9 +71,27 @@ import WarehouseExportRun from './warehouseExportRun.js';
 import WalletAccount from './walletAccount.js';
 import WalletTransaction from './walletTransaction.js';
 import WalletPaymentMethod from './walletPaymentMethod.js';
+import CustomerProfile from './customerProfile.js';
+import CustomerContact from './customerContact.js';
+import CustomerLocation from './customerLocation.js';
+import CustomerCoupon from './customerCoupon.js';
+import CustomerAccountSetting from './customerAccountSetting.js';
+import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
+CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
+  foreignKey: 'accountSettingId',
+  as: 'recipients'
+});
+CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
+  foreignKey: 'accountSettingId',
+  as: 'accountSetting'
+});
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -78,6 +101,18 @@ Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(CustomerProfile, { foreignKey: 'userId', as: 'customerProfile' });
+CustomerProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerContact, { foreignKey: 'userId', as: 'customerContacts' });
+CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
+CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerCoupon, { foreignKey: 'userId', as: 'customerCoupons' });
+CustomerCoupon.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
@@ -106,6 +141,12 @@ Order.belongsTo(Service, { foreignKey: 'serviceId' });
 
 User.hasMany(Order, { foreignKey: 'buyerId' });
 Order.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
+
+Order.hasMany(OrderNote, { foreignKey: 'orderId', as: 'notes' });
+OrderNote.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+OrderNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(OrderNote, { foreignKey: 'authorId', as: 'orderNotes' });
 
 Region.hasMany(Order, { foreignKey: 'regionId', as: 'orders' });
 Order.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -200,6 +241,17 @@ StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemI
 StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
+SecuritySignalConfig.hasMany(SecurityAutomationTask, {
+  sourceKey: 'metricKey',
+  foreignKey: 'signalKey',
+  as: 'automationTasks'
+});
+SecurityAutomationTask.belongsTo(SecuritySignalConfig, {
+  foreignKey: 'signalKey',
+  targetKey: 'metricKey',
+  as: 'signal'
+});
 
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
@@ -384,6 +436,9 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
 
+Booking.hasMany(BookingHistoryEntry, { foreignKey: 'bookingId', as: 'history' });
+BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+
 BlogPost.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 User.hasMany(BlogPost, { foreignKey: 'authorId', as: 'blogPosts' });
 
@@ -426,6 +481,7 @@ export {
   ServiceZone,
   ServiceZoneCoverage,
   Order,
+  OrderNote,
   Escrow,
   Dispute,
   UiPreferenceTelemetry,
@@ -435,6 +491,7 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,
   InventoryItem,
@@ -470,6 +527,9 @@ export {
   AffiliateReferral,
   AffiliateLedgerEntry,
   SecurityAuditEvent,
+  SecuritySignalConfig,
+  SecurityAutomationTask,
+  TelemetryConnector,
   UserSession,
   ConsentEvent,
   Region,
@@ -485,4 +545,10 @@ export {
   WalletAccount,
   WalletTransaction,
   WalletPaymentMethod
+  CustomerProfile,
+  CustomerContact,
+  CustomerLocation,
+  CustomerCoupon,
+  CustomerAccountSetting,
+  CustomerNotificationRecipient
 };
