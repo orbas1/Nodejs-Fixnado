@@ -216,6 +216,26 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.profile.read': {
+    id: 'admin.profile.read',
+    version: '1.0.0',
+    resource: 'admin.profile',
+    action: 'admin.profile:read',
+    description: 'Allow platform administrators to view and audit their control centre profile settings.',
+    requirements: [Permissions.ADMIN_PROFILE_READ],
+    tags: ['admin', 'profile'],
+    severity: 'medium'
+  },
+  'admin.profile.write': {
+    id: 'admin.profile.write',
+    version: '1.0.0',
+    resource: 'admin.profile',
+    action: 'admin.profile:write',
+    description: 'Allow platform administrators to edit profile, address, and delegate permissions.',
+    requirements: [Permissions.ADMIN_PROFILE_WRITE],
+    tags: ['admin', 'profile'],
+    severity: 'high'
+  },
   'admin.preferences.read': {
     id: 'admin.preferences.read',
     version: '1.0.0',

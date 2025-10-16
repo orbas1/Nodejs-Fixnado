@@ -689,6 +689,8 @@ const DashboardLayout = ({
       }
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
+    if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
+      return activeSection.render();
     if (activeSection.id === 'customer-control') {
       return <CustomerOverviewControl />;
     }

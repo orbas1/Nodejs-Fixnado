@@ -11,6 +11,12 @@ import {
   savePlatformSettings
 } from '../controllers/platformSettingsController.js';
 import {
+  fetchAdminProfileSettings,
+  saveAdminProfileSettings,
+  createAdminProfileDelegate,
+  updateAdminProfileDelegate,
+  deleteAdminProfileDelegate
+} from '../controllers/adminProfileController.js';
   listPlatformSettingDiagnostics,
   triggerPlatformSettingDiagnostic
 } from '../controllers/platformSettingsDiagnosticsController.js';
@@ -579,6 +585,43 @@ router.put(
   authenticate,
   enforcePolicy('admin.preferences.write', { metadata: () => ({ section: 'admin-preferences' }) }),
   saveAdminPreferences
+);
+
+router.get(
+  '/profile-settings',
+  authenticate,
+  enforcePolicy('admin.profile.read', { metadata: () => ({ section: 'profile-settings' }) }),
+  fetchAdminProfileSettings
+);
+router.put(
+  '/profile-settings',
+  authenticate,
+  enforcePolicy('admin.profile.write', { metadata: () => ({ section: 'profile-settings' }) }),
+  saveAdminProfileSettings
+);
+router.post(
+  '/profile-settings/delegates',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: () => ({ section: 'profile-settings', entity: 'delegates' })
+  }),
+  createAdminProfileDelegate
+);
+router.patch(
+  '/profile-settings/delegates/:id',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: (req) => ({ section: 'profile-settings', delegateId: req.params.id })
+  }),
+  updateAdminProfileDelegate
+);
+router.delete(
+  '/profile-settings/delegates/:id',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: (req) => ({ section: 'profile-settings', delegateId: req.params.id })
+  }),
+  deleteAdminProfileDelegate
 );
 
 router.get(
