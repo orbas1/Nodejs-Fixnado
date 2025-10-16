@@ -4,13 +4,20 @@ import { MemoryRouter } from 'react-router-dom';
 import Header from '../Header.jsx';
 
 const mockUseSession = vi.fn();
+const mockUseProfile = vi.fn();
 
 vi.mock('../../hooks/useSession.js', () => ({
   useSession: () => mockUseSession()
 }));
 
+vi.mock('../../hooks/useProfile.js', () => ({
+  useProfile: () => mockUseProfile()
+}));
+
 const translations = {
   'nav.login': 'Log in',
+  'nav.register': 'Register',
+  'nav.profile': 'Profile',
   'nav.getStarted': 'Get started',
   'nav.feed': 'Feed',
   'nav.explorer': 'Explorer',
@@ -33,7 +40,8 @@ const translations = {
   'nav.statusLabel': '{status} status',
   'nav.viewDashboard': 'Go to dashboard',
   'nav.manageAccountHint': 'Manage account controls from your dashboard profile.',
-  'nav.toggleMenu': 'Toggle navigation menu'
+  'nav.toggleMenu': 'Toggle navigation menu',
+  'auth.login.cta': 'Access your workspace'
 };
 
 vi.mock('../../hooks/useLocale.js', () => ({
@@ -50,7 +58,7 @@ vi.mock('../../hooks/useLocale.js', () => ({
 }));
 
 vi.mock('../LanguageSelector.jsx', () => ({
-  default: () => <div data-testid="language-selector" />
+  default: (props) => <div data-testid="language-selector" data-variant={props.variant} />
 }));
 
 beforeEach(() => {
@@ -59,6 +67,9 @@ beforeEach(() => {
     role: 'provider',
     userId: 'alex.rivera',
     dashboards: ['provider']
+  });
+  mockUseProfile.mockReturnValue({
+    profile: { firstName: 'Alex', lastName: 'Rivera', email: 'alex.rivera@fixnado.test' }
   });
 });
 
@@ -70,6 +81,7 @@ describe('Header navigation layout', () => {
       userId: null,
       dashboards: []
     });
+    mockUseProfile.mockReturnValue({ profile: {} });
 
     render(
       <MemoryRouter>
@@ -78,11 +90,11 @@ describe('Header navigation layout', () => {
     );
 
     expect(screen.getByRole('link', { name: /Log in/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Register/i })).toBeInTheDocument();
     expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
-    expect(screen.queryByRole('link', { name: /Get started/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Explorer/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/Toggle navigation menu/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Feed/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explorer/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Toggle navigation menu/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Notifications/i)).not.toBeInTheDocument();
   });
 
   it('shows consolidated navigation when authenticated', () => {
@@ -92,7 +104,11 @@ describe('Header navigation layout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
+    const accountButton = screen.getByRole('button', { name: /Account menu/i });
+    fireEvent.click(accountButton);
+    const selectors = screen.getAllByTestId('language-selector');
+    expect(selectors).toHaveLength(1);
+    expect(selectors[0]).toHaveAttribute('data-variant', 'menu');
     const explorerButton = screen.getByRole('button', { name: /Explorer/i });
     fireEvent.click(explorerButton);
     expect(screen.getByRole('link', { name: /Search services/i })).toBeInTheDocument();
@@ -102,14 +118,16 @@ describe('Header navigation layout', () => {
     expect(screen.queryByRole('link', { name: /Admin Control Tower/i })).not.toBeInTheDocument();
   });
 
-  it('links directly to the primary dashboard from the account control', () => {
+  it('offers profile navigation inside the account menu', () => {
     render(
       <MemoryRouter>
         <Header />
       </MemoryRouter>
     );
 
-    const accountLink = screen.getByRole('link', { name: /Go to dashboard/i });
-    expect(accountLink).toHaveAttribute('href', '/dashboards/provider');
+    const accountButton = screen.getByRole('button', { name: /Account menu/i });
+    fireEvent.click(accountButton);
+    const profileLink = screen.getByRole('link', { name: /Profile/i });
+    expect(profileLink).toHaveAttribute('href', '/account/profile');
   });
 });

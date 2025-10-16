@@ -19,10 +19,18 @@ export default function PageHeader({
   description,
   breadcrumbs,
   actions,
-  meta
+  meta,
+  sticky,
+  className
 }) {
   return (
-    <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header
+      className={clsx(
+        'border-b border-slate-200 bg-white/90 backdrop-blur',
+        sticky && 'sticky top-0 z-40 shadow-sm shadow-primary/10',
+        className
+      )}
+    >
       <div className="mx-auto max-w-7xl px-6 py-10">
         {breadcrumbs.length > 0 && (
           <nav aria-label="Breadcrumb" className="mb-6">
@@ -106,7 +114,9 @@ PageHeader.propTypes = {
       caption: PropTypes.string,
       emphasis: PropTypes.bool
     })
-  )
+  ),
+  sticky: PropTypes.bool,
+  className: PropTypes.string
 };
 
 PageHeader.defaultProps = {
@@ -114,5 +124,7 @@ PageHeader.defaultProps = {
   description: undefined,
   breadcrumbs: [],
   actions: [],
-  meta: []
+  meta: [],
+  sticky: false,
+  className: undefined
 };

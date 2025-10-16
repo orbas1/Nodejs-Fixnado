@@ -66,3 +66,39 @@ END;
 $$;
 
 \echo 'Postgres bootstrap complete. Role privileges and extensions are configured.'
+
+-- ---------------------------------------------------------------------------
+-- Command metrics configuration tables
+-- These tables back the admin control centre's configurable operating window
+-- highlights, metric thresholds, and custom dashboard cards. They are created
+-- here so production environments provisioned with this script have the
+-- required persistence layer without relying on ORM sync calls.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS command_metric_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  scope VARCHAR(64) UNIQUE NOT NULL,
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_by VARCHAR(120),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS command_metric_cards (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title VARCHAR(160) NOT NULL,
+  tone VARCHAR(24) NOT NULL DEFAULT 'info',
+  details JSONB NOT NULL DEFAULT '[]'::jsonb,
+  display_order INTEGER NOT NULL DEFAULT 100,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  media_url TEXT,
+  media_alt VARCHAR(160),
+  cta JSONB,
+  created_by VARCHAR(120),
+  updated_by VARCHAR(120),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
+  ON command_metric_cards (is_active, display_order, created_at);

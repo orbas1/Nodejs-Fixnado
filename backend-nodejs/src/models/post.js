@@ -62,8 +62,33 @@ Post.init(
       allowNull: true
     },
     status: {
-      type: DataTypes.ENUM('open', 'assigned', 'completed'),
+      type: DataTypes.ENUM('open', 'assigned', 'completed', 'cancelled'),
       defaultValue: 'open'
+    },
+    internalNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'internal_notes'
+    },
+    awardedBidId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'awarded_bid_id'
+    },
+    awardedBy: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'awarded_by'
+    },
+    awardedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'awarded_at'
+    },
+    closedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'closed_at'
     }
   },
   {

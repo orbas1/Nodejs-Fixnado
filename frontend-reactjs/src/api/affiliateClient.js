@@ -3,6 +3,14 @@ const ADMIN_API_ROOT = '/api/admin/affiliate';
 
 const memoryCache = new Map();
 
+function invalidateCache(prefix) {
+  for (const key of memoryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+    }
+  }
+}
+
 function buildHeaders(extra = {}) {
   const headers = new Headers({ Accept: 'application/json', ...extra });
   if (!headers.has('Content-Type')) {
@@ -116,6 +124,100 @@ export async function deactivateAffiliateRule(id, { signal } = {}) {
   const payload = await request(`${ADMIN_API_ROOT}/rules/${id}`, { method: 'DELETE', signal });
   memoryCache.delete('affiliate:admin:settings');
   return payload?.data ?? payload;
+}
+
+export async function listAdminAffiliateProfiles({ page, pageSize, status, search, tier, signal, forceRefresh } = {}) {
+  const params = new URLSearchParams();
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  if (status && status !== 'all') params.set('status', status);
+  if (search) params.set('search', search);
+  if (tier) params.set('tier', tier);
+  const query = params.toString();
+  const path = `${ADMIN_API_ROOT}/profiles${query ? `?${query}` : ''}`;
+  const cacheKey = `affiliate:admin:profiles:${query}`;
+  const payload = await request(path, {
+    signal,
+    forceRefresh,
+    cacheKey,
+    ttl: 5000
+  });
+  return payload;
+}
+
+export async function createAdminAffiliateProfile(body, { signal } = {}) {
+  const payload = await request(`${ADMIN_API_ROOT}/profiles`, { method: 'POST', body, signal });
+  invalidateCache('affiliate:admin:profiles:');
+  return payload?.data ?? payload;
+}
+
+export async function updateAdminAffiliateProfile(id, body, { signal } = {}) {
+  const payload = await request(`${ADMIN_API_ROOT}/profiles/${id}`, { method: 'PATCH', body, signal });
+  invalidateCache('affiliate:admin:profiles:');
+  return payload?.data ?? payload;
+}
+
+export async function listAdminAffiliateLedgerEntries(id, { page, pageSize, signal, forceRefresh } = {}) {
+  const params = new URLSearchParams();
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  const query = params.toString();
+  const path = `${ADMIN_API_ROOT}/profiles/${id}/ledger${query ? `?${query}` : ''}`;
+  const cacheKey = `affiliate:admin:ledger:${id}:${query}`;
+  const payload = await request(path, {
+    signal,
+    forceRefresh,
+    cacheKey,
+    ttl: 3000
+  });
+  return payload;
+}
+
+export async function createAdminAffiliateLedgerEntry(id, body, { signal } = {}) {
+  const payload = await request(`${ADMIN_API_ROOT}/profiles/${id}/ledger`, { method: 'POST', body, signal });
+  invalidateCache(`affiliate:admin:ledger:${id}:`);
+  invalidateCache('affiliate:admin:profiles:');
+  return payload;
+}
+
+export async function listAdminAffiliateReferrals({
+  status,
+  search,
+  affiliateProfileId,
+  page,
+  pageSize,
+  signal,
+  forceRefresh
+} = {}) {
+  const params = new URLSearchParams();
+  if (status && status !== 'all') params.set('status', status);
+  if (search) params.set('search', search);
+  if (affiliateProfileId) params.set('affiliateProfileId', affiliateProfileId);
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  const query = params.toString();
+  const cacheKey = `affiliate:admin:referrals:${query}`;
+  const payload = await request(`${ADMIN_API_ROOT}/referrals${query ? `?${query}` : ''}`, {
+    signal,
+    forceRefresh,
+    cacheKey,
+    ttl: 5000
+  });
+  return payload;
+}
+
+export async function createAdminAffiliateReferral(body, { signal } = {}) {
+  const payload = await request(`${ADMIN_API_ROOT}/referrals`, { method: 'POST', body, signal });
+  invalidateCache('affiliate:admin:referrals:');
+  invalidateCache('affiliate:admin:profiles:');
+  return payload;
+}
+
+export async function updateAdminAffiliateReferral(id, body, { signal } = {}) {
+  const payload = await request(`${ADMIN_API_ROOT}/referrals/${id}`, { method: 'PATCH', body, signal });
+  invalidateCache('affiliate:admin:referrals:');
+  invalidateCache('affiliate:admin:profiles:');
+  return payload;
 }
 
 export const affiliateFormatters = {
