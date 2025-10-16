@@ -216,6 +216,38 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.website.read': {
+    id: 'admin.website.read',
+    version: '1.0.0',
+    resource: 'admin.website',
+    action: 'admin.website:read',
+    description: 'Allow administrators to view marketing site pages, navigation, and widgets.',
+    requirements: [Permissions.ADMIN_WEBSITE_READ],
+    tags: ['admin', 'website', 'cms'],
+    severity: 'high',
+    metadata: (req) => ({
+      entity: req.params?.pageId ? 'page' : req.params?.menuId ? 'navigation' : 'collection'
+    })
+  },
+  'admin.website.write': {
+    id: 'admin.website.write',
+    version: '1.0.0',
+    resource: 'admin.website',
+    action: 'admin.website:write',
+    description: 'Allow administrators to create, update, and retire marketing site assets.',
+    requirements: [Permissions.ADMIN_WEBSITE_WRITE],
+    tags: ['admin', 'website', 'cms'],
+    severity: 'critical',
+    metadata: (req) => ({
+      entity: req.params?.pageId
+        ? 'page'
+        : req.params?.menuId
+          ? 'navigation'
+          : req.params?.itemId
+            ? 'navigation-item'
+            : 'unknown',
+      method: req.method
+    })
   'admin.live-feed.audit.read': {
     id: 'admin.live-feed.audit.read',
     version: '1.0.0',

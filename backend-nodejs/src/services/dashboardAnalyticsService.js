@@ -25,6 +25,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
@@ -1590,6 +1591,8 @@ async function loadAdminData(context) {
     `Campaign ROI ${campaignRevenue && campaignSpend ? formatPercent(campaignRevenue, campaignSpend) : '0.0%'} across ${campaignMetrics.length} metric days`
   ];
 
+  const websiteSnapshot = await getWebsiteManagementSnapshot();
+
   const overview = {
     metrics: [
       computeTrend(totalBookings, previousTotal, formatNumber, ''),
@@ -1697,6 +1700,75 @@ async function loadAdminData(context) {
         }
       },
       {
+        id: 'website-management',
+        label: 'Website management',
+        description: 'Govern marketing pages, content blocks, and navigation coverage.',
+        type: 'settings',
+        data: {
+          panels: [
+            {
+              id: 'pages-summary',
+              title: 'Marketing pages',
+              description: 'Lifecycle of enterprise marketing experiences.',
+              status: `${websiteSnapshot.pages.published} published`,
+              items: [
+                { id: 'pages-total', label: 'Total pages', value: websiteSnapshot.pages.total },
+                { id: 'pages-draft', label: 'Draft', value: websiteSnapshot.pages.draft },
+                { id: 'pages-preview', label: 'Preview', value: websiteSnapshot.pages.preview },
+                { id: 'pages-role-gated', label: 'Role gated', value: websiteSnapshot.pages.roleGated },
+                {
+                  id: 'pages-last-published',
+                  label: 'Last publish',
+                  value:
+                    websiteSnapshot.pages.lastPublishedAt
+                      ? DateTime.fromISO(websiteSnapshot.pages.lastPublishedAt)
+                          .setZone(window.timezone)
+                          .toLocaleString(DateTime.DATETIME_MED)
+                      : 'No published pages yet'
+                }
+              ]
+            },
+            {
+              id: 'blocks-summary',
+              title: 'Content blocks',
+              description: 'Reusable hero, feature, and CTA components.',
+              items: [
+                { id: 'blocks-total', label: 'Total blocks', value: websiteSnapshot.blocks.total },
+                { id: 'blocks-visible', label: 'Visible blocks', value: websiteSnapshot.blocks.visible }
+              ]
+            },
+            {
+              id: 'navigation-summary',
+              title: 'Navigation menus',
+              description: 'Surface coverage for menus and external links.',
+              items: [
+                { id: 'menus-total', label: 'Menus', value: websiteSnapshot.navigation.menus },
+                { id: 'menus-primary', label: 'Primary menus', value: websiteSnapshot.navigation.primaryMenus },
+                { id: 'nav-items', label: 'Navigation items', value: websiteSnapshot.navigation.items },
+                { id: 'nav-nested', label: 'Nested items', value: websiteSnapshot.navigation.nestedItems },
+                {
+                  id: 'nav-external',
+                  label: 'External links',
+                  value: websiteSnapshot.navigation.externalLinks,
+                  helper: 'Links that leave Fixnado surfaces'
+                },
+                {
+                  id: 'nav-restricted',
+                  label: 'Restricted items',
+                  value: websiteSnapshot.navigation.restrictedItems,
+                  helper: 'Role-gated navigation entries'
+                },
+                {
+                  id: 'website-editor-link',
+                  label: 'Launch website manager',
+                  type: 'action',
+                  href: '/admin/website-management',
+                  cta: 'Open manager'
+                }
+              ]
+            }
+          ]
+        }
         id: 'tags-seo',
         label: 'Tags & SEO',
         description: 'Manage metadata defaults, indexing controls, and tag governance.',

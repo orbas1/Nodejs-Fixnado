@@ -50,7 +50,7 @@ function createToken(userId) {
 }
 
 async function createUser(id, overrides = {}) {
-  return User.create({
+  const payload = {
     id,
     firstName: 'Test',
     lastName: 'User',
@@ -58,12 +58,13 @@ async function createUser(id, overrides = {}) {
     passwordHash: 'hashed',
     type: overrides.type ?? 'user',
     ...overrides
-  });
+  };
+
+  return User.create(payload, { validate: false });
 }
 
 async function seedCompany() {
   const user = await createUser(IDS.companyUser, {
-    email: `ops-${Date.now()}@example.com`,
     type: 'company'
   });
 
@@ -641,6 +642,9 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Jobs Received');
     expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
     expect(response.body.exports.csv.href).toContain('/api/analytics/dashboards/admin/export');
+    const websiteSection = response.body.navigation.find((section) => section.id === 'website-management');
+    expect(websiteSection).toBeTruthy();
+    expect(websiteSection.data.panels.length).toBeGreaterThan(0);
   });
 
   it('supports provider persona with acceptance and rental metrics', async () => {

@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, GlobeAltIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, EyeIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
@@ -1836,6 +1837,13 @@ export default function AdminDashboard() {
         Geo-zonal builder
       </Button>
       <Button
+        to="/admin/website-management"
+        size="sm"
+        variant="secondary"
+        icon={GlobeAltIcon}
+        iconPosition="start"
+      >
+        Website management
         to="/admin/system-settings"
         size="sm"
         variant="secondary"
