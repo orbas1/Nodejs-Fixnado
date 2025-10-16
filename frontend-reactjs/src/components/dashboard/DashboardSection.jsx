@@ -27,6 +27,10 @@ import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
+import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index.js';
+import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
+import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
+import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1622,7 +1626,6 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona, context = {} }) => {
-const DashboardSection = ({ section, features = {}, persona }) => {
   if (section.type === 'automation' || section.id === 'automation-backlog') {
     return <AutomationBacklogSection section={section} features={features} persona={persona} />;
   }
@@ -1644,6 +1647,12 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
+    case 'fixnado-ads':
+      return (
+        <FixnadoAdsProvider network={section.data?.network} initialSnapshot={section.data}>
+          <FixnadoAdsWorkspace section={section} />
+        </FixnadoAdsProvider>
+      );
     case 'component':
       return <ComponentSection section={section} />;
     case 'settings':
@@ -1691,6 +1700,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
           prefetchedOverview={section.data?.overview ?? null}
         />
       );
+    case 'serviceman-inbox':
+      return <ServicemanInboxWorkspace section={section} context={context} />;
     case 'service-management':
       return <ServiceManagementSection section={section} />;
     case 'audit-timeline':
@@ -1699,6 +1710,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'serviceman-escrows':
+      return <ServicemanEscrowWorkspace section={section} />;
     case 'component': {
       const Component = section.component;
       if (!Component) return null;
