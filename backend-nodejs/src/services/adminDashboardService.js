@@ -12,6 +12,7 @@ import {
   Company,
   User
 } from '../models/index.js';
+import { getCachedPlatformSettings } from './platformSettingsService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -735,6 +736,27 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
       : 0
   }));
 
+  const platformSettings = getCachedPlatformSettings();
+  const commissionSettings = platformSettings?.commissions ?? {};
+  const subscriptionSettings = platformSettings?.subscriptions ?? {};
+  const integrationSettings = platformSettings?.integrations ?? {};
+  const monetisationSummary = {
+    commissionsEnabled: commissionSettings.enabled !== false,
+    baseRate: commissionSettings.baseRate ?? 0.025,
+    baseRateLabel: `${((commissionSettings.baseRate ?? 0) * 100).toFixed(2)}%`,
+    subscriptionEnabled: subscriptionSettings.enabled !== false,
+    subscriptionCount: Array.isArray(subscriptionSettings.tiers)
+      ? subscriptionSettings.tiers.length
+      : Array.isArray(subscriptionSettings.packages)
+        ? subscriptionSettings.packages.length
+        : 0,
+    defaultTier: subscriptionSettings.defaultTier ?? '',
+    stripeConnected: Boolean(integrationSettings?.stripe?.secretKey),
+    escrowConnected: Boolean(integrationSettings?.escrow?.apiKey && integrationSettings?.escrow?.apiSecret),
+    smtpReady: Boolean(integrationSettings?.smtp?.host) && Boolean(integrationSettings?.smtp?.username),
+    storageConfigured: Boolean(integrationSettings?.cloudflareR2?.bucket)
+  };
+
   return {
     timeframe: key,
     timeframeLabel: label,
@@ -774,6 +796,9 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     },
     audit: {
       timeline: auditTimeline
+    },
+    platform: {
+      monetisation: monetisationSummary
     }
   };
 }

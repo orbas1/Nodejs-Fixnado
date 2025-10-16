@@ -296,5 +296,9 @@ describe('buildAdminDashboard', () => {
 
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
+    expect(dashboard.platform.monetisation).toBeDefined();
+    expect(dashboard.platform.monetisation.commissionsEnabled).toBe(true);
+    expect(dashboard.platform.monetisation.baseRateLabel).toBe('2.50%');
+    expect(typeof dashboard.platform.monetisation.subscriptionCount).toBe('number');
   });
 });

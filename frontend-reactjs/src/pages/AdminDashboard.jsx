@@ -432,6 +432,58 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
+  const monetisation = payload.platform?.monetisation;
+  const monetisationSection = monetisation
+    ? {
+        id: 'monetisation-governance',
+        label: 'Monetisation governance',
+        description: 'Launch the monetisation control centre to govern commissions, subscriptions, and finance integrations.',
+        type: 'settings',
+        data: {
+          panels: [
+            {
+              id: 'monetisation-console',
+              title: 'Monetisation control centre',
+              description: 'Keep commission structures, subscription packages, and Stripe/Escrow credentials aligned.',
+              status: monetisation.commissionsEnabled ? 'Commissions active' : 'Commissions disabled',
+              items: [
+                {
+                  id: 'launch-console',
+                  label: 'Monetisation console',
+                  helper: 'Adjust commission structures, subscription packages, and finance credentials.',
+                  type: 'action',
+                  href: '/admin/monetisation',
+                  cta: 'Open console'
+                },
+                {
+                  id: 'base-rate',
+                  label: 'Default commission rate',
+                  helper: 'Fallback platform share applied when no bespoke rule matches.',
+                  value: monetisation.baseRateLabel
+                },
+                {
+                  id: 'subscription-state',
+                  label: 'Subscription state',
+                  helper: monetisation.subscriptionEnabled ? 'Subscription gating enforced' : 'Subscriptions disabled',
+                  value: `${monetisation.subscriptionCount ?? 0} packages`
+                },
+                {
+                  id: 'integration-health',
+                  label: 'Integration readiness',
+                  helper: [
+                    monetisation.stripeConnected ? 'Stripe linked' : 'Stripe pending',
+                    monetisation.escrowConnected ? 'Escrow ready' : 'Escrow not configured',
+                    monetisation.smtpReady ? 'SMTP ready' : 'SMTP pending',
+                    monetisation.storageConfigured ? 'R2 storage connected' : 'Storage pending'
+                  ].join(' • ')
+                }
+              ]
+            }
+          ]
+        }
+      }
+    : null;
+
   const auditSection = auditTimeline.length
     ? {
         id: 'audit-log',
@@ -453,7 +505,8 @@ function buildAdminNavigation(payload) {
     disputeSection,
     complianceSection,
     automationSection,
-    auditSection
+    auditSection,
+    monetisationSection
   ].filter(Boolean);
 }
 
