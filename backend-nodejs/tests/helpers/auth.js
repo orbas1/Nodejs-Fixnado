@@ -12,6 +12,11 @@ export function createTestToken(userId, { expiresIn = '1h', payload = {} } = {})
     audience: 'fixnado:web',
     issuer: 'fixnado-api'
   });
+  return jwt.sign(
+    { sub: userId, ...payload },
+    secret,
+    { expiresIn, audience: 'fixnado:web', issuer: 'fixnado-api' }
+  );
 }
 
 export function withAuth(requestBuilder, userId, options) {

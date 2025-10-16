@@ -40,7 +40,9 @@ export async function updateZoneHandler(req, res, next) {
 
 export async function deleteZoneHandler(req, res, next) {
   try {
-    const removed = await deleteZone(req.params.zoneId);
+    const removed = await deleteZone(req.params.zoneId, {
+      actor: req.body?.actor ?? null
+    });
     if (!removed) {
       return res.status(404).json({ message: 'Zone not found' });
     }
