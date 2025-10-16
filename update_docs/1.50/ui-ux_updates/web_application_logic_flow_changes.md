@@ -50,5 +50,7 @@
 
 ## Error Handling & Observability
 - Global error boundary captures unexpected issues and displays recovery modal with support link; errors tagged with correlation ID for diagnostics.
+- Route-level error boundaries now surface telemetry confirmation, locale-aware support copy, and optional retry for recoverable loaders while dispatching structured payloads through the `errorReporting` helper.
+- 404 flow renders the dedicated `NotFound` screen, logging the stale URL and referrer before guiding users back to high-value destinations or reporting broken navigation.
 - Telemetry events instrumented for navigation search usage, widget refresh, quote submissions, resource feedback, settings saves, and export completions with timestamps and actor metadata.
 - Added analytics events for `live_feed_stream_opened`, `live_feed_stream_reconnected`, and `live_feed_stream_error` so product, SRE, and support teams can monitor connection health and correlate UI fallbacks with backend or network issues.

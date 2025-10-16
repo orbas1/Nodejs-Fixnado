@@ -21,6 +21,8 @@
 - Modals: 32px radius, drop shadow `0 24px 48px rgba(15,27,67,0.24)`; header includes icon for context, footer uses stacked actions on mobile.
 - Tabs & pills: emphasise active state with underline and background tint; accessible arrow key navigation added.
 - Live feed header adopts a status pill with animated glow when connected, amber pulse when reconnecting, and slate outline when paused; timestamp labels use `Inter 12/16` with grey-600 colour tokens and switch to warning red when staleness exceeds 90 seconds.
+- Error boundary fallback canvas uses gradient overlay from Primary 900 to Slate 800 with white text, 40px headline, and secondary action buttons styled as ghost links; correlation ID pill adopts monospace font and subtle glow to highlight copyable telemetry.
+- NotFound screen hero adopts illustrated empty state with 24px gap, quick-action buttons styled as primary/secondary pair, and breadcrumb chips to reinforce navigation context while maintaining 3:1 contrast.
 
 ## Interaction & Motion
 - Standard animation curve `cubic-bezier(0.4, 0.0, 0.2, 1)` for transitions; durations: 150ms (micro), 250ms (modal), 350ms (page).

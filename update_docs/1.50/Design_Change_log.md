@@ -159,3 +159,8 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Documented demand-weighted marketplace ranking, compliance score modifiers, and availability heuristics across explorer wireframes so both React and Flutter implementations surface compliant in-zone providers first.
    - Updated design plans and progress trackers to reflect the shared scoring model, adding notes for analytics instrumentation, parity testing, and fallback states when offline caches drive ordering.
    - Refreshed logic flow diagrams with decision branches illustrating ranking inputs (demand, compliance, pricing, availability) and parity callouts for mobile explorer cards and marketplace lists.
+
+30. **Error Resiliency & Telemetry Patterns (2025-04-12)**
+   - Authored router failure and support escalation overlays covering the React error boundary, correlation ID messaging, and full-screen 404 hero so navigation mishaps route users to recovery guidance while surfacing observability hooks.
+   - Documented telemetry badge placements, restart CTA hierarchy, and localisation copy for Flutter's fatal error boundary to ensure crash loops funnel diagnostics to the shared telemetry endpoint without sacrificing accessibility.
+   - Updated QA and release artefacts to reference crash-handling storyboards, restart flows, and diagnostics payload summaries so design, engineering, and operations review the same resiliency evidence ahead of production rollout.

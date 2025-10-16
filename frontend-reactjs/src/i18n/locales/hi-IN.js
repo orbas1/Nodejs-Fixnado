@@ -29,7 +29,38 @@ const messages = {
   'creationStudio.guard.title': 'आपकी भूमिका को क्रिएशन अनुमति चाहिए',
   'creationStudio.guard.body': 'क्रिएशन स्टूडियो केवल {roles} के लिए उपलब्ध है। अपने Fixnado प्रशासक से पहुँच का अनुरोध करें।',
   'creationStudio.guard.help': 'तुरंत एक्सेस चाहिए? {email} पर लिखें और हमारी ऑपरेशंस टीम आपको सक्षम करेगी।',
-  'creationStudio.errors.loadFailure': 'क्रिएशन ब्लूप्रिंट लोड नहीं हो पाए। दोबारा प्रयास करें या सहायता से संपर्क करें।'
+  'creationStudio.errors.loadFailure': 'क्रिएशन ब्लूप्रिंट लोड नहीं हो पाए। दोबारा प्रयास करें या सहायता से संपर्क करें।',
+
+  'errors.unexpected.title': 'गंभीर घटना',
+  'errors.unexpected.headline': 'लोड करते समय एक समस्या उत्पन्न हुई है।',
+  'errors.unexpected.inlineHeadline': 'यह अनुभाग लोड नहीं हो सका',
+  'errors.unexpected.inlineDescription': 'दृश्य को रीफ़्रेश करें या बाद में पुनः प्रयास करें; हमारी टीम पहले से जाँच कर रही है।',
+  'errors.unexpected.description':
+    'वर्कस्पेस लोड करते समय त्रुटि आई। हमने घटना को लॉग कर लिया है और इंजीनियरिंग टीम को सूचित कर दिया है।',
+  'errors.unexpected.reference': 'संदर्भ आईडी',
+  'errors.unexpected.actions.retry': 'Fixnado दोबारा लोड करें',
+  'errors.unexpected.actions.contactSupport': 'सपोर्ट को ईमेल करें',
+  'errors.unexpected.actions.statusPage': 'स्थिति पृष्ठ देखें',
+  'errors.unexpected.actions.copyDetails': 'डायग्नोस्टिक कॉपी करें',
+  'errors.unexpected.actions.copied': 'डायग्नोस्टिक कॉपी हो गया',
+  'errors.unexpected.detailsToggle': 'तकनीकी विवरण दिखाएँ',
+
+  'notFound.code': '404 — पेज नहीं मिला',
+  'notFound.title': 'हम वह पेज नहीं ढूँढ पाए।',
+  'notFound.description': 'पता {path} उपलब्ध नहीं है या कहीं और चला गया है।',
+  'notFound.reference': 'ट्रैकिंग कोड',
+  'notFound.actions.dashboard': 'डैशबोर्ड खोलें',
+  'notFound.actions.supportCentre': 'कम्युनिकेशन हब पर जाएँ',
+  'notFound.actions.home': 'मुखपृष्ठ पर लौटें',
+  'notFound.actions.explore': 'सेवाएँ एक्सप्लोर करें',
+  'notFound.secondary.title': 'कुछ और चाहिए?',
+  'notFound.secondary.description': 'हमारे विधिक दस्तावेज़ देखें या सहायता के लिए {email} पर लिखें।',
+  'notFound.secondary.privacy': 'गोपनीयता नीति',
+  'notFound.secondary.terms': 'सेवा की शर्तें',
+  'notFound.secondary.contact': 'सपोर्ट से संपर्क करें',
+  'notFound.auditTrail.title': 'क्या रिकॉर्ड किया गया',
+  'notFound.auditTrail.copy':
+    'हमने इस असफल प्रयास को ऑडिट ट्रेल में दर्ज कर लिया है। सपोर्ट से बात करते समय ऊपर दिए गए कोड को साझा करें ताकि हम जल्दी समाधान कर सकें।'
 };
 
 export const hiIN = {

@@ -96,6 +96,10 @@ class Bootstrap {
       print('[${record.loggerName}] ${record.level.name}: ${record.message}');
     });
   }
+
+  void dispose() {
+    httpClient.close();
+  }
 }
 
 class ProviderLogger extends ProviderObserver {

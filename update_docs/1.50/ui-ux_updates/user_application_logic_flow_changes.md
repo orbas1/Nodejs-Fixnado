@@ -19,6 +19,7 @@
 
 ## Error Handling & Offline Support
 - Booking wizard caches form data locally; if user loses connection, they can resume without re-entering information once online.
+- Fatal crash boundary intercepts uncaught exceptions, logs diagnostics via `AppDiagnosticsReporter`, prompts users to restart, and on success reinitialises bootstrap services without duplicating Riverpod providers.
 - Payment failures display detailed reasons (insufficient funds, 3DS required) and offer alternative payment method or support contact.
 - When provider cancels, automated flow suggests replacements ranked by compatibility, provides compensation voucher when policy applies, and collects feedback for analytics.
 

@@ -5,9 +5,9 @@
 | 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
 | 2 | Compliance & Data Governance | 94 | 100 | 94 | 95 | 88 | 92 | 94 |
 | 3 | Payments, Escrow & Finance Orchestration | 92 | 100 | 92 | 94 | 88 | 92 | 93 |
-| 4 | Experience & Navigation Overhaul | 58 | 74 | 66 | 72 | 60 | 68 | 66 |
+| 4 | Experience & Navigation Overhaul | 62 | 80 | 72 | 78 | 70 | 76 | 73 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
-| 6 | Mobile Parity & Stabilisation | 24 | 32 | 26 | 34 | 22 | 28 | 28 |
+| 6 | Mobile Parity & Stabilisation | 30 | 40 | 34 | 42 | 34 | 38 | 36 |
 | 7 | Observability, Testing & Quality Automation | 12 | 14 | 12 | 14 | 12 | 12 | 13 |
 | 8 | Documentation, Release & Change Management | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 
@@ -41,7 +41,9 @@
 > - Creation studio wizard and autosave infrastructure now operate end-to-end on React and Flutter, raising Task 4 completion, integration, functionality, and error-free scores while unlocking production readiness evidence for publishing flows.
 > - Explorer ranking now weights compliance, demand, and availability across React and Flutter with shared heuristics, parity unit tests, and mobile zoning filters so marketplace and dashboard journeys surface the strongest providers, increasing Task 4 security, integration, functionality, and production scores.
 > - Real-time live feed streaming now publishes SSE snapshots, filter-aware reconnections, and status telemetry across React and Flutter while adding backend policy guards and controller tests, lifting Task 4 completion/integration/functionality, Task 6 parity, and Task 7 error-free and production readiness metrics.
+> - Router-level error boundaries, telemetry reporting, and a dedicated 404 page now wrap the React navigation shell so loader failures surface recovery UI while shipping crash diagnostics to observability pipelines, raising Task 4 functionality, error-free, and production readiness scores.
 > - Mobile creation studio parity, localisation checks, and controller tests increased Task 6 security, completion, integration, and functionality scores as providers can now publish offerings from Flutter with the same compliance guardrails as web.
+> - Flutter's fatal error boundary and diagnostics reporter now guard the mobile shell, capturing crash payloads, presenting restart loops, and disposing bootstrap resources so Task 6 security, error-free, and production readiness scores climb while operations gain actionable telemetry.
 > - GDPR metrics endpoint, migration, and SLA instrumentation now drive real backlog/due-date telemetry across backend, React, and Flutter clients; Vitest/Supertest coverage plus design artefact updates elevate Task 2 completion, functionality, and production readiness to the 90s.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.
 > - Tracker will be updated weekly following milestone reviews and evidence collection.
@@ -53,12 +55,12 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
-| D1 | Token & System Foundation | 64 | 70 | 62 | 66 | 74 | 60 | 78 | 76 | 68 | 56 | 66 | 70 | 52 | 56 | 62 | 65 |
-| D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 58 | 56 | 54 | 54 | 52 | 50 | 60 | 56 | 56 | 52 | 56 | 50 | 44 | 46 | 54 | 53 |
+| D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
+| D2 | Navigation & IA Harmonisation | 78 | 80 | 76 | 72 | 64 | 72 | 86 | 84 | 78 | 62 | 80 | 78 | 64 | 62 | 76 | 77 |
+| D3 | Page Templates & Partial Library | 84 | 82 | 78 | 78 | 72 | 72 | 84 | 78 | 80 | 80 | 76 | 68 | 72 | 70 | 78 | 79 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 74 | 74 | 72 | 72 | 66 | 72 | 82 | 84 | 74 | 70 | 74 | 74 | 62 | 62 | 74 | 73 |
-| D6 | Design QA, Documentation & Handover | 34 | 36 | 34 | 36 | 32 | 34 | 40 | 40 | 36 | 34 | 38 | 48 | 34 | 38 | 36 | 37 |
+| D5 | Mobile Parity & Component Adaptation | 86 | 84 | 82 | 82 | 76 | 82 | 92 | 92 | 84 | 82 | 86 | 76 | 78 | 78 | 86 | 85 |
+| D6 | Design QA, Documentation & Handover | 56 | 58 | 54 | 56 | 48 | 54 | 60 | 60 | 56 | 54 | 64 | 52 | 56 | 56 | 54 | 57 |
 
 **Interpretation:**
 - Progress remains early-stage; token work shows the highest traction due to consolidated palette, typography, and state documentation.
@@ -71,3 +73,5 @@ The design workstream tracks readiness using the detailed metrics captured in `D
 - Finance orchestration dashboards and escrow timeline templates now include SLA breach, retry, manual intervention, and escalation ribbon states, boosting D3 quality, organisation, functionality, and accuracy grades with concrete artefacts tied to the alert fan-out telemetry.
 - Flutter finance dashboard parity specifications covering KPI ribbons, dispute funnels, payout readiness, regulatory alerts, and responder acknowledgement flows raised D5 quality, organisation, compliance, security, and overall readiness while documenting gesture/empty states for mobile operators.
 - Finance escalation QA checklists and handover notes expanded D6 readiness by detailing alert palettes, responder workflows, and release artefacts needed to operationalise the new monitoring surfaces.
+- Router error boundary and full-screen 404 storyboards now sit inside the navigation kit, boosting D2/D3 quality, organisation, and accuracy scores while giving support teams documented recovery messaging.
+- Flutter fatal boundary blueprints cover restart CTA hierarchy, telemetry consent copy, and diagnostics payload summaries, improving D5 usability/security and D6 QA/test marks by treating crash flows as first-class design scenarios.

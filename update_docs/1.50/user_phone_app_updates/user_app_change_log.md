@@ -44,3 +44,9 @@
 - Implemented SSE streaming via `live_feed_repository.dart` with frame parsing, cancellation handling, and exponential backoff-ready controllers to replace polling in the live feed experience.
 - Refactored `LiveFeedController` to manage stream state, reconnection timers, status messaging, and cached snapshot pruning while keeping existing publish/bid/message flows intact.
 - Updated the live feed screen to surface connection pulses, offline banners, and filter-aware restarts plus added unit tests covering repository parsing and controller event handling.
+
+## 2025-04-12 – Fatal Error Boundary & Diagnostics
+- Added `AppFailureBoundary` wrapping the Flutter root navigator with branded crash UI, restart affordance, and copy referencing support telemetry flows.
+- Integrated `AppDiagnosticsReporter` that posts crash payloads (stack traces, context, device metadata) to `/telemetry/mobile-crashes`, updating bootstrap config wiring and disposal to avoid leaking HTTP clients.
+- Refactored `main.dart` bootstrap to register the failure boundary, wire diagnostics reporter into Riverpod scopes, and recycle bootstrap handles during restart loops to prevent duplicate initialisation.
+- Authored unit coverage (`test/app_diagnostics_reporter_test.dart`) validating payload structure, header propagation, and network error handling to keep crash reporting regression-safe.

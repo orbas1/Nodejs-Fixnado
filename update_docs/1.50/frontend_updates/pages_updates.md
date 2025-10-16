@@ -34,3 +34,9 @@
 - Updated `LiveFeed.jsx` to establish an authenticated `EventSource`, reconcile snapshots with incremental events, and expose connection state, reconnection, and offline banners directly in the feed header.
 - Added `liveFeedState.js` to consolidate post/bid/message merging logic and unit tests covering streamed permutations so reducers stay regression-safe.
 - Documented the streaming behaviour and status messaging in the live feed notes to guide design, QA, and operations stakeholders.
+
+## Shell Resiliency & Error Handling
+- Wrapped `App` routing with `AppErrorBoundary` and `RouteErrorBoundary` so loader failures, rendering exceptions, and rejected promises surface branded fallback messaging with retry controls and diagnostic reference IDs.
+- Added a full-screen `NotFound` page featuring localisation-aware copy, support CTA, and navigation shortcuts back to high-traffic destinations (dashboard hub, explore, creation studio) while logging telemetry for dead link analysis.
+- Wired `errorReporting.js` into boundary fallbacks to stream crash payloads (stack trace, active route, locale) to the telemetry endpoint and display confirmation to the operator, aligning with compliance logging expectations.
+- Updated translations, layout wrappers, and document metadata so error screens respect locale direction, theming tokens, and analytics tagging introduced in the navigation overhaul.

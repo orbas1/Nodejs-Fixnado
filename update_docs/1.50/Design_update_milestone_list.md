@@ -26,6 +26,7 @@
 6. Usability test plan and findings summary for navigation prototypes (desktop, tablet, mobile).
 7. RBAC navigation blueprint translating the hardened backend matrix into role-specific landing routes, menu groupings, and badge placements for web and Flutter shells.
 8. Warehouse operations console IA package capturing dataset pickers, retention countdown chips, manual trigger modals, and DPIA documentation hooks for compliance operators across platforms.
+9. Error recovery navigation pack covering router-level error boundaries, diagnostic hooks, and full-screen 404 storyboard so IA artefacts include failure and support pathways.
 
 ## Milestone D3 – Page Templates & Partial Layout Library (Target Week 3–6)
 **Goals:** Rebuild priority pages and partial sections for marketing, dashboards, creation studio, and finance experiences.
@@ -54,6 +55,7 @@
 5. Cross-platform regression scripts for design QA (visual diff, accessibility, localisation).
 6. Live feed parity artefacts specifying Riverpod/React status banners, reduced motion fallbacks, and accessibility cues for streaming telemetry.
 7. Biometric unlock flows, secure-session banners, and token status indicators aligned with backend session hardening.
+8. Fatal error recovery blueprints capturing Flutter restart loops, diagnostics consent copy, and telemetry payload summaries aligned with the React error boundary experience.
 
 ## Milestone D5 – Design QA, Documentation & Handover (Target Week 7–9)
 **Goals:** Complete design QA, documentation packages, and engineer handover for implementation readiness.

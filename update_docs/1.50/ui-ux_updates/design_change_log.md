@@ -23,6 +23,7 @@
 8. **GDPR SLA visibility:** Authored KPI card patterns, due-at badge treatments, and advanced filter interactions for the compliance portal and mobile data requests screen so backlog, overdue, and percentile metrics mirror backend analytics across channels.
 9. **Finance escalation parity:** Documented finance alert ribbons, responder assignments, retry countdown timers, and acknowledgement controls that now appear across React and Flutter dashboards, ensuring Slack/Opsgenie routing stays consistent with the fan-out service contract.
 10. **Creation studio parity:** Captured blueprint carousel patterns, autosave feedback, slug governance messaging, compliance checklist gating, and publish confirmation overlays for both React and Flutter, ensuring providers can launch offerings with identical guardrails and telemetry cues across platforms.
+11. **Resiliency & Telemetry:** Documented React error boundary, 404 fallback, and Flutter fatal boundary experiences with correlation ID treatments, restart flows, and diagnostics payload guidance so crashes surface actionable messaging and feed observability pipelines.
 
 ## Live Feed Streaming Experience
 - Authored a cross-platform live feed status header combining connection pulses, reconnection loaders, and offline cache banners so operators understand whether SSE updates are active, retrying, or paused; design tokens specify success (`#2E7D32`), warning (`#FB8C00`), and paused (`#546E7A`) states with WCAG AA contrast guidance.
