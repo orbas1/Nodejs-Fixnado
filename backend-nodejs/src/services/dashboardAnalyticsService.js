@@ -30,6 +30,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getServicemanMetricsBundle } from './servicemanMetricsService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -2987,7 +2988,7 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, metricsBundle] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3014,8 +3015,11 @@ async function loadServicemanData(context) {
       where: providerFilter,
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
-    })
+    }),
+    getServicemanMetricsBundle({ includeInactiveCards: true })
   ]);
+
+  const { settings: metricsSettings, cards: metricsCards } = metricsBundle;
 
   const providerIds = Array.from(
     new Set(assignments.map((assignment) => assignment.providerId).filter(Boolean))
@@ -3424,6 +3428,23 @@ async function loadServicemanData(context) {
         description: 'Assignments, travel buffers, and earnings.',
         type: 'overview',
         analytics: overview
+      },
+      {
+        id: 'metrics',
+        label: 'Metrics',
+        description: 'Crew KPIs, readiness checklists, and automation guardrails.',
+        type: 'serviceman-metrics',
+        access: {
+          label: 'Crew metrics control',
+          level: 'manage',
+          features: ['targets', 'checklists', 'automation']
+        },
+        data: {
+          settings: metricsSettings,
+          cards: metricsCards,
+          metadata: metricsSettings?.metadata ?? {},
+          operations: metricsSettings?.operations ?? {}
+        }
       },
       {
         id: 'schedule',

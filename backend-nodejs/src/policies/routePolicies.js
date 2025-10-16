@@ -673,6 +673,29 @@ const ROUTE_POLICIES = {
     requirements: [Permissions.ADMIN_COMMAND_METRICS_WRITE],
     tags: ['admin', 'analytics'],
     severity: 'critical'
+  },
+  'serviceman.metrics.read': {
+    id: 'serviceman.metrics.read',
+    version: '1.0.0',
+    resource: 'serviceman.metrics',
+    action: 'serviceman.metrics:read',
+    description: 'Allow crew leads to review productivity, quality, and readiness guardrails.',
+    requirements: [Permissions.SERVICEMAN_METRICS_READ],
+    tags: ['serviceman', 'analytics'],
+    severity: 'medium',
+    metadata: () => ({ section: 'metrics', scope: 'serviceman-control-centre' })
+  },
+  'serviceman.metrics.write': {
+    id: 'serviceman.metrics.write',
+    version: '1.0.0',
+    resource: 'serviceman.metrics',
+    action: 'serviceman.metrics:write',
+    description: 'Allow authorised crew leads to update crew KPI targets, checklists, and dashboard cards.',
+    requirements: [Permissions.SERVICEMAN_METRICS_WRITE],
+    tags: ['serviceman', 'analytics'],
+    severity: 'high',
+    metadata: (req) => ({ section: 'metrics', method: req.method, cardId: req.params?.id ?? null })
+  },
   'admin.operations.queues.read': {
     id: 'admin.operations.queues.read',
     version: '1.0.0',

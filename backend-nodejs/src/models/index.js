@@ -105,6 +105,8 @@ import DisputeHealthBucket from './disputeHealthBucket.js';
 import DisputeHealthEntry from './disputeHealthEntry.js';
 import CommandMetricSetting from './commandMetricSetting.js';
 import CommandMetricCard from './commandMetricCard.js';
+import ServicemanMetricSetting from './servicemanMetricSetting.js';
+import ServicemanMetricCard from './servicemanMetricCard.js';
 import OperationsQueueBoard from './operationsQueueBoard.js';
 import OperationsQueueUpdate from './operationsQueueUpdate.js';
 import AutomationInitiative from './automationInitiative.js';
@@ -883,49 +885,48 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
-  AdminProfile,
-  AdminDelegate
+  RbacRoleAssignment,
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
+  ServicemanMetricSetting,
+  ServicemanMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
-  WalletAccount,
-  WalletTransaction,
-  WalletPaymentMethod
+  ServiceTaxonomyCategory,
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -934,10 +935,8 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
-  CustomerAccountSetting,
-  CustomerNotificationRecipient,
   InboxQueue,
   InboxConfiguration,
   InboxTemplate
