@@ -21,6 +21,7 @@ const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
+const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -107,6 +108,14 @@ function App() {
               <Route path="/feed" element={<Feed />} />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
               <Route
+                path="/provider/custom-jobs"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderCustomJobs />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
                 path="/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
@@ -142,10 +151,18 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminProfile />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/disputes/health/:bucketId/history"
                 element={
                   <AdminProtectedRoute>
                     <AdminDisputeHealthHistory />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/home-builder"
                 element={
                   <AdminProtectedRoute>
@@ -182,62 +199,122 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminEscrow />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/bookings"
                 element={
                   <AdminProtectedRoute>
                     <AdminBookings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/wallets"
                 element={
                   <AdminProtectedRoute>
                     <AdminWallets />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/custom-jobs"
                 element={
                   <AdminProtectedRoute>
                     <AdminCustomJobs />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/roles"
                 element={
                   <AdminProtectedRoute>
                     <AdminRoles />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/preferences"
                 element={
                   <AdminProtectedRoute>
                     <AdminPreferences />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/enterprise"
                 element={
                   <AdminProtectedRoute>
                     <AdminEnterprise />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/marketplace"
                 element={
                   <AdminProtectedRoute>
                     <AdminMarketplace />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/appearance"
                 element={
                   <AdminProtectedRoute>
                     <AppearanceManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/inbox"
                 element={
                   <AdminProtectedRoute>
                     <AdminInbox />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/purchases"
                 element={
                   <AdminProtectedRoute>
                     <AdminPurchaseManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/website-management"
                 element={
                   <AdminProtectedRoute>
                     <AdminWebsiteManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/live-feed/auditing"
                 element={
                   <AdminProtectedRoute>
                     <AdminLiveFeedAuditing />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/system-settings"
                 element={
                   <AdminProtectedRoute>
                     <AdminSystemSettings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/taxonomy"
                 element={
                   <AdminProtectedRoute>
                     <AdminTaxonomy />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/seo"
                 element={
                   <AdminProtectedRoute>
