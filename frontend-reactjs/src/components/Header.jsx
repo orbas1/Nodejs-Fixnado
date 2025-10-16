@@ -8,7 +8,7 @@ import {
   UserCircleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { Popover, Transition, Dialog } from '@headlessui/react';
+import { Popover, Transition, Dialog, Menu } from '@headlessui/react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { LOGO_URL } from '../constants/branding';
@@ -237,7 +237,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 lg:px-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:flex-1">
           {hasPrimaryNavigation ? (
             <button
               type="button"
@@ -250,6 +250,9 @@ export default function Header() {
           ) : null}
           <Link to="/" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
+            <span className="hidden text-sm font-semibold uppercase tracking-[0.3em] text-slate-500 lg:inline">
+              Fixnado
+            </span>
           </Link>
         </div>
 
@@ -292,7 +295,7 @@ export default function Header() {
           </nav>
         ) : null}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 lg:flex-1 lg:justify-end">
           {isAuthenticated ? (
             <>
               <Popover className="hidden lg:block">
@@ -345,7 +348,7 @@ export default function Header() {
             </>
           ) : null}
 
-          <LanguageSelector />
+          {!isAuthenticated ? <LanguageSelector /> : null}
 
           {isAuthenticated ? (
             <NavLink
@@ -377,28 +380,13 @@ export default function Header() {
             </NavLink>
           )}
 
-          <NavLink
-            to={isAuthenticated ? '/account/profile' : loginLink}
-            aria-label={isAuthenticated ? accountMenuLabel : undefined}
-            title={isAuthenticated ? accountMenuTitle : undefined}
-            className={({ isActive }) =>
-              isAuthenticated
-                ? clsx(
-                    'inline-flex h-12 w-12 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-                    isActive
-                      ? 'ring-2 ring-accent/60 ring-offset-2 ring-offset-white'
-                      : 'hover:bg-slate-100'
-                  )
-                : clsx(
-                    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
-                    isActive
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
-                  )
-            }
-          >
-            {isAuthenticated ? (
-              <>
+          {isAuthenticated ? (
+            <Menu as="div" className="relative">
+              <Menu.Button
+                aria-label={accountMenuLabel}
+                title={accountMenuTitle}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent hover:bg-slate-100"
+              >
                 <span className="sr-only">{accountMenuLabel}</span>
                 <span
                   aria-hidden="true"
@@ -406,14 +394,67 @@ export default function Header() {
                 >
                   {accountInitials}
                 </span>
-              </>
-            ) : (
-              <>
-                <UserCircleIcon className="h-5 w-5" />
-                <span>{t('nav.login')}</span>
-              </>
-            )}
-          </NavLink>
+              </Menu.Button>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-150"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-100"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-3 w-72 origin-top-right rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl focus:outline-none">
+                  <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold uppercase text-white shadow-lg shadow-accent/30">
+                      {accountInitials}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{accountMenuTitle}</p>
+                      {email ? <p className="truncate text-xs text-slate-500">{email}</p> : null}
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <NavLink
+                          to="/account/profile"
+                          className={clsx(
+                            'flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition',
+                            active
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-slate-200 text-slate-700 hover:border-accent/40 hover:text-accent'
+                          )}
+                        >
+                          {t('nav.profile')}
+                          <ChevronDownIcon className="h-4 w-4 -rotate-90" />
+                        </NavLink>
+                      )}
+                    </Menu.Item>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-slate-200 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('nav.languageSelector')}</p>
+                    <LanguageSelector variant="menu" className="mt-3 w-full" />
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          ) : (
+            <NavLink
+              to={loginLink}
+              className={({ isActive }) =>
+                clsx(
+                  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              <UserCircleIcon className="h-5 w-5" />
+              <span>{t('nav.login')}</span>
+            </NavLink>
+          )}
         </div>
       </div>
 

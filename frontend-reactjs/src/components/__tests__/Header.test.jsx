@@ -58,7 +58,7 @@ vi.mock('../../hooks/useLocale.js', () => ({
 }));
 
 vi.mock('../LanguageSelector.jsx', () => ({
-  default: () => <div data-testid="language-selector" />
+  default: (props) => <div data-testid="language-selector" data-variant={props.variant} />
 }));
 
 beforeEach(() => {
@@ -104,7 +104,11 @@ describe('Header navigation layout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
+    const accountButton = screen.getByRole('button', { name: /Account menu/i });
+    fireEvent.click(accountButton);
+    const selectors = screen.getAllByTestId('language-selector');
+    expect(selectors).toHaveLength(1);
+    expect(selectors[0]).toHaveAttribute('data-variant', 'menu');
     const explorerButton = screen.getByRole('button', { name: /Explorer/i });
     fireEvent.click(explorerButton);
     expect(screen.getByRole('link', { name: /Search services/i })).toBeInTheDocument();
@@ -114,15 +118,16 @@ describe('Header navigation layout', () => {
     expect(screen.queryByRole('link', { name: /Admin Control Tower/i })).not.toBeInTheDocument();
   });
 
-  it('links directly to the primary dashboard from the account control', () => {
+  it('offers profile navigation inside the account menu', () => {
     render(
       <MemoryRouter>
         <Header />
       </MemoryRouter>
     );
 
-    const accountLink = screen.getByRole('link', { name: /Account menu/i });
-    expect(accountLink).toHaveAttribute('href', '/account/profile');
-    expect(accountLink).toHaveAttribute('aria-label', 'Alex Rivera • Account menu');
+    const accountButton = screen.getByRole('button', { name: /Account menu/i });
+    fireEvent.click(accountButton);
+    const profileLink = screen.getByRole('link', { name: /Profile/i });
+    expect(profileLink).toHaveAttribute('href', '/account/profile');
   });
 });
