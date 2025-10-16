@@ -109,6 +109,7 @@ export const Permissions = Object.freeze({
   SERVICEMAN_ESCROW_MANAGE: 'serviceman:escrow:manage',
   SUPPORT_TICKETS: 'support:tickets:manage',
   CUSTOMER_CONTROL_MANAGE: 'customer:control:manage',
+  SERVICEMAN_CONTROL_MANAGE: 'serviceman:control:manage',
   USER_DIRECTORY: 'user:directory:view',
   ZONES_READ: 'zones:read',
   ZONES_MANAGE: 'zones:manage',

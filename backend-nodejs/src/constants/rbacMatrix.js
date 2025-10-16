@@ -66,6 +66,7 @@ export const RBAC_MATRIX = {
       Permissions.MESSAGING_ESCALATE,
       Permissions.SERVICEMAN_ESCROW_VIEW,
       Permissions.SERVICEMAN_ESCROW_MANAGE
+      Permissions.SERVICEMAN_CONTROL_MANAGE
     ],
     navigation: {
       landing: '/app/workqueue',
