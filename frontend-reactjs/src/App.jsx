@@ -27,6 +27,7 @@ const Tools = lazy(() => import('./pages/Tools.jsx'));
 const Materials = lazy(() => import('./pages/Materials.jsx'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminDisputeHealthHistory = lazy(() => import('./pages/AdminDisputeHealthHistory.jsx'));
 const AdminHomeBuilder = lazy(() => import('./features/homeBuilder/AdminHomeBuilderPage.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const AdminEnterprise = lazy(() => import('./pages/AdminEnterprise.jsx'));
@@ -129,6 +130,10 @@ function App() {
                 }
               />
               <Route
+                path="/admin/disputes/health/:bucketId/history"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDisputeHealthHistory />
                 path="/admin/home-builder"
                 element={
                   <AdminProtectedRoute>

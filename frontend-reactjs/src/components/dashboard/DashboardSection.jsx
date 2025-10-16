@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
+import DisputeHealthWorkspace from './DisputeHealthWorkspace.jsx';
 import { OperationsQueuesSection } from '../operationsQueues/index.js';
 import UserManagementSection from './userManagement/UserManagementSection.jsx';
 import MarketplaceWorkspace from '../../features/marketplace-admin/MarketplaceWorkspace.jsx';
@@ -1742,6 +1743,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'dispute-workspace':
+      return <DisputeHealthWorkspace section={section} />;
     case 'operations-queues':
       return <OperationsQueuesSection section={section} />;
     case 'user-management':

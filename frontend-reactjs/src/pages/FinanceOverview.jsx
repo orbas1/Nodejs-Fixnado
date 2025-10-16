@@ -440,6 +440,10 @@ const FinanceOverview = () => {
     refreshOverview();
   }, [refreshOverview]);
 
+  const paymentRows = useMemo(() => (overview?.payments ?? []).slice(0, 75), [overview]);
+  const payoutItems = useMemo(() => (overview?.payouts ?? []).slice(0, 50), [overview]);
+  const invoiceItems = useMemo(() => (overview?.invoices ?? []).slice(0, 50), [overview]);
+  const disputeItems = useMemo(() => (overview?.disputes ?? []).slice(0, 50), [overview]);
   const paymentsSource = overview?.payments;
   const payoutsSource = overview?.payouts;
   const invoicesSource = overview?.invoices;

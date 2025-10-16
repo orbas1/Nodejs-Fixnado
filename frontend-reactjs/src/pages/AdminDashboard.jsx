@@ -863,6 +863,20 @@ function disputeCommentary(escalated, resolved) {
   return 'Escalations balanced with resolutions.';
 }
 
+function resolveDisputeSnapshotStatus(escalated, resolved) {
+  if (escalated === 0 && resolved === 0) {
+    return 'monitor';
+  }
+  if (resolved >= escalated) {
+    return 'on_track';
+  }
+  const delta = escalated - resolved;
+  if (delta >= 5) {
+    return 'at_risk';
+  }
+  return 'monitor';
+}
+
 function complianceStatusLabel(tone) {
   if (tone === 'danger') return 'Escalate immediately';
   if (tone === 'warning') return 'Prioritise this window';
@@ -1157,27 +1171,29 @@ function buildAdminNavigation(payload, complianceContext = null) {
     }
   };
 
-  const disputeSection = disputeBreakdown.length
-    ? {
-        id: 'dispute-health',
-        label: 'Dispute health',
-        description: 'Escalated cases versus resolutions for each cadence bucket.',
-        type: 'table',
-        data: {
-          headers: ['Cadence', 'Escalated', 'Resolved', 'Commentary'],
-          rows: disputeBreakdown.map((bucket) => {
-            const escalated = Number(bucket.escalated ?? 0);
-            const resolved = Number(bucket.resolved ?? 0);
-            return [
-              bucket.label,
-              escalated.toLocaleString('en-GB'),
-              resolved.toLocaleString('en-GB'),
-              disputeCommentary(escalated, resolved)
-            ];
-          })
-        }
-      }
-    : null;
+  const disputeSnapshot = disputeBreakdown.map((bucket) => {
+    const escalated = Number(bucket.escalated ?? 0);
+    const resolved = Number(bucket.resolved ?? 0);
+    return {
+      id: bucket.id || bucket.label,
+      label: bucket.label,
+      escalated,
+      resolved,
+      commentary: disputeCommentary(escalated, resolved),
+      status: resolveDisputeSnapshotStatus(escalated, resolved)
+    };
+  });
+
+  const disputeSection = {
+    id: 'dispute-health',
+    label: 'Dispute health',
+    description: 'Manage dispute cadence buckets, playbooks, and live resolution targets.',
+    type: 'dispute-workspace',
+    data: {
+      snapshot: disputeSnapshot,
+      defaultBucketId: options.defaultDisputeBucketId || undefined
+    }
+  };
 
   const complianceSection = complianceContext
     ? {
@@ -1522,6 +1538,8 @@ export default function AdminDashboard() {
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const timeframeParam = searchParams.get('timeframe') ?? DEFAULT_TIMEFRAME;
+  const focusSectionId = searchParams.get('focus');
+  const disputeBucketIdParam = searchParams.get('bucket');
   const panelParam = searchParams.get('panel');
   const viewParam = searchParams.get('view') ?? 'summary';
   const focusParam = searchParams.get('focus');
@@ -2041,6 +2059,9 @@ export default function AdminDashboard() {
   ]);
 
   const navigation = useMemo(() => {
+    const sections = state.data
+      ? buildAdminNavigation(state.data, { defaultDisputeBucketId: disputeBucketIdParam || undefined })
+      : [];
     const sections = state.data ? buildAdminNavigation(state.data) : [];
     if (enterpriseSection) {
       sections.push(enterpriseSection);
@@ -2073,6 +2094,7 @@ export default function AdminDashboard() {
       to: '/admin/monetisation'
     });
     return sections;
+  }, [state.data, affiliateSection, disputeBucketIdParam]);
   }, [state.data, affiliateSection, enterpriseSection]);
   }, [state.data, affiliateSection]);
   const dashboardPayload = state.data ? { ...state.data, navigation } : null;
@@ -2822,6 +2844,7 @@ export default function AdminDashboard() {
       initialSectionId={focusParam}
       onSectionChange={handleSectionChange}
       onLogout={handleLogout}
+      initialSectionId={focusSectionId || undefined}
     />
     <>
       <DashboardLayout

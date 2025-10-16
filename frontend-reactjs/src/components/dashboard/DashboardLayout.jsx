@@ -123,6 +123,7 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting',
+  bucket: 'Bucket'
   route: 'Workspace'
 };
 
@@ -240,6 +241,16 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'dispute-workspace' && Array.isArray(section.data?.snapshot)) {
+      section.data.snapshot.forEach((bucket) => {
+        entries.push({
+          id: `${section.id}-${bucket.id ?? bucket.label}`,
+          type: 'bucket',
+          label: `${bucket.label} • Dispute cadence`,
+          description: bucket.commentary ?? '',
+          targetSection: section.id
+        });
+      });
     if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
       entries.push(
         ...section.data.controls.map((control) => ({
@@ -491,6 +502,14 @@ const DashboardLayout = ({
   toggleReason = null,
   onLogout,
   blogPosts = [],
+  initialSectionId = null
+}) => {
+  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const [selectedSection, setSelectedSection] = useState(
+    initialSectionId && navigation.some((item) => item.id === initialSectionId)
+      ? initialSectionId
+      : navigation[0]?.id ?? 'overview'
+  );
   initialSectionId = null,
   onSectionChange = null
 }) => {
@@ -550,6 +569,24 @@ const DashboardLayout = ({
   );
 
   useEffect(() => {
+    if (!navigation.length) return;
+    setSelectedSection((current) => {
+      const preferred =
+        initialSectionId && navigation.some((item) => item.id === initialSectionId)
+          ? initialSectionId
+          : navigation[0]?.id ?? 'overview';
+      const hasCurrent = navigation.some((item) => item.id === current);
+      if (!hasCurrent) {
+        return preferred;
+      }
+      if (initialSectionId && current !== preferred) {
+        return preferred;
+      }
+      return current;
+    });
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigation, initialSectionId]);
     setSelectedSection((current) => {
       const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
       if (stillValid) {
@@ -1358,6 +1395,7 @@ DashboardLayout.propTypes = {
       id: PropTypes.string.isRequired
     })
   ),
+  initialSectionId: PropTypes.string
   initialSectionId: PropTypes.string,
   onSectionChange: PropTypes.func
 };

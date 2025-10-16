@@ -82,6 +82,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import DisputeHealthBucket from './disputeHealthBucket.js';
+import DisputeHealthEntry from './disputeHealthEntry.js';
 import CommandMetricSetting from './commandMetricSetting.js';
 import CommandMetricCard from './commandMetricCard.js';
 import OperationsQueueBoard from './operationsQueueBoard.js';
@@ -309,6 +311,8 @@ Order.hasMany(FinanceWebhookEvent, { foreignKey: 'orderId', as: 'financeEvents' 
 Payment.hasMany(FinanceWebhookEvent, { foreignKey: 'paymentId', as: 'webhookEvents' });
 Escrow.hasMany(FinanceWebhookEvent, { foreignKey: 'escrowId', as: 'webhookEvents' });
 
+DisputeHealthBucket.hasMany(DisputeHealthEntry, { foreignKey: 'bucketId', as: 'entries' });
+DisputeHealthEntry.belongsTo(DisputeHealthBucket, { foreignKey: 'bucketId', as: 'bucket' });
 InboxQueue.hasMany(Conversation, { foreignKey: 'queueId', as: 'conversations' });
 Conversation.belongsTo(InboxQueue, { foreignKey: 'queueId', as: 'queue' });
 
@@ -783,6 +787,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  DisputeHealthBucket,
+  DisputeHealthEntry
   CommandMetricSetting,
   CommandMetricCard
   OperationsQueueBoard,

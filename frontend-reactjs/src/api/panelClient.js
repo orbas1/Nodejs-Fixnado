@@ -1,6 +1,8 @@
 const API_ROOT = '/api';
 const REQUEST_TIMEOUT = 10000;
 const CACHE_NAMESPACE = 'fixnado:panel-cache';
+const DISPUTE_HEALTH_CACHE_KEY = 'admin-dispute-health';
+const DISPUTE_HEALTH_CACHE_TTL = 12000;
 
 const memoryCache = new Map();
 
@@ -1757,6 +1759,207 @@ function normaliseAdminDashboard(payload = {}) {
   };
 }
 
+function normaliseDisputeAttachment(attachment, index = 0, entryId = 'attachment') {
+  if (!attachment) {
+    return null;
+  }
+
+  if (typeof attachment === 'string') {
+    const trimmed = attachment.trim();
+    if (!trimmed) {
+      return null;
+    }
+    return {
+      id: `${entryId}-${index}`,
+      label: trimmed,
+      url: trimmed,
+      type: 'link',
+      thumbnail: null
+    };
+  }
+
+  const url = typeof attachment.url === 'string' ? attachment.url.trim() : '';
+  if (!url) {
+    return null;
+  }
+
+  const label = typeof attachment.label === 'string' && attachment.label.trim().length > 0
+    ? attachment.label.trim()
+    : url;
+
+  return {
+    id: attachment.id ?? `${entryId}-${index}`,
+    label,
+    url,
+    type: typeof attachment.type === 'string' ? attachment.type : 'link',
+    thumbnail:
+      typeof attachment.thumbnail === 'string' && attachment.thumbnail.trim().length > 0
+        ? attachment.thumbnail.trim()
+        : null
+  };
+}
+
+function normaliseDisputeEntry(entry = {}, index = 0) {
+  const attachments = ensureArray(entry.attachments)
+    .map((item, attachmentIndex) => normaliseDisputeAttachment(item, attachmentIndex, entry.id ?? `entry-${index}`))
+    .filter(Boolean);
+
+  return {
+    id: entry.id || null,
+    bucketId: entry.bucketId || null,
+    periodStart: entry.periodStart || null,
+    periodEnd: entry.periodEnd || null,
+    escalatedCount: Number.parseInt(entry.escalatedCount ?? 0, 10) || 0,
+    resolvedCount: Number.parseInt(entry.resolvedCount ?? 0, 10) || 0,
+    reopenedCount: Number.parseInt(entry.reopenedCount ?? 0, 10) || 0,
+    backlogCount: Number.parseInt(entry.backlogCount ?? 0, 10) || 0,
+    ownerNotes: entry.ownerNotes || '',
+    attachments,
+    createdAt: entry.createdAt || null,
+    updatedAt: entry.updatedAt || null,
+    createdBy: entry.createdBy || null,
+    updatedBy: entry.updatedBy || null
+  };
+}
+
+function normaliseDisputeBucket(bucket = {}, index = 0) {
+  const entries = ensureArray(bucket.entries).map((entry, entryIndex) =>
+    normaliseDisputeEntry(entry, entryIndex)
+  );
+
+  const latestEntry = bucket.latestEntry
+    ? normaliseDisputeEntry(bucket.latestEntry, 0)
+    : entries[0] ?? null;
+
+  return {
+    id: bucket.id || `bucket-${index}`,
+    label: bucket.label || `Cadence bucket ${index + 1}`,
+    cadence: bucket.cadence || 'Window',
+    windowDurationHours: Number.parseInt(bucket.windowDurationHours ?? 24, 10) || 24,
+    ownerName: bucket.ownerName || '',
+    ownerRole: bucket.ownerRole || '',
+    escalationContact: bucket.escalationContact || '',
+    playbookUrl: bucket.playbookUrl || '',
+    heroImageUrl: bucket.heroImageUrl || '',
+    checklist: ensureArray(bucket.checklist).map((item) => String(item)),
+    status: bucket.status || 'on_track',
+    sortOrder: Number.parseInt(bucket.sortOrder ?? index, 10) || index,
+    metrics: {
+      latestResolutionRate: Number.parseFloat(bucket.metrics?.latestResolutionRate ?? 0) || 0,
+      latestEscalated: Number.parseInt(bucket.metrics?.latestEscalated ?? 0, 10) || 0,
+      latestResolved: Number.parseInt(bucket.metrics?.latestResolved ?? 0, 10) || 0,
+      backlog: Number.parseInt(bucket.metrics?.backlog ?? 0, 10) || 0,
+      trend: Number.parseFloat(bucket.metrics?.trend ?? 0) || 0
+    },
+    latestEntry,
+    entries
+  };
+}
+
+function normaliseDisputeHealthWorkspace(payload = {}) {
+  const summary = {
+    open: Number.parseInt(payload.summary?.open ?? 0, 10) || 0,
+    underReview: Number.parseInt(payload.summary?.underReview ?? 0, 10) || 0,
+    resolvedThisWindow: Number.parseInt(payload.summary?.resolvedThisWindow ?? 0, 10) || 0,
+    openedThisWindow: Number.parseInt(payload.summary?.openedThisWindow ?? 0, 10) || 0,
+    resolutionRate: Number.parseFloat(payload.summary?.resolutionRate ?? 0) || 0,
+    backlogOlderThanTarget: Number.parseInt(payload.summary?.backlogOlderThanTarget ?? 0, 10) || 0,
+    reopenedThisWindow: Number.parseInt(payload.summary?.reopenedThisWindow ?? 0, 10) || 0,
+    windowStart: payload.summary?.windowStart || null,
+    generatedAt: payload.summary?.generatedAt || new Date().toISOString()
+  };
+
+  const buckets = ensureArray(payload.buckets).map((bucket, index) =>
+    normaliseDisputeBucket(bucket, index)
+  );
+
+  const insights = ensureArray(payload.insights).map((insight) => ({
+    id: insight.id || null,
+    label: insight.label || 'Cadence bucket',
+    status: insight.status || 'on_track',
+    latestResolutionRate: Number.parseFloat(insight.latestResolutionRate ?? 0) || 0,
+    backlog: Number.parseInt(insight.backlog ?? 0, 10) || 0
+  }));
+
+  return {
+    summary,
+    buckets,
+    insights
+  };
+}
+
+function disputeHealthHistoryFallback() {
+  return {
+    bucket: null,
+    entries: [],
+    pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+    metrics: { latestResolutionRate: 0, latestEscalated: 0, latestResolved: 0, backlog: 0, trend: 0 }
+  };
+}
+
+function normaliseDisputeHealthHistory(payload = {}) {
+  const bucket = payload.bucket
+    ? {
+        id: payload.bucket.id || null,
+        label: payload.bucket.label || 'Cadence bucket',
+        cadence: payload.bucket.cadence || 'Window',
+        status: payload.bucket.status || 'monitor',
+        windowDurationHours: Number.parseInt(payload.bucket.windowDurationHours ?? 24, 10) || 24,
+        ownerName: payload.bucket.ownerName || '',
+        ownerRole: payload.bucket.ownerRole || '',
+        escalationContact: payload.bucket.escalationContact || '',
+        playbookUrl: payload.bucket.playbookUrl || '',
+        heroImageUrl: payload.bucket.heroImageUrl || '',
+        checklist: ensureArray(payload.bucket.checklist).map((item) => String(item))
+      }
+    : null;
+
+  const entries = ensureArray(payload.entries).map((entry, index) => normaliseDisputeEntry(entry, index));
+
+  const parsedTotal = Number.parseInt(payload.pagination?.total ?? entries.length, 10);
+  const total = Number.isFinite(parsedTotal) && parsedTotal >= 0 ? parsedTotal : entries.length;
+  const rawLimit = payload.pagination?.limit ?? (entries.length > 0 ? entries.length : 50);
+  const parsedLimit = Number.parseInt(rawLimit, 10);
+  const limitValue = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : entries.length > 0 ? entries.length : 50;
+  const parsedOffset = Number.parseInt(payload.pagination?.offset ?? 0, 10);
+  const offsetValue = Number.isFinite(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+
+  const pagination = {
+    total,
+    limit: limitValue,
+    offset: offsetValue,
+    hasMore: Boolean(payload.pagination?.hasMore)
+  };
+
+  const metrics = {
+    latestResolutionRate: Number.parseFloat(payload.metrics?.latestResolutionRate ?? 0) || 0,
+    latestEscalated: Number.parseInt(payload.metrics?.latestEscalated ?? 0, 10) || 0,
+    latestResolved: Number.parseInt(payload.metrics?.latestResolved ?? 0, 10) || 0,
+    backlog: Number.parseInt(payload.metrics?.backlog ?? 0, 10) || 0,
+    trend: Number.parseFloat(payload.metrics?.trend ?? 0) || 0
+  };
+
+  return { bucket, entries, pagination, metrics };
+}
+
+function disputeHealthFallback() {
+  return {
+    summary: {
+      open: 0,
+      underReview: 0,
+      resolvedThisWindow: 0,
+      openedThisWindow: 0,
+      resolutionRate: 0,
+      backlogOlderThanTarget: 0,
+      reopenedThisWindow: 0,
+      windowStart: null,
+      generatedAt: new Date().toISOString()
+    },
+    buckets: [],
+    insights: []
+  };
+}
+
 const adminFallback = normaliseAdminDashboard({
   timeframe: '7d',
   timeframeLabel: '7 days',
@@ -3023,6 +3226,14 @@ function withFallback(normaliser, fallback, fetcherFactory) {
   };
 }
 
+function cacheDisputeHealthWorkspace(payload) {
+  const normalised = normaliseDisputeHealthWorkspace(payload);
+  const expires = Date.now() + DISPUTE_HEALTH_CACHE_TTL;
+  memoryCache.set(DISPUTE_HEALTH_CACHE_KEY, { data: normalised, expires });
+  writeStorage(DISPUTE_HEALTH_CACHE_KEY, normalised, DISPUTE_HEALTH_CACHE_TTL);
+  return normalised;
+}
+
 export const getAdminDashboard = withFallback(
   normaliseAdminDashboard,
   adminFallback,
@@ -3035,6 +3246,88 @@ export const getAdminDashboard = withFallback(
     })
 );
 
+export const getDisputeHealthWorkspace = withFallback(
+  normaliseDisputeHealthWorkspace,
+  disputeHealthFallback(),
+  (options = {}) =>
+    request('/admin/disputes/health', {
+      cacheKey: DISPUTE_HEALTH_CACHE_KEY,
+      ttl: DISPUTE_HEALTH_CACHE_TTL,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    })
+);
+
+export const getDisputeHealthBucketHistory = withFallback(
+  normaliseDisputeHealthHistory,
+  disputeHealthHistoryFallback(),
+  (options = {}) => {
+    if (!options?.bucketId) {
+      throw new Error('bucketId is required to load dispute history');
+    }
+    const query = toQueryString({ limit: options.limit, offset: options.offset });
+    return request(
+      `/admin/disputes/health/buckets/${encodeURIComponent(options.bucketId)}/history${query}`,
+      {
+        cacheKey: `${DISPUTE_HEALTH_CACHE_KEY}:history:${options.bucketId}${query}`,
+        ttl: 5000,
+        forceRefresh: options?.forceRefresh,
+        signal: options?.signal
+      }
+    );
+  }
+);
+
+export async function createDisputeHealthBucket(payload) {
+  const { data } = await request('/admin/disputes/health/buckets', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function updateDisputeHealthBucket(bucketId, payload) {
+  const { data } = await request(`/admin/disputes/health/buckets/${encodeURIComponent(bucketId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function archiveDisputeHealthBucket(bucketId) {
+  const { data } = await request(`/admin/disputes/health/buckets/${encodeURIComponent(bucketId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function createDisputeHealthEntry(payload) {
+  const { data } = await request('/admin/disputes/health/entries', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function updateDisputeHealthEntry(entryId, payload) {
+  const { data } = await request(`/admin/disputes/health/entries/${encodeURIComponent(entryId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
+}
+
+export async function deleteDisputeHealthEntry(entryId) {
+  const { data } = await request(`/admin/disputes/health/entries/${encodeURIComponent(entryId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  return cacheDisputeHealthWorkspace(data);
 export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
   const query = toQueryString({ timeframe, category, status });
   return request(`/admin/audit/events${query}`, {
