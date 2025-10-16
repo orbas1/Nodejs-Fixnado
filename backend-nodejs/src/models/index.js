@@ -43,6 +43,9 @@ import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
+import CampaignCreative from './campaignCreative.js';
+import CampaignAudienceSegment from './campaignAudienceSegment.js';
+import CampaignPlacement from './campaignPlacement.js';
 import AnalyticsEvent from './analyticsEvent.js';
 import AnalyticsPipelineRun from './analyticsPipelineRun.js';
 import Conversation from './conversation.js';
@@ -486,6 +489,17 @@ AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSi
 CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
+AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
+CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignCreative.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
+
+AdCampaign.hasMany(CampaignAudienceSegment, { foreignKey: 'campaignId', as: 'audienceSegments' });
+CampaignAudienceSegment.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+AdCampaign.hasMany(CampaignPlacement, { foreignKey: 'campaignId', as: 'placements' });
+CampaignPlacement.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignPlacement.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
+
 Conversation.hasMany(ConversationParticipant, { foreignKey: 'conversationId', as: 'participants' });
 ConversationParticipant.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
 
@@ -835,6 +849,9 @@ export {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
+  CampaignCreative,
+  CampaignAudienceSegment,
+  CampaignPlacement,
   AnalyticsEvent,
   AnalyticsPipelineRun,
   Conversation,

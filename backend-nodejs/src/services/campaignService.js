@@ -9,6 +9,9 @@ import {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
+  CampaignCreative,
+  CampaignAudienceSegment,
+  CampaignPlacement,
   Company
 } from '../models/index.js';
 import { recordAnalyticsEvent } from './analyticsEventService.js';
@@ -248,7 +251,10 @@ function includeRelationsForCampaign(options = {}) {
   const include = [
     { model: CampaignFlight, as: 'flights' },
     { model: CampaignTargetingRule, as: 'targetingRules' },
-    { model: CampaignInvoice, as: 'invoices' }
+    { model: CampaignInvoice, as: 'invoices' },
+    { model: CampaignCreative, as: 'creatives', include: options.includeCreativeFlight ? [{ model: CampaignFlight, as: 'flight' }] : [] },
+    { model: CampaignAudienceSegment, as: 'audienceSegments' },
+    { model: CampaignPlacement, as: 'placements', include: options.includePlacementFlight ? [{ model: CampaignFlight, as: 'flight' }] : [] }
   ];
 
   if (options.includeMetrics) {
@@ -317,7 +323,16 @@ export async function createCampaign({
   });
 }
 
-export async function listCampaigns({ companyId, status, limit = 50, offset = 0 } = {}) {
+export async function listCampaigns({
+  companyId,
+  status,
+  limit = 50,
+  offset = 0,
+  includeMetrics = false,
+  includeFraudSignals = false,
+  includeCreativeFlight = false,
+  includePlacementFlight = false
+} = {}) {
   const where = {};
   if (companyId) {
     where.companyId = companyId;
@@ -328,7 +343,12 @@ export async function listCampaigns({ companyId, status, limit = 50, offset = 0 
 
   return AdCampaign.findAll({
     where,
-    include: includeRelationsForCampaign(),
+    include: includeRelationsForCampaign({
+      includeMetrics,
+      includeFraudSignals,
+      includeCreativeFlight,
+      includePlacementFlight
+    }),
     order: [['updatedAt', 'DESC']],
     limit,
     offset
@@ -447,6 +467,157 @@ export async function upsertTargetingRules(campaignId, rules = []) {
     }));
 
     return CampaignTargetingRule.bulkCreate(records, { transaction, returning: true });
+  });
+}
+
+export async function createCampaignCreative(campaignId, payload) {
+  const required = ['name', 'format', 'status', 'assetUrl'];
+  required.forEach((field) => {
+    if (!payload?.[field]) {
+      throw campaignError(`${field} is required to create a creative`);
+    }
+  });
+
+  return sequelize.transaction(async (transaction) => {
+    const campaign = await AdCampaign.findByPk(campaignId, { transaction });
+    if (!campaign) {
+      throw campaignError('Campaign not found', 404);
+    }
+
+    const creative = await CampaignCreative.create(
+      {
+        campaignId,
+        flightId: payload.flightId || null,
+        name: payload.name,
+        format: payload.format,
+        status: payload.status,
+        headline: payload.headline || null,
+        description: payload.description || null,
+        callToAction: payload.callToAction || null,
+        assetUrl: payload.assetUrl,
+        thumbnailUrl: payload.thumbnailUrl || null,
+        metadata: payload.metadata || {}
+      },
+      { transaction }
+    );
+
+    return creative;
+  });
+}
+
+export async function updateCampaignCreative(campaignId, creativeId, updates = {}) {
+  return sequelize.transaction(async (transaction) => {
+    const creative = await CampaignCreative.findOne({
+      where: { id: creativeId, campaignId },
+      transaction
+    });
+
+    if (!creative) {
+      throw campaignError('Creative not found', 404);
+    }
+
+    const allowed = [
+      'name',
+      'format',
+      'status',
+      'headline',
+      'description',
+      'callToAction',
+      'assetUrl',
+      'thumbnailUrl',
+      'metadata',
+      'flightId'
+    ];
+
+    allowed.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(updates, field)) {
+        creative[field] = updates[field];
+      }
+    });
+
+    await creative.save({ transaction });
+    return creative;
+  });
+}
+
+export async function deleteCampaignCreative(campaignId, creativeId) {
+  return sequelize.transaction(async (transaction) => {
+    const deleted = await CampaignCreative.destroy({
+      where: { id: creativeId, campaignId },
+      transaction
+    });
+
+    if (!deleted) {
+      throw campaignError('Creative not found', 404);
+    }
+
+    return true;
+  });
+}
+
+export async function upsertAudienceSegments(campaignId, segments = []) {
+  if (!Array.isArray(segments)) {
+    throw campaignError('segments must be an array');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const campaign = await AdCampaign.findByPk(campaignId, { transaction });
+    if (!campaign) {
+      throw campaignError('Campaign not found', 404);
+    }
+
+    await CampaignAudienceSegment.destroy({ where: { campaignId }, transaction });
+
+    if (segments.length === 0) {
+      return [];
+    }
+
+    const records = segments.map((segment) => ({
+      campaignId,
+      name: segment.name,
+      segmentType: segment.segmentType || 'custom',
+      status: segment.status || 'draft',
+      sizeEstimate: segment.sizeEstimate ?? null,
+      engagementRate: segment.engagementRate ?? null,
+      syncedAt: segment.syncedAt ? ensureDate(segment.syncedAt, 'syncedAt') : null,
+      metadata: segment.metadata || {}
+    }));
+
+    return CampaignAudienceSegment.bulkCreate(records, { transaction, returning: true });
+  });
+}
+
+export async function upsertPlacements(campaignId, placements = []) {
+  if (!Array.isArray(placements)) {
+    throw campaignError('placements must be an array');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const campaign = await AdCampaign.findByPk(campaignId, { transaction });
+    if (!campaign) {
+      throw campaignError('Campaign not found', 404);
+    }
+
+    await CampaignPlacement.destroy({ where: { campaignId }, transaction });
+
+    if (placements.length === 0) {
+      return [];
+    }
+
+    const records = placements.map((placement) => ({
+      campaignId,
+      flightId: placement.flightId || null,
+      channel: placement.channel || 'marketplace',
+      format: placement.format || 'native',
+      status: placement.status || 'planned',
+      bidAmount: placement.bidAmount ?? null,
+      bidCurrency: placement.bidCurrency || campaign.currency || 'GBP',
+      cpm: placement.cpm ?? null,
+      inventorySource: placement.inventorySource || null,
+      metadata: placement.metadata || {}
+    }));
+
+    return CampaignPlacement.bulkCreate(records, { transaction, returning: true });
   });
 }
 

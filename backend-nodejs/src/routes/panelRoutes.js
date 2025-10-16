@@ -6,6 +6,7 @@ import {
 } from '../controllers/panelController.js';
 import { authenticate, maybeAuthenticate, requireStorefrontRole } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
+import providerCampaignRoutes from './providerCampaignRoutes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.get(
   getEnterprisePanelHandler
 );
 router.get('/provider/storefront', maybeAuthenticate, requireStorefrontRole, getProviderStorefrontHandler);
+router.use('/provider/campaigns', providerCampaignRoutes);
 
 export default router;

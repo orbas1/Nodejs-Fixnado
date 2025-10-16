@@ -20,6 +20,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -83,7 +84,7 @@ function resolvePlatformCommissionRate() {
   return PLATFORM_COMMISSION_FALLBACK;
 }
 
-async function resolveCompanyForActor({ companyId, actor }) {
+export async function resolveCompanyForActor({ companyId, actor }) {
   if (!actor?.id) {
     throw buildHttpError(403, 'forbidden');
   }
@@ -466,27 +467,36 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
   const companyId = company.id;
   const now = DateTime.now();
 
-  const [bookings, inventoryItems, inventoryAlerts, complianceDocs, serviceZones, marketplaceItems, rentals] =
-    await Promise.all([
-      Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
-      InventoryItem.findAll({ where: { companyId }, raw: true }),
-      InventoryAlert.findAll({
-        include: [
-          {
-            model: InventoryItem,
-            attributes: ['id', 'name', 'companyId'],
-            required: true,
-            where: { companyId }
-          }
-        ],
-        order: [['triggeredAt', 'DESC']],
-        limit: 10
-      }),
-      ComplianceDocument.findAll({ where: { companyId } }),
-      ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
-      MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
-      RentalAgreement.findAll({ where: { companyId } })
-    ]);
+  const [
+    bookings,
+    inventoryItems,
+    inventoryAlerts,
+    complianceDocs,
+    serviceZones,
+    marketplaceItems,
+    rentals,
+    adsWorkspace
+  ] = await Promise.all([
+    Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
+    InventoryItem.findAll({ where: { companyId }, raw: true }),
+    InventoryAlert.findAll({
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['id', 'name', 'companyId'],
+          required: true,
+          where: { companyId }
+        }
+      ],
+      order: [['triggeredAt', 'DESC']],
+      limit: 10
+    }),
+    ComplianceDocument.findAll({ where: { companyId } }),
+    ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
+    MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
+    RentalAgreement.findAll({ where: { companyId } }),
+    buildProviderCampaignWorkspace({ company, actor })
+  ]);
 
   const bookingIds = bookings.map((booking) => booking.id);
   const assignments = bookingIds.length
@@ -578,6 +588,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       })),
       deals: buildDeals(marketplaceItems, now)
     },
+    ads: adsWorkspace,
     crews,
     rentals: {
       active: rentals.filter((rental) => ['in_use', 'pickup_scheduled'].includes(rental.status)).length,

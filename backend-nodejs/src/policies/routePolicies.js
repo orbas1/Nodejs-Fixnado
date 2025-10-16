@@ -1290,6 +1290,20 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.ads': {
+    id: 'panel.provider.ads',
+    version: '1.0.0',
+    resource: 'panel.provider.ads',
+    action: 'panel.provider:ads:manage',
+    description: 'Allow provider administrators to create and manage Gigvora ads campaigns.',
+    requirements: [Permissions.CAMPAIGN_MANAGE],
+    tags: ['panel', 'provider', 'campaigns'],
+    severity: 'high',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId || null,
+      companyId: req.query?.companyId || req.body?.companyId || null
+    })
+  },
   'panel.enterprise.dashboard': {
     id: 'panel.enterprise.dashboard',
     version: '1.0.0',
