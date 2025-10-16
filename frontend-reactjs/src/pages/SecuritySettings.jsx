@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useSecurityPreferences } from '../hooks/useSecurityPreferences.js';
+import Spinner from '../components/ui/Spinner.jsx';
 
 const methodOptions = [
   {
@@ -36,7 +37,8 @@ const formatTimestamp = (value) => {
 };
 
 export default function SecuritySettings() {
-  const { twoFactorEnabled, setTwoFactorEnabled, updateMethods, methods, lastUpdated } =
+  const [status, setStatus] = useState(null);
+  const { twoFactorEnabled, setTwoFactorEnabled, updateMethods, methods, lastUpdated, loading, saving, error } =
     useSecurityPreferences();
 
   const selectedMethods = useMemo(() => new Set(methods ?? []), [methods]);
@@ -46,20 +48,32 @@ export default function SecuritySettings() {
     ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
     : 'border-slate-200 bg-slate-50 text-slate-500';
 
-  const handleToggleTwoFactor = () => {
-    setTwoFactorEnabled(!twoFactorEnabled);
+  const handleToggleTwoFactor = async () => {
+    setStatus(null);
+    try {
+      await setTwoFactorEnabled(!twoFactorEnabled);
+      setStatus({ type: 'success', message: !twoFactorEnabled ? 'Two-factor enabled.' : 'Two-factor disabled.' });
+    } catch (caught) {
+      setStatus({ type: 'error', message: caught?.message || 'Unable to update two-factor settings.' });
+    }
   };
 
-  const handleMethodToggle = (methodId) => {
-    updateMethods((current) => {
-      const next = new Set(current ?? []);
-      if (next.has(methodId)) {
-        next.delete(methodId);
-      } else {
-        next.add(methodId);
-      }
-      return Array.from(next);
-    });
+  const handleMethodToggle = async (methodId) => {
+    setStatus(null);
+    try {
+      await updateMethods((current = []) => {
+        const next = new Set(current ?? []);
+        if (next.has(methodId)) {
+          next.delete(methodId);
+        } else {
+          next.add(methodId);
+        }
+        return Array.from(next);
+      });
+      setStatus({ type: 'success', message: 'Verification methods updated.' });
+    } catch (caught) {
+      setStatus({ type: 'error', message: caught?.message || 'Unable to update verification methods.' });
+    }
   };
 
   const formattedUpdatedAt = formatTimestamp(lastUpdated);
@@ -80,6 +94,24 @@ export default function SecuritySettings() {
         </div>
 
         <section className="space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-accent/10">
+          {(loading || saving) && (
+            <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white/70 p-3 text-xs text-slate-500">
+              <Spinner className="mr-2 h-4 w-4 text-primary" />
+              {loading ? 'Loading security settings…' : 'Saving security settings…'}
+            </div>
+          )}
+          {(error || status) && (
+            <div
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                (status?.type === 'error' || error)
+                  ? 'border-rose-200 bg-rose-50 text-rose-700'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              }`}
+              role="status"
+            >
+              {error || status?.message}
+            </div>
+          )}
           <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
               <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusBadge}`}>
@@ -102,9 +134,10 @@ export default function SecuritySettings() {
                 twoFactorEnabled
                   ? 'bg-emerald-600 text-white hover:bg-emerald-500'
                   : 'bg-primary text-white hover:bg-primary/90'
-              }`}
+              } disabled:cursor-not-allowed disabled:opacity-60`}
+              disabled={saving || loading}
             >
-              {twoFactorEnabled ? 'Disable two-factor' : 'Enable two-factor'}
+              {saving ? 'Saving…' : twoFactorEnabled ? 'Disable two-factor' : 'Enable two-factor'}
             </button>
           </header>
 
@@ -135,14 +168,15 @@ export default function SecuritySettings() {
                         checked
                           ? 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary'
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                      disabled={saving || loading}
                     >
                       {checked ? (
                         <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
                       ) : (
                         <span className="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true" />
                       )}
-                      {checked ? 'Added' : 'Add method'}
+                      {saving ? 'Saving…' : checked ? 'Added' : 'Add method'}
                     </button>
                   </li>
                 );

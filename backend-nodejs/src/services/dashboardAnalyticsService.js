@@ -2,11 +2,13 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getUserProfileSettings } from './userProfileService.js';
 import {
   AdCampaign,
   Booking,
   BookingAssignment,
   BookingBid,
+  BookingHistoryEntry,
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignFlight,
@@ -23,12 +25,51 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { getWalletOverview } from './walletService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
 const UPCOMING_LIMIT = Math.max(config.dashboards?.upcomingLimit ?? 8, 3);
 const EXPORT_ROW_LIMIT = Math.max(config.dashboards?.exportRowLimit ?? 5000, 500);
 const PERSONA_DEFAULTS = Object.freeze(config.dashboards?.defaults ?? {});
+const ORDER_HISTORY_ENTRY_TYPES = Object.freeze([
+  { value: 'note', label: 'Note' },
+  { value: 'status_update', label: 'Status update' },
+  { value: 'milestone', label: 'Milestone' },
+  { value: 'handoff', label: 'Handoff' },
+  { value: 'document', label: 'Document' }
+]);
+const ORDER_HISTORY_ACTOR_ROLES = Object.freeze([
+  { value: 'customer', label: 'Customer' },
+  { value: 'provider', label: 'Provider' },
+  { value: 'operations', label: 'Operations' },
+  { value: 'support', label: 'Support' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'system', label: 'System' }
+]);
+const ORDER_HISTORY_ATTACHMENT_TYPES = Object.freeze(['image', 'document', 'link']);
+const ORDER_HISTORY_TIMELINE_LIMIT = Math.max(config.dashboards?.historyTimelineLimit ?? 50, 10);
+const ORDER_HISTORY_ACCESS = Object.freeze({
+  level: 'manage',
+  features: ['order-history:write', 'history:write']
+});
+
+const toIsoString = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  try {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  } catch (error) {
+    return null;
+  }
+};
 
 const CURRENCY_FORMATTER = (currency = 'GBP', locale = 'en-GB') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -355,7 +396,8 @@ async function loadUserData(context) {
     previousOrders,
     rentals,
     disputes,
-    conversations
+    conversations,
+    walletOverview
   ] = await Promise.all([
     userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
     Booking.findAll({ where: bookingWhere }),
@@ -395,7 +437,8 @@ async function loadUserData(context) {
         }
       ]
     }),
-    ConversationParticipant.findAll({ where: conversationWhere })
+    ConversationParticipant.findAll({ where: conversationWhere }),
+    getWalletOverview({ userId, companyId })
   ]);
 
   const inventoryExtras = companyId
@@ -416,6 +459,29 @@ async function loadUserData(context) {
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
   };
+  let profileSettings = null;
+  if (userId) {
+    try {
+      profileSettings = await getUserProfileSettings(userId);
+    } catch (error) {
+      console.warn('Failed to load profile settings for user dashboard', {
+        userId,
+        message: error.message
+      });
+    }
+  const bookingIds = bookings.map((booking) => booking.id);
+  let historyEntries = [];
+
+  if (bookingIds.length > 0) {
+    historyEntries = await BookingHistoryEntry.findAll({
+      where: { bookingId: { [Op.in]: bookingIds } },
+      order: [
+        ['occurredAt', 'DESC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: ORDER_HISTORY_TIMELINE_LIMIT
+    });
+  }
 
   const totalBookings = bookings.length;
   const previousTotalBookings = previousBookings.length;
@@ -583,9 +649,18 @@ async function loadUserData(context) {
                 .setZone(window.timezone)
                 .toRelative({ base: window.end })
             : 'Schedule pending';
+        const ownerLabel =
+          order.metadata?.siteAddress ||
+          order.metadata?.contactName ||
+          order.Service?.category ||
+          'Service order';
+        const priorityLabel =
+          order.priority && order.priority !== 'medium'
+            ? `Priority: ${order.priority.replace(/_/g, ' ')}`
+            : null;
         return {
-          title: order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
-          owner: order.Service?.category || 'Service order',
+          title: order.title || order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
+          owner: priorityLabel ? `${ownerLabel} • ${priorityLabel}` : ownerLabel,
           value: formatCurrency(order.totalAmount, order.currency || order.Service?.currency || 'GBP'),
           eta: etaLabel
         };
@@ -781,6 +856,110 @@ async function loadUserData(context) {
     ]
   };
 
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const escalatedBookings = bookings.filter((booking) => ['disputed', 'cancelled'].includes(booking.status)).length;
+  const latestHistoryTransition = bookings.reduce((latest, booking) => {
+    if (booking.lastStatusTransitionAt instanceof Date && !Number.isNaN(booking.lastStatusTransitionAt.getTime())) {
+      return latest && latest > booking.lastStatusTransitionAt ? latest : booking.lastStatusTransitionAt;
+    }
+    return latest;
+  }, null);
+  const latestTimelineUpdate = historyEntries.reduce((latest, entry) => {
+    const candidate = entry.occurredAt instanceof Date ? entry.occurredAt : entry.createdAt;
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return latest && latest > candidate ? latest : candidate;
+    }
+    return latest;
+  }, null);
+  const latestHistory = [latestHistoryTransition, latestTimelineUpdate].reduce((resolved, candidate) => {
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return resolved && resolved > candidate ? resolved : candidate;
+    }
+    return resolved;
+  }, null);
+  const lastUpdatedLabel = latestHistory
+    ? DateTime.fromJSDate(latestHistory).setZone(window.timezone).toRelative({ base: window.end })
+    : '—';
+
+  const historySidebar = {
+    badge: `${formatNumber(totalBookings)} records`,
+    status:
+      escalatedBookings > 0
+        ? { label: `${formatNumber(escalatedBookings)} escalated`, tone: 'danger' }
+        : { label: 'No escalations', tone: 'success' },
+    highlights: [
+      { label: 'Completed', value: formatNumber(completedBookingsCount) },
+      { label: 'In flight', value: formatNumber(totalBookings - completedBookingsCount) }
+    ],
+    meta: [{ label: 'Last update', value: lastUpdatedLabel || '—' }]
+  };
+
+  const orderSummaries = bookings
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, EXPORT_ROW_LIMIT)
+    .map((order) => ({
+      id: order.id,
+      reference: order.id.slice(0, 8).toUpperCase(),
+      status: order.status,
+      serviceTitle: order.meta?.service || order.meta?.title || 'Service order',
+      serviceCategory: order.meta?.category || null,
+      totalAmount: Number.parseFloat(order.totalAmount ?? 0) || 0,
+      currency: order.currency || 'GBP',
+      scheduledFor: order.scheduledStart instanceof Date
+        ? DateTime.fromJSDate(order.scheduledStart).setZone(window.timezone).toISO()
+        : null,
+      createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : null,
+      updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : null,
+      lastStatusTransitionAt:
+        order.lastStatusTransitionAt instanceof Date ? order.lastStatusTransitionAt.toISOString() : null,
+      zoneId: order.zoneId || null,
+      companyId: order.companyId || null,
+      meta: order.meta || {}
+    }));
+
+  const statusOptions = Array.from(new Set(orderSummaries.map((order) => order.status).filter(Boolean))).map(
+    (status) => ({ value: status, label: humanise(status) })
+  );
+
+  if (!statusOptions.some((option) => option.value === 'all')) {
+    statusOptions.unshift({ value: 'all', label: 'All statuses' });
+  }
+
+  const historyEntriesPayload = historyEntries.map((entry) => ({
+    id: entry.id,
+    bookingId: entry.bookingId,
+    title: entry.title,
+    entryType: entry.entryType,
+    status: entry.status,
+    summary: entry.summary,
+    actorRole: entry.actorRole,
+    actorId: entry.actorId,
+    occurredAt: toIsoString(entry.occurredAt),
+    createdAt: toIsoString(entry.createdAt),
+    updatedAt: toIsoString(entry.updatedAt),
+    attachments: Array.isArray(entry.attachments) ? entry.attachments : [],
+    meta:
+      entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta)
+        ? entry.meta
+        : {}
+  }));
+
+  const historyData = {
+    statusOptions,
+    entryTypes: ORDER_HISTORY_ENTRY_TYPES,
+    actorRoles: ORDER_HISTORY_ACTOR_ROLES,
+    defaultFilters: { status: 'all', sort: 'desc', limit: 25 },
+    attachments: { acceptedTypes: ORDER_HISTORY_ATTACHMENT_TYPES, maxPerEntry: 6 },
+    context: {
+      customerId: userId ?? null,
+      companyId: companyId ?? null
+    },
+    orders: orderSummaries,
+    entries: historyEntriesPayload,
+    access: ORDER_HISTORY_ACCESS
+  };
+
   const rentalsSidebar = {
     badge: `${formatNumber(rentals.length)} rentals`,
     status:
@@ -808,14 +987,115 @@ async function loadUserData(context) {
   };
 
   const mfaEnabled = Boolean(user?.twoFactorApp || user?.twoFactorEmail);
+  const profilePrefs = profileSettings?.profile ?? {};
+  const notificationsPrefs = profileSettings?.notifications ?? {
+    dispatch: { email: true, sms: false },
+    support: { email: true, sms: false },
+    weeklySummary: { email: true },
+    concierge: { email: true, sms: false },
+    quietHours: { enabled: false, start: null, end: null, timezone: timezoneLabel },
+    escalationContacts: []
+  };
+  const billingPrefs = profileSettings?.billing ?? {
+    preferredCurrency: currency,
+    defaultPaymentMethod: null,
+    paymentNotes: null,
+    invoiceRecipients: []
+  };
+  const securityPrefs = profileSettings?.security?.twoFactor ?? {
+    app: Boolean(user?.twoFactorApp),
+    email: Boolean(user?.twoFactorEmail),
+    methods: [],
+    lastUpdated: null
+  };
+
+  const timezonePreference = profilePrefs.timezone ?? timezoneLabel;
+  const preferredCurrency = billingPrefs.preferredCurrency ?? currency;
+  const quietHours = notificationsPrefs.quietHours ?? {
+    enabled: false,
+    start: null,
+    end: null,
+    timezone: timezonePreference
+  };
+  const quietHoursLabel = quietHours.enabled
+    ? `${quietHours.start ?? '--:--'} – ${quietHours.end ?? '--:--'} ${quietHours.timezone ?? timezonePreference}`
+    : 'Disabled';
+  const escalationCount = Array.isArray(notificationsPrefs.escalationContacts)
+    ? notificationsPrefs.escalationContacts.length
+    : 0;
+  const invoiceRecipientCount = Array.isArray(billingPrefs.invoiceRecipients)
+    ? billingPrefs.invoiceRecipients.length
+    : 0;
+
   const settingsSidebar = {
-    badge: mfaEnabled ? 'MFA secured' : 'Security review',
+    badge: profilePrefs.preferredName
+      ? `${profilePrefs.preferredName}`
+      : mfaEnabled
+        ? 'MFA secured'
+        : 'Security review',
     status: mfaEnabled ? { label: 'MFA enabled', tone: 'success' } : { label: 'Enable MFA', tone: 'warning' },
     highlights: [
-      { label: 'Timezone', value: timezoneLabel },
-      { label: 'Currency', value: currency }
+      { label: 'Timezone', value: timezonePreference },
+      { label: 'Currency', value: preferredCurrency }
     ]
   };
+
+  const displayName = (() => {
+    if (profilePrefs.firstName || profilePrefs.lastName) {
+      return `${profilePrefs.firstName ?? ''} ${profilePrefs.lastName ?? ''}`.trim();
+    }
+    return user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
+  })();
+  const walletCurrency = walletOverview?.account?.currency || currency;
+  const walletSummary = walletOverview?.summary;
+  const walletSidebar = walletOverview
+    ? {
+        badge: formatCurrency(walletSummary?.balance ?? 0, walletCurrency),
+        status:
+          walletSummary?.pending && walletSummary.pending > 0
+            ? {
+                label: `${formatCurrency(walletSummary.pending, walletCurrency)} held`,
+                tone: 'warning'
+              }
+            : { label: 'Ready for release', tone: 'success' },
+        highlights: [
+          {
+            label: 'Available',
+            value: formatCurrency(
+              walletSummary?.available ?? walletSummary?.balance ?? 0,
+              walletCurrency
+            )
+          },
+          { label: 'Methods', value: formatNumber(walletOverview?.methods?.length ?? 0) }
+        ]
+      }
+    : null;
+
+  const walletSection = walletOverview
+    ? {
+        id: 'wallet',
+        label: 'Wallet & Payments',
+        description: 'Manage wallet balance, autopayouts, and funding routes.',
+        type: 'wallet',
+        sidebar: walletSidebar,
+        data: {
+          account: walletOverview.account,
+          accountId: walletOverview.account?.id ?? null,
+          summary: walletSummary,
+          autopayout: walletOverview.autopayout,
+          methods: walletOverview.methods,
+          user: walletOverview.user,
+          company: walletOverview.company,
+          currency: walletCurrency,
+          policy: {
+            canManage: true,
+            canTransact:
+              walletOverview.account?.status !== 'suspended' && walletOverview.account?.status !== 'closed',
+            canEditMethods: true
+          }
+        }
+      }
+    : null;
 
   const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
   const workspaceAlignment = companyId ? 'Linked to company workspace' : 'Standalone workspace';
@@ -834,8 +1114,14 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Preferred name',
+          value: profilePrefs.preferredName ?? 'Not set',
+          helper: 'Used on dashboards, receipts, and shared documents.'
+        },
+        {
+          type: 'value',
           label: 'Contact email',
-          value: user?.email ?? 'Not provided',
+          value: profilePrefs.email ?? user?.email ?? 'Not provided',
           helper: 'Primary channel for booking updates and notifications.'
         },
         {
@@ -848,8 +1134,20 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Phone number',
+          value: profilePrefs.phoneNumber ?? 'Not provided',
+          helper: 'SMS alerts and concierge outreach use this number.'
+        },
+        {
+          type: 'value',
+          label: 'Language',
+          value: profilePrefs.language ?? 'en-GB',
+          helper: 'Applied to notifications and scheduling copy.'
+        },
+        {
+          type: 'value',
           label: 'Local timezone',
-          value: timezoneLabel,
+          value: timezonePreference,
           helper: 'Applied to scheduling, reminders, and exports.'
         }
       ]
@@ -862,18 +1160,29 @@ async function loadUserData(context) {
         {
           type: 'toggle',
           label: 'Authenticator app 2FA',
-          enabled: Boolean(user?.twoFactorApp),
-          helper: user?.twoFactorApp
+          enabled: Boolean(securityPrefs.app),
+          helper: securityPrefs.app
             ? 'Time-based one-time passcodes are required on sign-in.'
             : 'Add an authenticator app to secure sign-ins.'
         },
         {
           type: 'toggle',
           label: 'Email verification codes',
-          enabled: Boolean(user?.twoFactorEmail),
-          helper: user?.twoFactorEmail
+          enabled: Boolean(securityPrefs.email),
+          helper: securityPrefs.email
             ? 'Backup verification codes are delivered to your inbox.'
             : 'Enable email codes as a fallback second factor.'
+        },
+        {
+          type: 'value',
+          label: 'Registered methods',
+          value:
+            securityPrefs.methods && securityPrefs.methods.length > 0
+              ? securityPrefs.methods.join(', ')
+              : 'No secondary methods saved',
+          helper: securityPrefs.lastUpdated
+            ? `Last security review ${DateTime.fromISO(securityPrefs.lastUpdated).toRelative?.() ?? ''}`
+            : 'Record MFA methods to keep access recovery options ready.'
         },
         {
           type: 'value',
@@ -892,28 +1201,35 @@ async function loadUserData(context) {
       items: [
         {
           type: 'toggle',
-          label: 'Support case updates',
-          enabled: supportConversations > 0,
-          helper: supportConversations > 0
-            ? 'Email alerts active for current support cases.'
-            : 'Alerts activate automatically when a case opens.'
+          label: 'Dispatch email alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.email),
+          helper: 'Emails send whenever a crew assignment or ETA changes.'
         },
         {
           type: 'toggle',
-          label: 'Job dispatch alerts',
-          enabled: activeBookings.length > 0,
-          helper:
-            activeBookings.length > 0
-              ? `${formatNumber(activeBookings.length)} active job${activeBookings.length === 1 ? '' : 's'} will send dispatch nudges.`
-              : 'Dispatch alerts enable once you have active jobs.'
+          label: 'Dispatch SMS alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.sms),
+          helper: 'SMS nudges mirror urgent dispatch or SLA changes.'
+        },
+        {
+          type: 'toggle',
+          label: 'Support email updates',
+          enabled: Boolean(notificationsPrefs.support?.email),
+          helper: 'Escalations and concierge follow-ups trigger email updates.'
         },
         {
           type: 'value',
-          label: 'Weekly summary',
-          value: totalOrders > 0 ? 'Scheduled' : 'Paused',
-          helper: totalOrders > 0
-            ? 'A weekly health report will arrive each Monday.'
-            : 'Resume once new orders are captured.'
+          label: 'Quiet hours',
+          value: quietHoursLabel,
+          helper: quietHours.enabled
+            ? 'Notifications pause during these hours across channels.'
+            : 'No quiet hours configured.'
+        },
+        {
+          type: 'value',
+          label: 'Escalation contacts',
+          value: `${escalationCount} contact${escalationCount === 1 ? '' : 's'}`,
+          helper: 'Escalation contacts mirror urgent disputes or incidents.'
         }
       ]
     },
@@ -925,16 +1241,20 @@ async function loadUserData(context) {
         {
           type: 'value',
           label: 'Preferred currency',
-          value: currency,
+          value: preferredCurrency,
           helper: 'All new orders default to this currency.'
         },
         {
           type: 'value',
-          label: 'Funded escrows',
-          value: formatNumber(escrowFunded),
-          helper: escrowFunded > 0
-            ? 'Escrows release once jobs complete and pass inspection.'
-            : 'Fund an order to initialise automated escrow releases.'
+          label: 'Default payment method',
+          value: billingPrefs.defaultPaymentMethod ?? 'Not set',
+          helper: 'Shown to finance teams when approving releases.'
+        },
+        {
+          type: 'value',
+          label: 'Invoice recipients',
+          value: `${invoiceRecipientCount} contact${invoiceRecipientCount === 1 ? '' : 's'}`,
+          helper: 'Contacts copied into every invoice and billing summary.'
         },
         {
           type: 'value',
@@ -991,6 +1311,15 @@ async function loadUserData(context) {
         type: 'board',
         sidebar: ordersSidebar,
         data: { columns: orderBoardColumns }
+      },
+      {
+        id: 'history',
+        label: 'Order History',
+        description: 'Detailed audit trail for every service order.',
+        type: 'history',
+        access: ORDER_HISTORY_ACCESS,
+        sidebar: historySidebar,
+        data: historyData
       },
       {
         id: 'rentals',
@@ -1058,6 +1387,7 @@ async function loadUserData(context) {
           }
         }
       },
+      ...(walletSection ? [walletSection] : []),
       {
         id: 'account',
         label: 'Account & Support',
@@ -1365,6 +1695,14 @@ async function loadAdminData(context) {
             }
           ]
         }
+      },
+      {
+        id: 'tags-seo',
+        label: 'Tags & SEO',
+        description: 'Manage metadata defaults, indexing controls, and tag governance.',
+        type: 'route',
+        icon: 'seo',
+        route: '/admin/seo'
       }
     ]
   };
