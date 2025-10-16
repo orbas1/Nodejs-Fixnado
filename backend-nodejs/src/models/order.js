@@ -18,9 +18,22 @@ Order.init(
       type: DataTypes.UUID,
       allowNull: false
     },
+    title: {
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
+    summary: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     status: {
       type: DataTypes.ENUM('draft', 'funded', 'in_progress', 'completed', 'disputed'),
       defaultValue: 'draft'
+    },
+    priority: {
+      type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'),
+      allowNull: false,
+      defaultValue: 'medium'
     },
     totalAmount: DataTypes.DECIMAL,
     currency: {
@@ -32,6 +45,21 @@ Order.init(
       type: DataTypes.UUID,
       allowNull: true,
       field: 'region_id'
+    },
+    tags: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    attachments: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    metadata: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {}
     }
   },
   {

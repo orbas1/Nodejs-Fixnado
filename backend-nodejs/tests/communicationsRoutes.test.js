@@ -200,4 +200,147 @@ describe('communications API', () => {
     expect(sessionResponse.body.channelName).toContain('conversation_');
     expect(sessionResponse.body.appId).toBe('test-app-id');
   });
+
+  it('manages inbox configuration settings, quick replies, and escalation rules', async () => {
+    const settingsResponse = await request(app)
+      .get('/api/communications/settings/inbox')
+      .set('x-tenant-id', 'tenant-alpha')
+      .expect(200);
+
+    expect(settingsResponse.body.configuration.liveRoutingEnabled).toBe(true);
+    expect(settingsResponse.body.entryPoints.length).toBeGreaterThanOrEqual(6);
+
+    const firstEntry = settingsResponse.body.entryPoints[0];
+    const updateResponse = await request(app)
+      .put('/api/communications/settings/inbox')
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'admin-user-1')
+      .send({
+        liveRoutingEnabled: false,
+        defaultGreeting: 'Thanks for contacting the Fixnado team. We will respond shortly.',
+        aiAssistDisplayName: 'Fixnado Copilot',
+        aiAssistDescription: 'Guided replies and scheduling support for every chat.',
+        quietHoursStart: '20:00',
+        quietHoursEnd: '07:30'
+      })
+      .expect(200);
+
+    expect(updateResponse.body.configuration.liveRoutingEnabled).toBe(false);
+    expect(updateResponse.body.configuration.aiAssistDisplayName).toBe('Fixnado Copilot');
+
+    const entryCreate = await request(app)
+      .post('/api/communications/settings/inbox/entry-points')
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'admin-user-1')
+      .send({
+        key: 'after-hours-support',
+        label: 'After hours support',
+        description: 'Route conversations to the evening responders.',
+        icon: '🌙',
+        defaultMessage: 'Thanks for reaching us overnight. Our on-call team will respond shortly.',
+        enabled: true,
+        displayOrder: 12
+      })
+      .expect(201);
+
+    expect(entryCreate.body.key).toBe('after-hours-support');
+
+    const entryUpdate = await request(app)
+      .patch(`/api/communications/settings/inbox/entry-points/${firstEntry.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'admin-user-2')
+      .send({
+        label: 'Launch coordination',
+        enabled: false,
+        displayOrder: 4,
+        ctaLabel: 'See launch playbook',
+        ctaUrl: '/operations/launch',
+        imageUrl: 'https://cdn.fixnado.com/inbox/launch.png'
+      })
+      .expect(200);
+
+    expect(entryUpdate.body.label).toBe('Launch coordination');
+    expect(entryUpdate.body.enabled).toBe(false);
+
+    await request(app)
+      .delete(`/api/communications/settings/inbox/entry-points/${entryCreate.body.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .expect(204);
+
+    const quickReplyResponse = await request(app)
+      .post('/api/communications/settings/inbox/quick-replies')
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'support-user-1')
+      .send({
+        title: 'Standard acknowledgement',
+        body: 'Thanks for getting in touch! We have received your note and will follow up in under 15 minutes.',
+        allowedRoles: ['support', 'operations']
+      })
+      .expect(201);
+
+    expect(quickReplyResponse.body.title).toBe('Standard acknowledgement');
+
+    const quickReplyUpdate = await request(app)
+      .patch(`/api/communications/settings/inbox/quick-replies/${quickReplyResponse.body.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'support-user-2')
+      .send({
+        body: 'Thank you for reaching out! An operations specialist will review and respond shortly.',
+        sortOrder: 5
+      })
+      .expect(200);
+
+    expect(quickReplyUpdate.body.sortOrder).toBe(5);
+    expect(quickReplyUpdate.body.body).toContain('operations specialist');
+
+    const escalationCreate = await request(app)
+      .post('/api/communications/settings/inbox/escalations')
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'ops-owner')
+      .send({
+        name: 'Ops email fallback',
+        description: 'Escalate when no reply is sent within SLA.',
+        triggerType: 'inactivity',
+        triggerMetadata: { minutesWithoutReply: 20 },
+        targetType: 'email',
+        targetReference: 'ops-alerts@fixnado.com',
+        slaMinutes: 20,
+        allowedRoles: ['operations']
+      })
+      .expect(201);
+
+    expect(escalationCreate.body.targetReference).toBe('ops-alerts@fixnado.com');
+
+    const escalationUpdate = await request(app)
+      .patch(`/api/communications/settings/inbox/escalations/${escalationCreate.body.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .set('x-user-id', 'ops-owner')
+      .send({ active: false, responseTemplate: 'We escalated this conversation to the operations desk.' })
+      .expect(200);
+
+    expect(escalationUpdate.body.active).toBe(false);
+    expect(escalationUpdate.body.responseTemplate).toContain('operations desk');
+
+    await request(app)
+      .delete(`/api/communications/settings/inbox/quick-replies/${quickReplyResponse.body.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .expect(204);
+
+    await request(app)
+      .delete(`/api/communications/settings/inbox/escalations/${escalationCreate.body.id}`)
+      .set('x-tenant-id', 'tenant-alpha')
+      .expect(204);
+
+    const refreshed = await request(app)
+      .get('/api/communications/settings/inbox')
+      .set('x-tenant-id', 'tenant-alpha')
+      .expect(200);
+
+    expect(refreshed.body.quickReplies).toHaveLength(0);
+    expect(refreshed.body.escalationRules).toHaveLength(0);
+    const refreshedEntry = refreshed.body.entryPoints.find((item) => item.id === firstEntry.id);
+    expect(refreshedEntry.label).toBe('Launch coordination');
+    expect(refreshedEntry.enabled).toBe(false);
+    expect(refreshed.body.entryPoints.some((item) => item.id === entryCreate.body.id)).toBe(false);
+  });
 });

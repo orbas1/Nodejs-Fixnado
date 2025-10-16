@@ -255,4 +255,87 @@ describe('Booking orchestration', () => {
     expect(response.body.message).toMatch(/on-demand/i);
     expect(await Booking.count()).toBe(0);
   });
+
+  it('supports order history CRUD and filtered listing', async () => {
+    const customer = await User.create({
+      firstName: 'History',
+      lastName: 'Tester',
+      email: 'history@example.com',
+      passwordHash: 'hashed',
+      type: 'user'
+    });
+
+    const { company, zoneId } = await createCompanyWithZone();
+
+    const bookingResponse = await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'scheduled',
+        demandLevel: 'medium',
+        baseAmount: 150,
+        currency: 'GBP',
+        scheduledStart: new Date(Date.now() + 3600 * 1000).toISOString(),
+        scheduledEnd: new Date(Date.now() + 7200 * 1000).toISOString(),
+        metadata: { service: 'roof inspection' }
+      })
+      .expect(201);
+
+    const bookingId = bookingResponse.body.id;
+
+    const createEntryResponse = await request(app)
+      .post(`/api/bookings/${bookingId}/history`)
+      .send({
+        title: 'Site survey confirmed',
+        entryType: 'milestone',
+        status: 'in_progress',
+        occurredAt: new Date().toISOString(),
+        summary: 'Operations confirmed crew arrival for 09:00.',
+        actorRole: 'operations',
+        attachments: [
+          {
+            label: 'Checklist',
+            url: 'https://example.com/checklist.pdf',
+            type: 'document'
+          }
+        ]
+      })
+      .expect(201);
+
+    expect(createEntryResponse.body.title).toBe('Site survey confirmed');
+    expect(createEntryResponse.body.attachments).toHaveLength(1);
+
+    const historyList = await request(app)
+      .get(`/api/bookings/${bookingId}/history`)
+      .query({ limit: 10 })
+      .expect(200);
+
+    expect(historyList.body.total).toBe(1);
+    expect(historyList.body.entries[0].status).toBe('in_progress');
+
+    const entryId = historyList.body.entries[0].id;
+
+    const updatedEntry = await request(app)
+      .patch(`/api/bookings/${bookingId}/history/${entryId}`)
+      .send({ status: 'completed', summary: 'Crew uploaded completion photos.' })
+      .expect(200);
+
+    expect(updatedEntry.body.status).toBe('completed');
+    expect(updatedEntry.body.summary).toContain('completion photos');
+
+    await request(app).delete(`/api/bookings/${bookingId}/history/${entryId}`).expect(204);
+
+    const emptyHistory = await request(app).get(`/api/bookings/${bookingId}/history`).expect(200);
+    expect(emptyHistory.body.total).toBe(0);
+
+    const filteredBookings = await request(app)
+      .get('/api/bookings')
+      .query({ customerId: customer.id, search: 'roof' })
+      .expect(200);
+
+    expect(filteredBookings.body).toHaveLength(1);
+    expect(filteredBookings.body[0].id).toBe(bookingId);
+  });
 });
