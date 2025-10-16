@@ -15,6 +15,7 @@ import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
 import EscrowMilestone from './escrowMilestone.js';
 import EscrowNote from './escrowNote.js';
+import EscrowWorkLog from './escrowWorkLog.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
@@ -22,12 +23,18 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderStorefront from './providerStorefront.js';
+import ProviderStorefrontInventory from './providerStorefrontInventory.js';
+import ProviderStorefrontCoupon from './providerStorefrontCoupon.js';
+import ProviderEscrowPolicy from './providerEscrowPolicy.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingNote from './bookingNote.js';
 import BookingTemplate from './bookingTemplate.js';
 import BookingHistoryEntry from './bookingHistoryEntry.js';
+import ServicemanBookingSetting from './servicemanBookingSetting.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
@@ -37,7 +44,10 @@ import ComplianceDocument from './complianceDocument.js';
 import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
+import ProviderCalendarSetting from './providerCalendarSetting.js';
+import ProviderCalendarEvent from './providerCalendarEvent.js';
 import AdCampaign from './adCampaign.js';
+import CampaignCreative from './campaignCreative.js';
 import CampaignFlight from './campaignFlight.js';
 import CampaignTargetingRule from './campaignTargetingRule.js';
 import CampaignInvoice from './campaignInvoice.js';
@@ -55,6 +65,8 @@ import AccountSupportTaskUpdate from './accountSupportTaskUpdate.js';
 import AdminUserProfile from './adminUserProfile.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
+import CustomJobInvitation from './customJobInvitation.js';
+import CustomJobReport from './customJobReport.js';
 import PlatformSetting from './platformSetting.js';
 import CommunicationsInboxConfiguration from './communicationsInboxConfiguration.js';
 import CommunicationsEntryPoint from './communicationsEntryPoint.js';
@@ -144,9 +156,15 @@ import CustomerDisputeCase from './customerDisputeCase.js';
 import CustomerDisputeTask from './customerDisputeTask.js';
 import CustomerDisputeNote from './customerDisputeNote.js';
 import CustomerDisputeEvidence from './customerDisputeEvidence.js';
+import ServicemanDisputeCase from './servicemanDisputeCase.js';
+import ServicemanDisputeTask from './servicemanDisputeTask.js';
+import ServicemanDisputeNote from './servicemanDisputeNote.js';
+import ServicemanDisputeEvidence from './servicemanDisputeEvidence.js';
 import InboxQueue from './inboxQueue.js';
 import InboxConfiguration from './inboxConfiguration.js';
 import InboxTemplate from './inboxTemplate.js';
+import ToolSaleProfile from './toolSaleProfile.js';
+import ToolSaleCoupon from './toolSaleCoupon.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -159,6 +177,9 @@ User.hasOne(ServicemanProfileSetting, { foreignKey: 'userId', as: 'servicemanPro
 ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(ServicemanBookingSetting, { foreignKey: 'servicemanId', as: 'servicemanBookingSetting' });
+ServicemanBookingSetting.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
 
 CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
   foreignKey: 'accountSettingId',
@@ -186,6 +207,24 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderCalendarSetting, { foreignKey: 'companyId', as: 'calendarSetting' });
+ProviderCalendarSetting.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderCalendarEvent, { foreignKey: 'companyId', as: 'calendarEvents' });
+ProviderCalendarEvent.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+Company.hasOne(ProviderStorefront, { foreignKey: 'companyId', as: 'storefront' });
+ProviderStorefront.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderStorefront.hasMany(ProviderStorefrontInventory, {
+  foreignKey: 'storefrontId',
+  as: 'inventory'
+});
+ProviderStorefrontInventory.belongsTo(ProviderStorefront, {
+  foreignKey: 'storefrontId',
+  as: 'storefront'
+});
+ProviderStorefront.hasMany(ProviderStorefrontCoupon, { foreignKey: 'storefrontId', as: 'coupons' });
+ProviderStorefrontCoupon.belongsTo(ProviderStorefront, { foreignKey: 'storefrontId', as: 'storefront' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
@@ -220,6 +259,20 @@ CustomerDisputeCase.hasMany(CustomerDisputeEvidence, { foreignKey: 'disputeCaseI
 CustomerDisputeEvidence.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
 CustomerDisputeEvidence.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 User.hasMany(CustomerDisputeEvidence, { foreignKey: 'uploadedBy', as: 'uploadedDisputeEvidence' });
+User.hasMany(ServicemanDisputeCase, { foreignKey: 'servicemanId', as: 'servicemanDisputeCases' });
+ServicemanDisputeCase.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+ServicemanDisputeCase.belongsTo(Dispute, { foreignKey: 'disputeId', as: 'platformDispute' });
+Dispute.hasMany(ServicemanDisputeCase, { foreignKey: 'disputeId', as: 'servicemanCases' });
+ServicemanDisputeCase.hasMany(ServicemanDisputeTask, { foreignKey: 'disputeCaseId', as: 'tasks' });
+ServicemanDisputeTask.belongsTo(ServicemanDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+ServicemanDisputeCase.hasMany(ServicemanDisputeNote, { foreignKey: 'disputeCaseId', as: 'notes' });
+ServicemanDisputeNote.belongsTo(ServicemanDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+ServicemanDisputeNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(ServicemanDisputeNote, { foreignKey: 'authorId', as: 'authoredServicemanDisputeNotes' });
+ServicemanDisputeCase.hasMany(ServicemanDisputeEvidence, { foreignKey: 'disputeCaseId', as: 'evidence' });
+ServicemanDisputeEvidence.belongsTo(ServicemanDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+ServicemanDisputeEvidence.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+User.hasMany(ServicemanDisputeEvidence, { foreignKey: 'uploadedBy', as: 'uploadedServicemanDisputeEvidence' });
 User.hasMany(CustomerCoupon, { foreignKey: 'userId', as: 'customerCoupons' });
 CustomerCoupon.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -243,6 +296,20 @@ CustomJobBid.hasMany(CustomJobBidMessage, { foreignKey: 'bidId', as: 'messages' 
 CustomJobBidMessage.belongsTo(CustomJobBid, { foreignKey: 'bidId', as: 'bid' });
 CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
+Post.hasMany(CustomJobInvitation, { foreignKey: 'postId', as: 'invitations' });
+CustomJobInvitation.belongsTo(Post, { foreignKey: 'postId', as: 'job' });
+Company.hasMany(CustomJobInvitation, { foreignKey: 'companyId', as: 'customJobInvitations' });
+CustomJobInvitation.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'createdBy', as: 'customJobInvitationsCreated' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'targetId', as: 'customJobInvites' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'targetId', as: 'target' });
+
+Company.hasMany(CustomJobReport, { foreignKey: 'companyId', as: 'customJobReports' });
+CustomJobReport.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+CustomJobReport.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+CustomJobReport.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
+
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -254,6 +321,12 @@ ServiceCategory.belongsTo(ServiceCategory, { foreignKey: 'parentId', as: 'parent
 
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
+
+User.hasMany(ProviderEscrowPolicy, { foreignKey: 'providerId', as: 'providerEscrowPolicies' });
+ProviderEscrowPolicy.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+Company.hasMany(ProviderEscrowPolicy, { foreignKey: 'companyId', as: 'escrowPolicies' });
+ProviderEscrowPolicy.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
 AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -293,6 +366,15 @@ EscrowMilestone.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
 
 Escrow.hasMany(EscrowNote, { foreignKey: 'escrowId', as: 'notes' });
 EscrowNote.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+
+Escrow.hasMany(EscrowWorkLog, { foreignKey: 'escrowId', as: 'workLogs' });
+EscrowWorkLog.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
+
+EscrowMilestone.hasMany(EscrowWorkLog, { foreignKey: 'milestoneId', as: 'workLogs' });
+EscrowWorkLog.belongsTo(EscrowMilestone, { foreignKey: 'milestoneId', as: 'milestone' });
+
+User.hasMany(EscrowWorkLog, { foreignKey: 'authorId', as: 'escrowWorkLogs' });
+EscrowWorkLog.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 Order.hasMany(Payment, { foreignKey: 'orderId', as: 'payments' });
 Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
@@ -466,6 +548,9 @@ AdCampaign.hasMany(CampaignDailyMetric, { foreignKey: 'campaignId', as: 'dailyMe
 CampaignDailyMetric.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignDailyMetric.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
+AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
+CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId', as: 'campaign' });
+
 CampaignDailyMetric.hasOne(CampaignAnalyticsExport, {
   foreignKey: 'campaignDailyMetricId',
   as: 'analyticsExport'
@@ -585,6 +670,21 @@ InventoryAlert.belongsTo(InventoryItem, { foreignKey: 'itemId' });
 InventoryItem.hasMany(RentalAgreement, { foreignKey: 'itemId' });
 RentalAgreement.belongsTo(InventoryItem, { foreignKey: 'itemId' });
 
+InventoryItem.hasOne(ToolSaleProfile, { foreignKey: 'inventoryItemId', as: 'toolSaleProfile' });
+ToolSaleProfile.belongsTo(InventoryItem, { foreignKey: 'inventoryItemId', as: 'inventoryItem' });
+
+MarketplaceItem.hasOne(ToolSaleProfile, { foreignKey: 'marketplaceItemId', as: 'toolSaleProfile' });
+ToolSaleProfile.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId', as: 'marketplaceItem' });
+
+Company.hasMany(ToolSaleProfile, { foreignKey: 'companyId', as: 'toolSaleProfiles' });
+ToolSaleProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ToolSaleProfile.hasMany(ToolSaleCoupon, { foreignKey: 'toolSaleProfileId', as: 'coupons' });
+ToolSaleCoupon.belongsTo(ToolSaleProfile, { foreignKey: 'toolSaleProfileId', as: 'profile' });
+
+Company.hasMany(ToolSaleCoupon, { foreignKey: 'companyId', as: 'toolSaleCoupons' });
+ToolSaleCoupon.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
 MarketplaceItem.hasMany(RentalAgreement, { foreignKey: 'marketplaceItemId' });
 RentalAgreement.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId' });
 
@@ -678,6 +778,16 @@ Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 
 Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
 BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'providerAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+Booking.hasMany(ProviderCalendarEvent, { foreignKey: 'bookingId', as: 'calendarEvents' });
+ProviderCalendarEvent.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
+BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 
 Booking.hasMany(BookingBid, { foreignKey: 'bookingId' });
 BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
@@ -685,6 +795,8 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
 
+Booking.hasMany(BookingNote, { foreignKey: 'bookingId', as: 'notes' });
+BookingNote.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 Booking.hasMany(BookingHistoryEntry, { foreignKey: 'bookingId', as: 'history' });
 BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
@@ -810,7 +922,8 @@ export {
   OrderNote,
   Escrow,
   EscrowMilestone,
-  EscrowNote,
+    EscrowNote,
+    EscrowWorkLog,
   Dispute,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,
@@ -819,13 +932,21 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingNote,
   BookingTemplate,
   BookingHistoryEntry,
+  ProviderCalendarSetting,
+  ProviderCalendarEvent,
+  ServicemanBookingSetting,
   CustomJobBid,
   CustomJobBidMessage,
+  CustomJobInvitation,
+  CustomJobReport,
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
+  ToolSaleProfile,
+  ToolSaleCoupon,
   RentalAgreement,
   RentalCheckpoint,
   ComplianceDocument,
@@ -833,6 +954,7 @@ export {
   InsuredSellerApplication,
   MarketplaceModerationAction,
   AdCampaign,
+  CampaignCreative,
   CampaignFlight,
   CampaignTargetingRule,
   CampaignInvoice,
@@ -887,49 +1009,50 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
+  ProviderEscrowPolicy,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
+  RbacRoleAssignment,
   AdminProfile,
-  AdminDelegate
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
+  ServiceTaxonomyCategory,
   WalletAccount,
   WalletTransaction,
-  WalletPaymentMethod
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -938,7 +1061,7 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,
@@ -946,3 +1069,5 @@ export {
   InboxConfiguration,
   InboxTemplate
 };
+
+export { ProviderStorefront, ProviderStorefrontInventory, ProviderStorefrontCoupon };

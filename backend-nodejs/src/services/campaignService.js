@@ -9,7 +9,8 @@ import {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
-  Company
+  Company,
+  CampaignCreative
 } from '../models/index.js';
 import { recordAnalyticsEvent } from './analyticsEventService.js';
 
@@ -251,6 +252,15 @@ function includeRelationsForCampaign(options = {}) {
     { model: CampaignInvoice, as: 'invoices' }
   ];
 
+  if (options.includeCreatives) {
+    include.push({
+      model: CampaignCreative,
+      as: 'creatives',
+      separate: true,
+      order: [['createdAt', 'DESC']]
+    });
+  }
+
   if (options.includeMetrics) {
     include.push({
       model: CampaignDailyMetric,
@@ -282,10 +292,17 @@ export async function createCampaign({
   dailySpendCap = null,
   startAt,
   endAt,
-  metadata = {}
+  metadata = {},
+  network = 'fixnado'
 }) {
   if (!companyId || !name || !objective || !totalBudget || !startAt || !endAt) {
     throw campaignError('companyId, name, objective, budget, startAt, and endAt are required fields');
+  }
+
+  const resolvedNetwork = typeof network === 'string' && network.trim().length > 0 ? network.trim() : 'fixnado';
+  const resolvedMetadata = { ...(metadata || {}) };
+  if (!resolvedMetadata.network) {
+    resolvedMetadata.network = resolvedNetwork;
   }
 
   return sequelize.transaction(async (transaction) => {
@@ -308,7 +325,8 @@ export async function createCampaign({
         dailySpendCap,
         startAt: ensureDate(startAt, 'startAt'),
         endAt: ensureDate(endAt, 'endAt'),
-        metadata
+        metadata: resolvedMetadata,
+        network: resolvedNetwork
       },
       { transaction }
     );
@@ -317,13 +335,23 @@ export async function createCampaign({
   });
 }
 
-export async function listCampaigns({ companyId, status, limit = 50, offset = 0 } = {}) {
+export async function listCampaigns({ companyId, status, search, network, limit = 50, offset = 0 } = {}) {
   const where = {};
   if (companyId) {
     where.companyId = companyId;
   }
   if (status) {
     where.status = status;
+  }
+  if (network) {
+    where.network = network;
+  }
+  if (search && search.trim().length > 0) {
+    const term = `%${search.trim()}%`;
+    where[Op.or] = [
+      { name: { [Op.iLike]: term } },
+      { objective: { [Op.iLike]: term } }
+    ];
   }
 
   return AdCampaign.findAll({
@@ -703,6 +731,97 @@ export async function resolveFraudSignal(signalId, { note } = {}) {
   signal.resolutionNote = note || 'Manually resolved via API.';
   await signal.save();
   return signal;
+}
+
+export async function listCampaignCreatives(campaignId) {
+  const campaign = await AdCampaign.findByPk(campaignId);
+  if (!campaign) {
+    throw campaignError('Campaign not found', 404);
+  }
+
+  return CampaignCreative.findAll({
+    where: { campaignId },
+    order: [['createdAt', 'DESC']]
+  });
+}
+
+export async function createCampaignCreative(campaignId, payload) {
+  const { name, headline, assetUrl } = payload || {};
+  if (!name || !headline || !assetUrl) {
+    throw campaignError('name, headline, and assetUrl are required to create a creative');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const campaign = await AdCampaign.findByPk(campaignId, { transaction });
+    if (!campaign) {
+      throw campaignError('Campaign not found', 404);
+    }
+
+    const creative = await CampaignCreative.create(
+      {
+        campaignId,
+        name,
+        headline,
+        assetUrl,
+        status: payload.status || 'draft',
+        format: payload.format || 'image',
+        description: payload.description || null,
+        callToAction: payload.callToAction || null,
+        thumbnailUrl: payload.thumbnailUrl || null,
+        reviewStatus: payload.reviewStatus || 'pending',
+        metadata: { ...(payload.metadata || {}), network: campaign.network }
+      },
+      { transaction }
+    );
+
+    return creative;
+  });
+}
+
+export async function updateCampaignCreative(creativeId, updates = {}) {
+  return sequelize.transaction(async (transaction) => {
+    const creative = await CampaignCreative.findByPk(creativeId, { transaction });
+    if (!creative) {
+      throw campaignError('Creative not found', 404);
+    }
+
+    const fields = [
+      'name',
+      'headline',
+      'description',
+      'callToAction',
+      'assetUrl',
+      'thumbnailUrl',
+      'status',
+      'format',
+      'reviewStatus'
+    ];
+
+    fields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(updates, field)) {
+        creative[field] = updates[field];
+      }
+    });
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'metadata')) {
+      creative.metadata = { ...creative.metadata, ...(updates.metadata || {}) };
+    }
+
+    await creative.save({ transaction });
+
+    return creative;
+  });
+}
+
+export async function deleteCampaignCreative(creativeId) {
+  return sequelize.transaction(async (transaction) => {
+    const creative = await CampaignCreative.findByPk(creativeId, { transaction });
+    if (!creative) {
+      throw campaignError('Creative not found', 404);
+    }
+
+    await creative.destroy({ transaction });
+  });
 }
 
 export async function fetchPendingAnalyticsExports(limit = campaignConfig.exportBatchSize) {
