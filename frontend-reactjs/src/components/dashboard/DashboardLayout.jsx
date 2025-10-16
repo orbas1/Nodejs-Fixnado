@@ -206,6 +206,20 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
+      entries.push(
+        ...section.data.controls.map((control) => ({
+          id: `${section.id}-${control.id ?? control.title}`,
+          type: 'record',
+          label: control.title,
+          description: [control.ownerTeam || control.owner?.name || '', control.reviewFrequency || '']
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
     if (section.type === 'table' && Array.isArray(section.data?.rows)) {
       entries.push(
         ...section.data.rows.map((row, index) => ({

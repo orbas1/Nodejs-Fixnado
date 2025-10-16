@@ -8,6 +8,21 @@ import {
   stableHash
 } from '../utils/security/fieldEncryption.js';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  return EMAIL_PATTERN.test(trimmed.toLowerCase());
+}
+
 function transformEmailConditions(whereClause) {
   if (!whereClause || typeof whereClause !== 'object') {
     return;
@@ -129,7 +144,27 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
-        isEmail: true
+        isEmail(value) {
+          if (value === null || value === undefined) {
+            throw new Error('Validation isEmail on email failed');
+          }
+
+          let candidate = value;
+          if (typeof value === 'string') {
+            try {
+              const decrypted = decryptString(value, 'user:email');
+              if (decrypted) {
+                candidate = decrypted;
+              }
+            } catch (error) {
+              candidate = value;
+            }
+          }
+
+          if (!isValidEmail(candidate)) {
+            throw new Error('Validation isEmail on email failed');
+          }
+        }
       },
       set(value) {
         if (typeof value !== 'string') {

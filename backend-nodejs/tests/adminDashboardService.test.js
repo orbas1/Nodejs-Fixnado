@@ -12,6 +12,7 @@ const {
   Dispute,
   Booking,
   ComplianceDocument,
+  ComplianceControl,
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
@@ -193,6 +194,31 @@ describe('buildAdminDashboard', () => {
       taxAmount: 29,
       meta: {},
       lastStatusTransitionAt: now.minus({ minutes: 30 }).toJSDate()
+    });
+
+    await ComplianceControl.create({
+      title: 'GDPR impact assessment',
+      category: 'policy',
+      controlType: 'preventative',
+      status: 'active',
+      reviewFrequency: 'quarterly',
+      ownerTeam: 'Compliance Ops',
+      ownerEmail: 'controls@fixnado.com',
+      companyId: company.id,
+      nextReviewAt: now.plus({ days: 2 }).toJSDate(),
+      evidenceRequired: true,
+      documentationUrl: 'https://runbooks.fixnado.com/gdpr-impact',
+      metadata: {
+        evidenceCheckpoints: [
+          {
+            id: 'impact-template',
+            name: 'Upload refreshed DPIA template',
+            dueAt: now.plus({ days: 1 }).toISO(),
+            status: 'pending',
+            owner: 'Compliance Ops'
+          }
+        ]
+      }
     });
 
     await ComplianceDocument.create({
