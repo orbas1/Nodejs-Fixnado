@@ -1,139 +1,31 @@
+import AdminMonetizationWorkspace from '../features/affiliateMonetization/AdminMonetizationWorkspace.jsx';
+
+export default function AdminMonetization() {
+  return <AdminMonetizationWorkspace />;
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ArrowPathIcon,
-  BanknotesIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  PlusIcon,
-  ScaleIcon,
-  ShieldCheckIcon,
-  TrashIcon
-} from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import PageHeader from '../components/blueprints/PageHeader.jsx';
-import { Button, Card, Checkbox, SegmentedControl, Spinner, StatusPill, TextInput } from '../components/ui/index.js';
+import { Button, Spinner, StatusPill } from '../components/ui/index.js';
 import { fetchPlatformSettings, persistPlatformSettings } from '../api/platformSettingsClient.js';
-
-const COMMISSION_PERCENT_PRECISION = 100;
-
-function percentFromRate(rate) {
-  const numeric = Number.parseFloat(rate ?? 0);
-  if (!Number.isFinite(numeric)) {
-    return 0;
-  }
-  return Math.round(numeric * 100 * COMMISSION_PERCENT_PRECISION) / COMMISSION_PERCENT_PRECISION;
-}
-
-function rateFromPercent(percent) {
-  const numeric = Number.parseFloat(percent ?? 0);
-  if (!Number.isFinite(numeric)) {
-    return 0;
-  }
-  const ratio = numeric / 100;
-  if (ratio < 0) return 0;
-  if (ratio > 1) return 1;
-  return Math.round(ratio * COMMISSION_PERCENT_PRECISION) / COMMISSION_PERCENT_PRECISION;
-}
-
-function listToText(list) {
-  return Array.isArray(list) ? list.join(', ') : '';
-}
-
-function textToList(value) {
-  if (typeof value !== 'string') {
-    return [];
-  }
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-}
-
-function normaliseTier(tier) {
-  return {
-    id: tier?.id ?? '',
-    label: tier?.label ?? '',
-    description: tier?.description ?? '',
-    featuresText: listToText(tier?.features ?? [])
-  };
-}
-
-function buildFormState(settings) {
-  return {
-    commissions: {
-      enabled: settings.commissions?.enabled !== false,
-      baseRatePercent:
-        settings.commissions?.baseRate !== undefined
-          ? percentFromRate(settings.commissions.baseRate)
-          : 2.5,
-      customRates: Object.entries(settings.commissions?.customRates ?? {}).map(([key, value]) => ({
-        key,
-        ratePercent: percentFromRate(value)
-      }))
-    },
-    subscriptions: {
-      enabled: settings.subscriptions?.enabled !== false,
-      enforceFeatures: settings.subscriptions?.enforceFeatures !== false,
-      defaultTier: settings.subscriptions?.defaultTier || 'standard',
-      restrictedFeaturesText: listToText(settings.subscriptions?.restrictedFeatures ?? []),
-      tiers: (settings.subscriptions?.tiers ?? []).map(normaliseTier)
-    },
-    integrations: {
-      stripe: { ...(settings.integrations?.stripe ?? {}) },
-      escrow: { ...(settings.integrations?.escrow ?? {}) },
-      smtp: { ...(settings.integrations?.smtp ?? {}) },
-      cloudflareR2: { ...(settings.integrations?.cloudflareR2 ?? {}) },
-      app: { ...(settings.integrations?.app ?? {}) },
-      database: { ...(settings.integrations?.database ?? {}) }
-    }
-  };
-}
-
-function slugify(value) {
-  if (typeof value !== 'string') {
-    return '';
-  }
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-function tierOptions(tiers) {
-  return tiers.map((tier) => ({ value: tier.id || slugify(tier.label), label: tier.label || tier.id || 'Tier' }));
-}
-
-function buildMetaSnapshot(settings) {
-  const commissionState = settings.commissions?.enabled === false ? 'Disabled' : 'Enabled';
-  const commissionRate = (
-    settings.commissions?.baseRate !== undefined
-      ? percentFromRate(settings.commissions.baseRate)
-      : 2.5
-  ).toLocaleString(undefined, {
-    maximumFractionDigits: 2
-  });
-  const subscriptionState = settings.subscriptions?.enabled === false ? 'Subscriptions disabled' : 'Subscriptions active';
-  const enforced = settings.subscriptions?.enforceFeatures !== false ? 'Feature gating on' : 'Feature gating off';
-  const stripeConfigured = settings.integrations?.stripe?.secretKey ? 'Connected' : 'Pending setup';
-
-  return [
-    {
-      label: 'Commission status',
-      value: `${commissionState} • ${commissionRate}%`,
-      caption: 'Applied to new bookings and analytics rollups.'
-    },
-    {
-      label: 'Subscription guardrails',
-      value: `${subscriptionState}`,
-      caption: enforced
-    },
-    {
-      label: 'Stripe integration',
-      value: stripeConfigured,
-      caption: settings.integrations?.stripe?.publishableKey ? 'Keys present' : 'Missing publishable key'
-    }
-  ];
-}
+import {
+  CommissionSettingsPanel,
+  SubscriptionSettingsPanel,
+  IntegrationSettingsPanel,
+  CommissionStructureModal,
+  SubscriptionPackageModal,
+  buildFormState,
+  buildMetaSnapshot,
+  packageOptions,
+  deriveStructureId,
+  derivePackageId,
+  rateFromPercent,
+  ensureCurrency,
+  textToList,
+  describeStructureRate,
+  describeBillingSummary,
+  EMPTY_STRUCTURE,
+  EMPTY_PACKAGE
+} from '../features/monetisation/index.js';
 
 export default function AdminMonetization() {
   const [loading, setLoading] = useState(true);
@@ -142,6 +34,8 @@ export default function AdminMonetization() {
   const [success, setSuccess] = useState(null);
   const [settings, setSettings] = useState(null);
   const [form, setForm] = useState(null);
+  const [structureEditor, setStructureEditor] = useState({ open: false, index: null, value: EMPTY_STRUCTURE });
+  const [packageEditor, setPackageEditor] = useState({ open: false, index: null, value: EMPTY_PACKAGE });
 
   const refreshSettings = useCallback(async () => {
     setLoading(true);
@@ -150,6 +44,8 @@ export default function AdminMonetization() {
       const loaded = await fetchPlatformSettings();
       setSettings(loaded);
       setForm(buildFormState(loaded));
+      setStructureEditor({ open: false, index: null, value: EMPTY_STRUCTURE });
+      setPackageEditor({ open: false, index: null, value: EMPTY_PACKAGE });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Failed to load settings');
     } finally {
@@ -224,44 +120,151 @@ export default function AdminMonetization() {
     }));
   };
 
-  const handleTierChange = (index, field, value) => {
+  const handleOpenStructureEditor = (index = null) => {
+    if (!form) return;
+    const base =
+      index !== null && index >= 0
+        ? form.commissions.structures[index]
+        : { ...EMPTY_STRUCTURE, ratePercent: form.commissions.baseRatePercent };
+    setStructureEditor({ open: true, index, value: { ...base } });
+  };
+
+  const handleStructureModalClose = () => {
+    setStructureEditor({ open: false, index: null, value: EMPTY_STRUCTURE });
+  };
+
+  const handleStructureSave = (draft, index) => {
     setForm((current) => {
-      const nextTiers = current.subscriptions.tiers.map((tier, idx) =>
-        idx === index ? { ...tier, [field]: value } : tier
-      );
+      const nextStructures = [...current.commissions.structures];
+      const sanitized = {
+        ...EMPTY_STRUCTURE,
+        ...draft,
+        id: draft.id ?? '',
+        name: draft.name ?? '',
+        description: draft.description ?? '',
+        rateType: draft.rateType === 'flat' ? 'flat' : 'percentage',
+        ratePercent: Number.parseFloat(draft.ratePercent ?? 0) || 0,
+        flatAmount: Number.parseFloat(draft.flatAmount ?? 0) || 0,
+        currency: ensureCurrency(draft.currency ?? 'GBP', 'GBP'),
+        appliesToText: draft.appliesToText ?? '',
+        payoutDelayDays: Number.parseInt(draft.payoutDelayDays ?? 0, 10) || 0,
+        minBookingValue: draft.minBookingValue ?? '',
+        maxBookingValue: draft.maxBookingValue ?? '',
+        active: draft.active !== false,
+        imageUrl: draft.imageUrl ?? ''
+      };
+      if (typeof index === 'number' && index >= 0 && index < nextStructures.length) {
+        nextStructures[index] = sanitized;
+      } else {
+        nextStructures.push(sanitized);
+      }
       return {
         ...current,
-        subscriptions: { ...current.subscriptions, tiers: nextTiers }
+        commissions: { ...current.commissions, structures: nextStructures }
+      };
+    });
+    handleStructureModalClose();
+  };
+
+  const handleStructureRemove = (index) => {
+    setForm((current) => ({
+      ...current,
+      commissions: {
+        ...current.commissions,
+        structures: current.commissions.structures.filter((_, idx) => idx !== index)
+      }
+    }));
+  };
+
+  const handleOpenPackageEditor = (index = null) => {
+    if (!form) return;
+    const base =
+      index !== null && index >= 0
+        ? form.subscriptions.packages[index]
+        : { ...EMPTY_PACKAGE, priceCurrency: form.subscriptions.packages[0]?.priceCurrency ?? 'GBP' };
+    setPackageEditor({ open: true, index, value: { ...base } });
+  };
+
+  const handlePackageModalClose = () => {
+    setPackageEditor({ open: false, index: null, value: EMPTY_PACKAGE });
+  };
+
+  const handlePackageSave = (draft, index) => {
+    setForm((current) => {
+      const nextPackages = [...current.subscriptions.packages];
+      const interval = (draft.billingInterval || '').toLowerCase();
+      const sanitized = {
+        ...EMPTY_PACKAGE,
+        ...draft,
+        id: draft.id ?? '',
+        label: draft.label ?? '',
+        description: draft.description ?? '',
+        priceAmount: Number.parseFloat(draft.priceAmount ?? 0) || 0,
+        priceCurrency: ensureCurrency(draft.priceCurrency ?? 'GBP', 'GBP'),
+        billingInterval: ['week', 'month', 'year'].includes(interval) ? interval : 'month',
+        billingFrequency: Number.parseInt(draft.billingFrequency ?? 1, 10) || 1,
+        trialDays: Number.parseInt(draft.trialDays ?? 0, 10) || 0,
+        badge: draft.badge ?? '',
+        imageUrl: draft.imageUrl ?? '',
+        featuresText: draft.featuresText ?? '',
+        roleAccessText: draft.roleAccessText ?? '',
+        highlight: draft.highlight === true,
+        supportUrl: draft.supportUrl ?? ''
+      };
+      if (typeof index === 'number' && index >= 0 && index < nextPackages.length) {
+        nextPackages[index] = sanitized;
+      } else {
+        nextPackages.push(sanitized);
+      }
+
+      let nextDefault = current.subscriptions.defaultTier;
+      if (!nextPackages.some((pkg) => derivePackageId(pkg) === nextDefault)) {
+        nextDefault = derivePackageId(nextPackages[0]) || '';
+      }
+
+      return {
+        ...current,
+        subscriptions: {
+          ...current.subscriptions,
+          packages: nextPackages,
+          defaultTier: nextPackages.length > 0 ? nextDefault : ''
+        }
+      };
+    });
+    handlePackageModalClose();
+  };
+
+  const handlePackageRemove = (index) => {
+    setForm((current) => {
+      const nextPackages = current.subscriptions.packages.filter((_, idx) => idx !== index);
+      let nextDefault = current.subscriptions.defaultTier;
+      if (!nextPackages.some((pkg) => derivePackageId(pkg) === nextDefault)) {
+        nextDefault = derivePackageId(nextPackages[0]) || '';
+      }
+      return {
+        ...current,
+        subscriptions: {
+          ...current.subscriptions,
+          packages: nextPackages,
+          defaultTier: nextPackages.length > 0 ? nextDefault : ''
+        }
       };
     });
   };
 
-  const handleAddTier = () => {
-    setForm((current) => ({
-      ...current,
-      subscriptions: {
-        ...current.subscriptions,
-        tiers: [
-          ...current.subscriptions.tiers,
-          {
-            id: '',
-            label: '',
-            description: '',
-            featuresText: ''
-          }
-        ]
+  const handleMovePackage = (index, direction) => {
+    setForm((current) => {
+      const nextPackages = [...current.subscriptions.packages];
+      const target = index + direction;
+      if (target < 0 || target >= nextPackages.length) {
+        return current;
       }
-    }));
-  };
-
-  const handleRemoveTier = (index) => {
-    setForm((current) => ({
-      ...current,
-      subscriptions: {
-        ...current.subscriptions,
-        tiers: current.subscriptions.tiers.filter((_, idx) => idx !== index)
-      }
-    }));
+      [nextPackages[index], nextPackages[target]] = [nextPackages[target], nextPackages[index]];
+      return {
+        ...current,
+        subscriptions: { ...current.subscriptions, packages: nextPackages }
+      };
+    });
   };
 
   const handleDefaultTierChange = (value) => {
@@ -309,25 +312,83 @@ export default function AdminMonetization() {
       customRates[entry.key.trim()] = rate;
     }
 
+    const structures = form.commissions.structures
+      .map((structure) => {
+        const id = deriveStructureId(structure);
+        if (!id || !structure.name) {
+          return null;
+        }
+        const minValue = Number.parseFloat(structure.minBookingValue);
+        const maxValue = Number.parseFloat(structure.maxBookingValue);
+        const minBookingValue = Number.isFinite(minValue) && minValue >= 0 ? Number(minValue.toFixed(2)) : 0;
+        const maxBookingValue =
+          Number.isFinite(maxValue) && maxValue >= minBookingValue ? Number(maxValue.toFixed(2)) : null;
+
+        return {
+          id,
+          name: structure.name,
+          description: structure.description,
+          rateType: structure.rateType === 'flat' ? 'flat' : 'percentage',
+          rateValue:
+            structure.rateType === 'flat'
+              ? Number.parseFloat(structure.flatAmount ?? 0) || 0
+              : rateFromPercent(structure.ratePercent),
+          currency: ensureCurrency(structure.currency ?? 'GBP', 'GBP'),
+          appliesTo: textToList(structure.appliesToText),
+          payoutDelayDays: Number.parseInt(structure.payoutDelayDays ?? 0, 10) || 0,
+          minBookingValue,
+          maxBookingValue,
+          active: structure.active !== false,
+          imageUrl: structure.imageUrl || ''
+        };
+      })
+      .filter(Boolean);
+
+    const packages = form.subscriptions.packages
+      .map((pkg) => {
+        const id = derivePackageId(pkg);
+        if (!id || !pkg.label) {
+          return null;
+        }
+        const priceAmount = Number.parseFloat(pkg.priceAmount ?? 0) || 0;
+        const billingFrequency = Number.parseInt(pkg.billingFrequency ?? 1, 10) || 1;
+        const trialDays = Number.parseInt(pkg.trialDays ?? 0, 10) || 0;
+        const interval = (pkg.billingInterval || 'month').toLowerCase();
+
+        return {
+          id,
+          label: pkg.label,
+          description: pkg.description,
+          features: textToList(pkg.featuresText),
+          price: {
+            amount: Number(priceAmount.toFixed(2)),
+            currency: ensureCurrency(pkg.priceCurrency ?? 'GBP', 'GBP')
+          },
+          billingInterval: ['week', 'month', 'year'].includes(interval) ? interval : 'month',
+          billingFrequency,
+          trialDays,
+          badge: pkg.badge ?? '',
+          imageUrl: pkg.imageUrl ?? '',
+          roleAccess: textToList(pkg.roleAccessText),
+          highlight: pkg.highlight === true,
+          supportUrl: pkg.supportUrl ?? ''
+        };
+      })
+      .filter(Boolean);
+
     const payload = {
       commissions: {
         enabled: form.commissions.enabled,
         baseRate: rateFromPercent(form.commissions.baseRatePercent),
-        customRates
+        customRates,
+        structures
       },
       subscriptions: {
         enabled: form.subscriptions.enabled,
         enforceFeatures: form.subscriptions.enforceFeatures,
         defaultTier: form.subscriptions.defaultTier,
         restrictedFeatures: textToList(form.subscriptions.restrictedFeaturesText),
-        tiers: form.subscriptions.tiers
-          .map((tier) => ({
-            id: tier.id ? slugify(tier.id) : slugify(tier.label),
-            label: tier.label,
-            description: tier.description,
-            features: textToList(tier.featuresText)
-          }))
-          .filter((tier) => tier.id && tier.label)
+        tiers: packages
       },
       integrations: {
         stripe: form.integrations.stripe,
@@ -367,7 +428,7 @@ export default function AdminMonetization() {
     );
   }
 
-  const tierChoices = tierOptions(form.subscriptions.tiers);
+  const packageChoices = packageOptions(form.subscriptions.packages);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24" data-qa-page="admin-monetization">
@@ -407,405 +468,33 @@ export default function AdminMonetization() {
           ) : null}
         </div>
 
-        <Card padding="lg" className="space-y-8 border-slate-200 bg-white/90 shadow-lg shadow-primary/5">
-          <header className="space-y-2">
-            <h2 className="text-2xl font-semibold text-primary">Commission management</h2>
-            <p className="text-sm text-slate-600">
-              Define cross-marketplace commission earnings from escrow transactions and staged releases.
-            </p>
-          </header>
+        <CommissionSettingsPanel
+          form={form.commissions}
+          onToggle={handleCommissionToggle}
+          onRateChange={handleCommissionRateChange}
+          onOpenStructureEditor={handleOpenStructureEditor}
+          onStructureRemove={handleStructureRemove}
+          onAddCustomRate={handleAddCustomRate}
+          onCustomRateChange={handleCustomRateChange}
+          onRemoveCustomRate={handleRemoveCustomRate}
+          describeStructureRate={describeStructureRate}
+          deriveStructureId={deriveStructureId}
+        />
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Checkbox
-              label="Enable commissions"
-              checked={form.commissions.enabled}
-              onChange={handleCommissionToggle}
-              description="Disable to waive platform earnings across all transactions."
-            />
+        <SubscriptionSettingsPanel
+          form={form.subscriptions}
+          packageChoices={packageChoices}
+          onToggle={handleSubscriptionToggle}
+          onFieldChange={handleSubscriptionField}
+          onDefaultTierChange={handleDefaultTierChange}
+          onOpenPackageEditor={handleOpenPackageEditor}
+          onMovePackage={handleMovePackage}
+          onRemovePackage={handlePackageRemove}
+          describeBillingSummary={describeBillingSummary}
+          derivePackageId={derivePackageId}
+        />
 
-            <TextInput
-              label="Default commission rate"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              suffix="%"
-              value={form.commissions.baseRatePercent}
-              onChange={handleCommissionRateChange}
-              placeholder="2.5"
-              hint="Applies when no demand-specific override is matched. Default platform share is 2.5%."
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-primary">Custom rate overrides</p>
-                <p className="text-xs text-slate-500">
-                  Provide keys like <code>scheduled:high</code> or <code>on_demand</code>. Empty entries are ignored.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                icon={PlusIcon}
-                onClick={handleAddCustomRate}
-              >
-                Add override
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {form.commissions.customRates.length === 0 ? (
-                <p className="text-xs text-slate-500">No custom rates configured.</p>
-              ) : (
-                form.commissions.customRates.map((entry, index) => (
-                  <div
-                    key={`custom-rate-${index}`}
-                    className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,160px)_auto]"
-                  >
-                    <TextInput
-                      label="Key"
-                      value={entry.key}
-                      onChange={(event) => handleCustomRateChange(index, 'key', event.target.value)}
-                      hint="Matches booking type and demand e.g. scheduled:high"
-                    />
-                    <TextInput
-                      label="Rate"
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      suffix="%"
-                      value={entry.ratePercent}
-                      onChange={(event) => handleCustomRateChange(index, 'ratePercent', event.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      icon={TrashIcon}
-                      onClick={() => handleRemoveCustomRate(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              Platform policy highlights
-            </h3>
-            <ul className="space-y-3 text-sm text-primary">
-              <li className="flex items-start gap-3">
-                <ShieldCheckIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
-                <div>
-                  Default owner commission is fixed at <strong>2.5%</strong> of every booking unless you explicitly override the rate for specific demand bands.
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <BanknotesIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
-                <div>
-                  Providers retain full control over how much they pay their servicemen. The platform only records ledger references and does not intermediate crew wages.
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <ScaleIcon aria-hidden="true" className="mt-0.5 h-5 w-5" />
-                <div>
-                  Wallet and ledger operations operate as pass-through accounting so Fixnado is not holding client funds—keeping us outside FCA regulated activities and aligned with Apple App Store rules that exempt real-world services from in-app purchase flows.
-                </div>
-              </li>
-            </ul>
-          </div>
-        </Card>
-
-        <Card padding="lg" className="space-y-8 border-slate-200 bg-white/90 shadow-lg shadow-primary/5">
-          <header className="space-y-2">
-            <h2 className="text-2xl font-semibold text-primary">Subscription governance</h2>
-            <p className="text-sm text-slate-600">
-              Configure subscription tiers and feature gating to regulate marketplace capabilities.
-            </p>
-          </header>
-
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Checkbox
-              label="Enable subscriptions"
-              checked={form.subscriptions.enabled}
-              onChange={handleSubscriptionToggle('enabled')}
-              description="Disable to grant all features regardless of tier."
-            />
-            <Checkbox
-              label="Enforce feature gating"
-              checked={form.subscriptions.enforceFeatures}
-              onChange={handleSubscriptionToggle('enforceFeatures')}
-              description="When off, tiers remain visible but restrictions are not applied."
-            />
-          </div>
-
-          <TextInput
-            label="Restricted features"
-            value={form.subscriptions.restrictedFeaturesText}
-            onChange={handleSubscriptionField('restrictedFeaturesText')}
-            hint="Comma separated feature flags that require an active subscription."
-          />
-
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-primary">Subscription tiers</p>
-                <p className="text-xs text-slate-500">
-                  Provide at least one tier. Default tier is assigned to new providers.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <SegmentedControl
-                  name="Default subscription tier"
-                  value={form.subscriptions.defaultTier}
-                  onChange={handleDefaultTierChange}
-                  options={tierChoices.length > 0 ? tierChoices : [{ value: form.subscriptions.defaultTier || 'standard', label: form.subscriptions.defaultTier || 'Standard' }]}
-                  size="sm"
-                />
-                <Button type="button" variant="secondary" size="sm" icon={PlusIcon} onClick={handleAddTier}>
-                  Add tier
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {form.subscriptions.tiers.length === 0 ? (
-                <p className="text-xs text-slate-500">No tiers configured. Add at least one tier to enable gating.</p>
-              ) : (
-                form.subscriptions.tiers.map((tier, index) => (
-                  <div key={`tier-${index}`} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <TextInput
-                        label="Tier ID"
-                        value={tier.id}
-                        onChange={(event) => handleTierChange(index, 'id', event.target.value)}
-                        hint="Used for API checks and analytics labelling."
-                      />
-                      <TextInput
-                        label="Display name"
-                        value={tier.label}
-                        onChange={(event) => handleTierChange(index, 'label', event.target.value)}
-                      />
-                    </div>
-                    <TextInput
-                      label="Description"
-                      value={tier.description}
-                      onChange={(event) => handleTierChange(index, 'description', event.target.value)}
-                      optionalLabel="optional"
-                    />
-                    <TextInput
-                      label="Features"
-                      value={tier.featuresText}
-                      onChange={(event) => handleTierChange(index, 'featuresText', event.target.value)}
-                      hint="Comma separated feature flags unlocked by this tier."
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        icon={TrashIcon}
-                        onClick={() => handleRemoveTier(index)}
-                      >
-                        Remove tier
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card padding="lg" className="space-y-8 border-slate-200 bg-white/90 shadow-lg shadow-primary/5">
-          <header className="space-y-2">
-            <h2 className="text-2xl font-semibold text-primary">Integration credentials</h2>
-            <p className="text-sm text-slate-600">
-              Centralise billing, escrow, email, and storage secrets. Values are stored securely server-side.
-            </p>
-          </header>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Stripe</h3>
-              <TextInput
-                label="Publishable key"
-                value={form.integrations.stripe.publishableKey || ''}
-                onChange={handleIntegrationChange('stripe', 'publishableKey')}
-              />
-              <TextInput
-                label="Secret key"
-                type="password"
-                value={form.integrations.stripe.secretKey || ''}
-                onChange={handleIntegrationChange('stripe', 'secretKey')}
-              />
-              <TextInput
-                label="Webhook secret"
-                type="password"
-                value={form.integrations.stripe.webhookSecret || ''}
-                onChange={handleIntegrationChange('stripe', 'webhookSecret')}
-              />
-              <TextInput
-                label="Account ID"
-                value={form.integrations.stripe.accountId || ''}
-                onChange={handleIntegrationChange('stripe', 'accountId')}
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Escrow.com</h3>
-              <TextInput
-                label="API key"
-                value={form.integrations.escrow.apiKey || ''}
-                onChange={handleIntegrationChange('escrow', 'apiKey')}
-              />
-              <TextInput
-                label="API secret"
-                type="password"
-                value={form.integrations.escrow.apiSecret || ''}
-                onChange={handleIntegrationChange('escrow', 'apiSecret')}
-              />
-              <TextInput
-                label="Environment"
-                value={form.integrations.escrow.environment || ''}
-                onChange={handleIntegrationChange('escrow', 'environment')}
-                hint="Use sandbox for testing or production when ready to transact."
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">SMTP</h3>
-              <TextInput
-                label="Host"
-                value={form.integrations.smtp.host || ''}
-                onChange={handleIntegrationChange('smtp', 'host')}
-              />
-              <TextInput
-                label="Port"
-                type="number"
-                value={form.integrations.smtp.port ?? ''}
-                onChange={handleIntegrationChange('smtp', 'port')}
-              />
-              <TextInput
-                label="Username"
-                value={form.integrations.smtp.username || ''}
-                onChange={handleIntegrationChange('smtp', 'username')}
-              />
-              <TextInput
-                label="Password"
-                type="password"
-                value={form.integrations.smtp.password || ''}
-                onChange={handleIntegrationChange('smtp', 'password')}
-              />
-              <TextInput
-                label="From email"
-                value={form.integrations.smtp.fromEmail || ''}
-                onChange={handleIntegrationChange('smtp', 'fromEmail')}
-              />
-              <Checkbox
-                label="Use secure connection (TLS)"
-                checked={Boolean(form.integrations.smtp.secure)}
-                onChange={handleIntegrationChange('smtp', 'secure')}
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Cloudflare R2</h3>
-              <TextInput
-                label="Account ID"
-                value={form.integrations.cloudflareR2.accountId || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'accountId')}
-              />
-              <TextInput
-                label="Access key ID"
-                value={form.integrations.cloudflareR2.accessKeyId || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'accessKeyId')}
-              />
-              <TextInput
-                label="Secret access key"
-                type="password"
-                value={form.integrations.cloudflareR2.secretAccessKey || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'secretAccessKey')}
-              />
-              <TextInput
-                label="Bucket name"
-                value={form.integrations.cloudflareR2.bucket || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'bucket')}
-              />
-              <TextInput
-                label="Public URL"
-                value={form.integrations.cloudflareR2.publicUrl || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'publicUrl')}
-              />
-              <TextInput
-                label="Endpoint"
-                value={form.integrations.cloudflareR2.endpoint || ''}
-                onChange={handleIntegrationChange('cloudflareR2', 'endpoint')}
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">App shell</h3>
-              <TextInput
-                label="Application name"
-                value={form.integrations.app.name || ''}
-                onChange={handleIntegrationChange('app', 'name')}
-              />
-              <TextInput
-                label="Primary URL"
-                value={form.integrations.app.url || ''}
-                onChange={handleIntegrationChange('app', 'url')}
-              />
-              <TextInput
-                label="Support email"
-                value={form.integrations.app.supportEmail || ''}
-                onChange={handleIntegrationChange('app', 'supportEmail')}
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Database credentials</h3>
-              <TextInput
-                label="Host"
-                value={form.integrations.database.host || ''}
-                onChange={handleIntegrationChange('database', 'host')}
-              />
-              <TextInput
-                label="Port"
-                type="number"
-                value={form.integrations.database.port ?? ''}
-                onChange={handleIntegrationChange('database', 'port')}
-              />
-              <TextInput
-                label="Database name"
-                value={form.integrations.database.name || ''}
-                onChange={handleIntegrationChange('database', 'name')}
-              />
-              <TextInput
-                label="User"
-                value={form.integrations.database.user || ''}
-                onChange={handleIntegrationChange('database', 'user')}
-              />
-              <TextInput
-                label="Password"
-                type="password"
-                value={form.integrations.database.password || ''}
-                onChange={handleIntegrationChange('database', 'password')}
-              />
-              <Checkbox
-                label="Require SSL"
-                checked={Boolean(form.integrations.database.ssl)}
-                onChange={handleIntegrationChange('database', 'ssl')}
-              />
-            </div>
-          </div>
-        </Card>
+        <IntegrationSettingsPanel form={form.integrations} onIntegrationChange={handleIntegrationChange} />
 
         <div className="flex flex-col items-stretch justify-end gap-3 sm:flex-row">
           <Button type="button" variant="secondary" onClick={resetForm} disabled={saving}>
@@ -816,6 +505,36 @@ export default function AdminMonetization() {
           </Button>
         </div>
       </form>
+
+      <CommissionStructureModal
+        open={structureEditor.open}
+        initialValue={structureEditor.value}
+        baseRatePercent={form.commissions.baseRatePercent}
+        onClose={handleStructureModalClose}
+        onSubmit={(draft) => handleStructureSave(draft, structureEditor.index)}
+        onDelete={
+          structureEditor.index !== null
+            ? () => {
+                handleStructureRemove(structureEditor.index);
+                handleStructureModalClose();
+              }
+            : undefined
+        }
+      />
+      <SubscriptionPackageModal
+        open={packageEditor.open}
+        initialValue={packageEditor.value}
+        onClose={handlePackageModalClose}
+        onSubmit={(draft) => handlePackageSave(draft, packageEditor.index)}
+        onDelete={
+          packageEditor.index !== null
+            ? () => {
+                handlePackageRemove(packageEditor.index);
+                handlePackageModalClose();
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
