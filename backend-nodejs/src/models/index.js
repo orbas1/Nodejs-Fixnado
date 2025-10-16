@@ -63,6 +63,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import WalletConfiguration from './walletConfiguration.js';
+import WalletAccount from './walletAccount.js';
+import WalletTransaction from './walletTransaction.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -164,6 +167,17 @@ FinanceWebhookEvent.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
 Order.hasMany(FinanceWebhookEvent, { foreignKey: 'orderId', as: 'financeEvents' });
 Payment.hasMany(FinanceWebhookEvent, { foreignKey: 'paymentId', as: 'webhookEvents' });
 Escrow.hasMany(FinanceWebhookEvent, { foreignKey: 'escrowId', as: 'webhookEvents' });
+
+WalletAccount.hasMany(WalletTransaction, {
+  foreignKey: 'walletAccountId',
+  sourceKey: 'id',
+  as: 'transactions'
+});
+WalletTransaction.belongsTo(WalletAccount, {
+  foreignKey: 'walletAccountId',
+  targetKey: 'id',
+  as: 'walletAccount'
+});
 
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -464,5 +478,8 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  WalletConfiguration,
+  WalletAccount,
+  WalletTransaction
 };

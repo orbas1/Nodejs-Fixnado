@@ -81,6 +81,7 @@ export const RBAC_MATRIX = {
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
       Permissions.FINANCE_PAYOUT_VIEW,
+      Permissions.FINANCE_WALLET_VIEW,
       Permissions.REPORTING_DOWNLOAD
     ],
     navigation: {
@@ -141,6 +142,7 @@ export const RBAC_MATRIX = {
     inherits: [CanonicalRoles.PROVIDER],
     permissions: [
       Permissions.FINANCE_PAYOUT_MANAGE,
+      Permissions.FINANCE_WALLET_VIEW,
       Permissions.DISPUTE_MANAGE,
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
@@ -179,6 +181,8 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
+      Permissions.FINANCE_WALLET_VIEW,
+      Permissions.FINANCE_WALLET_MANAGE,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS
     ],
@@ -214,6 +218,7 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
       Permissions.FINANCE_OVERVIEW,
+      Permissions.FINANCE_WALLET_MANAGE,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.SUPPORT_TICKETS
     ],

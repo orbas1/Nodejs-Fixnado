@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, WalletIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -533,6 +533,13 @@ export default function AdminDashboard() {
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
+    sections.push({
+      id: 'wallet-management-link',
+      label: 'Wallet management',
+      description: 'Configure balances, guardrails, and ledger activity for Fixnado wallets.',
+      icon: 'finance',
+      href: '/admin/wallets'
+    });
     return sections;
   }, [state.data, affiliateSection]);
   const dashboardPayload = state.data ? { navigation } : null;
@@ -592,6 +599,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/wallets"
+        size="sm"
+        variant="secondary"
+        icon={WalletIcon}
+        iconPosition="start"
+      >
+        Wallet management
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"

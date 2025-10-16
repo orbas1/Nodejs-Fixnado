@@ -169,6 +169,36 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.wallets.read': {
+    id: 'admin.wallets.read',
+    version: '1.0.0',
+    resource: 'admin.wallets',
+    action: 'admin.wallets:read',
+    description: 'Allow administrators to review wallet configuration, balances, and ledger history.',
+    requirements: [Permissions.FINANCE_WALLET_VIEW],
+    tags: ['admin', 'finance', 'wallets'],
+    severity: 'high',
+    metadata: (req) => ({
+      scope: req.params?.id ? 'account' : req.query?.scope || 'overview',
+      accountId: req.params?.id || null,
+      method: req.method
+    })
+  },
+  'admin.wallets.manage': {
+    id: 'admin.wallets.manage',
+    version: '1.0.0',
+    resource: 'admin.wallets',
+    action: 'admin.wallets:manage',
+    description: 'Allow administrators to configure wallet settings, create accounts, and post ledger adjustments.',
+    requirements: [Permissions.FINANCE_WALLET_MANAGE],
+    tags: ['admin', 'finance', 'wallets'],
+    severity: 'critical',
+    metadata: (req) => ({
+      scope: req.params?.id ? 'account' : 'settings',
+      accountId: req.params?.id || null,
+      method: req.method
+    })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',
