@@ -133,6 +133,10 @@ import PurchaseOrder from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
 import PurchaseAttachment from './purchaseAttachment.js';
 import PurchaseBudget from './purchaseBudget.js';
+import ServicemanFinancialProfile from './servicemanFinancialProfile.js';
+import ServicemanFinancialEarning from './servicemanFinancialEarning.js';
+import ServicemanExpenseClaim from './servicemanExpenseClaim.js';
+import ServicemanAllowance from './servicemanAllowance.js';
 import HomePage from './homePage.js';
 import HomePageSection from './homePageSection.js';
 import HomePageComponent from './homePageComponent.js';
@@ -427,11 +431,40 @@ PurchaseOrder.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 User.hasMany(PurchaseOrder, { foreignKey: 'updatedBy', as: 'updatedPurchaseOrders' });
 PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
 
-User.hasMany(PurchaseAttachment, { foreignKey: 'uploadedBy', as: 'uploadedPurchaseAttachments' });
-PurchaseAttachment.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+  User.hasMany(PurchaseAttachment, { foreignKey: 'uploadedBy', as: 'uploadedPurchaseAttachments' });
+  PurchaseAttachment.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 
-FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
-Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
+  User.hasOne(ServicemanFinancialProfile, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanFinancialProfile'
+  });
+  ServicemanFinancialProfile.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+
+  User.hasMany(ServicemanFinancialEarning, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanFinancialEarnings'
+  });
+  ServicemanFinancialEarning.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanFinancialEarning.belongsTo(User, { foreignKey: 'recordedBy', as: 'recordedByUser' });
+  ServicemanFinancialEarning.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+
+  User.hasMany(ServicemanExpenseClaim, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanExpenseClaims'
+  });
+  ServicemanExpenseClaim.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanExpenseClaim.belongsTo(User, { foreignKey: 'approvedBy', as: 'approvedByUser' });
+
+  User.hasMany(ServicemanAllowance, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanAllowances'
+  });
+  ServicemanAllowance.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanAllowance.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+  ServicemanAllowance.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
+
+  FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
+  Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
 
 FinanceTransactionHistory.belongsTo(PayoutRequest, { foreignKey: 'payoutRequestId', as: 'payoutRequest' });
 PayoutRequest.hasMany(FinanceTransactionHistory, { foreignKey: 'payoutRequestId', as: 'history' });
@@ -1051,6 +1084,10 @@ export {
   PurchaseOrderItem,
   PurchaseAttachment,
   PurchaseBudget,
+  ServicemanFinancialProfile,
+  ServicemanFinancialEarning,
+  ServicemanExpenseClaim,
+  ServicemanAllowance,
   HomePage,
   HomePageSection,
   HomePageComponent,
@@ -1074,8 +1111,6 @@ export {
   CustomerDisputeNote,
   CustomerDisputeEvidence,
   CustomerCoupon,
-  CustomerAccountSetting,
-  CustomerNotificationRecipient,
   InboxQueue,
   InboxConfiguration,
   InboxTemplate,

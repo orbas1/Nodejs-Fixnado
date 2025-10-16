@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Textarea from './Textarea.jsx';
 
 const TextArea = forwardRef(function TextArea(
+  { id, label, optionalLabel, hint, error, rows, className, textareaClassName, ...rest },
   { id, label, optionalLabel, hint, error, className, textareaClassName, rows = 4, ...rest },
   ref
 ) {

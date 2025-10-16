@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Select = forwardRef(function Select(
+  { id, label, optionalLabel, hint, error, options, className, selectClassName, children, ...rest },
   { id, label, optionalLabel, hint, error, options = [], className, selectClassName, ...rest },
   {
     id,
@@ -31,6 +32,7 @@ const Select = forwardRef(function Select(
     describedBy.push(`${fieldId}-error`);
   }
 
+  const resolvedOptions = Array.isArray(options) ? options : [];
   const optionNodes = Array.isArray(options) && options.length > 0
     ? options.map((option) => (
         <option key={option.value} value={option.value} disabled={option.disabled}>
@@ -50,12 +52,13 @@ const Select = forwardRef(function Select(
       <select
         ref={ref}
         id={fieldId}
+        className={clsx('fx-select', 'fx-text-input', error && 'fx-text-input--error', selectClassName)}
         className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
       >
-        {options.map((option) => (
+        {resolvedOptions.map((option) => (
           <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>

@@ -1,8 +1,6 @@
-import { forwardRef, useId } from 'react';
-import PropTypes from 'prop-types';
-import clsx from 'clsx';
-import './ui.css';
+import TextArea from './TextArea.jsx';
 
+export default TextArea;
 const Textarea = forwardRef(function Textarea(
   { id, label, optionalLabel, hint, error, className, textareaClassName, rows = 4, ...rest },
   ref
