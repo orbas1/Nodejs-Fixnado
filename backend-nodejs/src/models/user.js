@@ -195,6 +195,10 @@ User.init(
           throw new TypeError('email must be a string');
         }
         const trimmed = value.trim();
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+        if (!isEmail(trimmed)) {
         if (!EMAIL_PATTERN.test(trimmed)) {
           throw new Error('Validation isEmail on email failed');
         }

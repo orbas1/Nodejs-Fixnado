@@ -30,6 +30,11 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  listAutomationBacklogHandler,
+  createAutomationBacklogHandler,
+  updateAutomationBacklogHandler,
+  archiveAutomationBacklogHandler
+} from '../controllers/automationBacklogController.js';
   listAdminUsersHandler,
   createAdminUserHandler,
   updateAdminUserHandler,
@@ -503,6 +508,31 @@ router.post(
   }),
   revokeAdminUserSessionsValidators,
   revokeAdminUserSessionsHandler
+);
+
+router.get(
+  '/automation/backlog',
+  authenticate,
+  enforcePolicy('admin.automation.read', { metadata: (req) => ({ includeArchived: req.query.includeArchived === 'true' }) }),
+  listAutomationBacklogHandler
+);
+router.post(
+  '/automation/backlog',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: () => ({ action: 'create' }) }),
+  createAutomationBacklogHandler
+);
+router.patch(
+  '/automation/backlog/:id',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: (req) => ({ action: 'update', initiativeId: req.params.id }) }),
+  updateAutomationBacklogHandler
+);
+router.delete(
+  '/automation/backlog/:id',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: (req) => ({ action: 'archive', initiativeId: req.params.id }) }),
+  archiveAutomationBacklogHandler
 );
 
 router.get(

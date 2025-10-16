@@ -867,6 +867,7 @@ function complianceStatusLabel(tone) {
   return 'On track';
 }
 
+function buildAdminNavigation(payload) {
 function automationStatusLabel(tone) {
   if (tone === 'warning') return 'Monitor delivery';
   if (tone === 'success') return 'Operational';
@@ -1096,21 +1097,19 @@ function buildAdminNavigation(payload, complianceContext = null) {
         }
       : null;
 
-  const automationSection = automationBacklog.length
-    ? {
-        id: 'automation-backlog',
-        label: 'Automation backlog',
-        description: 'AI and automation initiatives with their current readiness state.',
-        type: 'list',
-        data: {
-          items: automationBacklog.map((item) => ({
-            title: item.name,
-            description: item.notes,
-            status: `${item.status} • ${automationStatusLabel(item.tone)}`
-          }))
-        }
-      }
-    : null;
+  const automationSection = {
+    id: 'automation-backlog',
+    label: 'Automation backlog',
+    description: 'AI and automation initiatives with their current readiness state.',
+    type: 'automation',
+    data: {
+      items: automationBacklog,
+      summary:
+        automationBacklog.length > 0
+          ? `Tracking ${automationBacklog.length} initiative${automationBacklog.length === 1 ? '' : 's'}`
+          : 'No automation initiatives yet'
+    }
+  };
 
   const zoneGovernanceSection = {
     id: 'zone-governance',

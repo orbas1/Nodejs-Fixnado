@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { listAutomationInitiativesForDashboard } from './automationBacklogService.js';
 import { summariseInboxForDashboard } from './adminInboxService.js';
 import { getServiceManagementSnapshot } from './adminServiceManagementService.js';
 import { listLegalDocumentsSummary } from './legalDocumentService.js';
@@ -399,6 +400,15 @@ function mapAutomationTask(task, timezone) {
   };
 }
 
+async function computeAutomationBacklog(ingestionTotals, timezone) {
+  const persisted = await listAutomationInitiativesForDashboard();
+  if (persisted.length) {
+    return persisted;
+  }
+  return buildFallbackAutomationBacklog(ingestionTotals, timezone);
+}
+
+async function buildFallbackAutomationBacklog(ingestionTotals, timezone) {
 async function computeComplianceControls(timezone) {
   const now = DateTime.now().setZone(timezone);
   const upcomingControls = await ComplianceControl.findAll({

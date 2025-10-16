@@ -82,6 +82,7 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import AutomationInitiative from './automationInitiative.js';
 import EnterpriseAccount from './enterpriseAccount.js';
 import EnterpriseSite from './enterpriseSite.js';
 import EnterpriseStakeholder from './enterpriseStakeholder.js';
@@ -776,6 +777,7 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  AutomationInitiative
   AdminUserProfile
   EnterpriseAccount,
   EnterpriseSite,
