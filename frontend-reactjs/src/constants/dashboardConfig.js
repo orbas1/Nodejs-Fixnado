@@ -103,7 +103,13 @@ export const DASHBOARD_ROLES = [
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
-      { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      {
+        id: 'byok-management',
+        label: 'BYOK management',
+        icon: 'compliance',
+        href: '/dashboards/serviceman/byok'
+      }
     ]
   },
   {

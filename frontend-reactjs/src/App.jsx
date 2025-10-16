@@ -10,6 +10,7 @@ import { useLocale } from './hooks/useLocale.js';
 import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
+import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
 import ConsentBanner from './components/legal/ConsentBanner.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -72,6 +73,9 @@ const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
+const ServicemanByokWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
+);
 
 function App() {
   const { t } = useLocale();
@@ -141,10 +145,18 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminProfile />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/disputes/health/:bucketId/history"
                 element={
                   <AdminProtectedRoute>
                     <AdminDisputeHealthHistory />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/home-builder"
                 element={
                   <AdminProtectedRoute>
@@ -181,62 +193,122 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminEscrow />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/bookings"
                 element={
                   <AdminProtectedRoute>
                     <AdminBookings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/wallets"
                 element={
                   <AdminProtectedRoute>
                     <AdminWallets />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/custom-jobs"
                 element={
                   <AdminProtectedRoute>
                     <AdminCustomJobs />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/roles"
                 element={
                   <AdminProtectedRoute>
                     <AdminRoles />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/preferences"
                 element={
                   <AdminProtectedRoute>
                     <AdminPreferences />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/enterprise"
                 element={
                   <AdminProtectedRoute>
                     <AdminEnterprise />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/marketplace"
                 element={
                   <AdminProtectedRoute>
                     <AdminMarketplace />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/appearance"
                 element={
                   <AdminProtectedRoute>
                     <AppearanceManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/inbox"
                 element={
                   <AdminProtectedRoute>
                     <AdminInbox />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/purchases"
                 element={
                   <AdminProtectedRoute>
                     <AdminPurchaseManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/website-management"
                 element={
                   <AdminProtectedRoute>
                     <AdminWebsiteManagement />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/live-feed/auditing"
                 element={
                   <AdminProtectedRoute>
                     <AdminLiveFeedAuditing />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/system-settings"
                 element={
                   <AdminProtectedRoute>
                     <AdminSystemSettings />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/taxonomy"
                 element={
                   <AdminProtectedRoute>
                     <AdminTaxonomy />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/seo"
                 element={
                   <AdminProtectedRoute>
@@ -283,6 +355,14 @@ function App() {
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
+              <Route
+                path="/dashboards/serviceman/byok"
+                element={
+                  <ServicemanProtectedRoute>
+                    <ServicemanByokWorkspace />
+                  </ServicemanProtectedRoute>
+                }
+              />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="/legal/:slug" element={<Terms />} />

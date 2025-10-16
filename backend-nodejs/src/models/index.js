@@ -146,6 +146,9 @@ import CustomerDisputeEvidence from './customerDisputeEvidence.js';
 import InboxQueue from './inboxQueue.js';
 import InboxConfiguration from './inboxConfiguration.js';
 import InboxTemplate from './inboxTemplate.js';
+import ServicemanByokProfile from './servicemanByokProfile.js';
+import ServicemanByokConnector from './servicemanByokConnector.js';
+import ServicemanByokAuditEvent from './servicemanByokAuditEvent.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -781,6 +784,14 @@ HomePage.hasMany(HomePageComponent, {
   hooks: true
 });
 HomePageComponent.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+ServicemanByokProfile.belongsTo(User, { foreignKey: 'userId', as: 'serviceman' });
+User.hasOne(ServicemanByokProfile, { foreignKey: 'userId', as: 'servicemanByokProfile' });
+ServicemanByokProfile.hasMany(ServicemanByokConnector, { foreignKey: 'profileId', as: 'connectors' });
+ServicemanByokConnector.belongsTo(ServicemanByokProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanByokProfile.hasMany(ServicemanByokAuditEvent, { foreignKey: 'profileId', as: 'auditEvents' });
+ServicemanByokAuditEvent.belongsTo(ServicemanByokProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanByokConnector.hasMany(ServicemanByokAuditEvent, { foreignKey: 'connectorId', as: 'auditTrail' });
+ServicemanByokAuditEvent.belongsTo(ServicemanByokConnector, { foreignKey: 'connectorId', as: 'connector' });
 export default sequelize;
 WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
 WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
@@ -940,5 +951,8 @@ export {
   CustomerNotificationRecipient,
   InboxQueue,
   InboxConfiguration,
-  InboxTemplate
+  InboxTemplate,
+  ServicemanByokProfile,
+  ServicemanByokConnector,
+  ServicemanByokAuditEvent
 };
