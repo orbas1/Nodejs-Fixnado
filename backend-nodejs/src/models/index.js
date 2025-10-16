@@ -16,6 +16,9 @@ import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
+import ProviderProfile from './providerProfile.js';
+import ProviderContact from './providerContact.js';
+import ProviderCoverage from './providerCoverage.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -162,6 +165,18 @@ AdminUserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(Company, { foreignKey: 'regionId', as: 'companies' });
 Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+
+Company.hasOne(ProviderProfile, { foreignKey: 'companyId', as: 'profile' });
+ProviderProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderContact, { foreignKey: 'companyId', as: 'contacts' });
+ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
+ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
+ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
@@ -821,6 +836,9 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,

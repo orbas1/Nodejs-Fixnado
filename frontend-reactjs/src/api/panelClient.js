@@ -312,6 +312,23 @@ function toNullableNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normaliseOption(option, fallbackValue = 'value', fallbackLabel = 'Label') {
+  if (!option || typeof option !== 'object') {
+    return { value: fallbackValue, label: fallbackLabel };
+  }
+  const value = option.value ?? fallbackValue;
+  const label = option.label ?? String(value ?? fallbackLabel);
+  return { value, label };
+}
+
+function toDate(value) {
+  if (!value) {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 const percentageFormatter = new Intl.NumberFormat('en-GB', {
   style: 'percent',
   maximumFractionDigits: 1
@@ -2293,6 +2310,490 @@ const adminFallback = normaliseAdminDashboard({
   }
 });
 
+function normaliseProviderContact(contact = {}) {
+  return {
+    id: contact.id ?? `contact-${Math.random().toString(36).slice(2, 8)}`,
+    name: contact.name ?? 'Provider contact',
+    role: contact.role ?? null,
+    email: contact.email ?? null,
+    phone: contact.phone ?? null,
+    type: contact.type ?? 'operations',
+    isPrimary: Boolean(contact.isPrimary),
+    notes: contact.notes ?? null,
+    avatarUrl: contact.avatarUrl ?? null,
+    createdAt: toDate(contact.createdAt),
+    updatedAt: toDate(contact.updatedAt)
+  };
+}
+
+function normaliseProviderCoverage(coverage = {}) {
+  return {
+    id: coverage.id ?? `coverage-${Math.random().toString(36).slice(2, 8)}`,
+    zoneId: coverage.zoneId ?? coverage.zone?.id ?? 'zone',
+    coverageType: coverage.coverageType ?? 'primary',
+    coverageTypeLabel: coverage.coverageTypeLabel ?? coverage.coverageType ?? 'Primary',
+    slaMinutes: toNumber(coverage.slaMinutes, 0),
+    maxCapacity: toNumber(coverage.maxCapacity, 0),
+    effectiveFrom: toDate(coverage.effectiveFrom),
+    effectiveTo: toDate(coverage.effectiveTo),
+    notes: coverage.notes ?? null,
+    zone: coverage.zone
+      ? {
+          id: coverage.zone.id ?? coverage.zoneId ?? 'zone',
+          name: coverage.zone.name ?? 'Coverage zone',
+          companyId: coverage.zone.companyId ?? null
+        }
+      : null,
+    createdAt: toDate(coverage.createdAt),
+    updatedAt: toDate(coverage.updatedAt)
+  };
+}
+
+function normaliseProviderDocument(document = {}) {
+  return {
+    id: document.id ?? `document-${Math.random().toString(36).slice(2, 8)}`,
+    type: document.type ?? 'Document',
+    status: document.status ?? 'submitted',
+    fileName: document.fileName ?? 'document.pdf',
+    fileSizeBytes: toNumber(document.fileSizeBytes, 0),
+    mimeType: document.mimeType ?? 'application/pdf',
+    issuedAt: toDate(document.issuedAt),
+    expiryAt: toDate(document.expiryAt),
+    submittedAt: toDate(document.submittedAt),
+    reviewedAt: toDate(document.reviewedAt),
+    reviewerId: document.reviewerId ?? null,
+    rejectionReason: document.rejectionReason ?? null,
+    metadata: document.metadata ?? {},
+    downloadUrl: document.downloadUrl ?? null
+  };
+}
+
+function normaliseProviderService(service = {}) {
+  return {
+    id: service.id ?? `service-${Math.random().toString(36).slice(2, 8)}`,
+    title: service.title ?? 'Service',
+    category: service.category ?? null,
+    price: toNullableNumber(service.price),
+    currency: service.currency ?? 'GBP',
+    createdAt: toDate(service.createdAt),
+    updatedAt: toDate(service.updatedAt)
+  };
+}
+
+function normaliseAdminProviderDirectory(payload = {}) {
+  const summary = payload.summary ?? {};
+  const providers = ensureArray(payload.providers).map((provider) => ({
+    id: provider.id ?? `provider-${Math.random().toString(36).slice(2, 8)}`,
+    profileId: provider.profileId ?? null,
+    displayName: provider.displayName ?? provider.tradingName ?? 'Provider',
+    tradingName: provider.tradingName ?? provider.displayName ?? 'Provider',
+    status: provider.status ?? 'prospect',
+    statusLabel: provider.statusLabel ?? provider.status ?? 'Prospect',
+    onboardingStage: provider.onboardingStage ?? 'intake',
+    onboardingStageLabel: provider.onboardingStageLabel ?? provider.onboardingStage ?? 'Intake',
+    tier: provider.tier ?? 'standard',
+    tierLabel: provider.tierLabel ?? provider.tier ?? 'Standard',
+    riskRating: provider.riskRating ?? 'medium',
+    riskLabel: provider.riskLabel ?? provider.riskRating ?? 'Medium',
+    supportEmail: provider.supportEmail ?? null,
+    supportPhone: provider.supportPhone ?? null,
+    coverageCount: toNumber(provider.coverageCount, 0),
+    contactCount: toNumber(provider.contactCount, 0),
+    servicesCount: toNumber(provider.servicesCount, 0),
+    averageRating: toNumber(provider.averageRating, 0),
+    jobsCompleted: toNumber(provider.jobsCompleted, 0),
+    complianceScore: toNumber(provider.complianceScore, 0),
+    verified: Boolean(provider.verified),
+    insuredStatus: provider.insuredStatus ?? 'not_started',
+    insuredStatusLabel: provider.insuredStatusLabel ?? provider.insuredStatus ?? 'Not started',
+    insuredBadgeVisible: Boolean(provider.insuredBadgeVisible),
+    storefrontSlug: provider.storefrontSlug ?? null,
+    lastReviewAt: toDate(provider.lastReviewAt),
+    updatedAt: toDate(provider.updatedAt),
+    createdAt: toDate(provider.createdAt),
+    region: provider.region ?? null
+  }));
+
+  return {
+    summary: {
+      total: toNumber(summary.total, providers.length),
+      averageComplianceScore: toNumber(summary.averageComplianceScore, 0),
+      lastUpdatedAt: toDate(summary.lastUpdatedAt),
+      statusBreakdown: ensureArray(summary.statusBreakdown).map((entry) => ({
+        value: entry.value ?? 'unknown',
+        label: entry.label ?? (entry.value ?? 'Unknown'),
+        count: toNumber(entry.count, 0)
+      })),
+      onboardingBreakdown: ensureArray(summary.onboardingBreakdown).map((entry) => ({
+        value: entry.value ?? 'intake',
+        label: entry.label ?? (entry.value ?? 'Intake'),
+        count: toNumber(entry.count, 0)
+      })),
+      tierBreakdown: ensureArray(summary.tierBreakdown).map((entry) => ({
+        value: entry.value ?? 'standard',
+        label: entry.label ?? (entry.value ?? 'Standard'),
+        count: toNumber(entry.count, 0)
+      })),
+      riskBreakdown: ensureArray(summary.riskBreakdown).map((entry) => ({
+        value: entry.value ?? 'medium',
+        label: entry.label ?? (entry.value ?? 'Medium'),
+        count: toNumber(entry.count, 0)
+      })),
+      insuredBreakdown: ensureArray(summary.insuredBreakdown).map((entry) => ({
+        value: entry.value ?? 'not_started',
+        label: entry.label ?? (entry.value ?? 'Not started'),
+        count: toNumber(entry.count, 0)
+      }))
+    },
+    providers,
+    pagination: {
+      total: toNumber(payload.pagination?.total ?? summary.total ?? providers.length, providers.length),
+      limit: toNumber(payload.pagination?.limit ?? providers.length, providers.length),
+      offset: toNumber(payload.pagination?.offset ?? 0, 0),
+      hasMore: Boolean(payload.pagination?.hasMore)
+    },
+    enums: {
+      statuses: ensureArray(payload.enums?.statuses).map((option) => normaliseOption(option, 'prospect', 'Prospect')),
+      onboardingStages: ensureArray(payload.enums?.onboardingStages).map((option) => normaliseOption(option, 'intake', 'Intake')),
+      tiers: ensureArray(payload.enums?.tiers).map((option) => normaliseOption(option, 'standard', 'Standard')),
+      riskLevels: ensureArray(payload.enums?.riskLevels).map((option) => normaliseOption(option, 'medium', 'Medium')),
+      coverageTypes: ensureArray(payload.enums?.coverageTypes).map((option) => normaliseOption(option, 'primary', 'Primary')),
+      insuredStatuses: ensureArray(payload.enums?.insuredStatuses).map((option) => normaliseOption(option, 'not_started', 'Not started')),
+      regions: ensureArray(payload.enums?.regions).map((region) => ({
+        id: region.id ?? region.code ?? `region-${Math.random().toString(36).slice(2, 8)}`,
+        name: region.name ?? 'Region',
+        code: region.code ?? null
+      }))
+    }
+  };
+}
+
+function normaliseAdminProviderDetail(payload = {}) {
+  const company = payload.company ?? {};
+  const profile = payload.profile ?? {};
+
+  return {
+    company: {
+      id: company.id ?? null,
+      legalStructure: company.legalStructure ?? 'company',
+      contactName: company.contactName ?? '',
+      contactEmail: company.contactEmail ?? null,
+      serviceRegions: company.serviceRegions ?? '',
+      marketplaceIntent: company.marketplaceIntent ?? '',
+      verified: Boolean(company.verified),
+      insuredSellerStatus: company.insuredSellerStatus ?? 'not_started',
+      insuredSellerBadgeVisible: Boolean(company.insuredSellerBadgeVisible),
+      complianceScore: toNumber(company.complianceScore, 0),
+      regionId: company.regionId ?? null,
+      region: company.region
+        ? {
+            id: company.region.id ?? company.region.code ?? 'region',
+            name: company.region.name ?? 'Region',
+            code: company.region.code ?? null
+          }
+        : null
+    },
+    profile: {
+      id: profile.id ?? null,
+      displayName: profile.displayName ?? 'Provider',
+      tradingName: profile.tradingName ?? profile.displayName ?? 'Provider',
+      status: profile.status ?? 'prospect',
+      onboardingStage: profile.onboardingStage ?? 'intake',
+      tier: profile.tier ?? 'standard',
+      riskRating: profile.riskRating ?? 'medium',
+      supportEmail: profile.supportEmail ?? null,
+      supportPhone: profile.supportPhone ?? null,
+      websiteUrl: profile.websiteUrl ?? null,
+      logoUrl: profile.logoUrl ?? null,
+      heroImageUrl: profile.heroImageUrl ?? null,
+      storefrontSlug: profile.storefrontSlug ?? null,
+      operationsNotes: profile.operationsNotes ?? null,
+      coverageNotes: profile.coverageNotes ?? null,
+      averageRating: toNumber(profile.averageRating, 0),
+      jobsCompleted: toNumber(profile.jobsCompleted, 0),
+      lastReviewAt: toDate(profile.lastReviewAt),
+      tags: Array.isArray(profile.tags) ? profile.tags : []
+    },
+    contacts: ensureArray(payload.contacts).map(normaliseProviderContact),
+    coverage: ensureArray(payload.coverage).map(normaliseProviderCoverage),
+    documents: ensureArray(payload.documents).map(normaliseProviderDocument),
+    services: ensureArray(payload.services).map(normaliseProviderService),
+    stats: {
+      activeBookings: toNumber(payload.stats?.activeBookings, 0),
+      completedBookings30d: toNumber(payload.stats?.completedBookings30d, 0),
+      openDisputes: toNumber(payload.stats?.openDisputes, 0)
+    },
+    links: {
+      storefront: payload.links?.storefront ?? null,
+      dashboard: payload.links?.dashboard ?? null,
+      compliance: payload.links?.compliance ?? null
+    },
+    enums: {
+      statuses: ensureArray(payload.enums?.statuses).map((option) => normaliseOption(option, 'prospect', 'Prospect')),
+      onboardingStages: ensureArray(payload.enums?.onboardingStages).map((option) => normaliseOption(option, 'intake', 'Intake')),
+      tiers: ensureArray(payload.enums?.tiers).map((option) => normaliseOption(option, 'standard', 'Standard')),
+      riskLevels: ensureArray(payload.enums?.riskLevels).map((option) => normaliseOption(option, 'medium', 'Medium')),
+      coverageTypes: ensureArray(payload.enums?.coverageTypes).map((option) => normaliseOption(option, 'primary', 'Primary')),
+      insuredStatuses: ensureArray(payload.enums?.insuredStatuses).map((option) => normaliseOption(option, 'not_started', 'Not started')),
+      zones: ensureArray(payload.enums?.zones).map((zone) => ({
+        id: zone.id ?? `zone-${Math.random().toString(36).slice(2, 8)}`,
+        name: zone.name ?? 'Coverage zone',
+        companyId: zone.companyId ?? null
+      }))
+    }
+  };
+}
+
+const adminProviderDirectoryFallback = normaliseAdminProviderDirectory({
+  summary: {
+    total: 1,
+    averageComplianceScore: 94.2,
+    lastUpdatedAt: new Date().toISOString(),
+    statusBreakdown: [{ value: 'active', label: 'Active', count: 1 }],
+    onboardingBreakdown: [{ value: 'live', label: 'Live', count: 1 }],
+    tierBreakdown: [{ value: 'strategic', label: 'Strategic', count: 1 }],
+    riskBreakdown: [{ value: 'medium', label: 'Medium', count: 1 }],
+    insuredBreakdown: [{ value: 'approved', label: 'Approved', count: 1 }]
+  },
+  providers: [
+    {
+      id: 'provider-metro-power',
+      profileId: 'profile-metro-power',
+      displayName: 'Metro Power Services',
+      tradingName: 'Metro Power',
+      status: 'active',
+      statusLabel: 'Active',
+      onboardingStage: 'live',
+      onboardingStageLabel: 'Live',
+      tier: 'strategic',
+      tierLabel: 'Strategic',
+      riskRating: 'medium',
+      riskLabel: 'Medium',
+      supportEmail: 'support@metro-power.example',
+      supportPhone: '+44 20 7946 0000',
+      coverageCount: 3,
+      contactCount: 4,
+      servicesCount: 6,
+      averageRating: 4.9,
+      jobsCompleted: 128,
+      complianceScore: 96,
+      verified: true,
+      insuredStatus: 'approved',
+      insuredStatusLabel: 'Approved',
+      insuredBadgeVisible: true,
+      storefrontSlug: 'metro-power-services',
+      lastReviewAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      region: { id: 'region-london', name: 'London & South East', code: 'LDN' }
+    }
+  ],
+  enums: {
+    statuses: [
+      { value: 'prospect', label: 'Prospect' },
+      { value: 'onboarding', label: 'Onboarding' },
+      { value: 'active', label: 'Active' },
+      { value: 'suspended', label: 'Suspended' },
+      { value: 'archived', label: 'Archived' }
+    ],
+    onboardingStages: [
+      { value: 'intake', label: 'Intake' },
+      { value: 'documents', label: 'Document collection' },
+      { value: 'compliance', label: 'Compliance review' },
+      { value: 'go-live', label: 'Go-live preparation' },
+      { value: 'live', label: 'Live' }
+    ],
+    tiers: [
+      { value: 'standard', label: 'Standard' },
+      { value: 'preferred', label: 'Preferred' },
+      { value: 'strategic', label: 'Strategic' }
+    ],
+    riskLevels: [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' }
+    ],
+    coverageTypes: [
+      { value: 'primary', label: 'Primary' },
+      { value: 'secondary', label: 'Secondary' },
+      { value: 'standby', label: 'Standby' }
+    ],
+    insuredStatuses: [
+      { value: 'not_started', label: 'Not started' },
+      { value: 'pending_documents', label: 'Pending documents' },
+      { value: 'in_review', label: 'In review' },
+      { value: 'approved', label: 'Approved' },
+      { value: 'suspended', label: 'Suspended' }
+    ],
+    regions: [{ id: 'region-london', name: 'London & South East', code: 'LDN' }]
+  },
+  pagination: { total: 1, limit: 50, offset: 0, hasMore: false }
+});
+
+const adminProviderDetailFallback = normaliseAdminProviderDetail({
+  company: {
+    id: 'provider-metro-power',
+    legalStructure: 'Ltd',
+    contactName: 'Jordan Miles',
+    contactEmail: 'ops@metro-power.example',
+    serviceRegions: 'London & South East',
+    marketplaceIntent: 'Critical power response',
+    verified: true,
+    insuredSellerStatus: 'approved',
+    insuredSellerBadgeVisible: true,
+    complianceScore: 96,
+    regionId: 'region-london',
+    region: { id: 'region-london', name: 'London & South East', code: 'LDN' }
+  },
+  profile: {
+    id: 'profile-metro-power',
+    displayName: 'Metro Power Services',
+    tradingName: 'Metro Power',
+    status: 'active',
+    onboardingStage: 'live',
+    tier: 'strategic',
+    riskRating: 'medium',
+    supportEmail: 'support@metro-power.example',
+    supportPhone: '+44 20 7946 0000',
+    websiteUrl: 'https://metro-power.example',
+    logoUrl: 'https://cdn.fixnado.example/providers/metro-power/logo.svg',
+    heroImageUrl: 'https://cdn.fixnado.example/providers/metro-power/hero.jpg',
+    storefrontSlug: 'metro-power-services',
+    operationsNotes: 'Maintains 4-person on-call rotation. Escalations routed via Slack #metro-power.',
+    coverageNotes: 'Primary coverage across Central and Thames Valley zones.',
+    averageRating: 4.9,
+    jobsCompleted: 128,
+    lastReviewAt: new Date().toISOString(),
+    tags: ['electrical', 'critical-response', 'strategic']
+  },
+  contacts: [
+    {
+      id: 'contact-ops',
+      name: 'Amelia Roberts',
+      role: 'Operations Lead',
+      email: 'amelia.roberts@example.com',
+      phone: '+44 20 7946 1122',
+      type: 'operations',
+      isPrimary: true,
+      notes: 'Escalations 06:00-18:00 GMT'
+    },
+    {
+      id: 'contact-finance',
+      name: 'Liam Patel',
+      role: 'Finance Manager',
+      email: 'liam.patel@example.com',
+      phone: '+44 20 7946 2233',
+      type: 'finance',
+      isPrimary: false
+    }
+  ],
+  coverage: [
+    {
+      id: 'coverage-central',
+      zoneId: 'zone-central',
+      coverageType: 'primary',
+      coverageTypeLabel: 'Primary',
+      slaMinutes: 180,
+      maxCapacity: 12,
+      effectiveFrom: new Date().toISOString(),
+      notes: 'Priority window 06:00–22:00',
+      zone: { id: 'zone-central', name: 'Central District', companyId: 'provider-metro-power' }
+    },
+    {
+      id: 'coverage-east',
+      zoneId: 'zone-east',
+      coverageType: 'secondary',
+      coverageTypeLabel: 'Secondary',
+      slaMinutes: 240,
+      maxCapacity: 8,
+      zone: { id: 'zone-east', name: 'East Borough', companyId: 'provider-metro-power' }
+    }
+  ],
+  documents: [
+    {
+      id: 'doc-insurance',
+      type: 'Insurance certificate',
+      status: 'approved',
+      fileName: 'public-liability.pdf',
+      fileSizeBytes: 120483,
+      mimeType: 'application/pdf',
+      issuedAt: new Date().toISOString(),
+      expiryAt: new Date(Date.now() + 12096e5).toISOString(),
+      submittedAt: new Date().toISOString(),
+      reviewedAt: new Date().toISOString(),
+      reviewerId: 'compliance-ops',
+      metadata: { coverage: '£5m', provider: 'Allied Insurance' },
+      downloadUrl: '/api/v1/compliance/documents/doc-insurance/download'
+    }
+  ],
+  services: [
+    {
+      id: 'service-critical',
+      title: 'Critical electrical maintenance',
+      category: 'Facilities',
+      price: 480,
+      currency: 'GBP',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'service-generator',
+      title: 'Generator health check',
+      category: 'Infrastructure',
+      price: 320,
+      currency: 'GBP',
+      createdAt: new Date().toISOString()
+    }
+  ],
+  stats: { activeBookings: 3, completedBookings30d: 18, openDisputes: 0 },
+  links: {
+    storefront: '/providers/metro-power-services',
+    dashboard: '/provider/dashboard?companyId=provider-metro-power',
+    compliance: '/admin/compliance?companyId=provider-metro-power'
+  },
+  enums: {
+    statuses: [
+      { value: 'prospect', label: 'Prospect' },
+      { value: 'onboarding', label: 'Onboarding' },
+      { value: 'active', label: 'Active' },
+      { value: 'suspended', label: 'Suspended' },
+      { value: 'archived', label: 'Archived' }
+    ],
+    onboardingStages: [
+      { value: 'intake', label: 'Intake' },
+      { value: 'documents', label: 'Document collection' },
+      { value: 'compliance', label: 'Compliance review' },
+      { value: 'go-live', label: 'Go-live preparation' },
+      { value: 'live', label: 'Live' }
+    ],
+    tiers: [
+      { value: 'standard', label: 'Standard' },
+      { value: 'preferred', label: 'Preferred' },
+      { value: 'strategic', label: 'Strategic' }
+    ],
+    riskLevels: [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' }
+    ],
+    coverageTypes: [
+      { value: 'primary', label: 'Primary' },
+      { value: 'secondary', label: 'Secondary' },
+      { value: 'standby', label: 'Standby' }
+    ],
+    insuredStatuses: [
+      { value: 'not_started', label: 'Not started' },
+      { value: 'pending_documents', label: 'Pending documents' },
+      { value: 'in_review', label: 'In review' },
+      { value: 'approved', label: 'Approved' },
+      { value: 'suspended', label: 'Suspended' }
+    ],
+    zones: [
+      { id: 'zone-central', name: 'Central District', companyId: 'provider-metro-power' },
+      { id: 'zone-east', name: 'East Borough', companyId: 'provider-metro-power' }
+    ]
+  }
+});
+
 const providerFallback = normaliseProviderDashboard({
   provider: {
     legalName: 'Metro Power Services',
@@ -3246,6 +3747,43 @@ export const getAdminDashboard = withFallback(
     })
 );
 
+export const getAdminProviderDirectory = withFallback(
+  normaliseAdminProviderDirectory,
+  adminProviderDirectoryFallback,
+  (options = {}) => {
+    const query = toQueryString({
+      status: options?.status,
+      search: options?.search,
+      limit: options?.limit,
+      offset: options?.offset
+    });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/admin/providers${query}`, {
+      cacheKey: `admin-providers${cacheKeySuffix}`,
+      ttl: 15000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
+export const getAdminProviderDetail = withFallback(
+  normaliseAdminProviderDetail,
+  adminProviderDetailFallback,
+  (options = {}) => {
+    const companyId = options?.companyId;
+    if (!companyId) {
+      throw new PanelApiError('Provider identifier required', 400);
+    }
+    return request(`/admin/providers/${encodeURIComponent(companyId)}`, {
+      cacheKey: `admin-provider:${companyId}`,
+      ttl: 15000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
 export const getDisputeHealthWorkspace = withFallback(
   normaliseDisputeHealthWorkspace,
   disputeHealthFallback(),
@@ -3396,6 +3934,109 @@ export const getProviderStorefront = withFallback(
     });
   }
 );
+
+function invalidateProviderCache(companyId) {
+  const keys = ['admin-providers'];
+  if (companyId) {
+    keys.push(`admin-provider:${companyId}`);
+  }
+  clearPanelCache(keys);
+}
+
+export async function createAdminProvider(payload) {
+  const response = await request('/admin/providers', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  const normalised = normaliseAdminProviderDetail(response.data ?? response);
+  invalidateProviderCache(normalised.company?.id ?? null);
+  return normalised;
+}
+
+export async function updateAdminProvider(companyId, payload) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  const normalised = normaliseAdminProviderDetail(response.data ?? response);
+  invalidateProviderCache(companyId);
+  return normalised;
+}
+
+export async function archiveAdminProvider(companyId, payload = {}) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}/archive`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  const normalised = normaliseAdminProviderDetail(response.data ?? response);
+  invalidateProviderCache(companyId);
+  return normalised;
+}
+
+export async function upsertAdminProviderContact(companyId, contactId, payload) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const path = contactId
+    ? `/admin/providers/${encodeURIComponent(companyId)}/contacts/${encodeURIComponent(contactId)}`
+    : `/admin/providers/${encodeURIComponent(companyId)}/contacts`;
+  const method = contactId ? 'PUT' : 'POST';
+  const response = await request(path, {
+    method,
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderContact(response.data ?? response);
+}
+
+export async function deleteAdminProviderContact(companyId, contactId) {
+  if (!companyId || !contactId) {
+    throw new PanelApiError('Provider contact identifier required', 400);
+  }
+  await request(`/admin/providers/${encodeURIComponent(companyId)}/contacts/${encodeURIComponent(contactId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+}
+
+export async function upsertAdminProviderCoverage(companyId, coverageId, payload) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const path = coverageId
+    ? `/admin/providers/${encodeURIComponent(companyId)}/coverage/${encodeURIComponent(coverageId)}`
+    : `/admin/providers/${encodeURIComponent(companyId)}/coverage`;
+  const method = coverageId ? 'PUT' : 'POST';
+  const response = await request(path, {
+    method,
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderCoverage(response.data ?? response);
+}
+
+export async function deleteAdminProviderCoverage(companyId, coverageId) {
+  if (!companyId || !coverageId) {
+    throw new PanelApiError('Provider coverage identifier required', 400);
+  }
+  await request(`/admin/providers/${encodeURIComponent(companyId)}/coverage/${encodeURIComponent(coverageId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+}
 
 export const getEnterprisePanel = withFallback(
   normaliseEnterprisePanel,

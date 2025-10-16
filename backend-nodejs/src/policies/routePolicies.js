@@ -216,6 +216,48 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.providers.read': {
+    id: 'admin.providers.read',
+    version: '1.0.0',
+    resource: 'admin.providers',
+    action: 'admin.providers:read',
+    description: 'Allow platform administrators to view SME/provider onboarding data and coverage.',
+    requirements: [Permissions.ADMIN_PROVIDER_READ],
+    tags: ['admin', 'providers', 'sme'],
+    severity: 'high',
+    metadata: (req) => ({
+      scope: req.query?.scope || 'directory',
+      companyId: req.params?.companyId || null
+    })
+  },
+  'admin.providers.write': {
+    id: 'admin.providers.write',
+    version: '1.0.0',
+    resource: 'admin.providers',
+    action: 'admin.providers:write',
+    description: 'Allow platform administrators to onboard, edit, and manage SME/provider records.',
+    requirements: [Permissions.ADMIN_PROVIDER_WRITE],
+    tags: ['admin', 'providers', 'sme'],
+    severity: 'critical',
+    metadata: (req) => ({
+      companyId: req.params?.companyId || req.body?.companyId || null,
+      action: req.method?.toLowerCase() || 'unknown'
+    })
+  },
+  'admin.providers.archive': {
+    id: 'admin.providers.archive',
+    version: '1.0.0',
+    resource: 'admin.providers',
+    action: 'admin.providers:archive',
+    description: 'Allow platform administrators to archive or retire SME/provider organisations.',
+    requirements: [Permissions.ADMIN_PROVIDER_ARCHIVE],
+    tags: ['admin', 'providers', 'sme'],
+    severity: 'critical',
+    metadata: (req) => ({
+      companyId: req.params?.companyId || null,
+      actor: req.user?.id || null
+    })
+  },
   'admin.customJobs.read': {
     id: 'admin.customJobs.read',
     version: '1.0.0',

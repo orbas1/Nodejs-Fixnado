@@ -133,6 +133,7 @@ const navIconMap = {
   pipeline: ClipboardDocumentListIcon,
   history: ClipboardDocumentListIcon,
   availability: UsersIcon,
+  provider: UsersIcon,
   users: UsersIcon,
   control: Squares2X2Icon,
   assets: CubeIcon,
