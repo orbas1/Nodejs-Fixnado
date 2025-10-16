@@ -235,7 +235,12 @@ function normalizeSettings(settings) {
     commissions: {
       enabled: commissions.enabled !== false,
       baseRate: typeof commissions.baseRate === 'number' ? commissions.baseRate : Number.parseFloat(commissions.baseRate ?? 0) || 0,
-      customRates: typeof commissions.customRates === 'object' && commissions.customRates !== null ? commissions.customRates : {}
+      customRates: typeof commissions.customRates === 'object' && commissions.customRates !== null ? commissions.customRates : {},
+      structures: Array.isArray(commissions.structures)
+        ? commissions.structures.map((structure) => ({
+            ...structure
+          }))
+        : []
     },
     subscriptions: {
       enabled: subscriptions.enabled !== false,
@@ -246,7 +251,12 @@ function normalizeSettings(settings) {
         : typeof subscriptions.restrictedFeatures === 'string'
           ? subscriptions.restrictedFeatures.split(',').map((value) => value.trim()).filter(Boolean)
           : [],
-      tiers: Array.isArray(subscriptions.tiers) ? subscriptions.tiers : []
+      tiers: Array.isArray(subscriptions.tiers)
+        ? subscriptions.tiers.map((tier) => ({
+            ...tier,
+            price: tier?.price ? { ...tier.price } : tier?.price
+          }))
+        : []
     },
     integrations: {
       stripe: normalizeSection(integrations.stripe),

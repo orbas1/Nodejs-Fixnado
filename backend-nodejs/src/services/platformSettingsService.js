@@ -1,3 +1,4 @@
+import slugify from 'slugify';
 import config from '../config/index.js';
 import { PlatformSetting } from '../models/index.js';
 
@@ -54,6 +55,92 @@ function parseRate(value, fallback) {
   return Number.parseFloat(parsed.toFixed(4));
 }
 
+function parseMoney(value, fallback = 0) {
+  if (value === null || value === undefined || value === '') {
+    return fallback;
+  }
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Number.parseFloat(parsed.toFixed(2));
+}
+
+function parsePositiveInteger(value, fallback, { min = 0, max = Number.POSITIVE_INFINITY } = {}) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  const clamped = Math.max(min, Math.min(parsed, max));
+  return clamped;
+}
+
+function normaliseCurrency(value, fallback = 'GBP') {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const cleaned = value.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(cleaned)) {
+    return fallback;
+  }
+  return cleaned;
+}
+
+function sanitiseCommissionStructures(structures, fallback) {
+  if (!Array.isArray(structures)) {
+    return fallback;
+  }
+
+  const cleaned = [];
+  for (const structure of structures) {
+    if (!structure || typeof structure !== 'object') continue;
+
+    const name = typeof structure.name === 'string' && structure.name.trim() ? structure.name.trim() : null;
+    if (!name) continue;
+
+    const rawId = typeof structure.id === 'string' && structure.id.trim() ? structure.id.trim() : name;
+    const id = slugify(rawId, { lower: true, strict: true });
+    if (!id) continue;
+
+    const description = typeof structure.description === 'string' ? structure.description.trim() : '';
+    const rateType = structure.rateType === 'flat' ? 'flat' : 'percentage';
+    const currency = normaliseCurrency(structure.currency, 'GBP');
+    const rateValue =
+      rateType === 'percentage'
+        ? parseRate(structure.rateValue ?? structure.rate, 0)
+        : parseMoney(structure.rateValue ?? structure.rate ?? structure.flatAmount, 0);
+    const appliesTo = Array.isArray(structure.appliesTo)
+      ? uniqueStrings(structure.appliesTo)
+      : typeof structure.appliesTo === 'string'
+        ? uniqueStrings(structure.appliesTo.split(','))
+        : [];
+    const payoutDelayDays = parsePositiveInteger(structure.payoutDelayDays, 0, { min: 0, max: 90 });
+    const minBookingValue = parseMoney(structure.minBookingValue, 0);
+    const maxBookingValueRaw = parseMoney(structure.maxBookingValue, null);
+    const maxBookingValue =
+      maxBookingValueRaw !== null && Number.isFinite(maxBookingValueRaw)
+        ? Math.max(minBookingValue, maxBookingValueRaw)
+        : null;
+    const active = structure.active !== false;
+    const imageUrl = typeof structure.imageUrl === 'string' ? structure.imageUrl.trim() : '';
+
+    cleaned.push({
+      id,
+      name,
+      description,
+      rateType,
+      rateValue,
+      currency,
+      appliesTo,
+      payoutDelayDays,
+      minBookingValue,
+      maxBookingValue,
+      active,
+      imageUrl
+    });
+  }
+
+  return cleaned.length > 0 ? cleaned : fallback;
 function stringOrDefault(value, fallback = '') {
   if (typeof value !== 'string') {
     return fallback;
@@ -212,13 +299,47 @@ const DEFAULT_SETTINGS = {
   commissions: {
     enabled: config.finance?.commissionsEnabled !== false,
     baseRate: defaultCommissionRates.defaultRate,
-    customRates: defaultCommissionRates.custom
+    customRates: defaultCommissionRates.custom,
+    structures: [
+      {
+        id: 'standard-marketplace',
+        name: 'Standard marketplace',
+        description: 'Applies when no bespoke commission structure is matched.',
+        rateType: 'percentage',
+        rateValue: defaultCommissionRates.defaultRate,
+        currency: 'GBP',
+        appliesTo: ['all'],
+        payoutDelayDays: 0,
+        minBookingValue: 0,
+        maxBookingValue: null,
+        active: true,
+        imageUrl: ''
+      }
+    ]
   },
   subscriptions: {
     enabled: config.subscriptions?.enabled !== false,
     enforceFeatures: config.subscriptions?.enforceFeatures !== false,
     defaultTier: config.subscriptions?.defaultTier || 'standard',
-    tiers: Array.isArray(config.subscriptions?.tiers) ? config.subscriptions.tiers : [],
+    tiers: Array.isArray(config.subscriptions?.tiers)
+      ? config.subscriptions.tiers
+      : [
+          {
+            id: 'standard',
+            label: 'Standard',
+            description: 'Core toolkit for emerging providers.',
+            features: ['Unlimited quotes', 'Calendar sync', 'Chat support'],
+            price: { amount: 0, currency: 'GBP' },
+            billingInterval: 'month',
+            billingFrequency: 1,
+            trialDays: 14,
+            badge: '',
+            imageUrl: '',
+            roleAccess: ['provider', 'administrator'],
+            highlight: false,
+            supportUrl: ''
+          }
+        ],
     restrictedFeatures: Array.isArray(config.subscriptions?.restrictedFeatures)
       ? uniqueStrings(config.subscriptions.restrictedFeatures)
       : []
@@ -282,6 +403,7 @@ function applyRuntimeSideEffects(settings) {
   config.finance = config.finance || {};
   config.finance.commissionRates = commissionRates;
   config.finance.commissionsEnabled = commissions.enabled !== false;
+  config.finance.commissionStructures = clone(commissions.structures ?? []);
 
   config.subscriptions = {
     ...(config.subscriptions || {}),
@@ -378,6 +500,9 @@ function sanitiseCommissions(update = {}, current = DEFAULT_SETTINGS.commissions
     }
     next.customRates = cleaned;
   }
+  if (Object.hasOwn(update, 'structures')) {
+    next.structures = sanitiseCommissionStructures(update.structures, next.structures);
+  }
   return next;
 }
 
@@ -388,7 +513,8 @@ function sanitiseTiers(tiers, fallback) {
   const cleaned = [];
   for (const tier of tiers) {
     if (!tier || typeof tier !== 'object') continue;
-    const id = typeof tier.id === 'string' && tier.id.trim() ? tier.id.trim().toLowerCase() : null;
+    const id =
+      typeof tier.id === 'string' && tier.id.trim() ? slugify(tier.id.trim(), { lower: true, strict: true }) : null;
     const label = typeof tier.label === 'string' && tier.label.trim() ? tier.label.trim() : null;
     if (!id || !label) continue;
     const description = typeof tier.description === 'string' ? tier.description.trim() : '';
@@ -398,7 +524,39 @@ function sanitiseTiers(tiers, fallback) {
     } else if (typeof tier.features === 'string') {
       features = uniqueStrings(tier.features.split(','));
     }
-    cleaned.push({ id, label, description, features });
+    const priceAmount = tier.price && typeof tier.price === 'object' ? tier.price.amount : tier.priceAmount;
+    const priceCurrency = tier.price && typeof tier.price === 'object' ? tier.price.currency : tier.priceCurrency;
+    const billingInterval =
+      tier.billing && typeof tier.billing === 'object' ? tier.billing.interval : tier.billingInterval;
+    const billingFrequency =
+      tier.billing && typeof tier.billing === 'object' ? tier.billing.intervalCount : tier.billingFrequency;
+    const roleAccessRaw =
+      Array.isArray(tier.roleAccess)
+        ? tier.roleAccess
+        : typeof tier.roleAccess === 'string'
+          ? tier.roleAccess.split(',')
+          : [];
+
+    cleaned.push({
+      id,
+      label,
+      description,
+      features,
+      price: {
+        amount: parseMoney(priceAmount, 0),
+        currency: normaliseCurrency(priceCurrency, 'GBP')
+      },
+      billingInterval: ['week', 'month', 'year'].includes((billingInterval || '').toLowerCase())
+        ? billingInterval.toLowerCase()
+        : 'month',
+      billingFrequency: parsePositiveInteger(billingFrequency, 1, { min: 1, max: 52 }),
+      trialDays: parsePositiveInteger(tier.trialDays, 0, { min: 0, max: 365 }),
+      badge: typeof tier.badge === 'string' ? tier.badge.trim() : '',
+      imageUrl: typeof tier.imageUrl === 'string' ? tier.imageUrl.trim() : '',
+      roleAccess: uniqueStrings(roleAccessRaw),
+      highlight: tier.highlight === true,
+      supportUrl: typeof tier.supportUrl === 'string' ? tier.supportUrl.trim() : ''
+    });
   }
   return cleaned.length > 0 ? cleaned : fallback;
 }
@@ -412,7 +570,7 @@ function sanitiseSubscriptions(update = {}, current = DEFAULT_SETTINGS.subscript
     next.enforceFeatures = Boolean(update.enforceFeatures);
   }
   if (Object.hasOwn(update, 'defaultTier') && typeof update.defaultTier === 'string' && update.defaultTier.trim()) {
-    next.defaultTier = update.defaultTier.trim().toLowerCase();
+    next.defaultTier = slugify(update.defaultTier.trim(), { lower: true, strict: true });
   }
   if (Object.hasOwn(update, 'restrictedFeatures')) {
     if (Array.isArray(update.restrictedFeatures)) {

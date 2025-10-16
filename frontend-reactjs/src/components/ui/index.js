@@ -2,6 +2,7 @@ export { default as Button } from './Button.jsx';
 export { default as Card } from './Card.jsx';
 export { default as Checkbox } from './Checkbox.jsx';
 export { default as FormField } from './FormField.jsx';
+export { default as Modal } from './Modal.jsx';
 export { default as SegmentedControl } from './SegmentedControl.jsx';
 export { default as Skeleton } from './Skeleton.jsx';
 export { default as Spinner } from './Spinner.jsx';

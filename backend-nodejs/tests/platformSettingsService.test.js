@@ -102,18 +102,89 @@ describe('platformSettingsService commission defaults', () => {
         baseRate: 0.18,
         customRates: {
           'scheduled:high': 0.25
-        }
+        },
+        structures: [
+          {
+            id: 'vip',
+            name: 'VIP partners',
+            rateType: 'percentage',
+            rateValue: 0.12,
+            appliesTo: ['vip', 'preferred'],
+            payoutDelayDays: 3,
+            minBookingValue: 100,
+            maxBookingValue: 2000,
+            active: true,
+            imageUrl: 'https://cdn.fixnado.com/vip.png'
+          }
+        ]
       }
     }, 'finance');
 
     expect(updated.commissions.baseRate).toBeCloseTo(0.18, 5);
     expect(updated.commissions.customRates['scheduled:high']).toBeCloseTo(0.25, 5);
+    expect(updated.commissions.structures).toHaveLength(1);
+    expect(updated.commissions.structures[0]).toMatchObject({
+      id: 'vip',
+      rateType: 'percentage',
+      rateValue: 0.12,
+      payoutDelayDays: 3,
+      minBookingValue: 100,
+      maxBookingValue: 2000,
+      active: true
+    });
     expect(config.finance.commissionRates.default).toBeCloseTo(0.18, 5);
     expect(config.finance.commissionRates['scheduled:high']).toBeCloseTo(0.25, 5);
+    expect(config.finance.commissionStructures).toHaveLength(1);
+    expect(config.finance.commissionStructures[0]).toMatchObject({ id: 'vip', rateValue: 0.12 });
 
     const cached = await getPlatformSettings();
     expect(cached.commissions.baseRate).toBeCloseTo(0.18, 5);
     expect(cached.commissions.customRates['scheduled:high']).toBeCloseTo(0.25, 5);
+    expect(cached.commissions.structures[0]).toMatchObject({ id: 'vip' });
+  });
+});
+
+describe('subscription package governance', () => {
+  it('sanitises and persists subscription packages', async () => {
+    const updated = await updatePlatformSettings({
+      subscriptions: {
+        defaultTier: 'growth',
+        tiers: [
+          {
+            id: 'growth',
+            label: 'Growth',
+            description: 'Scale to regional coverage.',
+            features: ['jobs', 'crm', 'analytics'],
+            price: { amount: 199.995, currency: 'usd' },
+            billingInterval: 'MONTH',
+            billingFrequency: 3,
+            trialDays: 21,
+            badge: 'Best value',
+            imageUrl: 'https://cdn.fixnado.com/growth.png',
+            roleAccess: ['provider', 'provider', 'admin'],
+            highlight: true,
+            supportUrl: 'https://docs.fixnado.com/growth'
+          }
+        ],
+        restrictedFeatures: ['jobs', 'crm']
+      }
+    }, 'subscriptions');
+
+    expect(updated.subscriptions.tiers).toHaveLength(1);
+    const [tier] = updated.subscriptions.tiers;
+    expect(tier).toMatchObject({
+      id: 'growth',
+      label: 'Growth',
+      price: { amount: 199.99, currency: 'USD' },
+      billingInterval: 'month',
+      billingFrequency: 3,
+      trialDays: 21,
+      highlight: true,
+      supportUrl: 'https://docs.fixnado.com/growth'
+    });
+    expect(tier.roleAccess).toEqual(['provider', 'admin']);
+    expect(config.subscriptions.tiers[0]).toMatchObject({ id: 'growth', highlight: true });
+    expect(updated.subscriptions.defaultTier).toBe('growth');
   });
 });
 

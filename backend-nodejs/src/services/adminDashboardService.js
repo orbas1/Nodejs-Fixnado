@@ -10,6 +10,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { getCachedPlatformSettings } from './platformSettingsService.js';
 import { getOverviewSettings } from './adminDashboardSettingsService.js';
 import { getSecurityPosture } from './securityPostureService.js';
 
@@ -883,6 +884,26 @@ export async function buildAdminDashboard({
       : 0
   }));
 
+  const platformSettings = getCachedPlatformSettings();
+  const commissionSettings = platformSettings?.commissions ?? {};
+  const subscriptionSettings = platformSettings?.subscriptions ?? {};
+  const integrationSettings = platformSettings?.integrations ?? {};
+  const monetisationSummary = {
+    commissionsEnabled: commissionSettings.enabled !== false,
+    baseRate: commissionSettings.baseRate ?? 0.025,
+    baseRateLabel: `${((commissionSettings.baseRate ?? 0) * 100).toFixed(2)}%`,
+    subscriptionEnabled: subscriptionSettings.enabled !== false,
+    subscriptionCount: Array.isArray(subscriptionSettings.tiers)
+      ? subscriptionSettings.tiers.length
+      : Array.isArray(subscriptionSettings.packages)
+        ? subscriptionSettings.packages.length
+        : 0,
+    defaultTier: subscriptionSettings.defaultTier ?? '',
+    stripeConnected: Boolean(integrationSettings?.stripe?.secretKey),
+    escrowConnected: Boolean(integrationSettings?.escrow?.apiKey && integrationSettings?.escrow?.apiSecret),
+    smtpReady: Boolean(integrationSettings?.smtp?.host) && Boolean(integrationSettings?.smtp?.username),
+    storageConfigured: Boolean(integrationSettings?.cloudflareR2?.bucket)
+  };
   const manualInsights = Array.isArray(insightSettings.manual) ? insightSettings.manual : [];
   const manualUpcoming = Array.isArray(timelineSettings.manual)
     ? timelineSettings.manual.map((item) => ({
@@ -936,6 +957,8 @@ export async function buildAdminDashboard({
     audit: {
       timeline: auditTimeline
     },
+    platform: {
+      monetisation: monetisationSummary
     overview: {
       manualInsights,
       manualUpcoming

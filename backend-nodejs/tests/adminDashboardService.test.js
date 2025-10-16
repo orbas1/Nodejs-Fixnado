@@ -435,6 +435,10 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.audit.timeline.some((entry) => entry.event === 'Manual audit')).toBe(true);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
+    expect(dashboard.platform.monetisation).toBeDefined();
+    expect(dashboard.platform.monetisation.commissionsEnabled).toBe(true);
+    expect(dashboard.platform.monetisation.baseRateLabel).toBe('2.50%');
+    expect(typeof dashboard.platform.monetisation.subscriptionCount).toBe('number');
     expect(dashboard.overview.manualInsights).toEqual(['Ops review scheduled']);
     expect(dashboard.overview.manualUpcoming[0]).toMatchObject({
       title: 'Ops briefing',
