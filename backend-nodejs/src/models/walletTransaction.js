@@ -17,6 +17,7 @@ WalletTransaction.init(
     },
     type: {
       type: DataTypes.STRING(24),
+      type: DataTypes.ENUM('credit', 'debit', 'hold', 'release', 'adjustment'),
       allowNull: false
     },
     amount: {
@@ -30,6 +31,11 @@ WalletTransaction.init(
     referenceType: {
       field: 'reference_type',
       type: DataTypes.STRING(64),
+      type: DataTypes.STRING(3),
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
     referenceId: {
@@ -39,6 +45,7 @@ WalletTransaction.init(
     },
     description: {
       type: DataTypes.STRING(255),
+      type: DataTypes.STRING(128),
       allowNull: true
     },
     actorId: {
@@ -56,11 +63,41 @@ WalletTransaction.init(
       field: 'running_balance',
       type: DataTypes.DECIMAL(14, 2),
       allowNull: true
+    actorRole: {
+      field: 'actor_role',
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+    balanceBefore: {
+      field: 'balance_before',
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false
+    },
+    balanceAfter: {
+      field: 'balance_after',
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false
+    },
+    pendingBefore: {
+      field: 'pending_before',
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false
+    },
+    pendingAfter: {
+      field: 'pending_after',
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false
     },
     metadata: {
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: {}
+    },
+    occurredAt: {
+      field: 'occurred_at',
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
     }
   },
   {
@@ -70,6 +107,7 @@ WalletTransaction.init(
     underscored: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
+    underscored: true
   }
 );
 
