@@ -21,6 +21,9 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderOnboardingTask from './providerOnboardingTask.js';
+import ProviderOnboardingRequirement from './providerOnboardingRequirement.js';
+import ProviderOnboardingNote from './providerOnboardingNote.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -187,6 +190,18 @@ ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
+
+Company.hasMany(ProviderOnboardingTask, { foreignKey: 'companyId', as: 'onboardingTasks' });
+ProviderOnboardingTask.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingTask.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+
+Company.hasMany(ProviderOnboardingRequirement, { foreignKey: 'companyId', as: 'onboardingRequirements' });
+ProviderOnboardingRequirement.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingRequirement.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+Company.hasMany(ProviderOnboardingNote, { foreignKey: 'companyId', as: 'onboardingNotes' });
+ProviderOnboardingNote.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
