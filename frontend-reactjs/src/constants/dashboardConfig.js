@@ -71,6 +71,7 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
+      { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },

@@ -14,6 +14,8 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null,
       surface: req.route?.path || null
+    })
+  },
   'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
@@ -1326,6 +1328,56 @@ const ROUTE_POLICIES = {
     description: 'Allow provider managers to view their operational dashboard.',
     requirements: [Permissions.PANEL_PROVIDER],
     tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
+  'panel.provider.customJobs.view': {
+    id: 'panel.provider.customJobs.view',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:view',
+    description: 'Allow providers to view custom job opportunities, bidding history, and communications.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'medium'
+  },
+  'panel.provider.customJobs.manage': {
+    id: 'panel.provider.customJobs.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:manage',
+    description: 'Allow providers to create bespoke jobs, issue invitations, and manage targeted briefs.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'high'
+  },
+  'panel.provider.customJobs.bid': {
+    id: 'panel.provider.customJobs.bid',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:bid',
+    description: 'Allow providers to create, edit, and withdraw bids on custom jobs.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs'],
+    severity: 'high'
+  },
+  'panel.provider.customJobs.message': {
+    id: 'panel.provider.customJobs.message',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:message',
+    description: 'Allow providers to communicate within custom job bidding threads.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'communications'],
+    severity: 'medium'
+  },
+  'panel.provider.customJobs.report': {
+    id: 'panel.provider.customJobs.report',
+    version: '1.0.0',
+    resource: 'panel.provider.custom-jobs',
+    action: 'panel.provider.custom-jobs:report',
+    description: 'Allow providers to create and manage saved reports for custom job performance.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'custom-jobs', 'reports'],
     severity: 'medium'
   },
   'panel.enterprise.dashboard': {
