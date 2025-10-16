@@ -167,7 +167,6 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useLocale();
   const { isAuthenticated, dashboards } = useSession();
-  const showAuthenticatedNavigation = Boolean(isAuthenticated);
 
   const primaryNavigation = useMemo(
     () => buildPrimaryNavigation({ t, dashboards }),
@@ -179,6 +178,7 @@ export default function Header() {
     [dashboards, isAuthenticated, t]
   );
 
+  const hasPrimaryNavigation = primaryNavigation.length > 0;
   const activeDashboard = dashboards?.[0] ?? 'user';
   const accountLink = isAuthenticated ? `/dashboards/${activeDashboard}` : '/login';
   const accountLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
@@ -187,7 +187,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 lg:px-6">
         <div className="flex items-center gap-4">
-          {showAuthenticatedNavigation ? (
+          {hasPrimaryNavigation ? (
             <button
               type="button"
               className="inline-flex rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent lg:hidden"
@@ -202,7 +202,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {showAuthenticatedNavigation ? (
+        {hasPrimaryNavigation ? (
           <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
             {primaryNavigation.map((section) => (
               <Popover className="relative" key={section.id}>
@@ -242,7 +242,7 @@ export default function Header() {
         ) : null}
 
         <div className="flex items-center gap-3">
-          {showAuthenticatedNavigation ? (
+          {isAuthenticated ? (
             <>
               <Popover className="hidden lg:block">
                 <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
@@ -296,6 +296,36 @@ export default function Header() {
 
           <LanguageSelector />
 
+          {isAuthenticated ? (
+            <NavLink
+              to="/account/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'hidden items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition lg:inline-flex',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              Profile
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/register"
+              className={({ isActive }) =>
+                clsx(
+                  'hidden items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition lg:inline-flex',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              {t('nav.register')}
+            </NavLink>
+          )}
+
           <NavLink
             to={accountLink}
             className={({ isActive }) =>
@@ -313,7 +343,7 @@ export default function Header() {
         </div>
       </div>
 
-      <Transition.Root show={mobileOpen && showAuthenticatedNavigation} as={Fragment}>
+      <Transition.Root show={mobileOpen && hasPrimaryNavigation} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setMobileOpen}>
           <Transition.Child
             as={Fragment}

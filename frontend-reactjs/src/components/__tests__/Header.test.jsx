@@ -11,6 +11,7 @@ vi.mock('../../hooks/useSession.js', () => ({
 
 const translations = {
   'nav.login': 'Log in',
+  'nav.register': 'Register',
   'nav.getStarted': 'Get started',
   'nav.feed': 'Feed',
   'nav.explorer': 'Explorer',
@@ -33,7 +34,8 @@ const translations = {
   'nav.statusLabel': '{status} status',
   'nav.viewDashboard': 'Go to dashboard',
   'nav.manageAccountHint': 'Manage account controls from your dashboard profile.',
-  'nav.toggleMenu': 'Toggle navigation menu'
+  'nav.toggleMenu': 'Toggle navigation menu',
+  'auth.login.cta': 'Access your workspace'
 };
 
 vi.mock('../../hooks/useLocale.js', () => ({
@@ -78,11 +80,11 @@ describe('Header navigation layout', () => {
     );
 
     expect(screen.getByRole('link', { name: /Log in/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Register/i })).toBeInTheDocument();
     expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
-    expect(screen.queryByRole('link', { name: /Get started/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Explorer/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/Toggle navigation menu/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Feed/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explorer/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Toggle navigation menu/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Notifications/i)).not.toBeInTheDocument();
   });
 
   it('shows consolidated navigation when authenticated', () => {
