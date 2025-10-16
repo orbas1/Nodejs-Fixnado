@@ -1,10 +1,10 @@
-import { forwardRef, useId } from 'react';
+import { forwardRef } from 'react';
 import PropTypes from 'prop-types';
-import clsx from 'clsx';
-import './ui.css';
+import Textarea from './Textarea.jsx';
 
 const TextArea = forwardRef(function TextArea(
   { id, label, optionalLabel, hint, error, rows, className, textareaClassName, ...rest },
+  { id, label, optionalLabel, hint, error, className, textareaClassName, rows = 4, ...rest },
   ref
 ) {
   const generatedId = useId();
@@ -48,6 +48,8 @@ const TextArea = forwardRef(function TextArea(
       ) : null}
     </div>
   );
+const TextArea = forwardRef(function TextArea(props, ref) {
+  return <Textarea {...props} ref={ref} />;
 });
 
 TextArea.displayName = 'TextArea';
@@ -58,7 +60,10 @@ TextArea.propTypes = {
   optionalLabel: PropTypes.string,
   hint: PropTypes.string,
   error: PropTypes.string,
-  rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  className: PropTypes.string,
+  textareaClassName: PropTypes.string,
+  rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+  rows: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   className: PropTypes.string,
   textareaClassName: PropTypes.string
 };
@@ -69,8 +74,9 @@ TextArea.defaultProps = {
   optionalLabel: undefined,
   hint: undefined,
   error: undefined,
-  rows: 4,
   className: undefined,
+  textareaClassName: undefined,
+  rows: 4
   textareaClassName: undefined
 };
 

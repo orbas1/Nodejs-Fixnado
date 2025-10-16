@@ -5,6 +5,19 @@ import './ui.css';
 
 const Select = forwardRef(function Select(
   { id, label, optionalLabel, hint, error, options, className, selectClassName, children, ...rest },
+  { id, label, optionalLabel, hint, error, options = [], className, selectClassName, ...rest },
+  {
+    id,
+    label,
+    optionalLabel,
+    hint,
+    error,
+    options,
+    className,
+    selectClassName,
+    children,
+    ...rest
+  },
   ref
 ) {
   const generatedId = useId();
@@ -20,6 +33,13 @@ const Select = forwardRef(function Select(
   }
 
   const resolvedOptions = Array.isArray(options) ? options : [];
+  const optionNodes = Array.isArray(options) && options.length > 0
+    ? options.map((option) => (
+        <option key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+        </option>
+      ))
+    : children;
 
   return (
     <div className={clsx('fx-field', className)}>
@@ -33,6 +53,7 @@ const Select = forwardRef(function Select(
         ref={ref}
         id={fieldId}
         className={clsx('fx-select', 'fx-text-input', error && 'fx-text-input--error', selectClassName)}
+        className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
@@ -42,7 +63,7 @@ const Select = forwardRef(function Select(
             {option.label}
           </option>
         ))}
-        {children}
+        {optionNodes}
       </select>
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
@@ -74,6 +95,7 @@ Select.propTypes = {
     })
   ),
   className: PropTypes.string,
+  selectClassName: PropTypes.string
   selectClassName: PropTypes.string,
   children: PropTypes.node
 };
@@ -86,6 +108,7 @@ Select.defaultProps = {
   error: undefined,
   options: undefined,
   className: undefined,
+  selectClassName: undefined
   selectClassName: undefined,
   children: undefined
 };
