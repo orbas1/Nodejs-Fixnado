@@ -45,6 +45,7 @@ const Blog = lazy(() => import('./pages/Blog.jsx'));
 const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
+const AdminLegal = lazy(() => import('./pages/AdminLegal.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
@@ -104,7 +105,7 @@ function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/tools" element={<Tools />} />
               <Route path="/materials" element={<Materials />} />
-              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
               <Route path="/about" element={<About />} />
               <Route path="/settings/security" element={<SecuritySettings />} />
               <Route path="/account/profile" element={<Profile />} />
@@ -184,6 +185,14 @@ function App() {
                   </AdminProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/legal/:slug?"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminLegal />
+                  </AdminProtectedRoute>
+                }
+              />
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />
@@ -193,6 +202,7 @@ function App() {
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
+              <Route path="/legal/:slug" element={<Terms />} />
               {import.meta.env.DEV && CustomerSettingsDevPreview ? (
                 <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
               ) : null}

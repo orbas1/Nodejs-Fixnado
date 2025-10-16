@@ -340,6 +340,27 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.legal.read': {
+    id: 'admin.legal.read',
+    version: '1.0.0',
+    resource: 'admin.legal',
+    action: 'admin.legal:read',
+    description: 'Allow administrators to view legal policy metadata and version history.',
+    requirements: [Permissions.ADMIN_LEGAL_READ],
+    tags: ['admin', 'legal'],
+    severity: 'high',
+    metadata: (req) => ({ slug: req.params?.slug || null })
+  },
+  'admin.legal.write': {
+    id: 'admin.legal.write',
+    version: '1.0.0',
+    resource: 'admin.legal',
+    action: 'admin.legal:write',
+    description: 'Allow administrators to create, update, and publish legal policy versions.',
+    requirements: [Permissions.ADMIN_LEGAL_WRITE],
+    tags: ['admin', 'legal'],
+    severity: 'critical',
+    metadata: (req) => ({ slug: req.params?.slug || null, versionId: req.params?.versionId || null })
   'zones.read': {
     id: 'zones.read',
     version: '1.0.0',

@@ -390,6 +390,8 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
+  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
   const contentSections = useMemo(
     () => navigation.filter((item) => item.type !== 'link'),
     [navigation]
@@ -651,6 +653,22 @@ const DashboardLayout = ({
                     );
                   })}
                 </nav>
+                {sidebarLinks.length ? (
+                  <div className="mt-6 space-y-2">
+                    <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
+                    {sidebarLinks.map((link) => (
+                      <Link
+                        key={link.id}
+                        to={link.href}
+                        onClick={() => setMobileNavOpen(false)}
+                        className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
+                      >
+                        <span>{link.label}</span>
+                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="mt-6 space-y-3">
                   <Link
                     to="/"
@@ -810,6 +828,26 @@ const DashboardLayout = ({
             );
           })}
         </nav>
+        {!navCollapsed && sidebarLinks.length ? (
+          <div className="px-6 pb-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
+            <ul className="mt-3 space-y-2">
+              {sidebarLinks.map((link) => (
+                <li key={link.id}>
+                  <Link
+                    to={link.href}
+                    className="flex flex-col rounded-xl border border-accent/20 bg-white/90 px-4 py-3 text-sm text-primary transition hover:border-accent hover:text-accent"
+                  >
+                    <span className="font-semibold">{link.label}</span>
+                    {link.description ? (
+                      <span className="text-xs text-slate-500">{link.description}</span>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </aside>
 
       <main className="flex-1 min-h-screen">

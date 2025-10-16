@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { listLegalDocumentsSummary } from './legalDocumentService.js';
 import { listAdminAuditEvents } from './adminAuditEventService.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
 import { getOverviewSettings } from './adminDashboardSettingsService.js';
@@ -984,6 +985,11 @@ export async function buildAdminDashboard({
   const [
     escrowSeries,
     disputeSeries,
+    complianceControls,
+    queueInsights,
+    auditTimeline,
+    security,
+    legalSummary
     complianceControlsComputed,
     queueInsights,
     auditTimelineComputed,
@@ -997,6 +1003,9 @@ export async function buildAdminDashboard({
     computeDisputeSeries(currentBuckets),
     computeComplianceControls(timezone),
     computeQueueInsights(range, timezone),
+    buildAuditTimeline(range, timezone),
+    computeSecuritySignals(timezone),
+    listLegalDocumentsSummary({ timezone })
     buildAuditTimeline(range, timezone, key),
     computeSecuritySignals(timezone)
     buildAuditTimeline(range, timezone),
@@ -1167,6 +1176,7 @@ export async function buildAdminDashboard({
     audit: {
       timeline: auditTimeline
     },
+    legal: legalSummary
     platform: {
       monetisation: monetisationSummary
     overview: {

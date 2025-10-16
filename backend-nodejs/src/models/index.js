@@ -79,6 +79,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import LegalDocument from './legalDocument.js';
+import LegalDocumentVersion from './legalDocumentVersion.js';
 import LiveFeedAuditEvent from './liveFeedAuditEvent.js';
 import LiveFeedAuditNote from './liveFeedAuditNote.js';
 import SystemSettingAudit from './systemSettingAudit.js';
@@ -476,6 +478,12 @@ WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
 WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
+LegalDocument.hasMany(LegalDocumentVersion, { foreignKey: 'documentId', as: 'versions' });
+LegalDocument.belongsTo(LegalDocumentVersion, {
+  foreignKey: 'currentVersionId',
+  as: 'currentVersion'
+});
+LegalDocumentVersion.belongsTo(LegalDocument, { foreignKey: 'documentId', as: 'document' });
 User.hasMany(WalletAccount, { foreignKey: 'userId', as: 'walletAccounts' });
 WalletAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -540,6 +548,7 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+export default sequelize;
 WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
 WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
 
@@ -630,6 +639,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  LegalDocument,
+  LegalDocumentVersion
   LiveFeedAuditEvent,
   LiveFeedAuditNote
   SystemSettingAudit

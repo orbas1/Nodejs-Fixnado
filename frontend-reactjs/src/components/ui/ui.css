@@ -308,6 +308,17 @@
   right: var(--fx-space-3);
 }
 
+.fx-textarea-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.fx-textarea {
+  width: 100%;
+  min-height: 140px;
+  border-radius: var(--fx-radius-lg);
+  border: 1px solid var(--fx-color-border-subtle);
+  padding: var(--fx-space-4);
 .fx-textarea {
   width: 100%;
   min-height: 140px;
