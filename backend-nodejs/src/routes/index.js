@@ -34,10 +34,10 @@ import adminEnterpriseRoutes from './adminEnterpriseRoutes.js';
 import adminMarketplaceRoutes from './adminMarketplaceRoutes.js';
 import legalRoutes from './legalRoutes.js';
 import userSettingsRoutes from './userSettingsRoutes.js';
-import walletRoutes from './walletRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
+import providerEscrowRoutes from './providerEscrowRoutes.js';
 
 const v1Router = Router();
 
@@ -80,6 +80,7 @@ v1Router.use('/wallet', walletRoutes);
 v1Router.use('/service-orders', serviceOrderRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
 v1Router.use('/account', accountRoutes);
+v1Router.use('/provider/escrows', providerEscrowRoutes);
 
 const router = Router();
 

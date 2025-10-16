@@ -1716,6 +1716,17 @@ const mockDashboards = {
         }
       },
       {
+        id: 'escrow-management',
+        icon: 'finance',
+        label: 'Escrow management',
+        description: 'Escrow funding status, approvals, and release readiness.',
+        type: 'component',
+        meta: {
+          api: 'provider-escrows',
+          providerId: 'PRV-1108'
+        }
+      },
+      {
         id: 'inventory',
         icon: 'assets',
         label: 'Tools & Materials',

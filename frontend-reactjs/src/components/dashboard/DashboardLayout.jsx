@@ -1,33 +1,33 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  Bars3BottomLeftIcon,
-  ArrowLeftOnRectangleIcon,
-  MagnifyingGlassIcon,
-  ArrowTopRightOnSquareIcon,
-  ArrowPathIcon,
   ArrowDownTrayIcon,
-  ExclamationTriangleIcon,
-  Squares2X2Icon,
-  UserCircleIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
-  WrenchScrewdriverIcon,
-  InboxStackIcon,
-  Cog8ToothIcon,
-  UsersIcon,
-  ChartPieIcon,
-  BuildingOfficeIcon,
-  ShieldCheckIcon,
-  MapIcon,
-  BoltIcon,
+  ArrowLeftOnRectangleIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   BanknotesIcon,
+  Bars3BottomLeftIcon,
+  BoltIcon,
+  BuildingOfficeIcon,
+  CalendarDaysIcon,
+  ChartPieIcon,
   ClipboardDocumentCheckIcon,
+  ClipboardDocumentListIcon,
+  Cog8ToothIcon,
   CubeIcon,
-  QueueListIcon
-  PaintBrushIcon
-  TagIcon
+  ExclamationTriangleIcon,
+  InboxStackIcon,
+  MagnifyingGlassIcon,
+  MapIcon,
+  PaintBrushIcon,
+  QueueListIcon,
+  ShieldCheckIcon,
+  Squares2X2Icon,
+  TagIcon,
+  UserCircleIcon,
+  UsersIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
@@ -36,6 +36,148 @@ import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 import DashboardBlogRail from './DashboardBlogRail.jsx';
 import CustomerOverviewControl from './CustomerOverviewControl.jsx';
+import ProviderEscrowWorkspace from '../../features/escrowManagement/ProviderEscrowWorkspace.jsx';
+
+const navIconMap = {
+  profile: UserCircleIcon,
+  calendar: CalendarDaysIcon,
+  pipeline: ClipboardDocumentListIcon,
+  history: ClipboardDocumentListIcon,
+  availability: UsersIcon,
+  crew: WrenchScrewdriverIcon,
+  provider: UsersIcon,
+  users: UsersIcon,
+  control: Squares2X2Icon,
+  assets: CubeIcon,
+  support: InboxStackIcon,
+  settings: Cog8ToothIcon,
+  analytics: ChartPieIcon,
+  finance: BanknotesIcon,
+  enterprise: BuildingOfficeIcon,
+  compliance: ShieldCheckIcon,
+  automation: BoltIcon,
+  map: MapIcon,
+  documents: ClipboardDocumentCheckIcon,
+  operations: QueueListIcon,
+  builder: PaintBrushIcon,
+  marketplace: WrenchScrewdriverIcon,
+  seo: TagIcon
+};
+
+const DEFAULT_ICON = Squares2X2Icon;
+
+function getNavIcon(item) {
+  if (!item?.icon) {
+    return DEFAULT_ICON;
+  }
+  return navIconMap[item.icon] ?? DEFAULT_ICON;
+}
+
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return null;
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.round(diffMs / 60000);
+  if (diffMinutes < 1) return 'moments ago';
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+}
+
+function titleCase(value) {
+  return value
+    .split(/[._-]/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+function buildSearchIndex(navigation) {
+  if (!Array.isArray(navigation)) {
+    return [];
+  }
+  return navigation
+    .filter((section) => !section.href)
+    .flatMap((section) => {
+      const entries = [
+        {
+          id: section.id,
+          label: section.label || titleCase(section.id),
+          description: section.description || '',
+          sectionId: section.id
+        }
+      ];
+
+      if (Array.isArray(section.searchable)) {
+        section.searchable.forEach((item) => {
+          entries.push({
+            id: `${section.id}-${item.id || item.label}`,
+            label: item.label || titleCase(item.id || 'item'),
+            description: item.description || '',
+            sectionId: item.targetSection || section.id
+          });
+        });
+      }
+
+      if (section.type === 'board' && Array.isArray(section.data?.columns)) {
+        section.data.columns.forEach((column) => {
+          entries.push({
+            id: `${section.id}-${column.id || column.title}`,
+            label: `${column.title || 'Column'} • ${section.label || titleCase(section.id)}`,
+            description: `${column.items?.length ?? 0} work items`,
+            sectionId: section.id
+          });
+        });
+      }
+
+      return entries;
+    });
+}
+
+function Skeleton() {
+  return (
+    <div className="space-y-6 px-6 py-10">
+      <div className="h-8 w-2/5 animate-pulse rounded-full bg-white/30" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={`skeleton-${index}`} className="h-40 animate-pulse rounded-2xl bg-white/40" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }) {
+  return (
+    <div className="flex min-h-[360px] flex-col items-center justify-center gap-4 px-6 text-center">
+      <ExclamationTriangleIcon className="h-10 w-10 text-amber-500" aria-hidden="true" />
+      <div className="space-y-1">
+        <p className="text-lg font-semibold text-primary">We couldn’t load this dashboard.</p>
+        <p className="text-sm text-slate-500">{message || 'Try refreshing the view.'}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow"
+      >
+        <ArrowPathIcon className="h-4 w-4" /> Try again
+      </button>
+    </div>
+  );
+}
+
+ErrorState.propTypes = {
+  message: PropTypes.string,
+  onRetry: PropTypes.func
+};
+
+ErrorState.defaultProps = {
+  message: null,
+  onRetry: undefined
+};
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -45,7 +187,7 @@ const stateBadgeMap = {
   sunset: 'bg-rose-100 text-rose-700 border-rose-200'
 };
 
-const formatToggleDate = (iso) => {
+function formatToggleDate(iso) {
   if (!iso) return '—';
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) {
@@ -58,61 +200,65 @@ const formatToggleDate = (iso) => {
     hour: '2-digit',
     minute: '2-digit'
   });
-};
+}
 
-const ToggleSummary = ({ toggle = null, reason = null }) => {
+function ToggleSummary({ toggle, reason }) {
   if (!toggle) {
     return null;
   }
   const badgeClass = stateBadgeMap[toggle.state] ?? 'bg-slate-100 text-slate-600 border-slate-200';
-  const parsedRollout = Number.parseFloat(toggle.rollout ?? 0);
-  const rolloutValue = Number.isFinite(parsedRollout) ? parsedRollout : 0;
+  const rolloutValue = Number.isFinite(Number(toggle.rollout)) ? Number(toggle.rollout) : 0;
   return (
-    <div className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm" data-qa="dashboard-toggle-summary">
+    <div className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-500">Feature toggle</p>
           <p className="text-sm font-semibold text-slate-900">analytics-dashboards</p>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass}`} data-qa="dashboard-toggle-chip">
+        <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass}`}>
           {toggle.state ?? 'unknown'}
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-500">
         <div>
           <dt className="font-medium text-slate-600">Owner</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-owner">{toggle.owner || '—'}</dd>
+          <dd className="mt-1">{toggle.owner || '—'}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Ticket</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-ticket">{toggle.ticket || '—'}</dd>
+          <dd className="mt-1">{toggle.ticket || '—'}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Last modified</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-modified">{formatToggleDate(toggle.lastModifiedAt)}</dd>
+          <dd className="mt-1">{formatToggleDate(toggle.lastModifiedAt)}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-600">Rollout</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-rollout">{Math.round(rolloutValue * 100)}%</dd>
+          <dd className="mt-1">{Math.round(rolloutValue * 100)}%</dd>
         </div>
         <div className="col-span-2">
           <dt className="font-medium text-slate-600">Reason</dt>
-          <dd className="mt-1 capitalize" data-qa="dashboard-toggle-reason">{reason?.replace('-', ' ') || 'enabled'}</dd>
+          <dd className="mt-1 capitalize">{reason?.replace('-', ' ') || 'enabled'}</dd>
         </div>
       </dl>
     </div>
   );
-};
+}
 
 ToggleSummary.propTypes = {
   toggle: PropTypes.shape({
     state: PropTypes.string,
-    rollout: PropTypes.number,
+    rollout: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     owner: PropTypes.string,
     ticket: PropTypes.string,
     lastModifiedAt: PropTypes.string
   }),
   reason: PropTypes.string
+};
+
+ToggleSummary.defaultProps = {
+  toggle: null,
+  reason: null
 };
 
 const resultBadge = {
@@ -123,572 +269,50 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting',
-  bucket: 'Bucket'
+  bucket: 'Bucket',
   route: 'Workspace'
 };
 
-const navIconMap = {
-  profile: UserCircleIcon,
-  calendar: CalendarDaysIcon,
-  pipeline: ClipboardDocumentListIcon,
-  history: ClipboardDocumentListIcon,
-  availability: UsersIcon,
-  provider: UsersIcon,
-  users: UsersIcon,
-  control: Squares2X2Icon,
-  assets: CubeIcon,
-  support: InboxStackIcon,
-  settings: Cog8ToothIcon,
-  crew: WrenchScrewdriverIcon,
-  compliance: ShieldCheckIcon,
-  enterprise: BuildingOfficeIcon,
-  finance: BanknotesIcon,
-  analytics: ChartPieIcon,
-  automation: BoltIcon,
-  map: MapIcon,
-  documents: ClipboardDocumentCheckIcon,
-  operations: QueueListIcon
-  marketplace: WrenchScrewdriverIcon
-  seo: TagIcon
-};
-
-navIconMap.builder = PaintBrushIcon;
-
-const getNavIcon = (item) => {
-  if (!item?.icon) {
-    return Squares2X2Icon;
-  }
-
-  return navIconMap[item.icon] ?? Squares2X2Icon;
-};
-
-const formatRelativeTime = (timestamp) => {
-  if (!timestamp) return null;
-  const last = new Date(timestamp);
-  if (Number.isNaN(last.getTime())) return null;
-  const diffMs = Date.now() - last.getTime();
-  const diffMinutes = Math.round(diffMs / 60000);
-  if (diffMinutes < 1) return 'moments ago';
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-};
-
-const buildSearchIndex = (navigation) =>
-  navigation
-    .filter((section) => !section.href)
-    .flatMap((section) => {
-  navigation.flatMap((section) => {
-    if (section.type === 'link') {
-    if (section.href) {
-      return [];
-    }
-
-    if (section.type === 'route') {
-      return [
-        {
-          id: section.id,
-          type: 'route',
-          label: section.label,
-          description: section.description ?? '',
-          href: section.href
-        }
-      ];
-    }
-
-    if (section.href) {
-    if (section.to) {
-    if (section.type === 'link') {
-    if (section.route || section.href) {
-      return [];
-    }
-    const entries = [
-      {
-        id: section.id,
-        type: 'section',
-        label: section.label,
-        description: section.description ?? '',
-        targetSection: section.id
-      }
-    ];
-
-    if (section.type === 'grid' && Array.isArray(section.data?.cards)) {
-      entries.push(
-        ...section.data.cards.map((card) => ({
-          id: `${section.id}-${card.title}`,
-          type: 'card',
-          label: card.title,
-          description: Array.isArray(card.details) ? card.details.join(' • ') : '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'board' && Array.isArray(section.data?.columns)) {
-      section.data.columns.forEach((column) => {
-        entries.push({
-          id: `${section.id}-${column.title}`,
-          type: 'column',
-          label: `${column.title} • ${section.label}`,
-          description: `${column.items?.length ?? 0} work items`,
-          targetSection: section.id
-        });
-        column.items?.forEach((item) => {
-          entries.push({
-            id: `${section.id}-${item.title}`,
-            type: 'item',
-            label: item.title,
-            description: [item.owner, item.value, item.eta].filter(Boolean).join(' • '),
-            targetSection: section.id
-          });
-        });
-      });
-    }
-
-    if (section.type === 'dispute-workspace' && Array.isArray(section.data?.snapshot)) {
-      section.data.snapshot.forEach((bucket) => {
-        entries.push({
-          id: `${section.id}-${bucket.id ?? bucket.label}`,
-          type: 'bucket',
-          label: `${bucket.label} • Dispute cadence`,
-          description: bucket.commentary ?? '',
-          targetSection: section.id
-        });
-      });
-    if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
-      entries.push(
-        ...section.data.controls.map((control) => ({
-          id: `${section.id}-${control.id ?? control.title}`,
-          type: 'record',
-          label: control.title,
-          description: [control.ownerTeam || control.owner?.name || '', control.reviewFrequency || '']
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'table' && Array.isArray(section.data?.rows)) {
-      entries.push(
-        ...section.data.rows.map((row, index) => ({
-          id: `${section.id}-row-${index}`,
-          type: 'record',
-          label: row[1] ?? row[0],
-          description: Array.isArray(row) ? row.join(' • ') : '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'list' && Array.isArray(section.data?.items)) {
-      entries.push(
-        ...section.data.items.map((item) => ({
-          id: `${section.id}-${item.title}`,
-          type: 'configuration',
-          label: item.title,
-          description: item.description ?? '',
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'operations-queues' && Array.isArray(section.data?.boards)) {
-      section.data.boards.forEach((board) => {
-        entries.push({
-          id: `${section.id}-${board.id}`,
-          type: 'board',
-          label: `${board.title} • ${section.label}`,
-          description: [board.summary, board.owner].filter(Boolean).join(' • '),
-          targetSection: section.id
-        });
-        (board.updates ?? []).forEach((update) => {
-          entries.push({
-            id: `${section.id}-${board.id}-${update.id}`,
-            type: 'item',
-            label: update.headline,
-            description: [update.body, formatRelativeTime(update.recordedAt)].filter(Boolean).join(' • '),
-            targetSection: section.id
-          });
-        });
-      });
-    }
-
-    if (section.type === 'ads') {
-      entries.push(
-        ...(section.data?.summaryCards ?? []).map((card) => ({
-          id: `${section.id}-${card.title}`,
-          type: 'card',
-          label: `${card.title} • ${card.value}`,
-          description: card.helper ?? card.change ?? '',
-          targetSection: section.id
-        })),
-        ...(section.data?.campaigns ?? []).map((campaign) => ({
-          id: `${section.id}-${campaign.id ?? campaign.name}`,
-          type: 'record',
-          label: `${campaign.name} • ${campaign.status ?? ''}`.trim(),
-          description: [`ROAS ${campaign.roas ?? '—'}`, campaign.pacing].filter(Boolean).join(' · '),
-          targetSection: section.id
-        })),
-        ...(section.data?.alerts ?? []).map((alert) => ({
-          id: `${section.id}-alert-${alert.title ?? alert.detectedAt}`,
-          type: 'record',
-          label: alert.title ?? 'Alert',
-          description: [`${alert.severity ?? ''}`.trim(), alert.description ?? ''].filter(Boolean).join(' • '),
-          targetSection: section.id
-        }))
-      );
-    }
-
-    if (section.type === 'settings' && Array.isArray(section.data?.panels)) {
-      section.data.panels.forEach((panel) => {
-        const panelId = panel.id ?? panel.title ?? 'panel';
-        entries.push({
-          id: `${section.id}-${panelId}`,
-          type: 'panel',
-          label: panel.title ?? 'Settings panel',
-          description: panel.description ?? '',
-          targetSection: section.id
-        });
-        panel.items?.forEach((item) => {
-          entries.push({
-            id: `${section.id}-${panelId}-${item.label}`,
-            type: item.type === 'toggle' ? 'configuration' : 'record',
-            label: item.label,
-            description: item.helper ?? '',
-            targetSection: section.id
-          });
-        });
-      });
-    }
-
-    if (section.type === 'services-management' && Array.isArray(section.data?.orders)) {
-      entries.push(
-        ...section.data.orders.map((order) => ({
-          id: `${section.id}-${order.id}`,
-          type: 'record',
-          label: order.service?.title ?? `Order ${order.id?.slice?.(0, 6) ?? ''}`,
-          description: [order.status, order.escrow?.status, order.booking?.zoneId]
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        }))
-    if (Array.isArray(section.searchable)) {
-      entries.push(
-        ...section.searchable.map((item) => ({
-          id: `${section.id}-${item.id}`,
-          type: 'configuration',
-          label: item.label,
-          description: item.description ?? '',
-          targetSection: item.targetSection ?? section.id
-        }))
-    if (section.type === 'marketplace-workspace' && section.data?.summary) {
-      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
-      entries.push(
-        {
-          id: `${section.id}-tools-summary`,
-          type: 'record',
-          label: `${tools.count ?? 0} tools catalogued`,
-          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-materials-summary`,
-          type: 'record',
-          label: `${materials.count ?? 0} materials tracked`,
-          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-moderation-summary`,
-          type: 'record',
-          label: `${moderationQueue} listings pending review`,
-          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
-    if (section.type === 'service-management') {
-      const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
-      const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
-      const packages = Array.isArray(section.data?.packages) ? section.data.packages : [];
-
-      categories.forEach((category) => {
-        entries.push({
-          id: `${section.id}-category-${category.id}`,
-          type: 'category',
-          label: `${category.name} • Category`,
-          description: category.description ?? '',
-          targetSection: section.id
-        });
-      });
-
-      listings.forEach((listing) => {
-        entries.push({
-          id: `${section.id}-listing-${listing.id}`,
-          type: 'listing',
-          label: listing.title,
-          description: [listing.category ?? 'Uncategorised', listing.status ?? 'draft']
-            .filter(Boolean)
-            .join(' • '),
-          targetSection: section.id
-        });
-      });
-
-      packages.forEach((pkg) => {
-        entries.push({
-          id: `${section.id}-package-${pkg.id}`,
-          type: 'package',
-          label: `${pkg.name ?? pkg.title} • Package`,
-          description: pkg.description ?? '',
-          targetSection: section.id
-        });
-      });
-    if (section.type === 'wallet') {
-      entries.push(
-        {
-          id: `${section.id}-summary`,
-          type: 'panel',
-          label: 'Wallet summary',
-          description: 'Balance, holds, and autopayout status',
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-transactions`,
-          type: 'record',
-          label: 'Wallet transactions',
-          description: 'Recent manual adjustments and automation events',
-          targetSection: section.id
-        },
-        {
-          id: `${section.id}-methods`,
-          type: 'record',
-          label: 'Wallet payment methods',
-          description: 'Configured payout destinations',
-          targetSection: section.id
-        }
-      );
-    }
-
-    return entries;
-  });
-
-const resolveInitialSection = (navigation) => navigation.find((item) => !item.href)?.id ?? navigation[0]?.id ?? 'overview';
-
-const Skeleton = () => (
-  <div className="px-6 py-10">
-    <div className="space-y-6">
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 w-52 rounded bg-primary/10" />
-        <div className="h-4 w-full rounded bg-primary/10" />
-        <div className="h-4 w-3/4 rounded bg-primary/10" />
-      </div>
-      <div className="animate-pulse grid gap-6 md:grid-cols-2">
-        <div className="h-40 rounded-2xl bg-primary/10" />
-        <div className="h-40 rounded-2xl bg-primary/10" />
-      </div>
-    </div>
-  </div>
-);
-
-const ErrorState = ({ message, onRetry }) => (
-  <div className="px-6 py-10">
-    <div className="mx-auto max-w-3xl">
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
-        <div className="flex items-start gap-3">
-          <ExclamationTriangleIcon className="h-6 w-6" />
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold">We couldn’t load this dashboard</h2>
-            <p className="text-sm">{message}</p>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
-            >
-              <ArrowPathIcon className="h-4 w-4" /> Try again
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-ErrorState.propTypes = {
-  message: PropTypes.string.isRequired,
-  onRetry: PropTypes.func.isRequired
-};
-
-const DashboardLayout = ({
+export default function DashboardLayout({
   roleMeta,
   registeredRoles,
-  dashboard = null,
-  loading = false,
-  error = null,
+  dashboard,
+  loading,
+  error,
   onRefresh,
-  lastRefreshed = null,
-  exportHref = null,
-  toggleMeta = null,
-  toggleReason = null,
+  lastRefreshed,
+  exportHref,
+  toggleMeta,
+  toggleReason,
   onLogout,
-  blogPosts = [],
-  initialSectionId = null
-}) => {
-  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const navigationSections = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const [selectedSection, setSelectedSection] = useState(navigationSections[0]?.id ?? 'overview');
-  const firstInteractiveSection = useMemo(() => {
-    const interactive = navigation.find((item) => item.type !== 'link');
-    return interactive?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstInteractiveSection);
-  const [selectedSection, setSelectedSection] = useState(
-    initialSectionId && navigation.some((item) => item.id === initialSectionId)
-      ? initialSectionId
-      : navigation[0]?.id ?? 'overview'
-  );
-  initialSectionId = null,
-  onSectionChange = null
-}) => {
-  const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation));
-  const [selectedSection, setSelectedSection] = useState(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
-      return initialSectionId;
-    }
-    return navigation[0]?.id ?? 'overview';
-  });
-  const firstSectionId = useMemo(() => {
-    const first = navigation.find((item) => item.type !== 'route');
-    return first?.id ?? navigation[0]?.id ?? 'overview';
-  }, [navigation]);
-  const [selectedSection, setSelectedSection] = useState(firstSectionId);
-  const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
-  const initialSectionId = navigableItems[0]?.id ?? null;
-  const [selectedSection, setSelectedSection] = useState(initialSectionId);
-  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
-  const contentSections = useMemo(
-    () => navigation.filter((item) => item.type !== 'link'),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(contentSections[0]?.id ?? null);
-  const navSections = useMemo(
-    () => navigation.filter((item) => !item.route && !item.href),
-    [navigation]
-  );
-  const [selectedSection, setSelectedSection] = useState(navSections[0]?.id ?? 'overview');
+  blogPosts,
+  initialSectionId,
+  onSectionChange
+}) {
+  const persona = roleMeta?.persona || roleMeta?.id || 'dashboard';
+  const navigation = dashboard?.navigation ?? [];
+
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [navCollapsed, setNavCollapsed] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleNavClick = useCallback(
-    (item) => {
-      if (item.href) {
-        if (item.target === '_blank') {
-          window.open(item.href, '_blank', 'noopener');
-        } else {
-          navigate(item.href);
-        }
-        setMobileNavOpen(false);
-  const handleNavItemSelect = useCallback(
-    (item) => {
-      if (item.type === 'link') {
-        if (item.routeTo) {
-          navigate(item.routeTo);
-        }
-        return;
-      }
-      setSelectedSection(item.id);
-    },
-    [navigate]
-  );
+  const [selectedSection, setSelectedSection] = useState(initialSectionId || navigation[0]?.id || null);
 
   useEffect(() => {
-    if (navigationSections.length === 0) {
-      setSelectedSection('overview');
-      setSearchQuery('');
-      setSearchResults([]);
+    if (initialSectionId) {
+      setSelectedSection(initialSectionId);
       return;
     }
-    setSelectedSection((current) => {
-      if (navigationSections.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigationSections[0]?.id ?? 'overview';
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigationSections]);
-    setSelectedSection(firstInteractiveSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstInteractiveSection]);
-    setSelectedSection(resolveInitialSection(navigation));
-    if (!navigation.length) return;
-    setSelectedSection((current) => {
-      const preferred =
-        initialSectionId && navigation.some((item) => item.id === initialSectionId)
-          ? initialSectionId
-          : navigation[0]?.id ?? 'overview';
-      const hasCurrent = navigation.some((item) => item.id === current);
-      if (!hasCurrent) {
-        return preferred;
-      }
-      if (initialSectionId && current !== preferred) {
-        return preferred;
-      }
-      return current;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, initialSectionId]);
-    setSelectedSection((current) => {
-      const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
-      if (stillValid) {
-        return current;
-      }
-      return firstSectionId;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, firstSectionId]);
-      if (current && navigableItems.some((item) => item.id === current)) {
-        return current;
-      }
-      return navigableItems[0]?.id ?? null;
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navigation, navigableItems]);
-    const defaultSection = contentSections[0]?.id ?? null;
-    setSelectedSection(defaultSection);
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [contentSections]);
-    setSelectedSection(navSections[0]?.id ?? 'overview');
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [navSections]);
-
-  useEffect(() => {
-    if (initialSectionId && navigation.some((item) => item.id === initialSectionId)) {
-      setSelectedSection((current) => (current === initialSectionId ? current : initialSectionId));
-      return;
-    }
-
-    if (navigation.length > 0 && !navigation.some((item) => item.id === selectedSection)) {
-      setSelectedSection(navigation[0]?.id ?? 'overview');
+    if (navigation.length && !navigation.some((item) => item.id === selectedSection)) {
+      setSelectedSection(navigation[0].id);
     }
   }, [initialSectionId, navigation, selectedSection]);
 
-  useEffect(() => {
-    if (!mobileNavOpen) return;
-    setMobileNavOpen(false);
-  }, [selectedSection, mobileNavOpen]);
+  const activeSection = useMemo(
+    () => navigation.find((item) => item.id === selectedSection) ?? navigation[0] ?? null,
+    [navigation, selectedSection]
+  );
 
-  const searchIndex = useMemo(() => buildSearchIndex(navSections), [navSections]);
+  const searchIndex = useMemo(() => buildSearchIndex(navigation), [navigation]);
 
   useEffect(() => {
     if (!searchQuery) {
@@ -696,32 +320,18 @@ const DashboardLayout = ({
       return;
     }
     const lowered = searchQuery.toLowerCase();
-    setSearchResults(
-      searchIndex.filter((entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)).slice(0, 8)
+    const matches = searchIndex.filter(
+      (entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)
     );
+    setSearchResults(matches.slice(0, 12));
   }, [searchQuery, searchIndex]);
-
-  const activeSection = navigationSections.find((item) => item.id === selectedSection) ?? navigationSections[0];
-  const activeSection = navigation.find((item) => item.id === selectedSection && item.type !== 'link')
-    ?? navigation.find((item) => item.type !== 'link')
-    ?? navigation[0];
-  const activeSection =
-    navigation.find((item) => item.id === selectedSection && !item.href) ??
-    navigation.find((item) => !item.href) ??
-    navigation[0];
-    navigation.find((item) => item.id === selectedSection && item.type !== 'route') ??
-    navigation.find((item) => item.type !== 'route') ??
-    navigation[0];
-  const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
-  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
-  const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
-  const persona = dashboard?.persona ?? roleMeta.id;
-  const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
-  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
   const handleSectionSelect = useCallback(
     (sectionId) => {
       setSelectedSection(sectionId);
+      setSearchQuery('');
+      setSearchResults([]);
+      setMobileNavOpen(false);
       if (onSectionChange) {
         onSectionChange(sectionId);
       }
@@ -729,8 +339,24 @@ const DashboardLayout = ({
     [onSectionChange]
   );
 
-  const renderSection = () => {
-    if (!activeSection) return null;
+  const handleSearchSubmit = useCallback(
+    (event) => {
+      event.preventDefault();
+      if (searchResults.length > 0) {
+        handleSectionSelect(searchResults[0].sectionId);
+      }
+    },
+    [handleSectionSelect, searchResults]
+  );
+
+  const shouldShowPersonaSummary = persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
+
+  const renderSection = useCallback(() => {
+    if (!activeSection) {
+      return null;
+    }
+
     if (activeSection.type === 'overview') {
       if (persona === 'user') {
         return (
@@ -742,17 +368,24 @@ const DashboardLayout = ({
       }
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
+
     if (typeof activeSection.render === 'function') {
       return activeSection.render();
     }
+
+    if (persona === 'provider' && activeSection.id === 'escrow-management') {
+      return <ProviderEscrowWorkspace section={activeSection} />;
+    }
+
     if (activeSection.component) {
       const Component = activeSection.component;
       return <Component {...(activeSection.componentProps ?? {})} />;
-    if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
-      return activeSection.render();
+    }
+
     if (activeSection.id === 'customer-control') {
       return <CustomerOverviewControl />;
     }
+
     return (
       <DashboardSection
         section={activeSection}
@@ -761,723 +394,212 @@ const DashboardLayout = ({
         context={dashboard?.metadata ?? {}}
       />
     );
-  };
+  }, [activeSection, persona, dashboard]);
 
-  const registeredOptions = registeredRoles.filter((role) => role.registered);
+  const registeredOptions = useMemo(
+    () => registeredRoles.filter((role) => role.registered),
+    [registeredRoles]
+  );
 
   if (error && !dashboard) {
     return <ErrorState message={error} onRetry={onRefresh} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
+    <div className="flex min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary">
       <Transition.Root show={mobileNavOpen} as={Fragment}>
         <Dialog as="div" className="relative z-40 lg:hidden" onClose={setMobileNavOpen}>
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-200"
+            enter="transition-opacity ease-linear duration-200"
             enterFrom="opacity-0"
             enterTo="opacity-100"
-            leave="ease-in duration-150"
+            leave="transition-opacity ease-linear duration-200"
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
+            <div className="fixed inset-0 bg-slate-900/60" />
           </Transition.Child>
 
-          <div className="fixed inset-y-0 left-0 flex max-w-xs w-full">
+          <div className="fixed inset-0 flex">
             <Transition.Child
               as={Fragment}
-              enter="ease-out duration-200"
+              enter="transition ease-in-out duration-200 transform"
               enterFrom="-translate-x-full"
               enterTo="translate-x-0"
-              leave="ease-in duration-150"
+              leave="transition ease-in-out duration-200 transform"
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative flex w-full flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/60 to-white p-6 shadow-2xl">
-                <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
-                <div className="flex items-center justify-between gap-3">
-                  <Link to="/dashboards" className="flex items-center gap-2 text-primary" onClick={() => setMobileNavOpen(false)}>
-                    <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
-                    <div className="leading-tight">
-                      <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
-                      <p className="text-lg font-semibold">{roleMeta.name}</p>
-                    </div>
-                  </Link>
+              <Dialog.Panel className="relative flex w-full max-w-xs flex-1 flex-col overflow-y-auto bg-white/90 px-4 pb-6 pt-5 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Persona</p>
+                    <p className="text-lg font-semibold text-primary">{roleMeta?.name ?? 'Dashboard'}</p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setMobileNavOpen(false)}
-                    className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
+                    className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-primary"
                     aria-label="Close navigation"
                   >
-                    <Squares2X2Icon className="h-5 w-5" />
+                    ✕
                   </button>
                 </div>
-                <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
+
+                <nav className="mt-6 space-y-1">
                   {navigation.map((item) => {
                     const Icon = getNavIcon(item);
-                    const baseContent = (
-                      <>
-                    if (item.href) {
-                      const isActiveLink = location.pathname === item.href;
-                    const isLink = item.type === 'link' && item.href;
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const handleItemClick = () => {
-                      if (isLink) {
-                        setMobileNavOpen(false);
-                        navigate(item.href);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const isLink = Boolean(item.href);
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isRoute = item.type === 'route' && item.href;
-                    const isActive = !isRoute && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const content = (
-                      <>
-                    const isActive = !item.to && item.id === activeSection?.id;
-                    const isLink = item.type === 'link';
-                    const isActive = !isLink && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const commonClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
-                        ? 'border-accent bg-accent text-white shadow-glow'
-                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                    }`;
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
-
-                    if (isLink) {
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                            isActiveLink
-                              ? 'border-accent bg-accent text-white shadow-glow'
-                              : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                          }`}
-                        >
-                          <span
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                              isActiveLink
-                                ? 'bg-white/20 text-white'
-                                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                            }`}
-                          >
-                          className={baseClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconWrapperClass}>
-                          className={commonClasses}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          <span className={iconClasses}>
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold">{item.label}</p>
-                            {item.description ? (
-                              <p className="text-xs text-slate-500">{item.description}</p>
-                            ) : null}
-                          </div>
-                        </Link>
-                      );
-                    }
                     const isActive = item.id === activeSection?.id;
-
-                    const baseClasses =
-                      'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
-                    const stateClasses = isActive
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary';
-                    const iconClasses = isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-                    const content = (
-                      <>
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-                    const handleClick = () => {
-                      if (item.to) {
-                        navigate(item.to);
-                        setMobileNavOpen(false);
-                        return;
-                      }
-                      setSelectedSection(item.id);
-                    };
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={handleItemClick}
-                        onClick={() => {
-                          if (isLink) {
-                            setMobileNavOpen(false);
-                            navigate(item.href);
-                            return;
-                          }
-                          setSelectedSection(item.id);
-                        onClick={() => handleSectionSelect(item.id)}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={baseClass}
-                        aria-pressed={isActive}
-                      >
-                        className={commonClasses}
-                        aria-pressed={isActive}
-                      >
-                        <span className={iconClasses}>
-                        onClick={() => handleNavClick(item)}
-                        onClick={handleClick}
-                        onClick={() => {
-                          handleNavItemSelect(item);
-                          if (item.type === 'link') {
-                            setMobileNavOpen(false);
-                          }
-                        }}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
-                        aria-pressed={isActive || undefined}
-                        aria-pressed={!isLink && isActive}
-                      >
-                        <span
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                          }`}
-                        >
-                    const isActive = !item.href && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const sharedClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    const isSection = !item.route && !item.href;
-                    const isActive = isSection && item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const navItemClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      isActive
-                        ? 'border-accent bg-accent text-white shadow-glow'
-                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                    }`;
-                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`;
-
-                    const content = (
-                      <>
-                        <span className={iconClasses}>
-                    const content = (
-                      <>
-                        <span className={iconWrapperClass}>
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div className="flex-1">
-                          <p className="flex items-center gap-2 text-sm font-semibold">
-                            {item.label}
-                            {isLink ? (
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                            ) : null}
-                          </p>
-                          {item.description ? (
-                            <p className="text-xs text-slate-500">{item.description}</p>
-                          ) : null}
-                        </div>
-                      </>
-                    );
-
-                    if (item.type === 'link' && item.href) {
-                    if (isRoute) {
                     if (item.href) {
                       return (
                         <Link
                           key={item.id}
                           to={item.href}
-                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
-                          onClick={() => setMobileNavOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-primary/80 hover:bg-white"
                         >
-                          {baseContent}
-                          className={`${baseClasses} ${stateClasses}`}
-                          onClick={() => setMobileNavOpen(false)}
-                          aria-label={item.label}
-                          className={sharedClasses}
-                    if (item.route) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.route}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
+                          <Icon className="h-5 w-5" aria-hidden="true" />
+                          <span>{item.label}</span>
+                          <ArrowTopRightOnSquareIcon className="ml-auto h-4 w-4 text-slate-400" aria-hidden="true" />
                         </Link>
                       );
                     }
-
-                    if (item.href) {
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          className={navItemClass}
-                          onClick={() => setMobileNavOpen(false)}
-                        >
-                          {content}
-                        </a>
-                      );
-                    }
-
                     return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedSection(item.id);
-                          setMobileNavOpen(false);
-                        }}
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        onClick={() => handleSectionSelect(item.id)}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                          isActive ? 'bg-primary text-white shadow-glow' : 'text-primary/80 hover:bg-white'
                         }`}
-                        aria-pressed={isActive}
                       >
-                        {baseContent}
-                        className={`${baseClasses} ${stateClasses}`}
-                        className={sharedClasses}
-                        className={navItemClass}
-                        aria-pressed={isActive}
-                      >
-                        {content}
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                        <span>{item.label}</span>
                       </button>
                     );
                   })}
                 </nav>
-                {sidebarLinks.length ? (
-                  <div className="mt-6 space-y-2">
-                    <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-                    {sidebarLinks.map((link) => (
-                      <Link
-                        key={link.id}
-                        to={link.href}
-                        onClick={() => setMobileNavOpen(false)}
-                        className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
-                      >
-                        <span>{link.label}</span>
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
-                      </Link>
-                    ))}
+
+                {registeredOptions.length > 1 ? (
+                  <div className="mt-10 space-y-2">
+                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Switch persona</p>
+                    <div className="flex flex-wrap gap-2">
+                      {registeredOptions.map((option) => (
+                        <span
+                          key={option.id}
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                            option.id === roleMeta.id
+                              ? 'bg-primary text-white'
+                              : 'bg-white/80 text-primary/70 border border-slate-200'
+                          }`}
+                        >
+                          {option.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
-                <div className="mt-6 space-y-3">
-                  <Link
-                    to="/"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                    onClick={() => setMobileNavOpen(false)}
-                  >
-                    <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                  </Link>
-                  {onLogout ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileNavOpen(false);
-                        onLogout();
-                      }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                    >
-                      <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                    </button>
-                  ) : null}
-                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>
         </Dialog>
       </Transition.Root>
-      <aside
-        className={`hidden lg:flex ${navCollapsed ? 'w-24' : 'w-80 xl:w-96'} flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white transition-[width] duration-300`}
-      >
-        <div className="flex items-center justify-between border-b border-accent/10 px-6 py-5">
-          <Link to="/dashboards" className="flex items-center gap-2 text-primary" title="Dashboard hub">
-            <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
-            {!navCollapsed && (
-              <div className="leading-tight">
-                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
-                <p className="text-lg font-semibold">{roleMeta.name}</p>
-              </div>
-            )}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setNavCollapsed((value) => !value)}
-            className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
-            aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          >
-            <Squares2X2Icon className={`h-5 w-5 transition-transform ${navCollapsed ? 'rotate-180' : ''}`} />
-          </button>
+
+      <aside className="hidden w-72 flex-col border-r border-white/50 bg-white/70 px-6 py-8 lg:flex">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Persona</p>
+          <p className="text-lg font-semibold text-primary">{roleMeta?.name ?? 'Dashboard'}</p>
+          <p className="text-sm text-slate-500">{roleMeta?.headline}</p>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
+
+        <nav className="mt-8 flex-1 space-y-1">
           {navigation.map((item) => {
             const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              navCollapsed ? 'justify-center px-2' : ''
-            }`;
-            if (item.href) {
-              const isActiveLink = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`${baseClasses} ${
-                    isActiveLink
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                  }`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isActiveLink
-                        ? 'bg-white/20 text-white'
-                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </Link>
-              );
-            }
             const isActive = item.id === activeSection?.id;
-            const isLink = item.type === 'link' && item.href;
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const handleItemClick = () => {
-              if (isLink) {
-                navigate(item.href);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const isLink = Boolean(item.href);
-            const isActive = !isLink && item.id === activeSection?.id;
-            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
-                ? 'border-accent bg-accent text-white shadow-glow'
-                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-            } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
-
-            if (isLink) {
+            if (item.href) {
               return (
                 <Link
                   key={item.id}
                   to={item.href}
-                  className={baseClass}
-                  title={navCollapsed ? item.label : undefined}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-primary/80 transition hover:bg-white"
                 >
-                  <span className={iconWrapperClass}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  {!navCollapsed && (
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs text-slate-500">{item.description}</p>
-                      ) : null}
-                    </div>
-                  )}
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  <span>{item.label}</span>
+                  <ArrowTopRightOnSquareIcon className="ml-auto h-4 w-4 text-slate-400" aria-hidden="true" />
                 </Link>
               );
             }
-
-            const isRoute = item.type === 'route' && item.href;
-            const isActive = !isRoute && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const content = (
-              <>
-            const isActive = !item.to && item.id === activeSection?.id;
-            const isLink = item.type === 'link';
-            const isActive = !isLink && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const baseClasses =
-              'group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition';
-            const stateClasses = isActive
-              ? 'border-accent bg-accent text-white shadow-glow'
-              : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary';
-            const spacingClasses = navCollapsed ? 'justify-center px-2' : '';
-            const iconClasses = isActive
-              ? 'bg-white/20 text-white'
-              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-            const content = (
-              <>
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-            const handleClick = () => {
-              if (item.to) {
-                navigate(item.to);
-                return;
-              }
-              setSelectedSection(item.id);
-            };
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={handleItemClick}
-                onClick={() => {
-                  if (isLink) {
-                    navigate(item.href);
-                    return;
-                  }
-                  setSelectedSection(item.id);
-                }}
                 onClick={() => handleSectionSelect(item.id)}
-                onClick={() => setSelectedSection(item.id)}
-                className={`${baseClasses} ${
-                className={baseClass}
-                onClick={() => handleNavClick(item)}
-                onClick={handleClick}
-                onClick={() => handleNavItemSelect(item)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                  isActive ? 'bg-primary text-white shadow-glow' : 'text-primary/80 hover:bg-white'
                 }`}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive || undefined}
-                aria-pressed={!isLink && isActive}
               >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                  }`}
-                >
-            const isActive = !item.href && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-            const isSection = !item.route && !item.href;
-            const isActive = isSection && item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-              isActive
-                ? 'border-accent bg-accent text-white shadow-glow'
-                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-            } ${navCollapsed ? 'justify-center px-2' : ''}`;
-            const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
-            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
-              isActive
-                ? 'bg-white/20 text-white'
-                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-            }`;
-            const content = (
-              <>
-                <span className={iconClasses}>
-
-            const content = (
-              <>
-                <span className={iconClasses}>
-            const content = (
-              <>
-                <span className={iconWrapperClass}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                {!navCollapsed && (
-                  <div className="flex-1">
-                    <p className="flex items-center gap-2 text-sm font-semibold">
-                      {item.label}
-                      {isLink ? (
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                      ) : null}
-                    </p>
-                    {item.description ? (
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                    ) : null}
-                    <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
-                  </div>
-                )}
-              </>
-            );
-
-            if (item.type === 'link' && item.href) {
-            if (isRoute) {
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-                  className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                  title={navCollapsed ? item.label : undefined}
-                  aria-label={item.label}
-                >
-                  className={baseClasses}
-                  title={navCollapsed ? item.label : undefined}
-                >
-            if (item.route) {
-              return (
-                <Link key={item.id} to={item.route} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </Link>
-              );
-            }
-
-            if (item.href) {
-              return (
-                <a key={item.id} href={item.href} className={baseClass} title={navCollapsed ? item.label : undefined}>
-                  {content}
-                </a>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
-                className={baseClasses}
-                className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                className={baseClasses}
-                className={baseClass}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
-                {content}
+                <Icon className="h-5 w-5" aria-hidden="true" />
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
-        {!navCollapsed && sidebarLinks.length ? (
-          <div className="px-6 pb-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
-            <ul className="mt-3 space-y-2">
-              {sidebarLinks.map((link) => (
-                <li key={link.id}>
-                  <Link
-                    to={link.href}
-                    className="flex flex-col rounded-xl border border-accent/20 bg-white/90 px-4 py-3 text-sm text-primary transition hover:border-accent hover:text-accent"
-                  >
-                    <span className="font-semibold">{link.label}</span>
-                    {link.description ? (
-                      <span className="text-xs text-slate-500">{link.description}</span>
-                    ) : null}
-                  </Link>
-                </li>
+
+        {registeredOptions.length > 1 ? (
+          <div className="mt-8 space-y-2">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Registered workspaces</p>
+            <div className="flex flex-wrap gap-2">
+              {registeredOptions.map((option) => (
+                <span
+                  key={option.id}
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                    option.id === roleMeta.id ? 'bg-primary text-white' : 'bg-white/80 text-primary/70 border border-slate-200'
+                  }`}
+                >
+                  {option.name}
+                </span>
               ))}
-            </ul>
+            </div>
           </div>
         ) : null}
       </aside>
 
-      <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-6 py-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center justify-between gap-3 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm transition hover:border-accent hover:text-primary"
-              >
-                <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
-              </button>
-              {lastRefreshed && (
-                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
-                <span className="rounded-full border border-slate-200 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  {roleMeta.persona}
-                </span>
-              </div>
-              {lastRefreshed && (
-                <p className="hidden text-xs text-primary/60 lg:block">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-              <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
-            </div>
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex w-full flex-col gap-2 sm:w-64">
-                <label className="text-xs uppercase tracking-wide text-primary/60" htmlFor="roleSwitcher">
-                  Switch workspace
-                </label>
-                <select
-                  id="roleSwitcher"
-                  value={roleMeta.id}
-                  onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-                  className="rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+      <main className="flex min-h-screen flex-1 flex-col">
+        <div className="border-b border-white/50 bg-white/80">
+          <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-500 shadow-sm hover:text-primary lg:hidden"
+                  onClick={() => setMobileNavOpen(true)}
+                  aria-label="Open navigation"
                 >
-                  {registeredOptions.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
+                  <Bars3BottomLeftIcon className="h-5 w-5" />
+                </button>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{roleMeta?.persona || 'Persona'}</p>
+                  <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? 'Dashboard'}</h1>
+                </div>
               </div>
-              <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <p className="max-w-2xl text-sm text-slate-600">{activeSection?.description || roleMeta?.headline}</p>
+              <form className="relative max-w-lg" onSubmit={handleSearchSubmit}>
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                 <input
                   type="search"
+                  placeholder="Search dashboard sections"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-accent/20 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full rounded-full border border-slate-200 bg-white/90 py-2 pl-10 pr-4 text-sm text-primary shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
-                {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-accent/10 bg-white shadow-glow">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                {searchQuery && searchResults.length > 0 ? (
+                  <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                    <ul className="divide-y divide-slate-100">
                       {searchResults.map((result) => (
                         <li key={result.id}>
                           <button
                             type="button"
-                            onClick={() => {
-                              handleSectionSelect(result.targetSection);
-                              if (result.type === 'route' && result.href) {
-                                navigate(result.href);
-                              } else if (result.targetSection) {
-                                setSelectedSection(result.targetSection);
-                              }
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
+                            onClick={() => handleSectionSelect(result.sectionId)}
                             className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
                           >
                             <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-primary/80">
@@ -1487,67 +609,75 @@ const DashboardLayout = ({
                               <p className="text-sm font-semibold text-primary">{result.label}</p>
                               <p className="text-xs text-slate-500">{result.description}</p>
                             </div>
-                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
+                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" aria-hidden="true" />
                           </button>
                         </li>
                       ))}
                     </ul>
                   </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 sm:self-end">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                >
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                </Link>
-                {onLogout ? (
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                  >
-                    <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                  </button>
                 ) : null}
+              </form>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm hover:border-accent hover:text-primary"
+              >
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
+              </Link>
+              {onLogout ? (
                 <button
                   type="button"
-                  onClick={onRefresh}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={onLogout}
+                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:border-rose-300 hover:text-rose-800"
                 >
-                  <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                  <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
                 </button>
-                {exportHref && (
-                  <a
-                    href={exportHref}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-primary/90"
-                  >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> Download CSV
-                  </a>
-                )}
-              </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={onRefresh}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm hover:border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+              </button>
+              {exportHref ? (
+                <a
+                  href={exportHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-primary/90"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" /> Download CSV
+                </a>
+              ) : null}
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 border-t border-white/60 px-6 py-3 text-xs text-slate-500">
+            {lastRefreshed ? <span>Last refreshed {formatRelativeTime(lastRefreshed)}</span> : null}
+            <span className="hidden md:inline">•</span>
+            <span>Persona: {persona}</span>
           </div>
         </div>
 
-        {loading && !dashboard ? (
-          <Skeleton />
-        ) : (
-          <div className="space-y-8 px-6 py-10">
-            {shouldShowServicemanSummary ? (
-              <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
-            ) : null}
-            {renderSection()}
-            {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
-            {blogPosts.length > 0 ? <DashboardBlogRail posts={blogPosts} /> : null}
-          </div>
-        )}
+        <div className="flex-1">
+          {loading && !dashboard ? (
+            <Skeleton />
+          ) : (
+            <div className="space-y-8 px-6 py-10">
+              {shouldShowServicemanSummary ? (
+                <ServicemanSummary metadata={dashboard?.metadata} windowLabel={dashboard?.window?.label ?? null} />
+              ) : null}
+              {renderSection()}
+              {shouldShowPersonaSummary ? <DashboardPersonaSummary dashboard={dashboard} /> : null}
+              {toggleMeta ? <ToggleSummary toggle={toggleMeta} reason={toggleReason} /> : null}
+              {Array.isArray(blogPosts) && blogPosts.length > 0 ? <DashboardBlogRail posts={blogPosts} /> : null}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
-};
+}
 
 DashboardLayout.propTypes = {
   roleMeta: PropTypes.shape({
@@ -1565,6 +695,7 @@ DashboardLayout.propTypes = {
   ).isRequired,
   dashboard: PropTypes.shape({
     navigation: PropTypes.array,
+    metadata: PropTypes.object,
     window: PropTypes.object
   }),
   loading: PropTypes.bool,
@@ -1586,7 +717,6 @@ DashboardLayout.propTypes = {
       id: PropTypes.string.isRequired
     })
   ),
-  initialSectionId: PropTypes.string
   initialSectionId: PropTypes.string,
   onSectionChange: PropTypes.func
 };
@@ -1604,5 +734,3 @@ DashboardLayout.defaultProps = {
   initialSectionId: null,
   onSectionChange: null
 };
-
-export default DashboardLayout;

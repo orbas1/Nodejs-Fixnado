@@ -25,6 +25,8 @@ export const Permissions = Object.freeze({
   ADMIN_AFFILIATE_WRITE: 'admin:affiliate:write',
   ADMIN_ESCROW_READ: 'admin:escrow:read',
   ADMIN_ESCROW_WRITE: 'admin:escrow:write',
+  PROVIDER_ESCROW_READ: 'provider:escrow:read',
+  PROVIDER_ESCROW_WRITE: 'provider:escrow:write',
   ADMIN_PROVIDER_READ: 'admin:provider:read',
   ADMIN_PROVIDER_WRITE: 'admin:provider:write',
   ADMIN_PROVIDER_ARCHIVE: 'admin:provider:archive',

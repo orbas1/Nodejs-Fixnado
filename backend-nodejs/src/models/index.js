@@ -21,6 +21,7 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderEscrowPolicy from './providerEscrowPolicy.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -251,6 +252,12 @@ ServiceCategory.belongsTo(ServiceCategory, { foreignKey: 'parentId', as: 'parent
 
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
+
+User.hasMany(ProviderEscrowPolicy, { foreignKey: 'providerId', as: 'providerEscrowPolicies' });
+ProviderEscrowPolicy.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+Company.hasMany(ProviderEscrowPolicy, { foreignKey: 'companyId', as: 'escrowPolicies' });
+ProviderEscrowPolicy.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
 AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -883,10 +890,11 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
+  ProviderEscrowPolicy,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,

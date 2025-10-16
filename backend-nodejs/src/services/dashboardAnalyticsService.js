@@ -2889,6 +2889,17 @@ async function loadProviderData(context) {
       }
     },
     {
+      id: 'escrow-management',
+      label: 'Escrow management',
+      description: 'Provider escrow funding, release readiness, and dispute notes.',
+      type: 'component',
+      meta: {
+        api: 'provider-escrows',
+        providerId: providerId ?? null,
+        companyId: companyId ?? null
+      }
+    },
+    {
       id: 'inventory',
       label: 'Tools & Materials',
       description: 'Inventory availability, low-stock signals, and maintenance cadence.',

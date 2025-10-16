@@ -89,6 +89,7 @@ export const RBAC_MATRIX = {
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
+      Permissions.PROVIDER_ESCROW_READ,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.REPORTING_DOWNLOAD
@@ -153,6 +154,8 @@ export const RBAC_MATRIX = {
       Permissions.FINANCE_PAYOUT_MANAGE,
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.DISPUTE_MANAGE,
+      Permissions.PROVIDER_ESCROW_READ,
+      Permissions.PROVIDER_ESCROW_WRITE,
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
       Permissions.PROVIDER_ONBOARD,
