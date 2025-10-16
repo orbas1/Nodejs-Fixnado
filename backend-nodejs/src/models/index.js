@@ -70,6 +70,7 @@ import WarehouseExportRun from './warehouseExportRun.js';
 import CustomerProfile from './customerProfile.js';
 import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
+import CustomerCoupon from './customerCoupon.js';
 import CustomerAccountSetting from './customerAccountSetting.js';
 import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 
@@ -105,6 +106,9 @@ CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
 CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerCoupon, { foreignKey: 'userId', as: 'customerCoupons' });
+CustomerCoupon.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
@@ -515,7 +519,8 @@ export {
   WarehouseExportRun,
   CustomerProfile,
   CustomerContact,
-  CustomerLocation
+  CustomerLocation,
+  CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient
 };
