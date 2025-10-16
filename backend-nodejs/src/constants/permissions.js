@@ -91,6 +91,7 @@ export const Permissions = Object.freeze({
   MESSAGING_RESPOND: 'messaging:threads:respond',
   MESSAGING_ESCALATE: 'messaging:threads:escalate',
   PANEL_PROVIDER: 'panel:provider:view',
+  PANEL_PROVIDER_TOOLS: 'panel:provider:tools:manage',
   PANEL_ENTERPRISE: 'panel:enterprise:view',
   PANEL_STOREFRONT: 'panel:storefront:view',
   PAYMENTS_CAPTURE: 'payments:capture',

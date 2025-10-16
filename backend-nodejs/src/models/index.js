@@ -160,6 +160,8 @@ import ServicemanDisputeEvidence from './servicemanDisputeEvidence.js';
 import InboxQueue from './inboxQueue.js';
 import InboxConfiguration from './inboxConfiguration.js';
 import InboxTemplate from './inboxTemplate.js';
+import ToolSaleProfile from './toolSaleProfile.js';
+import ToolSaleCoupon from './toolSaleCoupon.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -658,6 +660,21 @@ InventoryAlert.belongsTo(InventoryItem, { foreignKey: 'itemId' });
 InventoryItem.hasMany(RentalAgreement, { foreignKey: 'itemId' });
 RentalAgreement.belongsTo(InventoryItem, { foreignKey: 'itemId' });
 
+InventoryItem.hasOne(ToolSaleProfile, { foreignKey: 'inventoryItemId', as: 'toolSaleProfile' });
+ToolSaleProfile.belongsTo(InventoryItem, { foreignKey: 'inventoryItemId', as: 'inventoryItem' });
+
+MarketplaceItem.hasOne(ToolSaleProfile, { foreignKey: 'marketplaceItemId', as: 'toolSaleProfile' });
+ToolSaleProfile.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId', as: 'marketplaceItem' });
+
+Company.hasMany(ToolSaleProfile, { foreignKey: 'companyId', as: 'toolSaleProfiles' });
+ToolSaleProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ToolSaleProfile.hasMany(ToolSaleCoupon, { foreignKey: 'toolSaleProfileId', as: 'coupons' });
+ToolSaleCoupon.belongsTo(ToolSaleProfile, { foreignKey: 'toolSaleProfileId', as: 'profile' });
+
+Company.hasMany(ToolSaleCoupon, { foreignKey: 'companyId', as: 'toolSaleCoupons' });
+ToolSaleCoupon.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
 MarketplaceItem.hasMany(RentalAgreement, { foreignKey: 'marketplaceItemId' });
 RentalAgreement.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemId' });
 
@@ -910,6 +927,8 @@ export {
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
+  ToolSaleProfile,
+  ToolSaleCoupon,
   RentalAgreement,
   RentalCheckpoint,
   ComplianceDocument,

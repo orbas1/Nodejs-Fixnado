@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Select = forwardRef(function Select(
+  { id, label, optionalLabel, hint, error, options = [], className, selectClassName, ...rest },
   {
     id,
     label,
@@ -54,6 +55,11 @@ const Select = forwardRef(function Select(
         aria-invalid={Boolean(error)}
         {...rest}
       >
+        {options.map((option) => (
+          <option key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </option>
+        ))}
         {optionNodes}
       </select>
       {hint ? (
@@ -86,6 +92,7 @@ Select.propTypes = {
     })
   ),
   className: PropTypes.string,
+  selectClassName: PropTypes.string
   selectClassName: PropTypes.string,
   children: PropTypes.node
 };
@@ -98,6 +105,7 @@ Select.defaultProps = {
   error: undefined,
   options: undefined,
   className: undefined,
+  selectClassName: undefined
   selectClassName: undefined,
   children: undefined
 };

@@ -17,6 +17,8 @@ import {
   RentalAgreement,
   Service,
   ServiceZone,
+  ToolSaleProfile,
+  ToolSaleCoupon,
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
@@ -473,7 +475,16 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
   const companyId = company.id;
   const now = DateTime.now();
 
-  const [bookings, inventoryItems, inventoryAlerts, complianceDocs, serviceZones, marketplaceItems, rentals] =
+  const [
+    bookings,
+    inventoryItems,
+    inventoryAlerts,
+    complianceDocs,
+    serviceZones,
+    marketplaceItems,
+    rentals,
+    toolSaleProfiles
+  ] =
     await Promise.all([
       Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
       InventoryItem.findAll({ where: { companyId }, raw: true }),
@@ -492,7 +503,15 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       ComplianceDocument.findAll({ where: { companyId } }),
       ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
       MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
-      RentalAgreement.findAll({ where: { companyId } })
+      RentalAgreement.findAll({ where: { companyId } }),
+      ToolSaleProfile.findAll({
+        where: { companyId },
+        include: [
+          { model: ToolSaleCoupon, as: 'coupons' },
+          { model: InventoryItem, as: 'inventoryItem' },
+          { model: MarketplaceItem, as: 'marketplaceItem' }
+        ]
+      })
     ]);
 
   const bookingIds = bookings.map((booking) => booking.id);
@@ -666,6 +685,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       })),
       deals: buildDeals(marketplaceItems, now)
     },
+    toolSales: buildToolSalesOverview(toolSaleProfiles),
     crews,
     rentals: {
       active: rentals.filter((rental) => ['in_use', 'pickup_scheduled'].includes(rental.status)).length,
@@ -823,6 +843,89 @@ function buildMaterialsAndTools(inventoryItems = [], slug) {
     materials: materials.slice(0, 6),
     tools: tools.slice(0, 6)
   };
+}
+
+function formatToolSaleCoupon(coupon) {
+  if (!coupon) {
+    return null;
+  }
+  const entry = typeof coupon.toJSON === 'function' ? coupon.toJSON() : coupon;
+  return {
+    id: entry.id,
+    name: entry.name,
+    code: entry.code,
+    status: entry.status,
+    discountType: entry.discountType,
+    discountValue: entry.discountValue != null ? Number(entry.discountValue) : null,
+    currency: entry.currency,
+    autoApply: Boolean(entry.autoApply),
+    startsAt: entry.startsAt ? DateTime.fromJSDate(entry.startsAt).toISODate() : null,
+    expiresAt: entry.expiresAt ? DateTime.fromJSDate(entry.expiresAt).toISODate() : null
+  };
+}
+
+function formatToolSaleProfileForDashboard(profile) {
+  const json = typeof profile.toJSON === 'function' ? profile.toJSON() : profile;
+  const inventory = json.inventoryItem || {};
+  const listing = json.marketplaceItem || {};
+  const coupons = Array.isArray(json.coupons) ? json.coupons.map(formatToolSaleCoupon).filter(Boolean) : [];
+  const quantityOnHand = Number.parseInt(inventory.quantityOnHand ?? 0, 10) || 0;
+  const quantityReserved = Number.parseInt(inventory.quantityReserved ?? 0, 10) || 0;
+  const quantityAvailable = Math.max(quantityOnHand - quantityReserved, 0);
+
+  return {
+    id: json.id,
+    name: listing.title || inventory.name || json.tagline || 'Tool listing',
+    tagline: json.tagline || '',
+    description: json.longDescription || json.shortDescription || listing.description || '',
+    heroImageUrl: json.heroImageUrl || null,
+    showcaseVideoUrl: json.showcaseVideoUrl || null,
+    galleryImages: Array.isArray(json.galleryImages) ? json.galleryImages.slice(0, 6) : [],
+    tags: Array.isArray(json.tags) ? json.tags : [],
+    keywordTags: Array.isArray(json.keywordTags) ? json.keywordTags : [],
+    listing: json.marketplaceItemId
+      ? {
+          id: json.marketplaceItemId,
+          status: listing.status || 'draft',
+          availability: listing.availability || 'buy',
+          pricePerDay: listing.pricePerDay != null ? Number(listing.pricePerDay) : null,
+          purchasePrice: listing.purchasePrice != null ? Number(listing.purchasePrice) : null,
+          location: listing.location || 'UK-wide',
+          insuredOnly: Boolean(listing.insuredOnly)
+        }
+      : null,
+    inventory: json.inventoryItemId
+      ? {
+          id: json.inventoryItemId,
+          quantityOnHand,
+          quantityReserved,
+          safetyStock: Number.parseInt(inventory.safetyStock ?? 0, 10) || 0,
+          conditionRating: inventory.conditionRating || 'good'
+        }
+      : null,
+    coupons,
+    metrics: {
+      quantityAvailable,
+      activeCoupons: coupons.filter((coupon) => coupon?.status === 'active').length
+    }
+  };
+}
+
+function buildToolSalesOverview(toolSaleProfiles = []) {
+  const listings = toolSaleProfiles.map(formatToolSaleProfileForDashboard);
+  const summary = {
+    totalListings: listings.length,
+    draft: listings.filter((item) => item.listing?.status === 'draft').length,
+    published: listings.filter((item) => item.listing?.status === 'approved').length,
+    suspended: listings.filter((item) => item.listing?.status === 'suspended').length,
+    totalQuantity: listings.reduce((sum, item) => sum + (item.inventory?.quantityOnHand ?? 0), 0),
+    activeCoupons: listings.reduce(
+      (sum, item) => sum + item.coupons.filter((coupon) => coupon?.status === 'active').length,
+      0
+    )
+  };
+
+  return { summary, listings };
 }
 
 function buildServiceZonesOverview(serviceZones = []) {

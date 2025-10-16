@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Textarea = forwardRef(function Textarea(
-  { id, label, optionalLabel, hint, error, className, textareaClassName, rows, ...rest },
+  { id, label, optionalLabel, hint, error, className, textareaClassName, rows = 4, ...rest },
   ref
 ) {
   const generatedId = useId();
@@ -60,6 +60,7 @@ Textarea.propTypes = {
   error: PropTypes.string,
   className: PropTypes.string,
   textareaClassName: PropTypes.string,
+  rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
   rows: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
