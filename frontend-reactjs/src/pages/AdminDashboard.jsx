@@ -7,10 +7,46 @@ import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
+import { buildLegalAdminNavigation } from '../features/legal/adminDashboardNavigation.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
 const numberFormatter = new Intl.NumberFormat();
+
+function formatDateLabel(value) {
+  if (!value) {
+    return 'Not scheduled';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function formatRelativeMoment(value) {
+  if (!value) {
+    return '—';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '—';
+  }
+  const diffMs = Date.now() - parsed.getTime();
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'moments ago';
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
 
 function resolveRecurrence(rule) {
   if (!rule) return 'One time';
@@ -235,9 +271,9 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
-function buildAdminNavigation(payload) {
+function buildAdminNavigation(payload, helpers) {
   if (!payload) {
-    return [];
+    return { sections: [], sidebarLinks: [] };
   }
 
   const tiles = payload.metrics?.command?.tiles ?? [];
@@ -246,9 +282,12 @@ function buildAdminNavigation(payload) {
   const disputeBreakdown = payload.charts?.disputeBreakdown?.buckets ?? [];
   const securitySignals = payload.security?.signals ?? [];
   const automationBacklog = payload.security?.automationBacklog ?? [];
+  const legalSummary = payload.legal ?? null;
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
   const auditTimeline = payload.audit?.timeline ?? [];
+
+  const { section: legalSection, sidebarLinks } = buildLegalAdminNavigation(legalSummary, helpers);
 
   const overview = {
     id: 'overview',
@@ -445,16 +484,19 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  return [
+  const sections = [
     overview,
     commandMetrics,
     securitySection,
     operationsSection,
     disputeSection,
     complianceSection,
+    legalSection,
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  return { sections, sidebarLinks };
 }
 
 export default function AdminDashboard() {
@@ -528,14 +570,24 @@ export default function AdminDashboard() {
 
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
 
+  const navigationModel = useMemo(() => {
+    if (!state.data) {
+      return { sections: [], sidebarLinks: [] };
+    }
+    return buildAdminNavigation(state.data, { formatDateLabel, formatRelativeMoment });
+  }, [state.data]);
+
   const navigation = useMemo(() => {
-    const sections = state.data ? buildAdminNavigation(state.data) : [];
+    const sections = [...navigationModel.sections];
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
-  const dashboardPayload = state.data ? { navigation } : null;
+  }, [navigationModel.sections, affiliateSection]);
+
+  const dashboardPayload = state.data
+    ? { navigation, sidebarLinks: navigationModel.sidebarLinks }
+    : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
   const servedFromCache = Boolean(state.meta?.fromCache && !state.meta?.fallback);
