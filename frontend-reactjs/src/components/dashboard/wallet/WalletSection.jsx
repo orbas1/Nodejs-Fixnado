@@ -447,7 +447,14 @@ WalletSection.propTypes = {
       }),
       currency: PropTypes.string,
       user: PropTypes.object,
-      company: PropTypes.object
+      company: PropTypes.object,
+      transactions: PropTypes.shape({
+        items: PropTypes.array,
+        total: PropTypes.number,
+        limit: PropTypes.number,
+        offset: PropTypes.number,
+        error: PropTypes.string
+      })
     })
   }).isRequired
 };
