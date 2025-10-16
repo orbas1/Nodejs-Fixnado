@@ -15,7 +15,10 @@ const {
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
-  AnalyticsPipelineRun
+  AnalyticsPipelineRun,
+  SecuritySignalConfig,
+  SecurityAutomationTask,
+  TelemetryConnector
 } = await import('../src/models/index.js');
 
 const { buildAdminDashboard } = await import('../src/services/adminDashboardService.js');
@@ -325,6 +328,77 @@ describe('buildAdminDashboard', () => {
         manualTimeline: [{ time: '08:00', event: 'Manual audit', owner: 'Ops', status: 'Queued' }]
       }
     });
+    await SecuritySignalConfig.bulkCreate([
+      {
+        metricKey: 'mfa_adoption',
+        displayName: 'MFA adoption',
+        description: 'Enterprise portals',
+        targetSuccess: 95,
+        targetWarning: 85,
+        lowerIsBetter: false
+      },
+      {
+        metricKey: 'critical_alerts_open',
+        displayName: 'Critical alerts',
+        description: 'Open high severity alerts',
+        targetSuccess: 0,
+        targetWarning: 2,
+        lowerIsBetter: true
+      },
+      {
+        metricKey: 'manual_review',
+        displayName: 'Manual override',
+        description: 'Control room entered',
+        valueSource: 'manual',
+        manualValue: 12,
+        manualValueLabel: '12 open actions',
+        targetSuccess: 5,
+        targetWarning: 10,
+        lowerIsBetter: true
+      }
+    ]);
+
+    await SecurityAutomationTask.bulkCreate([
+      {
+        name: 'Escrow ledger reconciliation',
+        status: 'in_progress',
+        owner: 'Automation Guild',
+        priority: 'high',
+        dueAt: now.plus({ days: 1 }).toJSDate()
+      },
+      {
+        name: 'Compliance webhook retries',
+        status: 'blocked',
+        owner: 'Compliance Ops',
+        priority: 'urgent',
+        dueAt: now.minus({ days: 1 }).toJSDate()
+      },
+      {
+        name: 'Audit pipeline hardening',
+        status: 'planned',
+        owner: 'Security Engineering',
+        priority: 'medium'
+      }
+    ]);
+
+    await TelemetryConnector.bulkCreate([
+      {
+        name: 'Splunk Observability',
+        connectorType: 'siem',
+        region: 'eu-west-2',
+        status: 'healthy',
+        eventsPerMinuteTarget: 5000,
+        eventsPerMinuteActual: 5200
+      },
+      {
+        name: 'Azure Sentinel',
+        connectorType: 'siem',
+        region: 'ap-southeast-2',
+        status: 'warning',
+        eventsPerMinuteTarget: 2000,
+        eventsPerMinuteActual: 1500
+      }
+    ]);
 
     const dashboard = await buildAdminDashboard({ timeframe: '7d', timezone: TIMEZONE });
 
@@ -347,6 +421,11 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.security.automationBacklog.length).toBeGreaterThanOrEqual(3);
     expect(dashboard.security.signals.some((signal) => signal.label === 'Manual MFA signal')).toBe(true);
     expect(dashboard.security.automationBacklog.some((item) => item.name === 'Manual automation')).toBe(true);
+    expect(dashboard.security.capabilities).toEqual({
+      canManageSignals: false,
+      canManageAutomation: false,
+      canManageConnectors: false
+    });
 
     expect(dashboard.queues.complianceControls.length).toBeGreaterThan(0);
     expect(dashboard.queues.boards.length).toBeGreaterThanOrEqual(3);
@@ -361,6 +440,24 @@ describe('buildAdminDashboard', () => {
       title: 'Ops briefing',
       when: 'Next 48 hours',
       status: 'Operations'
+    });
+  });
+
+  it('embeds provided security capabilities in the payload', async () => {
+    const dashboard = await buildAdminDashboard({
+      timeframe: '7d',
+      timezone: TIMEZONE,
+      securityCapabilities: {
+        canManageSignals: true,
+        canManageAutomation: true,
+        canManageConnectors: false
+      }
+    });
+
+    expect(dashboard.security.capabilities).toEqual({
+      canManageSignals: true,
+      canManageAutomation: true,
+      canManageConnectors: false
     });
   });
 });

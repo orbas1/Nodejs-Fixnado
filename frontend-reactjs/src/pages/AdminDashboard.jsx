@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { BanknotesIcon, MapIcon, Cog6ToothIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -19,6 +20,7 @@ import {
   fetchAdminDashboardOverviewSettings,
   persistAdminDashboardOverviewSettings
 } from '../api/adminDashboardSettingsClient.js';
+import SecurityTelemetryWorkspace from '../components/security/telemetry/index.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
@@ -774,28 +776,24 @@ function buildAdminNavigation(payload) {
     }
   };
 
-  const securitySection = securitySignals.length
-    ? {
-        id: 'security-posture',
-        label: 'Security & telemetry posture',
-        description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
-        type: 'grid',
-        data: {
-          cards: securitySignals.map((signal) => ({
-            title: `${signal.label} — ${signal.valueLabel}`,
-            accent: resolveAccent(signal.tone),
-            details: [
-              signal.caption,
-              signal.tone === 'danger'
-                ? 'Immediate investigation required.'
-                : signal.tone === 'warning'
-                  ? 'Monitor closely and prepare contingency.'
-                  : 'Tracking to plan.'
-            ]
-          }))
-        }
+  const securitySection = {
+    id: 'security-posture',
+    label: 'Security & telemetry posture',
+    description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
+    type: 'component',
+    component: SecurityTelemetryWorkspace,
+    data: {
+      initialData: {
+        timezone: 'Europe/London',
+        updatedAt: payload.generatedAt,
+        signals: securitySignals,
+        automationTasks: payload.security?.automationBacklog ?? [],
+        connectors: payload.security?.connectors ?? [],
+        summary: payload.security?.summary ?? {},
+        capabilities: payload.security?.capabilities ?? {}
       }
-    : null;
+    }
+  };
 
   const operationsSection = queueBoards.length
     ? {
@@ -1546,6 +1544,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Monetisation controls
+      </Button>
+      <Button
+        to="/admin/seo"
+        size="sm"
+        variant="secondary"
+        icon={TagIcon}
+        iconPosition="start"
+      >
+        Tags &amp; SEO
       </Button>
       <Button
         to="/admin/zones"

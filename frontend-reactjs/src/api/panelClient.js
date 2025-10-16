@@ -1490,15 +1490,52 @@ function normaliseAdminDashboard(payload = {}) {
       signal.valueLabel ||
       (signal.value != null ? String(signal.value) : signal.percentage != null ? `${signal.percentage}%` : '—'),
     caption: signal.caption || '',
-    tone: signal.tone || 'info'
+    tone: signal.tone || 'info',
+    statusLabel: signal.statusLabel || signal.status || null,
+    ownerRole: signal.ownerRole || signal.owner || null,
+    runbookUrl: signal.runbookUrl || signal.runbook || null,
+    metricKey: signal.metricKey || `signal-${index}`
   }));
 
   const automationBacklog = ensureArray(payload.security?.automationBacklog).map((item, index) => ({
+    id: item.id || `automation-${index}`,
     name: item.name || `Automation ${index + 1}`,
     status: item.status || 'Monitor',
     notes: item.notes || '',
-    tone: item.tone || 'info'
+    tone: item.tone || 'info',
+    owner: item.owner || null,
+    runbookUrl: item.runbookUrl || null,
+    dueAt: item.dueAt || null,
+    priority: item.priority || 'medium',
+    signalKey: item.signalKey || null
   }));
+
+  const connectors = ensureArray(payload.security?.connectors).map((connector, index) => ({
+    id: connector.id || `connector-${index}`,
+    name: connector.name || `Connector ${index + 1}`,
+    status: connector.status || 'healthy',
+    description: connector.description || '',
+    connectorType: connector.connectorType || connector.type || 'custom',
+    region: connector.region || null,
+    dashboardUrl: connector.dashboardUrl || connector.url || null,
+    ingestionEndpoint: connector.ingestionEndpoint || null,
+    eventsPerMinuteTarget:
+      Number.parseInt(connector.eventsPerMinuteTarget ?? connector.target ?? 0, 10) || 0,
+    eventsPerMinuteActual:
+      Number.parseInt(connector.eventsPerMinuteActual ?? connector.actual ?? 0, 10) || 0,
+    lastHealthCheckAt: connector.lastHealthCheckAt || connector.lastHealth || null,
+    logoUrl: connector.logoUrl || null
+  }));
+
+  const summary = payload.security?.summary || {
+    connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
+    connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
+    automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
+    signalsWarning: securitySignals.filter((signal) => signal.tone === 'warning').length,
+    signalsDanger: securitySignals.filter((signal) => signal.tone === 'danger').length
+  };
+
+  const securityCapabilities = payload.security?.capabilities || {};
 
   const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
     id: board.id || `board-${index}`,
@@ -1552,7 +1589,14 @@ function normaliseAdminDashboard(payload = {}) {
     },
     security: {
       signals: securitySignals,
-      automationBacklog
+      automationBacklog,
+      connectors,
+      summary,
+      capabilities: {
+        canManageSignals: Boolean(securityCapabilities.canManageSignals),
+        canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
+        canManageConnectors: Boolean(securityCapabilities.canManageConnectors)
+      }
     },
     queues: {
       boards: queueBoards,
@@ -1653,30 +1697,117 @@ const adminFallback = normaliseAdminDashboard({
   },
   security: {
     signals: [
-      { label: 'MFA adoption', valueLabel: '96.4%', caption: 'Enterprise + provider portals', tone: 'success' },
-      { label: 'Critical alerts', valueLabel: '0', caption: 'Security Operations Center overnight review', tone: 'success' },
-      { label: 'Audit log ingestion', valueLabel: '100%', caption: '24h ingestion completeness from Splunk', tone: 'info' }
+      {
+        label: 'MFA adoption',
+        valueLabel: '96.4%',
+        caption: 'Enterprise + provider portals',
+        tone: 'success',
+        statusLabel: 'On target',
+        ownerRole: 'Security operations',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/mfa-hardening',
+        metricKey: 'mfa_adoption'
+      },
+      {
+        label: 'Critical alerts',
+        valueLabel: '0',
+        caption: 'Security Operations Center overnight review',
+        tone: 'success',
+        statusLabel: 'No open alerts',
+        ownerRole: 'Trust & safety',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/critical-alerts',
+        metricKey: 'critical_alerts_open'
+      },
+      {
+        label: 'Audit log ingestion',
+        valueLabel: '100%',
+        caption: '24h ingestion completeness from Splunk',
+        tone: 'info',
+        statusLabel: 'Tracking plan',
+        ownerRole: 'Platform engineering',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/telemetry-pipeline-reset',
+        metricKey: 'audit_ingestion_rate'
+      }
     ],
     automationBacklog: [
       {
+        id: 'auto-1',
         name: 'Escrow ledger reconciliation',
         status: 'Ready for QA',
         notes: 'Extends double-entry validation to rental deposits; requires finance sign-off.',
-        tone: 'success'
+        tone: 'success',
+        owner: 'Automation Guild',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/escrow-ledger',
+        dueAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        signalKey: 'audit_ingestion_rate'
       },
       {
+        id: 'auto-2',
         name: 'Compliance webhook retries',
-        status: 'In build',
+        status: 'In progress',
         notes: 'Retries failed submissions to insurance partners with exponential backoff.',
-        tone: 'info'
+        tone: 'info',
+        owner: 'Compliance Ops',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/compliance-retry-service',
+        dueAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'medium',
+        signalKey: 'critical_alerts_open'
       },
       {
+        id: 'auto-3',
         name: 'Dispute document summarisation',
-        status: 'Discovery',
+        status: 'Planned',
         notes: 'Pilot with AI summarisation flagged for accuracy review before production rollout.',
-        tone: 'warning'
+        tone: 'warning',
+        owner: 'Customer Advocacy',
+        runbookUrl: null,
+        dueAt: null,
+        priority: 'urgent',
+        signalKey: null
       }
-    ]
+    ],
+    connectors: [
+      {
+        id: 'connector-1',
+        name: 'Splunk Observability',
+        status: 'healthy',
+        description: 'Primary SIEM connector forwarding platform audit events.',
+        connectorType: 'siem',
+        region: 'eu-west-2',
+        dashboardUrl: 'https://splunk.fixnado.com/app/sre/telemetry-overview',
+        ingestionEndpoint: 'kinesis://splunk-audit',
+        eventsPerMinuteTarget: 4800,
+        eventsPerMinuteActual: 5120,
+        lastHealthCheckAt: new Date().toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/splunk.svg'
+      },
+      {
+        id: 'connector-2',
+        name: 'Azure Sentinel',
+        status: 'warning',
+        description: 'Regional SOC handoff for APAC enterprise tenants.',
+        connectorType: 'siem',
+        region: 'ap-southeast-2',
+        dashboardUrl: 'https://portal.azure.com/#view/Microsoft_Azure_Security/SentinelMainBlade',
+        ingestionEndpoint: 'eventhub://sentinel-apac',
+        eventsPerMinuteTarget: 1800,
+        eventsPerMinuteActual: 1540,
+        lastHealthCheckAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/azure-sentinel.svg'
+      }
+    ],
+    summary: {
+      connectorsHealthy: 1,
+      connectorsAttention: 1,
+      automationOpen: 3,
+      signalsWarning: 1,
+      signalsDanger: 0
+    },
+    capabilities: {
+      canManageSignals: true,
+      canManageAutomation: true,
+      canManageConnectors: true
+    }
   },
   queues: {
     boards: [

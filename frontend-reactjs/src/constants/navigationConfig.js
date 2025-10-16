@@ -125,18 +125,45 @@ export const buildPrimaryNavigation = ({ t, dashboards }) => [
 ];
 
 export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
-  if (!isAuthenticated) {
-    return [];
-  }
-
   const primary = buildPrimaryNavigation({ t, dashboards });
   const flatLinks = primary.flatMap((section) => section.items);
+
+  if (!isAuthenticated) {
+    return [
+      ...flatLinks,
+      {
+        id: 'mobile-login',
+        title: t('nav.login'),
+        description: t('auth.login.cta'),
+        href: '/login'
+      },
+      {
+        id: 'mobile-register',
+        title: t('nav.register'),
+        description: 'Create your Fixnado account',
+        href: '/register'
+      },
+      {
+        id: 'mobile-provider-register',
+        title: 'Provider onboarding',
+        description: 'Activate team dashboards and marketplace tools',
+        href: '/register/company'
+      }
+    ];
+  }
+
   const authLinks = [
     {
       id: 'mobile-dashboard-hub',
       title: t('nav.dashboards'),
       description: t('nav.enterpriseAnalyticsDescription'),
       href: '/dashboards'
+    },
+    {
+      id: 'mobile-profile',
+      title: 'Profile & settings',
+      description: 'Manage contact details and preferences',
+      href: '/account/profile'
     }
   ];
 
