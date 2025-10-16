@@ -21,6 +21,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -561,6 +562,7 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -628,6 +630,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      {
+        id: 'provider-dashboard-enterprise-upgrade',
+        label: t('providerDashboard.enterpriseUpgradeHeadline'),
+        description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -963,6 +970,11 @@ export default function ProviderDashboard() {
             </ul>
           </section>
         ) : null}
+
+        <EnterpriseUpgradeSection
+          upgrade={enterpriseUpgrade}
+          onRefresh={() => loadDashboard({ forceRefresh: true })}
+        />
 
         <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
           <header className="flex items-center gap-3">

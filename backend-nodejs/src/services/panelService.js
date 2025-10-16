@@ -20,6 +20,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getEnterpriseUpgradeByCompany } from './providerUpgradeService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -530,6 +531,81 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     sentimentScore: reviewAverage / 5
   });
 
+  const enterpriseUpgradeRecord = await getEnterpriseUpgradeByCompany(companyId);
+  const enterpriseUpgrade = enterpriseUpgradeRecord
+    ? {
+        id: enterpriseUpgradeRecord.id,
+        status: enterpriseUpgradeRecord.status,
+        summary: enterpriseUpgradeRecord.summary,
+        requestedAt: enterpriseUpgradeRecord.requestedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.requestedAt)).toISO()
+          : null,
+        targetGoLive: enterpriseUpgradeRecord.targetGoLive
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.targetGoLive)).toISO()
+          : null,
+        seats: enterpriseUpgradeRecord.seats ?? null,
+        contractValue:
+          enterpriseUpgradeRecord.contractValue != null
+            ? Number(enterpriseUpgradeRecord.contractValue)
+            : null,
+        currency: enterpriseUpgradeRecord.currency ?? 'GBP',
+        automationScope: enterpriseUpgradeRecord.automationScope ?? null,
+        enterpriseFeatures: Array.isArray(enterpriseUpgradeRecord.enterpriseFeatures)
+          ? enterpriseUpgradeRecord.enterpriseFeatures
+          : [],
+        onboardingManager: enterpriseUpgradeRecord.onboardingManager ?? null,
+        notes: enterpriseUpgradeRecord.notes ?? null,
+        lastDecisionAt: enterpriseUpgradeRecord.lastDecisionAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.lastDecisionAt)).toISO()
+          : null,
+        createdAt: enterpriseUpgradeRecord.createdAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.createdAt)).toISO()
+          : null,
+        updatedAt: enterpriseUpgradeRecord.updatedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.updatedAt)).toISO()
+          : null,
+        contacts: (enterpriseUpgradeRecord.contacts ?? []).map((contact) => ({
+          id: contact.id,
+          name: contact.name,
+          role: contact.role ?? null,
+          email: contact.email ?? null,
+          phone: contact.phone ?? null,
+          influenceLevel: contact.influenceLevel ?? null,
+          primaryContact: Boolean(contact.primaryContact)
+        })),
+        sites: (enterpriseUpgradeRecord.sites ?? []).map((site) => ({
+          id: site.id,
+          siteName: site.siteName,
+          region: site.region ?? null,
+          headcount: site.headcount ?? null,
+          goLiveDate: site.goLiveDate
+            ? DateTime.fromJSDate(new Date(site.goLiveDate)).toISODate()
+            : null,
+          imageUrl: site.imageUrl ?? null,
+          notes: site.notes ?? null
+        })),
+        checklist: (enterpriseUpgradeRecord.checklist ?? []).map((item) => ({
+          id: item.id,
+          label: item.label,
+          status: item.status,
+          owner: item.owner ?? null,
+          dueDate: item.dueDate
+            ? DateTime.fromJSDate(new Date(item.dueDate)).toISODate()
+            : null,
+          notes: item.notes ?? null,
+          sortOrder: item.sortOrder ?? 0
+        })),
+        documents: (enterpriseUpgradeRecord.documents ?? []).map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type ?? null,
+          url: doc.url,
+          thumbnailUrl: doc.thumbnailUrl ?? null,
+          description: doc.description ?? null
+        }))
+      }
+    : null;
+
   const data = {
     provider: {
       id: companyId,
@@ -598,7 +674,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       }
     },
     trust: trustScore,
-    alerts
+    alerts,
+    enterpriseUpgrade
   };
 
   const meta = {

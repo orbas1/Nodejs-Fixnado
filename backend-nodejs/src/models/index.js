@@ -112,6 +112,11 @@ import EnterpriseAccount from './enterpriseAccount.js';
 import EnterpriseSite from './enterpriseSite.js';
 import EnterpriseStakeholder from './enterpriseStakeholder.js';
 import EnterprisePlaybook from './enterprisePlaybook.js';
+import EnterpriseUpgradeRequest from './enterpriseUpgradeRequest.js';
+import EnterpriseUpgradeContact from './enterpriseUpgradeContact.js';
+import EnterpriseUpgradeSite from './enterpriseUpgradeSite.js';
+import EnterpriseUpgradeChecklistItem from './enterpriseUpgradeChecklistItem.js';
+import EnterpriseUpgradeDocument from './enterpriseUpgradeDocument.js';
 import AppearanceProfile from './appearanceProfile.js';
 import AppearanceAsset from './appearanceAsset.js';
 import AppearanceVariant from './appearanceVariant.js';
@@ -183,6 +188,58 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(EnterpriseUpgradeRequest, {
+  foreignKey: 'companyId',
+  as: 'enterpriseUpgrades',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeRequest.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeContact, {
+  foreignKey: 'upgradeRequestId',
+  as: 'contacts',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeContact.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeSite, {
+  foreignKey: 'upgradeRequestId',
+  as: 'sites',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeSite.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeChecklistItem, {
+  foreignKey: 'upgradeRequestId',
+  as: 'checklistItems',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeChecklistItem.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeDocument, {
+  foreignKey: 'upgradeRequestId',
+  as: 'documents',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeDocument.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
@@ -883,49 +940,51 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
-  AdminProfile,
-  AdminDelegate
+  RbacRoleAssignment,
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
+  EnterpriseUpgradeRequest,
+  EnterpriseUpgradeContact,
+  EnterpriseUpgradeSite,
+  EnterpriseUpgradeChecklistItem,
+  EnterpriseUpgradeDocument,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
-  WalletAccount,
-  WalletTransaction,
-  WalletPaymentMethod
+  ServiceTaxonomyCategory,
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -934,11 +993,9 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
-  CustomerAccountSetting,
-  CustomerNotificationRecipient,
   InboxQueue,
   InboxConfiguration,
-  InboxTemplate
+  InboxTemplate,
 };

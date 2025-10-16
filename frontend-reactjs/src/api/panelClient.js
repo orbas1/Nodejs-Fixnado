@@ -344,6 +344,65 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseEnterpriseUpgrade(upgrade = null) {
+  if (!upgrade) {
+    return null;
+  }
+
+  return {
+    id: upgrade.id || null,
+    status: upgrade.status || 'draft',
+    summary: upgrade.summary || null,
+    requestedAt: upgrade.requestedAt || null,
+    targetGoLive: upgrade.targetGoLive || null,
+    seats: upgrade.seats != null ? Number(upgrade.seats) : null,
+    contractValue: upgrade.contractValue != null ? Number(upgrade.contractValue) : null,
+    currency: upgrade.currency || 'GBP',
+    automationScope: upgrade.automationScope || null,
+    enterpriseFeatures: ensureArray(upgrade.enterpriseFeatures),
+    onboardingManager: upgrade.onboardingManager || null,
+    notes: upgrade.notes || null,
+    lastDecisionAt: upgrade.lastDecisionAt || null,
+    createdAt: upgrade.createdAt || null,
+    updatedAt: upgrade.updatedAt || null,
+    contacts: ensureArray(upgrade.contacts).map((contact, index) => ({
+      id: contact.id || `upgrade-contact-${index}`,
+      name: contact.name || 'Stakeholder',
+      role: contact.role || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      influenceLevel: contact.influenceLevel || null,
+      primaryContact: Boolean(contact.primaryContact)
+    })),
+    sites: ensureArray(upgrade.sites).map((site, index) => ({
+      id: site.id || `upgrade-site-${index}`,
+      siteName: site.siteName || site.name || 'Expansion site',
+      region: site.region || null,
+      headcount: site.headcount != null ? Number(site.headcount) : null,
+      goLiveDate: site.goLiveDate || null,
+      imageUrl: site.imageUrl || null,
+      notes: site.notes || null
+    })),
+    checklist: ensureArray(upgrade.checklist).map((item, index) => ({
+      id: item.id || `upgrade-checklist-${index}`,
+      label: item.label || item.name || 'Upgrade task',
+      status: item.status || 'not_started',
+      owner: item.owner || null,
+      dueDate: item.dueDate || null,
+      notes: item.notes || null,
+      sortOrder: item.sortOrder != null ? Number(item.sortOrder) : index
+    })),
+    documents: ensureArray(upgrade.documents).map((doc, index) => ({
+      id: doc.id || `upgrade-document-${index}`,
+      title: doc.title || 'Document',
+      type: doc.type || null,
+      url: doc.url || '#',
+      thumbnailUrl: doc.thumbnailUrl || null,
+      description: doc.description || null
+    }))
+  };
+}
+
 function normaliseProviderDashboard(payload = {}) {
   const root = payload?.data ?? payload;
   const provider = root.provider || root.profile || {};
@@ -351,6 +410,7 @@ function normaliseProviderDashboard(payload = {}) {
   const finances = root.finances || root.finance || {};
   const serviceDelivery = root.serviceDelivery || root.delivery || {};
   const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
+  const upgrade = normaliseEnterpriseUpgrade(root.enterpriseUpgrade || root.enterprise_upgrade);
 
   return {
     provider: {
@@ -472,7 +532,8 @@ function normaliseProviderDashboard(payload = {}) {
         tags: ensureArray(service.tags),
         coverage: ensureArray(service.coverage)
       }))
-    }
+    },
+    enterpriseUpgrade: upgrade
   };
 }
 
@@ -1559,7 +1620,7 @@ function normaliseAdminDashboard(payload = {}) {
     status: tile.status || null
   }));
 
-  const summary = payload.metrics?.command?.summary || {};
+  const commandSummary = payload.metrics?.command?.summary || {};
 
   const escrowTrend = ensureArray(payload.charts?.escrowTrend?.buckets).map((bucket, index) => ({
     label: bucket.label || `Bucket ${index + 1}`,
@@ -1634,7 +1695,7 @@ function normaliseAdminDashboard(payload = {}) {
     logoUrl: connector.logoUrl || null
   }));
 
-  const summary = payload.security?.summary || {
+  const securitySummary = payload.security?.summary || {
     connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
     connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
     automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
@@ -1643,14 +1704,6 @@ function normaliseAdminDashboard(payload = {}) {
   };
 
   const securityCapabilities = payload.security?.capabilities || {};
-
-  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
-    id: board.id || `board-${index}`,
-    title: board.title || board.name || `Queue ${index + 1}`,
-    summary: board.summary || '',
-    updates: ensureArray(board.updates),
-    owner: board.owner || 'Operations'
-  }));
 
   const complianceControls = ensureArray(payload.queues?.complianceControls).map((control, index) => ({
     id: control.id || `control-${index}`,
@@ -1742,12 +1795,13 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
-          escrowTotal: Number.parseFloat(summary.escrowTotal ?? summary.escrowTotalAmount ?? 0) || 0,
-          escrowTotalLabel: summary.escrowTotalLabel || summary.escrowTotal || '—',
-          slaCompliance: Number.parseFloat(summary.slaCompliance ?? 0) || 0,
-          slaComplianceLabel: summary.slaComplianceLabel || summary.slaCompliance || '—',
-          openDisputes: Number.parseInt(summary.openDisputes ?? 0, 10) || 0,
-          openDisputesLabel: summary.openDisputesLabel || `${summary.openDisputes ?? 0}`
+          escrowTotal:
+            Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
+          escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
+          slaCompliance: Number.parseFloat(commandSummary.slaCompliance ?? 0) || 0,
+          slaComplianceLabel: commandSummary.slaComplianceLabel || commandSummary.slaCompliance || '—',
+          openDisputes: Number.parseInt(commandSummary.openDisputes ?? 0, 10) || 0,
+          openDisputesLabel: commandSummary.openDisputesLabel || `${commandSummary.openDisputes ?? 0}`
         }
       }
     },
@@ -1759,7 +1813,7 @@ function normaliseAdminDashboard(payload = {}) {
       signals: securitySignals,
       automationBacklog,
       connectors,
-      summary,
+      summary: securitySummary,
       capabilities: {
         canManageSignals: Boolean(securityCapabilities.canManageSignals),
         canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
@@ -2942,6 +2996,111 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  enterpriseUpgrade: {
+    id: 'upgrade-request-fallback',
+    status: 'in_review',
+    summary:
+      'Preparing to scale Metro Power Services to enterprise tier with multi-site rollout, enhanced automation, and compliance tooling.',
+    requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    targetGoLive: new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString(),
+    seats: 45,
+    contractValue: 185000,
+    currency: 'GBP',
+    automationScope: 'Rollout playbooks across seven strategic sites, integrate SSO, and enable automated compliance attestations.',
+    enterpriseFeatures: ['dedicated_success', 'advanced_analytics', 'sso', 'compliance_reporting'],
+    onboardingManager: 'Priya Patel',
+    notes: 'Awaiting signed SOW from enterprise procurement. Security review scheduled for next week.',
+    lastDecisionAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    contacts: [
+      {
+        id: 'upgrade-contact-1',
+        name: 'Lena Howard',
+        role: 'Operations Director',
+        email: 'lena.howard@metropower.example',
+        phone: '+44 20 7946 1122',
+        influenceLevel: 'Decision maker',
+        primaryContact: true
+      },
+      {
+        id: 'upgrade-contact-2',
+        name: 'Jacob Miller',
+        role: 'Head of Facilities',
+        email: 'jacob.miller@metropower.example',
+        phone: '+44 20 7946 1135',
+        influenceLevel: 'Sponsor',
+        primaryContact: false
+      }
+    ],
+    sites: [
+      {
+        id: 'upgrade-site-hq',
+        siteName: 'Finova HQ',
+        region: 'City of London',
+        headcount: 12,
+        goLiveDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Requires redundant UPS upgrades and remote monitoring telemetry.'
+      },
+      {
+        id: 'upgrade-site-glasgow',
+        siteName: 'Northbank Data Centre',
+        region: 'Glasgow',
+        headcount: 8,
+        goLiveDate: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Needs carbon reporting integration and safety briefing refresh.'
+      }
+    ],
+    checklist: [
+      {
+        id: 'upgrade-checklist-discovery',
+        label: 'Enterprise discovery workshop',
+        status: 'complete',
+        owner: 'Priya Patel',
+        dueDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+        notes: 'Captured all compliance prerequisites and data residency requirements.',
+        sortOrder: 0
+      },
+      {
+        id: 'upgrade-checklist-security',
+        label: 'Security architecture review',
+        status: 'in_progress',
+        owner: 'Marcus Lee',
+        dueDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
+        notes: 'SSO integration staged; awaiting pen-test sign-off.',
+        sortOrder: 1
+      },
+      {
+        id: 'upgrade-checklist-training',
+        label: 'Enterprise operator training plan',
+        status: 'not_started',
+        owner: 'Lena Howard',
+        dueDate: new Date(Date.now() + 18 * 24 * 3600 * 1000).toISOString(),
+        notes: null,
+        sortOrder: 2
+      }
+    ],
+    documents: [
+      {
+        id: 'upgrade-document-sow',
+        title: 'Enterprise SOW draft',
+        type: 'contract',
+        url: 'https://cdn.fixnado.com/docs/metro-power-sow.pdf',
+        thumbnailUrl: null,
+        description: 'Statement of work covering rollout scope, milestones, and commercial terms.'
+      },
+      {
+        id: 'upgrade-document-journey',
+        title: 'Customer journey blueprint',
+        type: 'playbook',
+        url: 'https://cdn.fixnado.com/docs/metro-power-journey.png',
+        thumbnailUrl: 'https://cdn.fixnado.com/docs/thumbnails/metro-power-journey.png',
+        description: 'High-level flow for procurement to live operations, including telemetry checkpoints.'
+      }
+    ]
+  },
   servicePackages: [
     {
       id: 'critical-response',
@@ -3866,6 +4025,8 @@ export async function deleteDisputeHealthEntry(entryId) {
     forceRefresh: true
   });
   return cacheDisputeHealthWorkspace(data);
+}
+
 export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
   const query = toQueryString({ timeframe, category, status });
   return request(`/admin/audit/events${query}`, {
@@ -3934,6 +4095,28 @@ export const getProviderStorefront = withFallback(
     });
   }
 );
+
+export async function createProviderEnterpriseUpgrade(payload) {
+  const { data } = await request('/panel/provider/enterprise-upgrade', {
+    method: 'POST',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
+
+export async function updateProviderEnterpriseUpgrade(requestId, payload) {
+  const { data } = await request(`/panel/provider/enterprise-upgrade/${encodeURIComponent(requestId)}`, {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
 
 function invalidateProviderCache(companyId) {
   const keys = ['admin-providers'];

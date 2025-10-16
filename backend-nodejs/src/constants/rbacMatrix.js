@@ -85,6 +85,7 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_PROVIDER_UPGRADE,
       Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
