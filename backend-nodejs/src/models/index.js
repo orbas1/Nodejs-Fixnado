@@ -82,6 +82,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import OperationsQueueBoard from './operationsQueueBoard.js';
+import OperationsQueueUpdate from './operationsQueueUpdate.js';
 import AutomationInitiative from './automationInitiative.js';
 import EnterpriseAccount from './enterpriseAccount.js';
 import EnterpriseSite from './enterpriseSite.js';
@@ -454,6 +456,8 @@ MessageHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
 
+OperationsQueueBoard.hasMany(OperationsQueueUpdate, { foreignKey: 'boardId', as: 'updates' });
+OperationsQueueUpdate.belongsTo(OperationsQueueBoard, { foreignKey: 'boardId', as: 'board' });
 CommunicationsInboxConfiguration.hasMany(CommunicationsEntryPoint, {
   foreignKey: 'configurationId',
   as: 'entryPoints'
@@ -777,6 +781,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  OperationsQueueBoard,
+  OperationsQueueUpdate
   AutomationInitiative
   AdminUserProfile
   EnterpriseAccount,

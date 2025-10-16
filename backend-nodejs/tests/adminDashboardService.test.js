@@ -17,6 +17,8 @@ const {
   InventoryItem,
   InventoryAlert,
   AnalyticsPipelineRun,
+  OperationsQueueBoard,
+  OperationsQueueUpdate
   AdminAuditEvent
   SecuritySignalConfig,
   SecurityAutomationTask,
@@ -63,6 +65,31 @@ describe('buildAdminDashboard', () => {
   it('aggregates metrics, trends, and queues for admin reporting', async () => {
     const now = DateTime.now().setZone(TIMEZONE);
 
+    const buyer = await User.create({
+      firstName: 'Buyer',
+      lastName: 'One',
+      email: `buyer-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'user'
+    }, { validate: false });
+
+    const provider = await User.create({
+      firstName: 'Jordan',
+      lastName: 'Miles',
+      email: `provider-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'servicemen',
+      twoFactorApp: true
+    }, { validate: false });
+
+    const companyOwner = await User.create({
+      firstName: 'Company',
+      lastName: 'Admin',
+      email: `company-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'company',
+      twoFactorEmail: true
+    }, { validate: false });
     const buyer = await User.create(
       {
         firstName: 'Buyer',
@@ -301,7 +328,24 @@ describe('buildAdminDashboard', () => {
       severity: 'critical',
       status: 'active',
       triggeredAt: now.minus({ hours: 4 }).toJSDate(),
-      metadata: { reportedBy: 'Ops' }
+    metadata: { reportedBy: 'Ops' }
+  });
+
+    const operationsBoard = await OperationsQueueBoard.create({
+      slug: 'field-operations',
+      title: 'Field operations readiness',
+      summary: 'Live technician coverage and shift readiness overview.',
+      owner: 'Field Ops',
+      status: 'operational',
+      priority: 2
+    });
+
+    await OperationsQueueUpdate.create({
+      boardId: operationsBoard.id,
+      headline: 'Coverage steady at 98%',
+      body: 'Crew availability across primary metros remains above 95% threshold.',
+      tone: 'success',
+      recordedAt: now.minus({ hours: 2 }).toJSDate()
     });
 
     await AnalyticsPipelineRun.create({
@@ -474,6 +518,9 @@ describe('buildAdminDashboard', () => {
 
     expect(dashboard.queues.complianceControls.length).toBeGreaterThan(0);
     expect(dashboard.queues.boards.length).toBeGreaterThanOrEqual(3);
+    expect(dashboard.queues.boards[0].updates.length).toBeGreaterThan(0);
+    expect(dashboard.queues.boards[0].updates[0]).toHaveProperty('headline');
+
     expect(dashboard.queues.boards.some((board) => board.title === 'Manual operations board')).toBe(true);
     expect(dashboard.queues.complianceControls.some((control) => control.name === 'Manual compliance')).toBe(true);
 

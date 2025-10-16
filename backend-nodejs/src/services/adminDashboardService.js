@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { listQueueBoards } from './operationsQueueService.js';
 import { listAutomationInitiativesForDashboard } from './automationBacklogService.js';
 import { summariseInboxForDashboard } from './adminInboxService.js';
 import { getServiceManagementSnapshot } from './adminServiceManagementService.js';
@@ -576,48 +577,141 @@ async function computeQueueInsights(range, timezone) {
   const avgScore = badgeApplications.length
     ? badgeApplications.reduce((acc, app) => acc + toNumber(app.complianceScore), 0) / badgeApplications.length
     : 0;
+  const boards = await listQueueBoards({ includeUpdates: true, limit: 6 });
+  const nowIso = DateTime.now().setZone(timezone).toISO();
 
-  return [
-    {
-      id: 'provider-verification',
-      title: 'Provider verification queue',
-      summary: `${numberFormatter.format(documentsPending)} documents awaiting KYC review with ${numberFormatter.format(
-        expiringSoon
-      )} nearing expiry.`,
-      updates: [
-        `${numberFormatter.format(expiringSoon)} automated reminders dispatched in the last 24 hours.`,
-        `${numberFormatter.format(documentsPending)} total submissions across enterprise providers.`,
-        'Workflow prioritises expiring credentials and regulated categories.'
-      ],
-      owner: 'Compliance Ops'
-    },
-    {
-      id: 'dispute-board',
-      title: 'Dispute resolution board',
-      summary: `${numberFormatter.format(disputesEscalated)} escalated cases triaged this window with ${numberFormatter.format(
-        disputesResolved
-      )} resolved.`,
-      updates: [
-        'AI transcript summarisation prepared bundles for escalations.',
-        'Legal observers assigned to all stage-two disputes.',
-        `${numberFormatter.format(disputesResolved)} cases closed within SLA.`
-      ],
-      owner: 'Support & Legal'
-    },
-    {
-      id: 'insurance-badge',
-      title: 'Insurance badge review',
-      summary: `${numberFormatter.format(pendingBadges)} insured seller applications awaiting compliance sign-off.`,
-      updates: [
-        pendingBadges
-          ? `Average compliance score ${avgScore.toFixed(1)} / 100.`
-          : 'Awaiting next batch of submissions.',
-        'Automated document extraction completed for 100% of uploads.',
-        'Risk analytics pipeline feeding badge scoring telemetry.'
-      ],
-      owner: 'Risk & Legal'
-    }
-  ];
+  const fallbackSummaries = {
+    'provider-verification': `${numberFormatter.format(documentsPending)} documents awaiting KYC review with ${numberFormatter.format(
+      expiringSoon
+    )} nearing expiry.`,
+    'dispute-resolution': `${numberFormatter.format(disputesEscalated)} escalated cases triaged this window with ${numberFormatter.format(
+      disputesResolved
+    )} resolved.`,
+    'insurance-badge': `${numberFormatter.format(pendingBadges)} insured seller applications awaiting compliance sign-off.`
+  };
+
+  const fallbackUpdates = {
+    'provider-verification': [
+      {
+        headline: `${numberFormatter.format(expiringSoon)} credential expiry reminders dispatched`,
+        body: 'Automation prioritised expiring credentials and regulated categories.',
+        tone: expiringSoon > 0 ? 'warning' : 'info'
+      },
+      {
+        headline: `${numberFormatter.format(documentsPending)} documents pending manual proofing`,
+        body: 'Queue management sequencing highest risk submissions first.',
+        tone: documentsPending > 0 ? 'warning' : 'info'
+      }
+    ],
+    'dispute-resolution': [
+      {
+        headline: `${numberFormatter.format(disputesEscalated)} escalations triaged`,
+        body: 'Legal observers assigned to all stage-two disputes with AI transcripts attached.',
+        tone: disputesEscalated > disputesResolved ? 'warning' : 'info'
+      },
+      {
+        headline: `${numberFormatter.format(disputesResolved)} cases resolved within SLA`,
+        body: 'Resolution packs delivered to customers within contractual windows.',
+        tone: 'success'
+      }
+    ],
+    'insurance-badge': [
+      {
+        headline: pendingBadges
+          ? `${numberFormatter.format(pendingBadges)} badge applications pending`
+          : 'Awaiting new insured seller submissions',
+        body:
+          pendingBadges > 0
+            ? `Average compliance score ${avgScore.toFixed(1)} / 100.`
+            : 'Compliance checks will resume once new submissions arrive.',
+        tone: pendingBadges > 0 ? 'warning' : 'info'
+      },
+      {
+        headline: 'Risk analytics pipeline refreshed',
+        body: 'Risk telemetry pipelines refreshed scoring inputs for today’s submissions.',
+        tone: 'info'
+      }
+    ]
+  };
+
+  const titles = {
+    'provider-verification': 'Provider verification queue',
+    'dispute-resolution': 'Dispute resolution board',
+    'insurance-badge': 'Insurance badge review'
+  };
+
+  const owners = {
+    'provider-verification': 'Compliance Ops',
+    'dispute-resolution': 'Support & Legal',
+    'insurance-badge': 'Risk & Legal'
+  };
+
+  const buildFallbackBoard = (slug, index = 0) => {
+    const updates = (fallbackUpdates[slug] || []).map((item, updateIndex) => ({
+      id: `${slug}-fallback-${updateIndex}`,
+      headline: item.headline,
+      body: item.body ?? '',
+      tone: item.tone || 'info',
+      recordedAt: nowIso,
+      attachments: []
+    }));
+
+    return {
+      id: slug,
+      slug,
+      title: titles[slug] || 'Operations queue',
+      summary: fallbackSummaries[slug] || '',
+      updates,
+      owner: owners[slug] || 'Operations',
+      status: slug === 'provider-verification' ? 'attention' : 'operational',
+      priority: index + 1,
+      metadata: {}
+    };
+  };
+
+  if (boards.length) {
+    const mapped = boards.map((board, index) => {
+      const slug = board.slug || board.metadata?.slug || board.id;
+      const summary = board.summary || fallbackSummaries[slug] || board.summary || '';
+      const updates = (board.updates && board.updates.length
+        ? board.updates
+        : (fallbackUpdates[slug] || [])
+      ).slice(0, 4).map((update, updateIndex) => ({
+        id: update.id || `${board.id}-virtual-${updateIndex}`,
+        headline: update.headline,
+        body: update.body ?? '',
+        tone: update.tone || 'info',
+        recordedAt: update.recordedAt || nowIso,
+        attachments: update.attachments || []
+      }));
+
+      return {
+        id: board.id,
+        slug,
+        title: board.title,
+        summary,
+        updates,
+        owner: board.owner,
+        status: board.status || (index === 0 ? 'attention' : 'operational'),
+        priority: board.priority ?? index + 1,
+        metadata: board.metadata ?? {},
+        updatedAt: board.updatedAt,
+        createdAt: board.createdAt
+      };
+    });
+
+    ['provider-verification', 'dispute-resolution', 'insurance-badge'].forEach((slug) => {
+      if (!mapped.some((board) => board.slug === slug)) {
+        mapped.push(buildFallbackBoard(slug, mapped.length));
+      }
+    });
+
+    return mapped;
+  }
+
+  return ['provider-verification', 'dispute-resolution', 'insurance-badge'].map((slug, index) =>
+    buildFallbackBoard(slug, index)
+  );
 }
 
 async function buildAuditTimeline(range, timezone, timeframeKey) {
