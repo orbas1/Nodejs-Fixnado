@@ -39,7 +39,8 @@ const mockDashboards = {
           level: 'view',
           label: 'Unavailable',
           features: []
-        }
+        },
+        accountSettings: true
       }
     },
     navigation: [
@@ -111,6 +112,13 @@ const mockDashboards = {
             'Two rentals nearing inspection require proof-of-service uploads.'
           ]
         }
+      },
+      {
+        id: 'customer-control',
+        icon: 'control',
+        label: 'Customer Control Centre',
+        description: 'Manage customer profile, escalation contacts, and service locations.',
+        type: 'module'
       },
       {
         id: 'calendar',

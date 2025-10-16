@@ -5,8 +5,13 @@ const ROLE_STORAGE_KEY = 'fixnado:role';
 export const ROLE_OPTIONS = [
   { value: 'guest', label: 'Guest (read-only marketing view)' },
   { value: 'user', label: 'Customer / job poster' },
-  { value: 'servicemen', label: 'Verified provider' },
-  { value: 'company', label: 'Company operator' }
+  { value: 'serviceman', label: 'Crew operator' },
+  { value: 'servicemen', label: 'Field service provider' },
+  { value: 'provider', label: 'Provider leadership' },
+  { value: 'enterprise', label: 'Enterprise operator' },
+  { value: 'finance', label: 'Finance controller' },
+  { value: 'admin', label: 'Platform administrator' },
+  { value: 'company', label: 'Company operator (legacy)' }
 ];
 
 function normaliseRole(role, fallback = 'guest') {

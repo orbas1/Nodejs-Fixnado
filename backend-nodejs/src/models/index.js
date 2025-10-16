@@ -64,9 +64,26 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import CustomerProfile from './customerProfile.js';
+import CustomerContact from './customerContact.js';
+import CustomerLocation from './customerLocation.js';
+import CustomerAccountSetting from './customerAccountSetting.js';
+import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
+CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
+  foreignKey: 'accountSettingId',
+  as: 'recipients'
+});
+CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
+  foreignKey: 'accountSettingId',
+  as: 'accountSetting'
+});
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -76,6 +93,15 @@ Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(CustomerProfile, { foreignKey: 'userId', as: 'customerProfile' });
+CustomerProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerContact, { foreignKey: 'userId', as: 'customerContacts' });
+CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
+CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
@@ -469,5 +495,10 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  CustomerProfile,
+  CustomerContact,
+  CustomerLocation
+  CustomerAccountSetting,
+  CustomerNotificationRecipient
 };

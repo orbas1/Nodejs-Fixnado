@@ -1,6 +1,33 @@
 import { Permissions } from '../services/accessControlService.js';
 
 const ROUTE_POLICIES = {
+  'customer.control.manage': {
+    id: 'customer.control.manage',
+    version: '1.0.0',
+    resource: 'customer.control',
+    action: 'customer.control:manage',
+    description:
+      'Allow customer personas to view and update their control centre profile, escalation contacts, and service locations.',
+    requirements: [Permissions.CUSTOMER_CONTROL_MANAGE],
+    tags: ['customer', 'workspace', 'profile'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      surface: req.route?.path || null
+  'account.settings.manage': {
+    id: 'account.settings.manage',
+    version: '1.0.0',
+    resource: 'account.settings',
+    action: 'account.settings:manage',
+    description: 'Allow authenticated users to manage their Fixnado account workspace preferences.',
+    requirements: [Permissions.ACCOUNT_SETTINGS_MANAGE],
+    tags: ['account', 'preferences'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
   'feed.live.read': {
     id: 'feed.live.read',
     version: '1.0.0',

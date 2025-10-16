@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
+import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1638,8 +1639,20 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
-    case 'settings':
+    case 'settings': {
+      const sectionLabel = section?.label?.toLowerCase?.() ?? '';
+      const shouldRenderAccountSettings =
+        persona === 'user' ||
+        features?.accountSettings === true ||
+        features?.accountSettingsBeta === true ||
+        sectionLabel.includes('account settings');
+
+      if (shouldRenderAccountSettings) {
+        return <AccountSettingsManager initialSnapshot={section} />;
+      }
+
       return <SettingsSection section={section} />;
+    }
     case 'calendar':
       return <CalendarSection section={section} />;
     case 'availability':
