@@ -24,6 +24,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import ProviderByokManagementSection from './provider/ProviderByokManagementSection.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1802,6 +1803,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'byok-management':
+      return <ProviderByokManagementSection section={section} />;
     case 'component': {
       const Component = section.component;
       if (!Component) return null;

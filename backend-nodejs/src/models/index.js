@@ -21,6 +21,8 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderByokIntegration from './providerByokIntegration.js';
+import ProviderByokAuditLog from './providerByokAuditLog.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -183,6 +185,13 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderByokIntegration, { foreignKey: 'companyId', as: 'byokIntegrations' });
+ProviderByokIntegration.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderByokIntegration.hasMany(ProviderByokAuditLog, { foreignKey: 'integrationId', as: 'auditLogs' });
+ProviderByokAuditLog.belongsTo(ProviderByokIntegration, { foreignKey: 'integrationId', as: 'integration' });
+ProviderByokAuditLog.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });

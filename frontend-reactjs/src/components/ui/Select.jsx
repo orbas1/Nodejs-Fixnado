@@ -4,10 +4,20 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Select = forwardRef(function Select(
-  { id, label, optionalLabel, hint, error, options, className, selectClassName, ...rest },
+  {
+    id,
+    label,
+    optionalLabel,
+    hint,
+    error,
+    options,
+    children,
+    className,
+    selectClassName,
+    ...rest
+  },
   ref
 ) {
-const Select = forwardRef(({ id, label, hint, error, className, children, ...rest }, ref) => {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const describedBy = [];
@@ -31,8 +41,7 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
       <select
         ref={ref}
         id={fieldId}
-        className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
-        className={clsx('fx-text-input', error && 'fx-text-input--error')}
+        className={clsx('fx-text-input', error && 'fx-text-input--error', selectClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
@@ -58,12 +67,14 @@ const Select = forwardRef(({ id, label, hint, error, className, children, ...res
   );
 });
 
+Select.displayName = 'Select';
+
 Select.propTypes = {
   id: PropTypes.string,
-  label: PropTypes.string,
-  optionalLabel: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
+  label: PropTypes.node,
+  optionalLabel: PropTypes.node,
+  hint: PropTypes.node,
+  error: PropTypes.node,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -71,17 +82,9 @@ Select.propTypes = {
       disabled: PropTypes.bool
     })
   ),
+  children: PropTypes.node,
   className: PropTypes.string,
   selectClassName: PropTypes.string
-Select.displayName = 'Select';
-
-Select.propTypes = {
-  id: PropTypes.string,
-  label: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
-  className: PropTypes.string,
-  children: PropTypes.node.isRequired
 };
 
 Select.defaultProps = {
@@ -91,11 +94,9 @@ Select.defaultProps = {
   hint: undefined,
   error: undefined,
   options: [],
+  children: null,
   className: undefined,
   selectClassName: undefined
-  hint: undefined,
-  error: undefined,
-  className: undefined
 };
 
 export default Select;

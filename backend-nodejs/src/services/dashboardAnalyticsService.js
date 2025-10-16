@@ -30,6 +30,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getProviderByokSnapshot } from './providerByokService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -2050,6 +2051,8 @@ async function loadProviderData(context) {
     })
   ]);
 
+  const byokSnapshot = await getProviderByokSnapshot({ companyId });
+
   const totalAssignments = assignments.length;
   const previousTotal = previousAssignments.length;
   const accepted = assignments.filter((assignment) => assignment.status === 'accepted').length;
@@ -2946,6 +2949,14 @@ async function loadProviderData(context) {
     data: { items: alertItems }
   });
 
+  navigation.push({
+    id: 'byok-management',
+    label: 'BYOK Management',
+    description: 'Manage provider-owned API keys, rotation guardrails, and validation runs.',
+    type: 'byok-management',
+    data: byokSnapshot
+  });
+
   return {
     persona: 'provider',
     name: PERSONA_METADATA.provider.name,
@@ -2974,6 +2985,7 @@ async function loadProviderData(context) {
           jobs: adsSourcedCount
         }
       },
+      byok: byokSnapshot.summary,
       features: {
         ads: buildAdsFeatureMetadata('provider')
       }
