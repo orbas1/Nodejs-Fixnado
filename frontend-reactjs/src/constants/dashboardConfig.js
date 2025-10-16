@@ -116,6 +116,12 @@ export const DASHBOARD_ROLES = [
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      {
+        id: 'byok-management',
+        label: 'BYOK management',
+        icon: 'compliance',
+        href: '/dashboards/serviceman/byok'
+      }
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' }
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' }
       { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }

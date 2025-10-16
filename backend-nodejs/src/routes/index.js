@@ -93,6 +93,7 @@ v1Router.use('/service-orders', serviceOrderRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
 v1Router.use('/serviceman-control', servicemanControlRoutes);
 v1Router.use('/account', accountRoutes);
+v1Router.use('/servicemen', servicemanRoutes);
 v1Router.use('/serviceman', servicemanRoutes);
 v1Router.use('/servicemen/settings', servicemanSettingsRoutes);
 v1Router.use('/providers', providerCalendarRoutes);

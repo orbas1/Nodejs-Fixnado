@@ -10,6 +10,7 @@ import { useLocale } from './hooks/useLocale.js';
 import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
+import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
 import ConsentBanner from './components/legal/ConsentBanner.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -74,6 +75,9 @@ const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
+const ServicemanByokWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
+);
 
 const ADMIN_ROUTES = [
   { path: '/admin/dashboard', Component: AdminDashboard },
@@ -403,6 +407,11 @@ function App() {
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
               <Route
+                path="/dashboards/serviceman/byok"
+                element={
+                  <ServicemanProtectedRoute>
+                    <ServicemanByokWorkspace />
+                  </ServicemanProtectedRoute>
                 path="/dashboards/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
