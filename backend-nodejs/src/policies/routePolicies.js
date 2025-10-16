@@ -181,6 +181,36 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'provider.escrows.read': {
+    id: 'provider.escrows.read',
+    version: '1.0.0',
+    resource: 'provider.escrows',
+    action: 'provider.escrows:read',
+    description: 'Allow provider organisations to review escrow records tied to their service orders.',
+    requirements: [Permissions.PROVIDER_ESCROW_READ],
+    tags: ['provider', 'escrow', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      providerId: req.user?.id ?? null,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      escrowId: req.params?.id || null
+    })
+  },
+  'provider.escrows.write': {
+    id: 'provider.escrows.write',
+    version: '1.0.0',
+    resource: 'provider.escrows',
+    action: 'provider.escrows:write',
+    description: 'Allow provider finance teams to update escrow metadata, milestones, and release policies.',
+    requirements: [Permissions.PROVIDER_ESCROW_WRITE],
+    tags: ['provider', 'escrow', 'finance'],
+    severity: 'critical',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      providerId: req.user?.id ?? null,
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      escrowId: req.params?.id || null
   'serviceman.escrows.view': {
     id: 'serviceman.escrows.view',
     version: '1.0.0',
