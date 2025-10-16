@@ -25,9 +25,10 @@ import {
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
   CubeIcon,
-  QueueListIcon
-  PaintBrushIcon
-  TagIcon
+  QueueListIcon,
+  PaintBrushIcon,
+  TagIcon,
+  BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
@@ -123,7 +124,7 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting',
-  bucket: 'Bucket'
+  bucket: 'Bucket',
   route: 'Workspace'
 };
 
@@ -147,9 +148,10 @@ const navIconMap = {
   automation: BoltIcon,
   map: MapIcon,
   documents: ClipboardDocumentCheckIcon,
-  operations: QueueListIcon
-  marketplace: WrenchScrewdriverIcon
-  seo: TagIcon
+  operations: QueueListIcon,
+  marketplace: WrenchScrewdriverIcon,
+  seo: TagIcon,
+  storefront: BuildingStorefrontIcon
 };
 
 navIconMap.builder = PaintBrushIcon;

@@ -21,6 +21,9 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderStorefront from './providerStorefront.js';
+import ProviderStorefrontInventory from './providerStorefrontInventory.js';
+import ProviderStorefrontCoupon from './providerStorefrontCoupon.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -184,6 +187,19 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderStorefront, { foreignKey: 'companyId', as: 'storefront' });
+ProviderStorefront.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderStorefront.hasMany(ProviderStorefrontInventory, {
+  foreignKey: 'storefrontId',
+  as: 'inventory'
+});
+ProviderStorefrontInventory.belongsTo(ProviderStorefront, {
+  foreignKey: 'storefrontId',
+  as: 'storefront'
+});
+ProviderStorefront.hasMany(ProviderStorefrontCoupon, { foreignKey: 'storefrontId', as: 'coupons' });
+ProviderStorefrontCoupon.belongsTo(ProviderStorefront, { foreignKey: 'storefrontId', as: 'storefront' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
@@ -948,3 +964,5 @@ export {
   InboxConfiguration,
   InboxTemplate
 };
+
+export { ProviderStorefront, ProviderStorefrontInventory, ProviderStorefrontCoupon };
