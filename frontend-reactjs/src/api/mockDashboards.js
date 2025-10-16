@@ -1,4 +1,9 @@
 import { readSecurityPreferences } from '../utils/securityPreferences.js';
+import {
+  ORDER_HISTORY_ENTRY_TYPES,
+  ORDER_HISTORY_ACTOR_ROLES,
+  ORDER_HISTORY_ATTACHMENT_TYPES
+} from '../constants/orderHistory.js';
 
 const createWindow = () => ({
   label: 'Next 30 days',
@@ -41,7 +46,8 @@ const mockDashboards = {
           level: 'view',
           label: 'Unavailable',
           features: []
-        }
+        },
+        accountSettings: true
       }
     },
     navigation: [
@@ -113,6 +119,13 @@ const mockDashboards = {
             'Two rentals nearing inspection require proof-of-service uploads.'
           ]
         }
+      },
+      {
+        id: 'customer-control',
+        icon: 'control',
+        label: 'Customer Control Centre',
+        description: 'Manage customer profile, escalation contacts, and service locations.',
+        type: 'module'
       },
       {
         id: 'calendar',
@@ -217,6 +230,107 @@ const mockDashboards = {
         }
       },
       {
+        id: 'history',
+        icon: 'documents',
+        label: 'Order History',
+        description: 'Detailed audit trail for every service order.',
+        type: 'history',
+        access: { level: 'manage', features: ['order-history:write', 'history:write'] },
+        data: {
+          statusOptions: [
+            { value: 'all', label: 'All statuses' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'in_progress', label: 'In progress' },
+            { value: 'completed', label: 'Completed' },
+            { value: 'cancelled', label: 'Cancelled' }
+          ],
+          entryTypes: ORDER_HISTORY_ENTRY_TYPES,
+          actorRoles: ORDER_HISTORY_ACTOR_ROLES,
+          defaultFilters: { status: 'all', sort: 'desc', limit: 25 },
+          attachments: { acceptedTypes: ORDER_HISTORY_ATTACHMENT_TYPES, maxPerEntry: 6 },
+          context: { customerId: 'USR-2488', companyId: 'COMP-100' },
+          access: { level: 'manage', features: ['order-history:write', 'history:write'] },
+          orders: [
+            {
+              id: 'ORD-1001',
+              reference: 'ORD-1001',
+              status: 'in_progress',
+              serviceTitle: 'Retail lighting upgrade',
+              serviceCategory: 'Electrical',
+              totalAmount: 1900,
+              currency: 'GBP',
+              scheduledFor: '2025-03-18T09:00:00Z',
+              createdAt: '2025-03-10T08:00:00Z',
+              updatedAt: '2025-03-16T14:00:00Z',
+              lastStatusTransitionAt: '2025-03-16T14:00:00Z',
+              zoneId: 'ZONE-B',
+              companyId: 'COMP-100',
+              meta: {
+                serviceOwner: 'Avery Stone',
+                location: 'Downtown Core',
+                severity: 'standard'
+              }
+            },
+            {
+              id: 'ORD-1002',
+              reference: 'ORD-1002',
+              status: 'completed',
+              serviceTitle: 'Community centre deep clean',
+              serviceCategory: 'Facilities',
+              totalAmount: 1400,
+              currency: 'GBP',
+              scheduledFor: '2025-03-14T07:30:00Z',
+              createdAt: '2025-03-05T11:45:00Z',
+              updatedAt: '2025-03-14T16:20:00Z',
+              lastStatusTransitionAt: '2025-03-14T16:20:00Z',
+              zoneId: 'ZONE-B',
+              companyId: 'COMP-100',
+              meta: {
+                serviceOwner: 'Jordan Patel',
+                location: 'Community Centre A',
+                severity: 'standard'
+              }
+            }
+          ],
+          entries: [
+            {
+              id: 'HIST-001',
+              title: 'Crew check-in confirmed',
+              entryType: 'milestone',
+              status: 'in_progress',
+              summary: 'Crew onsite at 07:45, safety briefing completed and work area secured.',
+              actorRole: 'provider',
+              actorId: 'crew-17',
+              occurredAt: '2025-03-17T07:45:00Z',
+              createdAt: '2025-03-17T07:50:00Z',
+              updatedAt: '2025-03-17T07:50:00Z',
+              attachments: [
+                {
+                  id: 'ATT-001',
+                  label: 'Site photo',
+                  url: 'https://cdn.fixnado.com/orders/ord-1001/site-photo.jpg',
+                  type: 'image',
+                  previewImage: 'https://cdn.fixnado.com/orders/ord-1001/site-photo-thumb.jpg'
+                }
+              ],
+              meta: { shift: 'AM', severity: 'standard' }
+            },
+            {
+              id: 'HIST-002',
+              title: 'Finance approved release',
+              entryType: 'status_update',
+              status: 'completed',
+              summary: 'Finance approved escrow release following proof-of-service upload. Release queued for 24h settlement.',
+              actorRole: 'finance',
+              actorId: 'fin-ops',
+              occurredAt: '2025-03-15T16:30:00Z',
+              createdAt: '2025-03-15T16:32:00Z',
+              meta: { approvalId: 'ESC-4821', amount: '£1,300' }
+            }
+          ]
+        }
+      },
+      {
         id: 'availability',
         icon: 'availability',
         label: 'Availability Planner',
@@ -268,17 +382,432 @@ const mockDashboards = {
       {
         id: 'rentals',
         icon: 'assets',
-        label: 'Asset Management',
+        label: 'Hire & Rental Management',
         description: 'Track rentals, inspections, deposits, and service pairings.',
-        type: 'table',
+        type: 'rentals',
         data: {
-          headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
-          rows: [
-            ['Rental #9821', 'Thermal imaging camera', 'In field • paired with job #764', '20 Mar 2025', '£250'],
-            ['Rental #9774', 'Dehumidifier set', 'Inspection pending', 'Returned 15 Mar', '£150'],
-            ['Rental #9730', 'Lift platform', 'On hold • awaiting permit', 'Extension requested', '£600'],
-            ['Rental #9688', 'Air scrubber duo', 'Ready for pickup', 'Scheduled 24 Mar', '£180']
-          ]
+          metrics: [
+            { id: 'active', label: 'Active rentals', value: 3 },
+            { id: 'dueSoon', label: 'Due within 72h', value: 1 },
+            { id: 'held', label: 'Deposits held', value: 2 },
+            { id: 'released', label: 'Deposits released', value: 1 },
+            { id: 'atRisk', label: 'Disputes or inspections', value: 1 }
+          ],
+          rentals: [
+            {
+              id: 'rental-9821',
+              rentalNumber: 'Rental #9821',
+              status: 'in_use',
+              depositStatus: 'held',
+              quantity: 1,
+              renterId: 'user-001',
+              companyId: 'company-123',
+              bookingId: 'booking-764',
+              pickupAt: '2025-03-17T08:00:00.000Z',
+              returnDueAt: '2025-03-20T18:00:00.000Z',
+              rentalStartAt: '2025-03-17T08:30:00.000Z',
+              rentalEndAt: null,
+              lastStatusTransitionAt: '2025-03-18T12:00:00.000Z',
+              depositAmount: 250,
+              depositCurrency: 'GBP',
+              dailyRate: 120,
+              rateCurrency: 'GBP',
+              conditionOut: { notes: 'Calibrated before dispatch' },
+              conditionIn: {},
+              meta: { createdBy: 'user-001' },
+              item: {
+                id: 'asset-thermal',
+                name: 'Thermal imaging camera',
+                rentalRate: 120,
+                rentalRateCurrency: 'GBP',
+                depositAmount: 250,
+                depositCurrency: 'GBP'
+              },
+              booking: {
+                id: 'booking-764',
+                status: 'in_progress',
+                reference: 'Work order #764'
+              },
+              timeline: [
+                {
+                  id: 'checkpoint-1',
+                  type: 'status_change',
+                  description: 'Rental approved',
+                  recordedBy: 'ops-001',
+                  recordedByRole: 'admin',
+                  occurredAt: '2025-03-16T09:00:00.000Z',
+                  payload: {}
+                },
+                {
+                  id: 'checkpoint-2',
+                  type: 'handover',
+                  description: 'Picked up from depot',
+                  recordedBy: 'user-001',
+                  recordedByRole: 'customer',
+                  occurredAt: '2025-03-17T08:15:00.000Z',
+                  payload: { notes: 'Escorted by concierge' }
+                }
+              ]
+            },
+            {
+              id: 'rental-9774',
+              rentalNumber: 'Rental #9774',
+              status: 'inspection_pending',
+              depositStatus: 'held',
+              quantity: 2,
+              renterId: 'user-001',
+              companyId: 'company-123',
+              bookingId: 'booking-702',
+              pickupAt: '2025-03-10T09:00:00.000Z',
+              returnDueAt: '2025-03-15T17:00:00.000Z',
+              rentalStartAt: '2025-03-10T09:30:00.000Z',
+              rentalEndAt: '2025-03-15T16:45:00.000Z',
+              lastStatusTransitionAt: '2025-03-15T17:30:00.000Z',
+              depositAmount: 150,
+              depositCurrency: 'GBP',
+              dailyRate: 45,
+              rateCurrency: 'GBP',
+              conditionOut: { notes: 'Dry run with concierge' },
+              conditionIn: {},
+              meta: { createdBy: 'user-001' },
+              item: {
+                id: 'asset-dehumidifier',
+                name: 'Dehumidifier set',
+                rentalRate: 45,
+                rentalRateCurrency: 'GBP',
+                depositAmount: 150,
+                depositCurrency: 'GBP'
+              },
+              booking: {
+                id: 'booking-702',
+                status: 'completed',
+                reference: 'City Schools deep clean'
+              },
+              timeline: [
+                {
+                  id: 'checkpoint-3',
+                  type: 'status_change',
+                  description: 'Inspection scheduled',
+                  recordedBy: 'ops-002',
+                  recordedByRole: 'admin',
+                  occurredAt: '2025-03-15T18:00:00.000Z',
+                  payload: {}
+                }
+              ]
+            },
+            {
+              id: 'rental-9730',
+              rentalNumber: 'Rental #9730',
+              status: 'pickup_scheduled',
+              depositStatus: 'pending',
+              quantity: 1,
+              renterId: 'user-001',
+              companyId: 'company-123',
+              bookingId: 'booking-699',
+              pickupAt: '2025-03-22T07:30:00.000Z',
+              returnDueAt: '2025-03-29T18:00:00.000Z',
+              rentalStartAt: null,
+              rentalEndAt: null,
+              lastStatusTransitionAt: '2025-03-14T11:00:00.000Z',
+              depositAmount: 600,
+              depositCurrency: 'GBP',
+              dailyRate: 220,
+              rateCurrency: 'GBP',
+              conditionOut: {},
+              conditionIn: {},
+              meta: { createdBy: 'user-001' },
+              item: {
+                id: 'asset-lift-platform',
+                name: 'Lift platform',
+                rentalRate: 220,
+                rentalRateCurrency: 'GBP',
+                depositAmount: 600,
+                depositCurrency: 'GBP'
+              },
+              booking: {
+                id: 'booking-699',
+                status: 'awaiting_assignment',
+                reference: 'Facade lighting install'
+              },
+              timeline: [
+                {
+                  id: 'checkpoint-4',
+                  type: 'status_change',
+                  description: 'Permit pending with council',
+                  recordedBy: 'ops-004',
+                  recordedByRole: 'admin',
+                  occurredAt: '2025-03-13T15:30:00.000Z',
+                  payload: { ticket: 'OPS-2131' }
+                }
+              ]
+            },
+            {
+              id: 'rental-9688',
+              rentalNumber: 'Rental #9688',
+              status: 'settled',
+              depositStatus: 'released',
+              quantity: 3,
+              renterId: 'user-001',
+              companyId: 'company-123',
+              bookingId: null,
+              pickupAt: '2025-03-01T07:00:00.000Z',
+              returnDueAt: '2025-03-05T18:00:00.000Z',
+              rentalStartAt: '2025-03-01T07:30:00.000Z',
+              rentalEndAt: '2025-03-05T15:00:00.000Z',
+              lastStatusTransitionAt: '2025-03-06T09:00:00.000Z',
+              depositAmount: 180,
+              depositCurrency: 'GBP',
+              dailyRate: 55,
+              rateCurrency: 'GBP',
+              conditionOut: {},
+              conditionIn: { notes: 'Returned clean, filters replaced' },
+              meta: { createdBy: 'user-001' },
+              item: {
+                id: 'asset-air-scrubber',
+                name: 'Air scrubber duo',
+                rentalRate: 55,
+                rentalRateCurrency: 'GBP',
+                depositAmount: 180,
+                depositCurrency: 'GBP'
+              },
+              booking: null,
+              timeline: [
+                {
+                  id: 'checkpoint-5',
+                  type: 'inspection',
+                  description: 'Inspection completed - deposit released',
+                  recordedBy: 'ops-006',
+                  recordedByRole: 'admin',
+                  occurredAt: '2025-03-06T09:00:00.000Z',
+                  payload: { outcome: 'clear' }
+                }
+              ]
+            }
+          ],
+          inventoryCatalogue: [
+            {
+              id: 'asset-thermal',
+              name: 'Thermal imaging camera',
+              sku: 'THERM-01',
+              category: 'Diagnostics',
+              rentalRate: 120,
+              rentalRateCurrency: 'GBP',
+              depositAmount: 250,
+              depositCurrency: 'GBP',
+              quantityOnHand: 5,
+              quantityReserved: 2,
+              safetyStock: 1,
+              availability: 3,
+              status: 'healthy',
+              description: 'FLIR-series thermal imaging camera with dual battery kit.',
+              imageUrl: 'https://images.unsplash.com/photo-1603792907191-89e55f6d2d0f?auto=format&fit=crop&w=600&q=60'
+            },
+            {
+              id: 'asset-dehumidifier',
+              name: 'Dehumidifier set',
+              sku: 'DRY-02',
+              category: 'Environmental control',
+              rentalRate: 45,
+              rentalRateCurrency: 'GBP',
+              depositAmount: 150,
+              depositCurrency: 'GBP',
+              quantityOnHand: 8,
+              quantityReserved: 4,
+              safetyStock: 2,
+              availability: 4,
+              status: 'healthy',
+              description: 'Twin industrial dehumidifiers with hose kits.',
+              imageUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=60'
+            },
+            {
+              id: 'asset-lift-platform',
+              name: 'Lift platform',
+              sku: 'LIFT-07',
+              category: 'Access equipment',
+              rentalRate: 220,
+              rentalRateCurrency: 'GBP',
+              depositAmount: 600,
+              depositCurrency: 'GBP',
+              quantityOnHand: 2,
+              quantityReserved: 1,
+              safetyStock: 1,
+              availability: 1,
+              status: 'low_stock',
+              description: 'Self-propelled platform with 12m working height.',
+              imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=60'
+            },
+            {
+              id: 'asset-air-scrubber',
+              name: 'Air scrubber duo',
+              sku: 'SCRUB-05',
+              category: 'Air quality',
+              rentalRate: 55,
+              rentalRateCurrency: 'GBP',
+              depositAmount: 180,
+              depositCurrency: 'GBP',
+              quantityOnHand: 10,
+              quantityReserved: 3,
+              safetyStock: 2,
+              availability: 6,
+              status: 'healthy',
+              description: 'HEPA filtration units ideal for restoration and clean rooms.',
+              imageUrl: 'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=600&q=60'
+            }
+          ],
+          endpoints: {
+            list: '/api/rentals',
+            request: '/api/rentals',
+            approve: '/api/rentals/:rentalId/approve',
+            schedulePickup: '/api/rentals/:rentalId/schedule-pickup',
+            checkout: '/api/rentals/:rentalId/checkout',
+            markReturned: '/api/rentals/:rentalId/return',
+            inspection: '/api/rentals/:rentalId/inspection',
+            cancel: '/api/rentals/:rentalId/cancel',
+            checkpoint: '/api/rentals/:rentalId/checkpoints',
+            deposit: '/api/rentals/:rentalId/deposit',
+            dispute: '/api/rentals/:rentalId/dispute'
+          },
+          escrow: {
+            totals: {
+              total: 1180,
+              pending: 600,
+              held: 400,
+              released: 180,
+              partially_released: 0,
+              forfeited: 0
+            },
+            currency: 'GBP',
+            ledgerEndpoint: '/api/rentals/:rentalId/deposit'
+          },
+          defaults: {
+            renterId: 'user-001',
+            companyId: 'company-123',
+            timezone: 'Europe/London',
+            currency: 'GBP'
+          },
+          statusOptions: {
+            rental: [
+              { value: 'requested', label: 'Requested' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'pickup_scheduled', label: 'Pickup scheduled' },
+              { value: 'in_use', label: 'In use' },
+              { value: 'return_pending', label: 'Return pending' },
+              { value: 'inspection_pending', label: 'Inspection pending' },
+              { value: 'settled', label: 'Settled' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'disputed', label: 'Disputed' }
+            ],
+            deposit: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'held', label: 'Held' },
+              { value: 'released', label: 'Released' },
+              { value: 'partially_released', label: 'Partially released' },
+              { value: 'forfeited', label: 'Forfeited' }
+            ]
+          }
+        }
+      },
+      {
+        id: 'wallet',
+        icon: 'finance',
+        label: 'Wallet & Payments',
+        description: 'Fund balances, monitor automation, and control payout methods.',
+        type: 'wallet',
+        data: {
+          currency: 'GBP',
+          policy: { canManage: true, canTransact: true, canEditMethods: true },
+          user: { id: 'USR-2488' },
+          company: { id: 'COMP-442', name: 'Stone Facilities Co-op' },
+          account: {
+            id: 'acct-user-001',
+            alias: 'Facilities wallet',
+            currency: 'GBP',
+            balance: 15250,
+            pending: 1850,
+            autopayoutEnabled: true,
+            autopayoutMethodId: 'pm-001',
+            autopayoutThreshold: 5000,
+            spendingLimit: 25000
+          },
+          summary: {
+            balance: 15250,
+            pending: 1850,
+            available: 13400,
+            lifetimeCredits: 64200,
+            lifetimeDebits: 48950,
+            recentTransactions: [
+              {
+                id: 'txn-1001',
+                occurredAt: '2025-03-16T08:45:00Z',
+                type: 'credit',
+                amount: 4200,
+                balanceAfter: 15250,
+                referenceId: 'WO-4821'
+              },
+              {
+                id: 'txn-1000',
+                occurredAt: '2025-03-15T17:10:00Z',
+                type: 'hold',
+                amount: 850,
+                balanceAfter: 11050,
+                referenceId: 'Rental-9730'
+              },
+              {
+                id: 'txn-0999',
+                occurredAt: '2025-03-14T11:20:00Z',
+                type: 'debit',
+                amount: -350,
+                balanceAfter: 11900,
+                referenceId: 'Refund-2204'
+              }
+            ]
+          },
+          transactions: { total: 12, limit: 10, offset: 0 },
+          methods: [
+            {
+              id: 'pm-001',
+              label: 'HSBC Main',
+              type: 'bank_account',
+              status: 'active',
+              maskedIdentifier: '••22 33',
+              supportingDocumentUrl: 'https://files.fixnado.com/wallet/hsbc-kyc.pdf',
+              details: {
+                bankName: 'HSBC UK',
+                accountHolder: 'Stone Facilities Co-op',
+                notes: 'Primary operating account'
+              }
+            },
+            {
+              id: 'pm-002',
+              label: 'Wise Treasury',
+              type: 'external_wallet',
+              status: 'active',
+              maskedIdentifier: '@stoneops',
+              details: {
+                provider: 'Wise',
+                handle: '@stoneops',
+                notes: 'FX payouts to EU vendors'
+              }
+            },
+            {
+              id: 'pm-003',
+              label: 'Corporate Card',
+              type: 'card',
+              status: 'inactive',
+              maskedIdentifier: 'Visa ••4456',
+              details: {
+                brand: 'Visa',
+                expiryMonth: '11',
+                expiryYear: '28',
+                notes: 'Emergency weekend coverage'
+              }
+            }
+          ],
+          autopayout: {
+            enabled: true,
+            threshold: 5000,
+            method: { id: 'pm-001', label: 'HSBC Main' }
+          }
         }
       },
       {
@@ -1056,7 +1585,7 @@ const mockDashboards = {
       {
         id: 'rentals',
         icon: 'assets',
-        label: 'Asset Lifecycle',
+        label: 'Hire & Rental Management',
         description: 'Equipment tied to service delivery and inspection cadence.',
         type: 'table',
         data: {
@@ -2051,7 +2580,7 @@ const mockDashboards = {
       {
         id: 'assets',
         icon: 'assets',
-        label: 'Asset & Rental Control',
+        label: 'Hire & Rental Control',
         description: 'Fleet health, inspection cadence, and utilisation by zone.',
         type: 'table',
         data: {

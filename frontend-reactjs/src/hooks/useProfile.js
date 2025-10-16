@@ -1,23 +1,96 @@
-import { useCallback, useEffect, useState } from 'react';
-import { readProfile, writeProfile, resetProfile, DEFAULT_PROFILE } from '../utils/profileStorage.js';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { fetchProfile, updateProfile as updateProfileRequest } from '../api/profileClient.js';
+import {
+  readProfile,
+  writeProfile,
+  resetProfile,
+  DEFAULT_PROFILE,
+  PROFILE_STORAGE_KEY
+} from '../utils/profileStorage.js';
 
 const noop = () => {};
 
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
 export function useProfile() {
   const [profile, setProfile] = useState(() => readProfile());
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
 
-  const refresh = useCallback(() => {
-    setProfile(readProfile());
+  const syncFromStorage = useCallback(() => {
+    const snapshot = readProfile();
+    setProfile(snapshot);
+    return snapshot;
+  }, []);
+
+  const refresh = useCallback(async ({ skipNetwork = false } = {}) => {
+    if (skipNetwork) {
+      return syncFromStorage();
+    }
+
+    setIsLoading(true);
+    try {
+      const payload = await fetchProfile();
+      const merged = writeProfile(payload);
+      setProfile(merged);
+      setError(null);
+      return merged;
+    } catch (err) {
+      console.warn('[useProfile] unable to refresh profile from API', err);
+      setError(err);
+      return syncFromStorage();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [syncFromStorage]);
+
+  const updateProfile = useCallback(
+    async (nextProfile) => {
+      setIsSaving(true);
+      const previous = readProfile();
+      const optimistic = writeProfile(nextProfile);
+      setProfile(optimistic);
+
+      try {
+        const response = await updateProfileRequest(nextProfile);
+        const merged = writeProfile(response);
+        setProfile(merged);
+        setError(null);
+        return merged;
+      } catch (err) {
+        console.warn('[useProfile] profile update failed', err);
+        setError(err);
+        const reverted = writeProfile(previous);
+        setProfile(reverted);
+        throw err;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    []
+  );
+
+  const clearProfile = useCallback(() => {
+    const snapshot = resetProfile();
+    setProfile(snapshot);
+    return snapshot;
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!isBrowser()) {
       return noop;
     }
 
     const handleStorage = (event) => {
-      if (!event.key || event.key === 'fixnado:profile') {
-        refresh();
+      if (!event.key || event.key === PROFILE_STORAGE_KEY) {
+        syncFromStorage();
       }
     };
 
@@ -25,7 +98,7 @@ export function useProfile() {
       if (event?.detail) {
         setProfile(event.detail);
       } else {
-        refresh();
+        syncFromStorage();
       }
     };
 
@@ -36,26 +109,19 @@ export function useProfile() {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('fixnado:profile:update', handleProfileUpdate);
     };
-  }, [refresh]);
+  }, [syncFromStorage]);
 
-  const updateProfile = useCallback((patch) => {
-    const next = writeProfile(patch);
-    setProfile(next);
-    return next;
-  }, []);
-
-  const clearProfile = useCallback(() => {
-    const next = resetProfile();
-    setProfile(next);
-    return next;
-  }, []);
+  const defaults = useMemo(() => DEFAULT_PROFILE, []);
 
   return {
     profile,
     updateProfile,
     refresh,
     clearProfile,
-    defaults: DEFAULT_PROFILE
+    defaults,
+    isLoading,
+    isSaving,
+    error
   };
 }
 
