@@ -432,18 +432,23 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  const auditSection = auditTimeline.length
-    ? {
-        id: 'audit-log',
-        label: 'Audit timeline',
-        description: 'Latest pipeline runs, compliance reviews, and dispute checkpoints.',
-        type: 'table',
-        data: {
-          headers: ['Time', 'Event', 'Owner', 'Status'],
-          rows: auditTimeline.map((entry) => [entry.time, entry.event, entry.owner, entry.status])
-        }
-      }
-    : null;
+  const auditEvents = Array.isArray(payload.audit?.timeline?.events)
+    ? payload.audit.timeline.events
+    : [];
+  const auditSummary = payload.audit?.timeline?.summary ?? {};
+
+  const auditSection = {
+    id: 'audit-log',
+    label: 'Audit timeline',
+    description: 'Manage manual audit checkpoints alongside system-generated controls.',
+    icon: 'documents',
+    type: 'audit-timeline',
+    data: {
+      events: auditEvents,
+      summary: auditSummary,
+      initialTimeframe: auditSummary.timeframe ?? payload.timeframe ?? DEFAULT_TIMEFRAME
+    }
+  };
 
   return [
     overview,

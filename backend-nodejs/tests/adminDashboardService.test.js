@@ -15,7 +15,8 @@ const {
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
-  AnalyticsPipelineRun
+  AnalyticsPipelineRun,
+  AdminAuditEvent
 } = await import('../src/models/index.js');
 
 const { buildAdminDashboard } = await import('../src/services/adminDashboardService.js');
@@ -272,6 +273,25 @@ describe('buildAdminDashboard', () => {
       metadata: {}
     });
 
+    await AdminAuditEvent.create({
+      title: 'Manual risk review',
+      summary: 'Validating bespoke evidence package',
+      category: 'security',
+      status: 'in_progress',
+      ownerName: 'Security Ops',
+      ownerTeam: 'Security',
+      occurredAt: now.minus({ hours: 2 }).toJSDate(),
+      dueAt: now.plus({ hours: 1 }).toJSDate(),
+      attachments: [
+        {
+          label: 'Risk workbook',
+          url: 'https://example.com/risk-workbook.pdf'
+        }
+      ],
+      metadata: { ticket: 'SEC-101' },
+      createdBy: provider.id
+    });
+
     const dashboard = await buildAdminDashboard({ timeframe: '7d', timezone: TIMEZONE });
 
     expect(dashboard.timeframe).toBe('7d');
@@ -294,7 +314,11 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.queues.complianceControls.length).toBeGreaterThan(0);
     expect(dashboard.queues.boards.length).toBeGreaterThanOrEqual(3);
 
-    expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
+    expect(dashboard.audit.timeline.events.length).toBeGreaterThan(0);
+    const manualEntry = dashboard.audit.timeline.events.find((event) => event.event === 'Manual risk review');
+    expect(manualEntry).toBeTruthy();
+    expect(manualEntry.attachments).toHaveLength(1);
+    expect(dashboard.audit.timeline.summary.countsByCategory.security).toBeGreaterThanOrEqual(1);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
   });
 });

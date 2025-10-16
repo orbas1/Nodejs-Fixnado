@@ -77,6 +77,7 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
@@ -180,7 +181,8 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
       Permissions.INTEGRATION_CONSOLE,
-      Permissions.SUPPORT_TICKETS
+      Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_AUDIT_READ
     ],
     navigation: {
       landing: '/app/operations/overview',
@@ -213,6 +215,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_PLATFORM_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_AUDIT_READ,
+      Permissions.ADMIN_AUDIT_WRITE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.SUPPORT_TICKETS

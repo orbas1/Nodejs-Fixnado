@@ -1517,12 +1517,73 @@ function normaliseAdminDashboard(payload = {}) {
     tone: control.tone || 'info'
   }));
 
-  const auditTimeline = ensureArray(payload.audit?.timeline).map((item, index) => ({
-    time: item.time || '--:--',
-    event: item.event || `Audit event ${index + 1}`,
-    owner: item.owner || 'Operations',
-    status: item.status || 'Scheduled'
-  }));
+  let auditTimeline;
+  if (Array.isArray(payload.audit?.timeline?.events)) {
+    auditTimeline = {
+      events: ensureArray(payload.audit.timeline.events).map((item, index) => ({
+        id: item.id || `audit-${index}`,
+        time: item.time || '--:--',
+        event: item.event || `Audit event ${index + 1}`,
+        owner: item.owner || 'Operations',
+        ownerTeam: item.ownerTeam || null,
+        status: item.status || 'Scheduled',
+        category: item.category || 'other',
+        summary: item.summary || '',
+        attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+          label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+          url: attachment?.url || ''
+        })),
+        occurredAt: item.occurredAt || null,
+        dueAt: item.dueAt || null,
+        source: item.source || 'system',
+        metadata: item.metadata || {}
+      })),
+      summary: {
+        countsByCategory: payload.audit.timeline.summary?.countsByCategory ?? {},
+        countsByStatus: payload.audit.timeline.summary?.countsByStatus ?? {},
+        manualCounts: payload.audit.timeline.summary?.manualCounts ?? {},
+        manualStatusCounts: payload.audit.timeline.summary?.manualStatusCounts ?? {},
+        timeframe: payload.audit.timeline.summary?.timeframe || timeframe,
+        timeframeLabel: payload.audit.timeline.summary?.timeframeLabel || payload.timeframeLabel || '7 days',
+        timezone: payload.audit.timeline.summary?.timezone || 'Europe/London',
+        range: payload.audit.timeline.summary?.range || null,
+        lastUpdated: payload.audit.timeline.summary?.lastUpdated || generatedAt
+      }
+    };
+  } else {
+    const fallbackEvents = ensureArray(payload.audit?.timeline).map((item, index) => ({
+      id: item.id || `audit-${index}`,
+      time: item.time || '--:--',
+      event: item.event || `Audit event ${index + 1}`,
+      owner: item.owner || 'Operations',
+      ownerTeam: item.ownerTeam || null,
+      status: item.status || 'Scheduled',
+      category: item.category || 'other',
+      summary: item.summary || '',
+      attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+        label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+        url: attachment?.url || ''
+      })),
+      occurredAt: item.occurredAt || null,
+      dueAt: item.dueAt || null,
+      source: item.source || 'system',
+      metadata: item.metadata || {}
+    }));
+    auditTimeline = {
+      events: fallbackEvents,
+      summary: {
+        countsByCategory: {},
+        countsByStatus: {},
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe,
+        timeframeLabel: payload.timeframeLabel || '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: generatedAt
+      }
+    };
+  }
 
   return {
     timeframe,
@@ -1732,12 +1793,81 @@ const adminFallback = normaliseAdminDashboard({
     ]
   },
   audit: {
-    timeline: [
-      { time: '08:30', event: 'GDPR DSAR pack exported', owner: 'Legal', status: 'Completed' },
-      { time: '09:45', event: 'Escrow reconciliation (daily)', owner: 'Finance Ops', status: 'In progress' },
-      { time: '11:00', event: 'Provider onboarding review', owner: 'Compliance Ops', status: 'Scheduled' },
-      { time: '14:30', event: 'Pen-test retest results review', owner: 'Security', status: 'Scheduled' }
-    ]
+    timeline: {
+      events: [
+        {
+          id: 'fallback-dsar',
+          time: '08:30',
+          event: 'GDPR DSAR pack exported',
+          owner: 'Legal',
+          ownerTeam: 'Privacy',
+          status: 'Completed',
+          category: 'compliance',
+          summary: 'Evidence delivered to requester and archived in compliance vault.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-escrow',
+          time: '09:45',
+          event: 'Escrow reconciliation (daily)',
+          owner: 'Finance Ops',
+          ownerTeam: 'Finance',
+          status: 'In progress',
+          category: 'pipeline',
+          summary: 'Validating settlement balances before release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-onboarding',
+          time: '11:00',
+          event: 'Provider onboarding review',
+          owner: 'Compliance Ops',
+          ownerTeam: 'Compliance',
+          status: 'Scheduled',
+          category: 'compliance',
+          summary: 'Reviewing high-risk provider onboarding artifacts.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-security',
+          time: '14:30',
+          event: 'Pen-test retest results review',
+          owner: 'Security',
+          ownerTeam: 'Security',
+          status: 'Scheduled',
+          category: 'security',
+          summary: 'Confirming remediation of critical findings ahead of release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        }
+      ],
+      summary: {
+        countsByCategory: { compliance: 2, pipeline: 1, security: 1 },
+        countsByStatus: { completed: 1, in_progress: 1, scheduled: 2 },
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe: '7d',
+        timeframeLabel: '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: null
+      }
+    }
   }
 });
 
@@ -2685,6 +2815,44 @@ export const getAdminDashboard = withFallback(
       signal: options?.signal
     })
 );
+
+export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
+  const query = toQueryString({ timeframe, category, status });
+  return request(`/admin/audit/events${query}`, {
+    cacheKey: `admin-audit-events:${timeframe}:${category ?? 'all'}:${status ?? 'all'}`,
+    ttl: 10000,
+    signal,
+    forceRefresh
+  });
+}
+
+export function createAdminAuditEvent(event, { signal } = {}) {
+  return request('/admin/audit/events', {
+    method: 'POST',
+    body: JSON.stringify(event),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function updateAdminAuditEvent(eventId, payload, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function deleteAdminAuditEvent(eventId, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'DELETE',
+    signal,
+    cacheKey: null
+  });
+}
 
 export const getProviderDashboard = withFallback(
   normaliseProviderDashboard,

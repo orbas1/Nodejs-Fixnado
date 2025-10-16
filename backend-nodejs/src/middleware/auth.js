@@ -25,7 +25,7 @@ export async function authenticate(req, res, next) {
         userAgent: req.headers['user-agent'],
         metadata: { path: req.originalUrl }
       });
-      return res.status(401).json({ message: 'Authentication required' });
+      return res.status(401).json({ message: 'Missing authorization header' });
     }
 
     const payload = verifyAccessToken(token);
@@ -62,22 +62,25 @@ export async function authenticate(req, res, next) {
       return res.status(401).json({ message: 'Session is no longer valid' });
     }
 
-    const session = payload.sid ? await UserSession.findByPk(payload.sid) : null;
-    if (!session || !session.isActive()) {
-      await recordSecurityEvent({
-        userId: user.id,
-        actorRole: payload.role ?? user.type,
-        actorPersona: payload.persona ?? null,
-        resource: 'auth:authenticate',
-        action: req.originalUrl ?? 'unknown',
-        decision: 'deny',
-        reason: 'session_expired',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        metadata: { sessionId: payload.sid ?? null }
-      });
-      clearSessionCookies(res);
-      return res.status(401).json({ message: 'Session expired' });
+    let session = null;
+    if (payload.sid) {
+      session = await UserSession.findByPk(payload.sid);
+      if (!session || !session.isActive()) {
+        await recordSecurityEvent({
+          userId: user.id,
+          actorRole: payload.role ?? user.type,
+          actorPersona: payload.persona ?? null,
+          resource: 'auth:authenticate',
+          action: req.originalUrl ?? 'unknown',
+          decision: 'deny',
+          reason: 'session_expired',
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          metadata: { sessionId: payload.sid ?? null }
+        });
+        clearSessionCookies(res);
+        return res.status(401).json({ message: 'Session expired' });
+      }
     }
 
     req.user = {
@@ -96,7 +99,7 @@ export async function authenticate(req, res, next) {
 
     req.auth = {
       ...(req.auth ?? {}),
-      sessionId: session.id,
+      sessionId: session?.id ?? null,
       refreshToken,
       tokenPayload: payload,
       actor: actorContext
@@ -111,7 +114,11 @@ export async function authenticate(req, res, next) {
       decision: 'allow',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
-      metadata: { sessionId: session.id }
+      metadata: {
+        sessionId: session?.id ?? null,
+        tokenSource: bearerToken ? 'authorization' : 'cookie',
+        sidPresent: Boolean(payload.sid)
+      }
     });
 
     next();
@@ -158,7 +165,16 @@ export function authorize(requirements = [], options = {}) {
 
 export function requireStorefrontRole(req, res, next) {
   const personaHeader = `${req.headers['x-fixnado-persona'] ?? ''}`.toLowerCase();
-  if (personaHeader && !['provider', 'admin', 'operations'].includes(personaHeader)) {
+  const roleHeader = `${req.headers['x-fixnado-role'] ?? ''}`.toLowerCase();
+  const context = personaHeader || roleHeader;
+
+  if (!context) {
+    return res.status(401).json({ message: 'Storefront access restricted to providers' });
+  }
+
+  const canonicalContext = context === 'company' ? 'provider' : context;
+  const allowedContexts = new Set(['provider', 'provider_admin', 'admin', 'operations']);
+  if (!allowedContexts.has(canonicalContext)) {
     return res.status(403).json({ message: 'Persona not authorised for storefront operations' });
   }
 

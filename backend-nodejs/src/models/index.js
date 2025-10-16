@@ -51,6 +51,7 @@ import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 import SecurityAuditEvent from './securityAuditEvent.js';
+import AdminAuditEvent from './adminAuditEvent.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
@@ -280,6 +281,9 @@ UserSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(SecurityAuditEvent, { foreignKey: 'userId', as: 'securityAuditEvents' });
 SecurityAuditEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+AdminAuditEvent.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser', constraints: false });
+AdminAuditEvent.belongsTo(User, { foreignKey: 'updated_by', as: 'updatedByUser', constraints: false });
+
 User.hasMany(ConsentEvent, { foreignKey: 'userId', as: 'consentEvents' });
 ConsentEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -453,6 +457,7 @@ export {
   AffiliateReferral,
   AffiliateLedgerEntry,
   SecurityAuditEvent,
+  AdminAuditEvent,
   UserSession,
   ConsentEvent,
   Region,

@@ -1,4 +1,5 @@
 import { DataTypes, Model, Op } from 'sequelize';
+import validator from 'validator';
 import sequelize from '../config/database.js';
 import {
   decryptString,
@@ -129,7 +130,15 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
-        isEmail: true
+        isEncryptedEmail(value) {
+          if (value == null) {
+            throw new Error('Validation isEmail on email failed');
+          }
+          const decrypted = this.get('email');
+          if (!decrypted || !validator.isEmail(decrypted)) {
+            throw new Error('Validation isEmail on email failed');
+          }
+        }
       },
       set(value) {
         if (typeof value !== 'string') {
