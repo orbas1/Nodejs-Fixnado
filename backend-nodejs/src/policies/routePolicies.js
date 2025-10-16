@@ -305,6 +305,47 @@ const ROUTE_POLICIES = {
       bidId: req.params?.bidId ?? null,
       method: req.method ?? 'UNKNOWN'
     })
+  },
+  'serviceman.customJobs.read': {
+    id: 'serviceman.customJobs.read',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:read',
+    description: 'Allow crew members to review custom job opportunities and their bid activity.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_READ],
+    tags: ['serviceman', 'custom-jobs'],
+    severity: 'medium',
+    metadata: (req) => ({
+      jobId: req.params?.id ?? null,
+      status: req.query?.status ?? 'open',
+      zoneId: req.query?.zoneId ?? null
+    })
+  },
+  'serviceman.customJobs.write': {
+    id: 'serviceman.customJobs.write',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:write',
+    description: 'Allow crew members to submit, update, and collaborate on custom job bids.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_WRITE],
+    tags: ['serviceman', 'custom-jobs'],
+    severity: 'high',
+    metadata: (req) => ({
+      jobId: req.params?.id ?? null,
+      bidId: req.params?.bidId ?? null,
+      method: req.method ?? 'UNKNOWN'
+    })
+  },
+  'serviceman.customJobs.reports': {
+    id: 'serviceman.customJobs.reports',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:reports',
+    description: 'Allow crew members to generate performance analytics for their custom job bids.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_REPORTS],
+    tags: ['serviceman', 'custom-jobs', 'analytics'],
+    severity: 'medium'
+  },
   'admin.rbac.read': {
     id: 'admin.rbac.read',
     version: '1.0.0',

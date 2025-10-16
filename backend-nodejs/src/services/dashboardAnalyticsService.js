@@ -3304,6 +3304,86 @@ async function loadServicemanData(context) {
     });
   }
 
+  const pendingBids = bids.filter((bid) => bid.status === 'pending');
+  const awardedBids = bids.filter((bid) => bid.status === 'accepted');
+  const rejectedBids = bids.filter((bid) => bid.status === 'rejected');
+  const withdrawnBids = bids.filter((bid) => bid.status === 'withdrawn');
+
+  const pipelineValue = pendingBids.reduce((sum, bid) => sum + parseDecimal(bid.amount), 0);
+  const awardedValue = awardedBids.reduce((sum, bid) => sum + parseDecimal(bid.amount), 0);
+
+  const bidResponseMinutes = bids
+    .map((bid) => {
+      if (!bid.submittedAt || !bid.Booking?.createdAt) {
+        return null;
+      }
+      const created = DateTime.fromJSDate(bid.Booking.createdAt);
+      const submitted = DateTime.fromJSDate(bid.submittedAt);
+      if (!created.isValid || !submitted.isValid) {
+        return null;
+      }
+      const minutes = submitted.diff(created, 'minutes').minutes;
+      return Number.isFinite(minutes) && minutes >= 0 ? minutes : null;
+    })
+    .filter((value) => typeof value === 'number');
+
+  const averageBidResponseMinutes = bidResponseMinutes.length
+    ? Math.round(
+        bidResponseMinutes.reduce((total, value) => total + value, 0) / bidResponseMinutes.length
+      )
+    : null;
+
+  const bidVelocityBuckets = new Map();
+  for (const bid of bids) {
+    if (!bid.submittedAt) continue;
+    const submitted = DateTime.fromJSDate(bid.submittedAt).setZone(window.timezone);
+    if (!submitted.isValid) continue;
+    const key = submitted.startOf('week').toISODate();
+    const existing = bidVelocityBuckets.get(key) ?? {
+      label: submitted.startOf('week').toFormat('dd LLL'),
+      submitted: 0,
+      awarded: 0
+    };
+    existing.submitted += 1;
+    if (bid.status === 'accepted') {
+      existing.awarded += 1;
+    }
+    bidVelocityBuckets.set(key, existing);
+  }
+
+  const bidVelocity = Array.from(bidVelocityBuckets.entries())
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([, bucket]) => bucket)
+    .slice(-8);
+
+  const customJobSnapshot = {
+    summary: {
+      totalBids: bids.length,
+      activeBids: pendingBids.length,
+      awardedBids: awardedBids.length,
+      rejectedBids: rejectedBids.length,
+      withdrawnBids: withdrawnBids.length,
+      pipelineValue,
+      awardedValue,
+      averageResponseMinutes: averageBidResponseMinutes,
+      currency: bookingCurrency
+    },
+    board: {
+      columns: bidColumns.map(({ title, items }) => ({ title, items }))
+    },
+    metrics: {
+      totals: {
+        bids: bids.length,
+        pending: pendingBids.length,
+        awarded: awardedBids.length,
+        rejected: rejectedBids.length,
+        withdrawn: withdrawnBids.length
+      },
+      velocity: bidVelocity
+    },
+    generatedAt: new Date().toISOString()
+  };
+
   const serviceLookup = new Map(services.map((service) => [service.id, service]));
   const serviceStats = new Map();
 
@@ -3433,11 +3513,12 @@ async function loadServicemanData(context) {
         data: { columns: boardColumns }
       },
       {
-        id: 'bid-pipeline',
-        label: 'Bid Pipeline',
-        description: 'Track bids from submission through award.',
-        type: 'board',
-        data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
+        id: 'custom-jobs',
+        label: 'Custom Jobs & Bids',
+        description: 'Manage bespoke jobs, bidding, and performance analytics.',
+        type: 'component',
+        componentKey: 'serviceman-custom-jobs',
+        data: customJobSnapshot
       },
       {
         id: 'service-catalogue',
