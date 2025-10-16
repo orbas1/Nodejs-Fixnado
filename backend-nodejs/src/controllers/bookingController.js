@@ -1,3 +1,4 @@
+import { validationResult } from 'express-validator';
 import {
   createBooking,
   updateBookingStatus,
@@ -8,7 +9,15 @@ import {
   addBidComment,
   triggerDispute,
   listBookings,
-  getBookingById
+  getBookingById,
+  updateBooking,
+  listBookingNotes,
+  createBookingNote,
+  updateBookingNote,
+  deleteBookingNote,
+  listBookingAssignments,
+  updateBookingAssignment,
+  removeBookingAssignment
 } from '../services/bookingService.js';
 
 function handleServiceError(res, next, error) {
@@ -56,6 +65,20 @@ export async function updateBookingStatusHandler(req, res, next) {
       actorId: req.body.actorId,
       reason: req.body.reason
     });
+    res.json(booking);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const booking = await updateBooking(req.params.bookingId, req.body);
     res.json(booking);
   } catch (error) {
     handleServiceError(res, next, error);
@@ -136,6 +159,109 @@ export async function triggerDisputeHandler(req, res, next) {
       actorId: req.body.actorId
     });
     res.json(booking);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function listBookingNotesHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const notes = await listBookingNotes(req.params.bookingId);
+    res.json(notes);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function createBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const note = await createBookingNote(req.params.bookingId, req.body);
+    res.status(201).json(note);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const note = await updateBookingNote(req.params.bookingId, req.params.noteId, req.body);
+    res.json(note);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function deleteBookingNoteHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    await deleteBookingNote(req.params.bookingId, req.params.noteId);
+    res.status(204).send();
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function listBookingAssignmentsHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const assignments = await listBookingAssignments(req.params.bookingId);
+    res.json(assignments);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingAssignmentHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const assignment = await updateBookingAssignment(
+      req.params.bookingId,
+      req.params.assignmentId,
+      req.body,
+      req.body.actorId
+    );
+    res.json(assignment);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function deleteBookingAssignmentHandler(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    await removeBookingAssignment(req.params.bookingId, req.params.assignmentId, req.query.actorId);
+    res.status(204).send();
   } catch (error) {
     handleServiceError(res, next, error);
   }

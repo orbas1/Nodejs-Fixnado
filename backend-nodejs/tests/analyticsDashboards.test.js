@@ -623,12 +623,19 @@ describe('Persona analytics dashboards', () => {
 
     expect(response.body.persona).toBe('user');
     expect(response.body.navigation[0].analytics.metrics).toHaveLength(4);
-    expect(response.body.navigation[1].data.columns).toHaveLength(4);
-    expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
-    expect(response.body.navigation[3].data.items.length).toBeGreaterThan(0);
+    const calendarSection = response.body.navigation.find((section) => section.id === 'calendar');
+    expect(calendarSection).toBeTruthy();
+    expect(calendarSection.data.weeks.length).toBeGreaterThan(0);
+    expect(calendarSection.data.summary[0].value).toBeGreaterThanOrEqual(0);
+    const ordersSection = response.body.navigation.find((section) => section.id === 'orders');
+    expect(ordersSection.data.columns).toHaveLength(4);
+    const rentalsSection = response.body.navigation.find((section) => section.id === 'rentals');
+    expect(rentalsSection.data.rows.length).toBeGreaterThan(0);
+    const accountSection = response.body.navigation.find((section) => section.id === 'account');
+    expect(accountSection.data.items.length).toBeGreaterThan(0);
     expect(response.body.navigation[0].sidebar.badge).toContain('jobs');
-    expect(response.body.navigation[4].id).toBe('settings');
-    expect(response.body.navigation[4].data.panels.length).toBeGreaterThan(0);
+    const settingsSection = response.body.navigation.find((section) => section.id === 'settings');
+    expect(settingsSection.data.panels.length).toBeGreaterThan(0);
   });
 
   it('streams governed CSV exports for persona dashboards', async () => {
