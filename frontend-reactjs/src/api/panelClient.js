@@ -1490,15 +1490,52 @@ function normaliseAdminDashboard(payload = {}) {
       signal.valueLabel ||
       (signal.value != null ? String(signal.value) : signal.percentage != null ? `${signal.percentage}%` : '—'),
     caption: signal.caption || '',
-    tone: signal.tone || 'info'
+    tone: signal.tone || 'info',
+    statusLabel: signal.statusLabel || signal.status || null,
+    ownerRole: signal.ownerRole || signal.owner || null,
+    runbookUrl: signal.runbookUrl || signal.runbook || null,
+    metricKey: signal.metricKey || `signal-${index}`
   }));
 
   const automationBacklog = ensureArray(payload.security?.automationBacklog).map((item, index) => ({
+    id: item.id || `automation-${index}`,
     name: item.name || `Automation ${index + 1}`,
     status: item.status || 'Monitor',
     notes: item.notes || '',
-    tone: item.tone || 'info'
+    tone: item.tone || 'info',
+    owner: item.owner || null,
+    runbookUrl: item.runbookUrl || null,
+    dueAt: item.dueAt || null,
+    priority: item.priority || 'medium',
+    signalKey: item.signalKey || null
   }));
+
+  const connectors = ensureArray(payload.security?.connectors).map((connector, index) => ({
+    id: connector.id || `connector-${index}`,
+    name: connector.name || `Connector ${index + 1}`,
+    status: connector.status || 'healthy',
+    description: connector.description || '',
+    connectorType: connector.connectorType || connector.type || 'custom',
+    region: connector.region || null,
+    dashboardUrl: connector.dashboardUrl || connector.url || null,
+    ingestionEndpoint: connector.ingestionEndpoint || null,
+    eventsPerMinuteTarget:
+      Number.parseInt(connector.eventsPerMinuteTarget ?? connector.target ?? 0, 10) || 0,
+    eventsPerMinuteActual:
+      Number.parseInt(connector.eventsPerMinuteActual ?? connector.actual ?? 0, 10) || 0,
+    lastHealthCheckAt: connector.lastHealthCheckAt || connector.lastHealth || null,
+    logoUrl: connector.logoUrl || null
+  }));
+
+  const summary = payload.security?.summary || {
+    connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
+    connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
+    automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
+    signalsWarning: securitySignals.filter((signal) => signal.tone === 'warning').length,
+    signalsDanger: securitySignals.filter((signal) => signal.tone === 'danger').length
+  };
+
+  const securityCapabilities = payload.security?.capabilities || {};
 
   const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
     id: board.id || `board-${index}`,
@@ -1517,12 +1554,73 @@ function normaliseAdminDashboard(payload = {}) {
     tone: control.tone || 'info'
   }));
 
-  const auditTimeline = ensureArray(payload.audit?.timeline).map((item, index) => ({
-    time: item.time || '--:--',
-    event: item.event || `Audit event ${index + 1}`,
-    owner: item.owner || 'Operations',
-    status: item.status || 'Scheduled'
-  }));
+  let auditTimeline;
+  if (Array.isArray(payload.audit?.timeline?.events)) {
+    auditTimeline = {
+      events: ensureArray(payload.audit.timeline.events).map((item, index) => ({
+        id: item.id || `audit-${index}`,
+        time: item.time || '--:--',
+        event: item.event || `Audit event ${index + 1}`,
+        owner: item.owner || 'Operations',
+        ownerTeam: item.ownerTeam || null,
+        status: item.status || 'Scheduled',
+        category: item.category || 'other',
+        summary: item.summary || '',
+        attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+          label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+          url: attachment?.url || ''
+        })),
+        occurredAt: item.occurredAt || null,
+        dueAt: item.dueAt || null,
+        source: item.source || 'system',
+        metadata: item.metadata || {}
+      })),
+      summary: {
+        countsByCategory: payload.audit.timeline.summary?.countsByCategory ?? {},
+        countsByStatus: payload.audit.timeline.summary?.countsByStatus ?? {},
+        manualCounts: payload.audit.timeline.summary?.manualCounts ?? {},
+        manualStatusCounts: payload.audit.timeline.summary?.manualStatusCounts ?? {},
+        timeframe: payload.audit.timeline.summary?.timeframe || timeframe,
+        timeframeLabel: payload.audit.timeline.summary?.timeframeLabel || payload.timeframeLabel || '7 days',
+        timezone: payload.audit.timeline.summary?.timezone || 'Europe/London',
+        range: payload.audit.timeline.summary?.range || null,
+        lastUpdated: payload.audit.timeline.summary?.lastUpdated || generatedAt
+      }
+    };
+  } else {
+    const fallbackEvents = ensureArray(payload.audit?.timeline).map((item, index) => ({
+      id: item.id || `audit-${index}`,
+      time: item.time || '--:--',
+      event: item.event || `Audit event ${index + 1}`,
+      owner: item.owner || 'Operations',
+      ownerTeam: item.ownerTeam || null,
+      status: item.status || 'Scheduled',
+      category: item.category || 'other',
+      summary: item.summary || '',
+      attachments: ensureArray(item.attachments).map((attachment, attachmentIndex) => ({
+        label: attachment?.label || `Attachment ${attachmentIndex + 1}`,
+        url: attachment?.url || ''
+      })),
+      occurredAt: item.occurredAt || null,
+      dueAt: item.dueAt || null,
+      source: item.source || 'system',
+      metadata: item.metadata || {}
+    }));
+    auditTimeline = {
+      events: fallbackEvents,
+      summary: {
+        countsByCategory: {},
+        countsByStatus: {},
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe,
+        timeframeLabel: payload.timeframeLabel || '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: generatedAt
+      }
+    };
+  }
 
   return {
     timeframe,
@@ -1552,7 +1650,14 @@ function normaliseAdminDashboard(payload = {}) {
     },
     security: {
       signals: securitySignals,
-      automationBacklog
+      automationBacklog,
+      connectors,
+      summary,
+      capabilities: {
+        canManageSignals: Boolean(securityCapabilities.canManageSignals),
+        canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
+        canManageConnectors: Boolean(securityCapabilities.canManageConnectors)
+      }
     },
     queues: {
       boards: queueBoards,
@@ -1653,30 +1758,117 @@ const adminFallback = normaliseAdminDashboard({
   },
   security: {
     signals: [
-      { label: 'MFA adoption', valueLabel: '96.4%', caption: 'Enterprise + provider portals', tone: 'success' },
-      { label: 'Critical alerts', valueLabel: '0', caption: 'Security Operations Center overnight review', tone: 'success' },
-      { label: 'Audit log ingestion', valueLabel: '100%', caption: '24h ingestion completeness from Splunk', tone: 'info' }
+      {
+        label: 'MFA adoption',
+        valueLabel: '96.4%',
+        caption: 'Enterprise + provider portals',
+        tone: 'success',
+        statusLabel: 'On target',
+        ownerRole: 'Security operations',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/mfa-hardening',
+        metricKey: 'mfa_adoption'
+      },
+      {
+        label: 'Critical alerts',
+        valueLabel: '0',
+        caption: 'Security Operations Center overnight review',
+        tone: 'success',
+        statusLabel: 'No open alerts',
+        ownerRole: 'Trust & safety',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/critical-alerts',
+        metricKey: 'critical_alerts_open'
+      },
+      {
+        label: 'Audit log ingestion',
+        valueLabel: '100%',
+        caption: '24h ingestion completeness from Splunk',
+        tone: 'info',
+        statusLabel: 'Tracking plan',
+        ownerRole: 'Platform engineering',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/telemetry-pipeline-reset',
+        metricKey: 'audit_ingestion_rate'
+      }
     ],
     automationBacklog: [
       {
+        id: 'auto-1',
         name: 'Escrow ledger reconciliation',
         status: 'Ready for QA',
         notes: 'Extends double-entry validation to rental deposits; requires finance sign-off.',
-        tone: 'success'
+        tone: 'success',
+        owner: 'Automation Guild',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/escrow-ledger',
+        dueAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        signalKey: 'audit_ingestion_rate'
       },
       {
+        id: 'auto-2',
         name: 'Compliance webhook retries',
-        status: 'In build',
+        status: 'In progress',
         notes: 'Retries failed submissions to insurance partners with exponential backoff.',
-        tone: 'info'
+        tone: 'info',
+        owner: 'Compliance Ops',
+        runbookUrl: 'https://confluence.fixnado.com/runbooks/compliance-retry-service',
+        dueAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'medium',
+        signalKey: 'critical_alerts_open'
       },
       {
+        id: 'auto-3',
         name: 'Dispute document summarisation',
-        status: 'Discovery',
+        status: 'Planned',
         notes: 'Pilot with AI summarisation flagged for accuracy review before production rollout.',
-        tone: 'warning'
+        tone: 'warning',
+        owner: 'Customer Advocacy',
+        runbookUrl: null,
+        dueAt: null,
+        priority: 'urgent',
+        signalKey: null
       }
-    ]
+    ],
+    connectors: [
+      {
+        id: 'connector-1',
+        name: 'Splunk Observability',
+        status: 'healthy',
+        description: 'Primary SIEM connector forwarding platform audit events.',
+        connectorType: 'siem',
+        region: 'eu-west-2',
+        dashboardUrl: 'https://splunk.fixnado.com/app/sre/telemetry-overview',
+        ingestionEndpoint: 'kinesis://splunk-audit',
+        eventsPerMinuteTarget: 4800,
+        eventsPerMinuteActual: 5120,
+        lastHealthCheckAt: new Date().toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/splunk.svg'
+      },
+      {
+        id: 'connector-2',
+        name: 'Azure Sentinel',
+        status: 'warning',
+        description: 'Regional SOC handoff for APAC enterprise tenants.',
+        connectorType: 'siem',
+        region: 'ap-southeast-2',
+        dashboardUrl: 'https://portal.azure.com/#view/Microsoft_Azure_Security/SentinelMainBlade',
+        ingestionEndpoint: 'eventhub://sentinel-apac',
+        eventsPerMinuteTarget: 1800,
+        eventsPerMinuteActual: 1540,
+        lastHealthCheckAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        logoUrl: 'https://cdn.fixnado.com/logos/azure-sentinel.svg'
+      }
+    ],
+    summary: {
+      connectorsHealthy: 1,
+      connectorsAttention: 1,
+      automationOpen: 3,
+      signalsWarning: 1,
+      signalsDanger: 0
+    },
+    capabilities: {
+      canManageSignals: true,
+      canManageAutomation: true,
+      canManageConnectors: true
+    }
   },
   queues: {
     boards: [
@@ -1732,12 +1924,81 @@ const adminFallback = normaliseAdminDashboard({
     ]
   },
   audit: {
-    timeline: [
-      { time: '08:30', event: 'GDPR DSAR pack exported', owner: 'Legal', status: 'Completed' },
-      { time: '09:45', event: 'Escrow reconciliation (daily)', owner: 'Finance Ops', status: 'In progress' },
-      { time: '11:00', event: 'Provider onboarding review', owner: 'Compliance Ops', status: 'Scheduled' },
-      { time: '14:30', event: 'Pen-test retest results review', owner: 'Security', status: 'Scheduled' }
-    ]
+    timeline: {
+      events: [
+        {
+          id: 'fallback-dsar',
+          time: '08:30',
+          event: 'GDPR DSAR pack exported',
+          owner: 'Legal',
+          ownerTeam: 'Privacy',
+          status: 'Completed',
+          category: 'compliance',
+          summary: 'Evidence delivered to requester and archived in compliance vault.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-escrow',
+          time: '09:45',
+          event: 'Escrow reconciliation (daily)',
+          owner: 'Finance Ops',
+          ownerTeam: 'Finance',
+          status: 'In progress',
+          category: 'pipeline',
+          summary: 'Validating settlement balances before release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-onboarding',
+          time: '11:00',
+          event: 'Provider onboarding review',
+          owner: 'Compliance Ops',
+          ownerTeam: 'Compliance',
+          status: 'Scheduled',
+          category: 'compliance',
+          summary: 'Reviewing high-risk provider onboarding artifacts.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        },
+        {
+          id: 'fallback-security',
+          time: '14:30',
+          event: 'Pen-test retest results review',
+          owner: 'Security',
+          ownerTeam: 'Security',
+          status: 'Scheduled',
+          category: 'security',
+          summary: 'Confirming remediation of critical findings ahead of release.',
+          attachments: [],
+          occurredAt: null,
+          dueAt: null,
+          source: 'system',
+          metadata: {}
+        }
+      ],
+      summary: {
+        countsByCategory: { compliance: 2, pipeline: 1, security: 1 },
+        countsByStatus: { completed: 1, in_progress: 1, scheduled: 2 },
+        manualCounts: {},
+        manualStatusCounts: {},
+        timeframe: '7d',
+        timeframeLabel: '7 days',
+        timezone: 'Europe/London',
+        range: null,
+        lastUpdated: null
+      }
+    }
   }
 });
 
@@ -2685,6 +2946,44 @@ export const getAdminDashboard = withFallback(
       signal: options?.signal
     })
 );
+
+export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
+  const query = toQueryString({ timeframe, category, status });
+  return request(`/admin/audit/events${query}`, {
+    cacheKey: `admin-audit-events:${timeframe}:${category ?? 'all'}:${status ?? 'all'}`,
+    ttl: 10000,
+    signal,
+    forceRefresh
+  });
+}
+
+export function createAdminAuditEvent(event, { signal } = {}) {
+  return request('/admin/audit/events', {
+    method: 'POST',
+    body: JSON.stringify(event),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function updateAdminAuditEvent(eventId, payload, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    cacheKey: null
+  });
+}
+
+export function deleteAdminAuditEvent(eventId, { signal } = {}) {
+  return request(`/admin/audit/events/${encodeURIComponent(eventId)}`, {
+    method: 'DELETE',
+    signal,
+    cacheKey: null
+  });
+}
 
 export const getProviderDashboard = withFallback(
   normaliseProviderDashboard,

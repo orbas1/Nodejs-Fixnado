@@ -15,20 +15,50 @@ function NavList({ navigation, activeSection, onNavigate }) {
     <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
       {navigation.map((item) => {
         const isActive = item.id === activeSection;
+        const baseClass = clsx(
+          'block w-full rounded-xl border px-4 py-3 text-left transition-colors',
+          isActive
+            ? 'border-accent/50 bg-accent/10 text-accent shadow-sm'
+            : 'border-transparent bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+        );
+
+        const content = (
+          <>
+            <p className="text-sm font-semibold">{item.label}</p>
+            {item.description ? <p className="mt-1 text-xs text-slate-500">{item.description}</p> : null}
+          </>
+        );
+
+        if (item.href) {
+          if (item.external) {
+            return (
+              <a
+                key={item.id}
+                href={item.href}
+                className={baseClass}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => onNavigate(item.id)}
+              >
+                {content}
+              </a>
+            );
+          }
+          return (
+            <Link key={item.id} to={item.href} className={baseClass} onClick={() => onNavigate(item.id)}>
+              {content}
+            </Link>
+          );
+        }
+
         return (
           <button
             key={item.id}
             type="button"
             onClick={() => onNavigate(item.id)}
-            className={clsx(
-              'w-full rounded-xl border px-4 py-3 text-left transition-colors',
-              isActive
-                ? 'border-accent/50 bg-accent/10 text-accent shadow-sm'
-                : 'border-transparent bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-            )}
+            className={baseClass}
           >
-            <p className="text-sm font-semibold">{item.label}</p>
-            {item.description ? <p className="mt-1 text-xs text-slate-500">{item.description}</p> : null}
+            {content}
           </button>
         );
       })}
@@ -41,7 +71,9 @@ NavList.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
-      description: PropTypes.string
+      description: PropTypes.string,
+      href: PropTypes.string,
+      external: PropTypes.bool
     })
   ).isRequired,
   activeSection: PropTypes.string,
