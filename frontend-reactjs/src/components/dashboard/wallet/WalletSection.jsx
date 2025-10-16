@@ -8,7 +8,9 @@ import {
   createWalletTransaction,
   getWalletPaymentMethods,
   createWalletPaymentMethod,
-  updateWalletPaymentMethod
+  updateWalletPaymentMethod,
+  deleteWalletPaymentMethod,
+  exportWalletTransactions
 } from '../../../api/walletClient.js';
 import { Spinner } from '../../ui/index.js';
 import WalletEmptyState from './WalletEmptyState.jsx';
@@ -18,6 +20,7 @@ import WalletManualAdjustmentForm from './WalletManualAdjustmentForm.jsx';
 import WalletPaymentMethods from './WalletPaymentMethods.jsx';
 import WalletTransactionsPanel from './WalletTransactionsPanel.jsx';
 import { defaultMethodForm, defaultTransactionForm } from './walletDefaults.js';
+import { WalletLedgerDrawer } from '../../../modules/walletManagement/index.js';
 
 const WalletSection = ({ section }) => {
   const initialAccount = section.data?.account ?? null;
@@ -66,6 +69,16 @@ const WalletSection = ({ section }) => {
   const [methodSaving, setMethodSaving] = useState(false);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [methodsLoading, setMethodsLoading] = useState(false);
+  const [methodMode, setMethodMode] = useState('create');
+  const [editingMethod, setEditingMethod] = useState(null);
+  const [ledgerState, setLedgerState] = useState({
+    open: false,
+    loading: false,
+    account: null,
+    transactions: [],
+    error: null
+  });
+  const [exportState, setExportState] = useState({ downloading: false, error: null });
 
   const accountId = useMemo(() => account?.id ?? section.data?.accountId ?? null, [account, section.data?.accountId]);
   const currency = section.data?.currency || account?.currency || 'GBP';
@@ -160,6 +173,18 @@ const WalletSection = ({ section }) => {
     }
   }, [accountId, refreshAccount]);
 
+  useEffect(() => {
+    if (!methodMessage) return undefined;
+    const timer = setTimeout(() => setMethodMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [methodMessage]);
+
+  useEffect(() => {
+    if (!exportState.error) return undefined;
+    const timer = setTimeout(() => setExportState((current) => ({ ...current, error: null })), 4000);
+    return () => clearTimeout(timer);
+  }, [exportState.error]);
+
   const handleCreateAccount = useCallback(async () => {
     if (!canManage) return;
     setCreateError(null);
@@ -193,6 +218,20 @@ const WalletSection = ({ section }) => {
     const base = methods.map((method) => ({ value: method.id, label: method.label }));
     return [{ value: '', label: 'Select payout method' }, ...base];
   }, [methods]);
+
+  const renderCurrency = useCallback(
+    (value, iso = currency) => {
+      const numeric = Number.parseFloat(value ?? 0);
+      const amount = Number.isFinite(numeric) ? numeric : 0;
+      try {
+        return new Intl.NumberFormat(undefined, { style: 'currency', currency: iso || currency }).format(amount);
+      } catch (error) {
+        console.warn('Unable to format currency', error);
+        return `${iso || currency} ${amount.toFixed(2)}`;
+      }
+    },
+    [currency]
+  );
 
   const handleSettingsSubmit = async (event) => {
     event.preventDefault();
@@ -251,34 +290,71 @@ const WalletSection = ({ section }) => {
     setMethodSaving(true);
     setMethodMessage(null);
     try {
-      const details = {
-        accountHolder: methodForm.accountHolder,
-        accountNumber: methodForm.accountNumber,
-        sortCode: methodForm.sortCode,
-        bankName: methodForm.bankName,
-        notes: methodForm.notes,
-        brand: methodForm.brand,
-        expiryMonth: methodForm.expiryMonth,
-        expiryYear: methodForm.expiryYear,
-        provider: methodForm.provider,
-        handle: methodForm.handle
-      };
-      await createWalletPaymentMethod(accountId, {
+      const payload = {
         label: methodForm.label,
         type: methodForm.type,
-        details,
         supportingDocumentUrl: methodForm.supportingDocumentUrl || undefined,
-        isDefaultPayout: Boolean(methodForm.isDefaultPayout)
-      });
+        isDefaultPayout: Boolean(methodForm.isDefaultPayout),
+        details: {
+          accountHolder: methodForm.accountHolder || undefined,
+          accountNumber: methodForm.accountNumber || undefined,
+          sortCode: methodForm.sortCode || undefined,
+          bankName: methodForm.bankName || undefined,
+          notes: methodForm.notes || undefined,
+          brand: methodForm.brand || undefined,
+          expiryMonth: methodForm.expiryMonth || undefined,
+          expiryYear: methodForm.expiryYear || undefined,
+          provider: methodForm.provider || undefined,
+          handle: methodForm.handle || undefined
+        }
+      };
+
+      if (methodMode === 'edit' && editingMethod) {
+        await updateWalletPaymentMethod(accountId, editingMethod.id, payload);
+        setMethodMessage('Payment method updated');
+      } else {
+        await createWalletPaymentMethod(accountId, payload);
+        setMethodMessage('Payment method saved');
+      }
+
       setMethodForm(() => ({ ...defaultMethodForm }));
+      setMethodMode('create');
+      setEditingMethod(null);
       await refreshAccount(accountId);
       await refreshMethods();
-      setMethodMessage('Payment method saved');
     } catch (error) {
       setMethodMessage(error.message);
     } finally {
       setMethodSaving(false);
     }
+  };
+
+  const handleEditMethod = (method) => {
+    setMethodMode('edit');
+    setEditingMethod(method);
+    setMethodMessage(null);
+    setMethodForm({
+      label: method.label ?? '',
+      type: method.type ?? 'bank_account',
+      accountHolder: method.details?.accountHolder ?? '',
+      accountNumber: '',
+      sortCode: method.details?.sortCode ?? '',
+      bankName: method.details?.bankName ?? '',
+      notes: method.details?.notes ?? '',
+      supportingDocumentUrl: method.supportingDocumentUrl ?? '',
+      brand: method.details?.brand ?? '',
+      expiryMonth: method.details?.expiryMonth ?? '',
+      expiryYear: method.details?.expiryYear ?? '',
+      handle: method.details?.handle ?? '',
+      provider: method.details?.provider ?? '',
+      isDefaultPayout: Boolean(method.isDefaultPayout)
+    });
+  };
+
+  const handleCancelMethodEdit = () => {
+    setMethodMode('create');
+    setEditingMethod(null);
+    setMethodForm(() => ({ ...defaultMethodForm }));
   };
 
   const handleSetDefaultMethod = async (method) => {
@@ -304,6 +380,25 @@ const WalletSection = ({ section }) => {
     }
   };
 
+  const handleDeleteMethod = async (method) => {
+    if (!accountId || !canEditMethods) return;
+    setMethodSaving(true);
+    setMethodMessage(null);
+    try {
+      await deleteWalletPaymentMethod(accountId, method.id);
+      if (editingMethod?.id === method.id) {
+        handleCancelMethodEdit();
+      }
+      await refreshAccount(accountId);
+      await refreshMethods();
+      setMethodMessage('Payment method removed');
+    } catch (error) {
+      setMethodMessage(error.message);
+    } finally {
+      setMethodSaving(false);
+    }
+  };
+
   const handleTransactionTypeChange = (value) => {
     setTransactionForm((current) => ({ ...current, type: value }));
   };
@@ -324,6 +419,57 @@ const WalletSection = ({ section }) => {
   const handleMethodFieldChange = (field, value) => {
     setMethodForm((current) => ({ ...current, [field]: value }));
   };
+
+  const handleOpenLedger = useCallback(async () => {
+    if (!accountId) return;
+    setLedgerState({ open: true, loading: true, account: account ? { ...account } : null, transactions: [], error: null });
+    try {
+      const result = await getWalletTransactions(accountId, {
+        limit: 100,
+        ...(transactionQuery.type !== 'all' ? { type: transactionQuery.type } : {})
+      });
+      setLedgerState({
+        open: true,
+        loading: false,
+        account: account ? { ...account } : null,
+        transactions: result.items ?? [],
+        error: null
+      });
+    } catch (error) {
+      setLedgerState({
+        open: true,
+        loading: false,
+        account: account ? { ...account } : null,
+        transactions: [],
+        error: error.message
+      });
+    }
+  }, [accountId, account, transactionQuery.type]);
+
+  const handleCloseLedger = useCallback(() => {
+    setLedgerState((current) => ({ ...current, open: false }));
+  }, []);
+
+  const handleExportTransactions = useCallback(async () => {
+    if (typeof window === 'undefined' || !accountId) return;
+    setExportState({ downloading: true, error: null });
+    try {
+      const { blob, filename } = await exportWalletTransactions(accountId, {
+        ...(transactionQuery.type !== 'all' ? { type: transactionQuery.type } : {})
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setExportState({ downloading: false, error: null });
+    } catch (error) {
+      setExportState({ downloading: false, error: error.message });
+    }
+  }, [accountId, transactionQuery.type]);
 
   if (!accountId && !account) {
     return (
@@ -398,8 +544,13 @@ const WalletSection = ({ section }) => {
 
           <WalletPaymentMethods
             form={methodForm}
+            mode={methodMode}
+            editingMethodId={editingMethod?.id || null}
             onFieldChange={handleMethodFieldChange}
             onSubmit={handleMethodSubmit}
+            onCancelEdit={handleCancelMethodEdit}
+            onEdit={handleEditMethod}
+            onDelete={handleDeleteMethod}
             saving={methodSaving}
             message={methodMessage}
             canEditMethods={canEditMethods}
@@ -424,9 +575,14 @@ const WalletSection = ({ section }) => {
                 offset
               })
             }
+            onOpenLedger={handleOpenLedger}
+            onExport={handleExportTransactions}
+            exporting={exportState.downloading}
+            exportError={exportState.error}
           />
         </div>
       )}
+      <WalletLedgerDrawer ledger={ledgerState} onClose={handleCloseLedger} formatCurrency={renderCurrency} />
     </section>
   );
 };
@@ -444,6 +600,12 @@ WalletSection.propTypes = {
         canManage: PropTypes.bool,
         canTransact: PropTypes.bool,
         canEditMethods: PropTypes.bool
+      }),
+      transactions: PropTypes.shape({
+        total: PropTypes.number,
+        limit: PropTypes.number,
+        offset: PropTypes.number,
+        items: PropTypes.arrayOf(PropTypes.object)
       }),
       currency: PropTypes.string,
       user: PropTypes.object,

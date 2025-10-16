@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import AutomationBacklogSection from './AutomationBacklogSection.jsx';
 import AccountSupportSection from './AccountSupportSection.jsx';
 import {
   ArrowTrendingUpIcon,
@@ -1655,16 +1656,12 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       );
     case 'component':
       return <ComponentSection section={section} />;
-    case 'settings':
-      return persona === 'user' ? (
-        <CustomerSettingsSection section={section} />
-      ) : (
-        <SettingsSection section={section} />
-      );
     case 'settings': {
+      if (persona === 'user') {
+        return <CustomerSettingsSection section={section} />;
+      }
       const sectionLabel = section?.label?.toLowerCase?.() ?? '';
       const shouldRenderAccountSettings =
-        persona === 'user' ||
         features?.accountSettings === true ||
         features?.accountSettingsBeta === true ||
         sectionLabel.includes('account settings');
@@ -1728,6 +1725,8 @@ DashboardSection.propTypes = {
   section: PropTypes.shape({
     id: PropTypes.string,
     type: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    description: PropTypes.string,
     access: PropTypes.shape({
       label: PropTypes.string,
       level: PropTypes.string,
