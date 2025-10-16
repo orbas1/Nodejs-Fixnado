@@ -62,6 +62,76 @@ const CustomerLocationsSection = ({
             {location.accessNotes ? (
               <p className="text-xs text-slate-500">{location.accessNotes}</p>
             ) : null}
+            <dl className="space-y-2 text-xs text-slate-600">
+              {location.zoneLabel || location.zoneCode ? (
+                <div className="flex flex-wrap gap-2">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">Zone</dt>
+                  <dd className="rounded-full bg-primary/5 px-3 py-1 font-semibold text-primary">
+                    {[location.zoneLabel, location.zoneCode].filter(Boolean).join(' • ') || 'Not set'}
+                  </dd>
+                </div>
+              ) : null}
+              {location.serviceCatalogues ? (
+                <div className="flex flex-wrap gap-2">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">Catalogues</dt>
+                  <dd className="flex flex-wrap gap-1">
+                    {location.serviceCatalogues
+                      .split(',')
+                      .map((catalogue) => catalogue.trim())
+                      .filter(Boolean)
+                      .map((catalogue) => (
+                        <span key={catalogue} className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-primary">
+                          {catalogue}
+                        </span>
+                      ))}
+                  </dd>
+                </div>
+              ) : null}
+              {location.onsiteContactName || location.onsiteContactPhone || location.onsiteContactEmail ? (
+                <div className="space-y-1">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">On-site contact</dt>
+                  <dd className="space-y-1">
+                    {location.onsiteContactName ? <p className="font-semibold text-primary">{location.onsiteContactName}</p> : null}
+                    {location.onsiteContactPhone ? <p>Phone: {location.onsiteContactPhone}</p> : null}
+                    {location.onsiteContactEmail ? <p>Email: {location.onsiteContactEmail}</p> : null}
+                  </dd>
+                </div>
+              ) : null}
+              {location.accessWindowStart || location.accessWindowEnd ? (
+                <div className="flex flex-wrap gap-2">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">Access window</dt>
+                  <dd>
+                    {[location.accessWindowStart, location.accessWindowEnd].filter(Boolean).join(' – ') || 'Full access'}
+                  </dd>
+                </div>
+              ) : null}
+              {location.parkingInformation || location.loadingDockDetails || location.floorLevel ? (
+                <div className="space-y-1">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">Logistics</dt>
+                  <dd className="space-y-1">
+                    {location.parkingInformation ? <p>Parking: {location.parkingInformation}</p> : null}
+                    {location.loadingDockDetails ? <p>Loading: {location.loadingDockDetails}</p> : null}
+                    {location.floorLevel ? <p>Floor / suite: {location.floorLevel}</p> : null}
+                  </dd>
+                </div>
+              ) : null}
+              {location.securityNotes ? (
+                <div className="space-y-1">
+                  <dt className="font-semibold uppercase tracking-wide text-primary/60">Security</dt>
+                  <dd className="text-[11px] leading-relaxed text-slate-500">{location.securityNotes}</dd>
+                </div>
+              ) : null}
+            </dl>
+            {location.mapImageUrl ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-100 bg-secondary/50">
+                <img
+                  src={location.mapImageUrl}
+                  alt={`${location.label || 'Service location'} map`}
+                  className="h-40 w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ) : null}
             <div className="mt-auto flex flex-wrap gap-2">
               <button
                 type="button"

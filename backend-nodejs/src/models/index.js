@@ -1,12 +1,16 @@
 import sequelize from '../config/database.js';
 import User from './user.js';
+import UserProfileSetting from './userProfileSetting.js';
 import Company from './company.js';
+import UserPreference from './userPreference.js';
 import Service from './service.js';
+import ServiceCategory from './serviceCategory.js';
 import Post from './post.js';
 import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
 import ServiceZoneCoverage from './serviceZoneCoverage.js';
 import Order from './order.js';
+import OrderNote from './orderNote.js';
 import Escrow from './escrow.js';
 import Dispute from './dispute.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
@@ -16,12 +20,14 @@ import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
 import BookingBidComment from './bookingBidComment.js';
+import BookingHistoryEntry from './bookingHistoryEntry.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
 import RentalAgreement from './rentalAgreement.js';
 import RentalCheckpoint from './rentalCheckpoint.js';
 import ComplianceDocument from './complianceDocument.js';
+import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
 import AdCampaign from './adCampaign.js';
@@ -40,17 +46,29 @@ import MessageDelivery from './messageDelivery.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
 import PlatformSetting from './platformSetting.js';
+import CommunicationsInboxConfiguration from './communicationsInboxConfiguration.js';
+import CommunicationsEntryPoint from './communicationsEntryPoint.js';
+import CommunicationsQuickReply from './communicationsQuickReply.js';
+import CommunicationsEscalationRule from './communicationsEscalationRule.js';
 import BlogPost from './blogPost.js';
 import BlogCategory from './blogCategory.js';
 import BlogTag from './blogTag.js';
 import BlogMedia from './blogMedia.js';
 import BlogPostCategory from './blogPostCategory.js';
 import BlogPostTag from './blogPostTag.js';
+import WebsitePage from './websitePage.js';
+import WebsiteContentBlock from './websiteContentBlock.js';
+import WebsiteNavigationMenu from './websiteNavigationMenu.js';
+import WebsiteNavigationItem from './websiteNavigationItem.js';
 import AffiliateProfile from './affiliateProfile.js';
 import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
 import SecurityAuditEvent from './securityAuditEvent.js';
+import AdminAuditEvent from './adminAuditEvent.js';
+import SecuritySignalConfig from './securitySignalConfig.js';
+import SecurityAutomationTask from './securityAutomationTask.js';
+import TelemetryConnector from './telemetryConnector.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
@@ -63,9 +81,28 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import Supplier from './supplier.js';
+import PurchaseOrder from './purchaseOrder.js';
+import PurchaseOrderItem from './purchaseOrderItem.js';
+import PurchaseAttachment from './purchaseAttachment.js';
+import PurchaseBudget from './purchaseBudget.js';
+import HomePage from './homePage.js';
+import HomePageSection from './homePageSection.js';
+import HomePageComponent from './homePageComponent.js';
+import LegalDocument from './legalDocument.js';
+import LegalDocumentVersion from './legalDocumentVersion.js';
+import LiveFeedAuditEvent from './liveFeedAuditEvent.js';
+import LiveFeedAuditNote from './liveFeedAuditNote.js';
+import SystemSettingAudit from './systemSettingAudit.js';
+import ServiceTaxonomyType from './serviceTaxonomyType.js';
+import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
+import WalletAccount from './walletAccount.js';
+import WalletTransaction from './walletTransaction.js';
+import WalletPaymentMethod from './walletPaymentMethod.js';
 import CustomerProfile from './customerProfile.js';
 import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
+import CustomerCoupon from './customerCoupon.js';
 import CustomerAccountSetting from './customerAccountSetting.js';
 import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 import InboxQueue from './inboxQueue.js';
@@ -75,6 +112,10 @@ import InboxTemplate from './inboxTemplate.js';
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
 
+User.hasOne(UserPreference, { foreignKey: 'userId', as: 'preferences' });
+UserPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
+UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -105,6 +146,9 @@ CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
 CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(CustomerCoupon, { foreignKey: 'userId', as: 'customerCoupons' });
+CustomerCoupon.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
 
@@ -124,6 +168,12 @@ CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
 
+ServiceCategory.hasMany(Service, { foreignKey: 'categoryId', as: 'listings' });
+Service.belongsTo(ServiceCategory, { foreignKey: 'categoryId', as: 'categoryRef' });
+
+ServiceCategory.hasMany(ServiceCategory, { foreignKey: 'parentId', as: 'children' });
+ServiceCategory.belongsTo(ServiceCategory, { foreignKey: 'parentId', as: 'parent' });
+
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
 
@@ -132,6 +182,12 @@ Order.belongsTo(Service, { foreignKey: 'serviceId' });
 
 User.hasMany(Order, { foreignKey: 'buyerId' });
 Order.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
+
+Order.hasMany(OrderNote, { foreignKey: 'orderId', as: 'notes' });
+OrderNote.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+OrderNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(OrderNote, { foreignKey: 'authorId', as: 'orderNotes' });
 
 Region.hasMany(Order, { foreignKey: 'regionId', as: 'orders' });
 Order.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -178,6 +234,27 @@ FinanceInvoice.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 Region.hasMany(FinanceInvoice, { foreignKey: 'regionId', as: 'invoices' });
 FinanceInvoice.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
+Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplierId', as: 'purchaseOrders' });
+PurchaseOrder.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+
+PurchaseBudget.hasMany(PurchaseOrder, { foreignKey: 'budgetId', as: 'orders' });
+PurchaseOrder.belongsTo(PurchaseBudget, { foreignKey: 'budgetId', as: 'budget' });
+
+PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: 'purchaseOrderId', as: 'items' });
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+PurchaseOrder.hasMany(PurchaseAttachment, { foreignKey: 'purchaseOrderId', as: 'attachments' });
+PurchaseAttachment.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+User.hasMany(PurchaseOrder, { foreignKey: 'createdBy', as: 'createdPurchaseOrders' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
+User.hasMany(PurchaseOrder, { foreignKey: 'updatedBy', as: 'updatedPurchaseOrders' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
+
+User.hasMany(PurchaseAttachment, { foreignKey: 'uploadedBy', as: 'uploadedPurchaseAttachments' });
+PurchaseAttachment.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+
 FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
 Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
 
@@ -213,6 +290,11 @@ ComplianceDocument.belongsTo(Company, { foreignKey: 'companyId' });
 ComplianceDocument.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 ComplianceDocument.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
 
+Company.hasMany(ComplianceControl, { foreignKey: 'companyId', as: 'complianceControls' });
+ComplianceControl.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+User.hasMany(ComplianceControl, { foreignKey: 'ownerId', as: 'ownedComplianceControls' });
+ComplianceControl.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+
 Company.hasOne(InsuredSellerApplication, { foreignKey: 'companyId' });
 InsuredSellerApplication.belongsTo(Company, { foreignKey: 'companyId' });
 InsuredSellerApplication.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
@@ -234,6 +316,33 @@ StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemI
 StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'actor_id', as: 'actor' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'actor_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'assignee_id', as: 'assignee' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'assignee_id', as: 'assignedLiveFeedAudits' });
+LiveFeedAuditEvent.belongsTo(Post, { foreignKey: 'post_id', as: 'post' });
+Post.hasMany(LiveFeedAuditEvent, { foreignKey: 'post_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(ServiceZone, { foreignKey: 'zone_id', as: 'zone' });
+ServiceZone.hasMany(LiveFeedAuditEvent, { foreignKey: 'zone_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+Company.hasMany(LiveFeedAuditEvent, { foreignKey: 'company_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.hasMany(LiveFeedAuditNote, { foreignKey: 'audit_id', as: 'notes' });
+LiveFeedAuditNote.belongsTo(LiveFeedAuditEvent, { foreignKey: 'audit_id', as: 'audit' });
+LiveFeedAuditNote.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+User.hasMany(LiveFeedAuditNote, { foreignKey: 'author_id', as: 'liveFeedAuditNotes' });
+ServiceTaxonomyType.hasMany(ServiceTaxonomyCategory, { foreignKey: 'typeId', as: 'categories' });
+ServiceTaxonomyCategory.belongsTo(ServiceTaxonomyType, { foreignKey: 'typeId', as: 'type' });
+SecuritySignalConfig.hasMany(SecurityAutomationTask, {
+  sourceKey: 'metricKey',
+  foreignKey: 'signalKey',
+  as: 'automationTasks'
+});
+SecurityAutomationTask.belongsTo(SecuritySignalConfig, {
+  foreignKey: 'signalKey',
+  targetKey: 'metricKey',
+  as: 'signal'
+});
 
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
@@ -311,11 +420,41 @@ MessageHistory.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 ConversationParticipant.hasMany(MessageDelivery, { foreignKey: 'participantId', as: 'deliveries' });
 MessageDelivery.belongsTo(ConversationParticipant, { foreignKey: 'participantId', as: 'participant' });
 
+CommunicationsInboxConfiguration.hasMany(CommunicationsEntryPoint, {
+  foreignKey: 'configurationId',
+  as: 'entryPoints'
+});
+CommunicationsEntryPoint.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
+CommunicationsInboxConfiguration.hasMany(CommunicationsQuickReply, {
+  foreignKey: 'configurationId',
+  as: 'quickReplies'
+});
+CommunicationsQuickReply.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
+CommunicationsInboxConfiguration.hasMany(CommunicationsEscalationRule, {
+  foreignKey: 'configurationId',
+  as: 'escalationRules'
+});
+CommunicationsEscalationRule.belongsTo(CommunicationsInboxConfiguration, {
+  foreignKey: 'configurationId',
+  as: 'configuration'
+});
+
 User.hasMany(UserSession, { foreignKey: 'userId', as: 'sessions' });
 UserSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(SecurityAuditEvent, { foreignKey: 'userId', as: 'securityAuditEvents' });
 SecurityAuditEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+AdminAuditEvent.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser', constraints: false });
+AdminAuditEvent.belongsTo(User, { foreignKey: 'updated_by', as: 'updatedByUser', constraints: false });
 
 User.hasMany(ConsentEvent, { foreignKey: 'userId', as: 'consentEvents' });
 ConsentEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -389,6 +528,26 @@ WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
 WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
+LegalDocument.hasMany(LegalDocumentVersion, { foreignKey: 'documentId', as: 'versions' });
+LegalDocument.belongsTo(LegalDocumentVersion, {
+  foreignKey: 'currentVersionId',
+  as: 'currentVersion'
+});
+LegalDocumentVersion.belongsTo(LegalDocument, { foreignKey: 'documentId', as: 'document' });
+User.hasMany(WalletAccount, { foreignKey: 'userId', as: 'walletAccounts' });
+WalletAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Company.hasMany(WalletAccount, { foreignKey: 'companyId', as: 'walletAccounts' });
+WalletAccount.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+WalletAccount.hasMany(WalletTransaction, { foreignKey: 'walletAccountId', as: 'transactions' });
+WalletTransaction.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
+
+WalletAccount.hasMany(WalletPaymentMethod, { foreignKey: 'walletAccountId', as: 'paymentMethods' });
+WalletPaymentMethod.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
+
+WalletAccount.belongsTo(WalletPaymentMethod, { foreignKey: 'autopayoutMethodId', as: 'autopayoutMethod' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -403,6 +562,9 @@ BookingBid.belongsTo(Booking, { foreignKey: 'bookingId' });
 
 BookingBid.hasMany(BookingBidComment, { foreignKey: 'bidId' });
 BookingBidComment.belongsTo(BookingBid, { foreignKey: 'bidId' });
+
+Booking.hasMany(BookingHistoryEntry, { foreignKey: 'bookingId', as: 'history' });
+BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
 BlogPost.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 User.hasMany(BlogPost, { foreignKey: 'authorId', as: 'blogPosts' });
@@ -436,16 +598,52 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+HomePage.hasMany(HomePageSection, {
+  foreignKey: 'homePageId',
+  as: 'sections',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageSection.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+
+HomePageSection.hasMany(HomePageComponent, {
+  foreignKey: 'sectionId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePageSection, { foreignKey: 'sectionId', as: 'section' });
+
+HomePage.hasMany(HomePageComponent, {
+  foreignKey: 'homePageId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+export default sequelize;
+WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
+WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
+
+WebsiteNavigationMenu.hasMany(WebsiteNavigationItem, { foreignKey: 'menuId', as: 'items' });
+WebsiteNavigationItem.belongsTo(WebsiteNavigationMenu, { foreignKey: 'menuId', as: 'menu' });
+WebsiteNavigationItem.belongsTo(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'parent' });
+WebsiteNavigationItem.hasMany(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'children' });
+
 export {
   sequelize,
   User,
+  UserProfileSetting,
   Company,
+  UserPreference,
   Service,
+  ServiceCategory,
   Post,
   MarketplaceItem,
   ServiceZone,
   ServiceZoneCoverage,
   Order,
+  OrderNote,
   Escrow,
   Dispute,
   UiPreferenceTelemetry,
@@ -455,6 +653,7 @@ export {
   BookingAssignment,
   BookingBid,
   BookingBidComment,
+  BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,
   InventoryItem,
@@ -463,6 +662,7 @@ export {
   RentalAgreement,
   RentalCheckpoint,
   ComplianceDocument,
+  ComplianceControl,
   InsuredSellerApplication,
   MarketplaceModerationAction,
   AdCampaign,
@@ -478,6 +678,10 @@ export {
   ConversationParticipant,
   ConversationMessage,
   MessageDelivery,
+  CommunicationsInboxConfiguration,
+  CommunicationsEntryPoint,
+  CommunicationsQuickReply,
+  CommunicationsEscalationRule,
   PlatformSetting,
   BlogPost,
   BlogCategory,
@@ -485,11 +689,19 @@ export {
   BlogMedia,
   BlogPostCategory,
   BlogPostTag,
+  WebsitePage,
+  WebsiteContentBlock,
+  WebsiteNavigationMenu,
+  WebsiteNavigationItem,
   AffiliateProfile,
   AffiliateCommissionRule,
   AffiliateReferral,
   AffiliateLedgerEntry,
   SecurityAuditEvent,
+  AdminAuditEvent,
+  SecuritySignalConfig,
+  SecurityAutomationTask,
+  TelemetryConnector,
   UserSession,
   ConsentEvent,
   Region,
@@ -502,9 +714,28 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  Supplier,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  PurchaseAttachment,
+  PurchaseBudget
+  HomePage,
+  HomePageSection,
+  HomePageComponent
+  LegalDocument,
+  LegalDocumentVersion
+  LiveFeedAuditEvent,
+  LiveFeedAuditNote
+  SystemSettingAudit
+  ServiceTaxonomyType,
+  ServiceTaxonomyCategory
+  WalletAccount,
+  WalletTransaction,
+  WalletPaymentMethod
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
+  CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,
   InboxQueue,

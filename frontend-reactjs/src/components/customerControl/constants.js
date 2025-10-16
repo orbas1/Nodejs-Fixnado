@@ -39,8 +39,44 @@ export const locationTemplate = {
   region: '',
   postalCode: '',
   country: '',
+  zoneLabel: '',
+  zoneCode: '',
+  serviceCatalogues: '',
+  onsiteContactName: '',
+  onsiteContactPhone: '',
+  onsiteContactEmail: '',
+  accessWindowStart: '',
+  accessWindowEnd: '',
+  parkingInformation: '',
+  loadingDockDetails: '',
+  securityNotes: '',
+  floorLevel: '',
+  mapImageUrl: '',
   accessNotes: '',
   isPrimary: false
+};
+
+export const couponTemplate = {
+  id: null,
+  name: '',
+  code: '',
+  description: '',
+  discountType: 'percentage',
+  discountValue: 10,
+  currency: '',
+  minOrderTotal: '',
+  startsAt: '',
+  expiresAt: '',
+  maxRedemptions: '',
+  maxRedemptionsPerCustomer: '',
+  autoApply: false,
+  status: 'draft',
+  imageUrl: '',
+  termsUrl: '',
+  internalNotes: '',
+  lifecycleStatus: 'draft',
+  createdAt: null,
+  updatedAt: null
 };
 
 export const contactTypeOptions = [
@@ -50,4 +86,17 @@ export const contactTypeOptions = [
   { value: 'billing', label: 'Accounts payable' },
   { value: 'executive', label: 'Executive stakeholder' },
   { value: 'other', label: 'Other' }
+];
+
+export const discountTypeOptions = [
+  { value: 'percentage', label: 'Percentage off' },
+  { value: 'fixed', label: 'Fixed amount off' }
+];
+
+export const couponStatusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'active', label: 'Active' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'archived', label: 'Archived' }
 ];

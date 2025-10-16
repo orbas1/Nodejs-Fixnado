@@ -6,6 +6,12 @@ export function createTestToken(userId, { expiresIn = '1h', payload = {} } = {})
   }
 
   const secret = process.env.JWT_SECRET || 'test-secret-key';
+  const tokenPayload = { sub: userId, ...payload };
+  return jwt.sign(tokenPayload, secret, {
+    expiresIn,
+    audience: 'fixnado:web',
+    issuer: 'fixnado-api'
+  });
   return jwt.sign(
     { sub: userId, ...payload },
     secret,

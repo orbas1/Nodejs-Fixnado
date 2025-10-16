@@ -105,6 +105,32 @@ export async function deleteCustomerLocation(locationId, options = {}) {
   return true;
 }
 
+export function createCustomerCoupon(payload, options = {}) {
+  return requestJson(`${API_BASE}/coupons`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export function updateCustomerCoupon(couponId, payload, options = {}) {
+  return requestJson(`${API_BASE}/coupons/${couponId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export async function deleteCustomerCoupon(couponId, options = {}) {
+  const response = await fetch(`${API_BASE}/coupons/${couponId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    ...(options ?? {})
+  });
+  await ensureResponseOk(response, 'Failed to delete coupon');
+  return true;
+}
+
 export default {
   fetchCustomerOverview,
   saveCustomerProfile,
@@ -113,5 +139,8 @@ export default {
   deleteCustomerContact,
   createCustomerLocation,
   updateCustomerLocation,
-  deleteCustomerLocation
+  deleteCustomerLocation,
+  createCustomerCoupon,
+  updateCustomerCoupon,
+  deleteCustomerCoupon
 };

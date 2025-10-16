@@ -8,7 +8,10 @@ import {
   deleteCustomerContact,
   createCustomerLocation,
   updateCustomerLocation,
-  deleteCustomerLocation
+  deleteCustomerLocation,
+  createCustomerCoupon,
+  updateCustomerCoupon,
+  deleteCustomerCoupon
 } from '../controllers/customerControlController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
@@ -78,8 +81,40 @@ const locationValidators = () => [
   body('region').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
   body('postalCode').optional({ values: 'falsy' }).isString().trim().isLength({ max: 32 }),
   body('country').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('zoneLabel').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('zoneCode').optional({ values: 'falsy' }).isString().trim().isLength({ max: 64 }),
+  body('serviceCatalogues').optional({ values: 'falsy' }).isString().trim().isLength({ max: 500 }),
+  body('onsiteContactName').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('onsiteContactPhone').optional({ values: 'falsy' }).isString().trim().isLength({ max: 64 }),
+  body('onsiteContactEmail').optional({ values: 'falsy' }).isEmail().isLength({ max: 255 }),
+  body('accessWindowStart').optional({ values: 'falsy' }).isString().trim().isLength({ max: 32 }),
+  body('accessWindowEnd').optional({ values: 'falsy' }).isString().trim().isLength({ max: 32 }),
+  body('parkingInformation').optional({ values: 'falsy' }).isString().trim().isLength({ max: 255 }),
+  body('loadingDockDetails').optional({ values: 'falsy' }).isString().trim().isLength({ max: 255 }),
+  body('securityNotes').optional({ values: 'falsy' }).isString().trim().isLength({ max: 1000 }),
+  body('floorLevel').optional({ values: 'falsy' }).isString().trim().isLength({ max: 120 }),
+  body('mapImageUrl').optional({ values: 'falsy' }).isString().trim().isLength({ max: 512 }),
   body('accessNotes').optional({ values: 'falsy' }).isString().trim().isLength({ max: 1000 }),
   body('isPrimary').optional().isBoolean().toBoolean()
+];
+
+const couponValidators = () => [
+  body('name').isString().trim().isLength({ min: 2, max: 160 }),
+  body('code').isString().trim().isLength({ min: 3, max: 64 }),
+  body('description').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 }),
+  body('discountType').isIn(['percentage', 'fixed']),
+  body('discountValue').isFloat({ gt: 0 }).toFloat(),
+  body('currency').optional({ values: 'falsy' }).isString().trim().isLength({ min: 3, max: 12 }),
+  body('minOrderTotal').optional({ values: 'falsy' }).isFloat({ gt: 0 }).toFloat(),
+  body('startsAt').optional({ values: 'falsy' }).isISO8601(),
+  body('expiresAt').optional({ values: 'falsy' }).isISO8601(),
+  body('maxRedemptions').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  body('maxRedemptionsPerCustomer').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  body('autoApply').optional().isBoolean().toBoolean(),
+  body('status').optional({ values: 'falsy' }).isIn(['draft', 'scheduled', 'active', 'expired', 'archived']),
+  body('imageUrl').optional({ values: 'falsy' }).isString().trim().isLength({ max: 512 }),
+  body('termsUrl').optional({ values: 'falsy' }).isString().trim().isLength({ max: 512 }),
+  body('internalNotes').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 })
 ];
 
 router.use(authenticate, ensureCustomerPersona);
@@ -114,5 +149,14 @@ router.delete(
   param('locationId').isUUID(4),
   deleteCustomerLocation
 );
+
+router.post('/coupons', guard('coupons:create'), couponValidators(), createCustomerCoupon);
+router.put(
+  '/coupons/:couponId',
+  guard('coupons:update'),
+  [param('couponId').isUUID(4), ...couponValidators()],
+  updateCustomerCoupon
+);
+router.delete('/coupons/:couponId', guard('coupons:delete'), param('couponId').isUUID(4), deleteCustomerCoupon);
 
 export default router;
