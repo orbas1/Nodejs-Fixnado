@@ -63,6 +63,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import LiveFeedAuditEvent from './liveFeedAuditEvent.js';
+import LiveFeedAuditNote from './liveFeedAuditNote.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -197,6 +199,21 @@ StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemI
 StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'actor_id', as: 'actor' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'actor_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.belongsTo(User, { foreignKey: 'assignee_id', as: 'assignee' });
+User.hasMany(LiveFeedAuditEvent, { foreignKey: 'assignee_id', as: 'assignedLiveFeedAudits' });
+LiveFeedAuditEvent.belongsTo(Post, { foreignKey: 'post_id', as: 'post' });
+Post.hasMany(LiveFeedAuditEvent, { foreignKey: 'post_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(ServiceZone, { foreignKey: 'zone_id', as: 'zone' });
+ServiceZone.hasMany(LiveFeedAuditEvent, { foreignKey: 'zone_id', as: 'auditEvents' });
+LiveFeedAuditEvent.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+Company.hasMany(LiveFeedAuditEvent, { foreignKey: 'company_id', as: 'liveFeedAuditEvents' });
+LiveFeedAuditEvent.hasMany(LiveFeedAuditNote, { foreignKey: 'audit_id', as: 'notes' });
+LiveFeedAuditNote.belongsTo(LiveFeedAuditEvent, { foreignKey: 'audit_id', as: 'audit' });
+LiveFeedAuditNote.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+User.hasMany(LiveFeedAuditNote, { foreignKey: 'author_id', as: 'liveFeedAuditNotes' });
 
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
@@ -464,5 +481,7 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  LiveFeedAuditEvent,
+  LiveFeedAuditNote
 };
