@@ -30,6 +30,7 @@ const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
+const CreationStudio = lazy(() => import('./pages/CreationStudio.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
 const FinanceOverview = lazy(() => import('./pages/FinanceOverview.jsx'));
@@ -148,6 +149,7 @@ function App() {
               }
             />
             <Route path="/communications" element={<Communications />} />
+            <Route path="/creation-studio" element={<CreationStudio />} />
             <Route path="/operations/geo-matching" element={<GeoMatching />} />
             <Route path="/dashboards" element={<DashboardHub />} />
             <Route path="/dashboards/finance" element={<FinanceOverview />} />

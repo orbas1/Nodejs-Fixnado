@@ -11,6 +11,9 @@ class ExplorerService {
     required this.companyName,
     required this.providerName,
     required this.tags,
+    this.companyId,
+    this.complianceScore,
+    this.distanceKm,
   });
 
   final String id;
@@ -24,10 +27,17 @@ class ExplorerService {
   final String? companyName;
   final String? providerName;
   final List<String> tags;
+  final String? companyId;
+  final double? complianceScore;
+  final double? distanceKm;
 
   factory ExplorerService.fromJson(Map<String, dynamic> json) {
     final provider = json['provider'] ?? json['Provider'];
     final company = json['Company'];
+    final companyId = json['companyId'] ?? (company is Map<String, dynamic> ? company['id'] : null);
+    final compliance = company is Map<String, dynamic>
+        ? company['complianceScore'] ?? company['compliance_score']
+        : json['complianceScore'];
     return ExplorerService(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -45,6 +55,9 @@ class ExplorerService {
           .map((value) => value?.toString() ?? '')
           .where((value) => value.isNotEmpty)
           .toList(),
+      companyId: companyId?.toString(),
+      complianceScore: _toDouble(compliance),
+      distanceKm: _toDouble(json['distanceKm'] ?? json['distance']),
     );
   }
 }
@@ -60,6 +73,8 @@ class ExplorerMarketplaceItem {
     required this.purchasePrice,
     required this.status,
     required this.insuredOnly,
+    this.companyId,
+    this.complianceScore,
   });
 
   final String id;
@@ -71,6 +86,8 @@ class ExplorerMarketplaceItem {
   final double? purchasePrice;
   final String status;
   final bool insuredOnly;
+  final String? companyId;
+  final double? complianceScore;
 
   bool get supportsRental {
     final availabilityValue = availability.toLowerCase();
@@ -83,6 +100,11 @@ class ExplorerMarketplaceItem {
   }
 
   factory ExplorerMarketplaceItem.fromJson(Map<String, dynamic> json) {
+    final company = json['Company'];
+    final companyId = json['companyId'] ?? (company is Map<String, dynamic> ? company['id'] : null);
+    final compliance = company is Map<String, dynamic>
+        ? company['complianceScore'] ?? company['compliance_score']
+        : json['complianceScore'];
     return ExplorerMarketplaceItem(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -93,6 +115,8 @@ class ExplorerMarketplaceItem {
       purchasePrice: _toDouble(json['purchasePrice']),
       status: json['status'] as String? ?? 'pending_review',
       insuredOnly: (json['insuredOnly'] as bool?) ?? false,
+      companyId: companyId?.toString(),
+      complianceScore: _toDouble(compliance),
     );
   }
 }
@@ -476,6 +500,7 @@ class ZoneSummary {
     required this.centroid,
     required this.boundingBox,
     required this.analytics,
+    this.companyId,
   });
 
   final String id;
@@ -485,6 +510,7 @@ class ZoneSummary {
   final Map<String, dynamic> centroid;
   final Map<String, dynamic> boundingBox;
   final ZoneAnalyticsSummary? analytics;
+  final String? companyId;
 
   factory ZoneSummary.fromJson(Map<String, dynamic> json) {
     if (json.containsKey('zone')) {
@@ -499,6 +525,7 @@ class ZoneSummary {
         analytics: json['analytics'] == null
             ? null
             : ZoneAnalyticsSummary.fromJson(Map<String, dynamic>.from(json['analytics'] as Map)),
+        companyId: (zone['companyId'] ?? zone['company_id'])?.toString(),
       );
     }
 
@@ -512,6 +539,7 @@ class ZoneSummary {
       analytics: json['analytics'] == null
           ? null
           : ZoneAnalyticsSummary.fromJson(Map<String, dynamic>.from(json['analytics'] as Map)),
+      companyId: (json['companyId'] ?? json['company_id'])?.toString(),
     );
   }
 }
@@ -603,6 +631,7 @@ class ExplorerFilters {
     this.type = ExplorerResultType.all,
     this.serviceType,
     this.category,
+    this.availability,
   });
 
   final String? term;
@@ -610,6 +639,7 @@ class ExplorerFilters {
   final ExplorerResultType type;
   final String? serviceType;
   final String? category;
+  final String? availability;
 
   ExplorerFilters copyWith({
     String? term,
@@ -617,6 +647,7 @@ class ExplorerFilters {
     ExplorerResultType? type,
     String? serviceType,
     String? category,
+    String? availability,
   }) {
     return ExplorerFilters(
       term: term ?? this.term,
@@ -624,6 +655,7 @@ class ExplorerFilters {
       type: type ?? this.type,
       serviceType: serviceType ?? this.serviceType,
       category: category ?? this.category,
+      availability: availability ?? this.availability,
     );
   }
 
@@ -633,6 +665,7 @@ class ExplorerFilters {
         'type': type.name,
         'serviceType': serviceType,
         'category': category,
+        'availability': availability,
       };
 
   static ExplorerFilters fromJson(Map<String, dynamic> json) {
@@ -647,12 +680,12 @@ class ExplorerFilters {
       type: type,
       serviceType: json['serviceType'] as String?,
       category: json['category'] as String?,
+      availability: json['availability'] as String?,
     );
   }
 }
 
-enum ExplorerResultType { services, marketplace, tools, all }
-enum ExplorerResultType { services, marketplace, storefronts, businessFronts, all }
+enum ExplorerResultType { services, marketplace, tools, storefronts, businessFronts, all }
 
 class GeoMatchService {
   GeoMatchService({
@@ -815,6 +848,9 @@ Map<String, dynamic> _encode(Object value) {
       'companyName': value.companyName,
       'providerName': value.providerName,
       'tags': value.tags,
+      'companyId': value.companyId,
+      'complianceScore': value.complianceScore,
+      'distanceKm': value.distanceKm,
     };
   }
   if (value is ExplorerMarketplaceItem) {
@@ -828,6 +864,8 @@ Map<String, dynamic> _encode(Object value) {
       'purchasePrice': value.purchasePrice,
       'status': value.status,
       'insuredOnly': value.insuredOnly,
+      'companyId': value.companyId,
+      'complianceScore': value.complianceScore,
     };
   }
   if (value is ExplorerStorefront) {
@@ -854,6 +892,7 @@ Map<String, dynamic> _encode(Object value) {
               'averageAcceptanceMinutes': value.analytics!.averageAcceptanceMinutes,
               'metadata': value.analytics!.metadata,
             },
+      'companyId': value.companyId,
     };
   }
   throw UnsupportedError('Unsupported value for encoding: ${value.runtimeType}');

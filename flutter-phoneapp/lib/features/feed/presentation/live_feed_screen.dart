@@ -825,31 +825,95 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final statusColor = state.streamConnected
+        ? Colors.green.shade500
+        : state.streamReconnecting
+            ? Colors.orange.shade600
+            : theme.colorScheme.outline;
+    final statusLabel = state.streamConnected
+        ? 'Streaming live updates'
+        : state.streamReconnecting
+            ? 'Reconnecting…'
+            : 'Live updates paused';
+    final lastUpdatedLabel = state.lastUpdated != null
+        ? 'Last update ${DateTimeFormatter.relative(state.lastUpdated!)}'
+        : 'Awaiting first refresh';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Marketplace live feed',
+                    style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Track verified buyer posts and respond in minutes.',
+                    style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  'Marketplace live feed',
-                  style: GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w700),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                        boxShadow: state.streamConnected
+                            ? [
+                                BoxShadow(
+                                  color: statusColor.withOpacity(0.35),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      statusLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Track verified buyer posts and respond in minutes.',
-                  style: GoogleFonts.inter(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                  lastUpdatedLabel,
+                  style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
                 ),
+                if (state.streamError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      state.streamError!,
+                      style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.error),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
               ],
             ),
-            if (state.lastUpdated != null)
-              Text(
-                'Updated ${DateTimeFormatter.relative(state.lastUpdated!)}',
-                style: GoogleFonts.inter(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
-              ),
           ],
         ),
         const SizedBox(height: 16),

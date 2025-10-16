@@ -6,6 +6,10 @@ import {
   submitCustomJobBid,
   addCustomJobBidMessage
 } from '../services/feedService.js';
+import {
+  registerLiveFeedClient,
+  removeLiveFeedClient
+} from '../services/liveFeedStreamService.js';
 
 function handleServiceError(res, next, error) {
   if (error?.statusCode) {
@@ -81,6 +85,68 @@ export async function getLiveFeed(req, res, next) {
   } catch (error) {
     next(error);
   }
+}
+
+export async function streamLiveFeed(req, res, next) {
+  const zoneIds = coerceArray(req.query.zoneIds);
+  const singleZoneIds = coerceArray(req.query.zoneId);
+  const resolvedZoneIds = Array.from(new Set([...zoneIds, ...singleZoneIds]));
+
+  const limit = Array.isArray(req.query.limit)
+    ? Number.parseInt(req.query.limit.at(0), 10)
+    : req.query.limit
+      ? Number.parseInt(req.query.limit, 10)
+      : undefined;
+
+  const filters = {
+    zoneIds: resolvedZoneIds,
+    includeOutOfZone: parseBoolean(req.query.includeOutOfZone),
+    outOfZoneOnly: parseBoolean(req.query.outOfZoneOnly),
+    limit: Number.isFinite(limit) ? limit : undefined
+  };
+
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
+
+  const client = registerLiveFeedClient(res, filters);
+  const heartbeat = setInterval(() => {
+    client.send('heartbeat', { at: new Date().toISOString() });
+  }, 30000);
+
+  client.send('connected', { connectedAt: new Date().toISOString() });
+
+  try {
+    const posts = await listLiveFeed(filters);
+    client.send('snapshot', { generatedAt: new Date().toISOString(), posts }, {
+      zoneId: null,
+      allowOutOfZone: true
+    });
+  } catch (error) {
+    client.send('error', {
+      message: error?.message || 'Unable to load live feed snapshot',
+      status: error?.statusCode || 500
+    });
+  }
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    removeLiveFeedClient(client);
+    res.end();
+  });
+
+  req.on('error', (error) => {
+    clearInterval(heartbeat);
+    removeLiveFeedClient(client);
+    next(error);
+  });
 }
 
 export async function createLiveFeedPostHandler(req, res, next) {

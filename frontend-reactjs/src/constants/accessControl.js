@@ -9,6 +9,7 @@ export const COMMUNICATIONS_ALLOWED_ROLES = [
 export const BUSINESS_FRONT_ALLOWED_ROLES = ['enterprise', 'admin'];
 export const PROVIDER_EXPERIENCE_ALLOWED_ROLES = ['provider', 'admin'];
 export const PROVIDER_STOREFRONT_ALLOWED_ROLES = PROVIDER_EXPERIENCE_ALLOWED_ROLES;
+export const CREATION_STUDIO_ALLOWED_ROLES = ['provider', 'enterprise', 'admin'];
 
 export const ROLE_DISPLAY_NAMES = {
   guest: 'Guest access',

@@ -3,11 +3,11 @@
 | # | Task | Owner Squad | Duration (est.) | Dependencies | % Complete |
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 70% |
-| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
-| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 45% |
+| D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 73% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 78% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 75% |
-| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 16% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 90% |
+| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 38% |
 
 ---
 
@@ -29,7 +29,7 @@
 
 **Progress Notes:** Vault-managed status badges, secrets rotation callouts, and Postgres provisioning storyboards were added to the foundational token library, aligning security messaging with the new infrastructure workflows while nudging QA/ops documentation forward. Operational readiness icons, badge tones, and alert copy tied to `/readyz` states were added to the token set so deployment dashboards, release runbooks, and observability mock-ups mirror the backend readiness telemetry introduced in Task 1.
 
-## Task D2 – Navigation & IA Harmonisation (48%)
+## Task D2 – Navigation & IA Harmonisation (52%)
 **Objective:** Align navigation patterns, menus, and information architecture for web and Flutter clients.
 
 **Subtasks (9):**
@@ -43,9 +43,9 @@
 8. Run moderated usability tests on desktop/tablet/mobile prototypes and capture insights.
 9. Update IA documentation and publish to the knowledge base for cross-team consumption.
 
-**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways. Warehouse operations console user journeys now map dataset pickers, retention countdown chips, and DPIA help footers across both React and Flutter shells, closing IA gaps for manual trigger workflows and monitoring dashboards. Latest deliverables include a production-ready mega menu specification, responsive footer IA diagram, and Flutter workspaces card layouts, unlocking engineering implementation for the navigation overhaul.
+**Progress Notes:** Hardened RBAC matrix outputs were translated into annotated navigation blueprints for every persona, covering landing routes, sidebar groupings, compliance badge placements, and Flutter parity notes. Policy audit chips, denial copy decks, and audit log drawer patterns were added to the navigation kit, ensuring policy middleware feedback is visible in dashboard shells and raising D2 completion. The compliance portal entry card now lives inside the Flutter profile’s legal pane, validating cross-platform IA decisions and updating prototypes with explicit GDPR access pathways. Warehouse operations console user journeys now map dataset pickers, retention countdown chips, and DPIA help footers across both React and Flutter shells, closing IA gaps for manual trigger workflows and monitoring dashboards. Latest deliverables include a production-ready mega menu specification, responsive footer IA diagram, and Flutter workspaces card layouts, unlocking engineering implementation for the navigation overhaul. Live feed status header patterns now sit inside the navigation overlays so role dashboards surface consistent SSE health messaging alongside quick actions.
 
-## Task D3 – Page Templates & Partial Library (38%)
+## Task D3 – Page Templates & Partial Library (74%)
 **Objective:** Build modular page templates and partial sections enabling rapid assembly of marketing and product surfaces.
 
 **Subtasks (12):**
@@ -63,7 +63,7 @@
 12. Review templates with marketing, product, and compliance stakeholders for alignment.
 13. ✅ Validate provider dashboard and business front templates against restored backend payloads; document evidence in design QA backlog.
 
-**Progress Notes:** Finance dashboard and escrow timeline templates now include production data slots, SLA breach indicators, manual intervention cues, and the new escalation ribbon specs aligned with the alert fan-out contract. Provider/business front evidence has been cross-checked against restored payloads and recorded in the QA backlog. Compliance metrics and finance escalation layout packs cover KPI tiles, due-date tables, advanced filters, alert drawers, and refresh micro-interactions for web and Flutter parity, pushing Task D3 completion toward the mid-40% range while marketing partials and creation studio wizard visuals continue in design.
+**Progress Notes:** Creation studio blueprints now have responsive wizard flows, autosave panels, compliance checklist overlays, and slug validation messaging documented for both React and Flutter implementations. Explorer templates were updated with demand/compliance-driven ranking diagrams, availability badges, and pricing cues so marketplace cards communicate ordering logic across web and Flutter. The partial library gained creation summary cards, pricing grids, and publish confirmation states with annotated dummy-data scaffolding, while finance escalation templates remain aligned with the alert fan-out contract. Live feed streaming kit adds status header specs, snapshot hydration flows, offline cache banners, and error toasts so dashboards communicate SSE health; diagrams outline filter restart ladders and exponential backoff interactions shared across platforms. These artefacts, alongside refreshed navigation callouts for the solutions mega menu, lift Task D3 completion into the high-70% range and hand design-ready references to engineering.
 
 ## Task D4 – Theme & Visual Narrative Development (0%)
 **Objective:** Deliver theme variants (default, industrial, premium, emo) with imagery and motion guidance.
@@ -78,7 +78,7 @@
 7. Validate theme accessibility, ensuring compliance with contrast and motion preferences.
 8. Publish theme adoption playbook for engineering and marketing teams.
 
-## Task D5 – Mobile Parity & Component Adaptation (68%)
+## Task D5 – Mobile Parity & Component Adaptation (88%)
 **Objective:** Translate web patterns into Flutter-ready components with parity across user and provider apps.
 
 **Subtasks (11):**
@@ -94,9 +94,9 @@
 10. Coordinate with engineering on component feasibility and edge cases.
 11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
 
-**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, regulatory alert cards, and the escalation trays/acknowledgement flows documented for Slack/Opsgenie parity. Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
+**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, regulatory alert cards, and the escalation trays/acknowledgement flows documented for Slack/Opsgenie parity. Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Creation studio parity pack introduces mobile blueprint cards, autosave status chips, compliance checklists, and publish confirmation overlays, fully documenting navigation hooks, localisation behaviour, and accessibility cues for Flutter. Explorer parity notes now capture demand/compliance weighting, availability modifiers, and offline fallback ordering so marketplace cards list compliant in-zone providers ahead of out-of-region stock. Live feed parity pack adds Riverpod controller states, connection banners, offline cache treatment, and reduced-motion fallbacks so Flutter UIs communicate SSE health identically to React. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
 
-## Task D6 – Design QA, Documentation & Handover (10%)
+## Task D6 – Design QA, Documentation & Handover (34%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.
 
 **Subtasks (9):**
@@ -110,4 +110,4 @@
 8. Coordinate with QA to integrate design checkpoints into overall test plan.
 9. Conduct final stakeholder walkthrough and capture sign-off artefacts.
 
-**Progress Notes:** Compiled QA checklist entries for the warehouse operations console and the new finance escalation flows, including annotation guidelines, alert badge colour references, responder acknowledgement paths, and DPIA documentation link placements so engineering handover kits capture the compliance and finance workflows. Added operational readiness and finance alert handover notes describing `/readyz` states, alert palette references, Slack/Opsgenie copy decks, and deployment dashboard mock-ups so release management receives design-backed guidance for the new telemetry.
+**Progress Notes:** Compiled QA checklist entries for the warehouse operations console and the new finance escalation flows, including annotation guidelines, alert badge colour references, responder acknowledgement paths, and DPIA documentation link placements so engineering handover kits capture the compliance and finance workflows. Added operational readiness and finance alert handover notes describing `/readyz` states, alert palette references, Slack/Opsgenie copy decks, and deployment dashboard mock-ups so release management receives design-backed guidance for the new telemetry. Creation studio QA packs now bundle wizard stepper audits, localisation spot checks (including RTL Arabic copy), publish confirmation redlines, and changelog cross-references so design, engineering, and release teams can evidence parity and accessibility across platforms. Explorer ranking QA addendum details demand/compliance scoring checkpoints, availability badge treatments, offline fallback ordering, and parity verification steps shared with Flutter to keep marketplace ordering reproducible across clients. Live feed QA scenarios now cover SSE connection failures, reconnection timing, offline cache verification, and accessibility announcements with evidence templates wired to both React and Flutter controller test plans.

@@ -29,3 +29,7 @@
 - Added a policy-guarded listing endpoint (`GET /runs`) that returns paginated warehouse export runs filtered by dataset, region, status, and triggered-by metadata for audit reconcilation.
 - Introduced a manual trigger endpoint (`POST /runs`) allowing operations users to launch CDC exports on-demand with validation around active runs, dataset availability, and lookback configuration overrides.
 - Responses include NDJSON.gz storage paths, batch durations, record counts, and retention timestamps so operator consoles and compliance evidence packs surface actionable telemetry without inspecting the filesystem directly.
+
+## `/api/feed/live/stream`
+- Registered a streaming route protected by `authenticate` middleware and the `feed.live.read` policy, ensuring only authorised actors receive live feed events.
+- Streams heartbeat, snapshot, and mutation events (post, bid, message) from the new `liveFeedStreamService`, respecting zone and out-of-zone filters supplied via query parameters.

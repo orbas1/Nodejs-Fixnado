@@ -29,3 +29,18 @@
 - Extended the finance domain models, repository, and Riverpod controller to ingest webhook retry metadata, alert acknowledgement state, and Slack/Opsgenie delivery receipts exposed by the new backend fan-out service.
 - Updated `FinanceDashboardScreen` with escalation trays, responder chips, retry countdown timers, and manual refresh/acknowledge actions while tuning layouts for compact devices.
 - Authored Dart unit coverage (`test/features/finance/finance_models_test.dart`) validating alert parsing, escalation severity mapping, and retry countdown formatting against representative payloads.
+
+## 2025-04-10 – Creation Studio Wizard
+- Added Creation Studio repository, domain models, Riverpod controller, and widget wiring to enable blueprint discovery, draft autosave, slug validation, compliance tick-off, and publish submission directly from mobile.
+- Implemented the multi-step Creation Studio screen with blueprint cards, inline autosave indicator, persona-aware defaults, compliance checklist toggles, availability inputs, and publish flow consistent with the React experience and localisation requirements.
+- Wrote controller tests (`test/creation_studio_controller_test.dart`) covering blueprint load, autosave success/error, slug availability handling, and publish orchestration while documenting navigation entry, localisation copy, and parity tasks in the update trackers.
+
+## 2025-04-11 – Explorer Ranking & Demand Heuristics
+- Extended the explorer repository, filters, and view state to support zone-aware ranking inputs (company IDs, compliance scores, availability preferences) while aligning enums and cache encodings with the updated React heuristics.
+- Added shared ranking utilities (`explorer_ranking.dart`) scoring services and marketplace items by demand weighting, compliance telemetry, availability, rental support, and price signals with offline fallback ordering.
+- Authored Dart unit tests (`test/explorer_ranking_test.dart`) verifying service and marketplace ordering plus scoring deltas under different demand/compliance scenarios, keeping mobile explorer parity with the web experience.
+
+## 2025-04-15 – Live Feed Streaming & Reconnection UX
+- Implemented SSE streaming via `live_feed_repository.dart` with frame parsing, cancellation handling, and exponential backoff-ready controllers to replace polling in the live feed experience.
+- Refactored `LiveFeedController` to manage stream state, reconnection timers, status messaging, and cached snapshot pruning while keeping existing publish/bid/message flows intact.
+- Updated the live feed screen to surface connection pulses, offline banners, and filter-aware restarts plus added unit tests covering repository parsing and controller event handling.

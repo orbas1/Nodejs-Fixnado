@@ -8,7 +8,10 @@ import {
   summariseZoneAnalytics,
   buildZoneFeatureCollection,
   determineExplorerBounds,
-  filterZonesByDemand
+  filterZonesByDemand,
+  rankExplorerResults,
+  computeExplorerServiceScore,
+  computeExplorerMarketplaceScore
 } from '../explorerUtils.js';
 
 const londonZone = {
@@ -131,5 +134,85 @@ describe('explorerUtils', () => {
     });
 
     expect(filtered).toEqual([londonZone]);
+  });
+
+  it('ranks services using zone demand, compliance and price heuristics', () => {
+    const services = [
+      {
+        id: 'svc-1',
+        title: 'Premium electrical response',
+        description: '24/7 coverage with FCA compliance',
+        price: 180,
+        Company: { id: 'company-1', complianceScore: 94 },
+        tags: ['Escrow ready']
+      },
+      {
+        id: 'svc-2',
+        title: 'Budget maintenance',
+        description: 'Reactive and preventative maintenance',
+        price: 90,
+        Company: { id: 'company-2', complianceScore: 68 }
+      }
+    ];
+
+    const { services: ranked } = rankExplorerResults(
+      { services, items: [] },
+      { selectedZone: londonZone, filters: { term: 'electrical' } }
+    );
+
+    expect(ranked.map((service) => service.id)).toEqual(['svc-1', 'svc-2']);
+
+    const londonScore = computeExplorerServiceScore(services[0], {
+      selectedZone: londonZone,
+      filters: { term: 'electrical' }
+    });
+    const manchesterScore = computeExplorerServiceScore(services[1], {
+      selectedZone: londonZone,
+      filters: { term: 'electrical' }
+    });
+
+    expect(londonScore).toBeGreaterThan(manchesterScore);
+  });
+
+  it('ranks marketplace items using availability, rental support, and approval state', () => {
+    const items = [
+      {
+        id: 'item-1',
+        title: 'Diesel boom lift',
+        description: 'Certified and insured for high-rise work',
+        availability: 'rent',
+        pricePerDay: 250,
+        status: 'approved',
+        supportsRental: true,
+        companyId: 'company-1'
+      },
+      {
+        id: 'item-2',
+        title: 'Tool kit bundle',
+        description: 'Out of zone stock with pending approval',
+        availability: 'buy',
+        status: 'pending_review',
+        supportsRental: false,
+        companyId: 'company-2'
+      }
+    ];
+
+    const { items: ranked } = rankExplorerResults(
+      { services: [], items },
+      { selectedZone: londonZone, filters: { availability: 'rent', term: 'lift' } }
+    );
+
+    expect(ranked.map((item) => item.id)).toEqual(['item-1', 'item-2']);
+
+    const rankedScore = computeExplorerMarketplaceScore(items[0], {
+      selectedZone: londonZone,
+      filters: { availability: 'rent', term: 'lift' }
+    });
+    const lowerScore = computeExplorerMarketplaceScore(items[1], {
+      selectedZone: londonZone,
+      filters: { availability: 'rent', term: 'lift' }
+    });
+
+    expect(rankedScore).toBeGreaterThan(lowerScore);
   });
 });

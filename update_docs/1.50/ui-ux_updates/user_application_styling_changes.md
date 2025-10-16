@@ -15,6 +15,7 @@
 - Inputs: apply filled background with 8px radius; placeholder text greyed at 60% opacity; success state uses subtle green border.
 - Cards: 16px corner radius, drop shadow level 2, optional status bar. Expandable cards animate height transitions at 180ms with ease-in-out curves.
 - Chips & tags: pill shape with uppercase labels for statuses, lowercase for filters; ensure 12px horizontal padding to maintain readability.
+- Live feed header chips mirror web styling with Material 3 surfaces: success state uses `Color(0xFF2E7D32)` glow, reconnecting pulses amber, and paused state desaturates to slate; status text set in `Inter 13/18` with medium weight and accessible `Semantics` labels for assistive tech.
 
 ## Imagery & Illustrations
 - Onboarding illustrations updated to depict jobsite scenarios with inclusive representation; exported at 2x/3x densities and compressed under 80kb.
@@ -24,6 +25,7 @@
 ## Motion & Feedback
 - Screen transitions adopt native navigation patterns with 200ms duration; modals slide up from bottom with overshoot suppressed to reduce motion sickness.
 - Workspaces cards use Material 3 tonal fills, neon accent chips, and Riverpod-driven state labels to communicate active role, matching React mega menu styling tokens.
+- Live feed reconnect spinner uses adaptive theming to remain legible in dark mode, while offline cache banner slides in with 220ms curve and respects reduced motion settings by swapping to fade transitions.
 - Loading states rely on skeleton placeholders for lists and shimmering progress bars for timeline updates; avoid spinner loops longer than 8 seconds.
 - Toast notifications appear top-right with auto-dismiss after 6 seconds; accessible alternative ensures screen reader announces context and action.
 
@@ -41,3 +43,4 @@
 - Finance alert trays introduce stacked cards with severity colour bars (Critical `#D84315`, High `#FB8C00`, Medium `#FDD835`, Low `#039BE5`) and overlay icons representing Slack or Opsgenie delivery confirmation.
 - Retry countdown chips use mono-spaced numerals with soft-glow borders, scaling from 14px on phones to 16px on tablets while maintaining 12px vertical rhythm to avoid layout jump during updates.
 - Responder avatars adopt 32px circular frames with status rings that change hue when an acknowledgement is recorded, aligning mobile visuals with the React dashboard styling guidance.
+- Creation studio wizard gains responsive grid, persona badge styling, autosave toast colours, and publish confirmation cards to mirror the new engineering implementation.

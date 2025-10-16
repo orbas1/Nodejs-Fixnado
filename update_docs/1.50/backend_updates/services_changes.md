@@ -29,3 +29,7 @@
 - Expanded `backend-nodejs/src/services/dataGovernanceService.js` with SLA-aware due date assignment, backlog segmentation, percentile completion analytics, and region-aware metrics caching to power the new compliance dashboard KPIs.
 - Introduced filter validation helpers supporting subject email normalisation, ISO range coercion, and region lookup reuse across listing and metrics pipelines, returning structured 400 errors for invalid inputs.
 - Added Vitest coverage (`tests/dataGovernanceService.test.js`) exercising submission, filtering, metrics aggregation, and due-date calculations to keep SLA telemetry production-safe.
+
+## 2025-04-15
+- Added `backend-nodejs/src/services/liveFeedStreamService.js` to maintain SSE client registries, normalise zone/out-of-zone filters, and broadcast heartbeat/snapshot/post/bid/message events with reconnection resilience.
+- Integrated stream broadcasting into `feedService` so post, bid, and message mutations trigger real-time updates while honouring zone metadata for downstream filtering.

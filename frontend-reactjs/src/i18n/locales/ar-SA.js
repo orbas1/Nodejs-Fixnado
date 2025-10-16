@@ -19,7 +19,17 @@ const messages = {
   'nav.login': 'تسجيل الدخول',
   'nav.register': 'التسجيل',
   'nav.getStarted': 'ابدأ الآن',
-  'nav.languageSelector': 'اللغة'
+  'nav.languageSelector': 'اللغة',
+  'nav.creationStudio': 'استوديو الإنشاء',
+  'nav.creationStudioDescription': 'أنشئ الخدمات والواجهات والحملات مع أتمتة الامتثال.',
+  'roles.provider': 'تشغيل المزود',
+  'roles.enterprise': 'تشغيل المؤسسة',
+  'roles.admin': 'إدارة المنصة',
+  'creationStudio.guard.restricted': 'منطقة مقيدة',
+  'creationStudio.guard.title': 'دورك يحتاج إلى صلاحيات إنشاء',
+  'creationStudio.guard.body': 'استوديو الإنشاء متاح فقط لـ {roles}. اطلب التمكين من مسؤول Fixnado.',
+  'creationStudio.guard.help': 'تحتاج وصولاً سريعاً؟ راسل {email} وسيتولى فريق العمليات تفعيلك.',
+  'creationStudio.errors.loadFailure': 'تعذر تحميل مخططات الإنشاء. أعد المحاولة أو تواصل مع الدعم.'
 };
 
 export const arSA = {

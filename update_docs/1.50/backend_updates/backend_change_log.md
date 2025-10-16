@@ -61,3 +61,8 @@
 - Enriched `dataGovernanceService` with due-date calculations, percentile completion analytics, backlog segmentation, and configurable SLA/due-soon windows sourced from `config.dataGovernance`.
 - Added controller/route wiring for `/api/compliance/data-requests/metrics`, returning aggregated metrics with `dueAt`, `dueSoonWindowDays`, and `oldestPending` metadata plus a Supertest-backed regression suite covering filters and payload integrity.
 - Extended the Sequelize migration stack with `20250323000000-enhance-data-subject-requests.js`, introducing a `due_at` column, supporting index, and data backfill to keep analytics performant at scale.
+
+## 2025-04-15 – Live Feed Streaming & SSE Hardening
+- Introduced `liveFeedStreamService.js` to manage server-sent event clients, normalise zone filters, and broadcast demand events with reconnection-safe serialization.
+- Extended `feedController`/`feedService` to expose `/api/feed/live/stream`, push snapshot/heartbeat/post/bid/message events, and gate access through RBAC-aware policy middleware.
+- Added Supertest coverage validating successful streaming plus 401/403 rejections, ensuring the hardened SSE channel respects authentication and permission boundaries.

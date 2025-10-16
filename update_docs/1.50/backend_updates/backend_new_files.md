@@ -22,3 +22,5 @@
 | `backend-nodejs/src/jobs/databaseCredentialRotationJob.js` | Scheduled job monitoring rotation intervals, invoking the credential rotation service, and surfacing failures to operators. |
 | `backend-nodejs/src/database/migrations/20250323000000-enhance-data-subject-requests.js` | Adds the `due_at` column and supporting index for GDPR request SLA tracking, backfilling historical records. |
 | `backend-nodejs/tests/complianceMetricsRoutes.test.js` | Supertest suite covering `/api/compliance/data-requests/metrics` responses, filters, and readiness for dashboard integrations. |
+| `backend-nodejs/src/services/liveFeedStreamService.js` | SSE client registry, filter normalisation, and broadcast helper for live feed streaming. |
+| `backend-nodejs/tests/feedRoutes.test.js` | Supertest coverage validating live feed streaming snapshots and unauthorised access handling. |

@@ -20,3 +20,17 @@
 - Rebuilt the escalation panel with grouped alert ribbons that highlight breach severity, upstream webhook retries, and last fan-out targets, matching the backend escalation feed.
 - Added acknowledgement controls, responder assignments, and retry countdown timers tied to `/api/finance/alerts` metadata so finance leads can coordinate Slack/Opsgenie follow-ups without leaving the page.
 - Memoised chart/tile derivations and introduced manual refresh plus auto-polling fallback states to protect render performance while keeping alerts current in long-lived dashboard sessions.
+## Creation Studio
+- Added `CreationStudio.jsx` with a four-step wizard covering blueprint selection, detailed service description, operational configuration, and review/publish flows backed by autosave and compliance validation.
+- Introduced new API client, reducer-driven state management, slug availability checks, and spinner/alert states so providers can safely draft and publish packages.
+- Exposed the experience via the solutions mega menu with localisation updates across all supported languages.
+
+## Explorer & Search
+- Embedded demand and compliance-aware ranking inside `explorerUtils.js`, ensuring services and marketplace items returned by the Search and Explorer experiences prioritise providers within the active zone, compliant companies, and rentable stock when availability filters request it.
+- Documented the new ranking logic across explorer notes so teams understand how zone demand, compliance scores, availability preferences, and pricing heuristics combine to order results, and surfaced references to the exported scorers for dashboard integrations.
+- Added parity notes covering the shared heuristics with Flutter, highlighting that both clients now use the same demand weights, compliance multipliers, and availability fallbacks while exposing the behaviour through the React explorer page.
+
+## Live Feed
+- Updated `LiveFeed.jsx` to establish an authenticated `EventSource`, reconcile snapshots with incremental events, and expose connection state, reconnection, and offline banners directly in the feed header.
+- Added `liveFeedState.js` to consolidate post/bid/message merging logic and unit tests covering streamed permutations so reducers stay regression-safe.
+- Documented the streaming behaviour and status messaging in the live feed notes to guide design, QA, and operations stakeholders.

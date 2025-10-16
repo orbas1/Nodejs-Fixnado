@@ -33,12 +33,15 @@
 **Key Deliverables:**
 1. Home, Explore, and campaign landing templates with modular hero/feature/testimonial/CTA sections.
 2. Role-based dashboard shells including analytics ribbons, task queues, and compliance widgets.
-3. Creation studio stepper, preview panes, and theme selector interactions documented.
-4. ✅ Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
-5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
-6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
-7. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
-8. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
+3. ✅ Creation studio stepper, preview panes, and theme selector interactions documented.
+4. ✅ Creation studio autosave, compliance checklist, and publish confirmation flows documented for web and Flutter parity.
+5. ✅ Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
+6. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
+7. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
+8. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
+9. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
+10. Explorer ranking heuristics documentation detailing demand/compliance weighting, availability modifiers, price cues, and offline fallback ordering with parity notes for Flutter explorer cards and QA instrumentation.
+11. Live feed streaming design kit covering SSE status headers, offline cache banners, reconnection UX, and analytics instrumentation notes aligned with backend event contracts.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.
@@ -49,7 +52,8 @@
 3. Responsive behaviour matrices covering breakpoints, device classes, and orientation states.
 4. Offline/loading/error state illustrations and microcopy guidelines.
 5. Cross-platform regression scripts for design QA (visual diff, accessibility, localisation).
-6. Biometric unlock flows, secure-session banners, and token status indicators aligned with backend session hardening.
+6. Live feed parity artefacts specifying Riverpod/React status banners, reduced motion fallbacks, and accessibility cues for streaming telemetry.
+7. Biometric unlock flows, secure-session banners, and token status indicators aligned with backend session hardening.
 
 ## Milestone D5 – Design QA, Documentation & Handover (Target Week 7–9)
 **Goals:** Complete design QA, documentation packages, and engineer handover for implementation readiness.

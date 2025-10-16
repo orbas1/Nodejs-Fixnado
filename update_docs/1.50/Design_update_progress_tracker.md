@@ -3,11 +3,11 @@
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
-| D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 58 | 56 | 54 | 54 | 52 | 50 | 60 | 56 | 56 | 52 | 56 | 50 | 44 | 46 | 54 | 53 |
+| D2 | Navigation & IA Harmonisation | 74 | 76 | 72 | 70 | 62 | 68 | 84 | 80 | 74 | 60 | 76 | 78 | 60 | 58 | 72 | 73 |
+| D3 | Page Templates & Partial Library | 80 | 78 | 74 | 74 | 68 | 68 | 80 | 74 | 76 | 72 | 76 | 70 | 64 | 66 | 74 | 74 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 74 | 74 | 72 | 72 | 66 | 72 | 82 | 84 | 74 | 70 | 74 | 74 | 62 | 62 | 74 | 73 |
-| D6 | Design QA, Documentation & Handover | 34 | 36 | 34 | 36 | 32 | 34 | 40 | 40 | 36 | 34 | 38 | 48 | 34 | 38 | 36 | 37 |
+| D5 | Mobile Parity & Component Adaptation | 84 | 82 | 80 | 80 | 74 | 80 | 90 | 90 | 82 | 78 | 84 | 82 | 72 | 72 | 84 | 82 |
+| D6 | Design QA, Documentation & Handover | 50 | 52 | 48 | 50 | 44 | 50 | 56 | 56 | 50 | 48 | 52 | 60 | 46 | 50 | 48 | 52 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -32,6 +32,12 @@
 > - Finance escalation QA checklists, palette guidance, and responder flow annotations were added to the documentation bundle, increasing D6 quality, organisation, functionality, and QA scores while preparing handover packs for operations sign-off.
 > - Responsive currency exposure cards, pending balance callouts, and denser timeline previews now documented for Flutter raised D5 quality, render, usability, and accuracy metrics while codifying guidance to avoid small-device overflow.
 > - Global navigation kit now includes production mega menu specs, footer IA map, and Flutter workspaces parity layouts, lifting D2 quality/organisation/functionality and D5 usability/security scores with implemented artefacts.
+- Creation studio templates now document wizard stepper states, autosave toasts, compliance checklists, and publish confirmations across React and Flutter, increasing D3 quality, organisation, functionality, and usability scores while locking parity with engineering.
+- Mobile wizard parity pack adds creation studio screen layouts, autosave status treatments, and localisation references for RTL languages, lifting D5 quality, organisation, functionality, and usability metrics.
+- Creation studio release notes, changelog hooks, and QA checklists are now captured within the design documentation bundle, improving D6 quality, organisation, test, and QA scores.
+- Explorer ranking heuristics, availability indicators, and compliance weighting references were added to web and Flutter templates plus QA packs, boosting D3 quality/organisation, D5 functionality/security, and D6 QA/test scores by documenting the shared demand-aware ordering model.
+- Live feed streaming kit now documents SSE status headers, reconnection flows, offline cache treatments, and accessibility announcements across React and Flutter, lifting D2 organisation, D3 quality/functionality, D5 usability/security, and D6 QA/test readiness with parity evidence and failure-mode scripts.
+- Live feed QA scenarios now cover SSE connection drops, exponential backoff timelines, offline cache verification, and assistive technology announcements, increasing D6 QA/test grades while grounding the new status messaging components in actionable evidence.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.
