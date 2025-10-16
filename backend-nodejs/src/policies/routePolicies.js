@@ -169,6 +169,52 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'zones.read': {
+    id: 'zones.read',
+    version: '1.0.0',
+    resource: 'zones',
+    action: 'zones:read',
+    description: 'Allow operations staff to inspect geo-zone definitions, compliance, and analytics.',
+    requirements: [Permissions.ZONES_READ],
+    tags: ['zones', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      includeAnalytics: req.query?.includeAnalytics === 'true'
+    })
+  },
+  'zones.manage': {
+    id: 'zones.manage',
+    version: '1.0.0',
+    resource: 'zones',
+    action: 'zones:manage',
+    description: 'Allow operations administrators to create, update, import, and delete service zones.',
+    requirements: [Permissions.ZONES_MANAGE],
+    tags: ['zones', 'operations'],
+    severity: 'critical',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      replace: Boolean(req.body?.replace),
+      coverageCount: Array.isArray(req.body?.coverages) ? req.body.coverages.length : null
+    })
+  },
+  'zones.coverage': {
+    id: 'zones.coverage',
+    version: '1.0.0',
+    resource: 'zones.coverage',
+    action: 'zones:coverage',
+    description: 'Allow operations administrators to manage zone-to-service coverage assignments.',
+    requirements: [Permissions.ZONES_COVERAGE],
+    tags: ['zones', 'operations'],
+    severity: 'critical',
+    metadata: (req) => ({
+      zoneId: req.params?.zoneId || null,
+      coverageId: req.params?.coverageId || null,
+      coverageCount: Array.isArray(req.body?.coverages) ? req.body.coverages.length : null
+    })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',

@@ -45,6 +45,9 @@ export const Permissions = Object.freeze({
   SERVICES_BOOK: 'services:book',
   SUPPORT_TICKETS: 'support:tickets:manage',
   USER_DIRECTORY: 'user:directory:view',
+  ZONES_READ: 'zones:read',
+  ZONES_MANAGE: 'zones:manage',
+  ZONES_COVERAGE: 'zones:coverage',
   ZONES_MATCH: 'zones:match',
   ZONES_PREVIEW: 'zones:preview'
 });

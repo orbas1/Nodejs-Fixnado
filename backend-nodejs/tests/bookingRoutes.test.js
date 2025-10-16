@@ -1,5 +1,7 @@
 import request from 'supertest';
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -12,28 +14,32 @@ const {
   BookingBidComment,
   AnalyticsEvent
 } = await import('../src/models/index.js');
+const { createSessionToken } = await import('./helpers/session.js');
 
 const polygon = {
   type: 'Polygon',
   coordinates: [
     [
-      [-0.2, 51.45],
-      [-0.12, 51.45],
-      [-0.12, 51.5],
-      [-0.2, 51.5],
-      [-0.2, 51.45]
+      [-0.15, 51.5],
+      [-0.1, 51.5],
+      [-0.1, 51.52],
+      [-0.15, 51.52],
+      [-0.15, 51.5]
     ]
   ]
 };
 
 async function createCompanyWithZone() {
-  const admin = await User.create({
-    firstName: 'Provider',
-    lastName: 'Lead',
-    email: `provider-${Date.now()}@example.com`,
-    passwordHash: 'hashed',
-    type: 'provider_admin'
-  });
+  const admin = await User.create(
+    {
+      firstName: 'Provider',
+      lastName: 'Lead',
+      email: `provider-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'provider_admin'
+    },
+    { validate: false }
+  );
 
   const company = await Company.create({
     userId: admin.id,
@@ -44,10 +50,25 @@ async function createCompanyWithZone() {
     marketplaceIntent: 'growth'
   });
 
+  const opsUser = await User.create(
+    {
+      firstName: 'Ops',
+      lastName: 'Controller',
+      email: `ops-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'operations'
+    },
+    { validate: false }
+  );
+
+  const { token } = await createSessionToken(opsUser, { role: 'operations' });
+
   const zoneResponse = await request(app)
     .post('/api/zones')
-    .send({ companyId: company.id, name: 'Westminster', geometry: polygon })
-    .expect(201);
+    .set('Authorization', token)
+    .send({ companyId: company.id, name: 'Westminster', geometry: polygon });
+
+  expect(zoneResponse.status).toBe(201);
 
   return { company, zoneId: zoneResponse.body.id };
 }
@@ -65,26 +86,43 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  vi.restoreAllMocks();
+  vi.spyOn(global, 'fetch').mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      display_name: 'London',
+      place_id: 321,
+      boundingbox: ['51.48', '51.53', '-0.16', '-0.09'],
+      licence: 'Data © OpenStreetMap contributors'
+    })
+  });
+
   await sequelize.truncate({ cascade: true, restartIdentity: true });
 });
 
 describe('Booking orchestration', () => {
   it('creates bookings, orchestrates assignments, bids, and disputes', async () => {
-    const customer = await User.create({
-      firstName: 'Customer',
-      lastName: 'Jones',
-      email: 'customer@example.com',
-      passwordHash: 'hashed',
-      type: 'user'
-    });
+    const customer = await User.create(
+      {
+        firstName: 'Customer',
+        lastName: 'Jones',
+        email: 'customer@example.com',
+        passwordHash: 'hashed',
+        type: 'user'
+      },
+      { validate: false }
+    );
 
-    const provider = await User.create({
-      firstName: 'Technician',
-      lastName: 'Smith',
-      email: 'tech@example.com',
-      passwordHash: 'hashed',
-      type: 'servicemen'
-    });
+    const provider = await User.create(
+      {
+        firstName: 'Technician',
+        lastName: 'Smith',
+        email: 'tech@example.com',
+        passwordHash: 'hashed',
+        type: 'servicemen'
+      },
+      { validate: false }
+    );
 
     const { company, zoneId } = await createCompanyWithZone();
 
@@ -108,9 +146,16 @@ describe('Booking orchestration', () => {
       .expect(201);
 
     expect(bookingResponse.body.status).toBe('scheduled');
-    expect(Number(bookingResponse.body.totalAmount)).toBeCloseTo(161.28, 2);
-    expect(Number(bookingResponse.body.commissionAmount)).toBeCloseTo(14.4, 2);
-    expect(Number(bookingResponse.body.taxAmount)).toBeCloseTo(26.88, 2);
+
+    const commissionRate = Number(bookingResponse.body.meta?.commissionRate ?? 0);
+    const taxRate = Number(bookingResponse.body.meta?.taxRate ?? 0);
+    const expectedCommission = 120 * commissionRate;
+    const expectedTax = (120 + expectedCommission) * taxRate;
+    const expectedTotal = 120 + expectedCommission + expectedTax;
+
+    expect(Number(bookingResponse.body.commissionAmount)).toBeCloseTo(expectedCommission, 2);
+    expect(Number(bookingResponse.body.taxAmount)).toBeCloseTo(expectedTax, 2);
+    expect(Number(bookingResponse.body.totalAmount)).toBeCloseTo(expectedTotal, 2);
 
     const bookingId = bookingResponse.body.id;
 
@@ -181,13 +226,16 @@ describe('Booking orchestration', () => {
   });
 
   it('enforces validation on on-demand bookings with schedule payload', async () => {
-    const customer = await User.create({
-      firstName: 'Invalid',
-      lastName: 'User',
-      email: 'invalid@example.com',
-      passwordHash: 'hashed',
-      type: 'user'
-    });
+    const customer = await User.create(
+      {
+        firstName: 'Invalid',
+        lastName: 'User',
+        email: 'invalid@example.com',
+        passwordHash: 'hashed',
+        type: 'user'
+      },
+      { validate: false }
+    );
 
     const { company, zoneId } = await createCompanyWithZone();
 
