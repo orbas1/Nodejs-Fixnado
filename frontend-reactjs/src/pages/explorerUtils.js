@@ -123,9 +123,17 @@ export function applyExplorerFilters({ services, items }, filters, zones) {
       ? typedItems
       : typedItems.filter((item) => item.availability === filters.availability || item.availability === 'both');
 
+  const { services: rankedServices, items: rankedItems } = rankExplorerResults(
+    { services: typedServices, items: availabilityFilteredItems },
+    {
+      selectedZone,
+      filters
+    }
+  );
+
   return {
-    services: typedServices,
-    items: availabilityFilteredItems,
+    services: rankedServices,
+    items: rankedItems,
     selectedZone
   };
 }
@@ -242,4 +250,195 @@ export function extractServiceCategories(services) {
   });
 
   return Array.from(categories.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function normaliseTerm(term) {
+  return term?.toString().trim().toLowerCase() ?? '';
+}
+
+function textContainsTerm(text, term) {
+  if (!term) {
+    return 0;
+  }
+
+  const normalised = normaliseTerm(text);
+  if (!normalised) {
+    return 0;
+  }
+
+  if (normalised.includes(term)) {
+    return 1;
+  }
+
+  const tokens = normalised.split(/[^a-z0-9]+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return 0;
+  }
+
+  const matches = tokens.filter((token) => token.startsWith(term));
+  return Math.min(1, matches.length / tokens.length);
+}
+
+function demandWeight(level) {
+  switch ((level || '').toLowerCase()) {
+    case 'high':
+      return 0.18;
+    case 'medium':
+      return 0.12;
+    case 'low':
+      return 0.06;
+    default:
+      return 0.1;
+  }
+}
+
+function complianceScoreFromCompany(service) {
+  const candidate =
+    service?.complianceScore ?? service?.Company?.complianceScore ?? service?.Company?.compliance_snapshot?.score;
+
+  const numeric = Number(candidate);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function companyIdForService(service) {
+  if (!service) {
+    return null;
+  }
+  if (service.companyId) {
+    return service.companyId;
+  }
+  if (service.Company?.id) {
+    return service.Company.id;
+  }
+  return null;
+}
+
+function computeServiceScore(service, { selectedZone, filters }) {
+  let score = 0.4;
+  const zoneCompanyId = selectedZone?.companyId;
+  const serviceCompanyId = companyIdForService(service);
+
+  if (zoneCompanyId && serviceCompanyId && zoneCompanyId === serviceCompanyId) {
+    score += 0.32 + demandWeight(selectedZone?.demandLevel ?? '');
+  }
+
+  const compliance = complianceScoreFromCompany(service);
+  if (compliance != null) {
+    score += Math.min(1, compliance / 100) * 0.22;
+  }
+
+  const price = Number(service.price ?? service.metadata?.price);
+  if (Number.isFinite(price) && price > 0) {
+    const normalised = Math.min(1, 1 / Math.log10(price + 10));
+    score += normalised * 0.1;
+  } else {
+    score -= 0.02;
+  }
+
+  if (Array.isArray(service.tags) && service.tags.length > 0) {
+    score += Math.min(0.08, service.tags.length * 0.02);
+  }
+
+  const term = normaliseTerm(filters?.term);
+  if (term) {
+    const textMatch = textContainsTerm(`${service.title} ${service.description ?? ''}`, term);
+    score += textMatch * 0.15;
+  }
+
+  return score;
+}
+
+function companyIdForItem(item) {
+  if (!item) {
+    return null;
+  }
+  if (item.companyId) {
+    return item.companyId;
+  }
+  if (item.Company?.id) {
+    return item.Company.id;
+  }
+  return null;
+}
+
+function computeMarketplaceItemScore(item, { selectedZone, filters }) {
+  let score = 0.35;
+
+  const zoneCompanyId = selectedZone?.companyId;
+  const itemCompanyId = companyIdForItem(item);
+  if (zoneCompanyId && itemCompanyId && zoneCompanyId === itemCompanyId) {
+    score += 0.28 + demandWeight(selectedZone?.demandLevel ?? '');
+  }
+
+  const status = item.status?.toString().toLowerCase() ?? '';
+  if (status.includes('approved') || status.includes('live')) {
+    score += 0.12;
+  } else if (status.includes('hold') || status.includes('pending')) {
+    score -= 0.06;
+  }
+
+  if (item.supportsRental) {
+    score += 0.07;
+  }
+
+  const availabilityFilter = (filters?.availability || '').toLowerCase();
+  if (availabilityFilter && availabilityFilter !== 'any') {
+    const availability = item.availability?.toString().toLowerCase() ?? '';
+    if (availability.includes(availabilityFilter) || (availabilityFilter === 'rent' && item.supportsRental)) {
+      score += 0.1;
+    } else {
+      score -= 0.08;
+    }
+  }
+
+  const pricePerDay = Number(item.pricePerDay);
+  if (Number.isFinite(pricePerDay) && pricePerDay > 0) {
+    const normalised = Math.min(1, 1 / Math.log10(pricePerDay + 10));
+    score += normalised * 0.08;
+  }
+
+  const purchasePrice = Number(item.purchasePrice);
+  if (Number.isFinite(purchasePrice) && purchasePrice > 0) {
+    const normalised = Math.min(1, 1 / Math.log10(purchasePrice + 25));
+    score += normalised * 0.05;
+  }
+
+  if (item.insuredOnly) {
+    score += 0.03;
+  }
+
+  const term = normaliseTerm(filters?.term);
+  if (term) {
+    const textMatch = textContainsTerm(`${item.title} ${item.description ?? ''}`, term);
+    score += textMatch * 0.12;
+  }
+
+  return score;
+}
+
+function sortByScore(items, scorer) {
+  return items.slice().sort((a, b) => scorer(b) - scorer(a));
+}
+
+export function rankExplorerResults(results, { selectedZone, filters }) {
+  const rankedServices = sortByScore(results.services ?? [], (service) =>
+    computeServiceScore(service, { selectedZone, filters })
+  );
+
+  const rankedItems = sortByScore(results.items ?? [], (item) =>
+    computeMarketplaceItemScore(item, { selectedZone, filters })
+  );
+
+  return {
+    services: rankedServices,
+    items: rankedItems
+  };
+}
+
+export function computeExplorerServiceScore(service, context) {
+  return computeServiceScore(service, context);
+}
+
+export function computeExplorerMarketplaceScore(item, context) {
+  return computeMarketplaceItemScore(item, context);
 }

@@ -154,3 +154,8 @@ The design programme for Version 1.50 delivers a comprehensive visual and intera
    - Authored Flutter-specific parity pack including blueprint cards, autosave indicators, compliance checklist treatments, publish confirmation overlays, and localisation guidance for RTL locales.
    - Re-scored design progress trackers, milestone deliverables, and QA checklists to evidence parity completion and accessibility coverage for the creation studio wizard.
    - Synced user/web logic flow documentation with design artefacts, ensuring blueprint orchestration, autosave, slug governance, and compliance gating steps are represented consistently across UX, product, and engineering records.
+
+29. **Explorer Ranking Heuristics (2025-04-11)**
+   - Documented demand-weighted marketplace ranking, compliance score modifiers, and availability heuristics across explorer wireframes so both React and Flutter implementations surface compliant in-zone providers first.
+   - Updated design plans and progress trackers to reflect the shared scoring model, adding notes for analytics instrumentation, parity testing, and fallback states when offline caches drive ordering.
+   - Refreshed logic flow diagrams with decision branches illustrating ranking inputs (demand, compliance, pricing, availability) and parity callouts for mobile explorer cards and marketplace lists.

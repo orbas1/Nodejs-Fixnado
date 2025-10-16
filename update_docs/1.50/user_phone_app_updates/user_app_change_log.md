@@ -34,3 +34,8 @@
 - Added Creation Studio repository, domain models, Riverpod controller, and widget wiring to enable blueprint discovery, draft autosave, slug validation, compliance tick-off, and publish submission directly from mobile.
 - Implemented the multi-step Creation Studio screen with blueprint cards, inline autosave indicator, persona-aware defaults, compliance checklist toggles, availability inputs, and publish flow consistent with the React experience and localisation requirements.
 - Wrote controller tests (`test/creation_studio_controller_test.dart`) covering blueprint load, autosave success/error, slug availability handling, and publish orchestration while documenting navigation entry, localisation copy, and parity tasks in the update trackers.
+
+## 2025-04-11 – Explorer Ranking & Demand Heuristics
+- Extended the explorer repository, filters, and view state to support zone-aware ranking inputs (company IDs, compliance scores, availability preferences) while aligning enums and cache encodings with the updated React heuristics.
+- Added shared ranking utilities (`explorer_ranking.dart`) scoring services and marketplace items by demand weighting, compliance telemetry, availability, rental support, and price signals with offline fallback ordering.
+- Authored Dart unit tests (`test/explorer_ranking_test.dart`) verifying service and marketplace ordering plus scoring deltas under different demand/compliance scenarios, keeping mobile explorer parity with the web experience.

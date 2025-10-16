@@ -5,7 +5,7 @@
 | 1 | Security & Secrets Hardening | 96 | 100 | 95 | 94 | 86 | 95 | 94 |
 | 2 | Compliance & Data Governance | 94 | 100 | 94 | 95 | 88 | 92 | 94 |
 | 3 | Payments, Escrow & Finance Orchestration | 92 | 100 | 92 | 94 | 88 | 92 | 93 |
-| 4 | Experience & Navigation Overhaul | 48 | 58 | 46 | 54 | 44 | 52 | 50 |
+| 4 | Experience & Navigation Overhaul | 54 | 66 | 58 | 64 | 54 | 62 | 60 |
 | 5 | Intelligence, Integrations & Automation Hub | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
 | 6 | Mobile Parity & Stabilisation | 18 | 20 | 16 | 22 | 14 | 18 | 18 |
 | 7 | Observability, Testing & Quality Automation | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
@@ -39,6 +39,7 @@
 > - React jsdom suites for finance widgets and responsive Flutter currency cards cut render overhead on large datasets, lifting Task 3 integration, functionality, and production readiness benchmarks.
 > - Navigation overhaul introduced a production-ready mega menu, footer IA refresh, and Flutter workspaces parity screen, lifting Task 4 security, completion, integration, functionality, and production readiness metrics.
 > - Creation studio wizard and autosave infrastructure now operate end-to-end on React and Flutter, raising Task 4 completion, integration, functionality, and error-free scores while unlocking production readiness evidence for publishing flows.
+> - Explorer ranking now weights compliance, demand, and availability across React and Flutter with shared heuristics, parity unit tests, and mobile zoning filters so marketplace and dashboard journeys surface the strongest providers, increasing Task 4 security, integration, functionality, and production scores.
 > - Mobile creation studio parity, localisation checks, and controller tests increased Task 6 security, completion, integration, and functionality scores as providers can now publish offerings from Flutter with the same compliance guardrails as web.
 > - GDPR metrics endpoint, migration, and SLA instrumentation now drive real backlog/due-date telemetry across backend, React, and Flutter clients; Vitest/Supertest coverage plus design artefact updates elevate Task 2 completion, functionality, and production readiness to the 90s.
 > - Overall Level % values are the rounded averages of the six tracked dimensions per task.

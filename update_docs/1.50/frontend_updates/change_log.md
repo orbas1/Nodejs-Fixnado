@@ -28,3 +28,8 @@
 - Added `creationStudioClient` with blueprint fetching, draft autosave, publish submission, and slug validation helpers, wiring the new `/api/creation-studio` endpoints into the React application.
 - Introduced `CreationStudioWizard` page with blueprint selection cards, stepper, autosave feedback, compliance checklist validation, and publish flow plus integrated the route and navigation entry into the solutions mega menu.
 - Localised new copy across all supported locales and added Vitest coverage for the creation studio reducer to protect state transitions, autosave, and serialization logic.
+
+## 2025-04-11 – Explorer Ranking & Demand Heuristics
+- Implemented demand-aware ranking inside `explorerUtils.js`, combining zone demand, compliance telemetry, availability preferences, and pricing signals so search results prioritise compliant providers and rentable stock in high-demand regions.
+- Updated explorer unit tests to cover the new ranking heuristics and exported scorers, ensuring Vitest verifies ordering across services and marketplace items with demand, compliance, and availability permutations.
+- Hardened search utilities by surfacing reusable scoring helpers for downstream dashboards and adding documentation to explorer pages updates covering demand-weighted listings and compliance-driven ordering.

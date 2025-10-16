@@ -5,7 +5,7 @@
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 100% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 100% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 100% |
-| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 58% |
+| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 66% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
 | 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 12% |
 | 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 0% |
@@ -111,7 +111,7 @@
 - **Logic:** Routing guards, feature toggles, error boundaries.
 - **Design:** Visual refresh, imagery, accessibility guidance.
 
-**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%.
+**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%. Explorer search now applies demand-aware ranking across React and Flutter, uses compliance telemetry and availability heuristics, and ships parity tests plus mobile zoning filters so marketplace, storefront, and dashboard journeys surface the highest quality operators by default, pushing Task 4 execution to 66%.
 
 ## Task 5 – Intelligence, Integrations & Automation Hub (0%)
 **Objective:** Launch integration console, AI orchestration, and automation capabilities with full observability.

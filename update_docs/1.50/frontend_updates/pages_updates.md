@@ -24,3 +24,8 @@
 - Added `CreationStudio.jsx` with a four-step wizard covering blueprint selection, detailed service description, operational configuration, and review/publish flows backed by autosave and compliance validation.
 - Introduced new API client, reducer-driven state management, slug availability checks, and spinner/alert states so providers can safely draft and publish packages.
 - Exposed the experience via the solutions mega menu with localisation updates across all supported languages.
+
+## Explorer & Search
+- Embedded demand and compliance-aware ranking inside `explorerUtils.js`, ensuring services and marketplace items returned by the Search and Explorer experiences prioritise providers within the active zone, compliant companies, and rentable stock when availability filters request it.
+- Documented the new ranking logic across explorer notes so teams understand how zone demand, compliance scores, availability preferences, and pricing heuristics combine to order results, and surfaced references to the exported scorers for dashboard integrations.
+- Added parity notes covering the shared heuristics with Flutter, highlighting that both clients now use the same demand weights, compliance multipliers, and availability fallbacks while exposing the behaviour through the React explorer page.

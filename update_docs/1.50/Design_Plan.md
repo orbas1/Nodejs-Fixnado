@@ -28,6 +28,7 @@ Primary objectives:
 - Introduce policy decision badges, audit log drawers, and denial microcopy patterns so route-level enforcement is transparent and consistent across dashboards.
 - Validate provider dashboard modules against restored service responses (trust score, review summaries, inventory alerts) to confirm component coverage without additional visual redesign.
 - Refactor forms with inline validation, progressive disclosure for advanced settings, and security copy for sensitive actions.
+- Encode explorer ranking heuristics combining zone demand weighting, company compliance scores, availability preferences, and price cues with analytics instrumentation so search results and dashboards consume consistent ordering guidance.
 
 ### User & Provider Applications (Flutter)
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
@@ -39,6 +40,7 @@ Primary objectives:
 - Provide offline and loading states consistent with web skeleton patterns.
 - Overlay biometric unlock prompts and session status banners so mobile flows mirror the hardened authentication posture delivered in this milestone.
 - Layer consent acknowledgement overlays that reference the ledger templates and block navigation until required policies are accepted, aligning copy with the web banner system.
+- Bring explorer ranking parity to mobile by documenting demand/compliance weighting, availability modifiers, and offline fallback ordering so Flutter cards list compliant in-zone providers ahead of out-of-region stock.
 
 ### Shared Design Assets
 - Maintain unified iconography, illustration, and photography guidelines with emo-themed overlays and cultural localisation tips.

@@ -4,10 +4,10 @@
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
 | D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 72 | 70 | 66 | 66 | 62 | 60 | 72 | 66 | 68 | 64 | 68 | 62 | 56 | 58 | 66 | 66 |
+| D3 | Page Templates & Partial Library | 76 | 74 | 70 | 70 | 64 | 64 | 76 | 70 | 72 | 68 | 72 | 66 | 60 | 62 | 70 | 70 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 78 | 78 | 76 | 76 | 70 | 76 | 86 | 86 | 78 | 74 | 78 | 78 | 66 | 66 | 78 | 77 |
-| D6 | Design QA, Documentation & Handover | 40 | 42 | 38 | 40 | 36 | 40 | 46 | 46 | 40 | 38 | 42 | 52 | 38 | 42 | 40 | 43 |
+| D5 | Mobile Parity & Component Adaptation | 80 | 80 | 78 | 78 | 72 | 78 | 88 | 88 | 80 | 76 | 80 | 80 | 68 | 68 | 80 | 79 |
+| D6 | Design QA, Documentation & Handover | 46 | 48 | 44 | 46 | 40 | 46 | 52 | 52 | 46 | 44 | 48 | 56 | 42 | 46 | 44 | 48 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -35,6 +35,7 @@
 - Creation studio templates now document wizard stepper states, autosave toasts, compliance checklists, and publish confirmations across React and Flutter, increasing D3 quality, organisation, functionality, and usability scores while locking parity with engineering.
 - Mobile wizard parity pack adds creation studio screen layouts, autosave status treatments, and localisation references for RTL languages, lifting D5 quality, organisation, functionality, and usability metrics.
 - Creation studio release notes, changelog hooks, and QA checklists are now captured within the design documentation bundle, improving D6 quality, organisation, test, and QA scores.
+- Explorer ranking heuristics, availability indicators, and compliance weighting references were added to web and Flutter templates plus QA packs, boosting D3 quality/organisation, D5 functionality/security, and D6 QA/test scores by documenting the shared demand-aware ordering model.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.

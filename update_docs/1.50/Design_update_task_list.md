@@ -4,10 +4,10 @@
 |---|------|-------------|-----------------|--------------|------------|
 | D1 | Token & System Foundation | Design Systems Guild | 2 weeks | Existing design inventories, accessibility audit inputs | 70% |
 | D2 | Navigation & IA Harmonisation | Product Experience Team | 2.5 weeks | Task D1 tokens, stakeholder IA review | 71% |
-| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 66% |
+| D3 | Page Templates & Partial Library | Growth Experience Pod | 3 weeks | Tasks D1–D2 | 72% |
 | D4 | Theme & Visual Narrative Development | Brand & Campaign Studio | 2 weeks | Task D1 token outputs | 0% |
-| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 82% |
-| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 28% |
+| D5 | Mobile Parity & Component Adaptation | Mobile Experience Pod | 2.5 weeks | Tasks D1–D4 | 86% |
+| D6 | Design QA, Documentation & Handover | Design Ops & QA | 2 weeks | Tasks D1–D5 | 32% |
 
 ---
 
@@ -63,7 +63,7 @@
 12. Review templates with marketing, product, and compliance stakeholders for alignment.
 13. ✅ Validate provider dashboard and business front templates against restored backend payloads; document evidence in design QA backlog.
 
-**Progress Notes:** Creation studio blueprints now have responsive wizard flows, autosave panels, compliance checklist overlays, and slug validation messaging documented for both React and Flutter implementations. The partial library gained creation summary cards, pricing grids, and publish confirmation states with annotated dummy-data scaffolding, while finance escalation templates remain aligned with the alert fan-out contract. These artefacts, alongside refreshed navigation callouts for the solutions mega menu, lift Task D3 completion into the high-50% range and hand design-ready references to engineering.
+**Progress Notes:** Creation studio blueprints now have responsive wizard flows, autosave panels, compliance checklist overlays, and slug validation messaging documented for both React and Flutter implementations. Explorer templates were updated with demand/compliance-driven ranking diagrams, availability badges, and pricing cues so marketplace cards communicate ordering logic across web and Flutter. The partial library gained creation summary cards, pricing grids, and publish confirmation states with annotated dummy-data scaffolding, while finance escalation templates remain aligned with the alert fan-out contract. These artefacts, alongside refreshed navigation callouts for the solutions mega menu, lift Task D3 completion into the low-70% range and hand design-ready references to engineering.
 
 ## Task D4 – Theme & Visual Narrative Development (0%)
 **Objective:** Deliver theme variants (default, industrial, premium, emo) with imagery and motion guidance.
@@ -94,7 +94,7 @@
 10. Coordinate with engineering on component feasibility and edge cases.
 11. ✅ Prepare parity checklist verifying feature coverage, theme support, and compliance cues.
 
-**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, regulatory alert cards, and the escalation trays/acknowledgement flows documented for Slack/Opsgenie parity. Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Creation studio parity pack introduces mobile blueprint cards, autosave status chips, compliance checklists, and publish confirmation overlays, fully documenting navigation hooks, localisation behaviour, and accessibility cues for Flutter. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
+**Progress Notes:** Flutter finance dashboard specs now mirror the React experience with shared KPI ribbons, dispute funnels, payout readiness chips, regulatory alert cards, and the escalation trays/acknowledgement flows documented for Slack/Opsgenie parity. Latest updates swap chip-based currency exposure for responsive cards with pending balance callouts, tighten timeline density guidance, and align accessibility cues so compact devices avoid overflow. Creation studio parity pack introduces mobile blueprint cards, autosave status chips, compliance checklists, and publish confirmation overlays, fully documenting navigation hooks, localisation behaviour, and accessibility cues for Flutter. Explorer parity notes now capture demand/compliance weighting, availability modifiers, and offline fallback ordering so marketplace cards list compliant in-zone providers ahead of out-of-region stock. Consent overlays, compliance cards, and warehouse export tooling remain in parity, and new guidance covers finance empty/error states plus timeline gestures to support mobile-first operations teams.
 
 ## Task D6 – Design QA, Documentation & Handover (28%)
 **Objective:** Finalise design QA artefacts, documentation, and engineering handover materials.
@@ -110,4 +110,4 @@
 8. Coordinate with QA to integrate design checkpoints into overall test plan.
 9. Conduct final stakeholder walkthrough and capture sign-off artefacts.
 
-**Progress Notes:** Compiled QA checklist entries for the warehouse operations console and the new finance escalation flows, including annotation guidelines, alert badge colour references, responder acknowledgement paths, and DPIA documentation link placements so engineering handover kits capture the compliance and finance workflows. Added operational readiness and finance alert handover notes describing `/readyz` states, alert palette references, Slack/Opsgenie copy decks, and deployment dashboard mock-ups so release management receives design-backed guidance for the new telemetry. Creation studio QA packs now bundle wizard stepper audits, localisation spot checks (including RTL Arabic copy), publish confirmation redlines, and changelog cross-references so design, engineering, and release teams can evidence parity and accessibility across platforms.
+**Progress Notes:** Compiled QA checklist entries for the warehouse operations console and the new finance escalation flows, including annotation guidelines, alert badge colour references, responder acknowledgement paths, and DPIA documentation link placements so engineering handover kits capture the compliance and finance workflows. Added operational readiness and finance alert handover notes describing `/readyz` states, alert palette references, Slack/Opsgenie copy decks, and deployment dashboard mock-ups so release management receives design-backed guidance for the new telemetry. Creation studio QA packs now bundle wizard stepper audits, localisation spot checks (including RTL Arabic copy), publish confirmation redlines, and changelog cross-references so design, engineering, and release teams can evidence parity and accessibility across platforms. Explorer ranking QA addendum details demand/compliance scoring checkpoints, availability badge treatments, offline fallback ordering, and parity verification steps shared with Flutter to keep marketplace ordering reproducible across clients.

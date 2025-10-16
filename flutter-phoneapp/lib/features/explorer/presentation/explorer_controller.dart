@@ -4,6 +4,7 @@ import '../../../core/exceptions/api_exception.dart';
 import '../../auth/domain/role_scope.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/explorer_repository.dart';
+import '../domain/explorer_ranking.dart';
 import '../domain/models.dart';
 
 final explorerControllerProvider = StateNotifierProvider<ExplorerController, ExplorerViewState>((ref) {
@@ -111,82 +112,90 @@ class ExplorerViewState {
 
   List<ExplorerService> get services {
     if (snapshot == null) return const [];
-    final data = snapshot!.services;
-    if (filters.type == ExplorerResultType.marketplace || filters.type == ExplorerResultType.tools) {
-    Iterable<ExplorerService> data = snapshot!.services;
-    if (filters.type == ExplorerResultType.marketplace) {
+    if (_excludesServices(filters.type)) {
       return const [];
     }
+
+    Iterable<ExplorerService> data = snapshot!.services;
+
+    final zoneCompanyId = _selectedZoneCompanyId;
+    if (zoneCompanyId != null) {
+      data = data.where((service) => service.companyId == zoneCompanyId);
+    }
+
     if (filters.serviceType != null && filters.serviceType!.isNotEmpty) {
       data = data.where((service) => service.type == filters.serviceType);
     }
+
     if (filters.category != null && filters.category!.isNotEmpty) {
       data = data.where((service) {
         return service.categorySlug == filters.category || service.category == filters.category;
       });
     }
-    return data.toList();
-    final data = snapshot!.services;
-    switch (filters.type) {
-      case ExplorerResultType.services:
-      case ExplorerResultType.all:
-        return data;
-      case ExplorerResultType.marketplace:
-      case ExplorerResultType.storefronts:
-      case ExplorerResultType.businessFronts:
-        return const [];
-    }
+
+    return rankExplorerServices(
+      data,
+      selectedZone: _selectedZone,
+      filters: filters,
+    );
   }
 
   List<ExplorerMarketplaceItem> get marketplaceItems {
     if (snapshot == null) return const [];
-    final data = snapshot!.items;
-    switch (filters.type) {
-      case ExplorerResultType.marketplace:
-      case ExplorerResultType.all:
-        return data;
-      case ExplorerResultType.services:
-      case ExplorerResultType.storefronts:
-      case ExplorerResultType.businessFronts:
-        return const [];
+    if (_excludesMarketplace(filters.type)) {
+      return const [];
     }
+
+    Iterable<ExplorerMarketplaceItem> data = snapshot!.items;
+
+    final zoneCompanyId = _selectedZoneCompanyId;
+    if (zoneCompanyId != null) {
+      data = data.where((item) => item.companyId == zoneCompanyId);
+    }
+
+    final availability = filters.availability;
+    if (availability != null && availability.isNotEmpty && availability != 'any') {
+      final match = availability.toLowerCase();
+      data = data.where((item) {
+        final label = item.availability.toLowerCase();
+        return label.contains(match) || (match == 'rent' && item.supportsRental);
+      });
+    }
+
+    if (filters.type == ExplorerResultType.tools) {
+      data = data.where((item) => item.supportsRental);
+    }
+
+    return rankExplorerMarketplaceItems(
+      data,
+      selectedZone: _selectedZone,
+      filters: filters,
+    );
   }
 
   List<ExplorerStorefront> get storefronts {
     if (snapshot == null) return const [];
-    final data = snapshot!.storefronts;
-    switch (filters.type) {
-      case ExplorerResultType.storefronts:
-      case ExplorerResultType.all:
-        return data;
-      case ExplorerResultType.services:
-      case ExplorerResultType.marketplace:
-      case ExplorerResultType.businessFronts:
-        return const [];
+    if (filters.type == ExplorerResultType.storefronts || filters.type == ExplorerResultType.all) {
+      return snapshot!.storefronts;
     }
+    return const [];
   }
 
   List<ExplorerBusinessFront> get businessFronts {
-    if (snapshot == null || !role.canAccessBusinessFronts) return const [];
-    final data = snapshot!.businessFronts;
-    switch (filters.type) {
-      case ExplorerResultType.businessFronts:
-      case ExplorerResultType.all:
-        return data;
-      case ExplorerResultType.services:
-      case ExplorerResultType.marketplace:
-      case ExplorerResultType.storefronts:
-        return const [];
+    if (snapshot == null || !role.canAccessBusinessFronts) {
+      return const [];
     }
-    if (filters.type == ExplorerResultType.tools) {
-      return data.where((item) => item.supportsRental).toList();
+
+    if (filters.type == ExplorerResultType.businessFronts || filters.type == ExplorerResultType.all) {
+      return snapshot!.businessFronts;
     }
-    return data;
+
+    return const [];
   }
 
   List<ZoneSummary> get zones {
     if (snapshot == null) return const [];
-    if (filters.zoneId == null) {
+    if (filters.zoneId == null || filters.zoneId!.isEmpty) {
       return snapshot!.zones;
     }
     return snapshot!.zones.where((zone) => zone.id == filters.zoneId).toList();
@@ -215,5 +224,48 @@ class ExplorerViewState {
           ? null
           : (errorMessage ?? this.errorMessage),
     );
+  }
+
+  ZoneSummary? get _selectedZone {
+    if (snapshot == null) {
+      return null;
+    }
+    if (filters.zoneId == null || filters.zoneId!.isEmpty) {
+      return null;
+    }
+    for (final zone in snapshot!.zones) {
+      if (zone.id == filters.zoneId) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  String? get _selectedZoneCompanyId => _selectedZone?.companyId;
+
+  bool _excludesServices(ExplorerResultType type) {
+    switch (type) {
+      case ExplorerResultType.services:
+      case ExplorerResultType.all:
+        return false;
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.tools:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return true;
+    }
+  }
+
+  bool _excludesMarketplace(ExplorerResultType type) {
+    switch (type) {
+      case ExplorerResultType.marketplace:
+      case ExplorerResultType.tools:
+      case ExplorerResultType.all:
+        return false;
+      case ExplorerResultType.services:
+      case ExplorerResultType.storefronts:
+      case ExplorerResultType.businessFronts:
+        return true;
+    }
   }
 }

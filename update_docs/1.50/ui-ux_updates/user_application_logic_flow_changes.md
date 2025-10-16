@@ -22,6 +22,9 @@
 - Payment failures display detailed reasons (insufficient funds, 3DS required) and offer alternative payment method or support contact.
 - When provider cancels, automated flow suggests replacements ranked by compatibility, provides compensation voucher when policy applies, and collects feedback for analytics.
 
+## Marketplace Discovery & Explorer
+- Explorer ranking mirrors the web heuristics by weighting zone demand, company compliance scores, rental availability, and price telemetry so in-zone providers and rentable stock appear before out-of-region listings while offline states fall back to cached ordering.
+
 ## Analytics & Measurement
 - Added events: `user_booking_step_view`, `user_booking_exit`, `user_issue_report_submitted`, `user_payment_method_update`, and `user_support_article_viewed` with metadata for industry, booking value, and session length.
 - Funnel dashboards monitor drop-off per step, highlight response times for issue resolution, and track adoption of add-on bundles to inform future pricing experiments.

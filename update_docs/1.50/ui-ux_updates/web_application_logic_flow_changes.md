@@ -14,6 +14,7 @@
 - Marketplace search filters sync with URL query params enabling shareable states; clearing filters resets to persona defaults (e.g., procurement vs. operations).
 - Quote request drawer collects data across tabs; validation ensures each step completed before enabling submission; once submitted, API call triggers notification and logs event.
 - Provider comparison logic allows selecting up to three providers; comparison table renders capabilities, SLAs, pricing tiers, and ratings side-by-side.
+- Explorer ranking layer scores services and marketplace items using zone demand weighting, company compliance scores, availability preferences, and price heuristics so results surface compliant in-zone providers and rentable stock before out-of-region listings.
 
 ## Resource Hub & Support
 - Resource hub filter interactions update results without page refresh using incremental fetching; bookmarking article adds to personalised quick access list.

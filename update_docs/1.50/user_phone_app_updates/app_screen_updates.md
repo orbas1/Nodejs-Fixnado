@@ -11,3 +11,4 @@
 - Added empty/loading/error states for the metrics panel and pull-to-refresh hook that refreshes both metrics and requests, ensuring mobile parity with the web dashboard.
 - Refined the Finance Dashboard with escalation trays, Slack/Opsgenie delivery pills, and retry countdown chips that mirror the backend fan-out service while keeping summary tiles responsive on compact screens.
 - Launched the Creation Studio screen with blueprint carousel entry, multi-step form, autosave status chip, slug validator, compliance checklist, and publish CTA wired into the new repository/controller so providers can configure services end-to-end without desktop fallback.
+- Updated the Explorer screen and supporting view state to apply demand/compliance-aware ranking, availability highlights, and offline fallback ordering so in-zone providers and rentable stock surface ahead of out-of-region listings with parity to the React heuristics.

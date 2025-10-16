@@ -40,6 +40,7 @@
 7. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
 8. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
 9. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
+10. Explorer ranking heuristics documentation detailing demand/compliance weighting, availability modifiers, price cues, and offline fallback ordering with parity notes for Flutter explorer cards and QA instrumentation.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.
