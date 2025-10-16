@@ -1,4 +1,6 @@
 import { DataTypes, Model, Op } from 'sequelize';
+import isEmail from 'validator/lib/isEmail.js';
+import validator from 'validator';
 import sequelize from '../config/database.js';
 import {
   decryptString,
@@ -146,6 +148,7 @@ User.init(
       validate: {
         isEmail(value) {
           if (value === null || value === undefined) {
+          if (typeof value !== 'string') {
             throw new Error('Validation isEmail on email failed');
           }
 
@@ -162,6 +165,17 @@ User.init(
           }
 
           if (!isValidEmail(candidate)) {
+          try {
+            const decrypted = decryptString(value, 'user:email');
+            if (decrypted) {
+              candidate = decrypted;
+            }
+          } catch (error) {
+            // If decryption fails we fall back to the raw value which will fail validation below.
+          }
+
+          const normalised = normaliseEmail(candidate);
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalised)) {
             throw new Error('Validation isEmail on email failed');
           }
         }
@@ -170,7 +184,26 @@ User.init(
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
         }
-        const { encrypted, hash } = protectEmail(value);
+        const trimmed = value.trim();
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+        if (!isEmail(trimmed, { allow_utf8_local_part: false })) {
+          throw new Error('email must be a valid address');
+        }
+        if (!EMAIL_PATTERN.test(trimmed)) {
+          throw new Error('email must be a valid email address');
+        }
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+
+        const normalised = normaliseEmail(trimmed);
+        if (!validator.isEmail(normalised)) {
+          throw new Error('email must be a valid email address');
+        }
+
+        const { encrypted, hash } = protectEmail(trimmed);
         this.setDataValue('email', encrypted);
         this.setDataValue('emailHash', hash);
       },
@@ -214,6 +247,30 @@ User.init(
         return stored ? decryptString(stored, 'user:address') : null;
       }
     },
+    phoneNumber: {
+      type: DataTypes.TEXT,
+      field: 'phone_number_encrypted',
+      allowNull: true,
+      set(value) {
+        if (value === null || value === undefined || value === '') {
+          this.setDataValue('phoneNumber', null);
+          return;
+        }
+        if (typeof value !== 'string') {
+          throw new TypeError('phoneNumber must be a string when provided');
+        }
+        const trimmed = value.trim();
+        if (!trimmed) {
+          this.setDataValue('phoneNumber', null);
+          return;
+        }
+        this.setDataValue('phoneNumber', encryptString(trimmed, 'user:phoneNumber'));
+      },
+      get() {
+        const stored = this.getDataValue('phoneNumber');
+        return stored ? decryptString(stored, 'user:phoneNumber') : null;
+      }
+    },
     age: DataTypes.INTEGER,
     type: {
       type: DataTypes.ENUM(
@@ -236,6 +293,14 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'two_factor_app'
+    },
+    profileImageUrl: {
+      type: DataTypes.STRING(2048),
+      allowNull: true,
+      field: 'profile_image_url',
+      validate: {
+        isUrl: true
+      }
     },
     regionId: {
       type: DataTypes.UUID,
