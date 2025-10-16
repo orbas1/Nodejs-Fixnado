@@ -294,6 +294,10 @@
   resize: vertical;
   transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
     box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
+  line-height: 1.5;
+  transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
+    box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
+  resize: vertical;
 }
 
 .fx-text-input:focus-visible {
@@ -324,6 +328,7 @@
 .fx-text-input__affix--suffix {
   right: var(--fx-space-3);
 }
+
 
 .fx-textarea-wrapper {
   position: relative;

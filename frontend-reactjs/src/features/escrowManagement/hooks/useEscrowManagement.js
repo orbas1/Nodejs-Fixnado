@@ -19,7 +19,37 @@ import { formatNumber, toIsoString, toLocalDateTimeInput } from '../utils/format
 const DEFAULT_FILTERS = { status: 'all', policyId: 'all', onHold: 'all', search: '' };
 const DEFAULT_PAGINATION = { page: 1, pageSize: 20 };
 
-export function useEscrowManagement() {
+const DEFAULT_ESCROW_API = {
+  fetchEscrows,
+  fetchEscrow,
+  createEscrow,
+  updateEscrowRecord,
+  addEscrowNoteRecord,
+  deleteEscrowNoteRecord,
+  upsertEscrowMilestoneRecord,
+  deleteEscrowMilestoneRecord,
+  fetchReleasePolicies,
+  createReleasePolicyRecord,
+  updateReleasePolicyRecord,
+  deleteReleasePolicyRecord
+};
+
+export function useEscrowManagement(apiOverrides) {
+  const api = useMemo(() => ({ ...DEFAULT_ESCROW_API, ...(apiOverrides ?? {}) }), [apiOverrides]);
+  const {
+    fetchEscrows: fetchEscrowsApi,
+    fetchEscrow: fetchEscrowApi,
+    createEscrow: createEscrowApi,
+    updateEscrowRecord: updateEscrowApi,
+    addEscrowNoteRecord: addEscrowNoteApi,
+    deleteEscrowNoteRecord: deleteEscrowNoteApi,
+    upsertEscrowMilestoneRecord: upsertMilestoneApi,
+    deleteEscrowMilestoneRecord: deleteMilestoneApi,
+    fetchReleasePolicies: fetchPoliciesApi,
+    createReleasePolicyRecord: createPolicyApi,
+    updateReleasePolicyRecord: updatePolicyApi,
+    deleteReleasePolicyRecord: deletePolicyApi
+  } = api;
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
   const [listPayload, setListPayload] = useState(null);
@@ -60,7 +90,7 @@ export function useEscrowManagement() {
         if (filters.search) {
           query.search = filters.search;
         }
-        const payload = await fetchEscrows(query);
+        const payload = await fetchEscrowsApi(query);
         setListPayload(payload);
         setPolicies(payload?.settings?.releasePolicies ?? []);
         if (!payload.items?.length) {
@@ -88,7 +118,7 @@ export function useEscrowManagement() {
         setLoading(false);
       }
     },
-    [filters, pagination]
+    [filters, pagination, fetchEscrowsApi]
   );
 
   useEffect(() => {
@@ -99,7 +129,7 @@ export function useEscrowManagement() {
     setPoliciesLoading(true);
     setPolicyError(null);
     try {
-      const items = await fetchReleasePolicies();
+      const items = await fetchPoliciesApi();
       setPolicies(items ?? []);
       return items;
     } catch (caught) {
@@ -109,7 +139,7 @@ export function useEscrowManagement() {
     } finally {
       setPoliciesLoading(false);
     }
-  }, []);
+  }, [fetchPoliciesApi]);
 
   useEffect(() => {
     refreshPolicies();
@@ -123,7 +153,7 @@ export function useEscrowManagement() {
     }
     setSelectedLoading(true);
     try {
-      const record = await fetchEscrow(id);
+      const record = await fetchEscrowApi(id);
       setSelected(record);
       setDetailDraft({
         status: record.status,
@@ -145,7 +175,7 @@ export function useEscrowManagement() {
     } finally {
       setSelectedLoading(false);
     }
-  }, []);
+  }, [fetchEscrowApi]);
 
   useEffect(() => {
     if (selectedId) {
@@ -225,7 +255,7 @@ export function useEscrowManagement() {
         holdReason: detailDraft.onHold ? detailDraft.holdReason : null,
         externalReference: detailDraft.externalReference || null
       };
-      await updateEscrowRecord(selected.id, payload);
+      await updateEscrowApi(selected.id, payload);
       await loadEscrowDetail(selected.id);
       await loadEscrows();
     } catch (caught) {
@@ -233,14 +263,14 @@ export function useEscrowManagement() {
     } finally {
       setSavingDetails(false);
     }
-  }, [detailDraft, selected, loadEscrowDetail, loadEscrows]);
+  }, [detailDraft, selected, loadEscrowDetail, loadEscrows, updateEscrowApi]);
 
   const addNote = useCallback(
     async (body, pinned) => {
       if (!selected) return;
       setNoteSaving(true);
       try {
-        await addEscrowNoteRecord(selected.id, { body, pinned });
+        await addEscrowNoteApi(selected.id, { body, pinned });
         await loadEscrowDetail(selected.id);
       } catch (caught) {
         console.error('Failed to add note', caught);
@@ -248,27 +278,27 @@ export function useEscrowManagement() {
         setNoteSaving(false);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, addEscrowNoteApi]
   );
 
   const deleteNote = useCallback(
     async (note) => {
       if (!selected) return;
       try {
-        await deleteEscrowNoteRecord(selected.id, note.id);
+        await deleteEscrowNoteApi(selected.id, note.id);
         await loadEscrowDetail(selected.id);
       } catch (caught) {
         console.error('Failed to delete note', caught);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, deleteEscrowNoteApi]
   );
 
   const toggleNotePin = useCallback(
     async (note) => {
       if (!selected) return;
       try {
-        await updateEscrowRecord(selected.id, {
+        await updateEscrowApi(selected.id, {
           notes: [
             {
               id: note.id,
@@ -281,7 +311,7 @@ export function useEscrowManagement() {
         console.error('Failed to toggle note pin', caught);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, updateEscrowApi]
   );
 
   const changeMilestoneDraft = useCallback((next) => {
@@ -304,7 +334,7 @@ export function useEscrowManagement() {
     async (milestone) => {
       if (!selected) return;
       try {
-        await upsertEscrowMilestoneRecord(
+        await upsertMilestoneApi(
           selected.id,
           {
             id: milestone.id,
@@ -321,34 +351,34 @@ export function useEscrowManagement() {
         console.error('Failed to update milestone', caught);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, upsertMilestoneApi]
   );
 
   const removeMilestone = useCallback(
     async (milestone) => {
       if (!selected) return;
       try {
-        await deleteEscrowMilestoneRecord(selected.id, milestone.id);
+        await deleteMilestoneApi(selected.id, milestone.id);
         await loadEscrowDetail(selected.id);
       } catch (caught) {
         console.error('Failed to delete milestone', caught);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, deleteMilestoneApi]
   );
 
   const createMilestone = useCallback(
     async (milestone) => {
       if (!selected) return;
       try {
-        await upsertEscrowMilestoneRecord(selected.id, milestone);
+        await upsertMilestoneApi(selected.id, milestone);
         await loadEscrowDetail(selected.id);
         setMilestoneDraft(createEmptyMilestone());
       } catch (caught) {
         console.error('Failed to create milestone', caught);
       }
     },
-    [selected, loadEscrowDetail]
+    [selected, loadEscrowDetail, upsertMilestoneApi]
   );
 
   const resetCreateForm = useCallback(() => {
@@ -360,7 +390,7 @@ export function useEscrowManagement() {
       setPolicySaving(true);
       setPolicyError(null);
       try {
-        const result = await createReleasePolicyRecord(payload ?? {});
+        const result = await createPolicyApi(payload ?? {});
         if (Array.isArray(result?.policies)) {
           setPolicies(result.policies);
         } else {
@@ -376,7 +406,7 @@ export function useEscrowManagement() {
         setPolicySaving(false);
       }
     },
-    [loadEscrows, refreshPolicies]
+    [loadEscrows, refreshPolicies, createPolicyApi]
   );
 
   const updatePolicy = useCallback(
@@ -387,7 +417,7 @@ export function useEscrowManagement() {
       setPolicySaving(true);
       setPolicyError(null);
       try {
-        const result = await updateReleasePolicyRecord(id, payload ?? {});
+        const result = await updatePolicyApi(id, payload ?? {});
         if (Array.isArray(result?.policies)) {
           setPolicies(result.policies);
         } else {
@@ -403,7 +433,7 @@ export function useEscrowManagement() {
         setPolicySaving(false);
       }
     },
-    [loadEscrows, refreshPolicies]
+    [loadEscrows, refreshPolicies, updatePolicyApi]
   );
 
   const deletePolicy = useCallback(
@@ -414,7 +444,7 @@ export function useEscrowManagement() {
       setPolicySaving(true);
       setPolicyError(null);
       try {
-        const result = await deleteReleasePolicyRecord(id);
+        const result = await deletePolicyApi(id);
         if (Array.isArray(result?.policies)) {
           setPolicies(result.policies);
         } else {
@@ -430,7 +460,7 @@ export function useEscrowManagement() {
         setPolicySaving(false);
       }
     },
-    [loadEscrows, refreshPolicies]
+    [loadEscrows, refreshPolicies, deletePolicyApi]
   );
 
   const updateCreateField = useCallback((field, value) => {
@@ -483,7 +513,7 @@ export function useEscrowManagement() {
             sequence: index + 1
           }))
       };
-      const created = await createEscrow(payload);
+      const created = await createEscrowApi(payload);
       resetCreateForm();
       await loadEscrows({ focusId: created?.id });
       return created;
@@ -493,7 +523,7 @@ export function useEscrowManagement() {
     } finally {
       setCreatingRecord(false);
     }
-  }, [createForm, loadEscrows, resetCreateForm]);
+  }, [createForm, loadEscrows, resetCreateForm, createEscrowApi]);
 
   return {
     filters,
