@@ -464,4 +464,135 @@ describe('Panel routes', () => {
 
     expect(response.body).toMatchObject({ message: 'Storefront access restricted to providers' });
   });
+
+  it('returns storefront workspace management data for authenticated providers', async () => {
+    const { company, owner } = await createCompanyWithFixtures();
+
+    const response = await withAuth(
+      request(app)
+        .get('/api/panel/provider/storefront/workspace')
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(response.body.meta.companyId).toBe(company.id);
+    expect(response.body.data.storefront.name).toContain('Storefront');
+    expect(response.body.data.inventoryMeta.total).toBeGreaterThanOrEqual(0);
+    expect(response.body.data.couponMeta.total).toBeGreaterThanOrEqual(0);
+  });
+
+  it('allows providers to update storefront settings and manage inventory records', async () => {
+    const { company, owner } = await createCompanyWithFixtures();
+
+    const settingsResponse = await withAuth(
+      request(app)
+        .put('/api/panel/provider/storefront/settings')
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({
+          name: 'Metro Operations Store',
+          slug: 'metro-operations-store',
+          contactEmail: 'ops@metro.example',
+          primaryColor: '#2563eb',
+          isPublished: true
+        }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(settingsResponse.body.data.name).toBe('Metro Operations Store');
+    expect(settingsResponse.body.data.isPublished).toBe(true);
+
+    const inventoryCreate = await withAuth(
+      request(app)
+        .post('/api/panel/provider/storefront/inventory')
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({
+          sku: 'GEN-200',
+          name: 'Generator bundle',
+          priceAmount: 1200,
+          stockOnHand: 5,
+          visibility: 'public'
+        }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(201);
+
+    const itemId = inventoryCreate.body.data.id;
+    expect(itemId).toBeTruthy();
+
+    const inventoryUpdate = await withAuth(
+      request(app)
+        .put(`/api/panel/provider/storefront/inventory/${itemId}`)
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({ stockOnHand: 3, visibility: 'private' }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(inventoryUpdate.body.data.stockOnHand).toBe(3);
+    expect(inventoryUpdate.body.data.visibility).toBe('private');
+
+    const inventoryArchive = await withAuth(
+      request(app)
+        .delete(`/api/panel/provider/storefront/inventory/${itemId}`)
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(inventoryArchive.body.status).toBe('archived');
+  });
+
+  it('supports coupon creation, updates, and status transitions', async () => {
+    const { company, owner } = await createCompanyWithFixtures();
+
+    const couponCreate = await withAuth(
+      request(app)
+        .post('/api/panel/provider/storefront/coupons')
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({
+          code: 'SAVE10',
+          name: 'Save 10%',
+          discountType: 'percentage',
+          discountValue: 10
+        }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(201);
+
+    const couponId = couponCreate.body.data.id;
+    expect(couponId).toBeTruthy();
+
+    const couponUpdate = await withAuth(
+      request(app)
+        .put(`/api/panel/provider/storefront/coupons/${couponId}`)
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({ name: 'Save 12%', discountValue: 12 }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(couponUpdate.body.data.name).toBe('Save 12%');
+    expect(couponUpdate.body.data.discountValue).toBe(12);
+
+    const couponStatus = await withAuth(
+      request(app)
+        .patch(`/api/panel/provider/storefront/coupons/${couponId}/status`)
+        .set('X-Fixnado-Role', 'company')
+        .query({ companyId: company.id })
+        .send({ status: 'active' }),
+      owner.id,
+      { payload: { role: 'company', persona: 'provider' } }
+    ).expect(200);
+
+    expect(couponStatus.body.status).toBe('active');
+  });
 });

@@ -75,6 +75,13 @@ export const DASHBOARD_ROLES = [
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
+      {
+        id: 'storefront-control',
+        label: 'Storefront control centre',
+        description: 'Manage storefront branding, catalogue, and incentives.',
+        icon: 'storefront',
+        href: '/dashboards/provider/storefront'
+      },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]

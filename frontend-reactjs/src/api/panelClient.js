@@ -592,6 +592,106 @@ function normaliseProviderStorefront(payload = {}) {
   };
 }
 
+function normaliseStorefrontSettings(storefront = {}) {
+  return {
+    id: storefront.id || 'storefront',
+    companyId: storefront.companyId || storefront.company_id || null,
+    name: storefront.name || 'Provider storefront',
+    slug: storefront.slug || 'provider-storefront',
+    tagline: storefront.tagline || '',
+    description: storefront.description || '',
+    heroImageUrl: storefront.heroImageUrl || storefront.hero_image_url || '',
+    contactEmail: storefront.contactEmail || storefront.contact_email || '',
+    contactPhone: storefront.contactPhone || storefront.contact_phone || '',
+    primaryColor: storefront.primaryColor || storefront.primary_color || '#0f172a',
+    accentColor: storefront.accentColor || storefront.accent_color || '#38bdf8',
+    status: storefront.status || 'draft',
+    isPublished: Boolean(storefront.isPublished ?? storefront.is_published ?? false),
+    publishedAt: storefront.publishedAt || storefront.published_at || null,
+    reviewRequired: Boolean(storefront.reviewRequired ?? storefront.review_required ?? false),
+    metadata: typeof storefront.metadata === 'object' && storefront.metadata ? storefront.metadata : {}
+  };
+}
+
+function normaliseStorefrontInventory(item = {}, index = 0) {
+  return {
+    id: item.id || `inventory-${index}`,
+    storefrontId: item.storefrontId || item.storefront_id || null,
+    sku: item.sku || `SKU-${index}`,
+    name: item.name || 'Inventory item',
+    summary: item.summary || '',
+    description: item.description || '',
+    priceAmount: item.priceAmount != null ? Number(item.priceAmount) : Number(item.price_amount ?? 0),
+    priceCurrency: item.priceCurrency || item.price_currency || 'GBP',
+    stockOnHand: item.stockOnHand != null ? Number(item.stockOnHand) : Number(item.stock_on_hand ?? 0),
+    reorderPoint: item.reorderPoint != null ? Number(item.reorderPoint) : Number(item.reorder_point ?? 0),
+    restockAt: item.restockAt || item.restock_at || null,
+    visibility: item.visibility || 'public',
+    featured: Boolean(item.featured),
+    imageUrl: item.imageUrl || item.image_url || '',
+    metadata: typeof item.metadata === 'object' && item.metadata ? item.metadata : {}
+  };
+}
+
+function normaliseStorefrontCoupon(coupon = {}, index = 0) {
+  return {
+    id: coupon.id || `coupon-${index}`,
+    storefrontId: coupon.storefrontId || coupon.storefront_id || null,
+    code: coupon.code || `COUPON-${index}`,
+    name: coupon.name || 'Promotion',
+    description: coupon.description || '',
+    discountType: coupon.discountType || coupon.discount_type || 'percentage',
+    discountValue: coupon.discountValue != null ? Number(coupon.discountValue) : Number(coupon.discount_value ?? 0),
+    minOrderTotal:
+      coupon.minOrderTotal != null
+        ? Number(coupon.minOrderTotal)
+        : coupon.min_order_total != null
+          ? Number(coupon.min_order_total)
+          : null,
+    maxDiscountValue:
+      coupon.maxDiscountValue != null
+        ? Number(coupon.maxDiscountValue)
+        : coupon.max_discount_value != null
+          ? Number(coupon.max_discount_value)
+          : null,
+    startsAt: coupon.startsAt || coupon.starts_at || null,
+    endsAt: coupon.endsAt || coupon.ends_at || null,
+    usageLimit:
+      coupon.usageLimit != null ? Number(coupon.usageLimit) : coupon.usage_limit != null ? Number(coupon.usage_limit) : null,
+    usageCount:
+      coupon.usageCount != null ? Number(coupon.usageCount) : coupon.usage_count != null ? Number(coupon.usage_count) : 0,
+    status: coupon.status || 'draft',
+    appliesTo: coupon.appliesTo || coupon.applies_to || '',
+    metadata: typeof coupon.metadata === 'object' && coupon.metadata ? coupon.metadata : {}
+  };
+}
+
+function normaliseProviderStorefrontWorkspace(payload = {}) {
+  const root = payload?.data ?? payload;
+  const storefront = normaliseStorefrontSettings(root.storefront || {});
+  const inventory = ensureArray(root.inventory).map((item, index) => normaliseStorefrontInventory(item, index));
+  const coupons = ensureArray(root.coupons).map((item, index) => normaliseStorefrontCoupon(item, index));
+  const inventoryMeta = root.inventoryMeta || {
+    total: inventory.length,
+    published: inventory.filter((item) => item.visibility === 'public').length,
+    archived: inventory.filter((item) => item.visibility === 'archived').length,
+    lowStock: inventory.filter((item) => item.stockOnHand <= item.reorderPoint).length
+  };
+  const couponMeta = root.couponMeta || {
+    total: coupons.length,
+    active: coupons.filter((coupon) => coupon.status === 'active').length,
+    expiringSoon: coupons.filter((coupon) => coupon.endsAt).length
+  };
+
+  return {
+    storefront,
+    inventory,
+    coupons,
+    inventoryMeta,
+    couponMeta
+  };
+}
+
 function normaliseEnterprisePanel(payload = {}) {
   const root = payload?.data ?? payload;
   const enterprise = root.enterprise || root.account || {};
@@ -3198,6 +3298,130 @@ const storefrontFallback = normaliseProviderStorefront({
   ]
 });
 
+const storefrontWorkspaceFallback = normaliseProviderStorefrontWorkspace({
+  storefront: {
+    id: 'demo-storefront',
+    companyId: 'metro-power-services',
+    name: 'Metro Power Services Storefront',
+    slug: 'metro-power-services',
+    tagline: 'Trusted electrical resilience partners',
+    description:
+      'Operate your storefront with confidence. Update hero imagery, contact details, and compliance badges from one control centre.',
+    heroImageUrl: '/media/storefront/metro-power-hero.jpg',
+    contactEmail: 'hello@metropower.example',
+    contactPhone: '+44 20 7946 0010',
+    primaryColor: '#0f172a',
+    accentColor: '#38bdf8',
+    status: 'live',
+    isPublished: true,
+    publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    reviewRequired: false,
+    metadata: {}
+  },
+  inventory: [
+    {
+      id: 'inventory-1',
+      storefrontId: 'demo-storefront',
+      sku: 'GEN-13KVA',
+      name: '13kVA generator kit',
+      summary: 'Escrow-backed generator with logistics concierge.',
+      description: 'Includes ATS switchgear, telemetry sensors, and 24/7 dispatch readiness.',
+      priceAmount: 420,
+      priceCurrency: 'GBP',
+      stockOnHand: 4,
+      reorderPoint: 1,
+      restockAt: null,
+      visibility: 'public',
+      featured: true,
+      imageUrl: '/media/storefront/inventory-generator.jpg',
+      metadata: { category: 'Critical power', insuranceRequired: true }
+    },
+    {
+      id: 'inventory-2',
+      storefrontId: 'demo-storefront',
+      sku: 'HVAC-TUNE',
+      name: 'HVAC telemetry kit',
+      summary: 'SaaS-connected telemetry module for HVAC systems.',
+      description: 'Installs in under two hours with remote monitoring and alerting.',
+      priceAmount: 260,
+      priceCurrency: 'GBP',
+      stockOnHand: 7,
+      reorderPoint: 2,
+      restockAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
+      visibility: 'public',
+      featured: false,
+      imageUrl: '/media/storefront/inventory-hvac.jpg',
+      metadata: { category: 'HVAC', certifications: ['F-Gas Category 1'] }
+    },
+    {
+      id: 'inventory-3',
+      storefrontId: 'demo-storefront',
+      sku: 'ROOF-KIT',
+      name: 'Roof access safety kit',
+      summary: 'Full fall-arrest kit with telemetry enabled anchor points.',
+      description: 'Restore marketplace visibility by closing out outstanding safety findings.',
+      priceAmount: 120,
+      priceCurrency: 'GBP',
+      stockOnHand: 1,
+      reorderPoint: 2,
+      restockAt: null,
+      visibility: 'archived',
+      featured: false,
+      imageUrl: '/media/storefront/inventory-roof.jpg',
+      metadata: { category: 'Safety', status: 'awaiting_inspection' }
+    }
+  ],
+  coupons: [
+    {
+      id: 'coupon-1',
+      storefrontId: 'demo-storefront',
+      code: 'WELCOME10',
+      name: 'Welcome 10%',
+      description: 'Applies to new enterprise storefront orders booked this quarter.',
+      discountType: 'percentage',
+      discountValue: 10,
+      minOrderTotal: 500,
+      maxDiscountValue: 1500,
+      startsAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+      usageLimit: 25,
+      usageCount: 6,
+      status: 'active',
+      appliesTo: 'All generator rentals',
+      metadata: { channel: 'enterprise' }
+    },
+    {
+      id: 'coupon-2',
+      storefrontId: 'demo-storefront',
+      code: 'FLEET25',
+      name: 'Fleet bundle £250 off',
+      description: 'Fixed discount on HVAC telemetry bundles booked in a single order.',
+      discountType: 'fixed',
+      discountValue: 250,
+      minOrderTotal: 1500,
+      maxDiscountValue: null,
+      startsAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
+      usageLimit: null,
+      usageCount: 2,
+      status: 'scheduled',
+      appliesTo: 'HVAC telemetry kit',
+      metadata: { channel: 'campaign' }
+    }
+  ],
+  inventoryMeta: {
+    total: 3,
+    published: 2,
+    archived: 1,
+    lowStock: 1
+  },
+  couponMeta: {
+    total: 2,
+    active: 1,
+    expiringSoon: 1
+  }
+});
+
 const enterpriseFallback = normaliseEnterprisePanel({
   enterprise: {
     name: 'Albion Workspace Group',
@@ -3934,6 +4158,144 @@ export const getProviderStorefront = withFallback(
     });
   }
 );
+
+function buildStorefrontHeaders(options = {}, includeContentType = false) {
+  const headers = {
+    'X-Fixnado-Role': options?.role ?? 'company',
+    'X-Fixnado-Persona': options?.persona ?? 'provider'
+  };
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
+
+export const getProviderStorefrontWorkspace = withFallback(
+  normaliseProviderStorefrontWorkspace,
+  storefrontWorkspaceFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/provider/storefront/workspace${query}`, {
+      cacheKey: `provider-storefront-workspace${cacheKeySuffix}`,
+      ttl: 20000,
+      headers: buildStorefrontHeaders(options),
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
+export async function updateProviderStorefrontSettings(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/settings${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const storefront = response?.data ?? response;
+  return normaliseStorefrontSettings(storefront);
+}
+
+export async function createProviderStorefrontInventory(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory${query}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const inventory = response?.data ?? response;
+  return normaliseStorefrontInventory(inventory);
+}
+
+export async function updateProviderStorefrontInventory(inventoryId, payload, options = {}) {
+  if (!inventoryId) {
+    throw new PanelApiError('Inventory identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory/${encodeURIComponent(inventoryId)}${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const inventory = response?.data ?? response;
+  return normaliseStorefrontInventory(inventory);
+}
+
+export async function archiveProviderStorefrontInventory(inventoryId, options = {}) {
+  if (!inventoryId) {
+    throw new PanelApiError('Inventory identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory/${encodeURIComponent(inventoryId)}${query}`, {
+    method: 'DELETE',
+    headers: buildStorefrontHeaders(options),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  return response?.data ?? response;
+}
+
+export async function createProviderStorefrontCoupon(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons${query}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const coupon = response?.data ?? response;
+  return normaliseStorefrontCoupon(coupon);
+}
+
+export async function updateProviderStorefrontCoupon(couponId, payload, options = {}) {
+  if (!couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons/${encodeURIComponent(couponId)}${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const coupon = response?.data ?? response;
+  return normaliseStorefrontCoupon(coupon);
+}
+
+export async function updateProviderStorefrontCouponStatus(couponId, status, options = {}) {
+  if (!couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons/${encodeURIComponent(couponId)}/status${query}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  return response?.data ?? response;
+}
 
 function invalidateProviderCache(companyId) {
   const keys = ['admin-providers'];

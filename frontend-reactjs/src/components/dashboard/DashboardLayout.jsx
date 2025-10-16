@@ -17,6 +17,10 @@ import {
   ClipboardDocumentListIcon,
   Cog8ToothIcon,
   CubeIcon,
+  QueueListIcon,
+  PaintBrushIcon,
+  TagIcon,
+  BuildingStorefrontIcon
   ExclamationTriangleIcon,
   InboxStackIcon,
   MagnifyingGlassIcon,
@@ -307,6 +311,8 @@ const navIconMap = {
   documents: ClipboardDocumentCheckIcon,
   operations: QueueListIcon,
   marketplace: WrenchScrewdriverIcon,
+  seo: TagIcon,
+  storefront: BuildingStorefrontIcon
   seo: TagIcon
 };
 

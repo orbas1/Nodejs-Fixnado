@@ -20,6 +20,7 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
 const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
@@ -360,6 +361,14 @@ function App() {
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
+              <Route
+                path="/dashboards/provider/storefront"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderStorefrontControl />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="/legal/:slug" element={<Terms />} />
