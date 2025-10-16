@@ -1,5 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
+const identityId = '99999999-9999-4999-9999-999999999999';
+const passportDocumentId = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
+const licenceDocumentId = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
+const permitDocumentId = 'cccccccc-cccc-4ccc-cccc-cccccccccccc';
+const backgroundCheckId = 'dddddddd-dddd-4ddd-dddd-dddddddddddd';
+const safetyBriefingCheckId = 'eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee';
+const watcherOpsId = 'ffffffff-ffff-4fff-ffff-ffffffffffff';
+const watcherSafetyId = '11111111-aaaa-4aaa-aaaa-111111111111';
+const statusEventId = '22222222-bbbb-4bbb-bbbb-222222222222';
+const documentEventId = '33333333-cccc-4ccc-cccc-333333333333';
+
 export async function up({ context: queryInterface }) {
   const userId = '11111111-1111-1111-1111-111111111111';
   const providerId = '22222222-2222-2222-2222-222222222222';
@@ -25,6 +36,152 @@ export async function up({ context: queryInterface }) {
       type: 'servicemen',
       created_at: new Date(),
       updated_at: new Date()
+    }
+  ]);
+
+  const now = new Date();
+  const requestedAt = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const submittedAt = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+  await queryInterface.bulkInsert('ServicemanIdentity', [
+    {
+      id: identityId,
+      serviceman_id: providerId,
+      status: 'in_review',
+      risk_rating: 'medium',
+      verification_level: 'enhanced',
+      reviewer_id: userId,
+      requested_at: requestedAt,
+      submitted_at: submittedAt,
+      approved_at: null,
+      expires_at: expiresAt,
+      notes: 'Awaiting utility clearance confirmation before final approval.',
+      metadata: JSON.stringify({ seeded: true }),
+      created_at: now,
+      updated_at: now
+    }
+  ]);
+
+  await queryInterface.bulkInsert('ServicemanIdentityDocument', [
+    {
+      id: passportDocumentId,
+      identity_id: identityId,
+      document_type: 'passport',
+      status: 'approved',
+      document_number: '502993741',
+      issuing_country: 'United Kingdom',
+      issued_at: new Date('2021-04-14T00:00:00Z'),
+      expires_at: new Date('2031-04-13T00:00:00Z'),
+      file_url: 'https://cdn.fixnado.example/documents/passport-jordan-miles.pdf',
+      notes: 'Verified against original by compliance on 12 Feb 2025.',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: licenceDocumentId,
+      identity_id: identityId,
+      document_type: 'driving_license',
+      status: 'in_review',
+      document_number: 'MILEJ8021985A99',
+      issuing_country: 'United Kingdom',
+      issued_at: new Date('2022-08-01T00:00:00Z'),
+      expires_at: new Date('2032-07-31T00:00:00Z'),
+      file_url: 'https://cdn.fixnado.example/documents/licence-jordan-miles.pdf',
+      notes: 'DVLA status refresh scheduled for 18 Feb 2025.',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: permitDocumentId,
+      identity_id: identityId,
+      document_type: 'work_permit',
+      status: 'pending',
+      document_number: 'UK-WP-77421',
+      issuing_country: 'United Kingdom',
+      issued_at: new Date('2023-03-01T00:00:00Z'),
+      expires_at: new Date('2026-03-01T00:00:00Z'),
+      file_url: 'https://cdn.fixnado.example/documents/work-permit-jordan-miles.pdf',
+      notes: 'Awaiting client sponsor acknowledgement.',
+      created_at: now,
+      updated_at: now
+    }
+  ]);
+
+  await queryInterface.bulkInsert('ServicemanIdentityCheck', [
+    {
+      id: backgroundCheckId,
+      identity_id: identityId,
+      label: 'Enhanced DBS refresh',
+      status: 'in_progress',
+      owner: 'Compliance team',
+      due_at: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+      completed_at: null,
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: safetyBriefingCheckId,
+      identity_id: identityId,
+      label: 'Hospital infection control briefing sign-off',
+      status: 'not_started',
+      owner: 'Safety manager',
+      due_at: new Date(now.getTime() + 9 * 24 * 60 * 60 * 1000),
+      completed_at: null,
+      created_at: now,
+      updated_at: now
+    }
+  ]);
+
+  await queryInterface.bulkInsert('ServicemanIdentityWatcher', [
+    {
+      id: watcherOpsId,
+      identity_id: identityId,
+      email: 'ops.lead@fixnado.example',
+      name: 'Clara Benton',
+      role: 'operations_lead',
+      notified_at: submittedAt,
+      last_seen_at: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: watcherSafetyId,
+      identity_id: identityId,
+      email: 'safety.manager@fixnado.example',
+      name: 'Isaac Morley',
+      role: 'safety_manager',
+      notified_at: submittedAt,
+      last_seen_at: null,
+      created_at: now,
+      updated_at: now
+    }
+  ]);
+
+  await queryInterface.bulkInsert('ServicemanIdentityEvent', [
+    {
+      id: statusEventId,
+      identity_id: identityId,
+      event_type: 'status_change',
+      title: 'Verification moved to in-review',
+      description: 'Operations assigned Clara Benton as reviewer.',
+      occurred_at: submittedAt,
+      actor_id: userId,
+      metadata: JSON.stringify({ previousStatus: 'pending', newStatus: 'in_review' }),
+      created_at: submittedAt,
+      updated_at: submittedAt
+    },
+    {
+      id: documentEventId,
+      identity_id: identityId,
+      event_type: 'document_update',
+      title: 'Driving licence uploaded',
+      description: 'Awaiting DVLA verification response.',
+      occurred_at: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+      actor_id: userId,
+      metadata: JSON.stringify({ documentId: licenceDocumentId }),
+      created_at: now,
+      updated_at: now
     }
   ]);
 
@@ -161,7 +318,6 @@ export async function up({ context: queryInterface }) {
     }
   ]);
 
-  const now = new Date();
   await queryInterface.bulkDelete('PlatformSetting', { key: 'admin_preferences' });
   await queryInterface.bulkInsert('PlatformSetting', [
     {
@@ -295,6 +451,11 @@ export async function up({ context: queryInterface }) {
 }
 
 export async function down({ context: queryInterface }) {
+  await queryInterface.bulkDelete('ServicemanIdentityEvent', { identity_id: identityId });
+  await queryInterface.bulkDelete('ServicemanIdentityWatcher', { identity_id: identityId });
+  await queryInterface.bulkDelete('ServicemanIdentityCheck', { identity_id: identityId });
+  await queryInterface.bulkDelete('ServicemanIdentityDocument', { identity_id: identityId });
+  await queryInterface.bulkDelete('ServicemanIdentity', { id: identityId });
   await queryInterface.bulkDelete('ComplianceControl', null, {});
   await queryInterface.bulkDelete('ServiceZone', null, {});
   await queryInterface.bulkDelete('MarketplaceItem', null, {});

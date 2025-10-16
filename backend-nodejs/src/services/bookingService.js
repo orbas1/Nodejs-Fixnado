@@ -50,6 +50,15 @@ const toAssignmentStatus = (status) => {
   return normalised;
 };
 
+export function getAllowedBookingStatusTransitions(status) {
+  if (!status) {
+    return [];
+  }
+  const normalised = String(status).trim().toLowerCase();
+  const transitions = ALLOWED_STATUS_TRANSITIONS[normalised];
+  return Array.isArray(transitions) ? [...transitions] : [];
+}
+
 const reloadAssignment = (assignment, transaction) =>
   assignment.reload({ transaction, include: assignmentInclude });
 
