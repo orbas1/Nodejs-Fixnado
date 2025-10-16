@@ -54,6 +54,8 @@ import AccountSupportTaskUpdate from './accountSupportTaskUpdate.js';
 import AdminUserProfile from './adminUserProfile.js';
 import CustomJobBid from './customJobBid.js';
 import CustomJobBidMessage from './customJobBidMessage.js';
+import CustomJobInvitation from './customJobInvitation.js';
+import CustomJobReport from './customJobReport.js';
 import PlatformSetting from './platformSetting.js';
 import CommunicationsInboxConfiguration from './communicationsInboxConfiguration.js';
 import CommunicationsEntryPoint from './communicationsEntryPoint.js';
@@ -239,6 +241,20 @@ Company.hasMany(CustomJobBid, { foreignKey: 'companyId', as: 'customJobBids' });
 CustomJobBid.hasMany(CustomJobBidMessage, { foreignKey: 'bidId', as: 'messages' });
 CustomJobBidMessage.belongsTo(CustomJobBid, { foreignKey: 'bidId', as: 'bid' });
 CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+
+Post.hasMany(CustomJobInvitation, { foreignKey: 'postId', as: 'invitations' });
+CustomJobInvitation.belongsTo(Post, { foreignKey: 'postId', as: 'job' });
+Company.hasMany(CustomJobInvitation, { foreignKey: 'companyId', as: 'customJobInvitations' });
+CustomJobInvitation.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'createdBy', as: 'customJobInvitationsCreated' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+User.hasMany(CustomJobInvitation, { foreignKey: 'targetId', as: 'customJobInvites' });
+CustomJobInvitation.belongsTo(User, { foreignKey: 'targetId', as: 'target' });
+
+Company.hasMany(CustomJobReport, { foreignKey: 'companyId', as: 'customJobReports' });
+CustomJobReport.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+CustomJobReport.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+CustomJobReport.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
 
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
@@ -819,6 +835,8 @@ export {
   BookingHistoryEntry,
   CustomJobBid,
   CustomJobBidMessage,
+  CustomJobInvitation,
+  CustomJobReport,
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
@@ -883,49 +901,49 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
+  RbacRoleAssignment,
   AdminProfile,
-  AdminDelegate
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
+  ServiceTaxonomyCategory,
   WalletAccount,
   WalletTransaction,
-  WalletPaymentMethod
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -934,7 +952,7 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,

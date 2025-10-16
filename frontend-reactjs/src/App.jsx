@@ -20,6 +20,7 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -105,6 +106,14 @@ function App() {
               <Route path="/register/company" element={<CompanyRegister />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+              <Route
+                path="/provider/custom-jobs"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderCustomJobs />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route
                 path="/provider/storefront"
                 element={
