@@ -23,6 +23,7 @@ import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import financeRoutes from './financeRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
+import accountRoutes from './accountRoutes.js';
 
 const v1Router = Router();
 
@@ -50,6 +51,7 @@ v1Router.use('/affiliate', affiliateRoutes);
 v1Router.use('/consent', consentRoutes);
 v1Router.use('/finance', financeRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
+v1Router.use('/account', accountRoutes);
 
 const router = Router();
 

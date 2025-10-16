@@ -1,203 +1,211 @@
-import PageHeader from '../components/blueprints/PageHeader.jsx';
-import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
-import AffiliateDashboardSection from '../components/affiliate/AffiliateDashboardSection.jsx';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSession } from '../hooks/useSession.js';
+import { useProfile } from '../hooks/useProfile.js';
 
-const badges = ['Top rated', 'Escrow trusted', 'Rapid responder'];
-
-const services = [
-  { id: 1, name: 'Smart building commissioning', price: '$135/hr', completed: 112, sla: 'SLA 4h response' },
-  { id: 2, name: 'High-voltage diagnostics', price: '$165/hr', completed: 156, sla: 'SLA 2h response' },
-  { id: 3, name: 'Critical incident standby', price: '$420 retainer', completed: 28, sla: '24/7 on-call' }
-];
-
-const languages = [
-  { locale: 'English (US)', proficiency: 'Native', coverage: 'All copy and job notes' },
-  { locale: 'Spanish (MX)', proficiency: 'Professional working', coverage: 'Safety briefings and SMS updates' }
-];
-
-const complianceDocs = [
-  { name: 'DBS Enhanced', status: 'Cleared', expiry: 'Aug 2025' },
-  { name: 'NIC EIC Certification', status: 'Valid', expiry: 'Feb 2026' },
-  { name: 'Public liability insurance (£5m)', status: 'Active', expiry: 'Oct 2025' }
-];
-
-const availability = [
-  { window: 'Mon – Fri', time: '07:00 – 19:00', notes: 'Emergency response across all zones.' },
-  { window: 'Sat', time: '08:00 – 14:00', notes: 'Premium callout applies; remote diagnostics offered.' }
-];
-
-const engagementWorkflow = [
-  {
-    stage: 'Discovery',
-    detail: 'Survey the site within 24 hours and log permits or access notes.'
-  },
-  {
-    stage: 'Execution',
-    detail: 'Track milestones with geo-tagged proof before escrow releases.'
-  },
-  {
-    stage: 'Post-job',
-    detail: 'Send documentation and schedule follow-up checks automatically.'
-  }
-];
-
-const toolingAndShop = [
-  {
-    name: 'Marketplace storefront',
-    description: 'Thermal cameras, torque tools, and surge analyzers with insured delivery.'
-  },
-  {
-    name: 'Service zone coverage',
-    description: 'Downtown San Diego, La Jolla, Pacific Beach, and Chula Vista with live ETAs.'
-  },
-  {
-    name: 'Knowledge base references',
-    description: 'Permit checklist, lockout/tagout, and escalation scripts on hand.'
-  }
+const TIMEZONE_OPTIONS = [
+  'UTC',
+  'Europe/London',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Singapore'
 ];
 
 export default function Profile() {
+  const session = useSession();
+  const { profile, updateProfile, defaults } = useProfile();
+  const [form, setForm] = useState(profile);
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    setForm(profile);
+  }, [profile]);
+
+  const handleChange = (patch) => {
+    setForm((current) => ({ ...current, ...patch }));
+  };
+
+  const handlePreferenceChange = (key, value) => {
+    setForm((current) => ({
+      ...current,
+      communicationPreferences: {
+        ...current.communicationPreferences,
+        [key]: value
+      }
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    updateProfile(form);
+    setStatus('Profile updated successfully.');
+    window.setTimeout(() => setStatus(''), 1500);
+  };
+
+  const personaSummary = session.dashboards?.length
+    ? `Provisioned dashboards: ${session.dashboards.join(', ')}`
+    : 'No dashboards provisioned yet.';
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <PageHeader
-        eyebrow="Provider profile"
-        title="Jordan Miles — Master electrician"
-        description="Enterprise-certified electrician covering San Diego service zones."
-        breadcrumbs={[
-          { label: 'Providers', to: '/services' },
-          { label: 'Jordan Miles' }
-        ]}
-        actions={[
-          { label: 'Request quote', to: '/feed', variant: 'primary' },
-          { label: 'Share profile', to: '/profile/share' }
-        ]}
-        meta={[
-          { label: 'Overall rating', value: '4.95', caption: '321 verified reviews', emphasis: true },
-          { label: 'Avg. response', value: '11 minutes', caption: 'Based on last 90 days' },
-          { label: 'Escrow releases', value: '184', caption: '0 disputes escalated' }
-        ]}
-      />
+    <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 shadow-2xl shadow-accent/10">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-accent">Account</p>
+            <h1 className="text-3xl font-semibold text-primary">Profile & settings</h1>
+            <p className="mt-2 text-sm text-slate-500">Keep your contact details and notification preferences up to date.</p>
+          </div>
+          <Link
+            to="/dashboards"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
+          >
+            View dashboards
+          </Link>
+        </div>
 
-      <div className="mx-auto max-w-7xl px-6 pt-16 space-y-14">
-        <AffiliateDashboardSection />
-
-        <BlueprintSection
-          eyebrow="Service catalogue"
-          title="High-availability electrical services"
-          description="Escrow-backed packages tailored for regulated sites."
-          aside={
-            <div className="space-y-5">
-              <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-primary">Language & localisation</h3>
-                <ul className="mt-4 space-y-3 text-sm text-slate-600">
-                  {languages.map((language) => (
-                    <li key={language.locale} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4">
-                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{language.locale}</span>
-                      <span className="mt-2 font-semibold text-primary">{language.proficiency}</span>
-                      <span className="text-xs text-slate-500">{language.coverage}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-primary">Compliance documents</h3>
-                <ul className="mt-4 space-y-3 text-xs text-slate-600">
-                  {complianceDocs.map((doc) => (
-                    <li key={doc.name} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4">
-                      <span className="font-semibold text-primary">{doc.name}</span>
-                      <span className="text-right text-[0.65rem] uppercase tracking-[0.35em] text-slate-400">
-                        {doc.status}
-                        <br />
-                        Exp: {doc.expiry}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        <form className="mt-10 grid gap-6" onSubmit={handleSubmit}>
+          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-primary">Contact information</h2>
+              <p className="text-xs text-slate-500">We use this information to personalise dashboard experiences and notifications.</p>
             </div>
-          }
-        >
-          <div className="flex flex-wrap gap-2 text-xs">
-            {badges.map((badge) => (
-              <span key={badge} className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
-                {badge}
-              </span>
-            ))}
-          </div>
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => (
-              <article key={service.id} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                <header>
-                  <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
-                  <p className="mt-2 text-sm text-slate-600">Completed {service.completed} jobs</p>
-                </header>
-                <div className="mt-6 space-y-3 text-sm text-slate-600">
-                  <p className="flex items-center justify-between">
-                    <span>Pricing</span>
-                    <span className="font-semibold text-primary">{service.price}</span>
-                  </p>
-                  <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{service.sla}</p>
-                </div>
-                <button className="mt-6 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90">
-                  Request availability
-                </button>
-              </article>
-            ))}
-          </div>
-        </BlueprintSection>
-
-        <BlueprintSection
-          eyebrow="Operations"
-          title="Coverage, scheduling, and tooling visibility"
-          description="Coverage, scheduling, and tooling at a glance before booking."
-          aside={
-            <div className="space-y-5">
-              <div className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-primary">Availability windows</h3>
-                <ul className="mt-4 space-y-3 text-sm text-slate-600">
-                  {availability.map((slot) => (
-                    <li key={slot.window} className="rounded-2xl border border-slate-100 bg-white p-4">
-                      <p className="font-semibold text-primary">{slot.window}</p>
-                    <p className="text-xs text-slate-500">{slot.time}</p>
-                    <p className="mt-2 text-xs text-slate-500">{slot.notes}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="grid gap-4">
+              <label className="text-sm font-medium text-slate-600">
+                First name
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+                  value={form.firstName}
+                  onChange={(event) => handleChange({ firstName: event.target.value })}
+                  placeholder={defaults.firstName}
+                  autoComplete="given-name"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-600">
+                Last name
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+                  value={form.lastName}
+                  onChange={(event) => handleChange({ lastName: event.target.value })}
+                  placeholder={defaults.lastName}
+                  autoComplete="family-name"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-600">
+                Organisation
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+                  value={form.organisation}
+                  onChange={(event) => handleChange({ organisation: event.target.value })}
+                  placeholder="Fixnado"
+                  autoComplete="organization"
+                />
+              </label>
             </div>
-          }
-        >
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {toolingAndShop.map((item) => (
-              <article key={item.name} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-primary">{item.name}</h3>
-                <p className="mt-2 text-sm text-slate-600">{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </BlueprintSection>
+            <div className="grid gap-4">
+              <label className="text-sm font-medium text-slate-600">
+                Email
+                <input
+                  type="email"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500"
+                  value={form.email || session.userId || ''}
+                  readOnly
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-600">
+                Phone number
+                <input
+                  type="tel"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+                  value={form.phone}
+                  onChange={(event) => handleChange({ phone: event.target.value })}
+                  placeholder="+44 20 0000 0000"
+                  autoComplete="tel"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-600">
+                Timezone
+                <select
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
+                  value={form.timezone ?? defaults.timezone}
+                  onChange={(event) => handleChange({ timezone: event.target.value })}
+                >
+                  {TIMEZONE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
 
-        <BlueprintSection
-          eyebrow="Engagement blueprint"
-          title="How Jordan delivers regulated projects"
-          description="A three-step playbook from kickoff to closeout."
-        >
-          <ol className="space-y-4 text-sm text-slate-600">
-            {engagementWorkflow.map((step) => (
-              <li key={step.stage} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{step.stage}</p>
-                    <p className="mt-3 text-sm text-slate-600">{step.detail}</p>
-                  </div>
-                  <span className="rounded-full bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                    Escrow aligned
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </BlueprintSection>
+          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-primary">Communication preferences</h2>
+              <p className="text-xs text-slate-500">Control which notifications you receive from Fixnado.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
+                  checked={form.communicationPreferences?.email ?? defaults.communicationPreferences.email}
+                  onChange={(event) => handlePreferenceChange('email', event.target.checked)}
+                />
+                Email alerts
+              </label>
+              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
+                  checked={form.communicationPreferences?.sms ?? defaults.communicationPreferences.sms}
+                  onChange={(event) => handlePreferenceChange('sms', event.target.checked)}
+                />
+                SMS dispatch updates
+              </label>
+              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
+                  checked={form.communicationPreferences?.push ?? defaults.communicationPreferences.push}
+                  onChange={(event) => handlePreferenceChange('push', event.target.checked)}
+                />
+                Push notifications
+              </label>
+            </div>
+            <p className="text-xs text-slate-500">
+              We only send operational alerts that keep your crews, finance teams, and stakeholders aligned. You can adjust the
+              mix at any time.
+            </p>
+          </section>
+
+          <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-sm text-slate-600">
+            <p className="text-sm font-semibold text-primary">Workspace summary</p>
+            <p>{personaSummary}</p>
+            <p className="text-xs text-slate-500">
+              Need access to more workspaces? Visit the dashboards hub to request provider, finance, or enterprise access.
+            </p>
+          </section>
+
+          {status ? <p className="text-sm font-semibold text-emerald-600">{status}</p> : null}
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="submit"
+              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary/90"
+            >
+              Save profile
+            </button>
+            <Link
+              to="/settings/security"
+              className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
+            >
+              Security settings
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );

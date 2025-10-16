@@ -66,9 +66,23 @@ import WarehouseExportRun from './warehouseExportRun.js';
 import CustomerProfile from './customerProfile.js';
 import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
+import CustomerAccountSetting from './customerAccountSetting.js';
+import CustomerNotificationRecipient from './customerNotificationRecipient.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
+CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
+  foreignKey: 'accountSettingId',
+  as: 'recipients'
+});
+CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
+  foreignKey: 'accountSettingId',
+  as: 'accountSetting'
+});
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -480,4 +494,6 @@ export {
   CustomerProfile,
   CustomerContact,
   CustomerLocation
+  CustomerAccountSetting,
+  CustomerNotificationRecipient
 };
