@@ -6,6 +6,7 @@ import {
   BlogMedia,
   BlogPostCategory,
   BlogPostTag,
+  BlogPostRevision,
   sequelize,
   User
 } from '../models/index.js';
@@ -17,6 +18,26 @@ const PUBLIC_INCLUDE = [
   { model: BlogMedia, as: 'media' },
   { model: User, as: 'author', attributes: ['id', 'firstName', 'lastName'] }
 ];
+
+const METADATA_KEYS = [
+  'metaTitle',
+  'metaDescription',
+  'canonicalUrl',
+  'ogImageUrl',
+  'heroCaption',
+  'previewSubtitle',
+  'newsletterHeadline',
+  'callToActionLabel',
+  'callToActionUrl',
+  'featured',
+  'allowComments',
+  'sendToSubscribers',
+  'pinned'
+];
+
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+const VALID_STATUSES = new Set(['draft', 'scheduled', 'published', 'archived']);
 
 function toSlug(value) {
   if (!value) {
@@ -32,6 +53,89 @@ function toSlug(value) {
     .slice(0, 120);
 }
 
+function sanitiseMetadata(existing = {}, incoming = {}) {
+  const next = { ...existing };
+  METADATA_KEYS.forEach((key) => {
+    if (!hasOwn(incoming, key)) {
+      return;
+    }
+    const value = incoming[key];
+    if (typeof value === 'boolean') {
+      next[key] = value;
+      return;
+    }
+    if (value === undefined || value === null || value === '') {
+      delete next[key];
+      return;
+    }
+    next[key] = value;
+  });
+  return next;
+}
+
+function buildMediaMetadata(item = {}) {
+  const payload = { ...(item.metadata ?? {}) };
+  const assignable = {
+    title: item.title,
+    caption: item.caption,
+    credit: item.credit,
+    focalPoint: item.focalPoint
+  };
+  Object.entries(assignable).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      delete payload[key];
+    } else {
+      payload[key] = value;
+    }
+  });
+  return payload;
+}
+
+function ensureValidStatus(status) {
+  if (!VALID_STATUSES.has(status)) {
+    const error = new Error('Invalid blog status supplied');
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
+async function recordRevision(post, { transaction, actorId, action } = {}) {
+  if (!post) return;
+  await BlogPostRevision.create(
+    {
+      postId: post.id,
+      recordedById: actorId ?? null,
+      action: action ?? 'updated',
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt ?? '',
+      content: post.content ?? '',
+      status: post.status,
+      metadata: post.metadata ?? {},
+      publishedAt: post.publishedAt ?? null,
+      scheduledAt: post.scheduledAt ?? null
+    },
+    { transaction }
+  );
+}
+
+async function ensureUniqueSlug(baseSlug, transaction, excludePostId = null) {
+  const sanitizedBase = baseSlug && baseSlug.length > 0 ? baseSlug : toSlug(`post-${Date.now()}`);
+  let candidate = sanitizedBase || `post-${Date.now()}`;
+  let attempt = 1;
+  while (
+    await BlogPost.count({
+      where: {
+        slug: candidate,
+        ...(excludePostId ? { id: { [Op.ne]: excludePostId } } : {})
+      },
+      transaction
+    })
+  ) {
+    attempt += 1;
+    candidate = `${sanitizedBase}-${attempt}`;
+  }
+  return candidate;
 const ALLOWED_TAG_ROLES = new Set(['admin', 'provider', 'finance', 'serviceman', 'user', 'enterprise']);
 const TAG_SORT_FIELDS = new Set(['name', 'updatedAt', 'createdAt']);
 const TAG_SORT_DIRECTIONS = new Set(['asc', 'desc']);
@@ -257,7 +361,7 @@ export async function getDashboardPosts({ persona, limit = 5 } = {}) {
   return posts;
 }
 
-export async function getAdminPosts({ limit = 20, offset = 0, status, search } = {}) {
+export async function getAdminPosts({ limit = 20, offset = 0, status, search, category, tag } = {}) {
   const where = {};
   if (status) {
     where.status = status;
@@ -268,6 +372,41 @@ export async function getAdminPosts({ limit = 20, offset = 0, status, search } =
       { excerpt: { [Op.iLike]: `%${search}%` } }
     ];
   }
+
+  const include = PUBLIC_INCLUDE.map((entry) => ({ ...entry }));
+
+  if (category) {
+    const categoryInclude = include.find((item) => item.as === 'categories');
+    if (categoryInclude) {
+      categoryInclude.where = { ...(categoryInclude.where ?? {}), id: category };
+      categoryInclude.required = true;
+    } else {
+      include.push({
+        model: BlogCategory,
+        as: 'categories',
+        where: { id: category },
+        through: { attributes: [] },
+        required: true
+      });
+    }
+  }
+
+  if (tag) {
+    const tagInclude = include.find((item) => item.as === 'tags');
+    if (tagInclude) {
+      tagInclude.where = { ...(tagInclude.where ?? {}), id: tag };
+      tagInclude.required = true;
+    } else {
+      include.push({
+        model: BlogTag,
+        as: 'tags',
+        where: { id: tag },
+        through: { attributes: [] },
+        required: true
+      });
+    }
+  }
+
   const { rows, count } = await BlogPost.findAndCountAll({
     where,
     limit,
@@ -276,7 +415,8 @@ export async function getAdminPosts({ limit = 20, offset = 0, status, search } =
       ['status', 'ASC'],
       ['createdAt', 'DESC']
     ],
-    include: PUBLIC_INCLUDE
+    include,
+    distinct: true
   });
   return { posts: rows, total: count };
 }
@@ -295,8 +435,12 @@ async function syncCategories(post, categories = [], transaction) {
         defaults: { name: input.name, description: input.description ?? null },
         transaction
       });
-      if (input.description && record.description !== input.description) {
+      if (hasOwn(input, 'description') && record.description !== input.description) {
         record.description = input.description;
+        await record.save({ transaction });
+      }
+      if (hasOwn(input, 'displayOrder') && record.displayOrder !== input.displayOrder) {
+        record.displayOrder = input.displayOrder;
         await record.save({ transaction });
       }
       return record;
@@ -357,6 +501,10 @@ async function syncTags(post, tags = [], transaction) {
         },
         transaction
       });
+      if (hasOwn(input, 'name') && record.name !== input.name) {
+        record.name = input.name;
+        await record.save({ transaction });
+      }
       return record;
     })
   );
@@ -367,22 +515,25 @@ async function syncMedia(post, media = [], transaction) {
   if (!Array.isArray(media)) return;
   await BlogMedia.destroy({ where: { postId: post.id }, transaction });
   if (media.length === 0) return;
-  await BlogMedia.bulkCreate(
-    media.map((item) => ({
+  const rows = media
+    .filter((item) => item?.url)
+    .map((item) => ({
       postId: post.id,
       url: item.url,
       type: item.type ?? 'image',
       altText: item.altText ?? null,
-      metadata: item.metadata ?? {}
-    })),
-    { transaction }
-  );
+      metadata: buildMediaMetadata(item)
+    }));
+  if (rows.length === 0) return;
+  await BlogMedia.bulkCreate(rows, { transaction });
 }
 
 export async function createPost(payload, authorId) {
   const transaction = await sequelize.transaction();
   try {
-    const slug = toSlug(payload.slug ?? payload.title);
+    const status = payload.status ?? 'draft';
+    ensureValidStatus(status);
+    const slug = await ensureUniqueSlug(toSlug(payload.slug ?? payload.title), transaction);
     const post = await BlogPost.create(
       {
         authorId,
@@ -390,13 +541,13 @@ export async function createPost(payload, authorId) {
         slug,
         excerpt: payload.excerpt,
         content: payload.content,
-        status: payload.status ?? 'draft',
+        status,
         heroImageUrl: payload.heroImageUrl,
         heroImageAlt: payload.heroImageAlt,
         readingTimeMinutes: payload.readingTimeMinutes,
-        publishedAt: payload.status === 'published' ? payload.publishedAt ?? new Date() : null,
-        scheduledAt: payload.status === 'scheduled' ? payload.scheduledAt ?? null : null,
-        metadata: payload.metadata ?? {}
+        publishedAt: status === 'published' ? payload.publishedAt ?? new Date() : null,
+        scheduledAt: status === 'scheduled' ? payload.scheduledAt ?? null : null,
+        metadata: sanitiseMetadata({}, payload.metadata ?? {})
       },
       { transaction }
     );
@@ -407,6 +558,8 @@ export async function createPost(payload, authorId) {
       syncMedia(post, payload.media, transaction)
     ]);
 
+    await recordRevision(post, { transaction, actorId: authorId, action: 'created' });
+
     await transaction.commit();
     return BlogPost.findByPk(post.id, { include: PUBLIC_INCLUDE });
   } catch (error) {
@@ -415,44 +568,47 @@ export async function createPost(payload, authorId) {
   }
 }
 
-export async function updatePost(postId, payload) {
+export async function updatePost(postId, payload, actorId) {
   const transaction = await sequelize.transaction();
   try {
     const post = await BlogPost.findByPk(postId, { transaction });
     if (!post) {
       throw Object.assign(new Error('Blog post not found'), { statusCode: 404 });
     }
-    if (payload.title) {
+    if (hasOwn(payload, 'title')) {
       post.title = payload.title;
     }
-    if (payload.slug) {
-      post.slug = toSlug(payload.slug);
+    if (hasOwn(payload, 'slug') && payload.slug) {
+      post.slug = await ensureUniqueSlug(toSlug(payload.slug), transaction, post.id);
     }
-    if (payload.excerpt) {
+    if (hasOwn(payload, 'excerpt')) {
       post.excerpt = payload.excerpt;
     }
-    if (payload.content) {
+    if (hasOwn(payload, 'content')) {
       post.content = payload.content;
     }
-    if (payload.heroImageUrl !== undefined) {
+    if (hasOwn(payload, 'heroImageUrl')) {
       post.heroImageUrl = payload.heroImageUrl;
     }
-    if (payload.heroImageAlt !== undefined) {
+    if (hasOwn(payload, 'heroImageAlt')) {
       post.heroImageAlt = payload.heroImageAlt;
     }
-    if (payload.readingTimeMinutes !== undefined) {
+    if (hasOwn(payload, 'readingTimeMinutes')) {
       post.readingTimeMinutes = payload.readingTimeMinutes;
     }
-    if (payload.metadata) {
-      post.metadata = payload.metadata;
+    if (hasOwn(payload, 'metadata')) {
+      post.metadata = sanitiseMetadata(post.metadata ?? {}, payload.metadata ?? {});
     }
-    if (payload.status) {
+    if (hasOwn(payload, 'status')) {
+      ensureValidStatus(payload.status);
       post.status = payload.status;
       if (payload.status === 'published') {
         post.publishedAt = payload.publishedAt ?? post.publishedAt ?? new Date();
+        post.scheduledAt = null;
       }
       if (payload.status === 'scheduled') {
         post.scheduledAt = payload.scheduledAt ?? post.scheduledAt ?? new Date();
+        post.publishedAt = null;
       }
       if (payload.status !== 'scheduled') {
         post.scheduledAt = null;
@@ -460,15 +616,24 @@ export async function updatePost(postId, payload) {
       if (payload.status !== 'published') {
         post.publishedAt = null;
       }
+    } else {
+      if (hasOwn(payload, 'publishedAt')) {
+        post.publishedAt = payload.publishedAt;
+      }
+      if (hasOwn(payload, 'scheduledAt')) {
+        post.scheduledAt = payload.scheduledAt;
+      }
     }
 
     await post.save({ transaction });
 
     await Promise.all([
-      payload.categories ? syncCategories(post, payload.categories, transaction) : null,
-      payload.tags ? syncTags(post, payload.tags, transaction) : null,
-      payload.media ? syncMedia(post, payload.media, transaction) : null
+      hasOwn(payload, 'categories') ? syncCategories(post, payload.categories, transaction) : null,
+      hasOwn(payload, 'tags') ? syncTags(post, payload.tags, transaction) : null,
+      hasOwn(payload, 'media') ? syncMedia(post, payload.media, transaction) : null
     ]);
+
+    await recordRevision(post, { transaction, actorId, action: 'updated' });
 
     await transaction.commit();
     return BlogPost.findByPk(post.id, { include: PUBLIC_INCLUDE });
@@ -478,7 +643,7 @@ export async function updatePost(postId, payload) {
   }
 }
 
-export async function publishPost(postId, options = {}) {
+export async function publishPost(postId, options = {}, actorId) {
   const post = await BlogPost.findByPk(postId);
   if (!post) {
     throw Object.assign(new Error('Blog post not found'), { statusCode: 404 });
@@ -487,16 +652,18 @@ export async function publishPost(postId, options = {}) {
   post.publishedAt = options.publishedAt ?? new Date();
   post.scheduledAt = null;
   await post.save();
+  await recordRevision(post, { actorId, action: 'published' });
   return BlogPost.findByPk(post.id, { include: PUBLIC_INCLUDE });
 }
 
-export async function archivePost(postId) {
+export async function archivePost(postId, actorId) {
   const post = await BlogPost.findByPk(postId);
   if (!post) {
     throw Object.assign(new Error('Blog post not found'), { statusCode: 404 });
   }
   post.status = 'archived';
   await post.save();
+  await recordRevision(post, { actorId, action: 'archived' });
   return BlogPost.findByPk(post.id, { include: PUBLIC_INCLUDE });
 }
 
@@ -509,6 +676,129 @@ export async function deletePost(postId) {
     const deleted = await BlogPost.destroy({ where: { id: postId }, transaction });
     await transaction.commit();
     return deleted;
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+}
+
+export async function duplicatePost(postId, actorId) {
+  const transaction = await sequelize.transaction();
+  try {
+    const source = await BlogPost.findByPk(postId, { include: PUBLIC_INCLUDE, transaction });
+    if (!source) {
+      throw Object.assign(new Error('Blog post not found'), { statusCode: 404 });
+    }
+    const duplicateTitle = `${source.title} (Copy)`;
+    const slug = await ensureUniqueSlug(toSlug(`${source.slug || source.title}-copy`), transaction);
+    const clone = await BlogPost.create(
+      {
+        authorId: actorId ?? source.authorId,
+        title: duplicateTitle,
+        slug,
+        excerpt: source.excerpt,
+        content: source.content,
+        status: 'draft',
+        heroImageUrl: source.heroImageUrl,
+        heroImageAlt: source.heroImageAlt,
+        readingTimeMinutes: source.readingTimeMinutes,
+        metadata: sanitiseMetadata({}, source.metadata ?? {})
+      },
+      { transaction }
+    );
+
+    await Promise.all([
+      syncCategories(
+        clone,
+        source.categories?.map((category) => ({ id: category.id })) ?? [],
+        transaction
+      ),
+      syncTags(
+        clone,
+        source.tags?.map((tag) => ({ id: tag.id })) ?? [],
+        transaction
+      ),
+      syncMedia(
+        clone,
+        source.media?.map((asset) => ({
+          url: asset.url,
+          type: asset.type,
+          altText: asset.altText,
+          title: asset.metadata?.title,
+          caption: asset.metadata?.caption,
+          credit: asset.metadata?.credit,
+          focalPoint: asset.metadata?.focalPoint
+        })) ?? [],
+        transaction
+      )
+    ]);
+
+    await recordRevision(clone, {
+      transaction,
+      actorId: actorId ?? source.authorId,
+      action: 'duplicated'
+    });
+
+    await transaction.commit();
+    return BlogPost.findByPk(clone.id, { include: PUBLIC_INCLUDE });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+}
+
+export async function listPostRevisions(postId, { limit = 25 } = {}) {
+  return BlogPostRevision.findAll({
+    where: { postId },
+    order: [['createdAt', 'DESC']],
+    limit,
+    include: [{ model: User, as: 'recordedBy', attributes: ['id', 'firstName', 'lastName', 'email'] }]
+  });
+}
+
+export async function restorePostRevision(postId, revisionId, actorId) {
+  const revision = await BlogPostRevision.findOne({
+    where: { id: revisionId, postId }
+  });
+
+  if (!revision) {
+    const error = new Error('Revision not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const post = await BlogPost.findByPk(postId, { transaction });
+    if (!post) {
+      const error = new Error('Post not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const nextSlug = await ensureUniqueSlug(revision.slug, transaction, post.id);
+
+    post.title = revision.title;
+    post.slug = nextSlug;
+    post.excerpt = revision.excerpt ?? '';
+    post.content = revision.content ?? '';
+    post.status = revision.status;
+    post.metadata = revision.metadata ?? {};
+    post.publishedAt = revision.publishedAt ?? null;
+    post.scheduledAt = revision.scheduledAt ?? null;
+
+    await post.save({ transaction });
+
+    await recordRevision(post, {
+      transaction,
+      actorId: actorId ?? revision.recordedById ?? null,
+      action: 'restored'
+    });
+
+    await transaction.commit();
+
+    return BlogPost.findByPk(postId, { include: PUBLIC_INCLUDE });
   } catch (error) {
     await transaction.rollback();
     throw error;

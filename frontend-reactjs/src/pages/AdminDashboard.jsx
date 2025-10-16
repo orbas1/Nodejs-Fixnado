@@ -1508,6 +1508,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const sections = [
   const escrowConsoleLink = {
     id: 'escrow-console-link',
     label: 'Escrow management',
@@ -1665,6 +1666,31 @@ function buildAdminNavigation(payload, complianceContext = null) {
     monetisationSection
   ].filter(Boolean);
 
+  sections.push({
+    id: 'blog-management',
+    label: 'Blog management',
+    description: 'Create, schedule, and audit Fixnado editorial content from a dedicated workspace.',
+    icon: 'documents',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'blog-console-entry',
+          title: 'Editorial workspace',
+          description: 'Launch the production blog console to compose posts, manage taxonomy, and review revisions.',
+          items: [
+            {
+              id: 'open-blog-console',
+              label: 'Blog workspace',
+              helper: 'Full CRUD tooling for posts, categories, tags, and revision history.',
+              type: 'action',
+              href: '/admin/blog',
+              cta: 'Open workspace'
+            }
+          ]
+        }
+      ]
+    }
   navigation.push({
     id: 'settings-preferences-link',
     label: 'Settings & preferences',

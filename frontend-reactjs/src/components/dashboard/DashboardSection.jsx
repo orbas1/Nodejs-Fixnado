@@ -64,6 +64,32 @@ SectionHeader.propTypes = {
   }).isRequired
 };
 
+const ComponentSection = ({ section }) => {
+  const Component = section.Component ?? section.component ?? null;
+  return (
+    <div className="space-y-4">
+      <SectionHeader section={section} />
+      {Component ? (
+        <Component {...(section.props ?? {})} />
+      ) : (
+        <div className="rounded-2xl border border-accent/10 bg-white p-6 text-sm text-slate-600">
+          This dashboard module has not been configured yet.
+        </div>
+      )}
+    </div>
+  );
+};
+
+ComponentSection.propTypes = {
+  section: PropTypes.shape({
+    Component: PropTypes.elementType,
+    component: PropTypes.elementType,
+    props: PropTypes.object,
+    label: PropTypes.string,
+    description: PropTypes.string
+  }).isRequired
+};
+
 const GridSection = ({ section }) => {
   const cards = section.data?.cards ?? [];
   return (
@@ -1721,6 +1747,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
+    case 'component':
+      return <ComponentSection section={section} />;
     case 'settings':
       return persona === 'user' ? (
         <CustomerSettingsSection section={section} />

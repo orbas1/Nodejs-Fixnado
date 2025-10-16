@@ -65,6 +65,7 @@ import BlogTag from './blogTag.js';
 import BlogMedia from './blogMedia.js';
 import BlogPostCategory from './blogPostCategory.js';
 import BlogPostTag from './blogPostTag.js';
+import BlogPostRevision from './blogPostRevision.js';
 import WebsitePage from './websitePage.js';
 import WebsiteContentBlock from './websiteContentBlock.js';
 import WebsiteNavigationMenu from './websiteNavigationMenu.js';
@@ -740,6 +741,10 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+BlogPost.hasMany(BlogPostRevision, { foreignKey: 'postId', as: 'revisions' });
+BlogPostRevision.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
+BlogPostRevision.belongsTo(User, { foreignKey: 'recordedById', as: 'recordedBy' });
+User.hasMany(BlogPostRevision, { foreignKey: 'recordedById', as: 'recordedBlogRevisions' });
 RbacRole.hasMany(RbacRolePermission, { foreignKey: 'roleId', as: 'permissionEntries' });
 RbacRolePermission.belongsTo(RbacRole, { foreignKey: 'roleId', as: 'role' });
 
@@ -849,6 +854,7 @@ export {
   BlogMedia,
   BlogPostCategory,
   BlogPostTag,
+  BlogPostRevision,
   WebsitePage,
   WebsiteContentBlock,
   WebsiteNavigationMenu,

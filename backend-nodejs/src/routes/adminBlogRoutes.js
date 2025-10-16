@@ -6,6 +6,9 @@ import {
   publishAdminPost,
   archiveAdminPost,
   deleteAdminPost,
+  duplicateAdminPost,
+  listAdminPostRevisions,
+  restoreAdminPostRevision,
   listAdminCategories,
   upsertAdminCategory,
   deleteAdminCategory,
@@ -33,6 +36,9 @@ router.put('/posts/:postId', updateAdminPost);
 router.patch('/posts/:postId/publish', publishAdminPost);
 router.patch('/posts/:postId/archive', archiveAdminPost);
 router.delete('/posts/:postId', deleteAdminPost);
+router.post('/posts/:postId/duplicate', duplicateAdminPost);
+router.get('/posts/:postId/revisions', listAdminPostRevisions);
+router.post('/posts/:postId/revisions/:revisionId/restore', restoreAdminPostRevision);
 
 router.get('/categories', listAdminCategories);
 router.post('/categories', upsertAdminCategory);
