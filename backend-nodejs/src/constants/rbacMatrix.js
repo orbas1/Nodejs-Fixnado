@@ -29,9 +29,17 @@ export const RBAC_MATRIX = {
       Permissions.FEED_MESSAGE,
       Permissions.FEED_POST,
       Permissions.SERVICES_BOOK,
+      Permissions.SERVICE_ORDERS_VIEW,
+      Permissions.SERVICE_ORDERS_MANAGE,
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
-      Permissions.SCHEDULE_MANAGE
+      Permissions.SCHEDULE_MANAGE,
+      Permissions.WALLET_VIEW,
+      Permissions.WALLET_MANAGE,
+      Permissions.WALLET_TRANSACT,
+      Permissions.WALLET_METHOD_MANAGE
+      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
       landing: '/app/dashboard',
@@ -183,6 +191,7 @@ export const RBAC_MATRIX = {
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
       Permissions.ADMIN_AUDIT_READ
+      Permissions.ADMIN_SECURITY_POSTURE_READ
     ],
     navigation: {
       landing: '/app/operations/overview',
@@ -209,6 +218,7 @@ export const RBAC_MATRIX = {
     inherits: [CanonicalRoles.OPERATIONS],
     permissions: [
       Permissions.ADMIN_DASHBOARD,
+      Permissions.ADMIN_DASHBOARD_WRITE,
       Permissions.ADMIN_FEATURE_READ,
       Permissions.ADMIN_FEATURE_WRITE,
       Permissions.ADMIN_PLATFORM_READ,
@@ -217,6 +227,12 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_AFFILIATE_WRITE,
       Permissions.ADMIN_AUDIT_READ,
       Permissions.ADMIN_AUDIT_WRITE,
+      Permissions.ADMIN_COMPLIANCE_READ,
+      Permissions.ADMIN_COMPLIANCE_WRITE,
+      Permissions.ADMIN_TAXONOMY_READ,
+      Permissions.ADMIN_TAXONOMY_WRITE,
+      Permissions.ADMIN_SECURITY_POSTURE_READ,
+      Permissions.ADMIN_SECURITY_POSTURE_WRITE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.SUPPORT_TICKETS

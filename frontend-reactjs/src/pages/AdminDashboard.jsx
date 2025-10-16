@@ -1,12 +1,36 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
+import { BanknotesIcon, MapIcon, Cog6ToothIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
+import {
+  fetchComplianceControls,
+  createComplianceControl as createComplianceControlRequest,
+  updateComplianceControl as updateComplianceControlRequest,
+  deleteComplianceControl as deleteComplianceControlRequest,
+  updateComplianceAutomation
+} from '../api/adminComplianceClient.js';
+import {
+  Button,
+  SegmentedControl,
+  StatusPill,
+  TextInput,
+  Spinner,
+  FormField
+} from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
+import {
+  fetchAdminDashboardOverviewSettings,
+  persistAdminDashboardOverviewSettings
+} from '../api/adminDashboardSettingsClient.js';
+import SecurityTelemetryWorkspace from '../components/security/telemetry/index.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
@@ -204,6 +228,417 @@ const ACCENT_BY_TONE = {
   neutral: 'from-white via-slate-50 to-slate-100'
 };
 
+const OVERVIEW_METRICS_CONFIG = [
+  {
+    key: 'escrow',
+    title: 'Escrow under management',
+    description: 'Controls the liquidity tile copy and multiplier thresholds for escrow value reporting.',
+    inputs: [
+      {
+        field: 'label',
+        label: 'Metric name',
+        type: 'text',
+        hint: 'Heading presented in the overview metrics grid.'
+      },
+      {
+        field: 'caption',
+        label: 'Short caption',
+        type: 'text',
+        optionalLabel: 'Optional',
+        hint: 'Supporting description beneath the metric.'
+      },
+      {
+        field: 'targetHighMultiplier',
+        label: 'Stretch multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Multiplier for the target (green) band shown in charts.'
+      },
+      {
+        field: 'targetMediumMultiplier',
+        label: 'Baseline multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Multiplier for the baseline performance band.'
+      }
+    ]
+  },
+  {
+    key: 'disputes',
+    title: 'Dispute load',
+    description: 'Tune thresholds for dispute escalation monitoring in the overview tiles.',
+    inputs: [
+      {
+        field: 'label',
+        label: 'Metric name',
+        type: 'text',
+        hint: 'Heading presented in the overview metrics grid.'
+      },
+      {
+        field: 'caption',
+        label: 'Short caption',
+        type: 'text',
+        optionalLabel: 'Optional',
+        hint: 'Supporting description beneath the metric.'
+      },
+      {
+        field: 'thresholdLowMultiplier',
+        label: 'Healthy multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Threshold multiplier for green status messaging.'
+      },
+      {
+        field: 'thresholdMediumMultiplier',
+        label: 'Caution multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Multiplier at which the dashboard flags amber status.'
+      }
+    ]
+  },
+  {
+    key: 'jobs',
+    title: 'Live jobs',
+    description: 'Adjust the live jobs tile copy and multiplier thresholds.',
+    inputs: [
+      {
+        field: 'label',
+        label: 'Metric name',
+        type: 'text',
+        hint: 'Heading presented in the overview metrics grid.'
+      },
+      {
+        field: 'caption',
+        label: 'Short caption',
+        type: 'text',
+        optionalLabel: 'Optional',
+        hint: 'Supporting description beneath the metric.'
+      },
+      {
+        field: 'targetHighMultiplier',
+        label: 'Stretch multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Multiplier for maximum jobs target messaging.'
+      },
+      {
+        field: 'targetMediumMultiplier',
+        label: 'Baseline multiplier',
+        type: 'number',
+        step: '0.01',
+        hint: 'Multiplier for baseline jobs target messaging.'
+      }
+    ]
+  },
+  {
+    key: 'sla',
+    title: 'SLA compliance',
+    description: 'Set the SLA target and warning thresholds for the overview.',
+    inputs: [
+      {
+        field: 'label',
+        label: 'Metric name',
+        type: 'text',
+        hint: 'Heading presented in the overview metrics grid.'
+      },
+      {
+        field: 'caption',
+        label: 'Short caption',
+        type: 'text',
+        optionalLabel: 'Optional',
+        hint: 'Supporting description beneath the metric.'
+      },
+      {
+        field: 'goal',
+        label: 'Target %',
+        type: 'number',
+        step: '0.1',
+        hint: 'Target compliance percentage shown as the goal.'
+      },
+      {
+        field: 'warningThreshold',
+        label: 'Warning %',
+        type: 'number',
+        step: '0.1',
+        hint: 'Threshold for warning badge messaging.'
+      }
+    ]
+  }
+];
+
+const OVERVIEW_CHART_CONFIG = [
+  {
+    key: 'escrow',
+    title: 'Escrow chart target',
+    description: 'Update the comparison target applied to the escrow trend visual.',
+    inputs: [
+      {
+        field: 'targetLabel',
+        label: 'Target label',
+        type: 'text',
+        hint: 'Visible legend label for the target band.'
+      },
+      {
+        field: 'targetDivisor',
+        label: 'Target divisor',
+        type: 'number',
+        step: '1',
+        hint: 'Used to scale large escrow numbers (e.g. 1000000 for millions).'
+      }
+    ]
+  }
+];
+
+const MAX_OVERVIEW_INSIGHTS = 12;
+const MAX_OVERVIEW_TIMELINE = 12;
+const MAX_SECURITY_SIGNALS = 6;
+const MAX_AUTOMATION_BACKLOG = 8;
+const MAX_OPERATIONS_BOARDS = 6;
+const MAX_OPERATIONS_BOARD_UPDATES = 5;
+const MAX_COMPLIANCE_CONTROLS = 8;
+const MAX_AUDIT_TIMELINE = 10;
+
+const TONE_OPTIONS = [
+  { value: 'success', label: 'Success' },
+  { value: 'info', label: 'Info' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'danger', label: 'Alert' }
+];
+
+function buildFormState(settings) {
+  if (!settings) {
+    return null;
+  }
+
+  const metricState = (metric = {}) => ({
+    label: metric.label ?? '',
+    caption: metric.caption ?? '',
+    targetHighMultiplier:
+      metric.targetHighMultiplier != null ? String(metric.targetHighMultiplier) : '',
+    targetMediumMultiplier:
+      metric.targetMediumMultiplier != null ? String(metric.targetMediumMultiplier) : '',
+    thresholdLowMultiplier:
+      metric.thresholdLowMultiplier != null ? String(metric.thresholdLowMultiplier) : '',
+    thresholdMediumMultiplier:
+      metric.thresholdMediumMultiplier != null ? String(metric.thresholdMediumMultiplier) : '',
+    goal: metric.goal != null ? String(metric.goal) : '',
+    warningThreshold: metric.warningThreshold != null ? String(metric.warningThreshold) : ''
+  });
+
+  const manualInsights = Array.isArray(settings.insights?.manual)
+    ? [...settings.insights.manual]
+    : [];
+
+  const manualTimeline = Array.isArray(settings.timeline?.manual)
+    ? settings.timeline.manual.map((entry) => ({
+        title: entry?.title ?? '',
+        when: entry?.when ?? '',
+        status: entry?.status ?? ''
+      }))
+    : [];
+
+  const manualSignals = Array.isArray(settings.security?.manualSignals)
+    ? settings.security.manualSignals.map((signal) => ({
+        label: signal?.label ?? '',
+        caption: signal?.caption ?? '',
+        valueLabel: signal?.valueLabel ?? '',
+        tone: signal?.tone ?? 'info'
+      }))
+    : [];
+
+  const manualBacklog = Array.isArray(settings.automation?.manualBacklog)
+    ? settings.automation.manualBacklog.map((item) => ({
+        name: item?.name ?? '',
+        status: item?.status ?? '',
+        notes: item?.notes ?? '',
+        tone: item?.tone ?? 'info'
+      }))
+    : [];
+
+  const manualBoards = Array.isArray(settings.queues?.manualBoards)
+    ? settings.queues.manualBoards.map((board) => ({
+        title: board?.title ?? '',
+        summary: board?.summary ?? '',
+        owner: board?.owner ?? '',
+        updates: Array.isArray(board?.updates)
+          ? board.updates.map((entry) => entry ?? '').filter((entry) => typeof entry === 'string')
+          : []
+      }))
+    : [];
+
+  const manualControls = Array.isArray(settings.queues?.manualComplianceControls)
+    ? settings.queues.manualComplianceControls.map((control) => ({
+        name: control?.name ?? '',
+        detail: control?.detail ?? '',
+        due: control?.due ?? '',
+        owner: control?.owner ?? '',
+        tone: control?.tone ?? 'info'
+      }))
+    : [];
+
+  const manualAuditTimeline = Array.isArray(settings.audit?.manualTimeline)
+    ? settings.audit.manualTimeline.map((entry) => ({
+        time: entry?.time ?? '',
+        event: entry?.event ?? '',
+        owner: entry?.owner ?? '',
+        status: entry?.status ?? ''
+      }))
+    : [];
+
+  return {
+    metrics: {
+      escrow: metricState(settings.metrics?.escrow),
+      disputes: metricState(settings.metrics?.disputes),
+      jobs: metricState(settings.metrics?.jobs),
+      sla: metricState(settings.metrics?.sla)
+    },
+    charts: {
+      escrow: {
+        targetDivisor:
+          settings.charts?.escrow?.targetDivisor != null
+            ? String(settings.charts.escrow.targetDivisor)
+            : '',
+        targetLabel: settings.charts?.escrow?.targetLabel ?? ''
+      }
+    },
+    insights: { manual: manualInsights },
+    timeline: { manual: manualTimeline },
+    security: { manualSignals },
+    automation: { manualBacklog },
+    operations: { manualBoards },
+    compliance: { manualControls },
+    audit: { manualTimeline: manualAuditTimeline }
+  };
+}
+
+function prepareSettingsPayload(form) {
+  const parseNumber = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const metrics = {
+    escrow: {
+      label: form.metrics.escrow.label.trim(),
+      caption: form.metrics.escrow.caption.trim()
+    },
+    disputes: {
+      label: form.metrics.disputes.label.trim(),
+      caption: form.metrics.disputes.caption.trim()
+    },
+    jobs: {
+      label: form.metrics.jobs.label.trim(),
+      caption: form.metrics.jobs.caption.trim()
+    },
+    sla: {
+      label: form.metrics.sla.label.trim(),
+      caption: form.metrics.sla.caption.trim()
+    }
+  };
+
+  const maybeAssign = (target, key, value) => {
+    if (value !== undefined) {
+      target[key] = value;
+    }
+  };
+
+  maybeAssign(metrics.escrow, 'targetHighMultiplier', parseNumber(form.metrics.escrow.targetHighMultiplier));
+  maybeAssign(metrics.escrow, 'targetMediumMultiplier', parseNumber(form.metrics.escrow.targetMediumMultiplier));
+  maybeAssign(metrics.disputes, 'thresholdLowMultiplier', parseNumber(form.metrics.disputes.thresholdLowMultiplier));
+  maybeAssign(
+    metrics.disputes,
+    'thresholdMediumMultiplier',
+    parseNumber(form.metrics.disputes.thresholdMediumMultiplier)
+  );
+  maybeAssign(metrics.jobs, 'targetHighMultiplier', parseNumber(form.metrics.jobs.targetHighMultiplier));
+  maybeAssign(metrics.jobs, 'targetMediumMultiplier', parseNumber(form.metrics.jobs.targetMediumMultiplier));
+  maybeAssign(metrics.sla, 'goal', parseNumber(form.metrics.sla.goal));
+  maybeAssign(metrics.sla, 'warningThreshold', parseNumber(form.metrics.sla.warningThreshold));
+
+  const chartDivisor = parseNumber(form.charts.escrow.targetDivisor);
+  const charts = {
+    escrow: {
+      targetLabel: form.charts.escrow.targetLabel.trim()
+    }
+  };
+  if (chartDivisor !== undefined) {
+    charts.escrow.targetDivisor = chartDivisor;
+  }
+
+  const manualInsights = form.insights.manual
+    .map((entry) => entry.trim())
+    .filter((entry, index, arr) => entry && arr.indexOf(entry) === index);
+
+  const manualTimeline = form.timeline.manual
+    .map((entry) => ({
+      title: entry.title.trim(),
+      when: entry.when.trim(),
+      status: entry.status.trim()
+    }))
+    .filter((entry) => entry.title && entry.when);
+
+  const manualSignals = form.security.manualSignals
+    .map((entry) => ({
+      label: entry.label.trim(),
+      caption: entry.caption.trim(),
+      valueLabel: entry.valueLabel.trim(),
+      tone: entry.tone || 'info'
+    }))
+    .filter((entry) => entry.label && entry.valueLabel);
+
+  const manualBacklog = form.automation.manualBacklog
+    .map((entry) => ({
+      name: entry.name.trim(),
+      status: entry.status.trim(),
+      notes: entry.notes.trim(),
+      tone: entry.tone || 'info'
+    }))
+    .filter((entry) => entry.name && entry.status);
+
+  const manualBoards = form.operations.manualBoards
+    .map((entry) => ({
+      title: entry.title.trim(),
+      summary: entry.summary.trim(),
+      owner: entry.owner.trim(),
+      updates: entry.updates.map((update) => update.trim()).filter(Boolean)
+    }))
+    .filter((entry) => entry.title && entry.summary);
+
+  const manualControls = form.compliance.manualControls
+    .map((entry) => ({
+      name: entry.name.trim(),
+      detail: entry.detail.trim(),
+      due: entry.due.trim(),
+      owner: entry.owner.trim(),
+      tone: entry.tone || 'info'
+    }))
+    .filter((entry) => entry.name && entry.detail && entry.due);
+
+  const manualAudit = form.audit.manualTimeline
+    .map((entry) => ({
+      time: entry.time.trim(),
+      event: entry.event.trim(),
+      owner: entry.owner.trim(),
+      status: entry.status.trim()
+    }))
+    .filter((entry) => entry.time && entry.event);
+
+  return {
+    metrics,
+    charts,
+    insights: { manual: manualInsights },
+    timeline: { manual: manualTimeline },
+    security: { manualSignals },
+    automation: { manualBacklog },
+    queues: {
+      manualBoards,
+      manualComplianceControls: manualControls
+    },
+    audit: { manualTimeline: manualAudit }
+  };
+}
+
 function resolveAccent(tone) {
   return ACCENT_BY_TONE[tone] ?? ACCENT_BY_TONE.info;
 }
@@ -235,7 +670,7 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
-function buildAdminNavigation(payload) {
+function buildAdminNavigation(payload, complianceContext = null) {
   if (!payload) {
     return [];
   }
@@ -243,12 +678,38 @@ function buildAdminNavigation(payload) {
   const tiles = payload.metrics?.command?.tiles ?? [];
   const summary = payload.metrics?.command?.summary ?? {};
   const escrowTrend = payload.charts?.escrowTrend?.buckets ?? [];
+  const escrowTargetLabel = payload.charts?.escrowTrend?.targetLabel ?? 'baseline targets';
   const disputeBreakdown = payload.charts?.disputeBreakdown?.buckets ?? [];
   const securitySignals = payload.security?.signals ?? [];
   const automationBacklog = payload.security?.automationBacklog ?? [];
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
+  const complianceRegistry = Array.isArray(complianceContext?.payload?.controls)
+    ? complianceContext.payload.controls
+    : [];
   const auditTimeline = payload.audit?.timeline ?? [];
+  const manualInsights = Array.isArray(payload.overview?.manualInsights)
+    ? payload.overview.manualInsights.filter((item) => typeof item === 'string' && item.trim().length > 0)
+    : [];
+  const manualUpcoming = Array.isArray(payload.overview?.manualUpcoming)
+    ? payload.overview.manualUpcoming.filter(
+        (entry) => entry && typeof entry.title === 'string' && typeof entry.when === 'string'
+      )
+    : [];
+
+  const upcomingCompliance = (complianceRegistry.length
+    ? complianceRegistry.map((control) => ({
+        title: control.title,
+        when: control.dueLabel ||
+          (control.nextReviewAt ? new Date(control.nextReviewAt).toLocaleDateString() : 'Scheduled'),
+        status: control.ownerTeam || control.owner?.name || 'Compliance Ops'
+      }))
+    : complianceControls.map((control) => ({
+        title: control.name,
+        when: control.due,
+        status: control.owner
+      })))
+    .slice(0, 4);
 
   const overview = {
     id: 'overview',
@@ -267,7 +728,9 @@ function buildAdminNavigation(payload) {
           ? {
               id: 'escrow-trend',
               title: 'Escrow trajectory',
-              description: `Escrow under management across the ${payload.timeframeLabel?.toLowerCase() ?? 'selected'} window versus baseline targets.`,
+              description: `Escrow under management across the ${
+                payload.timeframeLabel?.toLowerCase() ?? 'selected'
+              } window versus ${escrowTargetLabel.toLowerCase()}.`,
               type: 'area',
               dataKey: 'value',
               secondaryKey: 'target',
@@ -294,16 +757,13 @@ function buildAdminNavigation(payload) {
             }
           : null
       ].filter(Boolean),
-      upcoming: complianceControls.slice(0, 4).map((control) => ({
-        title: control.name,
-        when: control.due,
-        status: control.owner
-      })),
+      upcoming: upcomingCompliance,
       insights: [
         ...securitySignals.map((signal) => `${signal.label}: ${signal.valueLabel} • ${signal.caption}`),
         automationBacklog.length
           ? `Automation backlog tracking ${automationBacklog.length} initiative${automationBacklog.length === 1 ? '' : 's'}.`
-          : null
+          : null,
+        ...manualInsights
       ].filter(Boolean)
     }
   };
@@ -339,28 +799,24 @@ function buildAdminNavigation(payload) {
     }
   };
 
-  const securitySection = securitySignals.length
-    ? {
-        id: 'security-posture',
-        label: 'Security & telemetry posture',
-        description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
-        type: 'grid',
-        data: {
-          cards: securitySignals.map((signal) => ({
-            title: `${signal.label} — ${signal.valueLabel}`,
-            accent: resolveAccent(signal.tone),
-            details: [
-              signal.caption,
-              signal.tone === 'danger'
-                ? 'Immediate investigation required.'
-                : signal.tone === 'warning'
-                  ? 'Monitor closely and prepare contingency.'
-                  : 'Tracking to plan.'
-            ]
-          }))
-        }
+  const securitySection = {
+    id: 'security-posture',
+    label: 'Security & telemetry posture',
+    description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
+    type: 'component',
+    component: SecurityTelemetryWorkspace,
+    data: {
+      initialData: {
+        timezone: 'Europe/London',
+        updatedAt: payload.generatedAt,
+        signals: securitySignals,
+        automationTasks: payload.security?.automationBacklog ?? [],
+        connectors: payload.security?.connectors ?? [],
+        summary: payload.security?.summary ?? {},
+        capabilities: payload.security?.capabilities ?? {}
       }
-    : null;
+    }
+  };
 
   const operationsSection = queueBoards.length
     ? {
@@ -400,21 +856,37 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  const complianceSection = complianceControls.length
+  const complianceSection = complianceContext
     ? {
         id: 'compliance-controls',
         label: 'Compliance controls',
-        description: 'Expiring attestations and their current owners over the next 14 days.',
-        type: 'list',
+        description:
+          'Control registry, evidence trail, and automation guardrails keeping Fixnado audit-ready across regions.',
+        type: 'compliance-controls',
+        icon: 'compliance',
         data: {
-          items: complianceControls.map((control) => ({
-            title: control.name,
-            description: `${control.detail} • Owner: ${control.owner}`,
-            status: `${control.due} • ${complianceStatusLabel(control.tone)}`
-          }))
-        }
+          loading: Boolean(complianceContext.loading),
+          error: complianceContext.error,
+          ...(complianceContext.payload || {})
+        },
+        actions: complianceContext.actions
       }
-    : null;
+    : complianceControls.length
+      ? {
+          id: 'compliance-controls',
+          label: 'Compliance controls',
+          description: 'Expiring attestations and their current owners over the next 14 days.',
+          type: 'list',
+          icon: 'compliance',
+          data: {
+            items: complianceControls.map((control) => ({
+              title: control.name,
+              description: `${control.detail} • Owner: ${control.owner}`,
+              status: `${control.due} • ${complianceStatusLabel(control.tone)}`
+            }))
+          }
+        }
+      : null;
 
   const automationSection = automationBacklog.length
     ? {
@@ -449,6 +921,81 @@ function buildAdminNavigation(payload) {
       initialTimeframe: auditSummary.timeframe ?? payload.timeframe ?? DEFAULT_TIMEFRAME
     }
   };
+  const monetisation = payload.platform?.monetisation;
+  const monetisationSection = monetisation
+    ? {
+        id: 'monetisation-governance',
+        label: 'Monetisation governance',
+        description: 'Launch the monetisation control centre to govern commissions, subscriptions, and finance integrations.',
+        type: 'settings',
+        data: {
+          panels: [
+            {
+              id: 'monetisation-console',
+              title: 'Monetisation control centre',
+              description: 'Keep commission structures, subscription packages, and Stripe/Escrow credentials aligned.',
+              status: monetisation.commissionsEnabled ? 'Commissions active' : 'Commissions disabled',
+              items: [
+                {
+                  id: 'launch-console',
+                  label: 'Monetisation console',
+                  helper: 'Adjust commission structures, subscription packages, and finance credentials.',
+                  type: 'action',
+                  href: '/admin/monetisation',
+                  cta: 'Open console'
+                },
+                {
+                  id: 'base-rate',
+                  label: 'Default commission rate',
+                  helper: 'Fallback platform share applied when no bespoke rule matches.',
+                  value: monetisation.baseRateLabel
+                },
+                {
+                  id: 'subscription-state',
+                  label: 'Subscription state',
+                  helper: monetisation.subscriptionEnabled ? 'Subscription gating enforced' : 'Subscriptions disabled',
+                  value: `${monetisation.subscriptionCount ?? 0} packages`
+                },
+                {
+                  id: 'integration-health',
+                  label: 'Integration readiness',
+                  helper: [
+                    monetisation.stripeConnected ? 'Stripe linked' : 'Stripe pending',
+                    monetisation.escrowConnected ? 'Escrow ready' : 'Escrow not configured',
+                    monetisation.smtpReady ? 'SMTP ready' : 'SMTP pending',
+                    monetisation.storageConfigured ? 'R2 storage connected' : 'Storage pending'
+                  ].join(' • ')
+                }
+              ]
+            }
+          ]
+        }
+      }
+    : null;
+
+  const auditSection = auditTimeline.length
+    ? {
+        id: 'audit-log',
+        label: 'Audit timeline',
+        description: 'Latest pipeline runs, compliance reviews, and dispute checkpoints.',
+        type: 'table',
+        data: {
+          headers: ['Time', 'Event', 'Owner', 'Status'],
+          rows: auditTimeline.map((entry) => [entry.time, entry.event, entry.owner, entry.status])
+        }
+      }
+    : null;
+
+  const sections = [
+  const upcomingManualEntries = manualUpcoming.slice(0, 4).map((entry) => ({
+    title: entry.title,
+    when: entry.when,
+    status: entry.status || 'Manual'
+  }));
+
+  if (upcomingManualEntries.length) {
+    overview.analytics.upcoming = [...overview.analytics.upcoming, ...upcomingManualEntries];
+  }
 
   return [
     overview,
@@ -458,8 +1005,20 @@ function buildAdminNavigation(payload) {
     disputeSection,
     complianceSection,
     automationSection,
-    auditSection
+    auditSection,
+    monetisationSection
   ].filter(Boolean);
+
+  sections.push({
+    id: 'system-settings-link',
+    label: 'System settings',
+    description: 'Configure email, storage, and integration credentials.',
+    type: 'link',
+    icon: 'settings',
+    routeTo: '/admin/system-settings'
+  });
+
+  return sections;
 }
 
 export default function AdminDashboard() {
@@ -473,6 +1032,15 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [complianceState, setComplianceState] = useState({ loading: true, error: null, payload: null });
+  const [overviewSettings, setOverviewSettings] = useState(null);
+  const [overviewSettingsForm, setOverviewSettingsForm] = useState(null);
+  const [overviewSettingsLoading, setOverviewSettingsLoading] = useState(true);
+  const [overviewSettingsLoadError, setOverviewSettingsLoadError] = useState(null);
+  const [overviewSettingsSaving, setOverviewSettingsSaving] = useState(false);
+  const [overviewSettingsFormError, setOverviewSettingsFormError] = useState(null);
+  const [overviewSettingsSuccess, setOverviewSettingsSuccess] = useState(null);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     if (timeframeParam !== timeframe) {
@@ -510,6 +1078,64 @@ export default function AdminDashboard() {
     [timeframe, logout, navigate]
   );
 
+  const loadComplianceControls = useCallback(
+    async ({ signal } = {}) => {
+      setComplianceState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const payload = await fetchComplianceControls({ signal });
+        setComplianceState({ loading: false, error: null, payload });
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          return;
+        }
+        setComplianceState((current) => ({ ...current, loading: false, error, payload: current.payload }));
+      }
+    },
+    []
+  );
+
+  const handleCreateControl = useCallback(
+    async (payload) => {
+      await createComplianceControlRequest(payload);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleUpdateControl = useCallback(
+    async (controlId, payload) => {
+      await updateComplianceControlRequest(controlId, payload);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleDeleteControl = useCallback(
+    async (controlId) => {
+      await deleteComplianceControlRequest(controlId);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleUpdateAutomation = useCallback(async (settings) => {
+    const updated = await updateComplianceAutomation(settings);
+    setComplianceState((current) => ({
+      ...current,
+      payload: current.payload
+        ? { ...current.payload, automation: updated }
+        : {
+            controls: [],
+            summary: { total: 0, overdue: 0, dueSoon: 0, monitoring: 0 },
+            filters: { statuses: [], categories: [], reviewFrequencies: [], controlTypes: [], ownerTeams: [] },
+            evidence: [],
+            exceptions: [],
+            automation: updated
+          }
+    }));
+    return updated;
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     loadDashboard({ signal: controller.signal, timeframe });
@@ -531,15 +1157,85 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    loadComplianceControls({ signal: controller.signal });
+    return () => controller.abort();
+  }, [loadComplianceControls]);
+    let isMounted = true;
+    const controller = new AbortController();
+    (async () => {
+      setOverviewSettingsLoading(true);
+      setOverviewSettingsLoadError(null);
+      try {
+        const settings = await fetchAdminDashboardOverviewSettings({ signal: controller.signal });
+        if (!isMounted) return;
+        setOverviewSettings(settings);
+      } catch (error) {
+        if (controller.signal.aborted || !isMounted) return;
+        const message =
+          error instanceof Error ? error.message : 'Failed to load overview settings';
+        setOverviewSettingsLoadError(message);
+      } finally {
+        if (!isMounted) return;
+        setOverviewSettingsLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!overviewSettings || settingsModalOpen) {
+      return;
+    }
+    setOverviewSettingsForm(buildFormState(overviewSettings));
+  }, [overviewSettings, settingsModalOpen]);
+
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
 
+  const complianceSectionContext = useMemo(() => {
+    const payload =
+      complianceState.payload ?? {
+        controls: [],
+        summary: { total: 0, overdue: 0, dueSoon: 0, monitoring: 0 },
+        filters: { statuses: [], categories: [], reviewFrequencies: [], controlTypes: [], ownerTeams: [] },
+        automation: {},
+        evidence: [],
+        exceptions: []
+      };
+    return {
+      loading: complianceState.loading,
+      error: complianceState.error,
+      payload,
+      actions: {
+        refresh: () => loadComplianceControls(),
+        createControl: handleCreateControl,
+        updateControl: handleUpdateControl,
+        deleteControl: handleDeleteControl,
+        updateAutomation: handleUpdateAutomation
+      }
+    };
+  }, [
+    complianceState.loading,
+    complianceState.error,
+    complianceState.payload,
+    loadComplianceControls,
+    handleCreateControl,
+    handleUpdateControl,
+    handleDeleteControl,
+    handleUpdateAutomation
+  ]);
+
   const navigation = useMemo(() => {
-    const sections = state.data ? buildAdminNavigation(state.data) : [];
+    const sections = state.data ? buildAdminNavigation(state.data, complianceSectionContext) : [];
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
+  }, [state.data, affiliateSection, complianceSectionContext]);
   const dashboardPayload = state.data ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
@@ -570,6 +1266,483 @@ export default function AdminDashboard() {
     navigate('/admin', { replace: true, state: { reason: 'signedOut' } });
   }, [logout, navigate]);
 
+  const handleOpenSettings = useCallback(() => {
+    if (!overviewSettings) return;
+    setOverviewSettingsSuccess(null);
+    setOverviewSettingsForm(buildFormState(overviewSettings));
+    setOverviewSettingsFormError(null);
+    setSettingsModalOpen(true);
+  }, [overviewSettings]);
+
+  const handleCloseSettings = useCallback(() => {
+    setSettingsModalOpen(false);
+    setOverviewSettingsFormError(null);
+    if (overviewSettings) {
+      setOverviewSettingsForm(buildFormState(overviewSettings));
+    }
+  }, [overviewSettings]);
+
+  const handleSaveOverviewSettings = useCallback(
+    async (payload) => {
+      setOverviewSettingsSaving(true);
+      setOverviewSettingsFormError(null);
+      try {
+        const saved = await persistAdminDashboardOverviewSettings(payload);
+        setOverviewSettings(saved);
+        setOverviewSettingsSuccess('Overview settings updated');
+        await loadDashboard({ timeframe, forceRefresh: true });
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to save overview settings';
+        setOverviewSettingsFormError(message);
+        return false;
+      } finally {
+        setOverviewSettingsSaving(false);
+      }
+    },
+    [loadDashboard, timeframe]
+  );
+
+  const handleMetricFieldChange = useCallback((metricKey, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        metrics: {
+          ...current.metrics,
+          [metricKey]: {
+            ...current.metrics[metricKey],
+            [field]: value
+          }
+        }
+      };
+    });
+  }, []);
+
+  const handleChartFieldChange = useCallback((chartKey, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        charts: {
+          ...current.charts,
+          [chartKey]: {
+            ...current.charts[chartKey],
+            [field]: value
+          }
+        }
+      };
+    });
+  }, []);
+
+  const handleAddManualInsight = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.insights.manual.length >= MAX_OVERVIEW_INSIGHTS) {
+        return current;
+      }
+      return {
+        ...current,
+        insights: {
+          ...current.insights,
+          manual: [...current.insights.manual, '']
+        }
+      };
+    });
+  }, []);
+
+  const handleManualInsightChange = useCallback((index, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manual = current.insights.manual.map((entry, entryIndex) =>
+        entryIndex === index ? value : entry
+      );
+      return {
+        ...current,
+        insights: {
+          ...current.insights,
+          manual
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveManualInsight = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manual = current.insights.manual.filter((_, entryIndex) => entryIndex !== index);
+      return {
+        ...current,
+        insights: {
+          ...current.insights,
+          manual
+        }
+      };
+    });
+  }, []);
+
+  const handleAddTimelineEntry = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.timeline.manual.length >= MAX_OVERVIEW_TIMELINE) {
+        return current;
+      }
+      return {
+        ...current,
+        timeline: {
+          ...current.timeline,
+          manual: [...current.timeline.manual, { title: '', when: '', status: '' }]
+        }
+      };
+    });
+  }, []);
+
+  const handleTimelineEntryChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manual = current.timeline.manual.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry
+      );
+      return {
+        ...current,
+        timeline: {
+          ...current.timeline,
+          manual
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveTimelineEntry = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manual = current.timeline.manual.filter((_, entryIndex) => entryIndex !== index);
+      return {
+        ...current,
+        timeline: {
+          ...current.timeline,
+          manual
+        }
+      };
+    });
+  }, []);
+
+  const handleAddManualSignal = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.security.manualSignals.length >= MAX_SECURITY_SIGNALS) {
+        return current;
+      }
+      return {
+        ...current,
+        security: {
+          ...current.security,
+          manualSignals: [...current.security.manualSignals, { label: '', caption: '', valueLabel: '', tone: 'info' }]
+        }
+      };
+    });
+  }, []);
+
+  const handleManualSignalChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualSignals = current.security.manualSignals.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry
+      );
+      return {
+        ...current,
+        security: {
+          ...current.security,
+          manualSignals
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveManualSignal = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualSignals = current.security.manualSignals.filter((_, entryIndex) => entryIndex !== index);
+      return {
+        ...current,
+        security: {
+          ...current.security,
+          manualSignals
+        }
+      };
+    });
+  }, []);
+
+  const handleAddAutomationEntry = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.automation.manualBacklog.length >= MAX_AUTOMATION_BACKLOG) {
+        return current;
+      }
+      return {
+        ...current,
+        automation: {
+          ...current.automation,
+          manualBacklog: [...current.automation.manualBacklog, { name: '', status: '', notes: '', tone: 'info' }]
+        }
+      };
+    });
+  }, []);
+
+  const handleAutomationEntryChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBacklog = current.automation.manualBacklog.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry
+      );
+      return {
+        ...current,
+        automation: {
+          ...current.automation,
+          manualBacklog
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveAutomationEntry = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBacklog = current.automation.manualBacklog.filter((_, entryIndex) => entryIndex !== index);
+      return {
+        ...current,
+        automation: {
+          ...current.automation,
+          manualBacklog
+        }
+      };
+    });
+  }, []);
+
+  const handleAddOperationsBoard = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.operations.manualBoards.length >= MAX_OPERATIONS_BOARDS) {
+        return current;
+      }
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards: [
+            ...current.operations.manualBoards,
+            { title: '', summary: '', owner: '', updates: [''] }
+          ]
+        }
+      };
+    });
+  }, []);
+
+  const handleOperationsBoardChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBoards = current.operations.manualBoards.map((board, boardIndex) =>
+        boardIndex === index ? { ...board, [field]: value } : board
+      );
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveOperationsBoard = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBoards = current.operations.manualBoards.filter((_, boardIndex) => boardIndex !== index);
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards
+        }
+      };
+    });
+  }, []);
+
+  const handleAddOperationsBoardUpdate = useCallback((boardIndex) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBoards = current.operations.manualBoards.map((board, index) => {
+        if (index !== boardIndex) {
+          return board;
+        }
+        if (board.updates.length >= MAX_OPERATIONS_BOARD_UPDATES) {
+          return board;
+        }
+        return { ...board, updates: [...board.updates, ''] };
+      });
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards
+        }
+      };
+    });
+  }, []);
+
+  const handleOperationsBoardUpdateChange = useCallback((boardIndex, updateIndex, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBoards = current.operations.manualBoards.map((board, index) => {
+        if (index !== boardIndex) {
+          return board;
+        }
+        const updates = board.updates.map((entry, entryIndex) =>
+          entryIndex === updateIndex ? value : entry
+        );
+        return { ...board, updates };
+      });
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveOperationsBoardUpdate = useCallback((boardIndex, updateIndex) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualBoards = current.operations.manualBoards.map((board, index) => {
+        if (index !== boardIndex) {
+          return board;
+        }
+        const updates = board.updates.filter((_, entryIndex) => entryIndex !== updateIndex);
+        return { ...board, updates: updates.length ? updates : [''] };
+      });
+      return {
+        ...current,
+        operations: {
+          ...current.operations,
+          manualBoards
+        }
+      };
+    });
+  }, []);
+
+  const handleAddComplianceControl = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.compliance.manualControls.length >= MAX_COMPLIANCE_CONTROLS) {
+        return current;
+      }
+      return {
+        ...current,
+        compliance: {
+          ...current.compliance,
+          manualControls: [
+            ...current.compliance.manualControls,
+            { name: '', detail: '', due: '', owner: '', tone: 'info' }
+          ]
+        }
+      };
+    });
+  }, []);
+
+  const handleComplianceControlChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualControls = current.compliance.manualControls.map((control, controlIndex) =>
+        controlIndex === index ? { ...control, [field]: value } : control
+      );
+      return {
+        ...current,
+        compliance: {
+          ...current.compliance,
+          manualControls
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveComplianceControl = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualControls = current.compliance.manualControls.filter((_, controlIndex) => controlIndex !== index);
+      return {
+        ...current,
+        compliance: {
+          ...current.compliance,
+          manualControls
+        }
+      };
+    });
+  }, []);
+
+  const handleAddAuditEntry = useCallback(() => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      if (current.audit.manualTimeline.length >= MAX_AUDIT_TIMELINE) {
+        return current;
+      }
+      return {
+        ...current,
+        audit: {
+          ...current.audit,
+          manualTimeline: [...current.audit.manualTimeline, { time: '', event: '', owner: '', status: '' }]
+        }
+      };
+    });
+  }, []);
+
+  const handleAuditEntryChange = useCallback((index, field, value) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualTimeline = current.audit.manualTimeline.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry
+      );
+      return {
+        ...current,
+        audit: {
+          ...current.audit,
+          manualTimeline
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveAuditEntry = useCallback((index) => {
+    setOverviewSettingsForm((current) => {
+      if (!current) return current;
+      const manualTimeline = current.audit.manualTimeline.filter((_, entryIndex) => entryIndex !== index);
+      return {
+        ...current,
+        audit: {
+          ...current.audit,
+          manualTimeline
+        }
+      };
+    });
+  }, []);
+
+  const handleSubmitOverviewSettings = useCallback(
+    async (event) => {
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      if (!overviewSettingsForm) return;
+      const payload = prepareSettingsPayload(overviewSettingsForm);
+      const saved = await handleSaveOverviewSettings(payload);
+      if (saved) {
+        setSettingsModalOpen(false);
+      }
+    },
+    [handleSaveOverviewSettings, overviewSettingsForm]
+  );
+
   if (!roleMeta) {
     return null;
   }
@@ -590,6 +1763,22 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/taxonomy"
+        size="sm"
+        variant="secondary"
+        icon={Squares2X2Icon}
+        iconPosition="start"
+      >
+        Taxonomy manager
+        to="/admin/seo"
+        size="sm"
+        variant="secondary"
+        icon={TagIcon}
+        iconPosition="start"
+      >
+        Tags &amp; SEO
+      </Button>
+      <Button
         to="/admin/zones"
         size="sm"
         variant="secondary"
@@ -597,6 +1786,24 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Geo-zonal builder
+      </Button>
+      <Button
+        to="/admin/system-settings"
+        size="sm"
+        variant="secondary"
+        icon={Cog8ToothIcon}
+        iconPosition="start"
+      >
+        System settings
+        type="button"
+        size="sm"
+        variant="secondary"
+        icon={Cog6ToothIcon}
+        iconPosition="start"
+        onClick={handleOpenSettings}
+        disabled={overviewSettingsLoading || !overviewSettings}
+      >
+        Configure overview
       </Button>
       <SegmentedControl
         name="Command metrics timeframe"
@@ -608,20 +1815,865 @@ export default function AdminDashboard() {
       {isFallback ? <StatusPill tone="warning">Showing cached insights</StatusPill> : null}
       {servedFromCache ? <StatusPill tone="info">Served from cache</StatusPill> : null}
       {state.error ? <StatusPill tone="danger">Refresh failed — {state.error.message}</StatusPill> : null}
+      {overviewSettingsLoadError ? (
+        <StatusPill tone="danger">{overviewSettingsLoadError}</StatusPill>
+      ) : null}
+      {overviewSettingsSuccess && !settingsModalOpen ? (
+        <StatusPill tone="success">{overviewSettingsSuccess}</StatusPill>
+      ) : null}
     </div>
   );
 
   return (
-    <DashboardLayout
-      roleMeta={{ ...roleMeta, persona: personaLabel }}
-      registeredRoles={registeredRoles}
-      dashboard={dashboardPayload}
-      loading={state.loading}
-      error={state.error?.message ?? null}
-      onRefresh={handleRefresh}
-      lastRefreshed={lastRefreshed}
-      filters={filters}
-      onLogout={handleLogout}
-    />
+    <>
+      <DashboardLayout
+        roleMeta={{ ...roleMeta, persona: personaLabel }}
+        registeredRoles={registeredRoles}
+        dashboard={dashboardPayload}
+        loading={state.loading}
+        error={state.error?.message ?? null}
+        onRefresh={handleRefresh}
+        lastRefreshed={lastRefreshed}
+        filters={filters}
+        onLogout={handleLogout}
+      />
+      <OverviewSettingsModal
+        open={settingsModalOpen}
+        loading={overviewSettingsLoading}
+        saving={overviewSettingsSaving}
+        error={overviewSettingsFormError}
+        form={overviewSettingsForm}
+        onClose={handleCloseSettings}
+        onSubmit={handleSubmitOverviewSettings}
+        onMetricChange={handleMetricFieldChange}
+        onChartChange={handleChartFieldChange}
+        onAddInsight={handleAddManualInsight}
+        onInsightChange={handleManualInsightChange}
+        onRemoveInsight={handleRemoveManualInsight}
+        onAddTimelineEntry={handleAddTimelineEntry}
+        onTimelineEntryChange={handleTimelineEntryChange}
+        onRemoveTimelineEntry={handleRemoveTimelineEntry}
+        onAddManualSignal={handleAddManualSignal}
+        onManualSignalChange={handleManualSignalChange}
+        onRemoveManualSignal={handleRemoveManualSignal}
+        onAddAutomationEntry={handleAddAutomationEntry}
+        onAutomationEntryChange={handleAutomationEntryChange}
+        onRemoveAutomationEntry={handleRemoveAutomationEntry}
+        onAddOperationsBoard={handleAddOperationsBoard}
+        onOperationsBoardChange={handleOperationsBoardChange}
+        onRemoveOperationsBoard={handleRemoveOperationsBoard}
+        onAddOperationsBoardUpdate={handleAddOperationsBoardUpdate}
+        onOperationsBoardUpdateChange={handleOperationsBoardUpdateChange}
+        onRemoveOperationsBoardUpdate={handleRemoveOperationsBoardUpdate}
+        onAddComplianceControl={handleAddComplianceControl}
+        onComplianceControlChange={handleComplianceControlChange}
+        onRemoveComplianceControl={handleRemoveComplianceControl}
+        onAddAuditEntry={handleAddAuditEntry}
+        onAuditEntryChange={handleAuditEntryChange}
+        onRemoveAuditEntry={handleRemoveAuditEntry}
+      />
+    </>
+  );
+}
+
+function OverviewSettingsModal({
+  open,
+  loading,
+  saving,
+  error,
+  form,
+  onClose,
+  onSubmit,
+  onMetricChange,
+  onChartChange,
+  onAddInsight,
+  onInsightChange,
+  onRemoveInsight,
+  onAddTimelineEntry,
+  onTimelineEntryChange,
+  onRemoveTimelineEntry,
+  onAddManualSignal,
+  onManualSignalChange,
+  onRemoveManualSignal,
+  onAddAutomationEntry,
+  onAutomationEntryChange,
+  onRemoveAutomationEntry,
+  onAddOperationsBoard,
+  onOperationsBoardChange,
+  onRemoveOperationsBoard,
+  onAddOperationsBoardUpdate,
+  onOperationsBoardUpdateChange,
+  onRemoveOperationsBoardUpdate,
+  onAddComplianceControl,
+  onComplianceControlChange,
+  onRemoveComplianceControl,
+  onAddAuditEntry,
+  onAuditEntryChange,
+  onRemoveAuditEntry
+}) {
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={saving ? () => {} : onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-200"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-150"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 sm:p-6 lg:p-8">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
+                <form onSubmit={onSubmit} className="flex h-full max-h-[90vh] flex-col">
+                  <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-4 sm:px-8 sm:py-5">
+                    <div>
+                      <Dialog.Title className="text-lg font-semibold text-slate-900">
+                        Configure overview experience
+                      </Dialog.Title>
+                      <p className="mt-1 max-w-3xl text-sm text-slate-600">
+                        Manage the copy, thresholds, curated insights, and upcoming milestones that power the admin overview. Changes apply instantly to all administrators with dashboard access.
+                      </p>
+                      {error ? (
+                        <p className="mt-3 text-sm font-medium text-rose-600">{error}</p>
+                      ) : null}
+                    </div>
+                    <Button type="button" variant="tertiary" size="sm" onClick={onClose} disabled={saving}>
+                      Close
+                    </Button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+                    {loading && !form ? (
+                      <div className="flex min-h-[240px] items-center justify-center">
+                        <Spinner aria-label="Loading overview settings" />
+                      </div>
+                    ) : (
+                      <div className="space-y-8 pb-6">
+                        <section>
+                          <h3 className="text-base font-semibold text-slate-900">Metric tiles</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Update the labels and performance thresholds that appear across the command metrics tiles.
+                          </p>
+                          <div className="mt-4 space-y-6">
+                            {OVERVIEW_METRICS_CONFIG.map((config) => {
+                              const metric = form?.metrics?.[config.key] ?? {};
+                              return (
+                                <div
+                                  key={config.key}
+                                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-transparent transition hover:ring-accent/20"
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-slate-900">{config.title}</h4>
+                                      <p className="mt-1 text-sm text-slate-600">{config.description}</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                    {config.inputs.map((input) => (
+                                      <TextInput
+                                        key={input.field}
+                                        label={input.label}
+                                        optionalLabel={input.optionalLabel}
+                                        type={input.type}
+                                        inputMode={input.type === 'number' ? 'decimal' : undefined}
+                                        step={input.step}
+                                        value={metric?.[input.field] ?? ''}
+                                        onChange={(event) =>
+                                          onMetricChange(config.key, input.field, event.target.value)
+                                        }
+                                        hint={input.hint}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+
+                        <section>
+                          <h3 className="text-base font-semibold text-slate-900">Charts</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Control the targets and scaling applied to overview visualisations.
+                          </p>
+                          <div className="mt-4 space-y-6">
+                            {OVERVIEW_CHART_CONFIG.map((config) => {
+                              const chart = form?.charts?.[config.key] ?? {};
+                              return (
+                                <div
+                                  key={config.key}
+                                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-transparent transition hover:ring-accent/20"
+                                >
+                                  <div>
+                                    <h4 className="text-sm font-semibold text-slate-900">{config.title}</h4>
+                                    <p className="mt-1 text-sm text-slate-600">{config.description}</p>
+                                  </div>
+                                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                    {config.inputs.map((input) => (
+                                      <TextInput
+                                        key={input.field}
+                                        label={input.label}
+                                        type={input.type}
+                                        inputMode={input.type === 'number' ? 'decimal' : undefined}
+                                        step={input.step}
+                                        value={chart?.[input.field] ?? ''}
+                                        onChange={(event) =>
+                                          onChartChange(config.key, input.field, event.target.value)
+                                        }
+                                        hint={input.hint}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+
+                        <section>
+                          <h3 className="text-base font-semibold text-slate-900">Manual insights</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Pin curated observations alongside automated signals. Insights appear in the overview insights rail.
+                          </p>
+                          <div className="mt-4 space-y-4">
+                            {form?.insights?.manual?.length ? null : (
+                              <p className="text-sm text-slate-500">No manual insights yet. Add one to get started.</p>
+                            )}
+                            {form?.insights?.manual?.map((entry, index) => (
+                              <div
+                                key={`insight-${index}`}
+                                className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-start"
+                              >
+                                <TextInput
+                                  className="flex-1"
+                                  label={`Insight ${index + 1}`}
+                                  value={entry}
+                                  onChange={(event) => onInsightChange(index, event.target.value)}
+                                  hint="Visible text shown in the overview insights list."
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveInsight(index)}
+                                  disabled={saving}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              icon={PlusIcon}
+                              iconPosition="start"
+                              onClick={onAddInsight}
+                              disabled={saving || (form?.insights?.manual?.length ?? 0) >= MAX_OVERVIEW_INSIGHTS}
+                            >
+                              Add insight
+                            </Button>
+                            {form?.insights?.manual?.length >= MAX_OVERVIEW_INSIGHTS ? (
+                              <p className="text-xs font-medium text-slate-500">
+                                Maximum of {MAX_OVERVIEW_INSIGHTS} insights reached.
+                              </p>
+                            ) : null}
+                          </div>
+                        </section>
+
+                        <section>
+                          <h3 className="text-base font-semibold text-slate-900">Upcoming milestones</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Curate manual milestones that appear in the upcoming compliance and automation timeline.
+                          </p>
+                          <div className="mt-4 space-y-4">
+                            {form?.timeline?.manual?.length ? null : (
+                              <p className="text-sm text-slate-500">No custom milestones yet. Add important updates for your operators.</p>
+                            )}
+                            {form?.timeline?.manual?.map((entry, index) => (
+                              <div
+                                key={`timeline-${index}`}
+                                className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                              >
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <TextInput
+                                    label="Milestone title"
+                                    value={entry.title}
+                                    onChange={(event) =>
+                                      onTimelineEntryChange(index, 'title', event.target.value)
+                                    }
+                                    hint="Appears as the title in the overview timeline."
+                                  />
+                                  <TextInput
+                                    label="Due date / window"
+                                    value={entry.when}
+                                    onChange={(event) =>
+                                      onTimelineEntryChange(index, 'when', event.target.value)
+                                    }
+                                    hint="Shown as the schedule indicator (e.g. 'Next week')."
+                                  />
+                                  <TextInput
+                                    label="Owner or status"
+                                    optionalLabel="Optional"
+                                    value={entry.status}
+                                    onChange={(event) =>
+                                      onTimelineEntryChange(index, 'status', event.target.value)
+                                    }
+                                    hint="Displayed as supporting context under the milestone."
+                                  />
+                                </div>
+                                <div className="flex justify-end">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    icon={TrashIcon}
+                                    iconPosition="start"
+                                    onClick={() => onRemoveTimelineEntry(index)}
+                                    disabled={saving}
+                                  >
+                                    Remove milestone
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              icon={PlusIcon}
+                              iconPosition="start"
+                              onClick={onAddTimelineEntry}
+                              disabled={
+                                saving || (form?.timeline?.manual?.length ?? 0) >= MAX_OVERVIEW_TIMELINE
+                              }
+                            >
+                              Add milestone
+                            </Button>
+                          {form?.timeline?.manual?.length >= MAX_OVERVIEW_TIMELINE ? (
+                            <p className="text-xs font-medium text-slate-500">
+                              Maximum of {MAX_OVERVIEW_TIMELINE} milestones reached.
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h3 className="text-base font-semibold text-slate-900">Security posture signals</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Add manual signals that appear alongside automated MFA, alerting, and ingestion telemetry.
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          {form?.security?.manualSignals?.length ? null : (
+                            <p className="text-sm text-slate-500">
+                              No manual security signals configured yet.
+                            </p>
+                          )}
+                          {form?.security?.manualSignals?.map((signal, index) => (
+                            <div
+                              key={`security-signal-${index}`}
+                              className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <TextInput
+                                  label="Signal title"
+                                  value={signal.label}
+                                  onChange={(event) => onManualSignalChange(index, 'label', event.target.value)}
+                                  hint="Appears as the heading for the manual signal."
+                                />
+                                <TextInput
+                                  label="Value label"
+                                  value={signal.valueLabel}
+                                  onChange={(event) => onManualSignalChange(index, 'valueLabel', event.target.value)}
+                                  hint="Displayed numeric or percentage indicator."
+                                />
+                                <TextInput
+                                  label="Caption"
+                                  optionalLabel="Optional"
+                                  value={signal.caption}
+                                  onChange={(event) => onManualSignalChange(index, 'caption', event.target.value)}
+                                  hint="Supplemental context shown under the signal."
+                                  className="md:col-span-2"
+                                />
+                                <div className="md:col-span-2">
+                                  <span className="block text-sm font-medium text-slate-700">Tone</span>
+                                  <SegmentedControl
+                                    className="mt-2"
+                                    name={`Manual security tone ${index + 1}`}
+                                    value={signal.tone || 'info'}
+                                    onChange={(value) => onManualSignalChange(index, 'tone', value)}
+                                    options={TONE_OPTIONS}
+                                    size="sm"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveManualSignal(index)}
+                                  disabled={saving}
+                                >
+                                  Remove signal
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            icon={PlusIcon}
+                            iconPosition="start"
+                            onClick={onAddManualSignal}
+                            disabled={saving || (form?.security?.manualSignals?.length ?? 0) >= MAX_SECURITY_SIGNALS}
+                          >
+                            Add security signal
+                          </Button>
+                          {form?.security?.manualSignals?.length >= MAX_SECURITY_SIGNALS ? (
+                            <p className="text-xs font-medium text-slate-500">Maximum of {MAX_SECURITY_SIGNALS} signals reached.</p>
+                          ) : null}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h3 className="text-base font-semibold text-slate-900">Automation backlog</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Curate manual automation initiatives that enrich the security &amp; telemetry backlog view.
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          {form?.automation?.manualBacklog?.length ? null : (
+                            <p className="text-sm text-slate-500">No manual automation initiatives captured yet.</p>
+                          )}
+                          {form?.automation?.manualBacklog?.map((item, index) => (
+                            <div
+                              key={`automation-${index}`}
+                              className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <TextInput
+                                  label="Initiative name"
+                                  value={item.name}
+                                  onChange={(event) => onAutomationEntryChange(index, 'name', event.target.value)}
+                                  hint="Name displayed in the automation backlog list."
+                                />
+                                <TextInput
+                                  label="Status"
+                                  value={item.status}
+                                  onChange={(event) => onAutomationEntryChange(index, 'status', event.target.value)}
+                                  hint="Headline state such as Pilot, Operational, or Monitoring."
+                                />
+                                <div className="md:col-span-2 space-y-2">
+                                  <span className="block text-sm font-medium text-slate-700">Tone</span>
+                                  <SegmentedControl
+                                    name={`Automation tone ${index + 1}`}
+                                    value={item.tone || 'info'}
+                                    onChange={(value) => onAutomationEntryChange(index, 'tone', value)}
+                                    options={TONE_OPTIONS}
+                                    size="sm"
+                                  />
+                                </div>
+                              </div>
+                              <FormField
+                                id={`automation-notes-${index}`}
+                                label="Notes"
+                                optionalLabel="Optional"
+                                hint="Provide additional context surfaced under the initiative."
+                              >
+                                <textarea
+                                  id={`automation-notes-${index}`}
+                                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
+                                  rows={3}
+                                  value={item.notes}
+                                  onChange={(event) => onAutomationEntryChange(index, 'notes', event.target.value)}
+                                />
+                              </FormField>
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveAutomationEntry(index)}
+                                  disabled={saving}
+                                >
+                                  Remove initiative
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            icon={PlusIcon}
+                            iconPosition="start"
+                            onClick={onAddAutomationEntry}
+                            disabled={saving || (form?.automation?.manualBacklog?.length ?? 0) >= MAX_AUTOMATION_BACKLOG}
+                          >
+                            Add automation initiative
+                          </Button>
+                          {form?.automation?.manualBacklog?.length >= MAX_AUTOMATION_BACKLOG ? (
+                            <p className="text-xs font-medium text-slate-500">
+                              Maximum of {MAX_AUTOMATION_BACKLOG} initiatives reached.
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h3 className="text-base font-semibold text-slate-900">Operations boards</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Draft manual queue summaries that appear with the provider verification, disputes, and insurance boards.
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          {form?.operations?.manualBoards?.length ? null : (
+                            <p className="text-sm text-slate-500">No manual boards configured yet.</p>
+                          )}
+                          {form?.operations?.manualBoards?.map((board, index) => (
+                            <div
+                              key={`operations-board-${index}`}
+                              className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <TextInput
+                                  label="Board title"
+                                  value={board.title}
+                                  onChange={(event) => onOperationsBoardChange(index, 'title', event.target.value)}
+                                  hint="Headline shown for the manual queue board."
+                                />
+                                <TextInput
+                                  label="Owner"
+                                  optionalLabel="Optional"
+                                  value={board.owner}
+                                  onChange={(event) => onOperationsBoardChange(index, 'owner', event.target.value)}
+                                  hint="Owner string appended to the board summary."
+                                />
+                                <FormField
+                                  id={`operations-summary-${index}`}
+                                  label="Summary"
+                                  hint="Short description surfaced as the primary board detail."
+                                  className="md:col-span-2"
+                                >
+                                  <textarea
+                                    id={`operations-summary-${index}`}
+                                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
+                                    rows={3}
+                                    value={board.summary}
+                                    onChange={(event) => onOperationsBoardChange(index, 'summary', event.target.value)}
+                                  />
+                                </FormField>
+                              </div>
+                              <div className="space-y-3">
+                                <p className="text-sm font-medium text-slate-700">Updates</p>
+                                {board.updates.map((update, updateIndex) => (
+                                  <div key={`operations-update-${index}-${updateIndex}`} className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                    <TextInput
+                                      className="flex-1"
+                                      label={`Update ${updateIndex + 1}`}
+                                      value={update}
+                                      onChange={(event) =>
+                                        onOperationsBoardUpdateChange(index, updateIndex, event.target.value)
+                                      }
+                                      hint="Appears as a bullet point in the operations board."
+                                    />
+                                    {board.updates.length > 1 ? (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon={TrashIcon}
+                                        iconPosition="start"
+                                        onClick={() => onRemoveOperationsBoardUpdate(index, updateIndex)}
+                                        disabled={saving}
+                                      >
+                                        Remove update
+                                      </Button>
+                                    ) : null}
+                                  </div>
+                                ))}
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={PlusIcon}
+                                    iconPosition="start"
+                                    onClick={() => onAddOperationsBoardUpdate(index)}
+                                    disabled={
+                                      saving || board.updates.length >= MAX_OPERATIONS_BOARD_UPDATES
+                                    }
+                                  >
+                                    Add update
+                                  </Button>
+                                  {board.updates.length >= MAX_OPERATIONS_BOARD_UPDATES ? (
+                                    <p className="text-xs font-medium text-slate-500">
+                                      Maximum of {MAX_OPERATIONS_BOARD_UPDATES} updates per board.
+                                    </p>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveOperationsBoard(index)}
+                                  disabled={saving}
+                                >
+                                  Remove board
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            icon={PlusIcon}
+                            iconPosition="start"
+                            onClick={onAddOperationsBoard}
+                            disabled={saving || (form?.operations?.manualBoards?.length ?? 0) >= MAX_OPERATIONS_BOARDS}
+                          >
+                            Add board
+                          </Button>
+                          {form?.operations?.manualBoards?.length >= MAX_OPERATIONS_BOARDS ? (
+                            <p className="text-xs font-medium text-slate-500">
+                              Maximum of {MAX_OPERATIONS_BOARDS} boards reached.
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h3 className="text-base font-semibold text-slate-900">Compliance controls</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Define manual compliance entries surfaced alongside expiring attestations.
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          {form?.compliance?.manualControls?.length ? null : (
+                            <p className="text-sm text-slate-500">No manual compliance controls defined yet.</p>
+                          )}
+                          {form?.compliance?.manualControls?.map((control, index) => (
+                            <div
+                              key={`compliance-control-${index}`}
+                              className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <TextInput
+                                  label="Control name"
+                                  value={control.name}
+                                  onChange={(event) => onComplianceControlChange(index, 'name', event.target.value)}
+                                  hint="Headline shown in the compliance list."
+                                />
+                                <TextInput
+                                  label="Due date / window"
+                                  value={control.due}
+                                  onChange={(event) => onComplianceControlChange(index, 'due', event.target.value)}
+                                  hint="Displayed schedule indicator (e.g. Due tomorrow)."
+                                />
+                                <FormField
+                                  id={`compliance-detail-${index}`}
+                                  label="Detail"
+                                  hint="Supporting text displayed beneath the control."
+                                  className="md:col-span-2"
+                                >
+                                  <textarea
+                                    id={`compliance-detail-${index}`}
+                                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
+                                    rows={3}
+                                    value={control.detail}
+                                    onChange={(event) => onComplianceControlChange(index, 'detail', event.target.value)}
+                                  />
+                                </FormField>
+                                <TextInput
+                                  label="Owner"
+                                  optionalLabel="Optional"
+                                  value={control.owner}
+                                  onChange={(event) => onComplianceControlChange(index, 'owner', event.target.value)}
+                                  hint="Owner or team responsible for the control."
+                                />
+                                <div>
+                                  <span className="block text-sm font-medium text-slate-700">Tone</span>
+                                  <SegmentedControl
+                                    className="mt-2"
+                                    name={`Compliance tone ${index + 1}`}
+                                    value={control.tone || 'info'}
+                                    onChange={(value) => onComplianceControlChange(index, 'tone', value)}
+                                    options={TONE_OPTIONS}
+                                    size="sm"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveComplianceControl(index)}
+                                  disabled={saving}
+                                >
+                                  Remove control
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            icon={PlusIcon}
+                            iconPosition="start"
+                            onClick={onAddComplianceControl}
+                            disabled={saving || (form?.compliance?.manualControls?.length ?? 0) >= MAX_COMPLIANCE_CONTROLS}
+                          >
+                            Add compliance control
+                          </Button>
+                          {form?.compliance?.manualControls?.length >= MAX_COMPLIANCE_CONTROLS ? (
+                            <p className="text-xs font-medium text-slate-500">
+                              Maximum of {MAX_COMPLIANCE_CONTROLS} controls reached.
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h3 className="text-base font-semibold text-slate-900">Audit timeline</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Append manual audit checkpoints that surface within the audit timeline table.
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          {form?.audit?.manualTimeline?.length ? null : (
+                            <p className="text-sm text-slate-500">No manual audit events recorded yet.</p>
+                          )}
+                          {form?.audit?.manualTimeline?.map((entry, index) => (
+                            <div
+                              key={`audit-entry-${index}`}
+                              className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <TextInput
+                                  label="Time"
+                                  value={entry.time}
+                                  onChange={(event) => onAuditEntryChange(index, 'time', event.target.value)}
+                                  hint="Displayed timestamp or window (e.g. 08:30 or Last run)."
+                                />
+                                <TextInput
+                                  label="Status"
+                                  optionalLabel="Optional"
+                                  value={entry.status}
+                                  onChange={(event) => onAuditEntryChange(index, 'status', event.target.value)}
+                                  hint="Status text shown in the timeline table."
+                                />
+                                <TextInput
+                                  label="Event"
+                                  className="md:col-span-2"
+                                  value={entry.event}
+                                  onChange={(event) => onAuditEntryChange(index, 'event', event.target.value)}
+                                  hint="Headline displayed for the audit entry."
+                                />
+                                <TextInput
+                                  label="Owner"
+                                  optionalLabel="Optional"
+                                  value={entry.owner}
+                                  onChange={(event) => onAuditEntryChange(index, 'owner', event.target.value)}
+                                  hint="Owner string shown alongside the event."
+                                />
+                              </div>
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={TrashIcon}
+                                  iconPosition="start"
+                                  onClick={() => onRemoveAuditEntry(index)}
+                                  disabled={saving}
+                                >
+                                  Remove audit entry
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            icon={PlusIcon}
+                            iconPosition="start"
+                            onClick={onAddAuditEntry}
+                            disabled={saving || (form?.audit?.manualTimeline?.length ?? 0) >= MAX_AUDIT_TIMELINE}
+                          >
+                            Add audit entry
+                          </Button>
+                          {form?.audit?.manualTimeline?.length >= MAX_AUDIT_TIMELINE ? (
+                            <p className="text-xs font-medium text-slate-500">
+                              Maximum of {MAX_AUDIT_TIMELINE} audit entries reached.
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:px-8">
+                    <div className="text-xs text-slate-500">
+                      Settings are scoped to administrators with dashboard access. Saved changes sync immediately.
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" variant="primary" loading={saving}>
+                        Save overview
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
   );
 }
