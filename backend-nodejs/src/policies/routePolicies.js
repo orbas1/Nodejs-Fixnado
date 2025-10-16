@@ -126,6 +126,22 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'servicemen.identity.manage': {
+    id: 'servicemen.identity.manage',
+    version: '1.0.0',
+    resource: 'servicemen.identity',
+    action: 'servicemen.identity:manage',
+    description:
+      'Allow authorised crew members and operations controllers to manage serviceman identity verification workflows and artefacts.',
+    requirements: [Permissions.SERVICEMAN_IDENTITY_MANAGE],
+    tags: ['servicemen', 'identity', 'compliance'],
+    severity: 'high',
+    metadata: (req) => ({
+      servicemanId: req.params?.servicemanId || null,
+      persona: req.headers['x-fixnado-persona'] || null,
+      method: req.method
+    })
+  },
   'service.orders.read': {
     id: 'service.orders.read',
     version: '1.0.0',

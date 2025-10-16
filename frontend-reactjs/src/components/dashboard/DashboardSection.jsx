@@ -24,6 +24,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import IdentityVerificationSection from './serviceman/IdentityVerificationSection.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1725,7 +1726,6 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona, context = {} }) => {
-const DashboardSection = ({ section, features = {}, persona }) => {
   if (section.type === 'automation' || section.id === 'automation-backlog') {
     return <AutomationBacklogSection section={section} features={features} persona={persona} />;
   }
@@ -1802,6 +1802,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'serviceman-identity':
+      return <IdentityVerificationSection section={section} />;
     case 'component': {
       const Component = section.component;
       if (!Component) return null;

@@ -1445,6 +1445,173 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'id-verification',
+        icon: 'compliance',
+        label: 'ID Verification',
+        description: 'Identity records, document governance, and reviewer notes.',
+        type: 'serviceman-identity',
+        data: {
+          verification: {
+            servicemanId: 'SRV-2210',
+            status: 'in_review',
+            riskRating: 'medium',
+            verificationLevel: 'enhanced',
+            requestedAt: '2025-02-10T09:12:00Z',
+            submittedAt: '2025-02-11T16:45:00Z',
+            approvedAt: null,
+            expiresAt: '2026-02-10T00:00:00Z',
+            reviewer: {
+              id: 'USR-8890',
+              name: 'Clara Benton',
+              email: 'clara.benton@fixnado.example'
+            },
+            notes: 'Awaiting utility clearance confirmation before final approval.'
+          },
+          documents: [
+            {
+              id: 'doc-passport',
+              documentType: 'passport',
+              status: 'approved',
+              documentNumber: '502993741',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2021-04-14',
+              expiresAt: '2031-04-13',
+              fileUrl: 'https://cdn.fixnado.example/documents/passport-jordan-miles.pdf',
+              notes: 'Verified against original by compliance on 12 Feb 2025.'
+            },
+            {
+              id: 'doc-driving-licence',
+              documentType: 'driving_license',
+              status: 'in_review',
+              documentNumber: 'MILEJ8021985A99',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2022-08-01',
+              expiresAt: '2032-07-31',
+              fileUrl: 'https://cdn.fixnado.example/documents/licence-jordan-miles.pdf',
+              notes: 'DVLA status refresh scheduled for 18 Feb 2025.'
+            },
+            {
+              id: 'doc-work-permit',
+              documentType: 'work_permit',
+              status: 'pending',
+              documentNumber: 'UK-WP-77421',
+              issuingCountry: 'United Kingdom',
+              issuedAt: null,
+              expiresAt: null,
+              fileUrl: '',
+              notes: 'Awaiting upload from crew coordinator.'
+            }
+          ],
+          checks: [
+            {
+              id: 'check-reference',
+              label: 'Professional reference validation',
+              owner: 'Operations Pod Beta',
+              status: 'in_progress',
+              dueAt: '2025-02-18',
+              completedAt: null
+            },
+            {
+              id: 'check-criminal',
+              label: 'Enhanced background screening',
+              owner: 'Compliance',
+              status: 'completed',
+              dueAt: '2025-02-12',
+              completedAt: '2025-02-12'
+            },
+            {
+              id: 'check-mvr',
+              label: 'Motor vehicle record pull',
+              owner: 'Fleet Safety',
+              status: 'not_started',
+              dueAt: '2025-02-20',
+              completedAt: null
+            }
+          ],
+          watchers: [
+            {
+              id: 'watcher-clara',
+              role: 'compliance_lead',
+              user: {
+                id: 'USR-8890',
+                name: 'Clara Benton',
+                email: 'clara.benton@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-samir',
+              role: 'operations_lead',
+              user: {
+                id: 'USR-7721',
+                name: 'Samir Patel',
+                email: 'samir.patel@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-lina',
+              role: 'safety_officer',
+              user: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez',
+                email: 'lina.alvarez@fixnado.example'
+              }
+            }
+          ],
+          events: [
+            {
+              id: 'event-1',
+              summary: 'Reviewer assigned to enhanced check',
+              eventType: 'assignment',
+              occurredAt: '2025-02-10T10:05:00Z',
+              actor: {
+                id: 'USR-7721',
+                name: 'Samir Patel'
+              }
+            },
+            {
+              id: 'event-2',
+              summary: 'Submitted passport document',
+              eventType: 'document_update',
+              occurredAt: '2025-02-11T16:40:00Z',
+              actor: {
+                id: 'SRV-2210',
+                name: 'Jordan Miles'
+              }
+            },
+            {
+              id: 'event-3',
+              summary: 'Background screening cleared',
+              eventType: 'compliance_check',
+              occurredAt: '2025-02-12T09:30:00Z',
+              actor: {
+                id: 'USR-8890',
+                name: 'Clara Benton'
+              }
+            },
+            {
+              id: 'event-4',
+              summary: 'Requested updated vehicle documents',
+              eventType: 'note',
+              occurredAt: '2025-02-13T14:15:00Z',
+              actor: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez'
+              }
+            }
+          ],
+          referenceData: {
+            statuses: ['pending', 'in_review', 'approved', 'rejected', 'suspended'],
+            riskRatings: ['low', 'medium', 'high', 'critical'],
+            verificationLevels: ['standard', 'enhanced', 'expedited'],
+            documentTypes: ['passport', 'driving_license', 'id_card', 'work_permit', 'insurance_certificate'],
+            documentStatuses: ['pending', 'in_review', 'approved', 'rejected', 'expired'],
+            checkStatuses: ['not_started', 'in_progress', 'completed', 'blocked'],
+            watcherRoles: ['operations_lead', 'compliance_lead', 'safety_officer', 'account_manager'],
+            eventTypes: ['note', 'document_update', 'assignment', 'compliance_check', 'system_alert']
+          }
+        }
       }
     ]
   },

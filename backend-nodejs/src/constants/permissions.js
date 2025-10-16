@@ -85,6 +85,7 @@ export const Permissions = Object.freeze({
   INVENTORY_READ: 'inventory:read',
   INVENTORY_WRITE: 'inventory:write',
   MATERIALS_VIEW: 'materials:showcase:view',
+  SERVICEMAN_IDENTITY_MANAGE: 'servicemen:identity:manage',
   MESSAGING_READ: 'messaging:threads:read',
   MESSAGING_RESPOND: 'messaging:threads:respond',
   MESSAGING_ESCALATE: 'messaging:threads:escalate',
