@@ -37,9 +37,9 @@ ServicemanShift.init(
       }
     },
     status: {
-      type: DataTypes.ENUM('available', 'booked', 'standby', 'travel', 'off'),
+      type: DataTypes.ENUM('submitted', 'confirmed', 'needs_revision', 'provider_cancelled', 'completed'),
       allowNull: false,
-      defaultValue: 'available'
+      defaultValue: 'submitted'
     },
     assignmentTitle: {
       type: DataTypes.STRING(160),

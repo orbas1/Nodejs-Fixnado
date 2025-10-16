@@ -17,6 +17,7 @@ export default function ProfileModal({
 }) {
   const statuses = options.statuses ?? ['active', 'standby', 'on_leave', 'training'];
   const employmentTypes = options.employmentTypes ?? ['full_time', 'part_time', 'contractor'];
+  const employerTypes = options.employerTypes ?? ['provider', 'sme', 'enterprise'];
 
   return (
     <ModalContainer
@@ -26,7 +27,7 @@ export default function ProfileModal({
       submitting={submitting}
       error={error}
       title={mode === 'create' ? 'Add serviceman' : 'Edit serviceman'}
-      description="Capture crew contact information, role details, and coverage notes."
+      description="Track supplier workforce contacts and the providers responsible for each serviceman."
       showDelete={mode === 'edit'}
       deleteLabel="Remove serviceman"
       onDelete={onDelete}
@@ -83,6 +84,40 @@ export default function ProfileModal({
           </select>
         </FormField>
       </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <FormField id="profile-employer-type" label="Supplier type">
+          <select
+            id="profile-employer-type"
+            value={toInputValue(formValues.employerType)}
+            onChange={onChange('employerType')}
+            className="w-full rounded-xl border border-accent/30 px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            {employerTypes.map((type) => (
+              <option key={type} value={type}>
+                {formatLabel(type)}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField id="profile-employer-name" label="Supplier / employer name" optionalLabel="Optional">
+          <input
+            id="profile-employer-name"
+            type="text"
+            value={toInputValue(formValues.employerName)}
+            onChange={onChange('employerName')}
+            className="w-full rounded-xl border border-accent/30 px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </FormField>
+      </div>
+      <FormField id="profile-employer-contact" label="Supplier point of contact" optionalLabel="Optional">
+        <input
+          id="profile-employer-contact"
+          type="text"
+          value={toInputValue(formValues.employerContact)}
+          onChange={onChange('employerContact')}
+          className="w-full rounded-xl border border-accent/30 px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+        />
+      </FormField>
       <FormField id="profile-zone" label="Primary zone" optionalLabel="Optional">
         <input
           id="profile-zone"
@@ -149,7 +184,8 @@ ProfileModal.propTypes = {
   formValues: PropTypes.object.isRequired,
   options: PropTypes.shape({
     statuses: PropTypes.array,
-    employmentTypes: PropTypes.array
+    employmentTypes: PropTypes.array,
+    employerTypes: PropTypes.array
   }),
   submitting: PropTypes.bool,
   error: PropTypes.string,

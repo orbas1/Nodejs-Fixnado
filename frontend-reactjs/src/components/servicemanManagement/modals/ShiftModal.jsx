@@ -16,7 +16,7 @@ export default function ShiftModal({
   onSubmit,
   onDelete
 }) {
-  const statuses = options.shiftStatuses ?? ['available', 'booked', 'standby', 'travel', 'off'];
+  const statuses = options.shiftStatuses ?? ['submitted', 'confirmed', 'needs_revision', 'provider_cancelled', 'completed'];
 
   return (
     <ModalContainer
@@ -25,14 +25,14 @@ export default function ShiftModal({
       onSubmit={onSubmit}
       submitting={submitting}
       error={error}
-      title={mode === 'create' ? 'Schedule shift' : 'Edit shift'}
-      description={`Plan coverage for ${profile?.displayName ?? 'crew member'}.`}
+      title={mode === 'create' ? 'Log provider assignment' : 'Review provider assignment'}
+      description={`Coordinate supplier coverage updates for ${profile?.displayName ?? 'crew member'}.`}
       showDelete={mode === 'edit'}
-      deleteLabel="Delete shift"
+      deleteLabel="Delete assignment"
       onDelete={onDelete}
     >
       <div className="grid gap-4 md:grid-cols-2">
-        <FormField id="shift-date" label="Shift date">
+        <FormField id="shift-date" label="Assignment date">
           <input
             id="shift-date"
             type="date"
@@ -79,7 +79,7 @@ export default function ShiftModal({
           />
         </FormField>
       </div>
-      <FormField id="shift-assignment" label="Assignment / focus" optionalLabel="Optional">
+      <FormField id="shift-assignment" label="Assignment summary" optionalLabel="Optional">
         <input
           id="shift-assignment"
           type="text"
@@ -88,7 +88,7 @@ export default function ShiftModal({
           className="w-full rounded-xl border border-accent/30 px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </FormField>
-      <FormField id="shift-location" label="Location / zone" optionalLabel="Optional">
+      <FormField id="shift-location" label="Service location / zone" optionalLabel="Optional">
         <input
           id="shift-location"
           type="text"
@@ -97,7 +97,7 @@ export default function ShiftModal({
           className="w-full rounded-xl border border-accent/30 px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </FormField>
-      <FormField id="shift-notes" label="Notes" optionalLabel="Optional">
+      <FormField id="shift-notes" label="Supplier notes" optionalLabel="Optional">
         <textarea
           id="shift-notes"
           rows={3}

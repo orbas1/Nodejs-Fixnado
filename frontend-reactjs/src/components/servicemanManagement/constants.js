@@ -1,9 +1,9 @@
 export const SHIFT_STATUS_CLASSES = {
-  available: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  booked: 'border-primary/20 bg-primary/5 text-primary',
-  standby: 'border-amber-200 bg-amber-50 text-amber-700',
-  travel: 'border-sky-200 bg-sky-50 text-sky-700',
-  off: 'border-slate-200 bg-slate-100 text-slate-500'
+  submitted: 'border-amber-200 bg-amber-50 text-amber-700',
+  confirmed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  needs_revision: 'border-rose-200 bg-rose-50 text-rose-700',
+  provider_cancelled: 'border-slate-300 bg-slate-100 text-slate-600',
+  completed: 'border-sky-200 bg-sky-50 text-sky-700'
 };
 
 export const CERTIFICATION_STATUS_CLASSES = {

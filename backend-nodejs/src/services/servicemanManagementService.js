@@ -9,7 +9,8 @@ import {
 
 const PROFILE_STATUSES = new Set(['active', 'standby', 'on_leave', 'training']);
 const EMPLOYMENT_TYPES = new Set(['full_time', 'part_time', 'contractor']);
-const SHIFT_STATUSES = new Set(['available', 'booked', 'standby', 'travel', 'off']);
+const EMPLOYER_TYPES = new Set(['provider', 'sme', 'enterprise']);
+const SHIFT_STATUSES = new Set(['submitted', 'confirmed', 'needs_revision', 'provider_cancelled', 'completed']);
 const CERTIFICATION_STATUSES = new Set(['valid', 'expiring', 'expired', 'revoked']);
 
 function managementError(message, statusCode = 400) {
@@ -156,6 +157,12 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
         required: false,
         separate: true,
         order: [['expiresAt', 'ASC NULLS LAST']]
+      },
+      {
+        model: Company,
+        as: 'company',
+        required: false,
+        attributes: ['id', 'legalStructure', 'contactName', 'contactEmail']
       }
     ]
   });
@@ -163,9 +170,11 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
   const roster = [];
   const allShifts = [];
   const certificationTracker = [];
-  const standbyProfiles = new Set();
-  let openSlots = 0;
   let followUps = 0;
+  let submittedAssignments = 0;
+  let needsRevision = 0;
+  let providerCancelled = 0;
+  const providerOrganisations = new Set();
 
   const today = DateTime.now().setZone(timezone).startOf('day');
 
@@ -175,14 +184,27 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
     const contactEmail = profile.get('contactEmail');
     const contactPhone = profile.get('contactPhone');
     const notes = profile.get('notes');
+    const employerName = normaliseText(
+      profile.employerName || profile.company?.contactName || profile.company?.legalStructure,
+      'employerName'
+    );
+    const employerContact = normaliseText(
+      profile.employerContact || profile.company?.contactEmail || profile.company?.contactName,
+      'employerContact'
+    );
+    if (employerName) {
+      providerOrganisations.add(employerName.toLowerCase());
+    }
+
     const shifts = Array.isArray(profile.shifts) ? profile.shifts : [];
     const certifications = Array.isArray(profile.certifications) ? profile.certifications : [];
 
     const zoneKey = profile.primaryZone || 'Unassigned zone';
     const zoneStats = regionAggregates.get(zoneKey) || {
       crews: 0,
-      standbyCrews: 0,
-      availableSlots: 0
+      confirmed: 0,
+      pending: 0,
+      needsRevision: 0
     };
     zoneStats.crews += 1;
 
@@ -195,13 +217,17 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
       })[0] || null;
 
     shifts.forEach((shift) => {
-      if (shift.status === 'standby') {
-        standbyProfiles.add(profile.id);
-        zoneStats.standbyCrews += 1;
-      }
-      if (shift.status === 'available' || shift.status === 'standby') {
-        openSlots += 1;
-        zoneStats.availableSlots += 1;
+      if (shift.status === 'submitted') {
+        submittedAssignments += 1;
+        zoneStats.pending += 1;
+      } else if (shift.status === 'needs_revision') {
+        needsRevision += 1;
+        zoneStats.pending += 1;
+        zoneStats.needsRevision += 1;
+      } else if (shift.status === 'confirmed') {
+        zoneStats.confirmed += 1;
+      } else if (shift.status === 'provider_cancelled') {
+        providerCancelled += 1;
       }
       allShifts.push(formatShift(shift, profile, timezone));
     });
@@ -224,6 +250,9 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
       role: profile.role,
       status: profile.status,
       employmentType: profile.employmentType,
+      employerType: profile.employerType,
+      employerName: employerName || null,
+      employerContact: employerContact || null,
       primaryZone: profile.primaryZone,
       avatarUrl: profile.avatarUrl,
       contactEmail,
@@ -235,32 +264,47 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
     });
   });
 
-  const coverageRegions = Array.from(regionAggregates.entries()).map(([label, stats]) => ({
-    id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    label,
-    crews: stats.crews,
-    standbyCrews: stats.standbyCrews,
-    availableSlots: stats.availableSlots,
-    status:
-      stats.availableSlots === 0
-        ? 'At capacity'
-        : stats.standbyCrews === 0
-          ? 'Needs standby'
-          : 'Healthy'
-  }));
+  const coverageRegions = Array.from(regionAggregates.entries()).map(([label, stats]) => {
+    const pendingAssignments = stats.pending;
+    const revisionCount = stats.needsRevision;
+    let statusLabel = 'Confirmed';
+    if (revisionCount > 0) {
+      statusLabel = `${revisionCount} need revision`;
+    } else if (pendingAssignments > 0) {
+      statusLabel = `${pendingAssignments} awaiting confirmation`;
+    }
+    return {
+      id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      label,
+      crews: stats.crews,
+      confirmedAssignments: stats.confirmed,
+      pendingAssignments,
+      needsRevision: revisionCount,
+      status: statusLabel
+    };
+  });
 
   const coverageActions = [];
-  if (openSlots > 0) {
-    coverageActions.push('Assign available or standby shifts to keep daily coverage balanced.');
+  if (needsRevision > 0) {
+    coverageActions.push(
+      `${needsRevision} assignment${needsRevision === 1 ? '' : 's'} require provider revision before confirmation.`
+    );
+  }
+  if (submittedAssignments > 0) {
+    coverageActions.push(
+      `${submittedAssignments} provider submission${submittedAssignments === 1 ? '' : 's'} awaiting admin confirmation.`
+    );
+  }
+  if (providerCancelled > 0) {
+    coverageActions.push(
+      `${providerCancelled} provider cancellation${providerCancelled === 1 ? '' : 's'} detected — reassign or escalate coverage.`
+    );
   }
   if (followUps > 0) {
-    coverageActions.push(`${followUps} certification${followUps === 1 ? '' : 's'} require review.`);
-  }
-  if (coverageRegions.some((region) => region.status !== 'Healthy')) {
-    coverageActions.push('Review regional staffing to restore standby coverage across all zones.');
+    coverageActions.push(`${followUps} certification${followUps === 1 ? '' : 's'} require compliance review.`);
   }
   if (coverageActions.length === 0) {
-    coverageActions.push('Crew availability, standby coverage, and compliance are healthy. Maintain weekly audits.');
+    coverageActions.push('Provider rosters are up to date. Maintain weekly spot checks with suppliers.');
   }
 
   certificationTracker.sort((a, b) => {
@@ -272,9 +316,10 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
 
   return {
     summary: {
-      openSlots,
-      standbyCrews: standbyProfiles.size,
-      followUps
+      providerPartners: providerOrganisations.size,
+      assignmentsAwaitingReview: submittedAssignments + needsRevision,
+      complianceFollowUps: followUps,
+      ...(providerCancelled > 0 ? { providerCancellations: providerCancelled } : {})
     },
     roster,
     schedule: {
@@ -290,6 +335,7 @@ export async function getServicemanManagementSnapshot({ companyId, window }) {
     formOptions: {
       statuses: Array.from(PROFILE_STATUSES),
       employmentTypes: Array.from(EMPLOYMENT_TYPES),
+      employerTypes: Array.from(EMPLOYER_TYPES),
       shiftStatuses: Array.from(SHIFT_STATUSES),
       certificationStatuses: Array.from(CERTIFICATION_STATUSES)
     },
@@ -308,6 +354,9 @@ export async function createServicemanProfile({
   role,
   status = 'active',
   employmentType = 'full_time',
+  employerName = null,
+  employerType = 'provider',
+  employerContact = null,
   primaryZone = null,
   contactEmail = null,
   contactPhone = null,
@@ -328,11 +377,14 @@ export async function createServicemanProfile({
     role: role.trim(),
     status: assertFromSet(status, PROFILE_STATUSES, 'status'),
     employmentType: assertFromSet(employmentType, EMPLOYMENT_TYPES, 'employmentType'),
+    employerType: assertFromSet(employerType, EMPLOYER_TYPES, 'employerType'),
     primaryZone: normaliseText(primaryZone, 'primaryZone'),
     avatarUrl: normaliseText(avatarUrl, 'avatarUrl'),
     skills: normaliseSkills(skills)
   });
 
+  profile.employerName = normaliseText(employerName, 'employerName');
+  profile.employerContact = normaliseText(employerContact, 'employerContact');
   profile.set('contactEmail', normaliseText(contactEmail, 'contactEmail'));
   profile.set('contactPhone', normaliseText(contactPhone, 'contactPhone'));
   profile.set('notes', normaliseText(notes, 'notes'));
@@ -373,6 +425,18 @@ export async function updateServicemanProfile(id, updates = {}) {
 
   if (updates.primaryZone !== undefined) {
     profile.primaryZone = normaliseText(updates.primaryZone, 'primaryZone');
+  }
+
+  if (updates.employerName !== undefined) {
+    profile.employerName = normaliseText(updates.employerName, 'employerName');
+  }
+
+  if (updates.employerType !== undefined) {
+    profile.employerType = assertFromSet(updates.employerType, EMPLOYER_TYPES, 'employerType');
+  }
+
+  if (updates.employerContact !== undefined) {
+    profile.employerContact = normaliseText(updates.employerContact, 'employerContact');
   }
 
   if (updates.avatarUrl !== undefined) {
@@ -427,7 +491,7 @@ export async function createServicemanShift(profileId, payload) {
     shiftDate,
     startTime,
     endTime,
-    status: assertFromSet(payload.status ?? 'available', SHIFT_STATUSES, 'status'),
+    status: assertFromSet(payload.status ?? 'submitted', SHIFT_STATUSES, 'status'),
     assignmentTitle: normaliseText(payload.assignmentTitle, 'assignmentTitle'),
     location: normaliseText(payload.location, 'location'),
     notes: normaliseText(payload.notes, 'notes')

@@ -66,6 +66,22 @@ ServicemanProfile.init(
       allowNull: true,
       field: 'primary_zone'
     },
+    employerName: {
+      type: DataTypes.STRING(160),
+      allowNull: true,
+      field: 'employer_name'
+    },
+    employerType: {
+      type: DataTypes.ENUM('provider', 'sme', 'enterprise'),
+      allowNull: false,
+      defaultValue: 'provider',
+      field: 'employer_type'
+    },
+    employerContact: {
+      type: DataTypes.STRING(160),
+      allowNull: true,
+      field: 'employer_contact'
+    },
     contactEmailEncrypted: {
       type: DataTypes.TEXT,
       allowNull: true,

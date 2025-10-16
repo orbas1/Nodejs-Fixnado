@@ -6,8 +6,8 @@ export default function ShiftPlanner({ roster, scheduleDays, shiftMap, timezone,
     <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-primary">Shift planner</h3>
-          <p className="text-sm text-slate-600">Weekly availability across the roster.</p>
+          <h3 className="text-lg font-semibold text-primary">Assignment oversight</h3>
+          <p className="text-sm text-slate-600">Review provider-submitted coverage and confirm supplier commitments.</p>
         </div>
         {timezone ? (
           <span className="rounded-full border border-accent/20 bg-secondary px-3 py-1 text-xs font-semibold text-primary/70">
@@ -31,7 +31,7 @@ export default function ShiftPlanner({ roster, scheduleDays, shiftMap, timezone,
             {roster.length === 0 ? (
               <tr>
                 <td colSpan={scheduleDays.length + 1} className="px-4 py-6 text-center text-sm text-slate-500">
-                  Add servicemen to schedule weekly coverage.
+                  Register supplier crews to begin tracking provider assignments.
                 </td>
               </tr>
             ) : (
@@ -69,7 +69,7 @@ export default function ShiftPlanner({ roster, scheduleDays, shiftMap, timezone,
                             </div>
                           ) : (
                             <div className="flex min-h-[72px] items-center justify-center rounded-xl border border-dashed border-accent/40 bg-secondary text-xs font-semibold text-primary/70 transition hover:border-accent">
-                              + Add shift
+                              Log provider assignment
                             </div>
                           )}
                         </button>

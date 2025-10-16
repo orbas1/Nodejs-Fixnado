@@ -5,7 +5,7 @@ export default function CoverageInsights({ coverage }) {
   return (
     <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-md">
       <h3 className="text-lg font-semibold text-primary">Coverage insights</h3>
-      <p className="mt-1 text-sm text-slate-600">Regional staffing health and standby coverage.</p>
+      <p className="mt-1 text-sm text-slate-600">Supplier confirmation status across operating zones.</p>
       <ul className="mt-4 space-y-3">
         {regions.length > 0 ? (
           regions.map((region) => (
@@ -17,13 +17,14 @@ export default function CoverageInsights({ coverage }) {
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {region.crews} crew • {region.standbyCrews} standby • {region.availableSlots} open slots
+                {region.crews} crew • {region.confirmedAssignments} confirmed • {region.pendingAssignments} pending
+                {region.needsRevision ? ` • ${region.needsRevision} need revision` : ''}
               </p>
             </li>
           ))
         ) : (
           <li className="rounded-2xl border border-dashed border-accent/30 bg-secondary px-4 py-4 text-sm text-slate-500">
-            Rosters have not been linked to zones yet. Assign primary zones to each crew member to track coverage.
+            Rosters have not been linked to zones yet. Assign primary zones to each supplier crew member to track confirmation status.
           </li>
         )}
       </ul>

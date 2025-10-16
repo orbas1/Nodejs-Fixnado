@@ -111,6 +111,9 @@ export default function ServicemanManagementSection({ section, onRefresh }) {
           role: toInputValue(profile.role),
           status: toInputValue(profile.status || formOptions.statuses?.[0] || 'active'),
           employmentType: toInputValue(profile.employmentType || formOptions.employmentTypes?.[0] || 'full_time'),
+          employerName: toInputValue(profile.employerName),
+          employerType: toInputValue(profile.employerType || formOptions.employerTypes?.[0] || 'provider'),
+          employerContact: toInputValue(profile.employerContact),
           primaryZone: toInputValue(profile.primaryZone),
           contactEmail: toInputValue(profile.contactEmail),
           contactPhone: toInputValue(profile.contactPhone),
@@ -125,6 +128,9 @@ export default function ServicemanManagementSection({ section, onRefresh }) {
           role: '',
           status: formOptions.statuses?.[0] || 'active',
           employmentType: formOptions.employmentTypes?.[0] || 'full_time',
+          employerName: '',
+          employerType: formOptions.employerTypes?.[0] || 'provider',
+          employerContact: '',
           primaryZone: '',
           contactEmail: '',
           contactPhone: '',
@@ -135,7 +141,7 @@ export default function ServicemanManagementSection({ section, onRefresh }) {
       }
       setModalError(null);
     },
-    [formOptions.employmentTypes, formOptions.statuses]
+    [formOptions.employerTypes, formOptions.employmentTypes, formOptions.statuses]
   );
 
   const openShiftModal = useCallback(
@@ -240,6 +246,9 @@ export default function ServicemanManagementSection({ section, onRefresh }) {
         role: formValues.role?.trim(),
         status: formValues.status,
         employmentType: formValues.employmentType,
+        employerName: formValues.employerName?.trim() || null,
+        employerType: formValues.employerType,
+        employerContact: formValues.employerContact?.trim() || null,
         primaryZone: formValues.primaryZone?.trim() || null,
         contactEmail: formValues.contactEmail?.trim() || null,
         contactPhone: formValues.contactPhone?.trim() || null,
@@ -395,7 +404,7 @@ export default function ServicemanManagementSection({ section, onRefresh }) {
             roster={roster}
             onCreateProfile={() => openProfileModal(null)}
             onEditProfile={openProfileModal}
-            onPlanShift={(profile) => openShiftModal(profile)}
+            onReviewAssignment={(profile) => openShiftModal(profile)}
             onAddCertification={(profile) => openCertificationModal(profile)}
           />
           <ShiftPlanner

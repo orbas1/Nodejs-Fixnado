@@ -1166,7 +1166,7 @@ async function loadAdminData(context) {
       {
         id: 'servicemen',
         label: 'Serviceman Management',
-        description: 'Crew roster, availability, and certification follow-ups.',
+        description: 'Supplier roster oversight, provider assignments, and compliance follow-ups.',
         icon: 'crew',
         type: 'serviceman-management',
         data: servicemanManagement
