@@ -33,9 +33,10 @@ const explorerSection = (t) => ({
 });
 
 const buildDashboardItems = (t, dashboards = []) => {
-  const visibleDashboards = dashboards.length
+  const hasExplicitDashboards = dashboards.length > 0;
+  const visibleDashboards = hasExplicitDashboards
     ? DASHBOARD_ROLES.filter((role) => dashboards.includes(role.id))
-    : DASHBOARD_ROLES.filter((role) => role.registered);
+    : DASHBOARD_ROLES.filter((role) => role.registered && role.id !== 'admin');
 
   return visibleDashboards.map((role) => ({
     id: `dashboard-${role.id}`,
@@ -124,31 +125,20 @@ export const buildPrimaryNavigation = ({ t, dashboards }) => [
 ];
 
 export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
+  if (!isAuthenticated) {
+    return [];
+  }
+
   const primary = buildPrimaryNavigation({ t, dashboards });
   const flatLinks = primary.flatMap((section) => section.items);
-  const authLinks = isAuthenticated
-    ? [
-        {
-          id: 'mobile-dashboard-hub',
-          title: t('nav.dashboards'),
-          description: t('nav.enterpriseAnalyticsDescription'),
-          href: '/dashboards'
-        }
-      ]
-    : [
-        {
-          id: 'mobile-login',
-          title: t('nav.login'),
-          description: t('auth.login.cta'),
-          href: '/login'
-        },
-        {
-          id: 'mobile-register',
-          title: t('nav.register'),
-          description: t('auth.register.subtitle'),
-          href: '/register'
-        }
-      ];
+  const authLinks = [
+    {
+      id: 'mobile-dashboard-hub',
+      title: t('nav.dashboards'),
+      description: t('nav.enterpriseAnalyticsDescription'),
+      href: '/dashboards'
+    }
+  ];
 
   return [...flatLinks, ...authLinks];
 };

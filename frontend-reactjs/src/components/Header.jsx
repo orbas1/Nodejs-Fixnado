@@ -167,6 +167,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useLocale();
   const { isAuthenticated, dashboards } = useSession();
+  const showAuthenticatedNavigation = Boolean(isAuthenticated);
 
   const primaryNavigation = useMemo(
     () => buildPrimaryNavigation({ t, dashboards }),
@@ -186,107 +187,112 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 lg:px-6">
         <div className="flex items-center gap-4">
-          <button
-            type="button"
-            className="inline-flex rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent lg:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label={t('nav.toggleMenu')}
-          >
-            <Bars3Icon className="h-5 w-5" />
-          </button>
+          {showAuthenticatedNavigation ? (
+            <button
+              type="button"
+              className="inline-flex rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent lg:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label={t('nav.toggleMenu')}
+            >
+              <Bars3Icon className="h-5 w-5" />
+            </button>
+          ) : null}
           <Link to="/" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
-            <span className="hidden text-sm font-semibold tracking-[0.3em] text-slate-500 sm:inline-block">
-              MARKETPLACE OPERATING SYSTEM
-            </span>
           </Link>
         </div>
 
-        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
-          {primaryNavigation.map((section) => (
-            <Popover className="relative" key={section.id}>
-              {({ open }) => (
-                <>
-                  <Popover.Button
-                    className={clsx(
-                      'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition',
-                      open
-                        ? 'bg-accent/10 text-accent shadow-glow'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                    )}
-                  >
-                    <span>{section.label}</span>
-                    <ChevronDownIcon className={clsx('h-4 w-4 transition-transform', open ? 'rotate-180' : 'rotate-0')} />
-                  </Popover.Button>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-150"
-                    enterFrom="opacity-0 translate-y-1"
-                    enterTo="opacity-100 translate-y-0"
-                    leave="transition ease-in duration-100"
-                    leaveFrom="opacity-100 translate-y-0"
-                    leaveTo="opacity-0 translate-y-1"
-                  >
-                    <Popover.Panel className="absolute left-1/2 mt-6 w-screen max-w-3xl -translate-x-1/2 px-4">
-                      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
-                        <MegaMenuSection section={section} />
-                      </div>
-                    </Popover.Panel>
-                  </Transition>
-                </>
-              )}
-            </Popover>
-          ))}
-        </nav>
+        {showAuthenticatedNavigation ? (
+          <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+            {primaryNavigation.map((section) => (
+              <Popover className="relative" key={section.id}>
+                {({ open }) => (
+                  <>
+                    <Popover.Button
+                      className={clsx(
+                        'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition',
+                        open
+                          ? 'bg-accent/10 text-accent shadow-glow'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      )}
+                    >
+                      <span>{section.label}</span>
+                      <ChevronDownIcon className={clsx('h-4 w-4 transition-transform', open ? 'rotate-180' : 'rotate-0')} />
+                    </Popover.Button>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-150"
+                      enterFrom="opacity-0 translate-y-1"
+                      enterTo="opacity-100 translate-y-0"
+                      leave="transition ease-in duration-100"
+                      leaveFrom="opacity-100 translate-y-0"
+                      leaveTo="opacity-0 translate-y-1"
+                    >
+                      <Popover.Panel className="absolute left-1/2 mt-6 w-screen max-w-3xl -translate-x-1/2 px-4">
+                        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
+                          <MegaMenuSection section={section} />
+                        </div>
+                      </Popover.Panel>
+                    </Transition>
+                  </>
+                )}
+              </Popover>
+            ))}
+          </nav>
+        ) : null}
 
         <div className="flex items-center gap-3">
-          <Popover className="hidden lg:block">
-            <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
-              <span className="sr-only">{t('nav.notifications')}</span>
-              <BellIcon className="h-5 w-5" />
-            </Popover.Button>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-150"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition ease-in duration-100"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
-            >
-              <Popover.Panel className="absolute right-0 mt-4">
-                <NotificationTray
-                  title={t('nav.notifications')}
-                  emptyLabel={t('nav.notificationsEmpty')}
-                  items={notificationPreview}
-                />
-              </Popover.Panel>
-            </Transition>
-          </Popover>
+          {showAuthenticatedNavigation ? (
+            <>
+              <Popover className="hidden lg:block">
+                <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
+                  <span className="sr-only">{t('nav.notifications')}</span>
+                  <BellIcon className="h-5 w-5" />
+                </Popover.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-150"
+                  enterFrom="opacity-0 translate-y-1"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="transition ease-in duration-100"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-1"
+                >
+                  <Popover.Panel className="absolute right-0 mt-4">
+                    <NotificationTray
+                      title={t('nav.notifications')}
+                      emptyLabel={t('nav.notificationsEmpty')}
+                      items={notificationPreview}
+                    />
+                  </Popover.Panel>
+                </Transition>
+              </Popover>
 
-          <Popover className="hidden lg:block">
-            <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
-              <span className="sr-only">{t('nav.inbox')}</span>
-              <ChatBubbleLeftRightIcon className="h-5 w-5" />
-            </Popover.Button>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-150"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition ease-in duration-100"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
-            >
-              <Popover.Panel className="absolute right-0 mt-4">
-                <NotificationTray
-                  title={t('nav.inbox')}
-                  emptyLabel={t('nav.inboxEmpty')}
-                  items={inboxPreview}
-                />
-              </Popover.Panel>
-            </Transition>
-          </Popover>
+              <Popover className="hidden lg:block">
+                <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
+                  <span className="sr-only">{t('nav.inbox')}</span>
+                  <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                </Popover.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-150"
+                  enterFrom="opacity-0 translate-y-1"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="transition ease-in duration-100"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-1"
+                >
+                  <Popover.Panel className="absolute right-0 mt-4">
+                    <NotificationTray
+                      title={t('nav.inbox')}
+                      emptyLabel={t('nav.inboxEmpty')}
+                      items={inboxPreview}
+                    />
+                  </Popover.Panel>
+                </Transition>
+              </Popover>
+            </>
+          ) : null}
 
           <LanguageSelector />
 
@@ -294,7 +300,7 @@ export default function Header() {
             to={accountLink}
             className={({ isActive }) =>
               clsx(
-                'hidden items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition lg:flex',
+                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
                 isActive
                   ? 'border-accent bg-accent text-white shadow-glow'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
@@ -307,7 +313,7 @@ export default function Header() {
         </div>
       </div>
 
-      <Transition.Root show={mobileOpen} as={Fragment}>
+      <Transition.Root show={mobileOpen && showAuthenticatedNavigation} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setMobileOpen}>
           <Transition.Child
             as={Fragment}
