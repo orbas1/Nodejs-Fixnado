@@ -29,6 +29,7 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminHomeBuilder = lazy(() => import('./features/homeBuilder/AdminHomeBuilderPage.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
+const AppearanceManagement = lazy(() => import('./pages/AppearanceManagement.jsx'));
 const AdminInbox = lazy(() => import('./pages/AdminInbox.jsx'));
 const AdminRentals = lazy(() => import('./pages/AdminRentals.jsx'));
 const AdminPurchaseManagement = lazy(() => import('./pages/AdminPurchaseManagement.jsx'));
@@ -158,6 +159,10 @@ function App() {
                 }
               />
               <Route
+                path="/admin/appearance"
+                element={
+                  <AdminProtectedRoute>
+                    <AppearanceManagement />
                 path="/admin/inbox"
                 element={
                   <AdminProtectedRoute>

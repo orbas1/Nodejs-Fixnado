@@ -30,6 +30,12 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  listAppearanceProfilesHandler,
+  getAppearanceProfileHandler,
+  createAppearanceProfileHandler,
+  updateAppearanceProfileHandler,
+  archiveAppearanceProfileHandler
+} from '../controllers/adminAppearanceController.js';
   getInboxSnapshot,
   saveInboxConfiguration,
   saveInboxQueue,
@@ -477,6 +483,48 @@ router.delete(
 );
 
 router.get(
+  '/appearance/profiles',
+  authenticate,
+  enforcePolicy('admin.appearance.read', {
+    metadata: () => ({ entity: 'appearance-profiles', action: 'list' })
+  }),
+  listAppearanceProfilesHandler
+);
+
+router.post(
+  '/appearance/profiles',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: () => ({ entity: 'appearance-profiles', action: 'create' })
+  }),
+  createAppearanceProfileHandler
+);
+
+router.get(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.read', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id })
+  }),
+  getAppearanceProfileHandler
+);
+
+router.put(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id })
+  }),
+  updateAppearanceProfileHandler
+);
+
+router.delete(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id, action: 'archive' })
+  }),
+  archiveAppearanceProfileHandler
   '/inbox',
   authenticate,
   enforcePolicy('admin.inbox.read', { metadata: () => ({ section: 'inbox' }) }),

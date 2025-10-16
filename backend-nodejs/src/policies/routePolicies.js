@@ -216,6 +216,34 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.appearance.read': {
+    id: 'admin.appearance.read',
+    version: '1.0.0',
+    resource: 'admin.appearance',
+    action: 'admin.appearance:read',
+    description: 'Allow admin operators to review appearance profiles, media, and marketing variants.',
+    requirements: [Permissions.ADMIN_APPEARANCE_READ],
+    tags: ['admin', 'appearance', 'branding'],
+    severity: 'high',
+    metadata: (req) => ({
+      profileId: req.params?.id || null,
+      slug: req.query?.slug || null
+    })
+  },
+  'admin.appearance.write': {
+    id: 'admin.appearance.write',
+    version: '1.0.0',
+    resource: 'admin.appearance',
+    action: 'admin.appearance:write',
+    description: 'Allow admin operators to create and update appearance profiles, assets, and marketing variants.',
+    requirements: [Permissions.ADMIN_APPEARANCE_WRITE],
+    tags: ['admin', 'appearance', 'branding'],
+    severity: 'critical',
+    metadata: (req) => ({
+      profileId: req.params?.id || null,
+      method: req.method,
+      action: req.method === 'DELETE' ? 'archive' : 'mutate'
+    })
   'admin.home-builder.manage': {
     id: 'admin.home-builder.manage',
     version: '1.0.0',

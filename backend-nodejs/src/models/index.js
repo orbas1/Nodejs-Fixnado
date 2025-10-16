@@ -81,6 +81,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import AppearanceProfile from './appearanceProfile.js';
+import AppearanceAsset from './appearanceAsset.js';
+import AppearanceVariant from './appearanceVariant.js';
 import Supplier from './supplier.js';
 import PurchaseOrder from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
@@ -550,6 +553,11 @@ WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
 WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
+AppearanceProfile.hasMany(AppearanceAsset, { foreignKey: 'profileId', as: 'assets' });
+AppearanceAsset.belongsTo(AppearanceProfile, { foreignKey: 'profileId', as: 'profile' });
+
+AppearanceProfile.hasMany(AppearanceVariant, { foreignKey: 'profileId', as: 'variants' });
+AppearanceVariant.belongsTo(AppearanceProfile, { foreignKey: 'profileId', as: 'profile' });
 LegalDocument.hasMany(LegalDocumentVersion, { foreignKey: 'documentId', as: 'versions' });
 LegalDocument.belongsTo(LegalDocumentVersion, {
   foreignKey: 'currentVersionId',
@@ -736,6 +744,9 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  AppearanceProfile,
+  AppearanceAsset,
+  AppearanceVariant
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,

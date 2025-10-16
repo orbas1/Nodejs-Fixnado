@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, SwatchIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, CubeIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, GlobeAltIcon, MapIcon } from '@heroicons/react/24/outline';
@@ -1099,6 +1100,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const navigation = [
   const inboxSection = inboxSummary
     ? {
         id: 'inbox',
@@ -1242,6 +1244,14 @@ function buildAdminNavigation(payload, complianceContext = null) {
   ].filter(Boolean);
 
   navigation.push({
+    id: 'appearance-management',
+    label: 'Appearance management',
+    description: 'Govern admin look & feel, brand assets, and marketing variants.',
+    icon: 'assets',
+    href: '/admin/appearance'
+  });
+
+  return navigation;
     id: 'admin-rentals-link',
     label: 'Rental management',
     description: 'Open the dedicated rental operations workspace.',
@@ -2284,6 +2294,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/appearance"
+        size="sm"
+        variant="secondary"
+        icon={SwatchIcon}
+        iconPosition="start"
+      >
+        Appearance management
         to="/admin/rentals"
         size="sm"
         variant="secondary"
