@@ -119,6 +119,7 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'metrics', label: 'Metrics', icon: 'analytics' },
       { id: 'escrows', label: 'Escrow Management', icon: 'finance' },
       { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },

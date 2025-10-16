@@ -39,6 +39,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getServicemanMetricsBundle } from './servicemanMetricsService.js';
 import { getServicemanFinanceWorkspace } from './servicemanFinanceService.js';
 import { getServicemanWebsitePreferences } from './servicemanWebsitePreferencesService.js';
 
@@ -3048,6 +3049,7 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
+  const [assignments, previousAssignments, bids, services, metricsBundle] = await Promise.all([
   const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
   const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
     BookingAssignment.findAll({
@@ -3077,6 +3079,7 @@ async function loadServicemanData(context) {
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
     }),
+    getServicemanMetricsBundle({ includeInactiveCards: true })
     providerId
       ? getServicemanFinanceWorkspace({ servicemanId: providerId, limit: 6 }).catch((error) => {
           console.warn('Failed to load serviceman finance workspace', error);
@@ -3085,6 +3088,8 @@ async function loadServicemanData(context) {
       : Promise.resolve(null)
     getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null }))
   ]);
+
+  const { settings: metricsSettings, cards: metricsCards } = metricsBundle;
 
   const providerIds = Array.from(
     new Set(assignments.map((assignment) => assignment.providerId).filter(Boolean))
@@ -3600,6 +3605,23 @@ async function loadServicemanData(context) {
         description: 'Assignments, travel buffers, and earnings.',
         type: 'overview',
         analytics: overview
+      },
+      {
+        id: 'metrics',
+        label: 'Metrics',
+        description: 'Crew KPIs, readiness checklists, and automation guardrails.',
+        type: 'serviceman-metrics',
+        access: {
+          label: 'Crew metrics control',
+          level: 'manage',
+          features: ['targets', 'checklists', 'automation']
+        },
+        data: {
+          settings: metricsSettings,
+          cards: metricsCards,
+          metadata: metricsSettings?.metadata ?? {},
+          operations: metricsSettings?.operations ?? {}
+        }
       },
       {
         id: 'schedule',

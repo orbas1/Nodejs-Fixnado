@@ -127,6 +127,8 @@ import DisputeHealthBucket from './disputeHealthBucket.js';
 import DisputeHealthEntry from './disputeHealthEntry.js';
 import CommandMetricSetting from './commandMetricSetting.js';
 import CommandMetricCard from './commandMetricCard.js';
+import ServicemanMetricSetting from './servicemanMetricSetting.js';
+import ServicemanMetricCard from './servicemanMetricCard.js';
 import OperationsQueueBoard from './operationsQueueBoard.js';
 import OperationsQueueUpdate from './operationsQueueUpdate.js';
 import AutomationInitiative from './automationInitiative.js';
@@ -1122,6 +1124,8 @@ export {
   DisputeHealthEntry,
   CommandMetricSetting,
   CommandMetricCard,
+  ServicemanMetricSetting,
+  ServicemanMetricCard,
   OperationsQueueBoard,
   OperationsQueueUpdate,
   AutomationInitiative,
