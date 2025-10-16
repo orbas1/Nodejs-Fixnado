@@ -12,6 +12,7 @@ export const Permissions = Object.freeze({
   AFFILIATE_REFERRALS: 'affiliate:referrals:view',
   ANALYTICS_OVERVIEW: 'analytics:overview:view',
   ANALYTICS_EXPORT: 'analytics:export:run',
+  ACCOUNT_SETTINGS_MANAGE: 'account:settings:manage',
   CAMPAIGN_MANAGE: 'campaign:manage',
   CAMPAIGN_REVIEW: 'campaign:review',
   COMPLIANCE_PORTAL: 'compliance:portal:access',
@@ -46,6 +47,7 @@ export const Permissions = Object.freeze({
   SERVICES_MANAGE: 'services:manage',
   SERVICES_BOOK: 'services:book',
   SUPPORT_TICKETS: 'support:tickets:manage',
+  CUSTOMER_CONTROL_MANAGE: 'customer:control:manage',
   USER_DIRECTORY: 'user:directory:view',
   ZONES_MATCH: 'zones:match',
   ZONES_PREVIEW: 'zones:preview'

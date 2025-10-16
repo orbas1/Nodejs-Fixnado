@@ -31,7 +31,9 @@ export const RBAC_MATRIX = {
       Permissions.SERVICES_BOOK,
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
-      Permissions.SCHEDULE_MANAGE
+      Permissions.SCHEDULE_MANAGE,
+      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
       landing: '/app/dashboard',
@@ -77,6 +79,7 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
