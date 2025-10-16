@@ -3,6 +3,7 @@ import User from './user.js';
 import UserProfileSetting from './userProfileSetting.js';
 import Company from './company.js';
 import Service from './service.js';
+import ServiceCategory from './serviceCategory.js';
 import Post from './post.js';
 import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
@@ -155,6 +156,12 @@ CustomJobBidMessage.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 Company.hasMany(Service, { foreignKey: 'companyId' });
 Service.belongsTo(Company, { foreignKey: 'companyId' });
+
+ServiceCategory.hasMany(Service, { foreignKey: 'categoryId', as: 'listings' });
+Service.belongsTo(ServiceCategory, { foreignKey: 'categoryId', as: 'categoryRef' });
+
+ServiceCategory.hasMany(ServiceCategory, { foreignKey: 'parentId', as: 'children' });
+ServiceCategory.belongsTo(ServiceCategory, { foreignKey: 'parentId', as: 'parent' });
 
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
@@ -589,6 +596,7 @@ export {
   UserProfileSetting,
   Company,
   Service,
+  ServiceCategory,
   Post,
   MarketplaceItem,
   ServiceZone,

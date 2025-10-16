@@ -191,6 +191,7 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_CAPTURE,
       Permissions.PAYMENTS_REFUND,
       Permissions.PAYMENTS_RELEASE,
+      Permissions.ADMIN_SERVICES_READ,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
       Permissions.ADMIN_WEBSITE_READ
@@ -231,6 +232,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_SERVICES_READ,
+      Permissions.ADMIN_SERVICES_WRITE,
       Permissions.ADMIN_HOME_BUILDER,
       Permissions.ADMIN_LEGAL_READ,
       Permissions.ADMIN_LEGAL_WRITE,

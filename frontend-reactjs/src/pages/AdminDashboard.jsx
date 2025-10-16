@@ -11,6 +11,16 @@ import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
+import {
+  archiveAdminServiceCategory,
+  archiveAdminServiceListing,
+  createAdminServiceCategory,
+  createAdminServiceListing,
+  getAdminServiceSummary,
+  updateAdminServiceCategory,
+  updateAdminServiceListing,
+  updateAdminServiceListingStatus
+} from '../api/adminServiceClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import {
   fetchComplianceControls,
@@ -1137,6 +1147,7 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [serviceState, setServiceState] = useState({ loading: true, data: null, error: null });
   const [complianceState, setComplianceState] = useState({ loading: true, error: null, payload: null });
   const [overviewSettings, setOverviewSettings] = useState(null);
   const [overviewSettingsForm, setOverviewSettingsForm] = useState(null);
@@ -1181,6 +1192,37 @@ export default function AdminDashboard() {
       }
     },
     [timeframe, logout, navigate]
+  );
+
+  const loadServiceManagement = useCallback(
+    async ({ signal, silent = false } = {}) => {
+      setServiceState((current) => ({
+        ...current,
+        loading: true,
+        error: silent ? current.error : null
+      }));
+
+      try {
+        const snapshot = await getAdminServiceSummary({ signal });
+        setServiceState({ loading: false, data: snapshot, error: null });
+        return snapshot;
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          return null;
+        }
+
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to load service management', error?.status ?? 500, {
+                cause: error
+              });
+
+        setServiceState((current) => ({ ...current, loading: false, error: panelError }));
+        throw panelError;
+      }
+    },
+    []
   );
 
   const loadComplianceControls = useCallback(
@@ -1249,6 +1291,25 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
+    loadServiceManagement({ signal: controller.signal }).catch(() => {});
+    return () => controller.abort();
+  }, [loadServiceManagement]);
+
+  useEffect(() => {
+    if (!state.data?.serviceManagement) {
+      return;
+    }
+
+    setServiceState((current) => {
+      if (current.data && !current.loading) {
+        return current;
+      }
+      return { loading: false, data: state.data.serviceManagement, error: null };
+    });
+  }, [state.data]);
+
+  useEffect(() => {
+    const controller = new AbortController();
     (async () => {
       try {
         const payload = await getAdminAffiliateSettings({ signal: controller.signal });
@@ -1301,6 +1362,182 @@ export default function AdminDashboard() {
 
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
 
+  const handleServiceRefresh = useCallback(() => {
+    loadServiceManagement().catch((error) => {
+      console.error('[AdminDashboard] Service management refresh failed', error);
+    });
+  }, [loadServiceManagement]);
+
+  const handleCreateCategory = useCallback(
+    async (input) => {
+      try {
+        const category = await createAdminServiceCategory(input);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after creating category', error);
+        });
+        return category;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to create service category', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleUpdateCategory = useCallback(
+    async (categoryId, updates) => {
+      try {
+        const category = await updateAdminServiceCategory(categoryId, updates);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after updating category', error);
+        });
+        return category;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update service category', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleArchiveCategory = useCallback(
+    async (categoryId) => {
+      try {
+        const category = await archiveAdminServiceCategory(categoryId);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after archiving category', error);
+        });
+        return category;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to archive service category', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleCreateListing = useCallback(
+    async (input) => {
+      try {
+        const listing = await createAdminServiceListing(input);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after creating listing', error);
+        });
+        return listing;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to create service listing', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleUpdateListing = useCallback(
+    async (serviceId, updates) => {
+      try {
+        const listing = await updateAdminServiceListing(serviceId, updates);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after updating listing', error);
+        });
+        return listing;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update service listing', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleUpdateListingStatus = useCallback(
+    async (serviceId, status) => {
+      try {
+        const listing = await updateAdminServiceListingStatus(serviceId, status);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after updating listing status', error);
+        });
+        return listing;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update listing status', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const handleArchiveListing = useCallback(
+    async (serviceId) => {
+      try {
+        const listing = await archiveAdminServiceListing(serviceId);
+        await loadServiceManagement({ silent: true }).catch((error) => {
+          console.error('[AdminDashboard] Failed to refresh after archiving listing', error);
+        });
+        return listing;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to archive service listing', error?.status ?? 500, { cause: error });
+        throw panelError;
+      }
+    },
+    [loadServiceManagement]
+  );
+
+  const serviceSection = useMemo(() => {
+    if (!serviceState.loading && !serviceState.error && !serviceState.data) {
+      return null;
+    }
+
+    const snapshot = serviceState.data ?? {};
+
+    return {
+      id: 'service-management',
+      label: 'Service listing management',
+      description: 'Publish, review, and govern the Fixnado service catalogue across regions.',
+      type: 'service-management',
+      icon: 'support',
+      data: {
+        ...snapshot,
+        loading: serviceState.loading,
+        error: serviceState.error,
+        onRefresh: handleServiceRefresh,
+        onCreateCategory: handleCreateCategory,
+        onUpdateCategory: handleUpdateCategory,
+        onArchiveCategory: handleArchiveCategory,
+        onCreateListing: handleCreateListing,
+        onUpdateListing: handleUpdateListing,
+        onUpdateListingStatus: handleUpdateListingStatus,
+        onArchiveListing: handleArchiveListing
+      }
+    };
+  }, [
+    serviceState,
+    handleServiceRefresh,
+    handleCreateCategory,
+    handleUpdateCategory,
+    handleArchiveCategory,
+    handleCreateListing,
+    handleUpdateListing,
+    handleUpdateListingStatus,
+    handleArchiveListing
   const navigationModel = useMemo(() => {
     if (!state.data) {
       return { sections: [], sidebarLinks: [] };
@@ -1345,6 +1582,9 @@ export default function AdminDashboard() {
 
   const navigation = useMemo(() => {
     const sections = state.data ? buildAdminNavigation(state.data) : [];
+    if (serviceSection) {
+      sections.push(serviceSection);
+    }
     sections.push({
       id: 'zone-management-link',
       label: 'Zone management workspace',
@@ -1364,6 +1604,7 @@ export default function AdminDashboard() {
       to: '/admin/monetisation'
     });
     return sections;
+  }, [state.data, serviceSection, affiliateSection]);
   }, [navigationModel.sections, affiliateSection]);
 
   const dashboardPayload = state.data
@@ -1393,7 +1634,10 @@ export default function AdminDashboard() {
 
   const handleRefresh = useCallback(() => {
     loadDashboard({ timeframe, forceRefresh: true });
-  }, [loadDashboard, timeframe]);
+    loadServiceManagement({ silent: true }).catch((error) => {
+      console.error('[AdminDashboard] Service management refresh failed during dashboard refresh', error);
+    });
+  }, [loadDashboard, timeframe, loadServiceManagement]);
 
   const handleLogout = useCallback(async () => {
     await logout();
