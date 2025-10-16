@@ -163,6 +163,10 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.href) {
+      return [];
+    }
+
     const entries = [
       {
         id: section.id,
@@ -281,6 +285,8 @@ const buildSearchIndex = (navigation) =>
     return entries;
   });
 
+const resolveInitialSection = (navigation) => navigation.find((item) => !item.href)?.id ?? navigation[0]?.id ?? 'overview';
+
 const Skeleton = () => (
   <div className="px-6 py-10">
     <div className="space-y-6">
@@ -340,7 +346,7 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -348,7 +354,7 @@ const DashboardLayout = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
+    setSelectedSection(resolveInitialSection(navigation));
     setSearchQuery('');
     setSearchResults([]);
   }, [navigation]);
@@ -371,7 +377,10 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
-  const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const activeSection =
+    navigation.find((item) => item.id === selectedSection && !item.href) ??
+    navigation.find((item) => !item.href) ??
+    navigation[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
@@ -443,13 +452,21 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
-                    const isActive = item.id === activeSection?.id;
+                    const isLink = Boolean(item.href);
+                    const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
                     return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedSection(item.id)}
+                        onClick={() => {
+                          if (isLink) {
+                            setMobileNavOpen(false);
+                            navigate(item.href);
+                            return;
+                          }
+                          setSelectedSection(item.id);
+                        }}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
@@ -467,7 +484,12 @@ const DashboardLayout = ({
                           <Icon className="h-5 w-5" />
                         </span>
                         <div className="flex-1">
-                          <p className="text-sm font-semibold">{item.label}</p>
+                          <p className="flex items-center gap-2 text-sm font-semibold">
+                            {item.label}
+                            {isLink ? (
+                              <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                            ) : null}
+                          </p>
                           {item.description ? (
                             <p className="text-xs text-slate-500">{item.description}</p>
                           ) : null}
@@ -526,13 +548,20 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
-            const isActive = item.id === activeSection?.id;
+            const isLink = Boolean(item.href);
+            const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedSection(item.id)}
+                onClick={() => {
+                  if (isLink) {
+                    navigate(item.href);
+                    return;
+                  }
+                  setSelectedSection(item.id);
+                }}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'
@@ -552,7 +581,12 @@ const DashboardLayout = ({
                 </span>
                 {!navCollapsed && (
                   <div className="flex-1">
-                    <p className="text-sm font-semibold">{item.label}</p>
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      {item.label}
+                      {isLink ? (
+                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                      ) : null}
+                    </p>
                     {item.description ? (
                       <p className="text-xs text-slate-500">{item.description}</p>
                     ) : null}

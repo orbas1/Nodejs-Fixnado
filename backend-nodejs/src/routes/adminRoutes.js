@@ -17,6 +17,10 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  fetchAdminPreferences,
+  saveAdminPreferences
+} from '../controllers/adminPreferencesController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -63,6 +67,20 @@ router.put(
   authenticate,
   enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
+);
+
+router.get(
+  '/preferences',
+  authenticate,
+  enforcePolicy('admin.preferences.read', { metadata: () => ({ section: 'admin-preferences' }) }),
+  fetchAdminPreferences
+);
+
+router.put(
+  '/preferences',
+  authenticate,
+  enforcePolicy('admin.preferences.write', { metadata: () => ({ section: 'admin-preferences' }) }),
+  saveAdminPreferences
 );
 
 router.get(
