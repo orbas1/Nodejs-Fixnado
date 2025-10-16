@@ -8,9 +8,16 @@ import {
   recordWalletTransaction,
   listWalletTransactions as listAdminWalletTransactions
 } from '../services/wallet/index.js';
+  listWalletAccounts as adminListWalletAccounts,
+  createWalletAccount as adminCreateWalletAccount,
+  updateWalletAccount as adminUpdateWalletAccount,
+  recordWalletTransaction as adminRecordWalletTransaction,
+  listWalletTransactions as adminListWalletTransactions
+} from '../services/wallet/index.js';
+import { toCanonicalRole } from '../constants/permissions.js';
 import {
-  listWalletAccounts,
-  createWalletAccount,
+  listWalletAccounts as listUserWalletAccounts,
+  createWalletAccount as createUserWalletAccount,
   getWalletAccountDetails,
   updateWalletAccount,
   listWalletTransactions,
@@ -21,7 +28,43 @@ import {
   deleteWalletPaymentMethod,
   exportWalletTransactions,
   getWalletOverview as getWalletSummary
+  updateWalletAccount as updateUserWalletAccount,
+  listWalletTransactions as listUserWalletTransactions,
+  createWalletTransaction as createUserWalletTransaction,
+  listWalletPaymentMethods,
+  createWalletPaymentMethod,
+  updateWalletPaymentMethod,
+  getWalletOverview as getUserWalletOverview
 } from '../services/walletService.js';
+
+function normaliseHttpError(error) {
+  if (!error) {
+    return new Error('Unknown wallet error');
+  }
+
+  if (error instanceof Error) {
+    if (!error.status && error.statusCode) {
+      const normalised = new Error(error.message);
+      normalised.status = error.statusCode;
+      if (error.code) {
+        normalised.code = error.code;
+      }
+      return normalised;
+    }
+
+    return error;
+  }
+
+  return new Error(typeof error === 'string' ? error : 'Unknown wallet error');
+}
+
+function handleAdminError(next, error) {
+  return next(normaliseHttpError(error));
+}
+
+function handleUserError(next, error) {
+  return next(normaliseHttpError(error));
+}
 
 function resolveActor(req) {
   const actorId = req.user?.id || null;
@@ -62,6 +105,17 @@ export async function listAdminWalletAccountsHandler(req, res, next) {
     res.json(payload);
   } catch (error) {
     forwardError(next, error);
+    handleAdminError(next, error);
+  }
+}
+
+export async function getAdminWalletAccountsHandler(req, res, next) {
+  try {
+    const { search, status, page, pageSize } = req.query;
+    const payload = await adminListWalletAccounts({ search, status, page, pageSize, includeRecent: true });
+    res.json(payload);
+  } catch (error) {
+    handleAdminError(next, error);
   }
 }
 
@@ -72,6 +126,7 @@ export async function saveAdminWalletSettingsHandler(req, res, next) {
     res.json({ settings });
   } catch (error) {
     forwardError(next, error);
+    handleAdminError(next, error);
   }
 }
 
@@ -82,6 +137,11 @@ export async function createAdminWalletAccountHandler(req, res, next) {
     res.status(201).json(account);
   } catch (error) {
     forwardError(next, error);
+    const actorId = req.user?.id ?? null;
+    const account = await adminCreateWalletAccount({ ...req.body, actorId });
+    res.status(201).json(account);
+  } catch (error) {
+    handleAdminError(next, error);
   }
 }
 
@@ -91,6 +151,10 @@ export async function updateAdminWalletAccountHandler(req, res, next) {
     res.json(account);
   } catch (error) {
     forwardError(next, error);
+    const account = await adminUpdateWalletAccount(req.params.id, req.body);
+    res.json(account);
+  } catch (error) {
+    handleAdminError(next, error);
   }
 }
 
@@ -119,9 +183,27 @@ export async function listAdminWalletTransactionsHandler(req, res, next) {
 }
 
 // Serviceman / general dashboard handlers
+    const actorId = req.user?.id ?? null;
+    const payload = await adminRecordWalletTransaction({ accountId: req.params.id, ...req.body, actorId });
+    res.status(201).json(payload);
+  } catch (error) {
+    handleAdminError(next, error);
+  }
+}
+
+export async function getAdminWalletTransactionsHandler(req, res, next) {
+  try {
+    const { limit } = req.query;
+    const payload = await adminListWalletTransactions({ accountId: req.params.id, limit });
+    res.json(payload);
+  } catch (error) {
+    handleAdminError(next, error);
+  }
+}
+
 export async function listWalletAccountsHandler(req, res, next) {
   try {
-    const accounts = await listWalletAccounts({
+    const accounts = await listUserWalletAccounts({
       userId: req.query.userId || req.user?.id || null,
       companyId: req.query.companyId || null,
       includeInactive: req.query.includeInactive === 'true'
@@ -129,6 +211,7 @@ export async function listWalletAccountsHandler(req, res, next) {
     res.json({ accounts });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -136,6 +219,8 @@ export async function createWalletAccountHandler(req, res, next) {
   try {
     const { actorId } = resolveActor(req);
     const account = await createWalletAccount({
+    const { actorId, actorRole } = resolveActor(req);
+    const account = await createUserWalletAccount({
       userId: req.body.userId || req.user?.id || null,
       companyId: req.body.companyId || null,
       currency: req.body.currency || 'GBP',
@@ -149,6 +234,7 @@ export async function createWalletAccountHandler(req, res, next) {
     res.status(201).json({ account });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -163,22 +249,24 @@ export async function getWalletAccountHandler(req, res, next) {
     res.json(payload);
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function updateWalletAccountHandler(req, res, next) {
   try {
     const { actorId } = resolveActor(req);
-    const account = await updateWalletAccount(req.params.accountId, req.body || {}, { actorId });
+    const account = await updateUserWalletAccount(req.params.accountId, req.body || {}, { actorId });
     res.json({ account });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
 export async function listWalletTransactionsHandler(req, res, next) {
   try {
-    const result = await listWalletTransactions(req.params.accountId, {
+    const result = await listUserWalletTransactions(req.params.accountId, {
       type: req.query.type,
       limit: req.query.limit ? Number.parseInt(req.query.limit, 10) : undefined,
       offset: req.query.offset ? Number.parseInt(req.query.offset, 10) : undefined,
@@ -188,6 +276,7 @@ export async function listWalletTransactionsHandler(req, res, next) {
     res.json(result);
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -198,6 +287,10 @@ export async function createWalletTransactionHandler(req, res, next) {
     res.status(201).json(payload);
   } catch (error) {
     forwardError(next, error);
+    const result = await createUserWalletTransaction(req.params.accountId, req.body || {}, { actorId, actorRole });
+    res.status(201).json(result);
+  } catch (error) {
+    handleUserError(next, error);
   }
 }
 
@@ -207,6 +300,7 @@ export async function listWalletPaymentMethodsHandler(req, res, next) {
     res.json({ methods });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -217,6 +311,7 @@ export async function createWalletPaymentMethodHandler(req, res, next) {
     res.status(201).json({ method });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 
@@ -252,18 +347,24 @@ export async function exportWalletTransactionsHandler(req, res, next) {
     res.send(payload.csv);
   } catch (error) {
     forwardError(next, error);
+    const method = await updateWalletPaymentMethod(req.params.accountId, req.params.methodId, req.body || {}, { actorId });
+    res.json({ method });
+  } catch (error) {
+    handleUserError(next, error);
   }
 }
 
 export async function getWalletSummaryHandler(req, res, next) {
   try {
     const overview = await getWalletSummary({
+    const overview = await getUserWalletOverview({
       userId: req.query.userId || req.user?.id || null,
       companyId: req.query.companyId || null
     });
     res.json({ overview });
   } catch (error) {
     forwardError(next, error);
+    handleUserError(next, error);
   }
 }
 

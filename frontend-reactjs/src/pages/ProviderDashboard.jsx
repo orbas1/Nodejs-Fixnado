@@ -6,6 +6,7 @@ import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
   ChartBarIcon,
   ClockIcon,
@@ -552,6 +553,7 @@ export default function ProviderDashboard() {
   const metrics = state.data?.metrics;
   const revenue = state.data?.revenue;
   const alerts = state.data?.alerts ?? [];
+  const walletSection = state.data?.wallet ?? null;
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
@@ -581,6 +583,13 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      walletSection
+        ? {
+            id: walletSection.id || 'provider-dashboard-wallet',
+            label: t('providerDashboard.walletHeadline'),
+            description: t('providerDashboard.nav.wallet')
+          }
+        : null,
       alerts.length > 0
         ? {
             id: 'provider-dashboard-alerts',
@@ -636,7 +645,17 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, t]);
+  }, [
+    alerts.length,
+    deliveryBoard.length,
+    serviceCatalogue.length,
+    serviceCategories.length,
+    serviceHealth.length,
+    servicePackages.length,
+    t,
+    walletSection?.id,
+    walletSection
+  ]);
 
   const heroBadges = useMemo(
     () => [
@@ -830,6 +849,8 @@ export default function ProviderDashboard() {
             </article>
           </div>
         </section>
+
+        {walletSection ? <WalletSection section={walletSection} /> : null}
 
         {alerts.length > 0 ? (
           <section id="provider-dashboard-alerts" aria-labelledby="provider-dashboard-alerts" className="space-y-4">

@@ -82,10 +82,20 @@ adminWalletRouter.post(
   }),
   recordAdminWalletTransactionHandler
 );
+  getWalletSummaryHandler
+} from '../controllers/walletController.js';
+import { authenticate } from '../middleware/auth.js';
+import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const walletRouter = Router();
 
 walletRouter.use(authenticate);
+router.use(authenticate);
+
+router.get('/accounts', enforcePolicy('wallet.accounts.read'), listWalletAccountsHandler);
+router.post('/accounts', enforcePolicy('wallet.accounts.create'), createWalletAccountHandler);
+router.get('/accounts/:accountId', enforcePolicy('wallet.accounts.read'), getWalletAccountHandler);
+router.patch('/accounts/:accountId', enforcePolicy('wallet.accounts.update'), updateWalletAccountHandler);
 
 walletRouter.get('/accounts', enforcePolicy('wallet.accounts.read'), listWalletAccountsHandler);
 walletRouter.post('/accounts', enforcePolicy('wallet.accounts.create'), createWalletAccountHandler);
