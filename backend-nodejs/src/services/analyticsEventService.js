@@ -87,6 +87,13 @@ const EVENT_DEFINITIONS = Object.freeze({
     requiredMetadata: ['rentalId', 'companyId', 'outcome', 'totalCharges', 'currency', 'durationDays'],
     tenantKey: 'companyId'
   },
+  'rental.dispute.opened': {
+    domain: 'rentals',
+    entityType: 'rental_agreement',
+    entityIdKey: 'rentalId',
+    requiredMetadata: ['rentalId', 'companyId', 'reason', 'previousStatus', 'depositStatus'],
+    tenantKey: 'companyId'
+  },
   'ads.campaign.metrics_recorded': {
     domain: 'ads',
     entityType: 'campaign',

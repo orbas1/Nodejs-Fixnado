@@ -398,6 +398,25 @@ async function loadUserData(context) {
     ConversationParticipant.findAll({ where: conversationWhere })
   ]);
 
+  const inventoryExtras = companyId
+    ? await InventoryItem.findAll({
+        where: { companyId },
+        order: [['updatedAt', 'DESC']],
+        limit: 24
+      })
+    : [];
+
+  const normaliseDate = (value) => {
+    if (!value) {
+      return null;
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  };
+
   const totalBookings = bookings.length;
   const previousTotalBookings = previousBookings.length;
   const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
@@ -573,15 +592,115 @@ async function loadUserData(context) {
       })
   }));
 
-  const rentalRows = rentals.slice(0, EXPORT_ROW_LIMIT).map((rental) => [
-    rental.rentalNumber,
-    rental.InventoryItem?.name ?? 'Asset',
-    humanise(rental.status),
-    rental.returnDueAt
-      ? DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone).toISODate()
-      : '—',
-    humanise(rental.depositStatus)
-  ]);
+  const depositStatusCounts = rentals.reduce(
+    (acc, rental) => {
+      const key = rental.depositStatus || 'unknown';
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    },
+    { pending: 0, held: 0, released: 0, forfeited: 0, partially_released: 0, unknown: 0 }
+  );
+
+  const depositAmountTotals = rentals.reduce(
+    (acc, rental) => {
+      const amount = Number.parseFloat(rental.depositAmount ?? NaN);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return acc;
+      }
+      const key = rental.depositStatus || 'pending';
+      acc[key] = (acc[key] ?? 0) + amount;
+      acc.total += amount;
+      return acc;
+    },
+    { total: 0, pending: 0, held: 0, released: 0, forfeited: 0, partially_released: 0 }
+  );
+
+  const rentalsAtRisk = rentals.filter((rental) => ['disputed', 'inspection_pending'].includes(rental.status));
+
+  const rentalSummaries = rentals.slice(0, 50).map((rental) => ({
+    id: rental.id,
+    rentalNumber: rental.rentalNumber,
+    status: rental.status,
+    depositStatus: rental.depositStatus,
+    quantity: rental.quantity,
+    renterId: rental.renterId,
+    companyId: rental.companyId,
+    bookingId: rental.bookingId,
+    pickupAt: normaliseDate(rental.pickupAt),
+    returnDueAt: normaliseDate(rental.returnDueAt),
+    rentalStartAt: normaliseDate(rental.rentalStartAt),
+    rentalEndAt: normaliseDate(rental.rentalEndAt),
+    lastStatusTransitionAt: normaliseDate(rental.lastStatusTransitionAt),
+    depositAmount: rental.depositAmount != null ? Number.parseFloat(rental.depositAmount) : null,
+    depositCurrency: rental.depositCurrency || null,
+    dailyRate: rental.dailyRate != null ? Number.parseFloat(rental.dailyRate) : null,
+    rateCurrency: rental.rateCurrency || null,
+    conditionOut: rental.conditionOut ?? {},
+    conditionIn: rental.conditionIn ?? {},
+    meta: rental.meta ?? {},
+    item: rental.InventoryItem
+      ? {
+          id: rental.InventoryItem.id,
+          name: rental.InventoryItem.name,
+          sku: rental.InventoryItem.sku || null,
+          rentalRate: rental.InventoryItem.rentalRate != null ? Number.parseFloat(rental.InventoryItem.rentalRate) : null,
+          rentalRateCurrency: rental.InventoryItem.rentalRateCurrency || null,
+          depositAmount:
+            rental.InventoryItem.depositAmount != null ? Number.parseFloat(rental.InventoryItem.depositAmount) : null,
+          depositCurrency: rental.InventoryItem.depositCurrency || null
+        }
+      : null,
+    booking: rental.Booking
+      ? {
+          id: rental.Booking.id,
+          status: rental.Booking.status,
+          reference: rental.Booking.meta?.reference || null,
+          title: rental.Booking.meta?.title || null
+        }
+      : null,
+    timeline: Array.isArray(rental.RentalCheckpoints)
+      ? rental.RentalCheckpoints.map((checkpoint) => ({
+          id: checkpoint.id,
+          type: checkpoint.type,
+          description: checkpoint.description,
+          recordedBy: checkpoint.recordedBy,
+          recordedByRole: checkpoint.recordedByRole,
+          occurredAt: normaliseDate(checkpoint.occurredAt),
+          payload: checkpoint.payload ?? {}
+        }))
+      : []
+  }));
+
+  const inventoryCatalogueMap = new Map();
+  rentals.forEach((rental) => {
+    if (rental.InventoryItem) {
+      const plain = rental.InventoryItem.get ? rental.InventoryItem.get({ plain: true }) : rental.InventoryItem;
+      inventoryCatalogueMap.set(plain.id, plain);
+    }
+  });
+  inventoryExtras.forEach((item) => {
+    const plain = item.get ? item.get({ plain: true }) : item;
+    inventoryCatalogueMap.set(plain.id, plain);
+  });
+
+  const inventoryCatalogue = Array.from(inventoryCatalogueMap.values()).slice(0, 40).map((item) => ({
+    id: item.id,
+    name: item.name,
+    sku: item.sku || null,
+    category: item.category || null,
+    rentalRate: item.rentalRate != null ? Number.parseFloat(item.rentalRate) : null,
+    rentalRateCurrency: item.rentalRateCurrency || null,
+    depositAmount: item.depositAmount != null ? Number.parseFloat(item.depositAmount) : null,
+    depositCurrency: item.depositCurrency || null,
+    quantityOnHand: item.quantityOnHand ?? null,
+    quantityReserved: item.quantityReserved ?? null,
+    safetyStock: item.safetyStock ?? null,
+    metadata: item.metadata ?? {},
+    imageUrl: item.metadata?.imageUrl || null,
+    description: item.metadata?.description || null,
+    availability: inventoryAvailable(item),
+    status: inventoryStatus(item)
+  }));
 
   const accountItems = [];
 
@@ -877,11 +996,66 @@ async function loadUserData(context) {
         id: 'rentals',
         label: 'Rental Assets',
         description: 'Track equipment associated with your jobs.',
-        type: 'table',
+        type: 'rentals',
         sidebar: rentalsSidebar,
         data: {
-          headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
-          rows: rentalRows
+          metrics: [
+            { id: 'active', label: 'Active rentals', value: rentalsInUse },
+            { id: 'dueSoon', label: 'Due within 72h', value: rentalsDueSoon },
+            { id: 'held', label: 'Deposits held', value: depositStatusCounts.held ?? 0 },
+            {
+              id: 'released',
+              label: 'Deposits released',
+              value: (depositStatusCounts.released ?? 0) + (depositStatusCounts.partially_released ?? 0)
+            },
+            { id: 'atRisk', label: 'Disputes or inspections', value: rentalsAtRisk.length }
+          ],
+          rentals: rentalSummaries,
+          inventoryCatalogue,
+          endpoints: {
+            list: '/api/rentals',
+            request: '/api/rentals',
+            approve: '/api/rentals/:rentalId/approve',
+            schedulePickup: '/api/rentals/:rentalId/schedule-pickup',
+            checkout: '/api/rentals/:rentalId/checkout',
+            markReturned: '/api/rentals/:rentalId/return',
+            inspection: '/api/rentals/:rentalId/inspection',
+            cancel: '/api/rentals/:rentalId/cancel',
+            checkpoint: '/api/rentals/:rentalId/checkpoints',
+            deposit: '/api/rentals/:rentalId/deposit',
+            dispute: '/api/rentals/:rentalId/dispute'
+          },
+          escrow: {
+            totals: depositAmountTotals,
+            currency,
+            ledgerEndpoint: '/api/rentals/:rentalId/deposit'
+          },
+          defaults: {
+            renterId: userId ?? null,
+            companyId: companyId ?? null,
+            timezone: window.timezone,
+            currency
+          },
+          statusOptions: {
+            rental: [
+              { value: 'requested', label: 'Requested' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'pickup_scheduled', label: 'Pickup scheduled' },
+              { value: 'in_use', label: 'In use' },
+              { value: 'return_pending', label: 'Return pending' },
+              { value: 'inspection_pending', label: 'Inspection pending' },
+              { value: 'settled', label: 'Settled' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'disputed', label: 'Disputed' }
+            ],
+            deposit: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'held', label: 'Held' },
+              { value: 'released', label: 'Released' },
+              { value: 'partially_released', label: 'Partially released' },
+              { value: 'forfeited', label: 'Forfeited' }
+            ]
+          }
         }
       },
       {
