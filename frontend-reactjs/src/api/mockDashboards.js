@@ -2090,6 +2090,13 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'serviceman-disputes',
+        icon: 'compliance',
+        label: 'Dispute Management',
+        description: 'Manage crew dispute cases, action items, and evidence.',
+        type: 'component'
       }
     ]
   },

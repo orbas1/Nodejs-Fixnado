@@ -19,7 +19,7 @@ import {
   deleteCustomerDisputeNoteRecord,
   createCustomerDisputeEvidenceRecord,
   updateCustomerDisputeEvidenceRecord,
-  deleteCustomerDisputeEvidenceRecord
+  deleteCustomerDisputeEvidenceRecord,
   createCustomerCouponRecord,
   updateCustomerCouponRecord,
   deleteCustomerCouponRecord

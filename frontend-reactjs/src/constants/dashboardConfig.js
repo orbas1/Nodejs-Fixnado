@@ -105,7 +105,8 @@ export const DASHBOARD_ROLES = [
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
-      { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
     ]
   },
   {
