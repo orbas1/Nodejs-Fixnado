@@ -169,6 +169,28 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.taxonomy.read': {
+    id: 'admin.taxonomy.read',
+    version: '1.0.0',
+    resource: 'admin.taxonomy',
+    action: 'admin.taxonomy:read',
+    description: 'Allow platform administrators to review service taxonomy types and categories.',
+    requirements: [Permissions.ADMIN_TAXONOMY_READ],
+    tags: ['admin', 'taxonomy'],
+    severity: 'medium',
+    metadata: (req) => ({ includeArchived: req.query?.includeArchived === 'true' })
+  },
+  'admin.taxonomy.write': {
+    id: 'admin.taxonomy.write',
+    version: '1.0.0',
+    resource: 'admin.taxonomy',
+    action: 'admin.taxonomy:write',
+    description: 'Allow platform administrators to create, update, and archive service taxonomy entries.',
+    requirements: [Permissions.ADMIN_TAXONOMY_WRITE],
+    tags: ['admin', 'taxonomy'],
+    severity: 'high',
+    metadata: (req) => ({ method: req.method, path: req.path })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',

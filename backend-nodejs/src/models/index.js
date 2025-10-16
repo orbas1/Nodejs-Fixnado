@@ -63,6 +63,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import ServiceTaxonomyType from './serviceTaxonomyType.js';
+import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -197,6 +199,9 @@ StorefrontRevisionLog.belongsTo(MarketplaceItem, { foreignKey: 'marketplaceItemI
 StorefrontRevisionLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 StorefrontRevisionLog.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 Region.hasMany(StorefrontRevisionLog, { foreignKey: 'regionId', as: 'storefrontRevisions' });
+
+ServiceTaxonomyType.hasMany(ServiceTaxonomyCategory, { foreignKey: 'typeId', as: 'categories' });
+ServiceTaxonomyCategory.belongsTo(ServiceTaxonomyType, { foreignKey: 'typeId', as: 'type' });
 
 AdCampaign.belongsTo(Company, { foreignKey: 'companyId' });
 Company.hasMany(AdCampaign, { foreignKey: 'companyId' });
@@ -464,5 +469,7 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  ServiceTaxonomyType,
+  ServiceTaxonomyCategory
 };

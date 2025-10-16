@@ -17,6 +17,13 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  getAdminTaxonomy,
+  upsertTaxonomyType,
+  archiveTaxonomyType,
+  upsertTaxonomyCategory,
+  archiveTaxonomyCategory
+} from '../controllers/taxonomyController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +111,63 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/taxonomy',
+  authenticate,
+  enforcePolicy('admin.taxonomy.read', { metadata: () => ({ scope: 'taxonomy' }) }),
+  getAdminTaxonomy
+);
+
+router.post(
+  '/taxonomy/types',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', { metadata: () => ({ entity: 'type', action: 'create' }) }),
+  upsertTaxonomyType
+);
+
+router.put(
+  '/taxonomy/types/:id',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', {
+    metadata: (req) => ({ entity: 'type', action: 'update', typeId: req.params.id })
+  }),
+  upsertTaxonomyType
+);
+
+router.delete(
+  '/taxonomy/types/:id',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', {
+    metadata: (req) => ({ entity: 'type', action: 'archive', typeId: req.params.id })
+  }),
+  archiveTaxonomyType
+);
+
+router.post(
+  '/taxonomy/categories',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', { metadata: () => ({ entity: 'category', action: 'create' }) }),
+  upsertTaxonomyCategory
+);
+
+router.put(
+  '/taxonomy/categories/:id',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', {
+    metadata: (req) => ({ entity: 'category', action: 'update', categoryId: req.params.id })
+  }),
+  upsertTaxonomyCategory
+);
+
+router.delete(
+  '/taxonomy/categories/:id',
+  authenticate,
+  enforcePolicy('admin.taxonomy.write', {
+    metadata: (req) => ({ entity: 'category', action: 'archive', categoryId: req.params.id })
+  }),
+  archiveTaxonomyCategory
 );
 
 export default router;

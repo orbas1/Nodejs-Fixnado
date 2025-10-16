@@ -30,6 +30,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminMonetization = lazy(() => import('./pages/AdminMonetization.jsx'));
 const ThemeStudio = lazy(() => import('./pages/ThemeStudio.jsx'));
 const TelemetryDashboard = lazy(() => import('./pages/TelemetryDashboard.jsx'));
+const AdminTaxonomy = lazy(() => import('./pages/AdminTaxonomy.jsx'));
 const Communications = lazy(() => import('./pages/Communications.jsx'));
 const CreationStudio = lazy(() => import('./pages/CreationStudio.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
@@ -124,6 +125,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminMonetization />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/taxonomy"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminTaxonomy />
                   </AdminProtectedRoute>
                 }
               />
