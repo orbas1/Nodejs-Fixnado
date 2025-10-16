@@ -275,6 +275,109 @@ const mockDashboards = {
         }
       },
       {
+        id: 'wallet',
+        icon: 'finance',
+        label: 'Wallet & Payments',
+        description: 'Fund balances, monitor automation, and control payout methods.',
+        type: 'wallet',
+        data: {
+          currency: 'GBP',
+          policy: { canManage: true, canTransact: true, canEditMethods: true },
+          user: { id: 'USR-2488' },
+          company: { id: 'COMP-442', name: 'Stone Facilities Co-op' },
+          account: {
+            id: 'acct-user-001',
+            alias: 'Facilities wallet',
+            currency: 'GBP',
+            balance: 15250,
+            pending: 1850,
+            autopayoutEnabled: true,
+            autopayoutMethodId: 'pm-001',
+            autopayoutThreshold: 5000,
+            spendingLimit: 25000
+          },
+          summary: {
+            balance: 15250,
+            pending: 1850,
+            available: 13400,
+            lifetimeCredits: 64200,
+            lifetimeDebits: 48950,
+            recentTransactions: [
+              {
+                id: 'txn-1001',
+                occurredAt: '2025-03-16T08:45:00Z',
+                type: 'credit',
+                amount: 4200,
+                balanceAfter: 15250,
+                referenceId: 'WO-4821'
+              },
+              {
+                id: 'txn-1000',
+                occurredAt: '2025-03-15T17:10:00Z',
+                type: 'hold',
+                amount: 850,
+                balanceAfter: 11050,
+                referenceId: 'Rental-9730'
+              },
+              {
+                id: 'txn-0999',
+                occurredAt: '2025-03-14T11:20:00Z',
+                type: 'debit',
+                amount: -350,
+                balanceAfter: 11900,
+                referenceId: 'Refund-2204'
+              }
+            ]
+          },
+          transactions: { total: 12, limit: 10, offset: 0 },
+          methods: [
+            {
+              id: 'pm-001',
+              label: 'HSBC Main',
+              type: 'bank_account',
+              status: 'active',
+              maskedIdentifier: '••22 33',
+              supportingDocumentUrl: 'https://files.fixnado.com/wallet/hsbc-kyc.pdf',
+              details: {
+                bankName: 'HSBC UK',
+                accountHolder: 'Stone Facilities Co-op',
+                notes: 'Primary operating account'
+              }
+            },
+            {
+              id: 'pm-002',
+              label: 'Wise Treasury',
+              type: 'external_wallet',
+              status: 'active',
+              maskedIdentifier: '@stoneops',
+              details: {
+                provider: 'Wise',
+                handle: '@stoneops',
+                notes: 'FX payouts to EU vendors'
+              }
+            },
+            {
+              id: 'pm-003',
+              label: 'Corporate Card',
+              type: 'card',
+              status: 'inactive',
+              maskedIdentifier: 'Visa ••4456',
+              details: {
+                brand: 'Visa',
+                expiryMonth: '11',
+                expiryYear: '28',
+                notes: 'Emergency weekend coverage'
+              }
+            }
+          ],
+          autopayout: {
+            enabled: true,
+            threshold: 5000,
+            method: { id: 'pm-001', label: 'HSBC Main' }
+          }
+        }
+      },
+      {
         id: 'support',
         icon: 'support',
         label: 'Support & Communications',

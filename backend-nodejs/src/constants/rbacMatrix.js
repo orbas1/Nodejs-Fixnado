@@ -31,7 +31,11 @@ export const RBAC_MATRIX = {
       Permissions.SERVICES_BOOK,
       Permissions.MESSAGING_READ,
       Permissions.MESSAGING_RESPOND,
-      Permissions.SCHEDULE_MANAGE
+      Permissions.SCHEDULE_MANAGE,
+      Permissions.WALLET_VIEW,
+      Permissions.WALLET_MANAGE,
+      Permissions.WALLET_TRANSACT,
+      Permissions.WALLET_METHOD_MANAGE
     ],
     navigation: {
       landing: '/app/dashboard',

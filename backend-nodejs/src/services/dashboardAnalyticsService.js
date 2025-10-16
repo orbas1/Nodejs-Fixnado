@@ -23,6 +23,7 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { getWalletOverview } from './walletService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -355,7 +356,8 @@ async function loadUserData(context) {
     previousOrders,
     rentals,
     disputes,
-    conversations
+    conversations,
+    walletOverview
   ] = await Promise.all([
     userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
     Booking.findAll({ where: bookingWhere }),
@@ -395,7 +397,8 @@ async function loadUserData(context) {
         }
       ]
     }),
-    ConversationParticipant.findAll({ where: conversationWhere })
+    ConversationParticipant.findAll({ where: conversationWhere }),
+    getWalletOverview({ userId, companyId })
   ]);
 
   const totalBookings = bookings.length;
@@ -698,6 +701,57 @@ async function loadUserData(context) {
     ]
   };
 
+  const walletCurrency = walletOverview?.account?.currency || currency;
+  const walletSummary = walletOverview?.summary;
+  const walletSidebar = walletOverview
+    ? {
+        badge: formatCurrency(walletSummary?.balance ?? 0, walletCurrency),
+        status:
+          walletSummary?.pending && walletSummary.pending > 0
+            ? {
+                label: `${formatCurrency(walletSummary.pending, walletCurrency)} held`,
+                tone: 'warning'
+              }
+            : { label: 'Ready for release', tone: 'success' },
+        highlights: [
+          {
+            label: 'Available',
+            value: formatCurrency(
+              walletSummary?.available ?? walletSummary?.balance ?? 0,
+              walletCurrency
+            )
+          },
+          { label: 'Methods', value: formatNumber(walletOverview?.methods?.length ?? 0) }
+        ]
+      }
+    : null;
+
+  const walletSection = walletOverview
+    ? {
+        id: 'wallet',
+        label: 'Wallet & Payments',
+        description: 'Manage wallet balance, autopayouts, and funding routes.',
+        type: 'wallet',
+        sidebar: walletSidebar,
+        data: {
+          account: walletOverview.account,
+          accountId: walletOverview.account?.id ?? null,
+          summary: walletSummary,
+          autopayout: walletOverview.autopayout,
+          methods: walletOverview.methods,
+          user: walletOverview.user,
+          company: walletOverview.company,
+          currency: walletCurrency,
+          policy: {
+            canManage: true,
+            canTransact:
+              walletOverview.account?.status !== 'suspended' && walletOverview.account?.status !== 'closed',
+            canEditMethods: true
+          }
+        }
+      }
+    : null;
+
   const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
   const workspaceAlignment = companyId ? 'Linked to company workspace' : 'Standalone workspace';
 
@@ -884,6 +938,7 @@ async function loadUserData(context) {
           rows: rentalRows
         }
       },
+      ...(walletSection ? [walletSection] : []),
       {
         id: 'account',
         label: 'Account & Support',

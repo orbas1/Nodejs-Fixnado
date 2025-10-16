@@ -278,6 +278,32 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'wallet') {
+      entries.push(
+        {
+          id: `${section.id}-summary`,
+          type: 'panel',
+          label: 'Wallet summary',
+          description: 'Balance, holds, and autopayout status',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-transactions`,
+          type: 'record',
+          label: 'Wallet transactions',
+          description: 'Recent manual adjustments and automation events',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-methods`,
+          type: 'record',
+          label: 'Wallet payment methods',
+          description: 'Configured payout destinations',
+          targetSection: section.id
+        }
+      );
+    }
+
     return entries;
   });
 

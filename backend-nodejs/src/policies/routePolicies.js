@@ -242,6 +242,117 @@ const ROUTE_POLICIES = {
       providerId: req.query?.providerId || null
     })
   },
+  'wallet.accounts.read': {
+    id: 'wallet.accounts.read',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:read',
+    description: 'Allow customers and operators to view wallet balances and settings.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.query?.userId || req.user?.id || null,
+      companyId: req.query?.companyId || null
+    })
+  },
+  'wallet.accounts.create': {
+    id: 'wallet.accounts.create',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:create',
+    description: 'Allow authorised roles to create wallet accounts for customers or organisations.',
+    requirements: [Permissions.WALLET_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      userId: req.body?.userId || req.user?.id || null,
+      companyId: req.body?.companyId || null
+    })
+  },
+  'wallet.accounts.update': {
+    id: 'wallet.accounts.update',
+    version: '1.0.0',
+    resource: 'wallet.accounts',
+    action: 'wallet.accounts:update',
+    description: 'Allow authorised actors to update wallet settings and thresholds.',
+    requirements: [Permissions.WALLET_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null
+    })
+  },
+  'wallet.transactions.read': {
+    id: 'wallet.transactions.read',
+    version: '1.0.0',
+    resource: 'wallet.transactions',
+    action: 'wallet.transactions:read',
+    description: 'Allow wallet owners to review transaction history and holds.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      type: req.query?.type || null
+    })
+  },
+  'wallet.transactions.create': {
+    id: 'wallet.transactions.create',
+    version: '1.0.0',
+    resource: 'wallet.transactions',
+    action: 'wallet.transactions:create',
+    description: 'Allow authorised actors to credit, debit, or hold wallet balances.',
+    requirements: [Permissions.WALLET_TRANSACT],
+    tags: ['wallet', 'finance'],
+    severity: 'critical',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      type: req.body?.type || null,
+      amount: req.body?.amount || null
+    })
+  },
+  'wallet.payment-methods.read': {
+    id: 'wallet.payment-methods.read',
+    version: '1.0.0',
+    resource: 'wallet.payment-methods',
+    action: 'wallet.payment-methods:read',
+    description: 'Allow wallet owners to view payout destinations and funding instruments.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null
+    })
+  },
+  'wallet.payment-methods.manage': {
+    id: 'wallet.payment-methods.manage',
+    version: '1.0.0',
+    resource: 'wallet.payment-methods',
+    action: 'wallet.payment-methods:manage',
+    description: 'Allow authorised roles to register or update wallet payment methods.',
+    requirements: [Permissions.WALLET_METHOD_MANAGE],
+    tags: ['wallet', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      methodId: req.params?.methodId || null
+    })
+  },
+  'wallet.summary.read': {
+    id: 'wallet.summary.read',
+    version: '1.0.0',
+    resource: 'wallet.summary',
+    action: 'wallet.summary:read',
+    description: 'Allow wallet owners to retrieve dashboard-ready wallet summaries.',
+    requirements: [Permissions.WALLET_VIEW],
+    tags: ['wallet', 'finance', 'reporting'],
+    severity: 'medium',
+    metadata: (req) => ({
+      userId: req.query?.userId || req.user?.id || null,
+      companyId: req.query?.companyId || null
+    })
+  },
   'compliance.data-requests.create': {
     id: 'compliance.data-requests.create',
     version: '1.0.0',

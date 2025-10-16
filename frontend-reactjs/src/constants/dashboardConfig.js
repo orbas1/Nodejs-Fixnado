@@ -11,6 +11,7 @@ export const DASHBOARD_ROLES = [
       { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },
       { id: 'rentals', label: 'Asset Management', icon: 'assets' },
+      { id: 'wallet', label: 'Wallet & Payments', icon: 'finance' },
       { id: 'support', label: 'Support & Communications', icon: 'support' },
       { id: 'settings', label: 'Account Settings', icon: 'settings' }
     ]
