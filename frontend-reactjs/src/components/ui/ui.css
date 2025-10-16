@@ -279,6 +279,8 @@
     box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
 }
 
+.fx-text-area {
+  min-height: 128px;
 .fx-textarea {
   min-height: 132px;
   padding-block: var(--fx-space-3);

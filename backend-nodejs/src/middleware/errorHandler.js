@@ -3,7 +3,12 @@ export function notFound(req, res) {
 }
 
 export function errorHandler(err, req, res, _next) {
-  const status = typeof err.status === 'number' ? err.status : 500;
+  const status =
+    typeof err.status === 'number'
+      ? err.status
+      : typeof err.statusCode === 'number'
+        ? err.statusCode
+        : 500;
   console.error('Unhandled request error', {
     path: req.path,
     method: req.method,

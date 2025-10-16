@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import './ui.css';
 
 const TextArea = forwardRef(function TextArea(
+  { id, label, optionalLabel, hint, error, rows, className, textareaClassName, ...rest },
   { id, label, hint, error, className, inputClassName, rows = 6, ...rest },
   { id, label, optionalLabel, hint, error, rows, className, inputClassName, ...rest },
   ref
@@ -45,6 +46,7 @@ const TextArea = forwardRef(function TextArea(
         ref={ref}
         id={fieldId}
         rows={rows}
+        className={clsx('fx-text-input fx-text-area', error && 'fx-text-input--error', textareaClassName)}
         className={clsx('fx-textarea', error && 'fx-textarea--error', inputClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
@@ -77,6 +79,7 @@ TextArea.propTypes = {
   error: PropTypes.string,
   rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   className: PropTypes.string,
+  textareaClassName: PropTypes.string
   inputClassName: PropTypes.string
 };
 
@@ -93,6 +96,7 @@ TextArea.defaultProps = {
   error: undefined,
   rows: 4,
   className: undefined,
+  textareaClassName: undefined
   inputClassName: undefined
 };
 

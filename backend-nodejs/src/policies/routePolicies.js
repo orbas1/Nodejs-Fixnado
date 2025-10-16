@@ -216,6 +216,35 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.enterprise.read': {
+    id: 'admin.enterprise.read',
+    version: '1.0.0',
+    resource: 'admin.enterprise',
+    action: 'admin.enterprise:read',
+    description: 'Allow platform administrators to view enterprise account settings and coverage.',
+    requirements: [Permissions.ADMIN_ENTERPRISE_READ],
+    tags: ['admin', 'enterprise'],
+    severity: 'high',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      includeArchived: req.query?.includeArchived === 'true'
+    })
+  },
+  'admin.enterprise.write': {
+    id: 'admin.enterprise.write',
+    version: '1.0.0',
+    resource: 'admin.enterprise',
+    action: 'admin.enterprise:write',
+    description: 'Allow platform administrators to create and update enterprise accounts, sites, and playbooks.',
+    requirements: [Permissions.ADMIN_ENTERPRISE_WRITE],
+    tags: ['admin', 'enterprise'],
+    severity: 'critical',
+    metadata: (req) => ({
+      accountId: req.params?.accountId || null,
+      siteId: req.params?.siteId || null,
+      stakeholderId: req.params?.stakeholderId || null,
+      playbookId: req.params?.playbookId || null
+    })
   'admin.appearance.read': {
     id: 'admin.appearance.read',
     version: '1.0.0',

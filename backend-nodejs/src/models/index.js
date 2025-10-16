@@ -81,6 +81,10 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import EnterpriseAccount from './enterpriseAccount.js';
+import EnterpriseSite from './enterpriseSite.js';
+import EnterpriseStakeholder from './enterpriseStakeholder.js';
+import EnterprisePlaybook from './enterprisePlaybook.js';
 import AppearanceProfile from './appearanceProfile.js';
 import AppearanceAsset from './appearanceAsset.js';
 import AppearanceVariant from './appearanceVariant.js';
@@ -599,6 +603,30 @@ BookingHistoryEntry.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' 
 BlogPost.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 User.hasMany(BlogPost, { foreignKey: 'authorId', as: 'blogPosts' });
 
+EnterpriseAccount.hasMany(EnterpriseSite, {
+  foreignKey: 'enterpriseAccountId',
+  as: 'sites',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseSite.belongsTo(EnterpriseAccount, { foreignKey: 'enterpriseAccountId', as: 'account' });
+
+EnterpriseAccount.hasMany(EnterpriseStakeholder, {
+  foreignKey: 'enterpriseAccountId',
+  as: 'stakeholders',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseStakeholder.belongsTo(EnterpriseAccount, { foreignKey: 'enterpriseAccountId', as: 'account' });
+
+EnterpriseAccount.hasMany(EnterprisePlaybook, {
+  foreignKey: 'enterpriseAccountId',
+  as: 'playbooks',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterprisePlaybook.belongsTo(EnterpriseAccount, { foreignKey: 'enterpriseAccountId', as: 'account' });
+
 BlogPost.belongsToMany(BlogCategory, {
   through: BlogPostCategory,
   foreignKey: 'postId',
@@ -744,6 +772,10 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  EnterpriseAccount,
+  EnterpriseSite,
+  EnterpriseStakeholder,
+  EnterprisePlaybook
   AppearanceProfile,
   AppearanceAsset,
   AppearanceVariant

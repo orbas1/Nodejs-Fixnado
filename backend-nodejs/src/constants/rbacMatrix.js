@@ -238,6 +238,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_ENTERPRISE_READ,
+      Permissions.ADMIN_ENTERPRISE_WRITE,
       Permissions.ADMIN_INBOX_READ,
       Permissions.ADMIN_INBOX_WRITE,
       Permissions.ADMIN_RENTAL_READ,
