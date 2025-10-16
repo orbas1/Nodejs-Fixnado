@@ -68,6 +68,9 @@ import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
 import CustomerAccountSetting from './customerAccountSetting.js';
 import CustomerNotificationRecipient from './customerNotificationRecipient.js';
+import InboxQueue from './inboxQueue.js';
+import InboxConfiguration from './inboxConfiguration.js';
+import InboxTemplate from './inboxTemplate.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -190,6 +193,14 @@ FinanceWebhookEvent.belongsTo(Escrow, { foreignKey: 'escrowId', as: 'escrow' });
 Order.hasMany(FinanceWebhookEvent, { foreignKey: 'orderId', as: 'financeEvents' });
 Payment.hasMany(FinanceWebhookEvent, { foreignKey: 'paymentId', as: 'webhookEvents' });
 Escrow.hasMany(FinanceWebhookEvent, { foreignKey: 'escrowId', as: 'webhookEvents' });
+
+InboxQueue.hasMany(Conversation, { foreignKey: 'queueId', as: 'conversations' });
+Conversation.belongsTo(InboxQueue, { foreignKey: 'queueId', as: 'queue' });
+
+InboxQueue.hasMany(InboxTemplate, { foreignKey: 'queueId', as: 'templates' });
+InboxTemplate.belongsTo(InboxQueue, { foreignKey: 'queueId', as: 'queue' });
+
+InboxConfiguration.belongsTo(InboxQueue, { foreignKey: 'defaultQueueId', as: 'defaultQueue' });
 
 Company.hasMany(MarketplaceItem, { foreignKey: 'companyId' });
 MarketplaceItem.belongsTo(Company, { foreignKey: 'companyId' });
@@ -493,7 +504,10 @@ export {
   WarehouseExportRun,
   CustomerProfile,
   CustomerContact,
-  CustomerLocation
+  CustomerLocation,
   CustomerAccountSetting,
-  CustomerNotificationRecipient
+  CustomerNotificationRecipient,
+  InboxQueue,
+  InboxConfiguration,
+  InboxTemplate
 };

@@ -12,6 +12,7 @@ import {
   Company,
   User
 } from '../models/index.js';
+import { summariseInboxForDashboard } from './adminInboxService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -735,6 +736,8 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
       : 0
   }));
 
+  const inboxSummary = await summariseInboxForDashboard();
+
   return {
     timeframe: key,
     timeframeLabel: label,
@@ -774,7 +777,8 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     },
     audit: {
       timeline: auditTimeline
-    }
+    },
+    inbox: inboxSummary
   };
 }
 

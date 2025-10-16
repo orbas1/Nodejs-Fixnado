@@ -17,6 +17,14 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  getInboxSnapshot,
+  saveInboxConfiguration,
+  saveInboxQueue,
+  removeInboxQueue,
+  saveInboxTemplate,
+  removeInboxTemplate
+} from '../controllers/adminInboxController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +112,70 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/inbox',
+  authenticate,
+  enforcePolicy('admin.inbox.read', { metadata: () => ({ section: 'inbox' }) }),
+  getInboxSnapshot
+);
+
+router.put(
+  '/inbox/configuration',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'configuration' }) }),
+  saveInboxConfiguration
+);
+
+router.post(
+  '/inbox/queues',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'queues', method: 'POST' }) }),
+  saveInboxQueue
+);
+
+router.put(
+  '/inbox/queues/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'queues', queueId: req.params.id, method: 'PUT' })
+  }),
+  saveInboxQueue
+);
+
+router.delete(
+  '/inbox/queues/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'queues', queueId: req.params.id, method: 'DELETE' })
+  }),
+  removeInboxQueue
+);
+
+router.post(
+  '/inbox/templates',
+  authenticate,
+  enforcePolicy('admin.inbox.write', { metadata: () => ({ entity: 'templates', method: 'POST' }) }),
+  saveInboxTemplate
+);
+
+router.put(
+  '/inbox/templates/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'templates', templateId: req.params.id, method: 'PUT' })
+  }),
+  saveInboxTemplate
+);
+
+router.delete(
+  '/inbox/templates/:id',
+  authenticate,
+  enforcePolicy('admin.inbox.write', {
+    metadata: (req) => ({ entity: 'templates', templateId: req.params.id, method: 'DELETE' })
+  }),
+  removeInboxTemplate
 );
 
 export default router;
