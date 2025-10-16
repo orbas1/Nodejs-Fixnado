@@ -17,6 +17,13 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  getCommandMetricsConfiguration,
+  saveCommandMetricSettings,
+  createCommandMetricCardHandler,
+  updateCommandMetricCardHandler,
+  deleteCommandMetricCardHandler
+} from '../controllers/commandMetricsController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +111,47 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/command-metrics/config',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.read', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'configuration' })
+  }),
+  getCommandMetricsConfiguration
+);
+router.put(
+  '/command-metrics/settings',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'settings' })
+  }),
+  saveCommandMetricSettings
+);
+router.post(
+  '/command-metrics/cards',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'cards', method: 'create' })
+  }),
+  createCommandMetricCardHandler
+);
+router.patch(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  updateCommandMetricCardHandler
+);
+router.delete(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  deleteCommandMetricCardHandler
 );
 
 export default router;

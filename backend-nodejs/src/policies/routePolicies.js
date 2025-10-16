@@ -169,6 +169,26 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.commandMetrics.read': {
+    id: 'admin.commandMetrics.read',
+    version: '1.0.0',
+    resource: 'admin.command-metrics',
+    action: 'admin.command-metrics:read',
+    description: 'Allow admin operators to view command centre metric thresholds and summaries.',
+    requirements: [Permissions.ADMIN_COMMAND_METRICS_READ],
+    tags: ['admin', 'analytics'],
+    severity: 'high'
+  },
+  'admin.commandMetrics.write': {
+    id: 'admin.commandMetrics.write',
+    version: '1.0.0',
+    resource: 'admin.command-metrics',
+    action: 'admin.command-metrics:write',
+    description: 'Allow admin operators to configure command centre thresholds, cards, and call-to-actions.',
+    requirements: [Permissions.ADMIN_COMMAND_METRICS_WRITE],
+    tags: ['admin', 'analytics'],
+    severity: 'critical'
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',

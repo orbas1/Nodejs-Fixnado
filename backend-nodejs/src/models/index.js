@@ -63,6 +63,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import CommandMetricSetting from './commandMetricSetting.js';
+import CommandMetricCard from './commandMetricCard.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -464,5 +466,7 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  CommandMetricSetting,
+  CommandMetricCard
 };

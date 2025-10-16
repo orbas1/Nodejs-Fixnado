@@ -5,7 +5,8 @@ import {
   ArrowTrendingDownIcon,
   MinusSmallIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 
 const softenGradient = (accent) => {
@@ -58,6 +59,13 @@ const GridSection = ({ section }) => {
             key={card.title}
             className={`rounded-2xl border border-accent/10 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-md`}
           >
+            {card.mediaUrl ? (
+              <img
+                src={card.mediaUrl}
+                alt={card.mediaAlt || card.title}
+                className="mb-4 h-12 w-12 rounded-full object-cover shadow-sm"
+              />
+            ) : null}
             <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               {(card.details ?? []).map((detail) => (
@@ -67,6 +75,27 @@ const GridSection = ({ section }) => {
                 </li>
               ))}
             </ul>
+            {card.cta && card.cta.href ? (
+              card.cta.href.startsWith('http') && card.cta.external ? (
+                <a
+                  href={card.cta.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                >
+                  {card.cta.label}
+                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
+                </a>
+              ) : (
+                <Link
+                  to={card.cta.href}
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                >
+                  {card.cta.label}
+                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
+                </Link>
+              )
+            ) : null}
           </div>
         ))}
       </div>
@@ -83,7 +112,14 @@ GridSection.propTypes = {
         PropTypes.shape({
           title: PropTypes.string.isRequired,
           details: PropTypes.arrayOf(PropTypes.string).isRequired,
-          accent: PropTypes.string
+          accent: PropTypes.string,
+          mediaUrl: PropTypes.string,
+          mediaAlt: PropTypes.string,
+          cta: PropTypes.shape({
+            label: PropTypes.string,
+            href: PropTypes.string,
+            external: PropTypes.bool
+          })
         })
       ).isRequired
     }).isRequired

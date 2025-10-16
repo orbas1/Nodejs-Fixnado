@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
+import { CommandMetricsConfigurator } from '../modules/commandMetrics/index.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
@@ -235,7 +236,27 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
-function buildAdminNavigation(payload) {
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return null;
+  const last = new Date(timestamp);
+  if (Number.isNaN(last.getTime())) return null;
+  const diffMs = Date.now() - last.getTime();
+  const diffMinutes = Math.round(diffMs / 60000);
+  if (diffMinutes < 1) return 'moments ago';
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  const diffDays = Math.round(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  const diffWeeks = Math.round(diffDays / 7);
+  if (diffWeeks < 5) return `${diffWeeks} week${diffWeeks === 1 ? '' : 's'} ago`;
+  const diffMonths = Math.round(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
+  const diffYears = Math.round(diffDays / 365);
+  return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
+}
+
+function buildAdminNavigation(payload, options = {}) {
   if (!payload) {
     return [];
   }
@@ -249,6 +270,18 @@ function buildAdminNavigation(payload) {
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
   const auditTimeline = payload.audit?.timeline ?? [];
+  const buildCommandMetricsLink =
+    typeof options.commandMetricsLink === 'function'
+      ? options.commandMetricsLink
+      : (view) => {
+          const params = new URLSearchParams();
+          params.set('panel', 'command-metrics');
+          if (view) {
+            params.set('view', view);
+          }
+          return `/admin/dashboard?${params.toString()}`;
+        };
+  const configRelative = summary.configUpdatedAt ? formatRelativeTime(summary.configUpdatedAt) : null;
 
   const overview = {
     id: 'overview',
@@ -314,27 +347,94 @@ function buildAdminNavigation(payload) {
     description: 'Financial oversight, dispute momentum, and SLA adherence for the current operating window.',
     type: 'grid',
     data: {
-      cards: [
+      cards: (() => {
+        const summaryNotes = Array.isArray(summary.notes) ? summary.notes : [];
+        const baseDetails = [
+          `Window: ${payload.timeframeLabel ?? '—'}`,
+          `Escrow managed: ${summary.escrowTotalLabel ?? '—'}`,
+          `Open disputes: ${summary.openDisputesLabel ?? '—'}`,
+          `SLA compliance: ${summary.slaComplianceLabel ?? '—'}`,
+          ...summaryNotes
+        ];
+        if (configRelative) {
+          baseDetails.push(`Configuration saved ${configRelative}`);
+        }
+
+        const primaryCards = [
+          {
+            title: 'Operating window summary',
+            accent: 'from-white via-sky-50 to-indigo-100/70',
+            details: baseDetails
+          },
+          ...tiles.map((tile) => ({
+            title: tile.label,
+            accent: resolveAccent(tile.status?.tone),
+            details: [
+              tile.valueLabel ? `Value: ${tile.valueLabel}` : null,
+              tile.caption,
+              tile.delta ? `Δ ${tile.delta}` : null,
+              tile.status?.label ? `Status: ${tile.status.label}` : null
+            ].filter(Boolean)
+          }))
+        ];
+
+        const customCards = Array.isArray(payload.metrics?.command?.customCards)
+          ? payload.metrics.command.customCards
+          : [];
+
+        const extended = customCards.map((card) => ({
+          title: card.title,
+          accent: resolveAccent(card.tone ?? 'info'),
+          details: Array.isArray(card.details) ? card.details : [],
+          mediaUrl: card.mediaUrl ?? null,
+          mediaAlt: card.mediaAlt ?? card.title,
+          cta: card.cta ?? null
+        }));
+
+        return [...primaryCards, ...extended];
+      })()
+    }
+  };
+
+  const commandMetricsAdmin = {
+    id: 'command-metrics-admin',
+    label: 'Command metrics configuration',
+    description: 'Manage highlight notes, thresholds, and custom dashboard callouts for the command centre.',
+    type: 'settings',
+    data: {
+      panels: [
         {
-          title: 'Operating window summary',
-          accent: 'from-white via-sky-50 to-indigo-100/70',
-          details: [
-            `Window: ${payload.timeframeLabel ?? '—'}`,
-            `Escrow managed: ${summary.escrowTotalLabel ?? '—'}`,
-            `Open disputes: ${summary.openDisputesLabel ?? '—'}`,
-            `SLA compliance: ${summary.slaComplianceLabel ?? '—'}`
+          id: 'command-metrics-config',
+          title: 'Command metrics workspace',
+          description: 'Everything required to keep the command centre insights accurate and actionable.',
+          status: configRelative ? `Last saved ${configRelative}` : 'Awaiting first save',
+          items: [
+            {
+              id: 'command-metrics-highlights',
+              label: 'Operating window highlights',
+              helper: 'Edit the guidance chips that appear above the operating window summary.',
+              type: 'action',
+              href: buildCommandMetricsLink('summary'),
+              cta: 'Edit highlights'
+            },
+            {
+              id: 'command-metrics-thresholds',
+              label: 'Metric thresholds',
+              helper: 'Adjust the targets that power the traffic-light states.',
+              type: 'action',
+              href: buildCommandMetricsLink('thresholds'),
+              cta: 'Tune thresholds'
+            },
+            {
+              id: 'command-metrics-cards',
+              label: 'Custom dashboard cards',
+              helper: 'Add contextual callouts and deep links for operators.',
+              type: 'action',
+              href: buildCommandMetricsLink('cards'),
+              cta: 'Manage cards'
+            }
           ]
-        },
-        ...tiles.map((tile) => ({
-          title: tile.label,
-          accent: resolveAccent(tile.status?.tone),
-          details: [
-            tile.valueLabel ? `Value: ${tile.valueLabel}` : null,
-            tile.caption,
-            tile.delta ? `Δ ${tile.delta}` : null,
-            tile.status?.label ? `Status: ${tile.status.label}` : null
-          ].filter(Boolean)
-        }))
+        }
       ]
     }
   };
@@ -448,6 +548,7 @@ function buildAdminNavigation(payload) {
   return [
     overview,
     commandMetrics,
+    commandMetricsAdmin,
     securitySection,
     operationsSection,
     disputeSection,
@@ -464,16 +565,17 @@ export default function AdminDashboard() {
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const timeframeParam = searchParams.get('timeframe') ?? DEFAULT_TIMEFRAME;
+  const panelParam = searchParams.get('panel');
+  const viewParam = searchParams.get('view') ?? 'summary';
   const [timeframe, setTimeframe] = useState(timeframeParam);
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const configuratorOpen = panelParam === 'command-metrics';
 
   useEffect(() => {
-    if (timeframeParam !== timeframe) {
-      setTimeframe(timeframeParam);
-    }
-  }, [timeframeParam, timeframe]);
+    setTimeframe(timeframeParam);
+  }, [timeframeParam]);
 
   const loadDashboard = useCallback(
     async ({ signal, timeframe: requestedTimeframe, forceRefresh = false } = {}) => {
@@ -528,13 +630,30 @@ export default function AdminDashboard() {
 
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
 
+  const commandMetricsHrefBuilder = useCallback(
+    (view) => {
+      const params = new URLSearchParams();
+      if (timeframe !== DEFAULT_TIMEFRAME) {
+        params.set('timeframe', timeframe);
+      }
+      params.set('panel', 'command-metrics');
+      if (view) {
+        params.set('view', view);
+      }
+      return `/admin/dashboard?${params.toString()}`;
+    },
+    [timeframe]
+  );
+
   const navigation = useMemo(() => {
-    const sections = state.data ? buildAdminNavigation(state.data) : [];
+    const sections = state.data
+      ? buildAdminNavigation(state.data, { commandMetricsLink: commandMetricsHrefBuilder })
+      : [];
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
+  }, [state.data, affiliateSection, commandMetricsHrefBuilder]);
   const dashboardPayload = state.data ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
@@ -554,6 +673,62 @@ export default function AdminDashboard() {
       });
     },
     [setSearchParams]
+  );
+
+  const openConfigurator = useCallback(
+    (view = 'summary') => {
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        params.set('panel', 'command-metrics');
+        if (view) {
+          params.set('view', view);
+        } else {
+          params.delete('view');
+        }
+        if (timeframe === DEFAULT_TIMEFRAME) {
+          params.delete('timeframe');
+        } else {
+          params.set('timeframe', timeframe);
+        }
+        return params;
+      });
+    },
+    [setSearchParams, timeframe]
+  );
+
+  const closeConfigurator = useCallback(() => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      params.delete('panel');
+      params.delete('view');
+      if (timeframe === DEFAULT_TIMEFRAME) {
+        params.delete('timeframe');
+      } else {
+        params.set('timeframe', timeframe);
+      }
+      return params;
+    });
+  }, [setSearchParams, timeframe]);
+
+  const handleConfiguratorViewChange = useCallback(
+    (view) => {
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        params.set('panel', 'command-metrics');
+        if (view) {
+          params.set('view', view);
+        } else {
+          params.delete('view');
+        }
+        if (timeframe === DEFAULT_TIMEFRAME) {
+          params.delete('timeframe');
+        } else {
+          params.set('timeframe', timeframe);
+        }
+        return params;
+      });
+    },
+    [setSearchParams, timeframe]
   );
 
   const handleRefresh = useCallback(() => {
@@ -593,6 +768,16 @@ export default function AdminDashboard() {
       >
         Geo-zonal builder
       </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="primary"
+        icon={Cog8ToothIcon}
+        iconPosition="start"
+        onClick={() => openConfigurator()}
+      >
+        Configure metrics
+      </Button>
       <SegmentedControl
         name="Command metrics timeframe"
         value={timeframe}
@@ -607,16 +792,25 @@ export default function AdminDashboard() {
   );
 
   return (
-    <DashboardLayout
-      roleMeta={{ ...roleMeta, persona: personaLabel }}
-      registeredRoles={registeredRoles}
-      dashboard={dashboardPayload}
-      loading={state.loading}
-      error={state.error?.message ?? null}
-      onRefresh={handleRefresh}
-      lastRefreshed={lastRefreshed}
-      filters={filters}
-      onLogout={handleLogout}
-    />
+    <>
+      <DashboardLayout
+        roleMeta={{ ...roleMeta, persona: personaLabel }}
+        registeredRoles={registeredRoles}
+        dashboard={dashboardPayload}
+        loading={state.loading}
+        error={state.error?.message ?? null}
+        onRefresh={handleRefresh}
+        lastRefreshed={lastRefreshed}
+        filters={filters}
+        onLogout={handleLogout}
+      />
+      <CommandMetricsConfigurator
+        open={configuratorOpen}
+        initialView={viewParam}
+        onClose={closeConfigurator}
+        onUpdated={() => loadDashboard({ timeframe, forceRefresh: true })}
+        onViewChange={handleConfiguratorViewChange}
+      />
+    </>
   );
 }
