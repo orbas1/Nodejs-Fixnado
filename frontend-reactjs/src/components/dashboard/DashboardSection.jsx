@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import AccountSupportSection from './AccountSupportSection.jsx';
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -1623,7 +1624,7 @@ ZonePlannerSection.propTypes = {
   }).isRequired
 };
 
-const DashboardSection = ({ section, features = {}, persona }) => {
+const DashboardSection = ({ section, features = {}, persona, context = {} }) => {
   switch (section.type) {
     case 'grid':
       return <GridSection section={section} />;
@@ -1645,6 +1646,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'accountSupport':
+      return <AccountSupportSection section={section} context={context} />;
     default:
       return null;
   }
@@ -1661,7 +1664,8 @@ DashboardSection.propTypes = {
     data: PropTypes.object
   }).isRequired,
   features: PropTypes.object,
-  persona: PropTypes.string
+  persona: PropTypes.string,
+  context: PropTypes.object
 };
 
 export default DashboardSection;
