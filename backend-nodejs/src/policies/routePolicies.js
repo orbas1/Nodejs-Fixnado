@@ -149,6 +149,28 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.automation.read': {
+    id: 'admin.automation.read',
+    version: '1.0.0',
+    resource: 'admin.automation',
+    action: 'admin.automation:read',
+    description: 'Allow authorised operators to review automation backlog initiatives.',
+    requirements: [Permissions.ADMIN_AUTOMATION_READ],
+    tags: ['admin', 'automation'],
+    severity: 'medium',
+    metadata: (req) => ({ includeArchived: req.query?.includeArchived === 'true' })
+  },
+  'admin.automation.write': {
+    id: 'admin.automation.write',
+    version: '1.0.0',
+    resource: 'admin.automation',
+    action: 'admin.automation:write',
+    description: 'Allow platform administrators to create, update, and archive automation initiatives.',
+    requirements: [Permissions.ADMIN_AUTOMATION_WRITE],
+    tags: ['admin', 'automation'],
+    severity: 'high',
+    metadata: (req) => ({ method: req.method, initiativeId: req.params?.id || null })
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

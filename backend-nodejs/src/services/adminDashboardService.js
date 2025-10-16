@@ -12,6 +12,7 @@ import {
   Company,
   User
 } from '../models/index.js';
+import { listAutomationInitiativesForDashboard } from './automationBacklogService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -374,6 +375,14 @@ async function computeSecuritySignals(timezone) {
 }
 
 async function computeAutomationBacklog(ingestionTotals, timezone) {
+  const persisted = await listAutomationInitiativesForDashboard();
+  if (persisted.length) {
+    return persisted;
+  }
+  return buildFallbackAutomationBacklog(ingestionTotals, timezone);
+}
+
+async function buildFallbackAutomationBacklog(ingestionTotals, timezone) {
   const now = DateTime.now().setZone(timezone);
 
   const pendingDocuments = await ComplianceDocument.count({

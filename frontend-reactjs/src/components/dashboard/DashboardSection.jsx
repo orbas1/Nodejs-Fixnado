@@ -1624,6 +1624,9 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona }) => {
+  if (section.type === 'automation' || section.id === 'automation-backlog') {
+    return <AutomationBacklogSection section={section} features={features} persona={persona} />;
+  }
   switch (section.type) {
     case 'grid':
       return <GridSection section={section} />;

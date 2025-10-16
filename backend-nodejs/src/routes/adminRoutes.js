@@ -17,6 +17,12 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  listAutomationBacklogHandler,
+  createAutomationBacklogHandler,
+  updateAutomationBacklogHandler,
+  archiveAutomationBacklogHandler
+} from '../controllers/automationBacklogController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -63,6 +69,31 @@ router.put(
   authenticate,
   enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
+);
+
+router.get(
+  '/automation/backlog',
+  authenticate,
+  enforcePolicy('admin.automation.read', { metadata: (req) => ({ includeArchived: req.query.includeArchived === 'true' }) }),
+  listAutomationBacklogHandler
+);
+router.post(
+  '/automation/backlog',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: () => ({ action: 'create' }) }),
+  createAutomationBacklogHandler
+);
+router.patch(
+  '/automation/backlog/:id',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: (req) => ({ action: 'update', initiativeId: req.params.id }) }),
+  updateAutomationBacklogHandler
+);
+router.delete(
+  '/automation/backlog/:id',
+  authenticate,
+  enforcePolicy('admin.automation.write', { metadata: (req) => ({ action: 'archive', initiativeId: req.params.id }) }),
+  archiveAutomationBacklogHandler
 );
 
 router.get(
