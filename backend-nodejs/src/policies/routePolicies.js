@@ -149,6 +149,36 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.customJobs.read': {
+    id: 'admin.customJobs.read',
+    version: '1.0.0',
+    resource: 'admin.custom-jobs',
+    action: 'admin.custom-jobs:read',
+    description: 'Allow administrators to review custom job requests, bids, and negotiation history.',
+    requirements: [Permissions.ADMIN_CUSTOM_JOBS_READ],
+    tags: ['admin', 'custom-jobs'],
+    severity: 'high',
+    metadata: (req) => ({
+      status: req.query?.status ?? 'all',
+      zoneId: req.query?.zoneId ?? null,
+      jobId: req.params?.id ?? null
+    })
+  },
+  'admin.customJobs.write': {
+    id: 'admin.customJobs.write',
+    version: '1.0.0',
+    resource: 'admin.custom-jobs',
+    action: 'admin.custom-jobs:write',
+    description: 'Allow administrators to create, edit, award, and message within custom jobs.',
+    requirements: [Permissions.ADMIN_CUSTOM_JOBS_WRITE],
+    tags: ['admin', 'custom-jobs'],
+    severity: 'critical',
+    metadata: (req) => ({
+      jobId: req.params?.id ?? null,
+      bidId: req.params?.bidId ?? null,
+      method: req.method ?? 'UNKNOWN'
+    })
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

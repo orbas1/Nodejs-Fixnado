@@ -6,8 +6,8 @@ import { broadcastLiveFeedEvent } from './liveFeedStreamService.js';
 
 const DEFAULT_FEED_LIMIT = 25;
 
-const POST_INCLUDE_GRAPH = [
-  { model: User, attributes: ['id', 'firstName', 'lastName', 'type'] },
+export const POST_INCLUDE_GRAPH = [
+  { model: User, attributes: ['id', 'firstName', 'lastName', 'type', 'email'] },
   { model: ServiceZone, as: 'zone', attributes: ['id', 'name', 'companyId'] },
   {
     model: CustomJobBid,
@@ -21,7 +21,21 @@ const POST_INCLUDE_GRAPH = [
         include: [{ model: User, as: 'author', attributes: ['id', 'firstName', 'lastName', 'type'] }]
       }
     ]
-  }
+  },
+  {
+    model: CustomJobBid,
+    as: 'awardedBid',
+    include: [
+      { model: User, as: 'provider', attributes: ['id', 'firstName', 'lastName', 'type'] },
+      { model: Company, as: 'providerCompany', attributes: ['id', 'legalStructure', 'contactName'] },
+      {
+        model: CustomJobBidMessage,
+        as: 'messages',
+        include: [{ model: User, as: 'author', attributes: ['id', 'firstName', 'lastName', 'type'] }]
+      }
+    ]
+  },
+  { model: User, as: 'awardedByUser', attributes: ['id', 'firstName', 'lastName', 'type', 'email'] }
 ];
 
 function sanitizeLimit(limit) {
@@ -32,7 +46,7 @@ function sanitizeLimit(limit) {
   return Math.min(Math.max(Math.trunc(limit), 1), 100);
 }
 
-function serialiseBid(bid) {
+export function serialiseBid(bid) {
   const json = typeof bid?.toJSON === 'function' ? bid.toJSON() : bid;
   if (!json) return json;
 
@@ -46,7 +60,7 @@ function serialiseBid(bid) {
   };
 }
 
-function serialisePost(post) {
+export function serialisePost(post) {
   const json = typeof post?.toJSON === 'function' ? post.toJSON() : post;
   if (!json) return json;
 
@@ -57,11 +71,38 @@ function serialisePost(post) {
         .map((entry) => serialiseBid(entry))
     : [];
 
+  const customer = json.customer ?? json.User ?? null;
+  const awardedByUser = json.awardedByUser ?? null;
+  const awardedBid = json.awardedBid ? serialiseBid(json.awardedBid) : null;
+  const messageCount = bids.reduce((acc, bidEntry) => acc + (bidEntry.messages?.length ?? 0), 0);
+
   return {
     ...json,
     images: Array.isArray(json.images) ? json.images : [],
     metadata: json.metadata ?? {},
-    bids
+    bids,
+    awardedBid,
+    customer: customer
+      ? {
+          id: customer.id,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          type: customer.type
+        }
+      : null,
+    awardedByUser: awardedByUser
+      ? {
+          id: awardedByUser.id,
+          firstName: awardedByUser.firstName,
+          lastName: awardedByUser.lastName,
+          email: awardedByUser.email,
+          type: awardedByUser.type
+        }
+      : null,
+    bidCount: bids.length,
+    messageCount,
+    internalNotes: json.internalNotes ?? null
   };
 }
 

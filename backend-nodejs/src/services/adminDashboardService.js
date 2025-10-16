@@ -12,6 +12,7 @@ import {
   Company,
   User
 } from '../models/index.js';
+import { getCustomJobOperationalSnapshot } from './adminCustomJobService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -711,13 +712,22 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     }
   ];
 
-  const [escrowSeries, disputeSeries, complianceControls, queueInsights, auditTimeline, security] = await Promise.all([
+  const [
+    escrowSeries,
+    disputeSeries,
+    complianceControls,
+    queueInsights,
+    auditTimeline,
+    security,
+    customJobSnapshot
+  ] = await Promise.all([
     computeEscrowSeries(currentBuckets),
     computeDisputeSeries(currentBuckets),
     computeComplianceControls(timezone),
     computeQueueInsights(range, timezone),
     buildAuditTimeline(range, timezone),
-    computeSecuritySignals(timezone)
+    computeSecuritySignals(timezone),
+    getCustomJobOperationalSnapshot({ rangeStart: range.start.toJSDate(), rangeEnd: range.end.toJSDate() })
   ]);
 
   const automationBacklog = await computeAutomationBacklog(security.pipelineTotals, timezone);
@@ -767,6 +777,16 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     security: {
       signals: securitySignals,
       automationBacklog
+    },
+    customJobs: {
+      summary: customJobSnapshot,
+      navigation: {
+        actionHref: '/admin/custom-jobs',
+        openCount: customJobSnapshot.openCount,
+        activeBidCount: customJobSnapshot.activeBidCount,
+        latestUpdate: customJobSnapshot.latestUpdate,
+        createdInWindow: customJobSnapshot.createdInWindow
+      }
     },
     queues: {
       boards: queueInsights,

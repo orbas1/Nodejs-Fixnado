@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -11,6 +11,10 @@ import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
 const numberFormatter = new Intl.NumberFormat();
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
 
 function resolveRecurrence(rule) {
   if (!rule) return 'One time';
@@ -235,6 +239,20 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
+function formatJobStatus(status) {
+  if (!status) return '—';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function formatJobTimestamp(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+  return dateTimeFormatter.format(date);
+}
+
 function buildAdminNavigation(payload) {
   if (!payload) {
     return [];
@@ -249,6 +267,7 @@ function buildAdminNavigation(payload) {
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
   const auditTimeline = payload.audit?.timeline ?? [];
+  const customJobSummary = payload.customJobs?.summary ?? {};
 
   const overview = {
     id: 'overview',
@@ -335,6 +354,59 @@ function buildAdminNavigation(payload) {
             tile.status?.label ? `Status: ${tile.status.label}` : null
           ].filter(Boolean)
         }))
+      ]
+    }
+  };
+
+  const customJobsSection = {
+    id: 'custom-job-operations',
+    label: 'Custom jobs',
+    icon: 'pipeline',
+    description: 'Oversee bespoke briefs, bids, and provider negotiations.',
+    type: 'settings',
+    data: {
+      panels: [
+        {
+          id: 'custom-job-console',
+          title: 'Custom job console',
+          description: 'Launch the dedicated workspace for bespoke work orders, bids, and awards.',
+          items: [
+            {
+              id: 'open-briefs',
+              label: 'Open briefs',
+              helper: 'Live custom jobs awaiting fulfilment',
+              value: `${(customJobSummary.openCount ?? 0).toLocaleString()} open`
+            },
+            {
+              id: 'created-window',
+              label: 'Briefs created',
+              helper: `Within ${payload.timeframeLabel ?? 'current window'}`,
+              value: `${(customJobSummary.createdInWindow ?? 0).toLocaleString()} new`
+            },
+            {
+              id: 'active-bids',
+              label: 'Active bids',
+              helper: 'Negotiations in progress across briefs',
+              value: `${(customJobSummary.activeBidCount ?? 0).toLocaleString()} active`
+            },
+            customJobSummary.latestUpdate
+              ? {
+                  id: 'latest-activity',
+                  label: 'Latest activity',
+                  helper: `Status: ${formatJobStatus(customJobSummary.latestUpdate.status)}`,
+                  value: formatJobTimestamp(customJobSummary.latestUpdate.updatedAt)
+                }
+              : null,
+            {
+              id: 'launch-console',
+              label: 'Management workspace',
+              helper: 'Create briefs, review bids, exchange attachments, and award providers.',
+              type: 'action',
+              href: '/admin/custom-jobs',
+              cta: 'Open console'
+            }
+          ].filter(Boolean)
+        }
       ]
     }
   };
@@ -448,6 +520,7 @@ function buildAdminNavigation(payload) {
   return [
     overview,
     commandMetrics,
+    customJobsSection,
     securitySection,
     operationsSection,
     disputeSection,
@@ -583,6 +656,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Monetisation controls
+      </Button>
+      <Button
+        to="/admin/custom-jobs"
+        size="sm"
+        variant="secondary"
+        icon={ClipboardDocumentListIcon}
+        iconPosition="start"
+      >
+        Custom job management
       </Button>
       <Button
         to="/admin/zones"

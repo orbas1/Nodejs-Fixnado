@@ -15,7 +15,9 @@ const {
   InsuredSellerApplication,
   InventoryItem,
   InventoryAlert,
-  AnalyticsPipelineRun
+  AnalyticsPipelineRun,
+  Post,
+  CustomJobBid
 } = await import('../src/models/index.js');
 
 const { buildAdminDashboard } = await import('../src/services/adminDashboardService.js');
@@ -272,6 +274,28 @@ describe('buildAdminDashboard', () => {
       metadata: {}
     });
 
+    const customJob = await Post.create({
+      userId: buyer.id,
+      title: 'Custom electrical audit',
+      description: 'Full compliance-grade electrical inspection.',
+      budget: '£9,500',
+      budgetAmount: 9500,
+      budgetCurrency: 'GBP',
+      category: 'custom-job',
+      metadata: { workflow: 'custom-job', source: 'admin-console' },
+      images: [],
+      status: 'open'
+    });
+
+    await CustomJobBid.create({
+      postId: customJob.id,
+      providerId: provider.id,
+      companyId: company.id,
+      amount: 9100,
+      currency: 'GBP',
+      status: 'pending'
+    });
+
     const dashboard = await buildAdminDashboard({ timeframe: '7d', timezone: TIMEZONE });
 
     expect(dashboard.timeframe).toBe('7d');
@@ -296,5 +320,8 @@ describe('buildAdminDashboard', () => {
 
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);
+    expect(dashboard.customJobs.summary.openCount).toBe(1);
+    expect(dashboard.customJobs.summary.activeBidCount).toBe(1);
+    expect(dashboard.customJobs.summary.latestUpdate.title).toBe('Custom electrical audit');
   });
 });

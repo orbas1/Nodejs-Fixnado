@@ -128,9 +128,6 @@ User.init(
       allowNull: false,
       field: 'email_encrypted',
       unique: false,
-      validate: {
-        isEmail: true
-      },
       set(value) {
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
