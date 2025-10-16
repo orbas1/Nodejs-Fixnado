@@ -165,9 +165,7 @@ function App() {
         </Suspense>
       </main>
       {!isDashboardExperience && <Footer />}
-      {!isDashboardExperience && (
-        <FloatingChatLauncher isAuthenticated={isAuthenticated} />
-      )}
+      <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       <ConsentBanner />
     </div>
   );

@@ -4,14 +4,20 @@ import { MemoryRouter } from 'react-router-dom';
 import Header from '../Header.jsx';
 
 const mockUseSession = vi.fn();
+const mockUseProfile = vi.fn();
 
 vi.mock('../../hooks/useSession.js', () => ({
   useSession: () => mockUseSession()
 }));
 
+vi.mock('../../hooks/useProfile.js', () => ({
+  useProfile: () => mockUseProfile()
+}));
+
 const translations = {
   'nav.login': 'Log in',
   'nav.register': 'Register',
+  'nav.profile': 'Profile',
   'nav.getStarted': 'Get started',
   'nav.feed': 'Feed',
   'nav.explorer': 'Explorer',
@@ -62,6 +68,9 @@ beforeEach(() => {
     userId: 'alex.rivera',
     dashboards: ['provider']
   });
+  mockUseProfile.mockReturnValue({
+    profile: { firstName: 'Alex', lastName: 'Rivera', email: 'alex.rivera@fixnado.test' }
+  });
 });
 
 describe('Header navigation layout', () => {
@@ -72,6 +81,7 @@ describe('Header navigation layout', () => {
       userId: null,
       dashboards: []
     });
+    mockUseProfile.mockReturnValue({ profile: {} });
 
     render(
       <MemoryRouter>
@@ -111,7 +121,8 @@ describe('Header navigation layout', () => {
       </MemoryRouter>
     );
 
-    const accountLink = screen.getByRole('link', { name: /Go to dashboard/i });
-    expect(accountLink).toHaveAttribute('href', '/dashboards/provider');
+    const accountLink = screen.getByRole('link', { name: /Account menu/i });
+    expect(accountLink).toHaveAttribute('href', '/account/profile');
+    expect(accountLink).toHaveAttribute('aria-label', 'Alex Rivera • Account menu');
   });
 });

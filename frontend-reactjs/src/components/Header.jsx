@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { LOGO_URL } from '../constants/branding';
 import { useLocale } from '../hooks/useLocale.js';
 import { useSession } from '../hooks/useSession.js';
+import { useProfile } from '../hooks/useProfile.js';
 import LanguageSelector from './LanguageSelector.jsx';
 import { buildMobileNavigation, buildPrimaryNavigation } from '../constants/navigationConfig.js';
 
@@ -167,6 +168,9 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useLocale();
   const { isAuthenticated, dashboards } = useSession();
+  const { profile } = useProfile();
+
+  const { firstName, lastName, email } = profile ?? {};
 
   const primaryNavigation = useMemo(
     () => buildPrimaryNavigation({ t, dashboards }),
@@ -180,8 +184,55 @@ export default function Header() {
 
   const hasPrimaryNavigation = primaryNavigation.length > 0;
   const activeDashboard = dashboards?.[0] ?? 'user';
-  const accountLink = isAuthenticated ? `/dashboards/${activeDashboard}` : '/login';
-  const accountLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
+  const dashboardLink = `/dashboards/${activeDashboard}`;
+  const loginLink = '/login';
+  const mobilePrimaryLink = isAuthenticated ? dashboardLink : loginLink;
+  const mobilePrimaryLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
+  const mobilePrimaryDescription = isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta');
+
+  const accountDisplayName = useMemo(() => {
+    if (!isAuthenticated) {
+      return '';
+    }
+
+    const safeFirst = typeof firstName === 'string' ? firstName.trim() : '';
+    const safeLast = typeof lastName === 'string' ? lastName.trim() : '';
+    if (safeFirst || safeLast) {
+      return [safeFirst, safeLast].filter(Boolean).join(' ');
+    }
+
+    const safeEmail = typeof email === 'string' ? email.trim() : '';
+    return safeEmail;
+  }, [email, firstName, isAuthenticated, lastName]);
+
+  const accountInitials = useMemo(() => {
+    if (!isAuthenticated) {
+      return 'FX';
+    }
+
+    const safeFirst = typeof firstName === 'string' ? firstName.trim() : '';
+    const safeLast = typeof lastName === 'string' ? lastName.trim() : '';
+    const combinedInitials = `${safeFirst ? safeFirst[0] : ''}${safeLast ? safeLast[0] : ''}`.trim();
+    if (combinedInitials) {
+      return combinedInitials.toUpperCase();
+    }
+
+    const safeEmail = typeof email === 'string' ? email.trim() : '';
+    if (safeEmail) {
+      return safeEmail.slice(0, 2).toUpperCase();
+    }
+
+    if (accountDisplayName) {
+      return accountDisplayName.slice(0, 2).toUpperCase();
+    }
+
+    return 'FX';
+  }, [accountDisplayName, email, firstName, isAuthenticated, lastName]);
+
+  const accountMenuLabel = accountDisplayName
+    ? `${accountDisplayName} • ${t('nav.accountMenu')}`
+    : t('nav.accountMenu');
+  const accountMenuTitle = accountDisplayName || t('nav.accountMenu');
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
@@ -308,7 +359,7 @@ export default function Header() {
                 )
               }
             >
-              Profile
+              {t('nav.profile')}
             </NavLink>
           ) : (
             <NavLink
@@ -327,18 +378,41 @@ export default function Header() {
           )}
 
           <NavLink
-            to={accountLink}
+            to={isAuthenticated ? '/account/profile' : loginLink}
+            aria-label={isAuthenticated ? accountMenuLabel : undefined}
+            title={isAuthenticated ? accountMenuTitle : undefined}
             className={({ isActive }) =>
-              clsx(
-                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
-                isActive
-                  ? 'border-accent bg-accent text-white shadow-glow'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
-              )
+              isAuthenticated
+                ? clsx(
+                    'inline-flex h-12 w-12 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                    isActive
+                      ? 'ring-2 ring-accent/60 ring-offset-2 ring-offset-white'
+                      : 'hover:bg-slate-100'
+                  )
+                : clsx(
+                    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
+                    isActive
+                      ? 'border-accent bg-accent text-white shadow-glow'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                  )
             }
           >
-            <UserCircleIcon className="h-5 w-5" />
-            <span>{accountLabel}</span>
+            {isAuthenticated ? (
+              <>
+                <span className="sr-only">{accountMenuLabel}</span>
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold uppercase text-white shadow-lg shadow-accent/30"
+                >
+                  {accountInitials}
+                </span>
+              </>
+            ) : (
+              <>
+                <UserCircleIcon className="h-5 w-5" />
+                <span>{t('nav.login')}</span>
+              </>
+            )}
           </NavLink>
         </div>
       </div>
@@ -404,13 +478,13 @@ export default function Header() {
 
                 <div className="mt-auto space-y-3 border-t border-slate-200 pt-4">
                   <MobileLink
-                    title={accountLabel}
-                    description={isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta')}
-                    href={accountLink}
+                    title={mobilePrimaryLabel}
+                    description={mobilePrimaryDescription}
+                    href={mobilePrimaryLink}
                     onNavigate={() => setMobileOpen(false)}
                   />
                   {mobileNavigation
-                    .filter((item) => item.href !== accountLink)
+                    .filter((item) => item.href !== mobilePrimaryLink)
                     .map((item) => (
                       <MobileLink
                         key={item.id}
