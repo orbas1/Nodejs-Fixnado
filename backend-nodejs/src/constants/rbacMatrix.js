@@ -194,6 +194,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_SERVICES_READ,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_PURCHASE_READ,
+      Permissions.ADMIN_PURCHASE_WRITE
       Permissions.ADMIN_WEBSITE_READ
       Permissions.ADMIN_AUDIT_READ
       Permissions.ADMIN_SECURITY_POSTURE_READ
@@ -249,7 +251,10 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_SECURITY_POSTURE_WRITE,
       Permissions.FINANCE_OVERVIEW,
       Permissions.REPORTING_DOWNLOAD,
-      Permissions.SUPPORT_TICKETS
+      Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_PURCHASE_READ,
+      Permissions.ADMIN_PURCHASE_WRITE,
+      Permissions.ADMIN_PURCHASE_BUDGET
     ],
     navigation: {
       landing: '/app/admin/dashboard',

@@ -1596,6 +1596,12 @@ export default function AdminDashboard() {
       sections.push(affiliateSection);
     }
     sections.push({
+      id: 'purchases-link',
+      label: 'Purchase management',
+      description: 'Create purchase orders, manage suppliers, and align budgets.',
+      type: 'link',
+      icon: 'documents',
+      href: '/admin/purchases'
       id: 'admin-monetisation-link',
       label: 'Monetisation workspace',
       description: 'Open the revenue and affiliate control centre.',

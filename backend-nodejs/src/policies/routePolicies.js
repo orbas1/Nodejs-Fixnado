@@ -355,6 +355,49 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.purchases.read': {
+    id: 'admin.purchases.read',
+    version: '1.0.0',
+    resource: 'admin.purchases',
+    action: 'admin.purchases:read',
+    description: 'Allow operations and admin staff to view procurement workspaces and supplier directories.',
+    requirements: [Permissions.ADMIN_PURCHASE_READ],
+    tags: ['admin', 'procurement'],
+    severity: 'high',
+    metadata: (req) => ({
+      status: req.query?.status || 'all',
+      supplierId: req.query?.supplierId || null
+    })
+  },
+  'admin.purchases.write': {
+    id: 'admin.purchases.write',
+    version: '1.0.0',
+    resource: 'admin.purchases',
+    action: 'admin.purchases:write',
+    description: 'Allow operations and admin staff to create or update purchase orders, suppliers, and receiving records.',
+    requirements: [Permissions.ADMIN_PURCHASE_WRITE],
+    tags: ['admin', 'procurement'],
+    severity: 'critical',
+    metadata: (req) => ({
+      method: req.method,
+      entity: req.params?.orderId ? 'order' : req.params?.supplierId ? 'supplier' : 'purchase',
+      reference: req.body?.reference || null
+    })
+  },
+  'admin.purchases.budget': {
+    id: 'admin.purchases.budget',
+    version: '1.0.0',
+    resource: 'admin.purchases.budget',
+    action: 'admin.purchases.budget:write',
+    description: 'Allow administrators to set procurement budgets and guardrails.',
+    requirements: [Permissions.ADMIN_PURCHASE_BUDGET],
+    tags: ['admin', 'procurement', 'finance'],
+    severity: 'critical',
+    metadata: (req) => ({
+      category: req.body?.category || null,
+      fiscalYear: req.body?.fiscalYear || null
+    })
+  },
   'admin.services.read': {
     id: 'admin.services.read',
     version: '1.0.0',

@@ -174,6 +174,7 @@ const buildSearchIndex = (navigation) =>
     .filter((section) => !section.href)
     .flatMap((section) => {
   navigation.flatMap((section) => {
+    if (section.href) {
     if (section.to) {
     if (section.type === 'link') {
     if (section.route || section.href) {
@@ -602,6 +603,36 @@ const DashboardLayout = ({
                     const isLink = item.type === 'link';
                     const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
+                    const commonClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      isActive
+                        ? 'border-accent bg-accent text-white shadow-glow'
+                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                    }`;
+                    const iconClasses = `flex h-10 w-10 items-center justify-center rounded-xl ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                    }`;
+                    if (item.href) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className={commonClasses}
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          <span className={iconClasses}>
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold">{item.label}</p>
+                            {item.description ? (
+                              <p className="text-xs text-slate-500">{item.description}</p>
+                            ) : null}
+                          </div>
+                        </Link>
+                      );
+                    }
                     const baseClasses =
                       'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
                     const stateClasses = isActive
@@ -625,6 +656,11 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
+                        onClick={() => setSelectedSection(item.id)}
+                        className={commonClasses}
+                        aria-pressed={isActive}
+                      >
+                        <span className={iconClasses}>
                         onClick={() => handleNavClick(item)}
                         onClick={handleClick}
                         onClick={() => {
@@ -803,6 +839,7 @@ const DashboardLayout = ({
             const isLink = item.type === 'link';
             const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
+            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
             const baseClasses =
               'group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition';
             const stateClasses = isActive
@@ -862,6 +899,9 @@ const DashboardLayout = ({
                 ? 'bg-white/20 text-white'
                 : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
             }`;
+            const content = (
+              <>
+                <span className={iconClasses}>
 
             const content = (
               <>
@@ -887,6 +927,9 @@ const DashboardLayout = ({
                 <Link
                   key={item.id}
                   to={item.href}
+                  className={baseClasses}
+                  title={navCollapsed ? item.label : undefined}
+                >
                   className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
                   title={navCollapsed ? item.label : undefined}
                   aria-label={item.label}
@@ -915,6 +958,7 @@ const DashboardLayout = ({
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedSection(item.id)}
+                className={baseClasses}
                 className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
                 className={baseClasses}
                 className={baseClass}

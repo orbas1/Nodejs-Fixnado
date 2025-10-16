@@ -30,6 +30,20 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  listPurchaseOrdersHandler,
+  getPurchaseOrderHandler,
+  createPurchaseOrderHandler,
+  updatePurchaseOrderHandler,
+  updatePurchaseOrderStatusHandler,
+  recordPurchaseReceiptHandler,
+  addPurchaseAttachmentHandler,
+  deletePurchaseAttachmentHandler,
+  listSuppliersHandler,
+  upsertSupplierHandler,
+  updateSupplierStatusHandler,
+  listPurchaseBudgetsHandler,
+  upsertPurchaseBudgetHandler
+} from '../controllers/purchaseManagementController.js';
   listLegalDocuments,
   getLegalDocument,
   createLegalDocumentHandler,
@@ -456,6 +470,126 @@ router.delete(
 );
 
 router.get(
+  '/purchases/orders',
+  authenticate,
+  enforcePolicy('admin.purchases.read', {
+    metadata: (req) => ({ scope: 'orders', status: req.query?.status ?? 'all' })
+  }),
+  listPurchaseOrdersHandler
+);
+router.post(
+  '/purchases/orders',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'create', supplierId: req.body?.supplierId ?? null })
+  }),
+  createPurchaseOrderHandler
+);
+router.get(
+  '/purchases/orders/:orderId',
+  authenticate,
+  enforcePolicy('admin.purchases.read', {
+    metadata: (req) => ({ scope: 'orders', action: 'view', orderId: req.params.orderId })
+  }),
+  getPurchaseOrderHandler
+);
+router.put(
+  '/purchases/orders/:orderId',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'update', orderId: req.params.orderId })
+  }),
+  updatePurchaseOrderHandler
+);
+router.patch(
+  '/purchases/orders/:orderId/status',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'status', orderId: req.params.orderId, nextStatus: req.body?.status })
+  }),
+  updatePurchaseOrderStatusHandler
+);
+router.post(
+  '/purchases/orders/:orderId/receipts',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'receipt', orderId: req.params.orderId })
+  }),
+  recordPurchaseReceiptHandler
+);
+router.post(
+  '/purchases/orders/:orderId/attachments',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'add-attachment', orderId: req.params.orderId })
+  }),
+  addPurchaseAttachmentHandler
+);
+router.delete(
+  '/purchases/orders/:orderId/attachments/:attachmentId',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'orders', action: 'remove-attachment', orderId: req.params.orderId })
+  }),
+  deletePurchaseAttachmentHandler
+);
+
+router.get(
+  '/purchases/suppliers',
+  authenticate,
+  enforcePolicy('admin.purchases.read', {
+    metadata: (req) => ({ scope: 'suppliers', status: req.query?.status ?? 'all' })
+  }),
+  listSuppliersHandler
+);
+router.post(
+  '/purchases/suppliers',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: () => ({ scope: 'suppliers', action: 'create' })
+  }),
+  upsertSupplierHandler
+);
+router.put(
+  '/purchases/suppliers/:supplierId',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'suppliers', action: 'update', supplierId: req.params.supplierId })
+  }),
+  upsertSupplierHandler
+);
+router.patch(
+  '/purchases/suppliers/:supplierId/status',
+  authenticate,
+  enforcePolicy('admin.purchases.write', {
+    metadata: (req) => ({ scope: 'suppliers', action: 'status', supplierId: req.params.supplierId, status: req.body?.status })
+  }),
+  updateSupplierStatusHandler
+);
+
+router.get(
+  '/purchases/budgets',
+  authenticate,
+  enforcePolicy('admin.purchases.read', {
+    metadata: (req) => ({ scope: 'budgets', fiscalYear: req.query?.fiscalYear ?? null })
+  }),
+  listPurchaseBudgetsHandler
+);
+router.post(
+  '/purchases/budgets',
+  authenticate,
+  enforcePolicy('admin.purchases.budget', {
+    metadata: (req) => ({ scope: 'budgets', action: 'create', category: req.body?.category ?? null })
+  }),
+  upsertPurchaseBudgetHandler
+);
+router.put(
+  '/purchases/budgets/:budgetId',
+  authenticate,
+  enforcePolicy('admin.purchases.budget', {
+    metadata: (req) => ({ scope: 'budgets', action: 'update', budgetId: req.params.budgetId })
+  }),
+  upsertPurchaseBudgetHandler
   '/legal',
   authenticate,
   enforcePolicy('admin.legal.read', { metadata: () => ({ scope: 'collection' }) }),
