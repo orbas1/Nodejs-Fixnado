@@ -14,6 +14,8 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null,
       surface: req.route?.path || null
+    })
+  },
   'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
@@ -154,6 +156,34 @@ const ROUTE_POLICIES = {
       method: req.method,
       orderId: req.params?.orderId || null,
       status: req.body?.status || null
+    })
+  },
+  'serviceman.website.read': {
+    id: 'serviceman.website.read',
+    version: '1.0.0',
+    resource: 'serviceman.website',
+    action: 'serviceman.website:read',
+    description: 'Allow authorised crew members to view and audit their microsite configuration.',
+    requirements: [Permissions.SERVICEMAN_WEBSITE_READ],
+    tags: ['serviceman', 'website', 'preferences'],
+    severity: 'medium',
+    metadata: (req) => ({
+      actorId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'serviceman.website.write': {
+    id: 'serviceman.website.write',
+    version: '1.0.0',
+    resource: 'serviceman.website',
+    action: 'serviceman.website:write',
+    description: 'Allow authorised crew leads to update microsite branding, content, and publishing preferences.',
+    requirements: [Permissions.SERVICEMAN_WEBSITE_WRITE],
+    tags: ['serviceman', 'website', 'preferences'],
+    severity: 'high',
+    metadata: (req) => ({
+      actorId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
     })
   },
   'admin.dashboard.view': {

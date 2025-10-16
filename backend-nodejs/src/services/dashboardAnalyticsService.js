@@ -30,6 +30,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getServicemanWebsitePreferences } from './servicemanWebsitePreferencesService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -2987,7 +2988,7 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3014,7 +3015,8 @@ async function loadServicemanData(context) {
       where: providerFilter,
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
-    })
+    }),
+    getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null }))
   ]);
 
   const providerIds = Array.from(
@@ -3452,6 +3454,17 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: websitePreferences?.preferences ?? null,
+          meta: websitePreferences?.meta ?? null
+        }
       }
     ]
   };

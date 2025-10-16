@@ -24,6 +24,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import { ServicemanWebsitePreferencesSection } from '../../features/servicemanWebsitePreferences/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1807,6 +1808,13 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       if (!Component) return null;
       return <Component {...(section.data ?? {})} />;
     }
+    case 'serviceman-website-preferences':
+      return (
+        <div className="space-y-6">
+          <SectionHeader section={section} />
+          <ServicemanWebsitePreferencesSection data={section.data} />
+        </div>
+      );
     case 'history':
       return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:

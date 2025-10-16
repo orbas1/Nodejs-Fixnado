@@ -1445,6 +1445,107 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: {
+            general: {
+              heroTitle: 'Metro North rapid response crew',
+              heroSubtitle: 'Trusted specialists on every critical dispatch',
+              heroTagline: 'Average arrival under 90 minutes across Metro North.',
+              callToActionLabel: 'Book this crew',
+              callToActionUrl: 'https://app.fixnado.com/bookings',
+              heroImageUrl: 'https://cdn.fixnado.com/images/crews/metro-north-hero.jpg',
+              aboutContent:
+                'Jordan Miles leads a Fixnado certified crew covering high-priority facilities, event resets, and compliance call-outs.'
+            },
+            branding: {
+              primaryColor: '#1D4ED8',
+              accentColor: '#0EA5E9',
+              theme: 'dark',
+              layout: 'spotlight',
+              logoUrl: 'https://cdn.fixnado.com/images/logos/metro-north.svg',
+              galleryMedia: [
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-1.jpg',
+                  altText: 'Crew installing HVAC units'
+                },
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-2.jpg',
+                  altText: 'Technician completing compliance checklist'
+                }
+              ]
+            },
+            contact: {
+              contactEmail: 'crew@fixnado.com',
+              contactPhone: '+44 20 1234 5678',
+              emergencyPhone: '+44 20 7654 3210',
+              bookingUrl: 'https://app.fixnado.com/bookings',
+              serviceAreas: ['Metro North', 'Central Loop'],
+              serviceTags: ['HVAC', 'sanitation', 'rapid response'],
+              contactHours: [
+                { label: 'Weekdays', value: '06:00 - 20:00' },
+                { label: 'Weekends', value: '08:00 - 18:00' }
+              ],
+              languages: ['English'],
+              socialLinks: {
+                facebook: '',
+                instagram: '',
+                linkedin: 'https://www.linkedin.com/company/fixnado',
+                youtube: '',
+                twitter: ''
+              }
+            },
+            operations: {
+              allowOnlineBooking: true,
+              enableEnquiryForm: true,
+              showTravelRadius: true,
+              travelRadiusKm: 25,
+              averageResponseMinutes: 90,
+              emergencySupport: true
+            },
+            content: {
+              highlights: ['Fixnado certified', 'Rapid arrival guarantee', 'Concierge messaging'],
+              testimonials: [
+                {
+                  name: 'Avery Harper',
+                  role: 'Facilities Director',
+                  quote: 'Jordan’s crew is on site faster than any vendor we have used.'
+                }
+              ],
+              featuredProjects: [
+                {
+                  title: 'Hospital isolation reset',
+                  summary: 'Completed sanitisation and filter replacements within 12 hours.',
+                  imageUrl: 'https://cdn.fixnado.com/images/projects/hospital-reset.jpg',
+                  link: 'https://app.fixnado.com/cases/hospital-reset'
+                }
+              ]
+            },
+            seo: {
+              seoTitle: 'Jordan Miles Crew | Fixnado Metro North Technicians',
+              seoDescription:
+                'Book the Metro North crew for rapid FM, HVAC, and sanitation assignments with audited travel buffers.',
+              seoKeywords: ['fixnado crew', 'metro north technicians'],
+              seoIndexable: true,
+              seoMetaImageUrl: 'https://cdn.fixnado.com/images/social/metro-north-og.jpg'
+            },
+            access: {
+              allowedRoles: ['serviceman', 'provider'],
+              publishedAt: new Date().toISOString()
+            }
+          },
+          meta: {
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'SRV-2210',
+            allowedRoles: ['serviceman', 'provider']
+          }
+        }
       }
     ]
   },
