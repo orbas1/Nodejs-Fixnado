@@ -109,6 +109,16 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'analytics'],
     severity: 'high'
   },
+  'admin.dashboard.configure': {
+    id: 'admin.dashboard.configure',
+    version: '1.0.0',
+    resource: 'admin.dashboard',
+    action: 'admin.dashboard:configure',
+    description: 'Allow platform administrators to configure dashboard overview thresholds and insights.',
+    requirements: [Permissions.ADMIN_DASHBOARD_WRITE],
+    tags: ['admin', 'analytics'],
+    severity: 'critical'
+  },
   'admin.features.read': {
     id: 'admin.features.read',
     version: '1.0.0',

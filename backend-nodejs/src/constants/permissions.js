@@ -1,5 +1,6 @@
 export const Permissions = Object.freeze({
   ADMIN_DASHBOARD: 'admin:dashboard',
+  ADMIN_DASHBOARD_WRITE: 'admin:dashboard:configure',
   ADMIN_FEATURE_READ: 'admin:feature-toggle:read',
   ADMIN_FEATURE_WRITE: 'admin:feature-toggle:write',
   ADMIN_PLATFORM_READ: 'admin:platform-settings:read',

@@ -207,6 +207,7 @@ export const RBAC_MATRIX = {
     inherits: [CanonicalRoles.OPERATIONS],
     permissions: [
       Permissions.ADMIN_DASHBOARD,
+      Permissions.ADMIN_DASHBOARD_WRITE,
       Permissions.ADMIN_FEATURE_READ,
       Permissions.ADMIN_FEATURE_WRITE,
       Permissions.ADMIN_PLATFORM_READ,
