@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { validationResult } from 'express-validator';
 import { User, Company } from '../models/index.js';
+import { getUserProfile, updateUserProfile } from '../services/userProfileService.js';
 import config from '../config/index.js';
 import {
   issueSession,
@@ -252,13 +253,21 @@ export async function logout(req, res, next) {
 
 export async function profile(req, res, next) {
   try {
-    const user = await User.findByPk(req.user.id, {
-      include: [{ model: Company }]
+    const snapshot = await getUserProfile({ userId: req.user.id });
+    return res.json(snapshot);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateProfile(req, res, next) {
+  try {
+    const snapshot = await updateUserProfile({
+      userId: req.user.id,
+      actorRole: req.user.role,
+      payload: req.body
     });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    return res.json(user);
+    return res.json(snapshot);
   } catch (error) {
     next(error);
   }

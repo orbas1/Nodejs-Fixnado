@@ -56,6 +56,35 @@ export async function up({ context: queryInterface }) {
     }
   ]);
 
+  await queryInterface.bulkInsert('user_preferences', [
+    {
+      id: '88888888-8888-4888-8888-888888888888',
+      user_id: userId,
+      timezone: 'Europe/London',
+      locale: 'en-GB',
+      organisation_name: 'Fixnado',
+      job_title: 'Operations Lead',
+      team_name: 'Dispatch',
+      avatar_url: 'https://cdn.fixnado.com/profiles/avery-stone.png',
+      signature: 'Avery Stone\\nOperations Lead',
+      digest_frequency: 'daily',
+      email_alerts: true,
+      sms_alerts: true,
+      push_alerts: false,
+      marketing_opt_in: false,
+      primary_phone_encrypted: null,
+      workspace_shortcuts: ['provider', 'finance', 'enterprise'],
+      role_assignments: [
+        { id: 'role-provider', role: 'provider', allowCreate: true, dashboards: ['provider', 'finance'], notes: 'Manage crews' }
+      ],
+      notification_channels: [
+        { id: 'channel-ops', type: 'email', label: 'Operations mailbox', value: 'ops@fixnado.com' }
+      ],
+      created_at: new Date(),
+      updated_at: new Date()
+    }
+  ]);
+
   await queryInterface.bulkInsert('Post', [
     {
       id: '55555555-5555-5555-5555-555555555555',

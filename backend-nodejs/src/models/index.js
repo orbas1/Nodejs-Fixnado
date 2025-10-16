@@ -1,6 +1,7 @@
 import sequelize from '../config/database.js';
 import User from './user.js';
 import Company from './company.js';
+import UserPreference from './userPreference.js';
 import Service from './service.js';
 import Post from './post.js';
 import MarketplaceItem from './marketplaceItem.js';
@@ -66,6 +67,9 @@ import WarehouseExportRun from './warehouseExportRun.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasOne(UserPreference, { foreignKey: 'userId', as: 'preferences' });
+UserPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
@@ -403,6 +407,7 @@ export {
   sequelize,
   User,
   Company,
+  UserPreference,
   Service,
   Post,
   MarketplaceItem,
