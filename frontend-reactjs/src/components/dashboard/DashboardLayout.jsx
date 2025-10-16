@@ -381,6 +381,9 @@ const DashboardLayout = ({
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
+    if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
+      return activeSection.render();
+    }
     return (
       <DashboardSection
         section={activeSection}

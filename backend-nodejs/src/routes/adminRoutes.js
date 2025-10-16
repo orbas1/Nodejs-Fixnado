@@ -11,6 +11,13 @@ import {
   savePlatformSettings
 } from '../controllers/platformSettingsController.js';
 import {
+  fetchAdminProfileSettings,
+  saveAdminProfileSettings,
+  createAdminProfileDelegate,
+  updateAdminProfileDelegate,
+  deleteAdminProfileDelegate
+} from '../controllers/adminProfileController.js';
+import {
   getAffiliateSettingsHandler,
   saveAffiliateSettingsHandler,
   listAffiliateCommissionRulesHandler,
@@ -63,6 +70,43 @@ router.put(
   authenticate,
   enforcePolicy('admin.platform.write', { metadata: () => ({ section: 'platform-settings' }) }),
   savePlatformSettings
+);
+
+router.get(
+  '/profile-settings',
+  authenticate,
+  enforcePolicy('admin.profile.read', { metadata: () => ({ section: 'profile-settings' }) }),
+  fetchAdminProfileSettings
+);
+router.put(
+  '/profile-settings',
+  authenticate,
+  enforcePolicy('admin.profile.write', { metadata: () => ({ section: 'profile-settings' }) }),
+  saveAdminProfileSettings
+);
+router.post(
+  '/profile-settings/delegates',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: () => ({ section: 'profile-settings', entity: 'delegates' })
+  }),
+  createAdminProfileDelegate
+);
+router.patch(
+  '/profile-settings/delegates/:id',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: (req) => ({ section: 'profile-settings', delegateId: req.params.id })
+  }),
+  updateAdminProfileDelegate
+);
+router.delete(
+  '/profile-settings/delegates/:id',
+  authenticate,
+  enforcePolicy('admin.profile.write', {
+    metadata: (req) => ({ section: 'profile-settings', delegateId: req.params.id })
+  }),
+  deleteAdminProfileDelegate
 );
 
 router.get(

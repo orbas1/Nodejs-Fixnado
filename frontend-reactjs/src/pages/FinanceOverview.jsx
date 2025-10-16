@@ -440,14 +440,10 @@ const FinanceOverview = () => {
     refreshOverview();
   }, [refreshOverview]);
 
-  const payments = overview?.payments ?? [];
-  const payouts = overview?.payouts ?? [];
-  const invoices = overview?.invoices ?? [];
-  const disputes = overview?.disputes ?? [];
-  const paymentRows = useMemo(() => payments.slice(0, 75), [payments]);
-  const payoutItems = useMemo(() => payouts.slice(0, 50), [payouts]);
-  const invoiceItems = useMemo(() => invoices.slice(0, 50), [invoices]);
-  const disputeItems = useMemo(() => disputes.slice(0, 50), [disputes]);
+  const paymentRows = useMemo(() => (overview?.payments ?? []).slice(0, 75), [overview]);
+  const payoutItems = useMemo(() => (overview?.payouts ?? []).slice(0, 50), [overview]);
+  const invoiceItems = useMemo(() => (overview?.invoices ?? []).slice(0, 50), [overview]);
+  const disputeItems = useMemo(() => (overview?.disputes ?? []).slice(0, 50), [overview]);
   const currencyTotals = useMemo(() => {
     if (!report?.currencyTotals) {
       return [];

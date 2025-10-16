@@ -63,6 +63,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import AdminProfile from './adminProfile.js';
+import AdminDelegate from './adminDelegate.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -97,6 +99,12 @@ Service.belongsTo(Company, { foreignKey: 'companyId' });
 
 User.hasMany(Service, { foreignKey: 'providerId' });
 Service.belongsTo(User, { as: 'provider', foreignKey: 'providerId' });
+
+User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
+AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+AdminProfile.hasMany(AdminDelegate, { foreignKey: 'adminProfileId', as: 'delegates' });
+AdminDelegate.belongsTo(AdminProfile, { foreignKey: 'adminProfileId', as: 'adminProfile' });
 
 Service.hasMany(Order, { foreignKey: 'serviceId' });
 Order.belongsTo(Service, { foreignKey: 'serviceId' });
@@ -464,5 +472,7 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  AdminProfile,
+  AdminDelegate
 };

@@ -7,6 +7,14 @@ import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
+import AdminProfileSettingsPanel from '../components/admin/profile/AdminProfileSettingsPanel.jsx';
+import {
+  getAdminProfileSettings,
+  updateAdminProfileSettings,
+  createAdminDelegate,
+  updateAdminDelegate,
+  deleteAdminDelegate
+} from '../api/adminProfileClient.js';
 
 const currencyFormatter = (currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
@@ -202,6 +210,40 @@ const ACCENT_BY_TONE = {
   warning: 'from-white via-amber-50 to-amber-100/80',
   danger: 'from-white via-rose-50 to-rose-100/80',
   neutral: 'from-white via-slate-50 to-slate-100'
+};
+
+const DEFAULT_PROFILE_PAYLOAD = {
+  profile: {
+    firstName: '',
+    lastName: '',
+    email: '',
+    jobTitle: '',
+    department: '',
+    phoneNumber: '',
+    avatarUrl: '',
+    timezone: 'UTC'
+  },
+  address: {
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: ''
+  },
+  notifications: {
+    email: true,
+    sms: false,
+    push: false,
+    slack: false,
+    pagerDuty: false,
+    weeklyDigest: true
+  },
+  notificationEmails: [],
+  delegates: [],
+  audit: {
+    updatedAt: null
+  }
 };
 
 function resolveAccent(tone) {
@@ -468,6 +510,13 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [profileState, setProfileState] = useState({
+    loading: true,
+    saving: false,
+    data: null,
+    error: null,
+    success: null
+  });
 
   useEffect(() => {
     if (timeframeParam !== timeframe) {
@@ -526,15 +575,206 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  const loadProfileSettings = useCallback(async () => {
+    setProfileState((current) => ({ ...current, loading: true, error: null, success: null }));
+    try {
+      const payload = await getAdminProfileSettings();
+      setProfileState({ loading: false, saving: false, data: payload, error: null, success: null });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load profile settings';
+      setProfileState((current) => ({ ...current, loading: false, error: message }));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProfileSettings();
+  }, [loadProfileSettings]);
+
+  const handleProfileSave = useCallback(
+    async (payload) => {
+      setProfileState((current) => ({ ...current, saving: true, error: null, success: null }));
+      try {
+        const updated = await updateAdminProfileSettings(payload);
+        setProfileState({ loading: false, saving: false, data: updated, error: null, success: 'Profile settings saved' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to save profile settings';
+        setProfileState((current) => ({ ...current, saving: false, error: message }));
+        throw (error instanceof Error ? error : new Error(message));
+      }
+    },
+    []
+  );
+
+  const handleDelegateCreate = useCallback(
+    async (payload) => {
+      setProfileState((current) => ({ ...current, saving: true, error: null, success: null }));
+      try {
+        const delegate = await createAdminDelegate(payload);
+        setProfileState((current) => {
+          const now = new Date().toISOString();
+          const base = current.data
+            ? {
+                profile: { ...current.data.profile },
+                address: { ...current.data.address },
+                notifications: {
+                  ...DEFAULT_PROFILE_PAYLOAD.notifications,
+                  ...(current.data.notifications ?? {})
+                },
+                notificationEmails: Array.isArray(current.data.notificationEmails)
+                  ? current.data.notificationEmails.slice()
+                  : [],
+                delegates: Array.isArray(current.data.delegates)
+                  ? current.data.delegates.slice()
+                  : [],
+                audit: { ...(current.data.audit ?? {}) }
+              }
+            : JSON.parse(JSON.stringify(DEFAULT_PROFILE_PAYLOAD));
+          const existingDelegates = Array.isArray(base.delegates) ? base.delegates : [];
+          const nextDelegates = existingDelegates.some((item) => item.id === delegate.id)
+            ? existingDelegates.map((item) => (item.id === delegate.id ? delegate : item))
+            : [...existingDelegates, delegate];
+          return {
+            ...current,
+            saving: false,
+            loading: false,
+            data: {
+              ...base,
+              delegates: nextDelegates,
+              audit: { ...(base.audit ?? {}), updatedAt: now }
+            },
+            error: null,
+            success: 'Delegate added'
+          };
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to add delegate';
+        setProfileState((current) => ({ ...current, saving: false, error: message }));
+        throw (error instanceof Error ? error : new Error(message));
+      }
+    },
+    []
+  );
+
+  const handleDelegateUpdate = useCallback(
+    async (delegateId, payload) => {
+      setProfileState((current) => ({ ...current, saving: true, error: null, success: null }));
+      try {
+        const delegate = await updateAdminDelegate(delegateId, payload);
+        setProfileState((current) => {
+          const now = new Date().toISOString();
+          if (!current.data) {
+            return {
+              ...current,
+              saving: false,
+              loading: false,
+              data: {
+                ...JSON.parse(JSON.stringify(DEFAULT_PROFILE_PAYLOAD)),
+                delegates: [delegate],
+                audit: { updatedAt: now }
+              },
+              error: null,
+              success: 'Delegate updated'
+            };
+          }
+          const nextDelegates = (current.data.delegates ?? []).map((item) =>
+            item.id === delegate.id ? delegate : item
+          );
+          return {
+            ...current,
+            saving: false,
+            loading: false,
+            data: {
+              ...current.data,
+              delegates: nextDelegates,
+              audit: { ...(current.data.audit ?? {}), updatedAt: now }
+            },
+            error: null,
+            success: 'Delegate updated'
+          };
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to update delegate';
+        setProfileState((current) => ({ ...current, saving: false, error: message }));
+        throw (error instanceof Error ? error : new Error(message));
+      }
+    },
+    []
+  );
+
+  const handleDelegateDelete = useCallback(
+    async (delegateId) => {
+      setProfileState((current) => ({ ...current, saving: true, error: null, success: null }));
+      try {
+        await deleteAdminDelegate(delegateId);
+        setProfileState((current) => {
+          if (!current.data) {
+            return { ...current, saving: false, loading: false, error: null, success: 'Delegate removed' };
+          }
+          const now = new Date().toISOString();
+          const nextDelegates = (current.data.delegates ?? []).filter((item) => item.id !== delegateId);
+          return {
+            ...current,
+            saving: false,
+            loading: false,
+            data: {
+              ...current.data,
+              delegates: nextDelegates,
+              audit: { ...(current.data.audit ?? {}), updatedAt: now }
+            },
+            error: null,
+            success: 'Delegate removed'
+          };
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to remove delegate';
+        setProfileState((current) => ({ ...current, saving: false, error: message }));
+        throw (error instanceof Error ? error : new Error(message));
+      }
+    },
+    []
+  );
+
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
+  const profileSettingsSection = useMemo(
+    () => ({
+      id: 'profile-settings-control',
+      label: 'Profile settings',
+      description: 'Identity, addresses, notifications, and delegate controls.',
+      icon: 'profile',
+      type: 'custom',
+      render: () => (
+        <AdminProfileSettingsPanel
+          data={profileState.data}
+          loading={profileState.loading}
+          saving={profileState.saving}
+          error={profileState.error}
+          success={profileState.success}
+          onRefresh={loadProfileSettings}
+          onSubmit={handleProfileSave}
+          onCreateDelegate={handleDelegateCreate}
+          onUpdateDelegate={handleDelegateUpdate}
+          onDeleteDelegate={handleDelegateDelete}
+        />
+      )
+    }),
+    [
+      profileState,
+      loadProfileSettings,
+      handleProfileSave,
+      handleDelegateCreate,
+      handleDelegateUpdate,
+      handleDelegateDelete
+    ]
+  );
 
   const navigation = useMemo(() => {
     const sections = state.data ? buildAdminNavigation(state.data) : [];
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
+    sections.push(profileSettingsSection);
     return sections;
-  }, [state.data, affiliateSection]);
+  }, [state.data, affiliateSection, profileSettingsSection]);
   const dashboardPayload = state.data ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
