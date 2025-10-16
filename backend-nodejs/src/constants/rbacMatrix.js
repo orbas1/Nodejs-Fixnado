@@ -64,6 +64,8 @@ export const RBAC_MATRIX = {
       Permissions.INVENTORY_READ,
       Permissions.SERVICES_MANAGE,
       Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_WEBSITE_READ,
+      Permissions.SERVICEMAN_WEBSITE_WRITE
       Permissions.SERVICEMAN_PROFILE_MANAGE
       Permissions.SERVICEMAN_BOOKINGS_VIEW,
       Permissions.SERVICEMAN_BOOKINGS_MANAGE,
