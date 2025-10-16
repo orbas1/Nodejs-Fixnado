@@ -350,6 +350,16 @@ class LiveFeedAttachment {
       };
 }
 
+class LiveFeedServerEvent {
+  LiveFeedServerEvent({
+    required this.type,
+    required this.data,
+  });
+
+  final String type;
+  final Map<String, dynamic> data;
+}
+
 class LiveFeedJobDraft {
   LiveFeedJobDraft({
     required this.title,

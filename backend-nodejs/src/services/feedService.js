@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
 import { Company, CustomJobBid, CustomJobBidMessage, Post, ServiceZone, User } from '../models/index.js';
 import { listApprovedMarketplaceItems } from './marketplaceService.js';
+import { broadcastLiveFeedEvent } from './liveFeedStreamService.js';
 
 const DEFAULT_FEED_LIMIT = 25;
 
@@ -308,6 +309,12 @@ export async function createLiveFeedPost({
     return serialisePost(reloaded);
   });
 
+  broadcastLiveFeedEvent('post.created', {
+    post: job,
+    zoneId: job.zoneId ?? job.zone?.id ?? null,
+    allowOutOfZone: Boolean(job.allowOutOfZone)
+  });
+
   return job;
 }
 
@@ -329,11 +336,18 @@ export async function submitCustomJobBid({
   const initialMessage = normaliseString(message, { maxLength: 2000, fallback: null });
   const normalisedAttachments = sanitiseAttachments(attachments);
 
-  return sequelize.transaction(async (transaction) => {
+  let postContext = null;
+  const bidResult = await sequelize.transaction(async (transaction) => {
     const post = await loadPost(postId, { transaction, lock: true });
     if (!post) {
       throw createServiceError('Live job post not found', 404);
     }
+
+    postContext = {
+      id: post.id,
+      zoneId: post.zoneId,
+      allowOutOfZone: Boolean(post.allowOutOfZone)
+    };
 
     if (post.status !== 'open') {
       throw createServiceError('Bidding is closed for this job', 409);
@@ -395,6 +409,17 @@ export async function submitCustomJobBid({
 
     return serialiseBid(reloadedBid);
   });
+
+  if (postContext) {
+    broadcastLiveFeedEvent('bid.created', {
+      postId,
+      bid: bidResult,
+      zoneId: postContext.zoneId,
+      allowOutOfZone: postContext.allowOutOfZone
+    });
+  }
+
+  return bidResult;
 }
 
 export async function addCustomJobBidMessage({
@@ -416,11 +441,18 @@ export async function addCustomJobBidMessage({
 
   const normalisedAttachments = sanitiseAttachments(attachments);
 
-  return sequelize.transaction(async (transaction) => {
+  let postContext = null;
+  const messageResult = await sequelize.transaction(async (transaction) => {
     const post = await loadPost(postId, { transaction, lock: true });
     if (!post) {
       throw createServiceError('Live job post not found', 404);
     }
+
+    postContext = {
+      id: post.id,
+      zoneId: post.zoneId,
+      allowOutOfZone: Boolean(post.allowOutOfZone)
+    };
 
     const bid = await CustomJobBid.findOne({
       where: { id: bidId, postId },
@@ -467,4 +499,16 @@ export async function addCustomJobBidMessage({
 
     return message?.toJSON() ?? created.toJSON();
   });
+
+  if (postContext) {
+    broadcastLiveFeedEvent('bid.message', {
+      postId,
+      bidId,
+      message: messageResult,
+      zoneId: postContext.zoneId,
+      allowOutOfZone: postContext.allowOutOfZone
+    });
+  }
+
+  return messageResult;
 }

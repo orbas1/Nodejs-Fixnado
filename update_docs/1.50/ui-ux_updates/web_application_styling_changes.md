@@ -20,16 +20,19 @@
 - Tables: zebra striping introduced for readability, column headers sticky with drop shadow; row interactions provide inline edit icons on hover.
 - Modals: 32px radius, drop shadow `0 24px 48px rgba(15,27,67,0.24)`; header includes icon for context, footer uses stacked actions on mobile.
 - Tabs & pills: emphasise active state with underline and background tint; accessible arrow key navigation added.
+- Live feed header adopts a status pill with animated glow when connected, amber pulse when reconnecting, and slate outline when paused; timestamp labels use `Inter 12/16` with grey-600 colour tokens and switch to warning red when staleness exceeds 90 seconds.
 
 ## Interaction & Motion
 - Standard animation curve `cubic-bezier(0.4, 0.0, 0.2, 1)` for transitions; durations: 150ms (micro), 250ms (modal), 350ms (page).
 - Loading skeletons defined for cards, tables, and charts; use gradient shimmer to indicate progress without jarring motion.
 - Notification toasts appear top-right, stacking with max 3 visible; each includes icon, descriptive text, and action link.
+- SSE reconnect spinner uses 180ms fade-in/out with easing `cubic-bezier(0.33, 1, 0.68, 1)` to avoid stutter during repeated retries; offline cache banner slides down with 220ms duration and retains focus trap for screen reader visibility.
 
 ## Accessibility & Internationalisation
 - Form fields meet minimum 48px height, focus outlines accessible on all backgrounds, error messaging includes icon + actionable text.
 - RTL support improved by mirroring layout grid, adjusting icons that imply direction, and ensuring text alignment flips gracefully.
 - Language selector style ensures long locale names truncate with tooltip fallback.
+- Status pill copy is mirrored in `aria-live` announcements and includes icon-only alternative text for screen readers, ensuring live feed users receive parity feedback when colour perception is limited.
 
 ## Compliance Operations Console
 - Warehouse export dashboard uses split panels with dark-surface cards and neon-accent chips to distinguish export health from GDPR request widgets while remaining within the shared token system.

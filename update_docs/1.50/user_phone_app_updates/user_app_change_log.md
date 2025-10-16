@@ -39,3 +39,8 @@
 - Extended the explorer repository, filters, and view state to support zone-aware ranking inputs (company IDs, compliance scores, availability preferences) while aligning enums and cache encodings with the updated React heuristics.
 - Added shared ranking utilities (`explorer_ranking.dart`) scoring services and marketplace items by demand weighting, compliance telemetry, availability, rental support, and price signals with offline fallback ordering.
 - Authored Dart unit tests (`test/explorer_ranking_test.dart`) verifying service and marketplace ordering plus scoring deltas under different demand/compliance scenarios, keeping mobile explorer parity with the web experience.
+
+## 2025-04-15 – Live Feed Streaming & Reconnection UX
+- Implemented SSE streaming via `live_feed_repository.dart` with frame parsing, cancellation handling, and exponential backoff-ready controllers to replace polling in the live feed experience.
+- Refactored `LiveFeedController` to manage stream state, reconnection timers, status messaging, and cached snapshot pruning while keeping existing publish/bid/message flows intact.
+- Updated the live feed screen to surface connection pulses, offline banners, and filter-aware restarts plus added unit tests covering repository parsing and controller event handling.

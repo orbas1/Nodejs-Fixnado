@@ -5,10 +5,10 @@
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 100% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 100% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 100% |
-| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 66% |
+| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 74% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
-| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 12% |
-| 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 0% |
+| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 28% |
+| 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 14% |
 | 8 | Documentation, Release & Change Management | Release Management PMO | 2 weeks | Tasks 1–7 artefacts | 0% |
 
 ---
@@ -88,7 +88,7 @@
 
 **Progress Notes:** Delivered the finance orchestration service, Sequelize models, and queue-backed webhook processor with retry telemetry, unlocking guarded `/api/finance` endpoints for checkout, payouts, invoices, and dispute timelines. React and Flutter finance dashboards now surface revenue, payout readiness, dispute volumes, and cash-flow alerts using the shared finance client, while backend integration tests validate happy-path settlement, webhook retries, and invoice snapshots. Reporting exports enforce configurable ceilings with Vitest coverage for invalid ranges and empty-alert responses, React jsdom suites harden timeline widgets, and Flutter currency grids are handset-ready. Finalised the SLA alert fan-out service, persistence model, and `/api/finance/alerts` enrichments alongside Slack/Opsgenie delivery handling, acknowledgement flows, and documentation updates across backend, frontend, Flutter, and design artefacts, closing Task 3 at production readiness.
 
-## Task 4 – Experience & Navigation Overhaul (45%)
+## Task 4 – Experience & Navigation Overhaul (58%)
 **Objective:** Complete web UX redesign, role dashboards, creation studio, and navigation parity with mobile.
 
 **Subtasks:**
@@ -111,7 +111,7 @@
 - **Logic:** Routing guards, feature toggles, error boundaries.
 - **Design:** Visual refresh, imagery, accessibility guidance.
 
-**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%. Explorer search now applies demand-aware ranking across React and Flutter, uses compliance telemetry and availability heuristics, and ships parity tests plus mobile zoning filters so marketplace, storefront, and dashboard journeys surface the highest quality operators by default, pushing Task 4 execution to 66%.
+**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%. Explorer search now applies demand-aware ranking across React and Flutter, uses compliance telemetry and availability heuristics, and ships parity tests plus mobile zoning filters so marketplace, storefront, and dashboard journeys surface the highest quality operators by default. Live feed streaming now delivers SSE snapshots, connection-state messaging, and filter-aware reconnection logic across React and Flutter with backend policy regression coverage, raising Task 4 execution to 74% with production telemetry and design artefacts captured.
 
 ## Task 5 – Intelligence, Integrations & Automation Hub (0%)
 **Objective:** Launch integration console, AI orchestration, and automation capabilities with full observability.
@@ -136,7 +136,7 @@
 - **Logic:** Toggle evaluation, retry handling, analytics validation.
 - **Design:** Console layouts, AI states, integration iconography.
 
-## Task 6 – Mobile Parity & Stabilisation (0%)
+## Task 6 – Mobile Parity & Stabilisation (22%)
 **Objective:** Align Flutter apps with roadmap features, resolve crashes, and optimise performance.
 
 **Subtasks:**
@@ -159,7 +159,9 @@
 - **Logic:** Offline sync, error handling, remote config rollouts.
 - **Design:** Mobile UI patterns, accessibility for large text/dark mode.
 
-## Task 7 – Observability, Testing & Quality Automation (0%)
+**Progress Notes:** Flutter's live feed controller now manages SSE snapshots with exponential backoff, cached snapshot pruning, and parity status messaging while the feed screen exposes connection pulses and offline banners. Repository and controller unit tests document the stream contract and reconnection logic, lifting Task 6 parity execution to 28% with production guidance published for mobile crews.
+
+## Task 7 – Observability, Testing & Quality Automation (12%)
 **Objective:** Create unified telemetry, automated testing, and quality gates for enterprise release readiness.
 
 **Subtasks:**
@@ -181,6 +183,8 @@
 - **API:** Contract validation, synthetic monitoring, SLA alarms.
 - **Logic:** Workflow resilience, error handling tests, failover simulations.
 - **Design:** Visual regression baselines, accessibility reviews.
+
+**Progress Notes:** Backend SSE policy coverage now blocks unauthorised stream clients while regression tests validate connection lifecycle, and Flutter unit suites exercise stream parsing plus Riverpod reconnection flows. The expanded automation raises Task 7 progress to 12% with actionable evidence across backend, web, and mobile pipelines.
 
 ## Task 8 – Documentation, Release & Change Management (0%)
 **Objective:** Finalise documentation, release processes, and change management assets, culminating in the end-of-update report.

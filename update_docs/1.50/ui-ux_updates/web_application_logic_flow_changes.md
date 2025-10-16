@@ -15,6 +15,7 @@
 - Quote request drawer collects data across tabs; validation ensures each step completed before enabling submission; once submitted, API call triggers notification and logs event.
 - Provider comparison logic allows selecting up to three providers; comparison table renders capabilities, SLAs, pricing tiers, and ratings side-by-side.
 - Explorer ranking layer scores services and marketplace items using zone demand weighting, company compliance scores, availability preferences, and price heuristics so results surface compliant in-zone providers and rentable stock before out-of-region listings.
+- Live feed stream opens an SSE channel with heartbeat checks, applies the same zone/out-of-zone filters as initial snapshots, updates status badges in real time, and triggers exponential backoff retries with informative toasts when the connection drops or infra proxies buffer events.
 
 ## Resource Hub & Support
 - Resource hub filter interactions update results without page refresh using incremental fetching; bookmarking article adds to personalised quick access list.
@@ -50,3 +51,4 @@
 ## Error Handling & Observability
 - Global error boundary captures unexpected issues and displays recovery modal with support link; errors tagged with correlation ID for diagnostics.
 - Telemetry events instrumented for navigation search usage, widget refresh, quote submissions, resource feedback, settings saves, and export completions with timestamps and actor metadata.
+- Added analytics events for `live_feed_stream_opened`, `live_feed_stream_reconnected`, and `live_feed_stream_error` so product, SRE, and support teams can monitor connection health and correlate UI fallbacks with backend or network issues.

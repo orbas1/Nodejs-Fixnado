@@ -29,3 +29,8 @@
 - Embedded demand and compliance-aware ranking inside `explorerUtils.js`, ensuring services and marketplace items returned by the Search and Explorer experiences prioritise providers within the active zone, compliant companies, and rentable stock when availability filters request it.
 - Documented the new ranking logic across explorer notes so teams understand how zone demand, compliance scores, availability preferences, and pricing heuristics combine to order results, and surfaced references to the exported scorers for dashboard integrations.
 - Added parity notes covering the shared heuristics with Flutter, highlighting that both clients now use the same demand weights, compliance multipliers, and availability fallbacks while exposing the behaviour through the React explorer page.
+
+## Live Feed
+- Updated `LiveFeed.jsx` to establish an authenticated `EventSource`, reconcile snapshots with incremental events, and expose connection state, reconnection, and offline banners directly in the feed header.
+- Added `liveFeedState.js` to consolidate post/bid/message merging logic and unit tests covering streamed permutations so reducers stay regression-safe.
+- Documented the streaming behaviour and status messaging in the live feed notes to guide design, QA, and operations stakeholders.

@@ -29,6 +29,7 @@ Primary objectives:
 - Validate provider dashboard modules against restored service responses (trust score, review summaries, inventory alerts) to confirm component coverage without additional visual redesign.
 - Refactor forms with inline validation, progressive disclosure for advanced settings, and security copy for sensitive actions.
 - Encode explorer ranking heuristics combining zone demand weighting, company compliance scores, availability preferences, and price cues with analytics instrumentation so search results and dashboards consume consistent ordering guidance.
+- Document live feed SSE interface patterns with status indicators, reconnection toasts, offline banners, and filter-aware refresh cues so the React experience communicates stream health and retry behaviour in real time.
 
 ### User & Provider Applications (Flutter)
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
@@ -41,6 +42,7 @@ Primary objectives:
 - Overlay biometric unlock prompts and session status banners so mobile flows mirror the hardened authentication posture delivered in this milestone.
 - Layer consent acknowledgement overlays that reference the ledger templates and block navigation until required policies are accepted, aligning copy with the web banner system.
 - Bring explorer ranking parity to mobile by documenting demand/compliance weighting, availability modifiers, and offline fallback ordering so Flutter cards list compliant in-zone providers ahead of out-of-region stock.
+- Capture live feed streaming parity guidelines covering Riverpod controller states, connection banners, offline cache surfaces, and haptic/voiceover announcements so Flutter operators receive the same telemetry as web crews.
 
 ### Shared Design Assets
 - Maintain unified iconography, illustration, and photography guidelines with emo-themed overlays and cultural localisation tips.
@@ -111,3 +113,8 @@ Each theme inherits the base typography scale and spacing while overriding accen
 - Documented navigation entry states within the solutions mega menu, dashboard sidebars, and Flutter bottom navigation to evidence RBAC-scoped access for provider, enterprise, and admin roles.
 - Updated dummy-data scaffolding, copy decks, and QA checklist items so engineering teams can rehearse creation flows with realistic payloads and audit-ready messaging.
 - Added Flutter parity pack detailing blueprint cards, autosave status chips, compliance checklist modules, publish confirmation modals, and localisation guidance (including RTL copy) so mobile engineering aligns with React artefacts.
+
+### Live Feed Streaming Experience (2025-04-13)
+- Produced connection state blueprints for live feed headers, documenting success/reconnect/offline palettes, timestamp formatting, and tooltip copy aligned with backend SSE contracts.
+- Authored interaction diagrams for filter changes, manual refresh, exponential backoff retries, and snapshot hydration so both React and Flutter controllers follow the same event ladder.
+- Added accessibility and localisation notes covering `aria-live` announcements, reduced motion fallbacks, RTL layout mirroring, and multi-locale status strings, ensuring parity across clients and QA scripts.

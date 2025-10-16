@@ -5,13 +5,15 @@ import {
   getMarketplaceFeed,
   createLiveFeedPostHandler,
   submitCustomJobBidHandler,
-  addCustomJobBidMessageHandler
+  addCustomJobBidMessageHandler,
+  streamLiveFeed
 } from '../controllers/feedController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
 const router = Router();
 
+router.get('/live/stream', authenticate, enforcePolicy('feed.live.read'), streamLiveFeed);
 router.get('/live', authenticate, enforcePolicy('feed.live.read'), getLiveFeed);
 
 router.post(

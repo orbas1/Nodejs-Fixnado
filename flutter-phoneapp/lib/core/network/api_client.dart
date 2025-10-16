@@ -145,4 +145,16 @@ class FixnadoApiClient {
     }
     throw _toApiException(response);
   }
+
+  Future<http.StreamedResponse> stream(String path,
+      {Map<String, dynamic>? query, Map<String, String>? headers}) async {
+    final uri = _buildUri(path, query);
+    _logger.fine('STREAM $uri');
+    final request = http.Request('GET', uri);
+    request.headers.addAll(_headers({
+      'Accept': 'text/event-stream',
+      if (headers != null) ...headers,
+    }));
+    return client.send(request).timeout(requestTimeout);
+  }
 }

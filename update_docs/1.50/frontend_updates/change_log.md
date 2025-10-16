@@ -33,3 +33,8 @@
 - Implemented demand-aware ranking inside `explorerUtils.js`, combining zone demand, compliance telemetry, availability preferences, and pricing signals so search results prioritise compliant providers and rentable stock in high-demand regions.
 - Updated explorer unit tests to cover the new ranking heuristics and exported scorers, ensuring Vitest verifies ordering across services and marketplace items with demand, compliance, and availability permutations.
 - Hardened search utilities by surfacing reusable scoring helpers for downstream dashboards and adding documentation to explorer pages updates covering demand-weighted listings and compliance-driven ordering.
+
+## 2025-04-15 – Live Feed Streaming & Status Messaging
+- Enhanced `LiveFeed.jsx` to open an authenticated `EventSource`, manage reconnection state, prune filters, and surface heartbeat-driven timestamps alongside the existing reducer state helpers.
+- Added `liveFeedState.js` utilities and unit tests to merge streamed posts, bids, and messages while preventing duplicates and preserving chronological ordering.
+- Introduced connection status badges and offline messaging in the live feed header so operators understand streaming health without polling.

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import clsx from 'clsx';
 import Spinner from './ui/Spinner.jsx';
 import {
   fetchLiveFeed,
@@ -9,6 +10,7 @@ import {
 } from '../api/feedClient.js';
 import { fetchZones } from '../api/explorerClient.js';
 import { useCurrentRole } from '../hooks/useCurrentRole.js';
+import { applyBidCreated, applyBidMessage, upsertLiveFeedPost } from './liveFeedState.js';
 
 const INITIAL_FORM_STATE = {
   title: '',
@@ -853,6 +855,7 @@ export default function LiveFeed({ condensed = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [feedError, setFeedError] = useState(null);
+  const [streamStatus, setStreamStatus] = useState({ connected: false, reconnecting: false, error: null });
   const [lastUpdated, setLastUpdated] = useState(null);
   const [formState, setFormState] = useState(INITIAL_FORM_STATE);
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -862,6 +865,7 @@ export default function LiveFeed({ condensed = false }) {
   const [messageStatus, setMessageStatus] = useState({});
 
   const { zones, loading: zoneLoading } = useZones(canCreate || (!condensed && canView));
+  const maxStreamPosts = useMemo(() => (condensed ? 6 : undefined), [condensed]);
 
   useEffect(() => {
     if (!canView) {
@@ -869,6 +873,7 @@ export default function LiveFeed({ condensed = false }) {
       setLoading(false);
       setFeedError(null);
       setLastUpdated(null);
+      setStreamStatus({ connected: false, reconnecting: false, error: null });
       return;
     }
 
@@ -909,6 +914,121 @@ export default function LiveFeed({ condensed = false }) {
     };
   }, [canView, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, condensed]);
 
+  useEffect(() => {
+    if (!canView) {
+      return undefined;
+    }
+
+    if (typeof window === 'undefined' || typeof window.EventSource !== 'function') {
+      setStreamStatus((current) => ({
+        connected: false,
+        reconnecting: false,
+        error:
+          current.error ||
+          'Live streaming is not supported in this browser. The feed will refresh periodically.'
+      }));
+      return undefined;
+    }
+
+    setStreamStatus((current) => ({
+      connected: false,
+      reconnecting: true,
+      error: current.error
+    }));
+
+    const params = new URLSearchParams();
+    if (filters.zoneId) params.set('zoneId', filters.zoneId);
+    if (filters.includeOutOfZone) params.set('includeOutOfZone', 'true');
+    if (filters.outOfZoneOnly) params.set('outOfZoneOnly', 'true');
+    if (maxStreamPosts) params.set('limit', String(maxStreamPosts));
+
+    const source = new EventSource(
+      `/api/feed/live/stream${params.toString() ? `?${params}` : ''}`,
+      { withCredentials: true }
+    );
+
+    let closed = false;
+
+    const safeParse = (event) => {
+      try {
+        return event?.data ? JSON.parse(event.data) : null;
+      } catch (error) {
+        console.error('[LiveFeed] failed to parse live feed event payload', error);
+        return null;
+      }
+    };
+
+    const handleSnapshot = (event) => {
+      if (closed) return;
+      const payload = safeParse(event);
+      if (!payload) {
+        return;
+      }
+      const snapshotPosts = Array.isArray(payload.posts) ? payload.posts : [];
+      setPosts(snapshotPosts);
+      setFeedError(null);
+      setLastUpdated(payload.generatedAt ? new Date(payload.generatedAt) : new Date());
+      setStreamStatus({ connected: true, reconnecting: false, error: null });
+    };
+
+    const handlePostCreated = (event) => {
+      if (closed) return;
+      const payload = safeParse(event);
+      if (payload?.post) {
+        setPosts((current) => upsertLiveFeedPost(current, payload.post, { maxSize: maxStreamPosts }));
+        setLastUpdated(new Date());
+      }
+    };
+
+    const handleBidCreated = (event) => {
+      if (closed) return;
+      const payload = safeParse(event);
+      if (payload) {
+        setPosts((current) => applyBidCreated(current, payload));
+        setLastUpdated(new Date());
+      }
+    };
+
+    const handleBidMessage = (event) => {
+      if (closed) return;
+      const payload = safeParse(event);
+      if (payload) {
+        setPosts((current) => applyBidMessage(current, payload));
+        setLastUpdated(new Date());
+      }
+    };
+
+    const handleConnected = () => {
+      if (closed) return;
+      setStreamStatus({ connected: true, reconnecting: false, error: null });
+    };
+
+    const handleError = () => {
+      if (closed) return;
+      setStreamStatus((current) => ({
+        connected: false,
+        reconnecting: true,
+        error: current.error || 'Live updates interrupted. Attempting to reconnect…'
+      }));
+    };
+
+    source.addEventListener('connected', handleConnected);
+    source.addEventListener('snapshot', handleSnapshot);
+    source.addEventListener('post.created', handlePostCreated);
+    source.addEventListener('bid.created', handleBidCreated);
+    source.addEventListener('bid.message', handleBidMessage);
+    source.addEventListener('heartbeat', () => {
+      if (closed) return;
+      setLastUpdated(new Date());
+    });
+    source.onerror = handleError;
+
+    return () => {
+      closed = true;
+      source.close();
+    };
+  }, [canView, filters.includeOutOfZone, filters.outOfZoneOnly, filters.zoneId, maxStreamPosts]);
+
   const handleFormChange = (patch) => {
     setFormState((current) => ({ ...current, ...patch }));
   };
@@ -929,7 +1049,7 @@ export default function LiveFeed({ condensed = false }) {
       };
 
       const created = await createLiveFeedPost(payload);
-      setPosts((current) => [created, ...current]);
+      setPosts((current) => upsertLiveFeedPost(current, created, { maxSize: maxStreamPosts }));
       setFormState(INITIAL_FORM_STATE);
       setFormSuccess('Job broadcast successfully. Providers are being notified in real time.');
       setLastUpdated(new Date());
@@ -944,16 +1064,7 @@ export default function LiveFeed({ condensed = false }) {
     setBidStatus((current) => ({ ...current, [postId]: { state: 'loading' } }));
     try {
       const bid = await submitCustomJobBid(postId, payload);
-      setPosts((current) =>
-        current.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                bids: [bid, ...(Array.isArray(post.bids) ? post.bids : [])]
-              }
-            : post
-        )
-      );
+      setPosts((current) => applyBidCreated(current, { postId, bid }));
       setBidStatus((current) => ({ ...current, [postId]: { state: 'success' } }));
       setLastUpdated(new Date());
     } catch (submissionError) {
@@ -969,36 +1080,7 @@ export default function LiveFeed({ condensed = false }) {
     setMessageStatus((current) => ({ ...current, [statusKey]: { state: 'loading' } }));
     try {
       const message = await sendCustomJobBidMessage(postId, bidId, payload);
-      setPosts((current) =>
-        current.map((post) => {
-          if (post.id !== postId) {
-            return post;
-          }
-
-          const updatedBids = Array.isArray(post.bids)
-            ? post.bids.map((bid) => {
-                if (bid.id !== bidId) {
-                  return bid;
-                }
-
-                const nextMessages = Array.isArray(bid.messages) ? [...bid.messages, message] : [message];
-                nextMessages.sort(
-                  (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                );
-
-                return {
-                  ...bid,
-                  messages: nextMessages
-                };
-              })
-            : [];
-
-          return {
-            ...post,
-            bids: updatedBids
-          };
-        })
-      );
+      setPosts((current) => applyBidMessage(current, { postId, bidId, message }));
       setMessageStatus((current) => ({ ...current, [statusKey]: { state: 'success' } }));
       setLastUpdated(new Date());
     } catch (submissionError) {
@@ -1025,8 +1107,42 @@ export default function LiveFeed({ condensed = false }) {
             </p>
           </div>
           {!condensed ? (
-            <div className="text-right text-xs text-slate-500">
-              {lastUpdated ? `Updated ${formatRelativeTime(lastUpdated)}` : 'Awaiting first refresh'}
+            <div className="flex flex-col items-end space-y-1 text-right text-xs text-slate-500">
+              <div
+                className={clsx(
+                  'inline-flex items-center gap-2 font-semibold',
+                  streamStatus.connected
+                    ? 'text-emerald-600'
+                    : streamStatus.reconnecting
+                      ? 'text-amber-600'
+                      : 'text-slate-500'
+                )}
+              >
+                <span
+                  className={clsx(
+                    'h-2 w-2 rounded-full',
+                    streamStatus.connected
+                      ? 'bg-emerald-500 animate-pulse'
+                      : streamStatus.reconnecting
+                        ? 'bg-amber-500 animate-pulse'
+                        : 'bg-slate-300'
+                  )}
+                  aria-hidden="true"
+                />
+                {streamStatus.connected
+                  ? 'Streaming live updates'
+                  : streamStatus.reconnecting
+                    ? 'Reconnecting…'
+                    : 'Live updates paused'}
+              </div>
+              <div>
+                {lastUpdated
+                  ? `Last update ${formatRelativeTime(lastUpdated)}`
+                  : 'Awaiting first refresh'}
+              </div>
+              {streamStatus.error ? (
+                <p className="text-rose-500">{streamStatus.error}</p>
+              ) : null}
             </div>
           ) : (
             <a href="/feed" className="text-sm font-semibold text-accent hover:text-primary">

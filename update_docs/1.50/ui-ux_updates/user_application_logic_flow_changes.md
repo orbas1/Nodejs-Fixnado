@@ -24,10 +24,12 @@
 
 ## Marketplace Discovery & Explorer
 - Explorer ranking mirrors the web heuristics by weighting zone demand, company compliance scores, rental availability, and price telemetry so in-zone providers and rentable stock appear before out-of-region listings while offline states fall back to cached ordering.
+- Live feed controller establishes SSE stream with heartbeat tracking, prunes cached posts when filters change, and restarts with exponential backoff; stream status exposes `connected`, `reconnecting`, and `paused` messages surfaced via Riverpod state to the UI banner.
 
 ## Analytics & Measurement
 - Added events: `user_booking_step_view`, `user_booking_exit`, `user_issue_report_submitted`, `user_payment_method_update`, and `user_support_article_viewed` with metadata for industry, booking value, and session length.
 - Funnel dashboards monitor drop-off per step, highlight response times for issue resolution, and track adoption of add-on bundles to inform future pricing experiments.
+- Added telemetry for `mobile_live_feed_stream_opened`, `mobile_live_feed_stream_reconnect`, and `mobile_live_feed_stream_error` to trace uptime, reconnection cycles, and fallback usage in parity with the web analytics stream.
 
 ## Compliance Operations
 - Warehouse export tab follows a review → trigger → monitor sequence: users first review latest run summaries, then optionally trigger a new export after confirming dataset scope and retention notices, and finally monitor progress via streamed status updates.
