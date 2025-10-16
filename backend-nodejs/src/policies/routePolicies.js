@@ -169,6 +169,32 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.services.read': {
+    id: 'admin.services.read',
+    version: '1.0.0',
+    resource: 'admin.services',
+    action: 'admin.services:read',
+    description: 'Allow admin operators to review service listings, categories, and catalogue health.',
+    requirements: [Permissions.ADMIN_SERVICES_READ],
+    tags: ['admin', 'services', 'catalogue'],
+    severity: 'high',
+    metadata: (req) => ({
+      entity: req.params?.categoryId ? 'category' : req.params?.serviceId ? 'listing' : 'collection'
+    })
+  },
+  'admin.services.write': {
+    id: 'admin.services.write',
+    version: '1.0.0',
+    resource: 'admin.services',
+    action: 'admin.services:write',
+    description: 'Allow admin operators to create, update, and archive service listings and categories.',
+    requirements: [Permissions.ADMIN_SERVICES_WRITE],
+    tags: ['admin', 'services', 'catalogue'],
+    severity: 'critical',
+    metadata: (req) => ({
+      entity: req.params?.categoryId ? 'category' : req.params?.serviceId ? 'listing' : 'collection'
+    })
+  },
   'finance.checkout.create': {
     id: 'finance.checkout.create',
     version: '1.0.0',

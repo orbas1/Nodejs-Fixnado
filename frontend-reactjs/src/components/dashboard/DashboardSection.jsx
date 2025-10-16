@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { ServiceManagementSection } from '../service-management/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1645,6 +1646,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'service-management':
+      return <ServiceManagementSection section={section} />;
     default:
       return null;
   }

@@ -278,6 +278,44 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (section.type === 'service-management') {
+      const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
+      const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
+      const packages = Array.isArray(section.data?.packages) ? section.data.packages : [];
+
+      categories.forEach((category) => {
+        entries.push({
+          id: `${section.id}-category-${category.id}`,
+          type: 'category',
+          label: `${category.name} • Category`,
+          description: category.description ?? '',
+          targetSection: section.id
+        });
+      });
+
+      listings.forEach((listing) => {
+        entries.push({
+          id: `${section.id}-listing-${listing.id}`,
+          type: 'listing',
+          label: listing.title,
+          description: [listing.category ?? 'Uncategorised', listing.status ?? 'draft']
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        });
+      });
+
+      packages.forEach((pkg) => {
+        entries.push({
+          id: `${section.id}-package-${pkg.id}`,
+          type: 'package',
+          label: `${pkg.name ?? pkg.title} • Package`,
+          description: pkg.description ?? '',
+          targetSection: section.id
+        });
+      });
+    }
+
     return entries;
   });
 

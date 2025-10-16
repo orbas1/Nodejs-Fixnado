@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import {
   Service,
+  ServiceCategory,
   Company,
   Order,
   Escrow,
@@ -11,13 +12,17 @@ import {
 import { calculateBookingTotals } from './financeService.js';
 import { createBooking } from './bookingService.js';
 
-function serviceError(message, statusCode = 400) {
+export const SERVICE_STATUSES = ['draft', 'published', 'paused', 'archived'];
+export const SERVICE_VISIBILITIES = ['private', 'restricted', 'public'];
+export const SERVICE_KINDS = ['standard', 'package'];
+
+export function serviceError(message, statusCode = 400) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
 }
 
-function normaliseCurrency(code, fallback = 'USD') {
+export function normaliseCurrency(code, fallback = 'USD') {
   const trimmed = (code || fallback || '').toString().trim().toUpperCase();
   if (!trimmed || trimmed.length !== 3) {
     throw serviceError('currency must be a 3-letter ISO code');
@@ -25,7 +30,7 @@ function normaliseCurrency(code, fallback = 'USD') {
   return trimmed;
 }
 
-function toNumber(value, fieldName) {
+export function toNumber(value, fieldName) {
   if (value === null || value === undefined) {
     return null;
   }
@@ -44,7 +49,7 @@ function toNumber(value, fieldName) {
   throw serviceError(`${fieldName} must be a numeric value`);
 }
 
-function assertPositive(value, fieldName) {
+export function assertPositive(value, fieldName) {
   const numeric = toNumber(value, fieldName);
   if (numeric === null || numeric <= 0) {
     throw serviceError(`${fieldName} must be greater than zero`);
@@ -122,7 +127,90 @@ function deriveAvailability(orders = []) {
   };
 }
 
-function sanitiseService(service) {
+function sanitiseGalleryItems(value) {
+  if (!Array.isArray(value)) {
+    if (typeof value === 'string' && value.trim()) {
+      return [{ url: value.trim(), altText: '' }];
+    }
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!entry) {
+        return null;
+      }
+
+      if (typeof entry === 'string') {
+        const url = entry.trim();
+        return url ? { url, altText: '' } : null;
+      }
+
+      if (typeof entry === 'object') {
+        const url = typeof entry.url === 'string' ? entry.url.trim() : '';
+        if (!url) {
+          return null;
+        }
+
+        const altText = typeof entry.altText === 'string'
+          ? entry.altText
+          : typeof entry.alt === 'string'
+            ? entry.alt
+            : '';
+
+        return { url, altText };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+}
+
+function sanitiseStringCollection(value) {
+  if (!Array.isArray(value)) {
+    if (typeof value === 'string' && value.trim()) {
+      return [value.trim()];
+    }
+    return [];
+  }
+
+  const seen = new Set();
+  const normalised = [];
+  value.forEach((entry) => {
+    if (typeof entry === 'string' && entry.trim()) {
+      const trimmed = entry.trim();
+      if (!seen.has(trimmed)) {
+        seen.add(trimmed);
+        normalised.push(trimmed);
+      }
+      return;
+    }
+
+    if (entry && typeof entry === 'object') {
+      const label =
+        typeof entry.label === 'string'
+          ? entry.label.trim()
+          : typeof entry.name === 'string'
+            ? entry.name.trim()
+            : null;
+      if (label && !seen.has(label)) {
+        seen.add(label);
+        normalised.push(label);
+      }
+    }
+  });
+
+  return normalised;
+}
+
+function sanitiseMetadata(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  return value;
+}
+
+export function normaliseServiceRecord(service) {
   const plain = service.get ? service.get({ plain: true }) : service;
   const orders = (plain.Orders || []).map((order) => ({
     id: order.id,
@@ -143,13 +231,23 @@ function sanitiseService(service) {
 
   return {
     id: plain.id,
+    slug: plain.slug,
     providerId: plain.providerId,
     companyId: plain.companyId,
     title: plain.title,
     description: plain.description,
     category: plain.category,
+    categoryId: plain.categoryId,
+    status: plain.status,
+    visibility: plain.visibility,
+    kind: plain.kind,
     price: plain.price ? Number.parseFloat(plain.price) : null,
     currency: plain.currency,
+    heroImageUrl: plain.heroImageUrl || null,
+    gallery: sanitiseGalleryItems(plain.gallery),
+    coverage: sanitiseStringCollection(plain.coverage),
+    tags: sanitiseStringCollection(plain.tags),
+    metadata: sanitiseMetadata(plain.metadata),
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
     availability,
@@ -168,6 +266,14 @@ function sanitiseService(service) {
           serviceRegions: plain.Company.serviceRegions || null
         }
       : null,
+    categoryRef: plain.categoryRef
+      ? {
+          id: plain.categoryRef.id,
+          name: plain.categoryRef.name,
+          slug: plain.categoryRef.slug,
+          description: plain.categoryRef.description || null
+        }
+      : null,
     orders
   };
 }
@@ -177,7 +283,12 @@ export async function listServiceCatalogue({
   offset = 0,
   companyId = null,
   providerId = null,
-  includeCompleted = false
+  includeCompleted = false,
+  statuses = null,
+  visibility = null,
+  includeArchived = false,
+  categoryId = null,
+  search = null
 } = {}) {
   const where = {};
 
@@ -187,6 +298,33 @@ export async function listServiceCatalogue({
 
   if (providerId) {
     where.providerId = providerId;
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+
+  const allowedStatuses = Array.isArray(statuses)
+    ? statuses.filter((status) => SERVICE_STATUSES.includes(status))
+    : [];
+
+  if (allowedStatuses.length > 0) {
+    where.status = { [Op.in]: allowedStatuses };
+  } else if (!includeArchived) {
+    where.status = { [Op.ne]: 'archived' };
+  }
+
+  if (visibility && SERVICE_VISIBILITIES.includes(visibility)) {
+    where.visibility = visibility;
+  }
+
+  if (search && search.trim()) {
+    const likeOperator = sequelize.getDialect() === 'postgres' ? Op.iLike : Op.like;
+    const term = `%${search.trim().replace(/\s+/g, '%')}%`;
+    where[Op.or] = [
+      { title: { [likeOperator]: term } },
+      { description: { [likeOperator]: term } }
+    ];
   }
 
   const orderWhere = includeCompleted
@@ -207,6 +345,12 @@ export async function listServiceCatalogue({
         where: orderWhere,
         required: false,
         include: [{ model: Escrow, attributes: ['status'] }]
+      },
+      {
+        model: ServiceCategory,
+        as: 'categoryRef',
+        attributes: ['id', 'name', 'slug', 'description'],
+        required: false
       }
     ],
     order: [['createdAt', 'DESC']],
@@ -214,7 +358,7 @@ export async function listServiceCatalogue({
     offset
   });
 
-  return services.map((service) => sanitiseService(service));
+  return services.map((service) => normaliseServiceRecord(service));
 }
 
 export async function createServiceOffering({
@@ -249,7 +393,7 @@ export async function createServiceOffering({
       { transaction }
     );
 
-    return sanitiseService(created);
+    return normaliseServiceRecord(created);
   });
 }
 

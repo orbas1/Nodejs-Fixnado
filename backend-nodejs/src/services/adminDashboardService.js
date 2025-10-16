@@ -12,6 +12,7 @@ import {
   Company,
   User
 } from '../models/index.js';
+import { getServiceManagementSnapshot } from './adminServiceManagementService.js';
 
 const TIMEFRAMES = {
   '7d': { label: '7 days', days: 7, bucket: 'day' },
@@ -711,13 +712,22 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     }
   ];
 
-  const [escrowSeries, disputeSeries, complianceControls, queueInsights, auditTimeline, security] = await Promise.all([
+  const [
+    escrowSeries,
+    disputeSeries,
+    complianceControls,
+    queueInsights,
+    auditTimeline,
+    security,
+    serviceSnapshot
+  ] = await Promise.all([
     computeEscrowSeries(currentBuckets),
     computeDisputeSeries(currentBuckets),
     computeComplianceControls(timezone),
     computeQueueInsights(range, timezone),
     buildAuditTimeline(range, timezone),
-    computeSecuritySignals(timezone)
+    computeSecuritySignals(timezone),
+    getServiceManagementSnapshot({ listingLimit: 12, packageLimit: 6 })
   ]);
 
   const automationBacklog = await computeAutomationBacklog(security.pipelineTotals, timezone);
@@ -774,7 +784,8 @@ export async function buildAdminDashboard({ timeframe = '7d', timezone = 'Europe
     },
     audit: {
       timeline: auditTimeline
-    }
+    },
+    serviceManagement: serviceSnapshot
   };
 }
 
