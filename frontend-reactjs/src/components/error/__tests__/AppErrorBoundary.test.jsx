@@ -9,6 +9,7 @@ vi.mock('../../../utils/errorReporting.js', () => ({
   reportClientError: vi.fn().mockResolvedValue(true)
 }));
 
+// eslint-disable-next-line react/prop-types -- helper wrapper for provider context in tests
 function Wrapper({ children }) {
   return <LocaleProvider>{children}</LocaleProvider>;
 }

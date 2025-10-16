@@ -45,7 +45,7 @@ Field.defaultProps = {
   description: null
 };
 
-export const TextInput = ({ id, value, onChange, type = 'text', placeholder }) => (
+export const TextInput = ({ id, value, onChange, type = 'text', placeholder, ...rest }) => (
   <input
     id={id}
     type={type}
@@ -53,6 +53,7 @@ export const TextInput = ({ id, value, onChange, type = 'text', placeholder }) =
     placeholder={placeholder}
     onChange={(event) => onChange(event.target.value)}
     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+    {...rest}
   />
 );
 

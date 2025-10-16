@@ -1,4 +1,6 @@
 import { DataTypes, Model, Op } from 'sequelize';
+import isEmail from 'validator/lib/isEmail.js';
+import validator from 'validator';
 import sequelize from '../config/database.js';
 import {
   decryptString,
@@ -7,6 +9,21 @@ import {
   protectEmail,
   stableHash
 } from '../utils/security/fieldEncryption.js';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  return EMAIL_PATTERN.test(trimmed.toLowerCase());
+}
 
 function transformEmailConditions(whereClause) {
   if (!whereClause || typeof whereClause !== 'object') {
@@ -129,12 +146,31 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
+        isEncryptedEmail(value) {
+          if (value == null) {
+            throw new Error('Validation isEmail on email failed');
+          }
+          const decrypted = this.get('email');
+          if (!decrypted || !validator.isEmail(decrypted)) {
         isEmail(value) {
+          if (value === null || value === undefined) {
           if (typeof value !== 'string') {
             throw new Error('Validation isEmail on email failed');
           }
 
           let candidate = value;
+          if (typeof value === 'string') {
+            try {
+              const decrypted = decryptString(value, 'user:email');
+              if (decrypted) {
+                candidate = decrypted;
+              }
+            } catch (error) {
+              candidate = value;
+            }
+          }
+
+          if (!isValidEmail(candidate)) {
           try {
             const decrypted = decryptString(value, 'user:email');
             if (decrypted) {
@@ -154,7 +190,26 @@ User.init(
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
         }
-        const { encrypted, hash } = protectEmail(value);
+        const trimmed = value.trim();
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+        if (!isEmail(trimmed, { allow_utf8_local_part: false })) {
+          throw new Error('email must be a valid address');
+        }
+        if (!EMAIL_PATTERN.test(trimmed)) {
+          throw new Error('email must be a valid email address');
+        }
+        if (!trimmed) {
+          throw new Error('email cannot be empty');
+        }
+
+        const normalised = normaliseEmail(trimmed);
+        if (!validator.isEmail(normalised)) {
+          throw new Error('email must be a valid email address');
+        }
+
+        const { encrypted, hash } = protectEmail(trimmed);
         this.setDataValue('email', encrypted);
         this.setDataValue('emailHash', hash);
       },

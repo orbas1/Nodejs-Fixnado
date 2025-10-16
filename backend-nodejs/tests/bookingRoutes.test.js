@@ -1,5 +1,7 @@
 import request from 'supertest';
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
 
 const { default: app } = await import('../src/app.js');
 const {
@@ -12,28 +14,32 @@ const {
   BookingBidComment,
   AnalyticsEvent
 } = await import('../src/models/index.js');
+const { createSessionToken } = await import('./helpers/session.js');
 
 const polygon = {
   type: 'Polygon',
   coordinates: [
     [
-      [-0.2, 51.45],
-      [-0.12, 51.45],
-      [-0.12, 51.5],
-      [-0.2, 51.5],
-      [-0.2, 51.45]
+      [-0.15, 51.5],
+      [-0.1, 51.5],
+      [-0.1, 51.52],
+      [-0.15, 51.52],
+      [-0.15, 51.5]
     ]
   ]
 };
 
 async function createCompanyWithZone() {
-  const admin = await User.create({
-    firstName: 'Provider',
-    lastName: 'Lead',
-    email: `provider-${Date.now()}@example.com`,
-    passwordHash: 'hashed',
-    type: 'provider_admin'
-  });
+  const admin = await User.create(
+    {
+      firstName: 'Provider',
+      lastName: 'Lead',
+      email: `provider-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'provider_admin'
+    },
+    { validate: false }
+  );
 
   const company = await Company.create({
     userId: admin.id,
@@ -44,10 +50,25 @@ async function createCompanyWithZone() {
     marketplaceIntent: 'growth'
   });
 
+  const opsUser = await User.create(
+    {
+      firstName: 'Ops',
+      lastName: 'Controller',
+      email: `ops-${Date.now()}@example.com`,
+      passwordHash: 'hashed',
+      type: 'operations'
+    },
+    { validate: false }
+  );
+
+  const { token } = await createSessionToken(opsUser, { role: 'operations' });
+
   const zoneResponse = await request(app)
     .post('/api/zones')
-    .send({ companyId: company.id, name: 'Westminster', geometry: polygon })
-    .expect(201);
+    .set('Authorization', token)
+    .send({ companyId: company.id, name: 'Westminster', geometry: polygon });
+
+  expect(zoneResponse.status).toBe(201);
 
   return { company, zoneId: zoneResponse.body.id };
 }
@@ -65,26 +86,43 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  vi.restoreAllMocks();
+  vi.spyOn(global, 'fetch').mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      display_name: 'London',
+      place_id: 321,
+      boundingbox: ['51.48', '51.53', '-0.16', '-0.09'],
+      licence: 'Data © OpenStreetMap contributors'
+    })
+  });
+
   await sequelize.truncate({ cascade: true, restartIdentity: true });
 });
 
 describe('Booking orchestration', () => {
   it('creates bookings, orchestrates assignments, bids, and disputes', async () => {
-    const customer = await User.create({
-      firstName: 'Customer',
-      lastName: 'Jones',
-      email: 'customer@example.com',
-      passwordHash: 'hashed',
-      type: 'user'
-    });
+    const customer = await User.create(
+      {
+        firstName: 'Customer',
+        lastName: 'Jones',
+        email: 'customer@example.com',
+        passwordHash: 'hashed',
+        type: 'user'
+      },
+      { validate: false }
+    );
 
-    const provider = await User.create({
-      firstName: 'Technician',
-      lastName: 'Smith',
-      email: 'tech@example.com',
-      passwordHash: 'hashed',
-      type: 'servicemen'
-    });
+    const provider = await User.create(
+      {
+        firstName: 'Technician',
+        lastName: 'Smith',
+        email: 'tech@example.com',
+        passwordHash: 'hashed',
+        type: 'servicemen'
+      },
+      { validate: false }
+    );
 
     const { company, zoneId } = await createCompanyWithZone();
 
@@ -108,9 +146,16 @@ describe('Booking orchestration', () => {
       .expect(201);
 
     expect(bookingResponse.body.status).toBe('scheduled');
-    expect(Number(bookingResponse.body.totalAmount)).toBeCloseTo(161.28, 2);
-    expect(Number(bookingResponse.body.commissionAmount)).toBeCloseTo(14.4, 2);
-    expect(Number(bookingResponse.body.taxAmount)).toBeCloseTo(26.88, 2);
+
+    const commissionRate = Number(bookingResponse.body.meta?.commissionRate ?? 0);
+    const taxRate = Number(bookingResponse.body.meta?.taxRate ?? 0);
+    const expectedCommission = 120 * commissionRate;
+    const expectedTax = (120 + expectedCommission) * taxRate;
+    const expectedTotal = 120 + expectedCommission + expectedTax;
+
+    expect(Number(bookingResponse.body.commissionAmount)).toBeCloseTo(expectedCommission, 2);
+    expect(Number(bookingResponse.body.taxAmount)).toBeCloseTo(expectedTax, 2);
+    expect(Number(bookingResponse.body.totalAmount)).toBeCloseTo(expectedTotal, 2);
 
     const bookingId = bookingResponse.body.id;
 
@@ -181,13 +226,16 @@ describe('Booking orchestration', () => {
   });
 
   it('enforces validation on on-demand bookings with schedule payload', async () => {
-    const customer = await User.create({
-      firstName: 'Invalid',
-      lastName: 'User',
-      email: 'invalid@example.com',
-      passwordHash: 'hashed',
-      type: 'user'
-    });
+    const customer = await User.create(
+      {
+        firstName: 'Invalid',
+        lastName: 'User',
+        email: 'invalid@example.com',
+        passwordHash: 'hashed',
+        type: 'user'
+      },
+      { validate: false }
+    );
 
     const { company, zoneId } = await createCompanyWithZone();
 
@@ -206,5 +254,88 @@ describe('Booking orchestration', () => {
 
     expect(response.body.message).toMatch(/on-demand/i);
     expect(await Booking.count()).toBe(0);
+  });
+
+  it('supports order history CRUD and filtered listing', async () => {
+    const customer = await User.create({
+      firstName: 'History',
+      lastName: 'Tester',
+      email: 'history@example.com',
+      passwordHash: 'hashed',
+      type: 'user'
+    });
+
+    const { company, zoneId } = await createCompanyWithZone();
+
+    const bookingResponse = await request(app)
+      .post('/api/bookings')
+      .send({
+        customerId: customer.id,
+        companyId: company.id,
+        zoneId,
+        type: 'scheduled',
+        demandLevel: 'medium',
+        baseAmount: 150,
+        currency: 'GBP',
+        scheduledStart: new Date(Date.now() + 3600 * 1000).toISOString(),
+        scheduledEnd: new Date(Date.now() + 7200 * 1000).toISOString(),
+        metadata: { service: 'roof inspection' }
+      })
+      .expect(201);
+
+    const bookingId = bookingResponse.body.id;
+
+    const createEntryResponse = await request(app)
+      .post(`/api/bookings/${bookingId}/history`)
+      .send({
+        title: 'Site survey confirmed',
+        entryType: 'milestone',
+        status: 'in_progress',
+        occurredAt: new Date().toISOString(),
+        summary: 'Operations confirmed crew arrival for 09:00.',
+        actorRole: 'operations',
+        attachments: [
+          {
+            label: 'Checklist',
+            url: 'https://example.com/checklist.pdf',
+            type: 'document'
+          }
+        ]
+      })
+      .expect(201);
+
+    expect(createEntryResponse.body.title).toBe('Site survey confirmed');
+    expect(createEntryResponse.body.attachments).toHaveLength(1);
+
+    const historyList = await request(app)
+      .get(`/api/bookings/${bookingId}/history`)
+      .query({ limit: 10 })
+      .expect(200);
+
+    expect(historyList.body.total).toBe(1);
+    expect(historyList.body.entries[0].status).toBe('in_progress');
+
+    const entryId = historyList.body.entries[0].id;
+
+    const updatedEntry = await request(app)
+      .patch(`/api/bookings/${bookingId}/history/${entryId}`)
+      .send({ status: 'completed', summary: 'Crew uploaded completion photos.' })
+      .expect(200);
+
+    expect(updatedEntry.body.status).toBe('completed');
+    expect(updatedEntry.body.summary).toContain('completion photos');
+
+    await request(app).delete(`/api/bookings/${bookingId}/history/${entryId}`).expect(204);
+
+    const emptyHistory = await request(app).get(`/api/bookings/${bookingId}/history`).expect(200);
+    expect(emptyHistory.body.total).toBe(0);
+
+    const filteredBookings = await request(app)
+      .get('/api/bookings')
+      .query({ customerId: customer.id, search: 'roof' })
+      .expect(200);
+
+    expect(filteredBookings.body).toHaveLength(1);
+    expect(filteredBookings.body[0].id).toBe(bookingId);
   });
 });

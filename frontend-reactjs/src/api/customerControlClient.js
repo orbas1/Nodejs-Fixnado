@@ -107,6 +107,8 @@ export async function deleteCustomerLocation(locationId, options = {}) {
 
 export function createCustomerDisputeCase(payload, options = {}) {
   return requestJson(`${API_BASE}/disputes`, {
+export function createCustomerCoupon(payload, options = {}) {
+  return requestJson(`${API_BASE}/coupons`, {
     method: 'POST',
     body: JSON.stringify(payload ?? {}),
     ...options
@@ -115,6 +117,8 @@ export function createCustomerDisputeCase(payload, options = {}) {
 
 export function updateCustomerDisputeCase(disputeCaseId, payload, options = {}) {
   return requestJson(`${API_BASE}/disputes/${disputeCaseId}`, {
+export function updateCustomerCoupon(couponId, payload, options = {}) {
+  return requestJson(`${API_BASE}/coupons/${couponId}`, {
     method: 'PUT',
     body: JSON.stringify(payload ?? {}),
     ...options
@@ -123,6 +127,8 @@ export function updateCustomerDisputeCase(disputeCaseId, payload, options = {}) 
 
 export async function deleteCustomerDisputeCase(disputeCaseId, options = {}) {
   const response = await fetch(`${API_BASE}/disputes/${disputeCaseId}`, {
+export async function deleteCustomerCoupon(couponId, options = {}) {
+  const response = await fetch(`${API_BASE}/coupons/${couponId}`, {
     method: 'DELETE',
     credentials: 'include',
     ...(options ?? {})
@@ -206,6 +212,7 @@ export async function deleteCustomerDisputeEvidence(disputeCaseId, evidenceId, o
     ...(options ?? {})
   });
   await ensureResponseOk(response, 'Failed to delete dispute evidence');
+  await ensureResponseOk(response, 'Failed to delete coupon');
   return true;
 }
 
@@ -230,4 +237,7 @@ export default {
   createCustomerDisputeEvidence,
   updateCustomerDisputeEvidence,
   deleteCustomerDisputeEvidence
+  createCustomerCoupon,
+  updateCustomerCoupon,
+  deleteCustomerCoupon
 };

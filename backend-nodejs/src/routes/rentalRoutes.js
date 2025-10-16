@@ -8,8 +8,10 @@ import {
   getRental,
   listRentals,
   markReturned,
+  startRentalDispute,
   requestRental,
-  schedulePickup
+  schedulePickup,
+  updateRentalDeposit
 } from '../controllers/rentalController.js';
 
 const router = Router();
@@ -22,6 +24,8 @@ router.post('/:rentalId/schedule-pickup', schedulePickup);
 router.post('/:rentalId/checkout', checkoutRental);
 router.post('/:rentalId/return', markReturned);
 router.post('/:rentalId/inspection', completeInspection);
+router.post('/:rentalId/deposit', updateRentalDeposit);
+router.post('/:rentalId/dispute', startRentalDispute);
 router.post('/:rentalId/cancel', cancelRental);
 router.post('/:rentalId/checkpoints', addRentalCheckpoint);
 

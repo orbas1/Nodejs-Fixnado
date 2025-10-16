@@ -2,11 +2,13 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getUserProfileSettings } from './userProfileService.js';
 import {
   AdCampaign,
   Booking,
   BookingAssignment,
   BookingBid,
+  BookingHistoryEntry,
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignFlight,
@@ -23,12 +25,52 @@ import {
   Service,
   User
 } from '../models/index.js';
+import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
+import { getWalletOverview } from './walletService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
 const UPCOMING_LIMIT = Math.max(config.dashboards?.upcomingLimit ?? 8, 3);
 const EXPORT_ROW_LIMIT = Math.max(config.dashboards?.exportRowLimit ?? 5000, 500);
 const PERSONA_DEFAULTS = Object.freeze(config.dashboards?.defaults ?? {});
+const ORDER_HISTORY_ENTRY_TYPES = Object.freeze([
+  { value: 'note', label: 'Note' },
+  { value: 'status_update', label: 'Status update' },
+  { value: 'milestone', label: 'Milestone' },
+  { value: 'handoff', label: 'Handoff' },
+  { value: 'document', label: 'Document' }
+]);
+const ORDER_HISTORY_ACTOR_ROLES = Object.freeze([
+  { value: 'customer', label: 'Customer' },
+  { value: 'provider', label: 'Provider' },
+  { value: 'operations', label: 'Operations' },
+  { value: 'support', label: 'Support' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'system', label: 'System' }
+]);
+const ORDER_HISTORY_ATTACHMENT_TYPES = Object.freeze(['image', 'document', 'link']);
+const ORDER_HISTORY_TIMELINE_LIMIT = Math.max(config.dashboards?.historyTimelineLimit ?? 50, 10);
+const ORDER_HISTORY_ACCESS = Object.freeze({
+  level: 'manage',
+  features: ['order-history:write', 'history:write']
+});
+
+const toIsoString = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  try {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  } catch (error) {
+    return null;
+  }
+};
 
 const CURRENCY_FORMATTER = (currency = 'GBP', locale = 'en-GB') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -355,7 +397,8 @@ async function loadUserData(context) {
     previousOrders,
     rentals,
     disputes,
-    conversations
+    conversations,
+    walletOverview
   ] = await Promise.all([
     userId ? User.findByPk(userId, { attributes: ['id', 'firstName', 'lastName', 'email', 'twoFactorEmail', 'twoFactorApp'] }) : null,
     Booking.findAll({ where: bookingWhere }),
@@ -395,8 +438,51 @@ async function loadUserData(context) {
         }
       ]
     }),
-    ConversationParticipant.findAll({ where: conversationWhere })
+    ConversationParticipant.findAll({ where: conversationWhere }),
+    getWalletOverview({ userId, companyId })
   ]);
+
+  const inventoryExtras = companyId
+    ? await InventoryItem.findAll({
+        where: { companyId },
+        order: [['updatedAt', 'DESC']],
+        limit: 24
+      })
+    : [];
+
+  const normaliseDate = (value) => {
+    if (!value) {
+      return null;
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  };
+  let profileSettings = null;
+  if (userId) {
+    try {
+      profileSettings = await getUserProfileSettings(userId);
+    } catch (error) {
+      console.warn('Failed to load profile settings for user dashboard', {
+        userId,
+        message: error.message
+      });
+    }
+  const bookingIds = bookings.map((booking) => booking.id);
+  let historyEntries = [];
+
+  if (bookingIds.length > 0) {
+    historyEntries = await BookingHistoryEntry.findAll({
+      where: { bookingId: { [Op.in]: bookingIds } },
+      order: [
+        ['occurredAt', 'DESC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: ORDER_HISTORY_TIMELINE_LIMIT
+    });
+  }
 
   const totalBookings = bookings.length;
   const previousTotalBookings = previousBookings.length;
@@ -564,24 +650,133 @@ async function loadUserData(context) {
                 .setZone(window.timezone)
                 .toRelative({ base: window.end })
             : 'Schedule pending';
+        const ownerLabel =
+          order.metadata?.siteAddress ||
+          order.metadata?.contactName ||
+          order.Service?.category ||
+          'Service order';
+        const priorityLabel =
+          order.priority && order.priority !== 'medium'
+            ? `Priority: ${order.priority.replace(/_/g, ' ')}`
+            : null;
         return {
-          title: order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
-          owner: order.Service?.category || 'Service order',
+          title: order.title || order.Service?.title || `Order ${order.id.slice(0, 6).toUpperCase()}`,
+          owner: priorityLabel ? `${ownerLabel} • ${priorityLabel}` : ownerLabel,
           value: formatCurrency(order.totalAmount, order.currency || order.Service?.currency || 'GBP'),
           eta: etaLabel
         };
       })
   }));
 
-  const rentalRows = rentals.slice(0, EXPORT_ROW_LIMIT).map((rental) => [
-    rental.rentalNumber,
-    rental.InventoryItem?.name ?? 'Asset',
-    humanise(rental.status),
-    rental.returnDueAt
-      ? DateTime.fromJSDate(rental.returnDueAt).setZone(window.timezone).toISODate()
-      : '—',
-    humanise(rental.depositStatus)
-  ]);
+  const depositStatusCounts = rentals.reduce(
+    (acc, rental) => {
+      const key = rental.depositStatus || 'unknown';
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    },
+    { pending: 0, held: 0, released: 0, forfeited: 0, partially_released: 0, unknown: 0 }
+  );
+
+  const depositAmountTotals = rentals.reduce(
+    (acc, rental) => {
+      const amount = Number.parseFloat(rental.depositAmount ?? NaN);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return acc;
+      }
+      const key = rental.depositStatus || 'pending';
+      acc[key] = (acc[key] ?? 0) + amount;
+      acc.total += amount;
+      return acc;
+    },
+    { total: 0, pending: 0, held: 0, released: 0, forfeited: 0, partially_released: 0 }
+  );
+
+  const rentalsAtRisk = rentals.filter((rental) => ['disputed', 'inspection_pending'].includes(rental.status));
+
+  const rentalSummaries = rentals.slice(0, 50).map((rental) => ({
+    id: rental.id,
+    rentalNumber: rental.rentalNumber,
+    status: rental.status,
+    depositStatus: rental.depositStatus,
+    quantity: rental.quantity,
+    renterId: rental.renterId,
+    companyId: rental.companyId,
+    bookingId: rental.bookingId,
+    pickupAt: normaliseDate(rental.pickupAt),
+    returnDueAt: normaliseDate(rental.returnDueAt),
+    rentalStartAt: normaliseDate(rental.rentalStartAt),
+    rentalEndAt: normaliseDate(rental.rentalEndAt),
+    lastStatusTransitionAt: normaliseDate(rental.lastStatusTransitionAt),
+    depositAmount: rental.depositAmount != null ? Number.parseFloat(rental.depositAmount) : null,
+    depositCurrency: rental.depositCurrency || null,
+    dailyRate: rental.dailyRate != null ? Number.parseFloat(rental.dailyRate) : null,
+    rateCurrency: rental.rateCurrency || null,
+    conditionOut: rental.conditionOut ?? {},
+    conditionIn: rental.conditionIn ?? {},
+    meta: rental.meta ?? {},
+    item: rental.InventoryItem
+      ? {
+          id: rental.InventoryItem.id,
+          name: rental.InventoryItem.name,
+          sku: rental.InventoryItem.sku || null,
+          rentalRate: rental.InventoryItem.rentalRate != null ? Number.parseFloat(rental.InventoryItem.rentalRate) : null,
+          rentalRateCurrency: rental.InventoryItem.rentalRateCurrency || null,
+          depositAmount:
+            rental.InventoryItem.depositAmount != null ? Number.parseFloat(rental.InventoryItem.depositAmount) : null,
+          depositCurrency: rental.InventoryItem.depositCurrency || null
+        }
+      : null,
+    booking: rental.Booking
+      ? {
+          id: rental.Booking.id,
+          status: rental.Booking.status,
+          reference: rental.Booking.meta?.reference || null,
+          title: rental.Booking.meta?.title || null
+        }
+      : null,
+    timeline: Array.isArray(rental.RentalCheckpoints)
+      ? rental.RentalCheckpoints.map((checkpoint) => ({
+          id: checkpoint.id,
+          type: checkpoint.type,
+          description: checkpoint.description,
+          recordedBy: checkpoint.recordedBy,
+          recordedByRole: checkpoint.recordedByRole,
+          occurredAt: normaliseDate(checkpoint.occurredAt),
+          payload: checkpoint.payload ?? {}
+        }))
+      : []
+  }));
+
+  const inventoryCatalogueMap = new Map();
+  rentals.forEach((rental) => {
+    if (rental.InventoryItem) {
+      const plain = rental.InventoryItem.get ? rental.InventoryItem.get({ plain: true }) : rental.InventoryItem;
+      inventoryCatalogueMap.set(plain.id, plain);
+    }
+  });
+  inventoryExtras.forEach((item) => {
+    const plain = item.get ? item.get({ plain: true }) : item;
+    inventoryCatalogueMap.set(plain.id, plain);
+  });
+
+  const inventoryCatalogue = Array.from(inventoryCatalogueMap.values()).slice(0, 40).map((item) => ({
+    id: item.id,
+    name: item.name,
+    sku: item.sku || null,
+    category: item.category || null,
+    rentalRate: item.rentalRate != null ? Number.parseFloat(item.rentalRate) : null,
+    rentalRateCurrency: item.rentalRateCurrency || null,
+    depositAmount: item.depositAmount != null ? Number.parseFloat(item.depositAmount) : null,
+    depositCurrency: item.depositCurrency || null,
+    quantityOnHand: item.quantityOnHand ?? null,
+    quantityReserved: item.quantityReserved ?? null,
+    safetyStock: item.safetyStock ?? null,
+    metadata: item.metadata ?? {},
+    imageUrl: item.metadata?.imageUrl || null,
+    description: item.metadata?.description || null,
+    availability: inventoryAvailable(item),
+    status: inventoryStatus(item)
+  }));
 
   const accountItems = [];
 
@@ -662,6 +857,110 @@ async function loadUserData(context) {
     ]
   };
 
+  const completedBookingsCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const escalatedBookings = bookings.filter((booking) => ['disputed', 'cancelled'].includes(booking.status)).length;
+  const latestHistoryTransition = bookings.reduce((latest, booking) => {
+    if (booking.lastStatusTransitionAt instanceof Date && !Number.isNaN(booking.lastStatusTransitionAt.getTime())) {
+      return latest && latest > booking.lastStatusTransitionAt ? latest : booking.lastStatusTransitionAt;
+    }
+    return latest;
+  }, null);
+  const latestTimelineUpdate = historyEntries.reduce((latest, entry) => {
+    const candidate = entry.occurredAt instanceof Date ? entry.occurredAt : entry.createdAt;
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return latest && latest > candidate ? latest : candidate;
+    }
+    return latest;
+  }, null);
+  const latestHistory = [latestHistoryTransition, latestTimelineUpdate].reduce((resolved, candidate) => {
+    if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+      return resolved && resolved > candidate ? resolved : candidate;
+    }
+    return resolved;
+  }, null);
+  const lastUpdatedLabel = latestHistory
+    ? DateTime.fromJSDate(latestHistory).setZone(window.timezone).toRelative({ base: window.end })
+    : '—';
+
+  const historySidebar = {
+    badge: `${formatNumber(totalBookings)} records`,
+    status:
+      escalatedBookings > 0
+        ? { label: `${formatNumber(escalatedBookings)} escalated`, tone: 'danger' }
+        : { label: 'No escalations', tone: 'success' },
+    highlights: [
+      { label: 'Completed', value: formatNumber(completedBookingsCount) },
+      { label: 'In flight', value: formatNumber(totalBookings - completedBookingsCount) }
+    ],
+    meta: [{ label: 'Last update', value: lastUpdatedLabel || '—' }]
+  };
+
+  const orderSummaries = bookings
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, EXPORT_ROW_LIMIT)
+    .map((order) => ({
+      id: order.id,
+      reference: order.id.slice(0, 8).toUpperCase(),
+      status: order.status,
+      serviceTitle: order.meta?.service || order.meta?.title || 'Service order',
+      serviceCategory: order.meta?.category || null,
+      totalAmount: Number.parseFloat(order.totalAmount ?? 0) || 0,
+      currency: order.currency || 'GBP',
+      scheduledFor: order.scheduledStart instanceof Date
+        ? DateTime.fromJSDate(order.scheduledStart).setZone(window.timezone).toISO()
+        : null,
+      createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : null,
+      updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : null,
+      lastStatusTransitionAt:
+        order.lastStatusTransitionAt instanceof Date ? order.lastStatusTransitionAt.toISOString() : null,
+      zoneId: order.zoneId || null,
+      companyId: order.companyId || null,
+      meta: order.meta || {}
+    }));
+
+  const statusOptions = Array.from(new Set(orderSummaries.map((order) => order.status).filter(Boolean))).map(
+    (status) => ({ value: status, label: humanise(status) })
+  );
+
+  if (!statusOptions.some((option) => option.value === 'all')) {
+    statusOptions.unshift({ value: 'all', label: 'All statuses' });
+  }
+
+  const historyEntriesPayload = historyEntries.map((entry) => ({
+    id: entry.id,
+    bookingId: entry.bookingId,
+    title: entry.title,
+    entryType: entry.entryType,
+    status: entry.status,
+    summary: entry.summary,
+    actorRole: entry.actorRole,
+    actorId: entry.actorId,
+    occurredAt: toIsoString(entry.occurredAt),
+    createdAt: toIsoString(entry.createdAt),
+    updatedAt: toIsoString(entry.updatedAt),
+    attachments: Array.isArray(entry.attachments) ? entry.attachments : [],
+    meta:
+      entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta)
+        ? entry.meta
+        : {}
+  }));
+
+  const historyData = {
+    statusOptions,
+    entryTypes: ORDER_HISTORY_ENTRY_TYPES,
+    actorRoles: ORDER_HISTORY_ACTOR_ROLES,
+    defaultFilters: { status: 'all', sort: 'desc', limit: 25 },
+    attachments: { acceptedTypes: ORDER_HISTORY_ATTACHMENT_TYPES, maxPerEntry: 6 },
+    context: {
+      customerId: userId ?? null,
+      companyId: companyId ?? null
+    },
+    orders: orderSummaries,
+    entries: historyEntriesPayload,
+    access: ORDER_HISTORY_ACCESS
+  };
+
   const rentalsSidebar = {
     badge: `${formatNumber(rentals.length)} rentals`,
     status:
@@ -689,14 +988,115 @@ async function loadUserData(context) {
   };
 
   const mfaEnabled = Boolean(user?.twoFactorApp || user?.twoFactorEmail);
+  const profilePrefs = profileSettings?.profile ?? {};
+  const notificationsPrefs = profileSettings?.notifications ?? {
+    dispatch: { email: true, sms: false },
+    support: { email: true, sms: false },
+    weeklySummary: { email: true },
+    concierge: { email: true, sms: false },
+    quietHours: { enabled: false, start: null, end: null, timezone: timezoneLabel },
+    escalationContacts: []
+  };
+  const billingPrefs = profileSettings?.billing ?? {
+    preferredCurrency: currency,
+    defaultPaymentMethod: null,
+    paymentNotes: null,
+    invoiceRecipients: []
+  };
+  const securityPrefs = profileSettings?.security?.twoFactor ?? {
+    app: Boolean(user?.twoFactorApp),
+    email: Boolean(user?.twoFactorEmail),
+    methods: [],
+    lastUpdated: null
+  };
+
+  const timezonePreference = profilePrefs.timezone ?? timezoneLabel;
+  const preferredCurrency = billingPrefs.preferredCurrency ?? currency;
+  const quietHours = notificationsPrefs.quietHours ?? {
+    enabled: false,
+    start: null,
+    end: null,
+    timezone: timezonePreference
+  };
+  const quietHoursLabel = quietHours.enabled
+    ? `${quietHours.start ?? '--:--'} – ${quietHours.end ?? '--:--'} ${quietHours.timezone ?? timezonePreference}`
+    : 'Disabled';
+  const escalationCount = Array.isArray(notificationsPrefs.escalationContacts)
+    ? notificationsPrefs.escalationContacts.length
+    : 0;
+  const invoiceRecipientCount = Array.isArray(billingPrefs.invoiceRecipients)
+    ? billingPrefs.invoiceRecipients.length
+    : 0;
+
   const settingsSidebar = {
-    badge: mfaEnabled ? 'MFA secured' : 'Security review',
+    badge: profilePrefs.preferredName
+      ? `${profilePrefs.preferredName}`
+      : mfaEnabled
+        ? 'MFA secured'
+        : 'Security review',
     status: mfaEnabled ? { label: 'MFA enabled', tone: 'success' } : { label: 'Enable MFA', tone: 'warning' },
     highlights: [
-      { label: 'Timezone', value: timezoneLabel },
-      { label: 'Currency', value: currency }
+      { label: 'Timezone', value: timezonePreference },
+      { label: 'Currency', value: preferredCurrency }
     ]
   };
+
+  const displayName = (() => {
+    if (profilePrefs.firstName || profilePrefs.lastName) {
+      return `${profilePrefs.firstName ?? ''} ${profilePrefs.lastName ?? ''}`.trim();
+    }
+    return user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
+  })();
+  const walletCurrency = walletOverview?.account?.currency || currency;
+  const walletSummary = walletOverview?.summary;
+  const walletSidebar = walletOverview
+    ? {
+        badge: formatCurrency(walletSummary?.balance ?? 0, walletCurrency),
+        status:
+          walletSummary?.pending && walletSummary.pending > 0
+            ? {
+                label: `${formatCurrency(walletSummary.pending, walletCurrency)} held`,
+                tone: 'warning'
+              }
+            : { label: 'Ready for release', tone: 'success' },
+        highlights: [
+          {
+            label: 'Available',
+            value: formatCurrency(
+              walletSummary?.available ?? walletSummary?.balance ?? 0,
+              walletCurrency
+            )
+          },
+          { label: 'Methods', value: formatNumber(walletOverview?.methods?.length ?? 0) }
+        ]
+      }
+    : null;
+
+  const walletSection = walletOverview
+    ? {
+        id: 'wallet',
+        label: 'Wallet & Payments',
+        description: 'Manage wallet balance, autopayouts, and funding routes.',
+        type: 'wallet',
+        sidebar: walletSidebar,
+        data: {
+          account: walletOverview.account,
+          accountId: walletOverview.account?.id ?? null,
+          summary: walletSummary,
+          autopayout: walletOverview.autopayout,
+          methods: walletOverview.methods,
+          user: walletOverview.user,
+          company: walletOverview.company,
+          currency: walletCurrency,
+          policy: {
+            canManage: true,
+            canTransact:
+              walletOverview.account?.status !== 'suspended' && walletOverview.account?.status !== 'closed',
+            canEditMethods: true
+          }
+        }
+      }
+    : null;
 
   const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Fixnado user' : 'Fixnado user';
   const workspaceAlignment = companyId ? 'Linked to company workspace' : 'Standalone workspace';
@@ -715,8 +1115,14 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Preferred name',
+          value: profilePrefs.preferredName ?? 'Not set',
+          helper: 'Used on dashboards, receipts, and shared documents.'
+        },
+        {
+          type: 'value',
           label: 'Contact email',
-          value: user?.email ?? 'Not provided',
+          value: profilePrefs.email ?? user?.email ?? 'Not provided',
           helper: 'Primary channel for booking updates and notifications.'
         },
         {
@@ -729,8 +1135,20 @@ async function loadUserData(context) {
         },
         {
           type: 'value',
+          label: 'Phone number',
+          value: profilePrefs.phoneNumber ?? 'Not provided',
+          helper: 'SMS alerts and concierge outreach use this number.'
+        },
+        {
+          type: 'value',
+          label: 'Language',
+          value: profilePrefs.language ?? 'en-GB',
+          helper: 'Applied to notifications and scheduling copy.'
+        },
+        {
+          type: 'value',
           label: 'Local timezone',
-          value: timezoneLabel,
+          value: timezonePreference,
           helper: 'Applied to scheduling, reminders, and exports.'
         }
       ]
@@ -743,18 +1161,29 @@ async function loadUserData(context) {
         {
           type: 'toggle',
           label: 'Authenticator app 2FA',
-          enabled: Boolean(user?.twoFactorApp),
-          helper: user?.twoFactorApp
+          enabled: Boolean(securityPrefs.app),
+          helper: securityPrefs.app
             ? 'Time-based one-time passcodes are required on sign-in.'
             : 'Add an authenticator app to secure sign-ins.'
         },
         {
           type: 'toggle',
           label: 'Email verification codes',
-          enabled: Boolean(user?.twoFactorEmail),
-          helper: user?.twoFactorEmail
+          enabled: Boolean(securityPrefs.email),
+          helper: securityPrefs.email
             ? 'Backup verification codes are delivered to your inbox.'
             : 'Enable email codes as a fallback second factor.'
+        },
+        {
+          type: 'value',
+          label: 'Registered methods',
+          value:
+            securityPrefs.methods && securityPrefs.methods.length > 0
+              ? securityPrefs.methods.join(', ')
+              : 'No secondary methods saved',
+          helper: securityPrefs.lastUpdated
+            ? `Last security review ${DateTime.fromISO(securityPrefs.lastUpdated).toRelative?.() ?? ''}`
+            : 'Record MFA methods to keep access recovery options ready.'
         },
         {
           type: 'value',
@@ -773,28 +1202,35 @@ async function loadUserData(context) {
       items: [
         {
           type: 'toggle',
-          label: 'Support case updates',
-          enabled: supportConversations > 0,
-          helper: supportConversations > 0
-            ? 'Email alerts active for current support cases.'
-            : 'Alerts activate automatically when a case opens.'
+          label: 'Dispatch email alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.email),
+          helper: 'Emails send whenever a crew assignment or ETA changes.'
         },
         {
           type: 'toggle',
-          label: 'Job dispatch alerts',
-          enabled: activeBookings.length > 0,
-          helper:
-            activeBookings.length > 0
-              ? `${formatNumber(activeBookings.length)} active job${activeBookings.length === 1 ? '' : 's'} will send dispatch nudges.`
-              : 'Dispatch alerts enable once you have active jobs.'
+          label: 'Dispatch SMS alerts',
+          enabled: Boolean(notificationsPrefs.dispatch?.sms),
+          helper: 'SMS nudges mirror urgent dispatch or SLA changes.'
+        },
+        {
+          type: 'toggle',
+          label: 'Support email updates',
+          enabled: Boolean(notificationsPrefs.support?.email),
+          helper: 'Escalations and concierge follow-ups trigger email updates.'
         },
         {
           type: 'value',
-          label: 'Weekly summary',
-          value: totalOrders > 0 ? 'Scheduled' : 'Paused',
-          helper: totalOrders > 0
-            ? 'A weekly health report will arrive each Monday.'
-            : 'Resume once new orders are captured.'
+          label: 'Quiet hours',
+          value: quietHoursLabel,
+          helper: quietHours.enabled
+            ? 'Notifications pause during these hours across channels.'
+            : 'No quiet hours configured.'
+        },
+        {
+          type: 'value',
+          label: 'Escalation contacts',
+          value: `${escalationCount} contact${escalationCount === 1 ? '' : 's'}`,
+          helper: 'Escalation contacts mirror urgent disputes or incidents.'
         }
       ]
     },
@@ -806,16 +1242,20 @@ async function loadUserData(context) {
         {
           type: 'value',
           label: 'Preferred currency',
-          value: currency,
+          value: preferredCurrency,
           helper: 'All new orders default to this currency.'
         },
         {
           type: 'value',
-          label: 'Funded escrows',
-          value: formatNumber(escrowFunded),
-          helper: escrowFunded > 0
-            ? 'Escrows release once jobs complete and pass inspection.'
-            : 'Fund an order to initialise automated escrow releases.'
+          label: 'Default payment method',
+          value: billingPrefs.defaultPaymentMethod ?? 'Not set',
+          helper: 'Shown to finance teams when approving releases.'
+        },
+        {
+          type: 'value',
+          label: 'Invoice recipients',
+          value: `${invoiceRecipientCount} contact${invoiceRecipientCount === 1 ? '' : 's'}`,
+          helper: 'Contacts copied into every invoice and billing summary.'
         },
         {
           type: 'value',
@@ -874,16 +1314,81 @@ async function loadUserData(context) {
         data: { columns: orderBoardColumns }
       },
       {
+        id: 'history',
+        label: 'Order History',
+        description: 'Detailed audit trail for every service order.',
+        type: 'history',
+        access: ORDER_HISTORY_ACCESS,
+        sidebar: historySidebar,
+        data: historyData
+      },
+      {
         id: 'rentals',
         label: 'Rental Assets',
         description: 'Track equipment associated with your jobs.',
-        type: 'table',
+        type: 'rentals',
         sidebar: rentalsSidebar,
         data: {
-          headers: ['Rental', 'Asset', 'Status', 'Return Due', 'Deposit'],
-          rows: rentalRows
+          metrics: [
+            { id: 'active', label: 'Active rentals', value: rentalsInUse },
+            { id: 'dueSoon', label: 'Due within 72h', value: rentalsDueSoon },
+            { id: 'held', label: 'Deposits held', value: depositStatusCounts.held ?? 0 },
+            {
+              id: 'released',
+              label: 'Deposits released',
+              value: (depositStatusCounts.released ?? 0) + (depositStatusCounts.partially_released ?? 0)
+            },
+            { id: 'atRisk', label: 'Disputes or inspections', value: rentalsAtRisk.length }
+          ],
+          rentals: rentalSummaries,
+          inventoryCatalogue,
+          endpoints: {
+            list: '/api/rentals',
+            request: '/api/rentals',
+            approve: '/api/rentals/:rentalId/approve',
+            schedulePickup: '/api/rentals/:rentalId/schedule-pickup',
+            checkout: '/api/rentals/:rentalId/checkout',
+            markReturned: '/api/rentals/:rentalId/return',
+            inspection: '/api/rentals/:rentalId/inspection',
+            cancel: '/api/rentals/:rentalId/cancel',
+            checkpoint: '/api/rentals/:rentalId/checkpoints',
+            deposit: '/api/rentals/:rentalId/deposit',
+            dispute: '/api/rentals/:rentalId/dispute'
+          },
+          escrow: {
+            totals: depositAmountTotals,
+            currency,
+            ledgerEndpoint: '/api/rentals/:rentalId/deposit'
+          },
+          defaults: {
+            renterId: userId ?? null,
+            companyId: companyId ?? null,
+            timezone: window.timezone,
+            currency
+          },
+          statusOptions: {
+            rental: [
+              { value: 'requested', label: 'Requested' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'pickup_scheduled', label: 'Pickup scheduled' },
+              { value: 'in_use', label: 'In use' },
+              { value: 'return_pending', label: 'Return pending' },
+              { value: 'inspection_pending', label: 'Inspection pending' },
+              { value: 'settled', label: 'Settled' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'disputed', label: 'Disputed' }
+            ],
+            deposit: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'held', label: 'Held' },
+              { value: 'released', label: 'Released' },
+              { value: 'partially_released', label: 'Partially released' },
+              { value: 'forfeited', label: 'Forfeited' }
+            ]
+          }
         }
       },
+      ...(walletSection ? [walletSection] : []),
       {
         id: 'account',
         label: 'Account & Support',
@@ -1086,6 +1591,8 @@ async function loadAdminData(context) {
     `Campaign ROI ${campaignRevenue && campaignSpend ? formatPercent(campaignRevenue, campaignSpend) : '0.0%'} across ${campaignMetrics.length} metric days`
   ];
 
+  const websiteSnapshot = await getWebsiteManagementSnapshot();
+
   const overview = {
     metrics: [
       computeTrend(totalBookings, previousTotal, formatNumber, ''),
@@ -1191,6 +1698,88 @@ async function loadAdminData(context) {
             }
           ]
         }
+      },
+      {
+        id: 'home-builder',
+        label: 'Home Page Builder',
+        description: 'Launch the modular home page workspace to design, publish, and manage components.',
+        type: 'link',
+        href: '/admin/home-builder'
+        id: 'website-management',
+        label: 'Website management',
+        description: 'Govern marketing pages, content blocks, and navigation coverage.',
+        type: 'settings',
+        data: {
+          panels: [
+            {
+              id: 'pages-summary',
+              title: 'Marketing pages',
+              description: 'Lifecycle of enterprise marketing experiences.',
+              status: `${websiteSnapshot.pages.published} published`,
+              items: [
+                { id: 'pages-total', label: 'Total pages', value: websiteSnapshot.pages.total },
+                { id: 'pages-draft', label: 'Draft', value: websiteSnapshot.pages.draft },
+                { id: 'pages-preview', label: 'Preview', value: websiteSnapshot.pages.preview },
+                { id: 'pages-role-gated', label: 'Role gated', value: websiteSnapshot.pages.roleGated },
+                {
+                  id: 'pages-last-published',
+                  label: 'Last publish',
+                  value:
+                    websiteSnapshot.pages.lastPublishedAt
+                      ? DateTime.fromISO(websiteSnapshot.pages.lastPublishedAt)
+                          .setZone(window.timezone)
+                          .toLocaleString(DateTime.DATETIME_MED)
+                      : 'No published pages yet'
+                }
+              ]
+            },
+            {
+              id: 'blocks-summary',
+              title: 'Content blocks',
+              description: 'Reusable hero, feature, and CTA components.',
+              items: [
+                { id: 'blocks-total', label: 'Total blocks', value: websiteSnapshot.blocks.total },
+                { id: 'blocks-visible', label: 'Visible blocks', value: websiteSnapshot.blocks.visible }
+              ]
+            },
+            {
+              id: 'navigation-summary',
+              title: 'Navigation menus',
+              description: 'Surface coverage for menus and external links.',
+              items: [
+                { id: 'menus-total', label: 'Menus', value: websiteSnapshot.navigation.menus },
+                { id: 'menus-primary', label: 'Primary menus', value: websiteSnapshot.navigation.primaryMenus },
+                { id: 'nav-items', label: 'Navigation items', value: websiteSnapshot.navigation.items },
+                { id: 'nav-nested', label: 'Nested items', value: websiteSnapshot.navigation.nestedItems },
+                {
+                  id: 'nav-external',
+                  label: 'External links',
+                  value: websiteSnapshot.navigation.externalLinks,
+                  helper: 'Links that leave Fixnado surfaces'
+                },
+                {
+                  id: 'nav-restricted',
+                  label: 'Restricted items',
+                  value: websiteSnapshot.navigation.restrictedItems,
+                  helper: 'Role-gated navigation entries'
+                },
+                {
+                  id: 'website-editor-link',
+                  label: 'Launch website manager',
+                  type: 'action',
+                  href: '/admin/website-management',
+                  cta: 'Open manager'
+                }
+              ]
+            }
+          ]
+        }
+        id: 'tags-seo',
+        label: 'Tags & SEO',
+        description: 'Manage metadata defaults, indexing controls, and tag governance.',
+        type: 'route',
+        icon: 'seo',
+        route: '/admin/seo'
       }
     ]
   };

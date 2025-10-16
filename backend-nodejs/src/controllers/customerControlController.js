@@ -20,6 +20,9 @@ import {
   createCustomerDisputeEvidenceRecord,
   updateCustomerDisputeEvidenceRecord,
   deleteCustomerDisputeEvidenceRecord
+  createCustomerCouponRecord,
+  updateCustomerCouponRecord,
+  deleteCustomerCouponRecord
 } from '../services/customerControlService.js';
 import {
   CustomerDisputeTask,
@@ -57,6 +60,19 @@ const LOCATION_FIELDS = [
   'region',
   'postalCode',
   'country',
+  'zoneLabel',
+  'zoneCode',
+  'serviceCatalogues',
+  'onsiteContactName',
+  'onsiteContactPhone',
+  'onsiteContactEmail',
+  'accessWindowStart',
+  'accessWindowEnd',
+  'parkingInformation',
+  'loadingDockDetails',
+  'securityNotes',
+  'floorLevel',
+  'mapImageUrl',
   'accessNotes',
   'isPrimary'
 ];
@@ -94,6 +110,25 @@ const CASE_CATEGORY_VALUES = ['billing', 'service_quality', 'damage', 'timeline'
 const TASK_STATUS_VALUES = ['pending', 'in_progress', 'completed', 'cancelled'];
 const NOTE_TYPE_VALUES = ['update', 'call', 'decision', 'escalation', 'reminder', 'other'];
 const NOTE_VISIBILITY_VALUES = ['customer', 'internal', 'provider', 'finance', 'compliance'];
+
+const COUPON_FIELDS = [
+  'name',
+  'code',
+  'description',
+  'discountType',
+  'discountValue',
+  'currency',
+  'minOrderTotal',
+  'startsAt',
+  'expiresAt',
+  'maxRedemptions',
+  'maxRedemptionsPerCustomer',
+  'autoApply',
+  'status',
+  'imageUrl',
+  'termsUrl',
+  'internalNotes'
+];
 
 function extractPayload(source, fields) {
   const payload = {};
@@ -372,6 +407,83 @@ function sanitiseDisputeNoteInput(body) {
     } else {
       delete payload.pinned;
     }
+function sanitiseCouponInput(body) {
+  const payload = extractPayload(body, COUPON_FIELDS);
+
+  if (Object.hasOwn(payload, 'name')) {
+    payload.name = `${payload.name ?? ''}`.trim();
+  }
+
+  if (Object.hasOwn(payload, 'code')) {
+    payload.code = `${payload.code ?? ''}`.replace(/\s+/g, '').toUpperCase();
+  }
+
+  const trimStringField = (field) => {
+    if (Object.hasOwn(payload, field)) {
+      const value = `${payload[field] ?? ''}`.trim();
+      payload[field] = value.length ? value : null;
+    }
+  };
+
+  ['description', 'imageUrl', 'termsUrl', 'internalNotes'].forEach(trimStringField);
+
+  if (Object.hasOwn(payload, 'currency')) {
+    const value = `${payload.currency ?? ''}`.trim().toUpperCase();
+    payload.currency = value.length ? value : null;
+  }
+
+  const parseDecimal = (value) => {
+    const numeric = Number.parseFloat(`${value ?? ''}`);
+    return Number.isFinite(numeric) ? numeric : null;
+  };
+
+  const parseInteger = (value) => {
+    const numeric = Number.parseInt(`${value ?? ''}`, 10);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+  };
+
+  if (Object.hasOwn(payload, 'discountValue')) {
+    payload.discountValue = parseDecimal(payload.discountValue);
+  }
+
+  if (Object.hasOwn(payload, 'minOrderTotal')) {
+    payload.minOrderTotal = parseDecimal(payload.minOrderTotal);
+  }
+
+  if (Object.hasOwn(payload, 'maxRedemptions')) {
+    payload.maxRedemptions = parseInteger(payload.maxRedemptions);
+  }
+
+  if (Object.hasOwn(payload, 'maxRedemptionsPerCustomer')) {
+    payload.maxRedemptionsPerCustomer = parseInteger(payload.maxRedemptionsPerCustomer);
+  }
+
+  if (Object.hasOwn(payload, 'autoApply')) {
+    const normalised = normaliseBoolean(payload.autoApply);
+    if (typeof normalised === 'boolean') {
+      payload.autoApply = normalised;
+    }
+  }
+
+  if (Object.hasOwn(payload, 'status')) {
+    const value = `${payload.status ?? ''}`.trim().toLowerCase();
+    payload.status = value.length ? value : null;
+  }
+
+  const parseDateValue = (value) => {
+    if (!value) {
+      return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  if (Object.hasOwn(payload, 'startsAt')) {
+    payload.startsAt = parseDateValue(payload.startsAt);
+  }
+
+  if (Object.hasOwn(payload, 'expiresAt')) {
+    payload.expiresAt = parseDateValue(payload.expiresAt);
   }
 
   return payload;
@@ -472,6 +584,19 @@ function serialiseLocation(location) {
     region: payload.region ?? '',
     postalCode: payload.postalCode ?? '',
     country: payload.country ?? '',
+    zoneLabel: payload.zoneLabel ?? '',
+    zoneCode: payload.zoneCode ?? '',
+    serviceCatalogues: payload.serviceCatalogues ?? '',
+    onsiteContactName: payload.onsiteContactName ?? '',
+    onsiteContactPhone: payload.onsiteContactPhone ?? '',
+    onsiteContactEmail: payload.onsiteContactEmail ?? '',
+    accessWindowStart: payload.accessWindowStart ?? '',
+    accessWindowEnd: payload.accessWindowEnd ?? '',
+    parkingInformation: payload.parkingInformation ?? '',
+    loadingDockDetails: payload.loadingDockDetails ?? '',
+    securityNotes: payload.securityNotes ?? '',
+    floorLevel: payload.floorLevel ?? '',
+    mapImageUrl: payload.mapImageUrl ?? '',
     accessNotes: payload.accessNotes ?? '',
     isPrimary: Boolean(payload.isPrimary),
     createdAt: payload.createdAt,
@@ -607,6 +732,57 @@ function serialiseDisputeCase(disputeCase) {
           closedAt: disputeCase.platformDispute.closedAt ?? null
         }
       : null
+function resolveCouponLifecycleStatus(payload) {
+  const now = new Date();
+  const startsAt = payload.startsAt ? new Date(payload.startsAt) : null;
+  const expiresAt = payload.expiresAt ? new Date(payload.expiresAt) : null;
+
+  if (payload.status === 'archived') {
+    return 'archived';
+  }
+
+  if (payload.status === 'expired' || (expiresAt && expiresAt < now)) {
+    return 'expired';
+  }
+
+  if (startsAt && startsAt > now) {
+    return 'scheduled';
+  }
+
+  if (payload.status === 'draft') {
+    return 'draft';
+  }
+
+  return 'active';
+}
+
+function serialiseCoupon(coupon) {
+  const payload = coupon.toJSON();
+  const discountValue = payload.discountValue ? Number.parseFloat(payload.discountValue) : 0;
+  const minOrderTotal = payload.minOrderTotal ? Number.parseFloat(payload.minOrderTotal) : null;
+
+  return {
+    id: payload.id,
+    userId: payload.userId,
+    name: payload.name ?? '',
+    code: payload.code ?? '',
+    description: payload.description ?? '',
+    discountType: payload.discountType ?? 'percentage',
+    discountValue: Number.isFinite(discountValue) ? discountValue : 0,
+    currency: payload.currency ?? null,
+    minOrderTotal: Number.isFinite(minOrderTotal) ? minOrderTotal : null,
+    startsAt: payload.startsAt ? new Date(payload.startsAt).toISOString() : null,
+    expiresAt: payload.expiresAt ? new Date(payload.expiresAt).toISOString() : null,
+    maxRedemptions: payload.maxRedemptions ?? null,
+    maxRedemptionsPerCustomer: payload.maxRedemptionsPerCustomer ?? null,
+    autoApply: Boolean(payload.autoApply),
+    status: payload.status ?? 'draft',
+    lifecycleStatus: resolveCouponLifecycleStatus(payload),
+    imageUrl: payload.imageUrl ?? '',
+    termsUrl: payload.termsUrl ?? '',
+    internalNotes: payload.internalNotes ?? '',
+    createdAt: payload.createdAt,
+    updatedAt: payload.updatedAt
   };
 }
 
@@ -634,6 +810,7 @@ export async function getCustomerOverview(req, res, next) {
       totalDisputedAmount: 0,
       totalCases: 0
     };
+    const { profile, contacts, locations, coupons } = await loadCustomerOverview(userId);
 
     return res.json({
       profile: serialiseProfile(profile),
@@ -648,6 +825,7 @@ export async function getCustomerOverview(req, res, next) {
             : 0
         }
       }
+      coupons: coupons.map(serialiseCoupon)
     });
   } catch (error) {
     next(error);
@@ -820,6 +998,7 @@ export async function deleteCustomerLocation(req, res, next) {
 }
 
 export async function createCustomerDisputeCase(req, res, next) {
+export async function createCustomerCoupon(req, res, next) {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -833,6 +1012,8 @@ export async function createCustomerDisputeCase(req, res, next) {
 
     const payload = sanitiseDisputeCaseInput(req.body ?? {});
     const disputeCase = await createCustomerDisputeCaseRecord({
+    const payload = sanitiseCouponInput(req.body ?? {});
+    const coupon = await createCustomerCouponRecord({
       userId,
       payload,
       auditContext: buildAuditContext(req)
@@ -917,12 +1098,14 @@ export async function createCustomerDisputeTask(req, res, next) {
     });
 
     return res.status(201).json({ task: serialiseDisputeTask(task) });
+    return res.status(201).json({ coupon: serialiseCoupon(coupon) });
   } catch (error) {
     handleServiceError(res, next, error);
   }
 }
 
 export async function updateCustomerDisputeTask(req, res, next) {
+export async function updateCustomerCoupon(req, res, next) {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -941,17 +1124,24 @@ export async function updateCustomerDisputeTask(req, res, next) {
       userId,
       disputeCaseId,
       taskId,
+    const couponId = req.params.couponId;
+    const payload = sanitiseCouponInput(req.body ?? {});
+    const coupon = await updateCustomerCouponRecord({
+      userId,
+      couponId,
       payload,
       auditContext: buildAuditContext(req)
     });
 
     return res.json({ task: serialiseDisputeTask(task) });
+    return res.json({ coupon: serialiseCoupon(coupon) });
   } catch (error) {
     handleServiceError(res, next, error);
   }
 }
 
 export async function deleteCustomerDisputeTask(req, res, next) {
+export async function deleteCustomerCoupon(req, res, next) {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -1123,6 +1313,10 @@ export async function deleteCustomerDisputeEvidence(req, res, next) {
       userId,
       disputeCaseId,
       evidenceId,
+    const couponId = req.params.couponId;
+    await deleteCustomerCouponRecord({
+      userId,
+      couponId,
       auditContext: buildAuditContext(req)
     });
 

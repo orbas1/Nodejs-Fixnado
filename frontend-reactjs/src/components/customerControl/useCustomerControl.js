@@ -30,6 +30,11 @@ import {
   disputeNoteTemplate,
   disputeEvidenceTemplate
 } from './constants.js';
+  createCustomerCoupon,
+  updateCustomerCoupon,
+  deleteCustomerCoupon
+} from '../../api/customerControlClient.js';
+import { contactTemplate, couponTemplate, defaultProfile, locationTemplate } from './constants.js';
 
 const normaliseProfile = (profile) => ({
   ...defaultProfile,
@@ -122,6 +127,133 @@ const normaliseDisputeCase = (disputeCase) => ({
     ? disputeCase.evidence.map(normaliseDisputeEvidence)
     : disputeCaseTemplate.evidence
 });
+const normaliseCoupon = (coupon) => {
+  const discountValue = Number.parseFloat(coupon?.discountValue);
+  const minOrderTotal = Number.parseFloat(coupon?.minOrderTotal);
+  const toDateInput = (value) => {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toISOString().slice(0, 10);
+  };
+
+  return {
+    ...couponTemplate,
+    ...(coupon ?? {}),
+    name: coupon?.name ?? '',
+    code: coupon?.code ?? '',
+    description: coupon?.description ?? '',
+    discountType: coupon?.discountType ?? couponTemplate.discountType,
+    discountValue: Number.isFinite(discountValue) ? Number(discountValue.toFixed(2)) : couponTemplate.discountValue,
+    currency: coupon?.currency ?? '',
+    minOrderTotal: Number.isFinite(minOrderTotal) ? Number(minOrderTotal.toFixed(2)) : '',
+    startsAt: toDateInput(coupon?.startsAt),
+    expiresAt: toDateInput(coupon?.expiresAt),
+    maxRedemptions:
+      coupon?.maxRedemptions === null || coupon?.maxRedemptions === undefined
+        ? ''
+        : `${coupon.maxRedemptions}`,
+    maxRedemptionsPerCustomer:
+      coupon?.maxRedemptionsPerCustomer === null || coupon?.maxRedemptionsPerCustomer === undefined
+        ? ''
+        : `${coupon.maxRedemptionsPerCustomer}`,
+    autoApply: Boolean(coupon?.autoApply),
+    status: coupon?.status ?? couponTemplate.status,
+    lifecycleStatus: coupon?.lifecycleStatus ?? couponTemplate.lifecycleStatus,
+    imageUrl: coupon?.imageUrl ?? '',
+    termsUrl: coupon?.termsUrl ?? '',
+    internalNotes: coupon?.internalNotes ?? '',
+    createdAt: coupon?.createdAt ?? null,
+    updatedAt: coupon?.updatedAt ?? null
+  };
+};
+
+const toIsoDate = (value, endOfDay = false) => {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === 'string' && value.includes('T')) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+
+  if (typeof value === 'string') {
+    const [year, month, day] = value.split('-').map((part) => Number.parseInt(part, 10));
+    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+      const date = endOfDay
+        ? new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 0))
+        : new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+  }
+
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback.toISOString();
+};
+
+const decimalOrNull = (value) => {
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  const numeric = Number.parseFloat(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Number.parseFloat(numeric.toFixed(2));
+};
+
+const integerOrNull = (value) => {
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  const numeric = Number.parseInt(value, 10);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+};
+
+const trimOrNull = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const trimmed = `${value}`.trim();
+  return trimmed.length ? trimmed : null;
+};
+
+const prepareCouponPayload = (form) => {
+  const name = `${form.name ?? ''}`.trim();
+  const code = `${form.code ?? ''}`.trim().toUpperCase();
+  const status = `${form.status ?? ''}`.trim().toLowerCase() || 'draft';
+  const discountValue = Number.parseFloat(form.discountValue ?? 0);
+
+  return {
+    name,
+    code,
+    description: trimOrNull(form.description),
+    discountType: form.discountType,
+    discountValue: Number.isFinite(discountValue) ? Number.parseFloat(discountValue.toFixed(2)) : 0,
+    currency:
+      form.discountType === 'fixed'
+        ? (() => {
+            const currency = trimOrNull(form.currency);
+            return currency ? currency.toUpperCase() : null;
+          })()
+        : null,
+    minOrderTotal: decimalOrNull(form.minOrderTotal),
+    startsAt: toIsoDate(form.startsAt, false),
+    expiresAt: toIsoDate(form.expiresAt, true),
+    maxRedemptions: integerOrNull(form.maxRedemptions),
+    maxRedemptionsPerCustomer: integerOrNull(form.maxRedemptionsPerCustomer),
+    autoApply: Boolean(form.autoApply),
+    status,
+    imageUrl: trimOrNull(form.imageUrl),
+    termsUrl: trimOrNull(form.termsUrl),
+    internalNotes: trimOrNull(form.internalNotes)
+  };
+};
 
 export const useCustomerControl = () => {
   const [profile, setProfile] = useState(defaultProfile);
@@ -144,6 +276,7 @@ export const useCustomerControl = () => {
     totalDisputedAmount: 0,
     totalCases: 0
   });
+  const [coupons, setCoupons] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -152,6 +285,7 @@ export const useCustomerControl = () => {
   const [contactStatus, setContactStatus] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null);
   const [disputeStatus, setDisputeStatus] = useState(null);
+  const [couponStatus, setCouponStatus] = useState(null);
 
   const [profileSaving, setProfileSaving] = useState(false);
   const [contactSaving, setContactSaving] = useState(false);
@@ -160,6 +294,7 @@ export const useCustomerControl = () => {
   const [taskSaving, setTaskSaving] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [evidenceSaving, setEvidenceSaving] = useState(false);
+  const [couponSaving, setCouponSaving] = useState(false);
 
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [activeContact, setActiveContact] = useState(null);
@@ -236,6 +371,8 @@ export const useCustomerControl = () => {
     },
     [computeDisputeMetrics]
   );
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [activeCoupon, setActiveCoupon] = useState(null);
 
   const loadOverview = useCallback(
     async ({ signal } = {}) => {
@@ -250,6 +387,7 @@ export const useCustomerControl = () => {
           : [];
         setDisputes(normalisedDisputes);
         setDisputeMetrics(computeDisputeMetrics(normalisedDisputes));
+        setCoupons(Array.isArray(data.coupons) ? data.coupons.map(normaliseCoupon) : []);
         setError(null);
       } catch (caught) {
         if (signal?.aborted) return;
@@ -273,6 +411,7 @@ export const useCustomerControl = () => {
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCouponStatus(null);
     await loadOverview();
   }, [loadOverview]);
 
@@ -371,6 +510,23 @@ export const useCustomerControl = () => {
   const closeLocationModal = useCallback(() => {
     setLocationModalOpen(false);
     setActiveLocation(null);
+  }, []);
+
+  const openCreateCoupon = useCallback(() => {
+    setActiveCoupon(normaliseCoupon(couponTemplate));
+    setCouponStatus(null);
+    setCouponModalOpen(true);
+  }, []);
+
+  const openEditCoupon = useCallback((coupon) => {
+    setActiveCoupon(normaliseCoupon(coupon));
+    setCouponStatus(null);
+    setCouponModalOpen(true);
+  }, []);
+
+  const closeCouponModal = useCallback(() => {
+    setCouponModalOpen(false);
+    setActiveCoupon(null);
   }, []);
 
   const handleLocationSubmit = useCallback(async (form) => {
@@ -796,6 +952,52 @@ export const useCustomerControl = () => {
       locationCount === 1 ? '' : 's'
     } • ${disputeCount} dispute${disputeCount === 1 ? '' : 's'}`;
   }, [contacts.length, locations.length, disputes.length]);
+  const handleCouponSubmit = useCallback(
+    async (form) => {
+      setCouponSaving(true);
+      try {
+        const payload = prepareCouponPayload(form);
+        if (form.id) {
+          const { coupon } = await updateCustomerCoupon(form.id, payload);
+          setCoupons((previous) => previous.map((item) => (item.id === coupon.id ? normaliseCoupon(coupon) : item)));
+          setCouponStatus({ tone: 'success', message: 'Coupon updated.' });
+        } else {
+          const { coupon } = await createCustomerCoupon(payload);
+          setCoupons((previous) => [normaliseCoupon(coupon), ...previous]);
+          setCouponStatus({ tone: 'success', message: 'Coupon created.' });
+        }
+        setCouponModalOpen(false);
+        setActiveCoupon(null);
+      } catch (caught) {
+        setCouponStatus({ tone: 'error', message: caught?.message || 'Unable to save coupon.' });
+      } finally {
+        setCouponSaving(false);
+      }
+    },
+    []
+  );
+
+  const handleDeleteCoupon = useCallback(async (couponId) => {
+    setCouponSaving(true);
+    try {
+      await deleteCustomerCoupon(couponId);
+      setCoupons((previous) => previous.filter((coupon) => coupon.id !== couponId));
+      setCouponStatus({ tone: 'success', message: 'Coupon removed.' });
+    } catch (caught) {
+      setCouponStatus({ tone: 'error', message: caught?.message || 'Unable to remove coupon.' });
+    } finally {
+      setCouponSaving(false);
+    }
+  }, []);
+
+  const personaSummary = useMemo(() => {
+    const contactCount = contacts.length;
+    const locationCount = locations.length;
+    const couponCount = coupons.length;
+    return `${contactCount} team contact${contactCount === 1 ? '' : 's'} • ${locationCount} location${
+      locationCount === 1 ? '' : 's'
+    } • ${couponCount} coupon${couponCount === 1 ? '' : 's'}`;
+  }, [contacts.length, locations.length, coupons.length]);
 
   return {
     state: {
@@ -804,6 +1006,7 @@ export const useCustomerControl = () => {
       profile,
       contacts,
       locations,
+      coupons,
       personaSummary,
       profileStatus,
       contactStatus,
@@ -818,6 +1021,11 @@ export const useCustomerControl = () => {
       evidenceSaving,
       disputes,
       disputeMetrics,
+      couponStatus,
+      profileSaving,
+      contactSaving,
+      locationSaving,
+      couponSaving,
       contactModalOpen,
       locationModalOpen,
       activeContact,
@@ -833,6 +1041,8 @@ export const useCustomerControl = () => {
       evidenceModalOpen,
       activeEvidence,
       evidenceStatus
+      couponModalOpen,
+      activeCoupon
     },
     actions: {
       reload,
@@ -869,6 +1079,11 @@ export const useCustomerControl = () => {
       closeEvidenceModal,
       handleDisputeEvidenceSubmit,
       handleDeleteDisputeEvidence
+      openCreateCoupon,
+      openEditCoupon,
+      closeCouponModal,
+      handleCouponSubmit,
+      handleDeleteCoupon
     }
   };
 };

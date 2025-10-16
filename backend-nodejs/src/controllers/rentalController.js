@@ -6,9 +6,11 @@ import {
   getRentalAgreementById,
   listRentalAgreements,
   markRentalReturned,
+  raiseRentalDispute,
   recordRentalCheckout,
   requestRentalAgreement,
-  scheduleRentalPickup
+  scheduleRentalPickup,
+  updateRentalDepositStatus
 } from '../services/rentalService.js';
 
 function toResponse(rental) {
@@ -123,6 +125,24 @@ export async function addRentalCheckpoint(req, res, next) {
   try {
     const checkpoint = await appendRentalCheckpoint(req.params.rentalId, req.body || {});
     res.status(201).json(checkpoint.toJSON());
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateRentalDeposit(req, res, next) {
+  try {
+    const rental = await updateRentalDepositStatus(req.params.rentalId, req.body || {});
+    res.json(toResponse(rental));
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function startRentalDispute(req, res, next) {
+  try {
+    const rental = await raiseRentalDispute(req.params.rentalId, req.body || {});
+    res.json(toResponse(rental));
   } catch (error) {
     handleServiceError(res, next, error);
   }

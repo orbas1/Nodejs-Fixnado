@@ -10,6 +10,7 @@ import {
   CustomerDisputeNote,
   CustomerDisputeEvidence,
   Dispute
+  CustomerCoupon
 } from '../models/index.js';
 import { recordSecurityEvent } from './auditTrailService.js';
 
@@ -194,6 +195,110 @@ async function loadCustomerDisputeWorkspace(userId) {
 
 export async function loadCustomerOverview(userId) {
   const [profile, contacts, locations, disputes] = await Promise.all([
+const ALLOWED_COUPON_STATUSES = new Set(['draft', 'scheduled', 'active', 'expired', 'archived']);
+
+function coerceCouponPayload(payload = {}) {
+  const result = { ...payload };
+
+  if (Object.hasOwn(result, 'code') && typeof result.code === 'string') {
+    result.code = result.code.trim().toUpperCase();
+  }
+
+  if (Object.hasOwn(result, 'discountValue')) {
+    const value = Number.parseFloat(result.discountValue);
+    result.discountValue = Number.isFinite(value) ? Number.parseFloat(value.toFixed(2)) : null;
+  }
+
+  if (Object.hasOwn(result, 'minOrderTotal')) {
+    const value = Number.parseFloat(result.minOrderTotal);
+    result.minOrderTotal = Number.isFinite(value) ? Number.parseFloat(value.toFixed(2)) : null;
+  }
+
+  if (Object.hasOwn(result, 'maxRedemptions')) {
+    const value = Number.parseInt(result.maxRedemptions, 10);
+    result.maxRedemptions = Number.isInteger(value) && value > 0 ? value : null;
+  }
+
+  if (Object.hasOwn(result, 'maxRedemptionsPerCustomer')) {
+    const value = Number.parseInt(result.maxRedemptionsPerCustomer, 10);
+    result.maxRedemptionsPerCustomer = Number.isInteger(value) && value > 0 ? value : null;
+  }
+
+  if (Object.hasOwn(result, 'autoApply')) {
+    result.autoApply = Boolean(result.autoApply);
+  }
+
+  if (Object.hasOwn(result, 'status') && typeof result.status === 'string') {
+    result.status = result.status.trim().toLowerCase();
+  }
+
+  if (Object.hasOwn(result, 'currency')) {
+    result.currency = result.currency ? `${result.currency}`.trim().toUpperCase() : null;
+  }
+
+  const normaliseDate = (value) => {
+    if (!value) {
+      return null;
+    }
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  if (Object.hasOwn(result, 'startsAt')) {
+    result.startsAt = normaliseDate(result.startsAt);
+  }
+
+  if (Object.hasOwn(result, 'expiresAt')) {
+    result.expiresAt = normaliseDate(result.expiresAt);
+  }
+
+  ['name', 'description', 'imageUrl', 'termsUrl', 'internalNotes'].forEach((field) => {
+    if (Object.hasOwn(result, field) && typeof result[field] === 'string') {
+      const trimmed = result[field].trim();
+      result[field] = trimmed.length ? trimmed : null;
+    }
+  });
+
+  return result;
+}
+
+function validateCouponBusinessRules(payload) {
+  if (!payload.name || !payload.code) {
+    throw customerControlError('coupon_required_fields_missing', 422);
+  }
+
+  const discountValue = Number.parseFloat(payload.discountValue ?? 0);
+  if (!Number.isFinite(discountValue) || discountValue <= 0) {
+    throw customerControlError('coupon_invalid_discount', 422);
+  }
+
+  if (payload.discountType === 'percentage' && discountValue > 100) {
+    throw customerControlError('coupon_percentage_exceeds_maximum', 422);
+  }
+
+  if (payload.discountType === 'fixed' && !payload.currency) {
+    throw customerControlError('coupon_currency_required', 422);
+  }
+
+  if (payload.startsAt && payload.expiresAt && payload.expiresAt < payload.startsAt) {
+    throw customerControlError('coupon_expiry_before_start', 422);
+  }
+
+  if (
+    Number.isInteger(payload.maxRedemptions ?? null) &&
+    Number.isInteger(payload.maxRedemptionsPerCustomer ?? null) &&
+    payload.maxRedemptionsPerCustomer > payload.maxRedemptions
+  ) {
+    throw customerControlError('coupon_redemption_limits_invalid', 422);
+  }
+
+  if (payload.status && !ALLOWED_COUPON_STATUSES.has(payload.status)) {
+    throw customerControlError('coupon_status_invalid', 422);
+  }
+}
+
+export async function loadCustomerOverview(userId) {
+  const [profile, contacts, locations, coupons] = await Promise.all([
     CustomerProfile.findOne({ where: { userId } }),
     CustomerContact.findAll({
       where: { userId },
@@ -213,6 +318,16 @@ export async function loadCustomerOverview(userId) {
   ]);
 
   return { profile, contacts, locations, disputes };
+    CustomerCoupon.findAll({
+      where: { userId },
+      order: [
+        ['status', 'ASC'],
+        ['created_at', 'DESC']
+      ]
+    })
+  ]);
+
+  return { profile, contacts, locations, coupons };
 }
 
 export async function persistCustomerProfile({ userId, payload, auditContext }) {
@@ -676,6 +791,42 @@ export async function updateCustomerDisputeNoteRecord({
 
     const note = await CustomerDisputeNote.findOne({
       where: { id: noteId, disputeCaseId: disputeCase.id },
+export async function createCustomerCouponRecord({ userId, payload, auditContext }) {
+  const couponPayload = coerceCouponPayload(payload);
+
+  return sequelize.transaction(async (transaction) => {
+    if (couponPayload.code) {
+      const existing = await CustomerCoupon.findOne({
+        where: { userId, code: couponPayload.code },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (existing) {
+        throw customerControlError('coupon_code_conflict', 409);
+      }
+    }
+
+    validateCouponBusinessRules(couponPayload);
+
+    const coupon = await CustomerCoupon.create({ userId, ...couponPayload }, { transaction });
+
+    await recordCustomerControlEvent(userId, 'customer.control:coupon:create', auditContext, {
+      couponId: coupon.id,
+      status: coupon.status,
+      discountType: coupon.discountType
+    });
+
+    return coupon;
+  });
+}
+
+export async function updateCustomerCouponRecord({ userId, couponId, payload, auditContext }) {
+  const couponPayload = coerceCouponPayload(payload);
+
+  return sequelize.transaction(async (transaction) => {
+    const coupon = await CustomerCoupon.findOne({
+      where: { id: couponId, userId },
       transaction,
       lock: transaction.LOCK.UPDATE
     });
@@ -825,6 +976,43 @@ export async function deleteCustomerDisputeEvidenceRecord({
 
     const evidence = await CustomerDisputeEvidence.findOne({
       where: { id: evidenceId, disputeCaseId: disputeCase.id },
+    if (!coupon) {
+      throw customerControlError('coupon_not_found', 404);
+    }
+
+    if (couponPayload.code) {
+      const duplicate = await CustomerCoupon.findOne({
+        where: { userId, code: couponPayload.code, id: { [Op.ne]: coupon.id } },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (duplicate) {
+        throw customerControlError('coupon_code_conflict', 409);
+      }
+    }
+
+    const existingValues = coerceCouponPayload(coupon.toJSON());
+    validateCouponBusinessRules({ ...existingValues, ...couponPayload });
+
+    coupon.set(couponPayload);
+    const changed = coupon.changed() ?? [];
+    await coupon.save({ transaction });
+
+    await recordCustomerControlEvent(userId, 'customer.control:coupon:update', auditContext, {
+      couponId: coupon.id,
+      changedFields: changed,
+      status: coupon.status
+    });
+
+    return coupon;
+  });
+}
+
+export async function deleteCustomerCouponRecord({ userId, couponId, auditContext }) {
+  return sequelize.transaction(async (transaction) => {
+    const coupon = await CustomerCoupon.findOne({
+      where: { id: couponId, userId },
       transaction,
       lock: transaction.LOCK.UPDATE
     });
@@ -838,6 +1026,16 @@ export async function deleteCustomerDisputeEvidenceRecord({
     await recordCustomerControlEvent(userId, 'customer.control:disputeEvidence:delete', auditContext, {
       caseId: disputeCase.id,
       evidenceId: evidence.id
+    if (!coupon) {
+      throw customerControlError('coupon_not_found', 404);
+    }
+
+    const status = coupon.status;
+    await coupon.destroy({ transaction });
+
+    await recordCustomerControlEvent(userId, 'customer.control:coupon:delete', auditContext, {
+      couponId,
+      status
     });
 
     return true;
@@ -865,4 +1063,7 @@ export default {
   createCustomerDisputeEvidenceRecord,
   updateCustomerDisputeEvidenceRecord,
   deleteCustomerDisputeEvidenceRecord
+  createCustomerCouponRecord,
+  updateCustomerCouponRecord,
+  deleteCustomerCouponRecord
 };
