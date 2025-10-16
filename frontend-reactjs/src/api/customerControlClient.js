@@ -105,6 +105,8 @@ export async function deleteCustomerLocation(locationId, options = {}) {
   return true;
 }
 
+export function createCustomerDisputeCase(payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes`, {
 export function createCustomerCoupon(payload, options = {}) {
   return requestJson(`${API_BASE}/coupons`, {
     method: 'POST',
@@ -113,6 +115,8 @@ export function createCustomerCoupon(payload, options = {}) {
   });
 }
 
+export function updateCustomerDisputeCase(disputeCaseId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}`, {
 export function updateCustomerCoupon(couponId, payload, options = {}) {
   return requestJson(`${API_BASE}/coupons/${couponId}`, {
     method: 'PUT',
@@ -121,12 +125,93 @@ export function updateCustomerCoupon(couponId, payload, options = {}) {
   });
 }
 
+export async function deleteCustomerDisputeCase(disputeCaseId, options = {}) {
+  const response = await fetch(`${API_BASE}/disputes/${disputeCaseId}`, {
 export async function deleteCustomerCoupon(couponId, options = {}) {
   const response = await fetch(`${API_BASE}/coupons/${couponId}`, {
     method: 'DELETE',
     credentials: 'include',
     ...(options ?? {})
   });
+  await ensureResponseOk(response, 'Failed to delete dispute case');
+  return true;
+}
+
+export function createCustomerDisputeTask(disputeCaseId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/tasks`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export function updateCustomerDisputeTask(disputeCaseId, taskId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/tasks/${taskId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export async function deleteCustomerDisputeTask(disputeCaseId, taskId, options = {}) {
+  const response = await fetch(`${API_BASE}/disputes/${disputeCaseId}/tasks/${taskId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    ...(options ?? {})
+  });
+  await ensureResponseOk(response, 'Failed to delete dispute task');
+  return true;
+}
+
+export function createCustomerDisputeNote(disputeCaseId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export function updateCustomerDisputeNote(disputeCaseId, noteId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/notes/${noteId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export async function deleteCustomerDisputeNote(disputeCaseId, noteId, options = {}) {
+  const response = await fetch(`${API_BASE}/disputes/${disputeCaseId}/notes/${noteId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    ...(options ?? {})
+  });
+  await ensureResponseOk(response, 'Failed to delete dispute note');
+  return true;
+}
+
+export function createCustomerDisputeEvidence(disputeCaseId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/evidence`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export function updateCustomerDisputeEvidence(disputeCaseId, evidenceId, payload, options = {}) {
+  return requestJson(`${API_BASE}/disputes/${disputeCaseId}/evidence/${evidenceId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload ?? {}),
+    ...options
+  });
+}
+
+export async function deleteCustomerDisputeEvidence(disputeCaseId, evidenceId, options = {}) {
+  const response = await fetch(`${API_BASE}/disputes/${disputeCaseId}/evidence/${evidenceId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    ...(options ?? {})
+  });
+  await ensureResponseOk(response, 'Failed to delete dispute evidence');
   await ensureResponseOk(response, 'Failed to delete coupon');
   return true;
 }
@@ -140,6 +225,18 @@ export default {
   createCustomerLocation,
   updateCustomerLocation,
   deleteCustomerLocation,
+  createCustomerDisputeCase,
+  updateCustomerDisputeCase,
+  deleteCustomerDisputeCase,
+  createCustomerDisputeTask,
+  updateCustomerDisputeTask,
+  deleteCustomerDisputeTask,
+  createCustomerDisputeNote,
+  updateCustomerDisputeNote,
+  deleteCustomerDisputeNote,
+  createCustomerDisputeEvidence,
+  updateCustomerDisputeEvidence,
+  deleteCustomerDisputeEvidence
   createCustomerCoupon,
   updateCustomerCoupon,
   deleteCustomerCoupon

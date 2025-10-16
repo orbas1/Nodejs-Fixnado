@@ -105,6 +105,10 @@ import CustomerLocation from './customerLocation.js';
 import CustomerCoupon from './customerCoupon.js';
 import CustomerAccountSetting from './customerAccountSetting.js';
 import CustomerNotificationRecipient from './customerNotificationRecipient.js';
+import CustomerDisputeCase from './customerDisputeCase.js';
+import CustomerDisputeTask from './customerDisputeTask.js';
+import CustomerDisputeNote from './customerDisputeNote.js';
+import CustomerDisputeEvidence from './customerDisputeEvidence.js';
 import InboxQueue from './inboxQueue.js';
 import InboxConfiguration from './inboxConfiguration.js';
 import InboxTemplate from './inboxTemplate.js';
@@ -146,6 +150,24 @@ CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
 CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(CustomerDisputeCase, { foreignKey: 'userId', as: 'customerDisputeCases' });
+CustomerDisputeCase.belongsTo(User, { foreignKey: 'userId', as: 'customer' });
+
+CustomerDisputeCase.belongsTo(Dispute, { foreignKey: 'disputeId', as: 'platformDispute' });
+Dispute.hasMany(CustomerDisputeCase, { foreignKey: 'disputeId', as: 'customerCases' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeTask, { foreignKey: 'disputeCaseId', as: 'tasks' });
+CustomerDisputeTask.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeNote, { foreignKey: 'disputeCaseId', as: 'notes' });
+CustomerDisputeNote.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+CustomerDisputeNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(CustomerDisputeNote, { foreignKey: 'authorId', as: 'authoredDisputeNotes' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeEvidence, { foreignKey: 'disputeCaseId', as: 'evidence' });
+CustomerDisputeEvidence.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+CustomerDisputeEvidence.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+User.hasMany(CustomerDisputeEvidence, { foreignKey: 'uploadedBy', as: 'uploadedDisputeEvidence' });
 User.hasMany(CustomerCoupon, { foreignKey: 'userId', as: 'customerCoupons' });
 CustomerCoupon.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -735,6 +757,12 @@ export {
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
+  CustomerAccountSetting,
+  CustomerNotificationRecipient,
+  CustomerDisputeCase,
+  CustomerDisputeTask,
+  CustomerDisputeNote,
+  CustomerDisputeEvidence
   CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,

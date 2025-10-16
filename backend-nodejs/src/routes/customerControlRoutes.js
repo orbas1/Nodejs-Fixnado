@@ -9,6 +9,18 @@ import {
   createCustomerLocation,
   updateCustomerLocation,
   deleteCustomerLocation,
+  createCustomerDisputeCase,
+  updateCustomerDisputeCase,
+  deleteCustomerDisputeCase,
+  createCustomerDisputeTask,
+  updateCustomerDisputeTask,
+  deleteCustomerDisputeTask,
+  createCustomerDisputeNote,
+  updateCustomerDisputeNote,
+  deleteCustomerDisputeNote,
+  createCustomerDisputeEvidence,
+  updateCustomerDisputeEvidence,
+  deleteCustomerDisputeEvidence
   createCustomerCoupon,
   updateCustomerCoupon,
   deleteCustomerCoupon
@@ -98,6 +110,59 @@ const locationValidators = () => [
   body('isPrimary').optional().isBoolean().toBoolean()
 ];
 
+const disputeCaseValidators = () => [
+  body('caseNumber').optional({ values: 'falsy' }).isString().trim().isLength({ max: 32 }),
+  body('disputeId').optional({ values: 'falsy' }).isUUID(4),
+  body('title').isString().trim().isLength({ min: 3, max: 200 }),
+  body('category').optional({ values: 'falsy' }).isIn(['billing', 'service_quality', 'damage', 'timeline', 'compliance', 'other']),
+  body('status')
+    .optional({ values: 'falsy' })
+    .isIn(['draft', 'open', 'under_review', 'awaiting_customer', 'resolved', 'closed']),
+  body('severity').optional({ values: 'falsy' }).isIn(['low', 'medium', 'high', 'critical']),
+  body('summary').optional({ values: 'falsy' }).isString().trim().isLength({ max: 4000 }),
+  body('nextStep').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 }),
+  body('assignedTeam').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('assignedOwner').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('resolutionNotes').optional({ values: 'falsy' }).isString().trim().isLength({ max: 4000 }),
+  body('externalReference').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('amountDisputed').optional({ values: 'falsy' }).isFloat({ min: 0, max: 100000000 }).toFloat(),
+  body('currency').optional({ values: 'falsy' }).isString().trim().isLength({ min: 3, max: 12 }),
+  body('openedAt').optional({ values: 'falsy' }).isISO8601(),
+  body('dueAt').optional({ values: 'falsy' }).isISO8601(),
+  body('resolvedAt').optional({ values: 'falsy' }).isISO8601(),
+  body('slaDueAt').optional({ values: 'falsy' }).isISO8601(),
+  body('requiresFollowUp').optional().isBoolean().toBoolean(),
+  body('lastReviewedAt').optional({ values: 'falsy' }).isISO8601()
+];
+
+const disputeTaskValidators = () => [
+  body('label').isString().trim().isLength({ min: 2, max: 160 }),
+  body('status').optional({ values: 'falsy' }).isIn(['pending', 'in_progress', 'completed', 'cancelled']),
+  body('dueAt').optional({ values: 'falsy' }).isISO8601(),
+  body('assignedTo').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
+  body('instructions').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 }),
+  body('completedAt').optional({ values: 'falsy' }).isISO8601()
+];
+
+const disputeNoteValidators = () => [
+  body('noteType').optional({ values: 'falsy' }).isIn(['update', 'call', 'decision', 'escalation', 'reminder', 'other']),
+  body('visibility').optional({ values: 'falsy' }).isIn(['customer', 'internal', 'provider', 'finance', 'compliance']),
+  body('body').isString().trim().isLength({ min: 2, max: 4000 }),
+  body('nextSteps').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 }),
+  body('pinned').optional().isBoolean().toBoolean()
+];
+
+const disputeEvidenceValidators = () => [
+  body('label').isString().trim().isLength({ min: 2, max: 200 }),
+  body('fileUrl').isString().trim().isURL({ require_protocol: true }).isLength({ max: 512 }),
+  body('fileType').optional({ values: 'falsy' }).isString().trim().isLength({ max: 120 }),
+  body('thumbnailUrl')
+    .optional({ values: 'falsy' })
+    .isString()
+    .trim()
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('notes').optional({ values: 'falsy' }).isString().trim().isLength({ max: 2000 })
 const couponValidators = () => [
   body('name').isString().trim().isLength({ min: 2, max: 160 }),
   body('code').isString().trim().isLength({ min: 3, max: 64 }),
@@ -150,6 +215,76 @@ router.delete(
   deleteCustomerLocation
 );
 
+router.post('/disputes', guard('disputes:create'), disputeCaseValidators(), createCustomerDisputeCase);
+router.put(
+  '/disputes/:disputeCaseId',
+  guard('disputes:update'),
+  [param('disputeCaseId').isUUID(4), ...disputeCaseValidators()],
+  updateCustomerDisputeCase
+);
+router.delete(
+  '/disputes/:disputeCaseId',
+  guard('disputes:delete'),
+  param('disputeCaseId').isUUID(4),
+  deleteCustomerDisputeCase
+);
+
+router.post(
+  '/disputes/:disputeCaseId/tasks',
+  guard('disputes:tasks:create'),
+  [param('disputeCaseId').isUUID(4), ...disputeTaskValidators()],
+  createCustomerDisputeTask
+);
+router.put(
+  '/disputes/:disputeCaseId/tasks/:taskId',
+  guard('disputes:tasks:update'),
+  [param('disputeCaseId').isUUID(4), param('taskId').isUUID(4), ...disputeTaskValidators()],
+  updateCustomerDisputeTask
+);
+router.delete(
+  '/disputes/:disputeCaseId/tasks/:taskId',
+  guard('disputes:tasks:delete'),
+  [param('disputeCaseId').isUUID(4), param('taskId').isUUID(4)],
+  deleteCustomerDisputeTask
+);
+
+router.post(
+  '/disputes/:disputeCaseId/notes',
+  guard('disputes:notes:create'),
+  [param('disputeCaseId').isUUID(4), ...disputeNoteValidators()],
+  createCustomerDisputeNote
+);
+router.put(
+  '/disputes/:disputeCaseId/notes/:noteId',
+  guard('disputes:notes:update'),
+  [param('disputeCaseId').isUUID(4), param('noteId').isUUID(4), ...disputeNoteValidators()],
+  updateCustomerDisputeNote
+);
+router.delete(
+  '/disputes/:disputeCaseId/notes/:noteId',
+  guard('disputes:notes:delete'),
+  [param('disputeCaseId').isUUID(4), param('noteId').isUUID(4)],
+  deleteCustomerDisputeNote
+);
+
+router.post(
+  '/disputes/:disputeCaseId/evidence',
+  guard('disputes:evidence:create'),
+  [param('disputeCaseId').isUUID(4), ...disputeEvidenceValidators()],
+  createCustomerDisputeEvidence
+);
+router.put(
+  '/disputes/:disputeCaseId/evidence/:evidenceId',
+  guard('disputes:evidence:update'),
+  [param('disputeCaseId').isUUID(4), param('evidenceId').isUUID(4), ...disputeEvidenceValidators()],
+  updateCustomerDisputeEvidence
+);
+router.delete(
+  '/disputes/:disputeCaseId/evidence/:evidenceId',
+  guard('disputes:evidence:delete'),
+  [param('disputeCaseId').isUUID(4), param('evidenceId').isUUID(4)],
+  deleteCustomerDisputeEvidence
+);
 router.post('/coupons', guard('coupons:create'), couponValidators(), createCustomerCoupon);
 router.put(
   '/coupons/:couponId',
