@@ -68,6 +68,10 @@ import CustomerContact from './customerContact.js';
 import CustomerLocation from './customerLocation.js';
 import CustomerAccountSetting from './customerAccountSetting.js';
 import CustomerNotificationRecipient from './customerNotificationRecipient.js';
+import CustomerDisputeCase from './customerDisputeCase.js';
+import CustomerDisputeTask from './customerDisputeTask.js';
+import CustomerDisputeNote from './customerDisputeNote.js';
+import CustomerDisputeEvidence from './customerDisputeEvidence.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -101,6 +105,25 @@ CustomerContact.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(CustomerLocation, { foreignKey: 'userId', as: 'customerLocations' });
 CustomerLocation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(CustomerDisputeCase, { foreignKey: 'userId', as: 'customerDisputeCases' });
+CustomerDisputeCase.belongsTo(User, { foreignKey: 'userId', as: 'customer' });
+
+CustomerDisputeCase.belongsTo(Dispute, { foreignKey: 'disputeId', as: 'platformDispute' });
+Dispute.hasMany(CustomerDisputeCase, { foreignKey: 'disputeId', as: 'customerCases' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeTask, { foreignKey: 'disputeCaseId', as: 'tasks' });
+CustomerDisputeTask.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeNote, { foreignKey: 'disputeCaseId', as: 'notes' });
+CustomerDisputeNote.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+CustomerDisputeNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+User.hasMany(CustomerDisputeNote, { foreignKey: 'authorId', as: 'authoredDisputeNotes' });
+
+CustomerDisputeCase.hasMany(CustomerDisputeEvidence, { foreignKey: 'disputeCaseId', as: 'evidence' });
+CustomerDisputeEvidence.belongsTo(CustomerDisputeCase, { foreignKey: 'disputeCaseId', as: 'disputeCase' });
+CustomerDisputeEvidence.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+User.hasMany(CustomerDisputeEvidence, { foreignKey: 'uploadedBy', as: 'uploadedDisputeEvidence' });
 
 Post.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 ServiceZone.hasMany(Post, { foreignKey: 'zoneId', as: 'customJobs' });
@@ -493,7 +516,11 @@ export {
   WarehouseExportRun,
   CustomerProfile,
   CustomerContact,
-  CustomerLocation
+  CustomerLocation,
   CustomerAccountSetting,
-  CustomerNotificationRecipient
+  CustomerNotificationRecipient,
+  CustomerDisputeCase,
+  CustomerDisputeTask,
+  CustomerDisputeNote,
+  CustomerDisputeEvidence
 };
