@@ -257,6 +257,7 @@ function normalizeSettings(settings) {
       database: normalizeSection(integrations.database)
     },
     system: normalizeSystem(settings.system)
+    seo: normalizeSeo(settings.seo)
   };
 }
 
@@ -277,4 +278,77 @@ function normalizeSection(section) {
     normalised[key] = String(value);
   }
   return normalised;
+}
+
+function normalizeSeo(seo) {
+  const input = seo && typeof seo === 'object' ? seo : {};
+  const social = input.social && typeof input.social === 'object' ? input.social : {};
+  const structuredData =
+    input.structuredData && typeof input.structuredData === 'object' ? input.structuredData : {};
+  const tagDefaults =
+    input.tagDefaults && typeof input.tagDefaults === 'object' ? input.tagDefaults : {};
+  const sitemap = input.sitemap && typeof input.sitemap === 'object' ? input.sitemap : {};
+  const robots = input.robots && typeof input.robots === 'object' ? input.robots : {};
+  const governance =
+    input.governance && typeof input.governance === 'object' ? input.governance : {};
+
+  const defaultKeywords = Array.isArray(input.defaultKeywords) ? input.defaultKeywords : [];
+  const defaultRoleAccess = Array.isArray(tagDefaults.defaultRoleAccess)
+    ? tagDefaults.defaultRoleAccess
+    : ['admin'];
+
+  return {
+    siteName: typeof input.siteName === 'string' ? input.siteName : 'Fixnado',
+    defaultTitle: typeof input.defaultTitle === 'string' ? input.defaultTitle : '',
+    titleTemplate: typeof input.titleTemplate === 'string' ? input.titleTemplate : '%s • Fixnado',
+    defaultDescription: typeof input.defaultDescription === 'string' ? input.defaultDescription : '',
+    defaultKeywords,
+    defaultKeywordsText: defaultKeywords.join(', '),
+    canonicalHost: typeof input.canonicalHost === 'string' ? input.canonicalHost : '',
+    robots: {
+      index: robots.index !== false,
+      follow: robots.follow !== false,
+      advancedDirectives:
+        typeof robots.advancedDirectives === 'string' ? robots.advancedDirectives : ''
+    },
+    sitemap: {
+      autoGenerate: sitemap.autoGenerate !== false,
+      pingSearchEngines: sitemap.pingSearchEngines !== false,
+      lastGeneratedAt: sitemap.lastGeneratedAt ?? null
+    },
+    social: {
+      twitterHandle: typeof social.twitterHandle === 'string' ? social.twitterHandle : '',
+      facebookAppId: typeof social.facebookAppId === 'string' ? social.facebookAppId : '',
+      defaultImageUrl: typeof social.defaultImageUrl === 'string' ? social.defaultImageUrl : '',
+      defaultImageAlt: typeof social.defaultImageAlt === 'string' ? social.defaultImageAlt : ''
+    },
+    structuredData: {
+      organisationJsonLd:
+        typeof structuredData.organisationJsonLd === 'string'
+          ? structuredData.organisationJsonLd
+          : '',
+      enableAutoBreadcrumbs: structuredData.enableAutoBreadcrumbs !== false
+    },
+    tagDefaults: {
+      metaTitleTemplate:
+        typeof tagDefaults.metaTitleTemplate === 'string'
+          ? tagDefaults.metaTitleTemplate
+          : '%tag% • Fixnado',
+      metaDescriptionTemplate:
+        typeof tagDefaults.metaDescriptionTemplate === 'string'
+          ? tagDefaults.metaDescriptionTemplate
+          : '',
+      defaultRoleAccess,
+      ownerRole: typeof tagDefaults.ownerRole === 'string' ? tagDefaults.ownerRole : 'admin',
+      defaultOgImageAlt:
+        typeof tagDefaults.defaultOgImageAlt === 'string'
+          ? tagDefaults.defaultOgImageAlt
+          : '',
+      autoPopulateOg: tagDefaults.autoPopulateOg !== false
+    },
+    governance: {
+      lockSlugEdits: governance.lockSlugEdits === true,
+      requireOwnerForPublish: governance.requireOwnerForPublish === true
+    }
+  };
 }

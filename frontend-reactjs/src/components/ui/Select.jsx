@@ -7,6 +7,7 @@ const Select = forwardRef(function Select(
   { id, label, optionalLabel, hint, error, options, className, selectClassName, ...rest },
   ref
 ) {
+const Select = forwardRef(({ id, label, hint, error, className, children, ...rest }, ref) => {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const describedBy = [];
@@ -31,6 +32,7 @@ const Select = forwardRef(function Select(
         ref={ref}
         id={fieldId}
         className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
+        className={clsx('fx-text-input', error && 'fx-text-input--error')}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
@@ -40,6 +42,7 @@ const Select = forwardRef(function Select(
             {option.label}
           </option>
         ))}
+        {children}
       </select>
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
@@ -70,6 +73,15 @@ Select.propTypes = {
   ),
   className: PropTypes.string,
   selectClassName: PropTypes.string
+Select.displayName = 'Select';
+
+Select.propTypes = {
+  id: PropTypes.string,
+  label: PropTypes.string,
+  hint: PropTypes.string,
+  error: PropTypes.string,
+  className: PropTypes.string,
+  children: PropTypes.node.isRequired
 };
 
 Select.defaultProps = {
@@ -81,6 +93,9 @@ Select.defaultProps = {
   options: [],
   className: undefined,
   selectClassName: undefined
+  hint: undefined,
+  error: undefined,
+  className: undefined
 };
 
 export default Select;

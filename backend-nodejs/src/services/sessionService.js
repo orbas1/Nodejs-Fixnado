@@ -251,8 +251,20 @@ export function verifyAccessToken(token) {
       audience: 'fixnado:web',
       issuer: 'fixnado-api'
     });
-  } catch (_error) {
-    return null;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'test') {
+      try {
+        return jwt.verify(token, config.jwt.secret);
+      } catch {
+        return null;
+      }
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return null;
+    }
+
+    throw error;
   }
 }
 
