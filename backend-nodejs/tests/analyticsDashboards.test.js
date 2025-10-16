@@ -10,6 +10,7 @@ const {
   Booking,
   BookingAssignment,
   BookingBid,
+  BookingHistoryEntry,
   CampaignDailyMetric,
   CampaignFraudSignal,
   Company,
@@ -49,7 +50,7 @@ function createToken(userId) {
 }
 
 async function createUser(id, overrides = {}) {
-  return User.create({
+  const payload = {
     id,
     firstName: 'Test',
     lastName: 'User',
@@ -57,12 +58,13 @@ async function createUser(id, overrides = {}) {
     passwordHash: 'hashed',
     type: overrides.type ?? 'user',
     ...overrides
-  });
+  };
+
+  return User.create(payload, { validate: false });
 }
 
 async function seedCompany() {
   const user = await createUser(IDS.companyUser, {
-    email: `ops-${Date.now()}@example.com`,
     type: 'company'
   });
 
@@ -286,6 +288,59 @@ async function seedAdminFixtures(company) {
     submittedAt: dateMinus(4),
     updatedAt: dateMinus(1)
   });
+
+  await BookingHistoryEntry.bulkCreate([
+    {
+      bookingId: bookingOne.id,
+      title: 'Completed walk-through',
+      entryType: 'status_update',
+      status: 'completed',
+      summary: 'Final checks signed off with facilities manager and documentation uploaded.',
+      actorRole: 'operations',
+      actorId: 'ops-lead',
+      occurredAt: now.minus({ days: 5, hours: 1 }).toJSDate(),
+      attachments: [
+        {
+          id: 'att-history-1',
+          label: 'Sign-off sheet',
+          url: 'https://cdn.fixnado.test/history/booking-one/signoff.pdf',
+          type: 'document'
+        }
+      ],
+      meta: { shift: 'AM', checklist: 'OPS-108' }
+    },
+    {
+      bookingId: bookingTwo.id,
+      title: 'Crew dispatched',
+      entryType: 'milestone',
+      status: 'in_progress',
+      summary: 'Crew routed to site with ETA 35 minutes. Customer notified via SMS.',
+      actorRole: 'provider',
+      actorId: providerId,
+      occurredAt: now.minus({ hours: 2 }).toJSDate(),
+      attachments: [],
+      meta: { severity: 'standard', transportMode: 'van' }
+    },
+    {
+      bookingId: bookingThree.id,
+      title: 'Escalation opened',
+      entryType: 'handoff',
+      status: 'blocked',
+      summary: 'Ops escalation engaged due to lift failure safety interlock. Awaiting specialist.',
+      actorRole: 'support',
+      actorId: 'support-escalations',
+      occurredAt: now.minus({ hours: 6 }).toJSDate(),
+      attachments: [
+        {
+          id: 'att-history-3',
+          label: 'Diagnostic log',
+          url: 'https://cdn.fixnado.test/history/booking-three/diagnostics.log',
+          type: 'document'
+        }
+      ],
+      meta: { escalationLevel: 'L2', requiresSpecialist: true }
+    }
+  ]);
 
   const inventoryItem = await InventoryItem.create({
     companyId: company.id,
@@ -587,6 +642,9 @@ describe('Persona analytics dashboards', () => {
     expect(response.body.navigation[0].analytics.metrics[0].label).toBe('Jobs Received');
     expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
     expect(response.body.exports.csv.href).toContain('/api/analytics/dashboards/admin/export');
+    const websiteSection = response.body.navigation.find((section) => section.id === 'website-management');
+    expect(websiteSection).toBeTruthy();
+    expect(websiteSection.data.panels.length).toBeGreaterThan(0);
   });
 
   it('supports provider persona with acceptance and rental metrics', async () => {
@@ -622,13 +680,23 @@ describe('Persona analytics dashboards', () => {
       .expect(200);
 
     expect(response.body.persona).toBe('user');
-    expect(response.body.navigation[0].analytics.metrics).toHaveLength(4);
-    expect(response.body.navigation[1].data.columns).toHaveLength(4);
-    expect(response.body.navigation[2].data.rows.length).toBeGreaterThan(0);
-    expect(response.body.navigation[3].data.items.length).toBeGreaterThan(0);
-    expect(response.body.navigation[0].sidebar.badge).toContain('jobs');
-    expect(response.body.navigation[4].id).toBe('settings');
-    expect(response.body.navigation[4].data.panels.length).toBeGreaterThan(0);
+    const navigation = response.body.navigation;
+    expect(navigation[0].analytics.metrics).toHaveLength(4);
+    const ordersSection = navigation.find((section) => section.id === 'orders');
+    expect(ordersSection.data.columns).toHaveLength(4);
+    const historySection = navigation.find((section) => section.id === 'history');
+    expect(historySection.data.orders.length).toBeGreaterThan(0);
+    expect(historySection.data.statusOptions.length).toBeGreaterThan(0);
+    expect(historySection.data.entries.length).toBeGreaterThan(0);
+    expect(historySection.access.features).toContain('order-history:write');
+    const rentalsSection = navigation.find((section) => section.id === 'rentals');
+    expect(rentalsSection.data.rows.length).toBeGreaterThan(0);
+    const accountSection = navigation.find((section) => section.id === 'account');
+    expect(accountSection.data.items.length).toBeGreaterThan(0);
+    expect(navigation[0].sidebar.badge).toContain('jobs');
+    const settingsSection = navigation.find((section) => section.id === 'settings');
+    expect(settingsSection).toBeTruthy();
+    expect(settingsSection.data.panels.length).toBeGreaterThan(0);
   });
 
   it('streams governed CSV exports for persona dashboards', async () => {

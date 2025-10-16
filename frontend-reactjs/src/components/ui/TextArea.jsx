@@ -5,6 +5,7 @@ import './ui.css';
 
 const TextArea = forwardRef(function TextArea(
   { id, label, hint, error, className, inputClassName, rows = 6, ...rest },
+  { id, label, optionalLabel, hint, error, rows, className, inputClassName, ...rest },
   ref
 ) {
   const generatedId = useId();
@@ -37,6 +38,18 @@ const TextArea = forwardRef(function TextArea(
           {...rest}
         />
       </div>
+          {optionalLabel ? <span className="fx-field__optional">{optionalLabel}</span> : null}
+        </label>
+      ) : null}
+      <textarea
+        ref={ref}
+        id={fieldId}
+        rows={rows}
+        className={clsx('fx-textarea', error && 'fx-textarea--error', inputClassName)}
+        aria-describedby={describedBy.join(' ') || undefined}
+        aria-invalid={Boolean(error)}
+        {...rest}
+      />
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
           {hint}
@@ -59,6 +72,12 @@ TextArea.propTypes = {
   className: PropTypes.string,
   inputClassName: PropTypes.string,
   rows: PropTypes.number
+  optionalLabel: PropTypes.string,
+  hint: PropTypes.string,
+  error: PropTypes.string,
+  rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  className: PropTypes.string,
+  inputClassName: PropTypes.string
 };
 
 TextArea.defaultProps = {
@@ -69,6 +88,12 @@ TextArea.defaultProps = {
   className: undefined,
   inputClassName: undefined,
   rows: 6
+  optionalLabel: undefined,
+  hint: undefined,
+  error: undefined,
+  rows: 4,
+  className: undefined,
+  inputClassName: undefined
 };
 
 export default TextArea;
