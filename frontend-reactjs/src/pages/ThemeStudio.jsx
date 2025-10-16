@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowTopRightOnSquareIcon, SwatchIcon } from '@heroicons/react/24/outline';
+import { useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/blueprints/PageHeader.jsx';
 import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
 import ThemePreviewCard from '../components/theme/ThemePreviewCard.jsx';
 import MarketingModulePreview from '../components/theme/MarketingModulePreview.jsx';
 import PreferenceChangeAnnouncer from '../components/accessibility/PreferenceChangeAnnouncer.jsx';
-import { Button, Card, SegmentedControl } from '../components/ui/index.js';
+import { Button, Card, SegmentedControl, Spinner, StatusPill } from '../components/ui/index.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { PERSONALISATION_OPTIONS } from '../theme/config.js';
+import { fetchAppearanceProfile } from '../api/appearanceClient.js';
 
 const preferenceMeta = ({ preferences }) => [
   {
@@ -29,9 +31,49 @@ const preferenceMeta = ({ preferences }) => [
 ];
 
 export default function ThemeStudio() {
+  const [searchParams] = useSearchParams();
   const { preferences, themes, personalisationOptions, setTheme, setDensity, setContrast, setMarketingVariant } = useTheme();
+  const [previewState, setPreviewState] = useState({ loading: false, profile: null, error: null });
+  const previewId = searchParams.get('profileId');
+  const variantParam = searchParams.get('variant');
 
   const headerMeta = useMemo(() => preferenceMeta({ preferences }), [preferences]);
+
+  useEffect(() => {
+    if (!previewId) {
+      setPreviewState({ loading: false, profile: null, error: null });
+      return;
+    }
+
+    let mounted = true;
+    setPreviewState({ loading: true, profile: null, error: null });
+    (async () => {
+      try {
+        const profile = await fetchAppearanceProfile(previewId);
+        if (!mounted) return;
+        setPreviewState({ loading: false, profile, error: null });
+      } catch (error) {
+        if (!mounted) return;
+        const failure = error instanceof Error ? error : new Error('Unable to load appearance preview');
+        setPreviewState({ loading: false, profile: null, error: failure });
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [previewId]);
+
+  useEffect(() => {
+    if (!variantParam) {
+      return;
+    }
+
+    const allowed = personalisationOptions.marketingVariant.some((option) => option.value === variantParam);
+    if (allowed) {
+      setMarketingVariant(variantParam);
+    }
+  }, [personalisationOptions.marketingVariant, setMarketingVariant, variantParam]);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24" data-qa-page="theme-studio">
@@ -58,6 +100,66 @@ export default function ThemeStudio() {
       />
 
       <div className="mx-auto max-w-7xl px-6 pt-16 space-y-14">
+        {previewState.loading ? (
+          <Card padding="lg" className="border-slate-200 bg-white/90 shadow-md shadow-primary/5">
+            <div className="flex items-center gap-3 text-slate-600">
+              <Spinner className="h-5 w-5 text-primary" />
+              <p className="text-sm">Loading appearance preview…</p>
+            </div>
+          </Card>
+        ) : null}
+        {previewState.error ? (
+          <Card padding="lg" className="border-rose-200 bg-white/90 text-rose-600 shadow-md shadow-rose-200/40">
+            <h2 className="text-sm font-semibold">Unable to load appearance profile</h2>
+            <p className="mt-2 text-sm">{previewState.error.message}</p>
+          </Card>
+        ) : null}
+        {previewState.profile ? (
+          <Card padding="lg" className="space-y-4 border-slate-200 bg-white/90 shadow-lg shadow-primary/5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-primary">Previewing {previewState.profile.name}</h2>
+                <p className="text-sm text-slate-600">Synced palette and copy from appearance management.</p>
+              </div>
+              {previewState.profile.isDefault ? <StatusPill tone="info">Default profile</StatusPill> : null}
+            </div>
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4">
+                <h3 className="text-sm font-semibold text-slate-700">Palette</h3>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {Object.entries(previewState.profile.colorPalette).map(([token, value]) => (
+                    <div key={token} className="flex items-center gap-3">
+                      <span className="h-10 w-10 rounded-xl border border-slate-200" style={{ background: value }} />
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{token}</p>
+                        <p className="text-sm text-slate-700">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700">Allowed roles</h3>
+                  <p className="text-sm text-slate-600">
+                    {previewState.profile.allowedRoles.map((role) => role.toUpperCase()).join(', ') || 'ADMIN'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700">Marketing headline</h3>
+                  <p className="text-sm text-slate-600">
+                    {previewState.profile.variants?.[0]?.headline || 'No marketing variants linked yet.'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700">Hero imagery note</h3>
+                  <p className="text-sm text-slate-600">{previewState.profile.imagery.heroGuidelines}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
         <section className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div>

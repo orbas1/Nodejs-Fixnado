@@ -5,8 +5,22 @@ import {
   ArrowTrendingDownIcon,
   MinusSmallIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
+import DisputeHealthWorkspace from './DisputeHealthWorkspace.jsx';
+import { OperationsQueuesSection } from '../operationsQueues/index.js';
+import UserManagementSection from './userManagement/UserManagementSection.jsx';
+import MarketplaceWorkspace from '../../features/marketplace-admin/MarketplaceWorkspace.jsx';
+import { ServiceManagementSection } from '../service-management/index.js';
+import AuditTimelineSection from '../audit-timeline/AuditTimelineSection.jsx';
+import ComplianceControlSection from './compliance/ComplianceControlSection.jsx';
+import RentalManagementSection from './rentals/RentalManagementSection.jsx';
+import CustomerSettingsSection from './CustomerSettingsSection.jsx';
+import WalletSection from './wallet/WalletSection.jsx';
+import ServiceOrdersWorkspace from './service-orders/index.js';
+import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
+import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -58,6 +72,13 @@ const GridSection = ({ section }) => {
             key={card.title}
             className={`rounded-2xl border border-accent/10 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-md`}
           >
+            {card.mediaUrl ? (
+              <img
+                src={card.mediaUrl}
+                alt={card.mediaAlt || card.title}
+                className="mb-4 h-12 w-12 rounded-full object-cover shadow-sm"
+              />
+            ) : null}
             <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               {(card.details ?? []).map((detail) => (
@@ -67,6 +88,27 @@ const GridSection = ({ section }) => {
                 </li>
               ))}
             </ul>
+            {card.cta && card.cta.href ? (
+              card.cta.href.startsWith('http') && card.cta.external ? (
+                <a
+                  href={card.cta.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                >
+                  {card.cta.label}
+                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
+                </a>
+              ) : (
+                <Link
+                  to={card.cta.href}
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                >
+                  {card.cta.label}
+                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
+                </Link>
+              )
+            ) : null}
           </div>
         ))}
       </div>
@@ -83,7 +125,14 @@ GridSection.propTypes = {
         PropTypes.shape({
           title: PropTypes.string.isRequired,
           details: PropTypes.arrayOf(PropTypes.string).isRequired,
-          accent: PropTypes.string
+          accent: PropTypes.string,
+          mediaUrl: PropTypes.string,
+          mediaAlt: PropTypes.string,
+          cta: PropTypes.shape({
+            label: PropTypes.string,
+            href: PropTypes.string,
+            external: PropTypes.bool
+          })
         })
       ).isRequired
     }).isRequired
@@ -396,6 +445,26 @@ const ListSection = ({ section }) => {
               <p className="text-base font-semibold text-primary">{item.title}</p>
               <p className="text-sm text-slate-600">{item.description}</p>
               <span className="text-xs uppercase tracking-wide text-primary/60">{item.status}</span>
+              {item.href ? (
+                item.href.startsWith('http') ? (
+                  <a
+                    href={item.href}
+                    target={item.target ?? '_blank'}
+                    rel="noreferrer"
+                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                  >
+                    {item.cta ?? 'Open link'}
+                  </a>
+                ) : (
+                  <Link
+                    to={item.href}
+                    target={item.target ?? '_self'}
+                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                  >
+                    {item.cta ?? 'Open workspace'}
+                  </Link>
+                )
+              ) : null}
             </div>
           </div>
         ))}
@@ -413,7 +482,10 @@ ListSection.propTypes = {
         PropTypes.shape({
           title: PropTypes.string.isRequired,
           description: PropTypes.string.isRequired,
-          status: PropTypes.string.isRequired
+          status: PropTypes.string.isRequired,
+          href: PropTypes.string,
+          target: PropTypes.string,
+          cta: PropTypes.string
         })
       ).isRequired
     }).isRequired
@@ -1624,27 +1696,81 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona }) => {
+  if (section.type === 'automation' || section.id === 'automation-backlog') {
+    return <AutomationBacklogSection section={section} features={features} persona={persona} />;
+  }
   switch (section.type) {
     case 'grid':
       return <GridSection section={section} />;
     case 'board':
+      if (section.id === 'orders') {
+        return <ServiceOrdersWorkspace section={section} />;
+      }
       return <BoardSection section={section} />;
     case 'table':
       return <TableSection section={section} />;
     case 'list':
       return <ListSection section={section} />;
+    case 'rentals':
+      return <RentalManagementSection section={section} />;
     case 'inventory':
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
     case 'settings':
+      return persona === 'user' ? (
+        <CustomerSettingsSection section={section} />
+      ) : (
+        <SettingsSection section={section} />
+      );
+    case 'settings': {
+      const sectionLabel = section?.label?.toLowerCase?.() ?? '';
+      const shouldRenderAccountSettings =
+        persona === 'user' ||
+        features?.accountSettings === true ||
+        features?.accountSettingsBeta === true ||
+        sectionLabel.includes('account settings');
+
+      if (shouldRenderAccountSettings) {
+        return <AccountSettingsManager initialSnapshot={section} />;
+      }
+
       return <SettingsSection section={section} />;
+    }
     case 'calendar':
       return <CalendarSection section={section} />;
     case 'availability':
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'dispute-workspace':
+      return <DisputeHealthWorkspace section={section} />;
+    case 'operations-queues':
+      return <OperationsQueuesSection section={section} />;
+    case 'user-management':
+      return <UserManagementSection section={section} />;
+    case 'marketplace-workspace':
+      return (
+        <MarketplaceWorkspace
+          initialCompanyId={section.data?.companyId ?? ''}
+          prefetchedOverview={section.data?.overview ?? null}
+        />
+      );
+    case 'service-management':
+      return <ServiceManagementSection section={section} />;
+    case 'audit-timeline':
+      return <AuditTimelineSection section={section} />;
+    case 'compliance-controls':
+      return <ComplianceControlSection section={section} />;
+    case 'wallet':
+      return <WalletSection section={section} />;
+    case 'component': {
+      const Component = section.component;
+      if (!Component) return null;
+      return <Component {...(section.data ?? {})} />;
+    }
+    case 'history':
+      return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:
       return null;
   }
@@ -1652,6 +1778,7 @@ const DashboardSection = ({ section, features = {}, persona }) => {
 
 DashboardSection.propTypes = {
   section: PropTypes.shape({
+    id: PropTypes.string,
     type: PropTypes.string.isRequired,
     access: PropTypes.shape({
       label: PropTypes.string,

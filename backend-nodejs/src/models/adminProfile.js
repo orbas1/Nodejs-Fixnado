@@ -23,6 +23,8 @@ AdminProfile.init(
     },
     jobTitle: {
       type: DataTypes.STRING(160),
+    jobTitle: {
+      type: DataTypes.STRING(120),
       allowNull: true,
       field: 'job_title'
     },
@@ -33,6 +35,10 @@ AdminProfile.init(
     pronouns: {
       type: DataTypes.STRING(80),
       allowNull: true
+    phoneNumber: {
+      type: DataTypes.STRING(80),
+      allowNull: true,
+      field: 'phone_number'
     },
     avatarUrl: {
       type: DataTypes.TEXT,
@@ -80,6 +86,37 @@ AdminProfile.init(
       defaultValue: {},
       field: 'working_hours'
     },
+    timezone: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    addressLine1: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'address_line1'
+    },
+    addressLine2: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'address_line2'
+    },
+    city: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
+    state: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
+    postalCode: {
+      type: DataTypes.STRING(40),
+      allowNull: true,
+      field: 'postal_code'
+    },
+    country: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
     notificationPreferences: {
       type: DataTypes.JSONB,
       allowNull: false,
@@ -119,6 +156,11 @@ AdminProfile.init(
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: {}
+    notificationEmails: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      field: 'notification_emails'
     }
   },
   {
