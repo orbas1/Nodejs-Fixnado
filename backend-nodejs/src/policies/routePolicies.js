@@ -14,6 +14,23 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null,
       surface: req.route?.path || null
+    })
+  },
+  'serviceman.control.manage': {
+    id: 'serviceman.control.manage',
+    version: '1.0.0',
+    resource: 'serviceman.control',
+    action: 'serviceman.control:manage',
+    description:
+      'Allow crew personas to manage dispute cases, evidence, and follow-up actions from the serviceman control centre.',
+    requirements: [Permissions.SERVICEMAN_CONTROL_MANAGE],
+    tags: ['serviceman', 'workspace', 'disputes'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      surface: req.route?.path || null
+    })
+  },
   'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',

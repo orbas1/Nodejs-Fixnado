@@ -3452,6 +3452,12 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'serviceman-disputes',
+        label: 'Dispute Management',
+        description: 'Open and track dispute cases, assignments, and supporting evidence.',
+        type: 'component'
       }
     ]
   };
