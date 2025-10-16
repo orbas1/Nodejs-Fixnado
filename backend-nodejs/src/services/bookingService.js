@@ -37,6 +37,55 @@ function ensureDate(value, fieldName) {
   return date;
 }
 
+function normaliseChecklist(items = []) {
+  if (!Array.isArray(items)) {
+    return undefined;
+  }
+
+  const entries = items
+    .map((item, index) => {
+      if (!item) return null;
+      const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `item-${index + 1}`;
+      const label = typeof item.label === 'string' ? item.label.trim() : '';
+      if (!label) {
+        return null;
+      }
+      return {
+        id,
+        label,
+        mandatory: item.mandatory === true
+      };
+    })
+    .filter(Boolean);
+
+  return entries;
+}
+
+function normaliseAttachments(items = []) {
+  if (!Array.isArray(items)) {
+    return undefined;
+  }
+
+  const entries = items
+    .map((item) => {
+      if (!item) return null;
+      const label = typeof item.label === 'string' ? item.label.trim() : '';
+      const url = typeof item.url === 'string' ? item.url.trim() : '';
+      if (!label || !url) {
+        return null;
+      }
+      return {
+        label,
+        url,
+        type:
+          typeof item.type === 'string' && item.type.trim() ? item.type.trim().toLowerCase() : 'document'
+      };
+    })
+    .filter(Boolean);
+
+  return entries;
+}
+
 function invalidBooking(message) {
   const error = new Error(message);
   error.statusCode = 400;
@@ -618,4 +667,178 @@ export async function getBookingById(id) {
   return Booking.findByPk(id, {
     include: [BookingAssignment, BookingBid]
   });
+}
+
+export async function updateBookingSchedule(bookingId, schedule = {}, context = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const startProvided = Object.hasOwn(schedule, 'scheduledStart');
+  const endProvided = Object.hasOwn(schedule, 'scheduledEnd');
+  const slaProvided = Object.hasOwn(schedule, 'slaExpiresAt');
+
+  const nextStart = startProvided
+    ? schedule.scheduledStart
+      ? ensureDate(schedule.scheduledStart, 'scheduledStart')
+      : null
+    : booking.scheduledStart;
+  const nextEnd = endProvided
+    ? schedule.scheduledEnd
+      ? ensureDate(schedule.scheduledEnd, 'scheduledEnd')
+      : null
+    : booking.scheduledEnd;
+  const nextSla = slaProvided
+    ? schedule.slaExpiresAt
+      ? ensureDate(schedule.slaExpiresAt, 'slaExpiresAt')
+      : null
+    : booking.slaExpiresAt;
+
+  if (booking.type === 'scheduled') {
+    if (!nextStart || !nextEnd || nextEnd <= nextStart) {
+      throw invalidBooking('Scheduled bookings require a valid start and end window');
+    }
+  } else if (startProvided || endProvided) {
+    throw invalidBooking('On-demand bookings cannot include scheduled windows');
+  }
+
+  const payload = {};
+  if (startProvided) {
+    payload.scheduledStart = nextStart;
+  }
+  if (endProvided) {
+    payload.scheduledEnd = nextEnd;
+  }
+  if (slaProvided) {
+    payload.slaExpiresAt = nextSla ?? booking.slaExpiresAt;
+  }
+
+  const meta = {
+    ...booking.meta,
+    schedule: {
+      ...(booking.meta?.schedule || {}),
+      updatedAt: new Date().toISOString(),
+      updatedBy: context.actorId || null
+    }
+  };
+
+  if (nextStart) {
+    meta.schedule.start = nextStart.toISOString();
+  }
+  if (nextEnd) {
+    meta.schedule.end = nextEnd.toISOString();
+  }
+  if (nextSla) {
+    meta.schedule.slaExpiresAt = nextSla.toISOString();
+  }
+
+  await booking.update({ ...payload, meta });
+  return booking.reload();
+}
+
+export async function updateBookingMetadata(bookingId, updates = {}, context = {}) {
+  const booking = await Booking.findByPk(bookingId);
+  if (!booking) {
+    const error = new Error('Booking not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const meta = { ...booking.meta };
+  const nextMeta = { ...meta };
+
+  if (Object.hasOwn(updates, 'title')) {
+    nextMeta.title =
+      typeof updates.title === 'string' && updates.title.trim() ? updates.title.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'summary')) {
+    nextMeta.summary =
+      typeof updates.summary === 'string' && updates.summary.trim() ? updates.summary.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'instructions')) {
+    nextMeta.instructions =
+      typeof updates.instructions === 'string' && updates.instructions.trim()
+        ? updates.instructions.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'notes')) {
+    nextMeta.notes =
+      typeof updates.notes === 'string' && updates.notes.trim() ? updates.notes.trim() : null;
+  }
+
+  if (Object.hasOwn(updates, 'ownerName')) {
+    nextMeta.ownerName =
+      typeof updates.ownerName === 'string' && updates.ownerName.trim()
+        ? updates.ownerName.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'templateId')) {
+    nextMeta.templateId = updates.templateId || null;
+  }
+
+  if (Object.hasOwn(updates, 'heroImageUrl')) {
+    nextMeta.heroImageUrl =
+      typeof updates.heroImageUrl === 'string' && updates.heroImageUrl.trim()
+        ? updates.heroImageUrl.trim()
+        : null;
+  }
+
+  if (Object.hasOwn(updates, 'images')) {
+    nextMeta.images = Array.isArray(updates.images)
+      ? updates.images
+          .map((entry) => (typeof entry === 'string' ? entry.trim() : null))
+          .filter(Boolean)
+      : [];
+  }
+
+  const checklist = normaliseChecklist(updates.checklist);
+  if (checklist !== undefined) {
+    nextMeta.checklist = checklist;
+  }
+
+  const attachments = normaliseAttachments(updates.attachments);
+  if (attachments !== undefined) {
+    nextMeta.attachments = attachments;
+  }
+
+  if (Object.hasOwn(updates, 'demandLevel')) {
+    if (typeof updates.demandLevel === 'string' && updates.demandLevel.trim()) {
+      nextMeta.demandLevel = updates.demandLevel.trim().toLowerCase();
+    }
+  }
+
+  if (Object.hasOwn(updates, 'tags')) {
+    nextMeta.tags = Array.isArray(updates.tags)
+      ? updates.tags
+          .map((tag) => (typeof tag === 'string' ? tag.trim() : null))
+          .filter(Boolean)
+      : [];
+  }
+
+  if (Object.hasOwn(updates, 'autoAssignEnabled')) {
+    nextMeta.autoAssignEnabled = Boolean(updates.autoAssignEnabled);
+  }
+
+  if (Object.hasOwn(updates, 'allowCustomerEdits')) {
+    nextMeta.allowCustomerEdits = Boolean(updates.allowCustomerEdits);
+  }
+
+  if (updates.extraMetadata && typeof updates.extraMetadata === 'object' && !Array.isArray(updates.extraMetadata)) {
+    nextMeta.extraMetadata = { ...(nextMeta.extraMetadata || {}), ...updates.extraMetadata };
+  }
+
+  nextMeta.lastEdited = {
+    actorId: context.actorId || null,
+    updatedAt: new Date().toISOString()
+  };
+
+  await booking.update({ meta: nextMeta });
+  return booking.reload();
 }

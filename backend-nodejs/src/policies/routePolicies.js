@@ -149,6 +149,26 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.bookings.read': {
+    id: 'admin.bookings.read',
+    version: '1.0.0',
+    resource: 'admin.bookings',
+    action: 'admin.bookings:read',
+    description: 'Allow platform administrators to view booking management insights and settings.',
+    requirements: [Permissions.ADMIN_BOOKINGS_READ],
+    tags: ['admin', 'bookings'],
+    severity: 'high'
+  },
+  'admin.bookings.write': {
+    id: 'admin.bookings.write',
+    version: '1.0.0',
+    resource: 'admin.bookings',
+    action: 'admin.bookings:write',
+    description: 'Allow platform administrators to create and update bookings, templates, and guardrails.',
+    requirements: [Permissions.ADMIN_BOOKINGS_WRITE],
+    tags: ['admin', 'bookings'],
+    severity: 'critical'
+  },
   'admin.affiliates.read': {
     id: 'admin.affiliates.read',
     version: '1.0.0',

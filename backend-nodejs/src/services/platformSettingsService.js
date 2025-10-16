@@ -63,6 +63,33 @@ const defaultCommissionRates = (() => {
   };
 })();
 
+const DEFAULT_BOOKING_SETTINGS = {
+  autoAssignEnabled: true,
+  allowManualAssignments: true,
+  defaultDemandLevel: 'medium',
+  defaultCurrency: 'GBP',
+  sla: {
+    onDemandMinutes: 45,
+    scheduledHours: 24,
+    followUpMinutes: 120
+  },
+  cancellation: {
+    windowHours: 6,
+    feePercent: 0.1,
+    gracePeriodMinutes: 15
+  },
+  reminders: {
+    assignmentMinutes: 15,
+    startMinutes: 60,
+    completionMinutes: 30
+  },
+  documents: {
+    requireRiskAssessment: true,
+    requireInsuranceProof: true,
+    requirePermit: false
+  }
+};
+
 const DEFAULT_SETTINGS = {
   commissions: {
     enabled: config.finance?.commissionsEnabled !== false,
@@ -119,7 +146,8 @@ const DEFAULT_SETTINGS = {
       password: process.env.DB_PASSWORD || '',
       ssl: Boolean(config.database?.ssl)
     }
-  }
+  },
+  bookings: DEFAULT_BOOKING_SETTINGS
 };
 
 let cachedSettings = clone(DEFAULT_SETTINGS);
@@ -146,6 +174,7 @@ function applyRuntimeSideEffects(settings) {
   };
 
   config.integrations = deepMerge(config.integrations || {}, settings.integrations || {});
+  config.bookings = clone(settings.bookings ?? DEFAULT_BOOKING_SETTINGS);
 }
 
 async function refreshCache() {
@@ -306,6 +335,118 @@ function sanitiseIntegrations(update = {}, current = DEFAULT_SETTINGS.integratio
   return next;
 }
 
+function parseIntegerWithinRange(value, fallback, { min = 0, max = Number.POSITIVE_INFINITY } = {}) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  const bounded = Math.max(min, Math.min(max, parsed));
+  return bounded;
+}
+
+function parsePercent(value, fallback) {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  const bounded = Math.max(0, Math.min(1, parsed));
+  return Number.parseFloat(bounded.toFixed(4));
+}
+
+function sanitiseBookings(update = {}, current = DEFAULT_BOOKING_SETTINGS) {
+  const next = clone(current);
+
+  if (Object.hasOwn(update, 'autoAssignEnabled')) {
+    next.autoAssignEnabled = Boolean(update.autoAssignEnabled);
+  }
+  if (Object.hasOwn(update, 'allowManualAssignments')) {
+    next.allowManualAssignments = Boolean(update.allowManualAssignments);
+  }
+  if (typeof update.defaultDemandLevel === 'string' && update.defaultDemandLevel.trim()) {
+    const normalised = update.defaultDemandLevel.trim().toLowerCase();
+    if (['low', 'medium', 'high'].includes(normalised)) {
+      next.defaultDemandLevel = normalised;
+    }
+  }
+  if (typeof update.defaultCurrency === 'string' && update.defaultCurrency.trim()) {
+    next.defaultCurrency = update.defaultCurrency.trim().slice(0, 3).toUpperCase();
+  }
+
+  if (isPlainObject(update.sla)) {
+    next.sla = {
+      ...next.sla,
+      onDemandMinutes: parseIntegerWithinRange(update.sla.onDemandMinutes, next.sla.onDemandMinutes, {
+        min: 5,
+        max: 720
+      }),
+      scheduledHours: parseIntegerWithinRange(update.sla.scheduledHours, next.sla.scheduledHours, {
+        min: 1,
+        max: 336
+      }),
+      followUpMinutes: parseIntegerWithinRange(update.sla.followUpMinutes, next.sla.followUpMinutes, {
+        min: 5,
+        max: 720
+      })
+    };
+  }
+
+  if (isPlainObject(update.cancellation)) {
+    next.cancellation = {
+      ...next.cancellation,
+      windowHours: parseIntegerWithinRange(update.cancellation.windowHours, next.cancellation.windowHours, {
+        min: 0,
+        max: 168
+      }),
+      feePercent: parsePercent(update.cancellation.feePercent, next.cancellation.feePercent),
+      gracePeriodMinutes: parseIntegerWithinRange(
+        update.cancellation.gracePeriodMinutes,
+        next.cancellation.gracePeriodMinutes,
+        { min: 0, max: 240 }
+      )
+    };
+  }
+
+  if (isPlainObject(update.reminders)) {
+    next.reminders = {
+      ...next.reminders,
+      assignmentMinutes: parseIntegerWithinRange(
+        update.reminders.assignmentMinutes,
+        next.reminders.assignmentMinutes,
+        { min: 0, max: 1440 }
+      ),
+      startMinutes: parseIntegerWithinRange(update.reminders.startMinutes, next.reminders.startMinutes, {
+        min: 0,
+        max: 1440
+      }),
+      completionMinutes: parseIntegerWithinRange(
+        update.reminders.completionMinutes,
+        next.reminders.completionMinutes,
+        { min: 0, max: 1440 }
+      )
+    };
+  }
+
+  if (isPlainObject(update.documents)) {
+    next.documents = {
+      ...next.documents,
+      requireRiskAssessment:
+        Object.hasOwn(update.documents, 'requireRiskAssessment')
+          ? Boolean(update.documents.requireRiskAssessment)
+          : next.documents.requireRiskAssessment,
+      requireInsuranceProof:
+        Object.hasOwn(update.documents, 'requireInsuranceProof')
+          ? Boolean(update.documents.requireInsuranceProof)
+          : next.documents.requireInsuranceProof,
+      requirePermit:
+        Object.hasOwn(update.documents, 'requirePermit')
+          ? Boolean(update.documents.requirePermit)
+          : next.documents.requirePermit
+    };
+  }
+
+  return next;
+}
+
 function validationError(message, details = []) {
   const error = new Error(message);
   error.name = 'ValidationError';
@@ -342,6 +483,11 @@ export async function updatePlatformSettings(updates = {}, actor = 'system') {
   if (Object.hasOwn(updates, 'integrations')) {
     next.integrations = sanitiseIntegrations(updates.integrations, current.integrations);
     changedKeys.add('integrations');
+  }
+
+  if (Object.hasOwn(updates, 'bookings')) {
+    next.bookings = sanitiseBookings(updates.bookings, current.bookings);
+    changedKeys.add('bookings');
   }
 
   if (changedKeys.size === 0) {

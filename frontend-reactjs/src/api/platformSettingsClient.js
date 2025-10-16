@@ -71,7 +71,8 @@ function normalizeSettings(settings) {
       cloudflareR2: normalizeSection(integrations.cloudflareR2),
       app: normalizeSection(integrations.app),
       database: normalizeSection(integrations.database)
-    }
+    },
+    bookings: normalizeBookings(settings.bookings)
   };
 }
 
@@ -92,4 +93,41 @@ function normalizeSection(section) {
     normalised[key] = String(value);
   }
   return normalised;
+}
+
+function normalizeBookings(bookings) {
+  const source = bookings && typeof bookings === 'object' ? bookings : {};
+  const sla = source.sla && typeof source.sla === 'object' ? source.sla : {};
+  const cancellation = source.cancellation && typeof source.cancellation === 'object' ? source.cancellation : {};
+  const reminders = source.reminders && typeof source.reminders === 'object' ? source.reminders : {};
+  const documents = source.documents && typeof source.documents === 'object' ? source.documents : {};
+
+  return {
+    autoAssignEnabled: source.autoAssignEnabled !== false,
+    allowManualAssignments: source.allowManualAssignments !== false,
+    defaultDemandLevel: typeof source.defaultDemandLevel === 'string' ? source.defaultDemandLevel : 'medium',
+    defaultCurrency: typeof source.defaultCurrency === 'string' ? source.defaultCurrency : 'GBP',
+    sla: {
+      onDemandMinutes: Number.isFinite(Number(sla.onDemandMinutes)) ? Number(sla.onDemandMinutes) : 45,
+      scheduledHours: Number.isFinite(Number(sla.scheduledHours)) ? Number(sla.scheduledHours) : 24,
+      followUpMinutes: Number.isFinite(Number(sla.followUpMinutes)) ? Number(sla.followUpMinutes) : 120
+    },
+    cancellation: {
+      windowHours: Number.isFinite(Number(cancellation.windowHours)) ? Number(cancellation.windowHours) : 6,
+      feePercent: Number.isFinite(Number(cancellation.feePercent)) ? Number(cancellation.feePercent) : 0.1,
+      gracePeriodMinutes: Number.isFinite(Number(cancellation.gracePeriodMinutes))
+        ? Number(cancellation.gracePeriodMinutes)
+        : 15
+    },
+    reminders: {
+      assignmentMinutes: Number.isFinite(Number(reminders.assignmentMinutes)) ? Number(reminders.assignmentMinutes) : 15,
+      startMinutes: Number.isFinite(Number(reminders.startMinutes)) ? Number(reminders.startMinutes) : 60,
+      completionMinutes: Number.isFinite(Number(reminders.completionMinutes)) ? Number(reminders.completionMinutes) : 30
+    },
+    documents: {
+      requireRiskAssessment: documents.requireRiskAssessment !== false,
+      requireInsuranceProof: documents.requireInsuranceProof !== false,
+      requirePermit: documents.requirePermit === true
+    }
+  };
 }
