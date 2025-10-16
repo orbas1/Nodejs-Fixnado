@@ -1191,6 +1191,13 @@ async function loadAdminData(context) {
             }
           ]
         }
+      },
+      {
+        id: 'home-builder',
+        label: 'Home Page Builder',
+        description: 'Launch the modular home page workspace to design, publish, and manage components.',
+        type: 'link',
+        href: '/admin/home-builder'
       }
     ]
   };

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -24,7 +24,8 @@ import {
   BoltIcon,
   BanknotesIcon,
   ClipboardDocumentCheckIcon,
-  CubeIcon
+  CubeIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
@@ -139,6 +140,8 @@ const navIconMap = {
   documents: ClipboardDocumentCheckIcon
 };
 
+navIconMap.builder = PaintBrushIcon;
+
 const getNavIcon = (item) => {
   if (!item?.icon) {
     return Squares2X2Icon;
@@ -162,7 +165,9 @@ const formatRelativeTime = (timestamp) => {
 };
 
 const buildSearchIndex = (navigation) =>
-  navigation.flatMap((section) => {
+  navigation
+    .filter((section) => !section.href)
+    .flatMap((section) => {
     const entries = [
       {
         id: section.id,
@@ -340,18 +345,41 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
-  const [selectedSection, setSelectedSection] = useState(navigation[0]?.id ?? 'overview');
+  const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
+  const initialSectionId = navigableItems[0]?.id ?? null;
+  const [selectedSection, setSelectedSection] = useState(initialSectionId);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleNavClick = useCallback(
+    (item) => {
+      if (item.href) {
+        if (item.target === '_blank') {
+          window.open(item.href, '_blank', 'noopener');
+        } else {
+          navigate(item.href);
+        }
+        setMobileNavOpen(false);
+        return;
+      }
+      setSelectedSection(item.id);
+    },
+    [navigate]
+  );
+
   useEffect(() => {
-    setSelectedSection(navigation[0]?.id ?? 'overview');
+    setSelectedSection((current) => {
+      if (current && navigableItems.some((item) => item.id === current)) {
+        return current;
+      }
+      return navigableItems[0]?.id ?? null;
+    });
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigation]);
+  }, [navigation, navigableItems]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -371,7 +399,7 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
-  const activeSection = navigation.find((item) => item.id === selectedSection) ?? navigation[0];
+  const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
   const persona = dashboard?.persona ?? roleMeta.id;
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
@@ -449,7 +477,7 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedSection(item.id)}
+                        onClick={() => handleNavClick(item)}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
@@ -532,7 +560,7 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedSection(item.id)}
+                onClick={() => handleNavClick(item)}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'

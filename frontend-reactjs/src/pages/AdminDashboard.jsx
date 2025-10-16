@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -575,6 +575,15 @@ export default function AdminDashboard() {
 
   const filters = (
     <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+      <Button
+        to="/admin/home-builder"
+        size="sm"
+        variant="secondary"
+        icon={Squares2X2Icon}
+        iconPosition="start"
+      >
+        Home builder
+      </Button>
       <Button
         to="/admin/monetisation"
         size="sm"

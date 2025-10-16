@@ -63,6 +63,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import HomePage from './homePage.js';
+import HomePageSection from './homePageSection.js';
+import HomePageComponent from './homePageComponent.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -399,6 +402,30 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+HomePage.hasMany(HomePageSection, {
+  foreignKey: 'homePageId',
+  as: 'sections',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageSection.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+
+HomePageSection.hasMany(HomePageComponent, {
+  foreignKey: 'sectionId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePageSection, { foreignKey: 'sectionId', as: 'section' });
+
+HomePage.hasMany(HomePageComponent, {
+  foreignKey: 'homePageId',
+  as: 'components',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+HomePageComponent.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
+
 export {
   sequelize,
   User,
@@ -464,5 +491,8 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  HomePage,
+  HomePageSection,
+  HomePageComponent
 };
