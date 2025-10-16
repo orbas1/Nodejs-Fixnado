@@ -17,6 +17,13 @@ import {
   upsertAffiliateCommissionRuleHandler,
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  listAppearanceProfilesHandler,
+  getAppearanceProfileHandler,
+  createAppearanceProfileHandler,
+  updateAppearanceProfileHandler,
+  archiveAppearanceProfileHandler
+} from '../controllers/adminAppearanceController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
 
@@ -104,6 +111,51 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/appearance/profiles',
+  authenticate,
+  enforcePolicy('admin.appearance.read', {
+    metadata: () => ({ entity: 'appearance-profiles', action: 'list' })
+  }),
+  listAppearanceProfilesHandler
+);
+
+router.post(
+  '/appearance/profiles',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: () => ({ entity: 'appearance-profiles', action: 'create' })
+  }),
+  createAppearanceProfileHandler
+);
+
+router.get(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.read', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id })
+  }),
+  getAppearanceProfileHandler
+);
+
+router.put(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id })
+  }),
+  updateAppearanceProfileHandler
+);
+
+router.delete(
+  '/appearance/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.appearance.write', {
+    metadata: (req) => ({ entity: 'appearance-profiles', profileId: req.params.id, action: 'archive' })
+  }),
+  archiveAppearanceProfileHandler
 );
 
 export default router;

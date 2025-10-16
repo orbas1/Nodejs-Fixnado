@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, MapIcon, SwatchIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
@@ -445,7 +445,7 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  return [
+  const navigation = [
     overview,
     commandMetrics,
     securitySection,
@@ -455,6 +455,16 @@ function buildAdminNavigation(payload) {
     automationSection,
     auditSection
   ].filter(Boolean);
+
+  navigation.push({
+    id: 'appearance-management',
+    label: 'Appearance management',
+    description: 'Govern admin look & feel, brand assets, and marketing variants.',
+    icon: 'assets',
+    href: '/admin/appearance'
+  });
+
+  return navigation;
 }
 
 export default function AdminDashboard() {
@@ -583,6 +593,15 @@ export default function AdminDashboard() {
         iconPosition="start"
       >
         Monetisation controls
+      </Button>
+      <Button
+        to="/admin/appearance"
+        size="sm"
+        variant="secondary"
+        icon={SwatchIcon}
+        iconPosition="start"
+      >
+        Appearance management
       </Button>
       <Button
         to="/admin/zones"

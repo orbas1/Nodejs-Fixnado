@@ -443,27 +443,50 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
-                    const isActive = item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
+                    const isLink = Boolean(item.href);
+                    const isActive = !isLink && item.id === activeSection?.id;
+                    const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      isActive
+                        ? 'border-accent bg-accent text-white shadow-glow'
+                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                    }`;
+                    const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                    }`;
+
+                    if (isLink) {
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          className={baseClass}
+                          onClick={() => setMobileNavOpen(false)}
+                        >
+                          <span className={iconWrapperClass}>
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold">{item.label}</p>
+                            {item.description ? (
+                              <p className="text-xs text-slate-500">{item.description}</p>
+                            ) : null}
+                          </div>
+                        </Link>
+                      );
+                    }
+
                     return (
                       <button
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedSection(item.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                          isActive
-                            ? 'border-accent bg-accent text-white shadow-glow'
-                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
-                        }`}
+                        className={baseClass}
                         aria-pressed={isActive}
                       >
-                        <span
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                          }`}
-                        >
+                        <span className={iconWrapperClass}>
                           <Icon className="h-5 w-5" />
                         </span>
                         <div className="flex-1">
@@ -526,28 +549,53 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
-            const isActive = item.id === activeSection?.id;
             const Icon = getNavIcon(item);
+            const isLink = Boolean(item.href);
+            const isActive = !isLink && item.id === activeSection?.id;
+            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+              isActive
+                ? 'border-accent bg-accent text-white shadow-glow'
+                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+            } ${navCollapsed ? 'justify-center px-2' : ''}`;
+            const iconWrapperClass = `flex h-10 w-10 items-center justify-center rounded-xl ${
+              isActive
+                ? 'bg-white/20 text-white'
+                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+            }`;
+
+            if (isLink) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={baseClass}
+                  title={navCollapsed ? item.label : undefined}
+                >
+                  <span className={iconWrapperClass}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  {!navCollapsed && (
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{item.label}</p>
+                      {item.description ? (
+                        <p className="text-xs text-slate-500">{item.description}</p>
+                      ) : null}
+                    </div>
+                  )}
+                </Link>
+              );
+            }
+
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedSection(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                  isActive
-                    ? 'border-accent bg-accent text-white shadow-glow'
-                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
+                className={baseClass}
                 title={navCollapsed ? item.label : undefined}
                 aria-pressed={isActive}
               >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
-                  }`}
-                >
+                <span className={iconWrapperClass}>
                   <Icon className="h-5 w-5" />
                 </span>
                 {!navCollapsed && (

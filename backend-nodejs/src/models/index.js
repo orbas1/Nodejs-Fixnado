@@ -63,6 +63,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import AppearanceProfile from './appearanceProfile.js';
+import AppearanceAsset from './appearanceAsset.js';
+import AppearanceVariant from './appearanceVariant.js';
 
 User.hasOne(Company, { foreignKey: 'userId' });
 Company.belongsTo(User, { foreignKey: 'userId' });
@@ -352,6 +355,12 @@ WarehouseExportRun.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 User.hasMany(WarehouseExportRun, { foreignKey: 'triggeredBy', as: 'warehouseExportRuns' });
 WarehouseExportRun.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
 
+AppearanceProfile.hasMany(AppearanceAsset, { foreignKey: 'profileId', as: 'assets' });
+AppearanceAsset.belongsTo(AppearanceProfile, { foreignKey: 'profileId', as: 'profile' });
+
+AppearanceProfile.hasMany(AppearanceVariant, { foreignKey: 'profileId', as: 'variants' });
+AppearanceVariant.belongsTo(AppearanceProfile, { foreignKey: 'profileId', as: 'profile' });
+
 Company.hasMany(Booking, { foreignKey: 'companyId' });
 Booking.belongsTo(Company, { foreignKey: 'companyId' });
 
@@ -464,5 +473,8 @@ export {
   FinanceWebhookEvent,
   MessageHistory,
   StorefrontRevisionLog,
-  WarehouseExportRun
+  WarehouseExportRun,
+  AppearanceProfile,
+  AppearanceAsset,
+  AppearanceVariant
 };
