@@ -3105,6 +3105,16 @@ async function loadServicemanData(context) {
   const adsSourcedCount = assignments.filter(
     (assignment) => assignment.Booking?.meta?.source === 'fixnado_ads'
   ).length;
+  const pendingAssignments = assignments.filter((assignment) => assignment.status === 'pending').length;
+
+  const slaAtRiskCount = assignments.filter((assignment) => {
+    const booking = assignment.Booking;
+    if (!booking?.slaExpiresAt || ['completed', 'cancelled'].includes(booking.status)) {
+      return false;
+    }
+    const expiry = DateTime.fromJSDate(booking.slaExpiresAt).setZone(window.timezone);
+    return expiry <= window.end.plus({ hours: 6 });
+  }).length;
 
   const bookingCurrency = assignments[0]?.Booking?.currency ?? 'GBP';
 
@@ -3455,6 +3465,30 @@ async function loadServicemanData(context) {
         description: 'Track bids from submission through award.',
         type: 'board',
         data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
+      },
+      {
+        id: 'booking-management',
+        label: 'Booking Management',
+        description: 'Update bookings, notes, and crew preferences in real time.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: providerId ?? null,
+            timezone: window.timezone,
+            summary: {
+              totalAssignments: assignments.length,
+              scheduledAssignments: scheduled,
+              activeAssignments: inProgress,
+              awaitingResponse: pendingAssignments,
+              completedThisMonth: completed,
+              slaAtRisk: slaAtRiskCount,
+              revenueEarned: revenue,
+              averageTravelMinutes: avgTravelMinutes,
+              currency: bookingCurrency
+            }
+          }
+        }
       },
       {
         id: 'service-catalogue',

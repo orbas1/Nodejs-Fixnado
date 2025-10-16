@@ -28,6 +28,7 @@ import BookingBidComment from './bookingBidComment.js';
 import BookingNote from './bookingNote.js';
 import BookingTemplate from './bookingTemplate.js';
 import BookingHistoryEntry from './bookingHistoryEntry.js';
+import ServicemanBookingSetting from './servicemanBookingSetting.js';
 import InventoryItem from './inventoryItem.js';
 import InventoryLedgerEntry from './inventoryLedgerEntry.js';
 import InventoryAlert from './inventoryAlert.js';
@@ -157,6 +158,9 @@ User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' })
 UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(ServicemanBookingSetting, { foreignKey: 'servicemanId', as: 'servicemanBookingSetting' });
+ServicemanBookingSetting.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
 
 CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
   foreignKey: 'accountSettingId',
@@ -823,6 +827,7 @@ export {
   BookingNote,
   BookingTemplate,
   BookingHistoryEntry,
+  ServicemanBookingSetting,
   CustomJobBid,
   CustomJobBidMessage,
   InventoryItem,

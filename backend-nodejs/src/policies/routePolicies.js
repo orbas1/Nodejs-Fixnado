@@ -156,6 +156,35 @@ const ROUTE_POLICIES = {
       status: req.body?.status || null
     })
   },
+  'serviceman.bookings.view': {
+    id: 'serviceman.bookings.view',
+    version: '1.0.0',
+    resource: 'serviceman.bookings',
+    action: 'serviceman.bookings:view',
+    description: 'Allow crew members to review assigned bookings, schedules, and notes.',
+    requirements: [Permissions.SERVICEMAN_BOOKINGS_VIEW],
+    tags: ['serviceman', 'bookings', 'workspace'],
+    severity: 'medium',
+    metadata: (req) => ({
+      servicemanId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null
+    })
+  },
+  'serviceman.bookings.manage': {
+    id: 'serviceman.bookings.manage',
+    version: '1.0.0',
+    resource: 'serviceman.bookings',
+    action: 'serviceman.bookings:manage',
+    description: 'Allow crew members to update booking status, schedules, notes, and workspace preferences.',
+    requirements: [Permissions.SERVICEMAN_BOOKINGS_MANAGE],
+    tags: ['serviceman', 'bookings', 'workspace'],
+    severity: 'high',
+    metadata: (req) => ({
+      servicemanId: req.user?.id ?? null,
+      persona: req.headers['x-fixnado-persona'] || null,
+      method: req.method
+    })
+  },
   'admin.dashboard.view': {
     id: 'admin.dashboard.view',
     version: '1.0.0',

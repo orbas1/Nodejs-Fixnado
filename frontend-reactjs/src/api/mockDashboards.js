@@ -2006,6 +2006,30 @@ const mockDashboards = {
         }
       },
       {
+        id: 'booking-management',
+        icon: 'pipeline',
+        label: 'Booking Management',
+        description: 'Manage jobs, notes, and crew preferences without leaving the cockpit.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: 'SRV-2210',
+            timezone: 'Europe/London',
+            summary: {
+              totalAssignments: 28,
+              scheduledAssignments: 7,
+              activeAssignments: 5,
+              awaitingResponse: 3,
+              completedThisMonth: 21,
+              slaAtRisk: 1,
+              revenueEarned: 18450,
+              averageTravelMinutes: 26
+            }
+          }
+        }
+      },
+      {
         id: 'toolkit',
         icon: 'assets',
         label: 'Asset Kit',

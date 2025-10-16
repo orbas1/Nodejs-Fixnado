@@ -26,6 +26,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -66,8 +67,15 @@ SectionHeader.propTypes = {
   }).isRequired
 };
 
+const componentRegistry = {
+  'serviceman-booking-management': ServicemanBookingManagementWorkspace
+};
+
 const ComponentSection = ({ section }) => {
-  const Component = section.Component ?? section.component ?? null;
+  const Component =
+    section.Component ??
+    section.component ??
+    (section.componentKey ? componentRegistry[section.componentKey] ?? null : null);
   return (
     <div className="space-y-4">
       <SectionHeader section={section} />
