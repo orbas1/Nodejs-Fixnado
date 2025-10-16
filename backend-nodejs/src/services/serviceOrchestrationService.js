@@ -356,6 +356,26 @@ export async function purchaseServiceOffering({
 
     const scheduledFor = schedule.start || new Date();
 
+    const metadataPayload = typeof metadata === 'object' && metadata !== null ? metadata : {};
+    const orderPriority =
+      typeof metadataPayload.priority === 'string' &&
+      ['low', 'medium', 'high', 'urgent'].includes(metadataPayload.priority)
+        ? metadataPayload.priority
+        : 'medium';
+    const orderTitle =
+      typeof metadataPayload.title === 'string' && metadataPayload.title.trim().length > 0
+        ? metadataPayload.title.trim()
+        : service.title;
+    const orderSummary =
+      typeof metadataPayload.brief === 'string' && metadataPayload.brief.trim().length > 0
+        ? metadataPayload.brief.trim()
+        : typeof metadataPayload.summary === 'string' && metadataPayload.summary.trim().length > 0
+        ? metadataPayload.summary.trim()
+        : null;
+    const orderTags = Array.isArray(metadataPayload.tags)
+      ? [...new Set(metadataPayload.tags.map((tag) => (typeof tag === 'string' ? tag.trim() : '')).filter(Boolean))]
+      : [service.category].filter(Boolean);
+
     const order = await Order.create(
       {
         buyerId,
@@ -363,7 +383,19 @@ export async function purchaseServiceOffering({
         status: 'funded',
         totalAmount: totals.totalAmount,
         currency: totals.currency,
-        scheduledFor
+        scheduledFor,
+        title: orderTitle,
+        summary: orderSummary,
+        priority: orderPriority,
+        tags: orderTags,
+        attachments: Array.isArray(metadataPayload.attachments) ? metadataPayload.attachments : [],
+        metadata: {
+          ...metadataPayload,
+          bookingType: schedule.type,
+          demandLevel,
+          serviceCategory: service.category,
+          serviceTitle: service.title
+        }
       },
       { transaction }
     );
