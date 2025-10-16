@@ -8,7 +8,11 @@ import {
   addBidComment,
   triggerDispute,
   listBookings,
-  getBookingById
+  getBookingById,
+  listBookingHistory,
+  createBookingHistoryEntry,
+  updateBookingHistoryEntry,
+  deleteBookingHistoryEntry
 } from '../services/bookingService.js';
 
 function handleServiceError(res, next, error) {
@@ -136,6 +140,47 @@ export async function triggerDisputeHandler(req, res, next) {
       actorId: req.body.actorId
     });
     res.json(booking);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function listBookingHistoryHandler(req, res, next) {
+  try {
+    const history = await listBookingHistory(req.params.bookingId, {
+      limit: req.query.limit,
+      offset: req.query.offset,
+      sort: req.query.sort,
+      status: req.query.status
+    });
+    res.json(history);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function createBookingHistoryEntryHandler(req, res, next) {
+  try {
+    const entry = await createBookingHistoryEntry(req.params.bookingId, req.body || {});
+    res.status(201).json(entry);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function updateBookingHistoryEntryHandler(req, res, next) {
+  try {
+    const entry = await updateBookingHistoryEntry(req.params.bookingId, req.params.entryId, req.body || {});
+    res.json(entry);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function deleteBookingHistoryEntryHandler(req, res, next) {
+  try {
+    await deleteBookingHistoryEntry(req.params.bookingId, req.params.entryId);
+    res.status(204).end();
   } catch (error) {
     handleServiceError(res, next, error);
   }

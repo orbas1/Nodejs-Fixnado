@@ -58,6 +58,11 @@ Conversation.init(
       allowNull: false,
       defaultValue: {}
     },
+    queueId: {
+      field: 'queue_id',
+      type: DataTypes.UUID,
+      allowNull: true
+    },
     regionId: {
       type: DataTypes.UUID,
       allowNull: true,

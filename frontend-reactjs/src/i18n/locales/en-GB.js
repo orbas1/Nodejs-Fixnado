@@ -123,6 +123,7 @@ export const enGB = {
     'nav.communications': 'Communications',
     'nav.login': 'Log in',
     'nav.register': 'Register',
+    'nav.profile': 'Profile',
     'nav.getStarted': 'Get started',
     'nav.languageSelector': 'Language',
     'auth.login.cta': 'Access your saved work, bookings, and dashboards.',

@@ -9,6 +9,7 @@ import {
 function inventoryError(message, statusCode = 400) {
   const error = new Error(message);
   error.statusCode = statusCode;
+  error.status = statusCode;
   return error;
 }
 
@@ -16,6 +17,28 @@ function normaliseQuantity(value, fieldName) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw inventoryError(`${fieldName} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function normaliseNonNegativeInteger(value, fieldName) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw inventoryError(`${fieldName} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+function normaliseNonNegativeDecimal(value, fieldName) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw inventoryError(`${fieldName} must be a non-negative number`);
   }
   return parsed;
 }
@@ -149,6 +172,7 @@ export async function createInventoryItem({
   category,
   unitType = 'unit',
   quantityOnHand = 0,
+  quantityReserved = 0,
   safetyStock = 0,
   locationZoneId = null,
   rentalRate = null,
@@ -167,6 +191,22 @@ export async function createInventoryItem({
     throw inventoryError('name, sku, and category are required');
   }
 
+  const resolvedQuantityOnHand = normaliseNonNegativeInteger(quantityOnHand ?? 0, 'quantityOnHand');
+  const resolvedQuantityReserved = normaliseNonNegativeInteger(quantityReserved ?? 0, 'quantityReserved');
+  const resolvedSafetyStock = normaliseNonNegativeInteger(safetyStock ?? 0, 'safetyStock');
+
+  if (resolvedQuantityReserved > resolvedQuantityOnHand) {
+    throw inventoryError('quantityReserved cannot exceed quantityOnHand');
+  }
+
+  const rentalRateValue = normaliseNonNegativeDecimal(rentalRate, 'rentalRate');
+  const depositAmountValue = normaliseNonNegativeDecimal(depositAmount, 'depositAmount');
+  const replacementCostValue = normaliseNonNegativeDecimal(replacementCost, 'replacementCost');
+
+  if (metadata && typeof metadata !== 'object') {
+    throw inventoryError('metadata must be an object when provided');
+  }
+
   return sequelize.transaction(async (transaction) => {
     const item = await InventoryItem.create(
       {
@@ -176,14 +216,15 @@ export async function createInventoryItem({
         sku,
         category,
         unitType,
-        quantityOnHand,
-        safetyStock,
+        quantityOnHand: resolvedQuantityOnHand,
+        quantityReserved: resolvedQuantityReserved,
+        safetyStock: resolvedSafetyStock,
         locationZoneId,
-        rentalRate,
+        rentalRate: rentalRateValue,
         rentalRateCurrency,
-        depositAmount,
+        depositAmount: depositAmountValue,
         depositCurrency,
-        replacementCost,
+        replacementCost: replacementCostValue,
         insuranceRequired,
         conditionRating,
         metadata
@@ -196,6 +237,123 @@ export async function createInventoryItem({
     }
 
     return item;
+  });
+}
+
+export async function updateInventoryItem(itemId, updates = {}) {
+  if (!itemId) {
+    throw inventoryError('itemId is required');
+  }
+
+  const stringFields = ['name', 'sku', 'category', 'unitType', 'rentalRateCurrency', 'depositCurrency'];
+  const integerFields = ['quantityOnHand', 'quantityReserved', 'safetyStock'];
+  const decimalFields = ['rentalRate', 'depositAmount', 'replacementCost'];
+
+  return sequelize.transaction(async (transaction) => {
+    const item = await InventoryItem.findByPk(itemId, {
+      transaction,
+      lock: transaction ? transaction.LOCK.UPDATE : undefined
+    });
+
+    if (!item) {
+      throw inventoryError('Inventory item not found', 404);
+    }
+
+    const patch = {};
+
+    stringFields.forEach((field) => {
+      if (Object.hasOwn(updates, field)) {
+        const value = updates[field];
+        if (value === undefined || value === null || value === '') {
+          patch[field] = field === 'category' ? item[field] : value ?? null;
+        } else if (typeof value === 'string') {
+          patch[field] = value.trim();
+        } else {
+          throw inventoryError(`${field} must be a string`);
+        }
+      }
+    });
+
+    integerFields.forEach((field) => {
+      if (Object.hasOwn(updates, field)) {
+        const parsed = normaliseNonNegativeInteger(updates[field], field);
+        if (parsed !== null) {
+          patch[field] = parsed;
+        }
+      }
+    });
+
+    decimalFields.forEach((field) => {
+      if (Object.hasOwn(updates, field)) {
+        const parsed = normaliseNonNegativeDecimal(updates[field], field);
+        patch[field] = parsed;
+      }
+    });
+
+    if (Object.hasOwn(updates, 'insuranceRequired')) {
+      patch.insuranceRequired = Boolean(updates.insuranceRequired);
+    }
+
+    if (Object.hasOwn(updates, 'conditionRating')) {
+      const allowed = ['new', 'excellent', 'good', 'fair', 'needs_service'];
+      const rating = updates.conditionRating;
+      if (rating === undefined || rating === null || rating === '') {
+        patch.conditionRating = 'good';
+      } else if (typeof rating === 'string' && allowed.includes(rating)) {
+        patch.conditionRating = rating;
+      } else {
+        throw inventoryError(`conditionRating must be one of ${allowed.join(', ')}`);
+      }
+    }
+
+    if (Object.hasOwn(updates, 'metadata')) {
+      if (updates.metadata && typeof updates.metadata !== 'object') {
+        throw inventoryError('metadata must be an object when provided');
+      }
+      patch.metadata = updates.metadata || {};
+    } else if (Object.hasOwn(updates, 'metadataPatch')) {
+      if (!updates.metadataPatch || typeof updates.metadataPatch !== 'object') {
+        throw inventoryError('metadataPatch must be an object when provided');
+      }
+      patch.metadata = { ...item.metadata, ...updates.metadataPatch };
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return item;
+    }
+
+    await item.update(patch, { transaction });
+
+    const requiresAlertUpdate = ['quantityOnHand', 'quantityReserved', 'safetyStock'].some((field) =>
+      Object.hasOwn(patch, field)
+    );
+
+    if (requiresAlertUpdate) {
+      await updateLowStockAlert(item, transaction);
+    }
+
+    return item;
+  });
+}
+
+export async function deleteInventoryItem(itemId) {
+  if (!itemId) {
+    throw inventoryError('itemId is required');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const item = await InventoryItem.findByPk(itemId, {
+      transaction,
+      lock: transaction ? transaction.LOCK.UPDATE : undefined
+    });
+
+    if (!item) {
+      throw inventoryError('Inventory item not found', 404);
+    }
+
+    await InventoryAlert.destroy({ where: { itemId: item.id }, transaction });
+    await item.destroy({ transaction });
+    return true;
   });
 }
 
