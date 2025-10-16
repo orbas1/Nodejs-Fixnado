@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, WalletIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
@@ -2282,6 +2283,19 @@ export default function AdminDashboard() {
     if (!overviewSettings || settingsModalOpen) {
       return;
     }
+    sections.push({
+      id: 'wallet-management-link',
+      label: 'Wallet management',
+      description: 'Configure balances, guardrails, and ledger activity for Fixnado wallets.',
+      icon: 'finance',
+      href: '/admin/wallets'
+    });
+    return sections;
+  }, [state.data, affiliateSection]);
+  const dashboardPayload = state.data ? { navigation } : null;
+  const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
+  const isFallback = Boolean(state.meta?.fallback);
+  const servedFromCache = Boolean(state.meta?.fromCache && !state.meta?.fallback);
     setOverviewSettingsForm(buildFormState(overviewSettings));
   }, [overviewSettings, settingsModalOpen]);
 
@@ -3536,6 +3550,13 @@ export default function AdminDashboard() {
         Geo-zonal builder
       </Button>
       <Button
+        to="/admin/wallets"
+        size="sm"
+        variant="secondary"
+        icon={WalletIcon}
+        iconPosition="start"
+      >
+        Wallet management
         type="button"
         size="sm"
         variant="primary"

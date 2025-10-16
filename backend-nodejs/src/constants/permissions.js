@@ -75,6 +75,8 @@ export const Permissions = Object.freeze({
   FINANCE_OVERVIEW: 'finance:overview:view',
   FINANCE_PAYOUT_MANAGE: 'finance:payout:manage',
   FINANCE_PAYOUT_VIEW: 'finance:payout:view',
+  FINANCE_WALLET_VIEW: 'finance:wallet:view',
+  FINANCE_WALLET_MANAGE: 'finance:wallet:manage',
   INTEGRATION_CONSOLE: 'integration:console:manage',
   INVENTORY_READ: 'inventory:read',
   INVENTORY_WRITE: 'inventory:write',

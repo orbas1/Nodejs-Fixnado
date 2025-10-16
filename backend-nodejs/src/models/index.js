@@ -86,6 +86,9 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import WalletConfiguration from './walletConfiguration.js';
+import WalletAccount from './walletAccount.js';
+import WalletTransaction from './walletTransaction.js';
 import RbacRole from './rbacRole.js';
 import RbacRolePermission from './rbacRolePermission.js';
 import RbacRoleInheritance from './rbacRoleInheritance.js';
@@ -343,6 +346,16 @@ Order.hasMany(FinanceWebhookEvent, { foreignKey: 'orderId', as: 'financeEvents' 
 Payment.hasMany(FinanceWebhookEvent, { foreignKey: 'paymentId', as: 'webhookEvents' });
 Escrow.hasMany(FinanceWebhookEvent, { foreignKey: 'escrowId', as: 'webhookEvents' });
 
+WalletAccount.hasMany(WalletTransaction, {
+  foreignKey: 'walletAccountId',
+  sourceKey: 'id',
+  as: 'transactions'
+});
+WalletTransaction.belongsTo(WalletAccount, {
+  foreignKey: 'walletAccountId',
+  targetKey: 'id',
+  as: 'walletAccount'
+});
 DisputeHealthBucket.hasMany(DisputeHealthEntry, { foreignKey: 'bucketId', as: 'entries' });
 DisputeHealthEntry.belongsTo(DisputeHealthBucket, { foreignKey: 'bucketId', as: 'bucket' });
 InboxQueue.hasMany(Conversation, { foreignKey: 'queueId', as: 'conversations' });
@@ -836,6 +849,9 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  WalletConfiguration,
+  WalletAccount,
+  WalletTransaction
   ProviderProfile,
   ProviderContact,
   ProviderCoverage

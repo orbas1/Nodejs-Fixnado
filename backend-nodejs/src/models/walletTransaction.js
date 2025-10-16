@@ -16,6 +16,7 @@ WalletTransaction.init(
       allowNull: false
     },
     type: {
+      type: DataTypes.STRING(24),
       type: DataTypes.ENUM('credit', 'debit', 'hold', 'release', 'adjustment'),
       allowNull: false
     },
@@ -24,6 +25,12 @@ WalletTransaction.init(
       allowNull: false
     },
     currency: {
+      type: DataTypes.STRING(8),
+      allowNull: false
+    },
+    referenceType: {
+      field: 'reference_type',
+      type: DataTypes.STRING(64),
       type: DataTypes.STRING(3),
       allowNull: false
     },
@@ -33,6 +40,11 @@ WalletTransaction.init(
     },
     referenceId: {
       field: 'reference_id',
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+    description: {
+      type: DataTypes.STRING(255),
       type: DataTypes.STRING(128),
       allowNull: true
     },
@@ -41,6 +53,16 @@ WalletTransaction.init(
       type: DataTypes.UUID,
       allowNull: true
     },
+    occurredAt: {
+      field: 'occurred_at',
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    runningBalance: {
+      field: 'running_balance',
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: true
     actorRole: {
       field: 'actor_role',
       type: DataTypes.STRING(32),
@@ -82,6 +104,9 @@ WalletTransaction.init(
     sequelize,
     modelName: 'WalletTransaction',
     tableName: 'wallet_transactions',
+    underscored: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
     underscored: true
   }
 );

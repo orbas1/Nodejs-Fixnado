@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bars3BottomLeftIcon,
   ArrowLeftOnRectangleIcon,
@@ -521,6 +521,8 @@ const DashboardLayout = ({
   initialSectionId = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const navigationSections = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
+  const [selectedSection, setSelectedSection] = useState(navigationSections[0]?.id ?? 'overview');
   const firstInteractiveSection = useMemo(() => {
     const interactive = navigation.find((item) => item.type !== 'link');
     return interactive?.id ?? navigation[0]?.id ?? 'overview';
@@ -567,6 +569,7 @@ const DashboardLayout = ({
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleNavClick = useCallback(
     (item) => {
@@ -591,6 +594,21 @@ const DashboardLayout = ({
   );
 
   useEffect(() => {
+    if (navigationSections.length === 0) {
+      setSelectedSection('overview');
+      setSearchQuery('');
+      setSearchResults([]);
+      return;
+    }
+    setSelectedSection((current) => {
+      if (navigationSections.some((item) => item.id === current)) {
+        return current;
+      }
+      return navigationSections[0]?.id ?? 'overview';
+    });
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigationSections]);
     setSelectedSection(firstInteractiveSection);
     setSearchQuery('');
     setSearchResults([]);
@@ -671,6 +689,7 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
+  const activeSection = navigationSections.find((item) => item.id === selectedSection) ?? navigationSections[0];
   const activeSection = navigation.find((item) => item.id === selectedSection && item.type !== 'link')
     ?? navigation.find((item) => item.type !== 'link')
     ?? navigation[0];
@@ -784,6 +803,9 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const Icon = getNavIcon(item);
+                    if (item.href) {
+                      const isActiveLink = location.pathname === item.href;
                     const isLink = item.type === 'link' && item.href;
                     const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
@@ -824,6 +846,20 @@ const DashboardLayout = ({
                         <Link
                           key={item.id}
                           to={item.href}
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                            isActiveLink
+                              ? 'border-accent bg-accent text-white shadow-glow'
+                              : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                          }`}
+                        >
+                          <span
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                              isActiveLink
+                                ? 'bg-white/20 text-white'
+                                : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                            }`}
+                          >
                           className={baseClass}
                           onClick={() => setMobileNavOpen(false)}
                         >
@@ -843,6 +879,7 @@ const DashboardLayout = ({
                         </Link>
                       );
                     }
+                    const isActive = item.id === activeSection?.id;
 
                     const baseClasses =
                       'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
@@ -1070,6 +1107,44 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const Icon = getNavIcon(item);
+            const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+              navCollapsed ? 'justify-center px-2' : ''
+            }`;
+            if (item.href) {
+              const isActiveLink = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={`${baseClasses} ${
+                    isActiveLink
+                      ? 'border-accent bg-accent text-white shadow-glow'
+                      : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                  }`}
+                  title={navCollapsed ? item.label : undefined}
+                >
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                      isActiveLink
+                        ? 'bg-white/20 text-white'
+                        : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  {!navCollapsed && (
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{item.label}</p>
+                      {item.description ? (
+                        <p className="text-xs text-slate-500">{item.description}</p>
+                      ) : null}
+                    </div>
+                  )}
+                </Link>
+              );
+            }
+            const isActive = item.id === activeSection?.id;
             const isLink = item.type === 'link' && item.href;
             const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
@@ -1158,6 +1233,7 @@ const DashboardLayout = ({
                 }}
                 onClick={() => handleSectionSelect(item.id)}
                 onClick={() => setSelectedSection(item.id)}
+                className={`${baseClasses} ${
                 className={baseClass}
                 onClick={() => handleNavClick(item)}
                 onClick={handleClick}
@@ -1166,7 +1242,7 @@ const DashboardLayout = ({
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'
                     : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
-                } ${navCollapsed ? 'justify-center px-2' : ''}`}
+                }`}
                 title={navCollapsed ? item.label : undefined}
                 aria-pressed={isActive || undefined}
                 aria-pressed={!isLink && isActive}
