@@ -1290,6 +1290,35 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.servicemen.finance.read': {
+    id: 'panel.provider.servicemen.finance.read',
+    version: '1.0.0',
+    resource: 'panel.provider.servicemen.finance',
+    action: 'panel.provider.servicemen.finance:read',
+    description: 'Allow provider finance leads to view serviceman payment and commission workspaces.',
+    requirements: [Permissions.PANEL_PROVIDER_SERVICEMAN_FINANCE_VIEW],
+    tags: ['panel', 'provider', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      status: req.query?.status || 'all'
+    })
+  },
+  'panel.provider.servicemen.finance.manage': {
+    id: 'panel.provider.servicemen.finance.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.servicemen.finance',
+    action: 'panel.provider.servicemen.finance:manage',
+    description: 'Allow provider finance leads to create, update, and archive serviceman payments and commission rules.',
+    requirements: [Permissions.PANEL_PROVIDER_SERVICEMAN_FINANCE_MANAGE],
+    tags: ['panel', 'provider', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      method: req.method,
+      resourceId: req.params?.paymentId || req.params?.ruleId || null
+    })
+  },
   'panel.enterprise.dashboard': {
     id: 'panel.enterprise.dashboard',
     version: '1.0.0',

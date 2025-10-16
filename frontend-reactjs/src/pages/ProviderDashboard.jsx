@@ -21,6 +21,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -555,6 +556,7 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const servicemanFinance = state.data?.servicemanFinance ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
   const deliveryBoard = serviceManagement.deliveryBoard ?? [];
@@ -581,6 +583,13 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      servicemanFinance
+        ? {
+            id: 'provider-dashboard-serviceman-payments',
+            label: t('providerPayments.headline'),
+            description: t('providerPayments.navDescription')
+          }
+        : null,
       alerts.length > 0
         ? {
             id: 'provider-dashboard-alerts',
@@ -636,7 +645,7 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, t]);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
 
   const heroBadges = useMemo(
     () => [
@@ -830,6 +839,14 @@ export default function ProviderDashboard() {
             </article>
           </div>
         </section>
+
+        {servicemanFinance ? (
+          <ServicemanPaymentsSection
+            initialWorkspace={servicemanFinance}
+            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
+        ) : null}
 
         {alerts.length > 0 ? (
           <section id="provider-dashboard-alerts" aria-labelledby="provider-dashboard-alerts" className="space-y-4">

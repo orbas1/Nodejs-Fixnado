@@ -20,6 +20,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getServicemanPaymentsWorkspace } from './servicemanFinanceService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -600,6 +601,21 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     trust: trustScore,
     alerts
   };
+
+  try {
+    const servicemanFinance = await getServicemanPaymentsWorkspace({
+      companyId,
+      actor,
+      limit: 10,
+      offset: 0
+    });
+    data.servicemanFinance = servicemanFinance;
+  } catch (error) {
+    console.warn('[panel] Unable to load serviceman finance workspace', {
+      companyId,
+      message: error?.message || error
+    });
+  }
 
   const meta = {
     companyId,

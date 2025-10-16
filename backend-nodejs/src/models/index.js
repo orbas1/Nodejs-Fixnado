@@ -942,3 +942,6 @@ export {
   InboxConfiguration,
   InboxTemplate
 };
+
+export { default as ServicemanPayment, SERVICEMAN_PAYMENT_STATUSES } from './servicemanPayment.js';
+export { default as ServicemanCommissionRule, SERVICEMAN_COMMISSION_RATE_TYPES, SERVICEMAN_COMMISSION_APPROVAL_STATUSES } from './servicemanCommissionRule.js';

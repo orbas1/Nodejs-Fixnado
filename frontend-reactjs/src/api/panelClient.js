@@ -312,6 +312,150 @@ function toNullableNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normaliseServicemanPayment(payment, index = 0) {
+  if (!payment || typeof payment !== 'object') {
+    return null;
+  }
+
+  const serviceman = payment.serviceman || {};
+  const booking = payment.booking || {};
+  const commissionRule = payment.commissionRule || payment.rule || null;
+
+  const servicemanName =
+    serviceman.name || payment.servicemanName || serviceman.displayName || 'Serviceman';
+
+  return {
+    id: payment.id || `serviceman-payment-${index}`,
+    companyId: payment.companyId ?? null,
+    amount: toNumber(payment.amount ?? payment.value ?? 0, 0),
+    currency: typeof payment.currency === 'string' && payment.currency.trim().length
+      ? payment.currency.trim().toUpperCase()
+      : 'GBP',
+    status: payment.status || 'scheduled',
+    dueDate: payment.dueDate || payment.due_date || null,
+    paidAt: payment.paidAt || payment.paid_at || null,
+    commissionRate: toNullableNumber(payment.commissionRate ?? payment.rate ?? null),
+    commissionAmount: toNullableNumber(payment.commissionAmount ?? payment.commission ?? null),
+    notes: payment.notes ?? '',
+    metadata: payment.metadata && typeof payment.metadata === 'object' ? payment.metadata : {},
+    serviceman: {
+      id: serviceman.id ?? payment.servicemanId ?? null,
+      name: servicemanName,
+      role: serviceman.role || payment.servicemanRole || serviceman.type || 'Crew'
+    },
+    booking: booking && Object.keys(booking).length
+      ? {
+          id: booking.id ?? payment.bookingId ?? null,
+          reference: booking.reference || booking.bookingReference || booking.id || null,
+          service: booking.service || booking.serviceName || null,
+          status: booking.status || null
+        }
+      : null,
+    commissionRule: commissionRule
+      ? {
+          id: commissionRule.id ?? null,
+          name: commissionRule.name || 'Commission rule',
+          rateType: commissionRule.rateType || 'percentage',
+          rateValue: toNullableNumber(commissionRule.rateValue ?? commissionRule.rate ?? null),
+          approvalStatus: commissionRule.approvalStatus || 'draft',
+          autoApply: Boolean(commissionRule.autoApply),
+          isDefault: Boolean(commissionRule.isDefault)
+        }
+      : null,
+    createdAt: payment.createdAt || payment.created_at || null,
+    updatedAt: payment.updatedAt || payment.updated_at || null
+  };
+}
+
+function normaliseServicemanCommissionRule(rule, index = 0) {
+  if (!rule || typeof rule !== 'object') {
+    return {
+      id: `commission-rule-${index}`,
+      name: 'Commission rule',
+      description: '',
+      rateType: 'percentage',
+      rateValue: 0,
+      autoApply: false,
+      isDefault: false,
+      approvalStatus: 'draft',
+      appliesToRole: null,
+      serviceCategory: null,
+      minimumBookingValue: null,
+      maximumCommissionValue: null,
+      effectiveFrom: null,
+      effectiveTo: null,
+      metadata: {},
+      companyId: null,
+      createdAt: null,
+      updatedAt: null
+    };
+  }
+
+  return {
+    id: rule.id || `commission-rule-${index}`,
+    name: rule.name || 'Commission rule',
+    description: rule.description || '',
+    rateType: rule.rateType || 'percentage',
+    rateValue: toNumber(rule.rateValue ?? rule.rate ?? 0, 0),
+    autoApply: Boolean(rule.autoApply),
+    isDefault: Boolean(rule.isDefault),
+    approvalStatus: rule.approvalStatus || 'draft',
+    appliesToRole: rule.appliesToRole || null,
+    serviceCategory: rule.serviceCategory || null,
+    minimumBookingValue: toNullableNumber(rule.minimumBookingValue ?? rule.minimumBooking ?? null),
+    maximumCommissionValue: toNullableNumber(rule.maximumCommissionValue ?? null),
+    effectiveFrom: rule.effectiveFrom || null,
+    effectiveTo: rule.effectiveTo || null,
+    metadata: rule.metadata && typeof rule.metadata === 'object' ? rule.metadata : {},
+    companyId: rule.companyId ?? null,
+    createdAt: rule.createdAt || null,
+    updatedAt: rule.updatedAt || null
+  };
+}
+
+function normaliseServicemanFinance(finance = {}) {
+  const summary = finance.summary || {};
+  const upcoming = ensureArray(finance.upcoming)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const history = finance.history || {};
+  const historyItems = ensureArray(history.items)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const commissions = finance.commissions || {};
+  const commissionRules = ensureArray(commissions.rules)
+    .map((rule, index) => normaliseServicemanCommissionRule(rule, index))
+    .filter(Boolean);
+
+  return {
+    companyId: finance.companyId ?? null,
+    summary: {
+      outstandingTotal: toNumber(summary.outstandingTotal ?? summary.outstanding ?? 0, 0),
+      paidLast30Days: toNumber(summary.paidLast30Days ?? summary.paidLast30 ?? 0, 0),
+      avgCommissionRate: toNumber(summary.avgCommissionRate ?? summary.averageRate ?? 0, 0),
+      upcomingCount:
+        typeof summary.upcomingCount === 'number' && Number.isFinite(summary.upcomingCount)
+          ? summary.upcomingCount
+          : upcoming.length,
+      commissionPaid: toNumber(summary.commissionPaid ?? 0, 0),
+      commissionOutstanding: toNumber(summary.commissionOutstanding ?? 0, 0)
+    },
+    upcoming,
+    history: {
+      items: historyItems,
+      total: history.total ?? history.count ?? historyItems.length,
+      limit: history.limit ?? history.pageSize ?? historyItems.length,
+      offset: history.offset ?? history.page ?? 0
+    },
+    commissions: {
+      rules: commissionRules,
+      activeRules:
+        commissions.activeRules ?? commissionRules.filter((rule) => rule.approvalStatus === 'approved').length,
+      defaultRuleId: commissions.defaultRuleId ?? commissionRules.find((rule) => rule.isDefault)?.id ?? null
+    }
+  };
+}
+
 function normaliseOption(option, fallbackValue = 'value', fallbackLabel = 'Label') {
   if (!option || typeof option !== 'object') {
     return { value: fallbackValue, label: fallbackLabel };
@@ -472,7 +616,10 @@ function normaliseProviderDashboard(payload = {}) {
         tags: ensureArray(service.tags),
         coverage: ensureArray(service.coverage)
       }))
-    }
+    },
+    servicemanFinance: normaliseServicemanFinance(
+      root.servicemanFinance || root.servicemanFinanceSnapshot || {}
+    )
   };
 }
 
@@ -2854,6 +3001,192 @@ const providerFallback = normaliseProviderDashboard({
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
     { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
   ],
+  servicemanFinance: {
+    companyId: 'provider-metro-power',
+    summary: {
+      outstandingTotal: 4200,
+      paidLast30Days: 22600,
+      avgCommissionRate: 0.18,
+      upcomingCount: 3,
+      commissionPaid: 12600,
+      commissionOutstanding: 4200
+    },
+    upcoming: [
+      {
+        id: 'payment-upcoming-1',
+        serviceman: { id: 'crew-1', name: 'Amina Khan', role: 'Lead Electrical Engineer' },
+        amount: 2400,
+        currency: 'GBP',
+        status: 'scheduled',
+        dueDate: new Date(Date.now() + 86400000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.15,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4801',
+          reference: 'BK-4801',
+          service: 'Critical power maintenance',
+          status: 'scheduled'
+        },
+        notes: 'Release once compliance evidence uploaded.',
+        metadata: { milestone: 'Stage 2' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-default',
+          name: 'Default performance',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          approvalStatus: 'approved',
+          autoApply: true,
+          isDefault: true
+        }
+      },
+      {
+        id: 'payment-upcoming-2',
+        serviceman: { id: 'crew-2', name: 'Owen Davies', role: 'HVAC Specialist' },
+        amount: 1800,
+        currency: 'GBP',
+        status: 'pending',
+        dueDate: new Date(Date.now() + 172800000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.2,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4820',
+          reference: 'BK-4820',
+          service: 'HVAC emergency call-out',
+          status: 'in_progress'
+        },
+        notes: 'Hold until photographic evidence reviewed.',
+        metadata: { milestone: 'Completion' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      },
+      {
+        id: 'payment-upcoming-3',
+        serviceman: { id: 'crew-3', name: 'Sophie Chen', role: 'Compliance Coordinator' },
+        amount: 1000,
+        currency: 'GBP',
+        status: 'approved',
+        dueDate: new Date(Date.now() + 259200000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.12,
+        commissionAmount: 120,
+        booking: {
+          id: 'booking-4825',
+          reference: 'BK-4825',
+          service: 'Compliance audit closeout',
+          status: 'awaiting_assignment'
+        },
+        notes: 'Auto-approve when documentation uploaded.',
+        metadata: { stage: 'Audit' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-admin',
+          name: 'Coordinator baseline',
+          rateType: 'percentage',
+          rateValue: 0.12,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      }
+    ],
+    history: {
+      items: [
+        {
+          id: 'payment-history-1',
+          serviceman: { id: 'crew-4', name: 'Ibrahim Adeyemi', role: 'Field Engineer' },
+          amount: 3600,
+          currency: 'GBP',
+          status: 'paid',
+          dueDate: new Date(Date.now() - 1209600000).toISOString(),
+          paidAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRate: 0.18,
+          commissionAmount: 648,
+          booking: {
+            id: 'booking-4701',
+            reference: 'BK-4701',
+            service: 'Generator upgrade',
+            status: 'completed'
+          },
+          notes: 'Paid after QA sign-off.',
+          metadata: { invoice: 'INV-3384' },
+          createdAt: new Date(Date.now() - 1296000000).toISOString(),
+          updatedAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRule: {
+            id: 'commission-default',
+            name: 'Default performance',
+            rateType: 'percentage',
+            rateValue: 0.15,
+            approvalStatus: 'approved',
+            autoApply: true,
+            isDefault: true
+          }
+        }
+      ],
+      total: 4,
+      limit: 6,
+      offset: 0
+    },
+    commissions: {
+      rules: [
+        {
+          id: 'commission-default',
+          name: 'Default performance',
+          description: 'Applies to scheduled jobs under £10k where QA checks are green.',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          autoApply: true,
+          isDefault: true,
+          approvalStatus: 'approved',
+          appliesToRole: 'Lead engineer',
+          serviceCategory: 'Critical power',
+          minimumBookingValue: 500,
+          maximumCommissionValue: null,
+          effectiveFrom: new Date(Date.now() - 864000000).toISOString(),
+          effectiveTo: null,
+          metadata: { window: 'standard' },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 864000000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          description: 'Applies 20% commission to emergency HVAC call-outs completed within SLA.',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          autoApply: false,
+          isDefault: false,
+          approvalStatus: 'approved',
+          appliesToRole: 'HVAC Specialist',
+          serviceCategory: 'HVAC emergency response',
+          minimumBookingValue: 0,
+          maximumCommissionValue: 2200,
+          effectiveFrom: new Date(Date.now() - 432000000).toISOString(),
+          effectiveTo: null,
+          metadata: { slaMinutes: 60 },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 432000000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ],
+      activeRules: 2,
+      defaultRuleId: 'commission-default'
+    }
+  },
   serviceDelivery: {
     health: [
       { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
@@ -4099,7 +4432,7 @@ export function clearPanelCache(keys) {
   });
 }
 
-export { PanelApiError };
+export { PanelApiError, normaliseServicemanFinance, normaliseServicemanPayment, normaliseServicemanCommissionRule };
 
 export const formatters = {
   percentage: (value) => percentageFormatter.format(value),
