@@ -17,6 +17,7 @@ import '../features/explorer/presentation/explorer_screen.dart';
 import '../features/profile/presentation/profile_management_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
+import '../features/creation/presentation/creation_studio_screen.dart';
 import '../features/materials/presentation/materials_screen.dart';
 import '../features/enterprise/presentation/enterprise_dashboard_screen.dart';
 import '../features/finance/presentation/finance_dashboard_screen.dart';
@@ -174,6 +175,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     UserRole.admin,
   };
 
+  static const Set<UserRole> _creationAllowedRoles = {
+    UserRole.provider,
+    UserRole.enterprise,
+    UserRole.admin,
+  };
+
   List<_NavigationDestination> _visibleDestinationsForRole(UserRole role) {
     final items = <_NavigationDestination>[
       _NavigationDestination.explorer,
@@ -185,6 +192,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     ];
     if (_financeAllowedRoles.contains(role)) {
       items.add(_NavigationDestination.finance);
+    }
+    if (_creationAllowedRoles.contains(role)) {
+      items.add(_NavigationDestination.creation);
     }
     if (_communicationsAllowedRoles.contains(role)) {
       items.add(_NavigationDestination.inbox);
@@ -224,6 +234,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           return const EnterpriseDashboardScreen();
         }
         return const AnalyticsDashboardScreen();
+      case _NavigationDestination.creation:
+        return const CreationStudioScreen();
     }
   }
 }
@@ -250,6 +262,7 @@ enum _NavigationDestination {
   inbox('Inbox', Icons.inbox_outlined),
   profile('Profile', Icons.person_outline),
   finance('Finance', Icons.payments_outlined),
+  creation('Create', Icons.auto_fix_high_outlined),
   operations('Ops Pulse', Icons.analytics_outlined);
 
   const _NavigationDestination(this.title, this.icon);

@@ -40,3 +40,4 @@
 - Finance alert ribbons adopt severity palettes (Critical `#D32F2F`, High `#F57C00`, Medium `#FBC02D`, Informational `#0288D1`) with 18px pill badges indicating Slack/Opsgenie delivery state and retry counters rendered in JetBrains Mono for clarity.
 - Escalation drawers use stacked section headers with 16px divider spacing, responder avatar chips, and a neutral slate background so long-form remediation steps remain legible alongside telemetry pills.
 - Retry countdown timers animate via subtle progress bars (4px height) that inherit severity colour and reset smoothly when acknowledgements pause repeats, preventing jarring flashes during extended monitoring sessions.
+- Creation studio wizard gains responsive grid, persona badge styling, autosave toast colours, and publish confirmation cards to mirror the new engineering implementation.

@@ -29,3 +29,8 @@
 - Extended the finance domain models, repository, and Riverpod controller to ingest webhook retry metadata, alert acknowledgement state, and Slack/Opsgenie delivery receipts exposed by the new backend fan-out service.
 - Updated `FinanceDashboardScreen` with escalation trays, responder chips, retry countdown timers, and manual refresh/acknowledge actions while tuning layouts for compact devices.
 - Authored Dart unit coverage (`test/features/finance/finance_models_test.dart`) validating alert parsing, escalation severity mapping, and retry countdown formatting against representative payloads.
+
+## 2025-04-10 – Creation Studio Wizard
+- Added Creation Studio repository, domain models, Riverpod controller, and widget wiring to enable blueprint discovery, draft autosave, slug validation, compliance tick-off, and publish submission directly from mobile.
+- Implemented the multi-step Creation Studio screen with blueprint cards, inline autosave indicator, persona-aware defaults, compliance checklist toggles, availability inputs, and publish flow consistent with the React experience and localisation requirements.
+- Wrote controller tests (`test/creation_studio_controller_test.dart`) covering blueprint load, autosave success/error, slug availability handling, and publish orchestration while documenting navigation entry, localisation copy, and parity tasks in the update trackers.

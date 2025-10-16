@@ -76,6 +76,11 @@ export const enGB = {
     'nav.providerStorefront': 'Storefront & listings',
     'nav.providerStorefrontDescription':
       'Manage marketplace listings, insured seller compliance, and campaign readiness.',
+    'nav.creationStudio': 'Creation studio',
+    'nav.creationStudioDescription': 'Build services, storefronts, and campaigns with compliance automation.',
+    'roles.provider': 'Provider operations',
+    'roles.enterprise': 'Enterprise operations',
+    'roles.admin': 'Platform administration',
     'nav.enterpriseAnalytics': 'Enterprise analytics',
     'nav.enterpriseAnalyticsDescription':
       'Multi-site SLA monitoring, spend visibility, and upcoming visit planning.',
@@ -280,6 +285,11 @@ export const enGB = {
       'Switch to an authorised provider or admin persona to continue. Marketplace storefront controls are reserved for {roles} to protect inventory governance.',
     'providerStorefront.guard.help':
       'Use the persona switcher in the header or contact your Fixnado administrator to request storefront access.',
+    'creationStudio.guard.restricted': 'Restricted workspace',
+    'creationStudio.guard.title': 'Your role needs creation privileges',
+    'creationStudio.guard.body': 'Creation studio is limited to {roles}. Request provisioning from your Fixnado administrator.',
+    'creationStudio.guard.help': 'Need access fast? Email {email} and our operations team will onboard you.',
+    'creationStudio.errors.loadFailure': 'We could not load creation blueprints. Try again or contact support.',
     'providerStorefront.sidebar.eyebrow': 'Storefront insight',
     'providerStorefront.sidebar.title': 'Marketplace readiness',
     'providerStorefront.sidebar.description':

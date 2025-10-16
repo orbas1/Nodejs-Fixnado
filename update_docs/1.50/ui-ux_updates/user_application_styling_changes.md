@@ -41,3 +41,4 @@
 - Finance alert trays introduce stacked cards with severity colour bars (Critical `#D84315`, High `#FB8C00`, Medium `#FDD835`, Low `#039BE5`) and overlay icons representing Slack or Opsgenie delivery confirmation.
 - Retry countdown chips use mono-spaced numerals with soft-glow borders, scaling from 14px on phones to 16px on tablets while maintaining 12px vertical rhythm to avoid layout jump during updates.
 - Responder avatars adopt 32px circular frames with status rings that change hue when an acknowledgement is recorded, aligning mobile visuals with the React dashboard styling guidance.
+- Creation studio wizard gains responsive grid, persona badge styling, autosave toast colours, and publish confirmation cards to mirror the new engineering implementation.

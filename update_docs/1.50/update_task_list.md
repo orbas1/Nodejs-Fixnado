@@ -5,9 +5,9 @@
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 100% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 100% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 100% |
-| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 32% |
+| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 58% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
-| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 0% |
+| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 12% |
 | 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 0% |
 | 8 | Documentation, Release & Change Management | Release Management PMO | 2 weeks | Tasks 1–7 artefacts | 0% |
 
@@ -88,7 +88,7 @@
 
 **Progress Notes:** Delivered the finance orchestration service, Sequelize models, and queue-backed webhook processor with retry telemetry, unlocking guarded `/api/finance` endpoints for checkout, payouts, invoices, and dispute timelines. React and Flutter finance dashboards now surface revenue, payout readiness, dispute volumes, and cash-flow alerts using the shared finance client, while backend integration tests validate happy-path settlement, webhook retries, and invoice snapshots. Reporting exports enforce configurable ceilings with Vitest coverage for invalid ranges and empty-alert responses, React jsdom suites harden timeline widgets, and Flutter currency grids are handset-ready. Finalised the SLA alert fan-out service, persistence model, and `/api/finance/alerts` enrichments alongside Slack/Opsgenie delivery handling, acknowledgement flows, and documentation updates across backend, frontend, Flutter, and design artefacts, closing Task 3 at production readiness.
 
-## Task 4 – Experience & Navigation Overhaul (0%)
+## Task 4 – Experience & Navigation Overhaul (45%)
 **Objective:** Complete web UX redesign, role dashboards, creation studio, and navigation parity with mobile.
 
 **Subtasks:**
@@ -110,6 +110,8 @@
 - **API:** Dashboard data contracts, creation studio endpoints, analytics metrics.
 - **Logic:** Routing guards, feature toggles, error boundaries.
 - **Design:** Visual refresh, imagery, accessibility guidance.
+
+**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%.
 
 ## Task 5 – Intelligence, Integrations & Automation Hub (0%)
 **Objective:** Launch integration console, AI orchestration, and automation capabilities with full observability.

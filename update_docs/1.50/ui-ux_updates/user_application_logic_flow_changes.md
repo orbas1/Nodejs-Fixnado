@@ -31,6 +31,13 @@
 - Manual triggers require biometric confirmation when enabled and log `compliance_export_trigger` analytics events with dataset, region, and justification metadata to maintain DPIA evidence.
 - Completed runs surface actionable buttons (`Download`, `Copy secure link`, `View DPIA guidance`) with guardrails preventing downloads on expired retention windows; errors route operators into troubleshooting checklists referencing backend status codes.
 
+## Creation Studio & Service Publishing
+1. **Blueprint discovery:** Entry point surfaces blueprints relevant to the operator’s persona with channel, compliance, and automation badges; selection hydrates a draft with persona defaults, recommended regions, and automation hints.
+2. **Autosave wizard:** Every field change queues an autosave through the controller repository; UI surfaces save spinners, success toasts, and retry banners when offline, persisting drafts locally until server confirmation is received.
+3. **Slug and compliance validation:** Slug field performs debounce validation against `/creation-studio/slug-check`; compliance checklist warns when blueprint-required items remain unticked and blocks publish CTA until resolved.
+4. **Availability & pricing guards:** Lead hours enforce minimum thresholds per blueprint while pricing inputs normalise currency, setup fees, and highlight inconsistent combinations (e.g., subscription model without cadence) with inline helper text.
+5. **Publish orchestration:** Publish CTA requests confirmation, runs final validation, displays compliance summary, and on success redirects to storefront preview with analytics event `creation_publish_completed`; errors surface actionable guidance referencing backend status codes.
+
 ## Finance Escalation Handling
 - Alert inbox polls orchestration telemetry every five minutes; when new SLA breaches appear the flow highlights the alert card, preloads context, and prompts the user to confirm or delegate the responder from a quick-pick roster.
 - Acknowledge action posts responder details and optional notes, pauses repeat notifications, and records analytics event `user_finance_alert_acknowledged` with severity, retry count, and downstream channel metadata.

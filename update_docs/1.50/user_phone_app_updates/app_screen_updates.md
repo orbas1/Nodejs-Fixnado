@@ -10,3 +10,4 @@
 - Introduced compliance KPI banners summarising backlog, overdue, and completion metrics with refresh affordances plus due-at labels on each request row so SLA breaches surface directly within the list.
 - Added empty/loading/error states for the metrics panel and pull-to-refresh hook that refreshes both metrics and requests, ensuring mobile parity with the web dashboard.
 - Refined the Finance Dashboard with escalation trays, Slack/Opsgenie delivery pills, and retry countdown chips that mirror the backend fan-out service while keeping summary tiles responsive on compact screens.
+- Launched the Creation Studio screen with blueprint carousel entry, multi-step form, autosave status chip, slug validator, compliance checklist, and publish CTA wired into the new repository/controller so providers can configure services end-to-end without desktop fallback.

@@ -24,3 +24,7 @@
 - Updated `FinanceOverview.jsx` to surface escalation ribbons, Slack/Opsgenie delivery state, retry counters, and acknowledgement controls so finance operators can triage SLA breaches directly from the dashboard.
 - Extended the finance client with alert acknowledgement, escalation filters, and retry metadata normalisation to keep the React UI aligned with the fan-out job payloads.
 - Added Vitest coverage (`src/pages/__tests__/FinanceOverview.test.jsx`) validating severity theming, retry indicators, and manual refresh flows against mocked `/api/finance/alerts` responses.
+## 2025-04-09 – Creation Studio Wizard & Navigation Entry
+- Added `creationStudioClient` with blueprint fetching, draft autosave, publish submission, and slug validation helpers, wiring the new `/api/creation-studio` endpoints into the React application.
+- Introduced `CreationStudioWizard` page with blueprint selection cards, stepper, autosave feedback, compliance checklist validation, and publish flow plus integrated the route and navigation entry into the solutions mega menu.
+- Localised new copy across all supported locales and added Vitest coverage for the creation studio reducer to protect state transitions, autosave, and serialization logic.

@@ -33,12 +33,13 @@
 **Key Deliverables:**
 1. Home, Explore, and campaign landing templates with modular hero/feature/testimonial/CTA sections.
 2. Role-based dashboard shells including analytics ribbons, task queues, and compliance widgets.
-3. Creation studio stepper, preview panes, and theme selector interactions documented.
-4. ✅ Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
-5. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
-6. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
-7. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
-8. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
+3. ✅ Creation studio stepper, preview panes, and theme selector interactions documented.
+4. ✅ Creation studio autosave, compliance checklist, and publish confirmation flows documented for web and Flutter parity.
+5. ✅ Finance and dispute resolution layouts featuring escrow timelines, payout summaries, and alerts.
+6. Partial layout catalogue with usage rules, asset specifications, and dummy-data scaffolding.
+7. Provider dashboard data-alignment review against restored panel services to confirm layout assumptions remain valid.
+8. Compliance data governance metrics pack capturing KPI cards, due-date table states, advanced filter forms, and refresh micro-interactions aligned with the new SLA analytics.
+9. Finance escalation ribbon & responder workflow specs covering alert drawers, Slack/Opsgenie affordances, and retry countdown treatments for web and Flutter dashboards.
 
 ## Milestone D4 – Mobile Parity & Thematic Extensions (Target Week 5–7)
 **Goals:** Ensure Flutter implementations mirror web patterns, and theme variants (premium, emo) are production ready.

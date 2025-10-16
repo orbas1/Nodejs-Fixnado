@@ -20,3 +20,7 @@
 - Rebuilt the escalation panel with grouped alert ribbons that highlight breach severity, upstream webhook retries, and last fan-out targets, matching the backend escalation feed.
 - Added acknowledgement controls, responder assignments, and retry countdown timers tied to `/api/finance/alerts` metadata so finance leads can coordinate Slack/Opsgenie follow-ups without leaving the page.
 - Memoised chart/tile derivations and introduced manual refresh plus auto-polling fallback states to protect render performance while keeping alerts current in long-lived dashboard sessions.
+## Creation Studio
+- Added `CreationStudio.jsx` with a four-step wizard covering blueprint selection, detailed service description, operational configuration, and review/publish flows backed by autosave and compliance validation.
+- Introduced new API client, reducer-driven state management, slug availability checks, and spinner/alert states so providers can safely draft and publish packages.
+- Exposed the experience via the solutions mega menu with localisation updates across all supported languages.

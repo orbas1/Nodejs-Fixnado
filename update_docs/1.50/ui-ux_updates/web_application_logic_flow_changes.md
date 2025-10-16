@@ -39,6 +39,13 @@
 - Manual trigger flow enforces justification entry, dataset validation, and retention acknowledgement before calling the backend; progress indicator polls run status every 15 seconds with exponential backoff when idle.
 - Error states provide remediation actions (retry export, view troubleshooting doc, contact security) while success surfaces download and DPIA documentation buttons alongside retention countdown chips synced from run metadata.
 
+## Creation Studio Workflows
+- **Blueprint orchestration:** Landing state fetches blueprint catalogue, caches persona-scoped results, and surfaces compliance badges; selecting a blueprint initialises wizard state, pre-filling personas, recommended regions, and automation hints.
+- **Draft autosave pipeline:** Wizard dispatches debounced autosave events that persist drafts server-side and record timestamps in the reducer; UI surfaces status chips, retry actions, and failure toasts when autosave fails.
+- **Slug governance:** Slug field normalises input, calls `/api/creation-studio/slug-check`, and renders inline errors with recommended alternatives when duplicates exist while logging events for analytics.
+- **Compliance gating:** Publish CTA remains disabled until blueprint-required checklist items are confirmed; missing items highlight with inline callouts, and analytics fire `creation_publish_blocked` events for operations insight.
+- **Publish confirmation:** Final step summarises key attributes, requires explicit confirmation of compliance/availability, triggers publish API call, and on success routes to success screen with storefront URL plus background job ID for audit trails.
+
 ## Error Handling & Observability
 - Global error boundary captures unexpected issues and displays recovery modal with support link; errors tagged with correlation ID for diagnostics.
 - Telemetry events instrumented for navigation search usage, widget refresh, quote submissions, resource feedback, settings saves, and export completions with timestamps and actor metadata.

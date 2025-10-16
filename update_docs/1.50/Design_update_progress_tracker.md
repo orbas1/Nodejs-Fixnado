@@ -4,10 +4,10 @@
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
 | D2 | Navigation & IA Harmonisation | 72 | 74 | 70 | 68 | 60 | 66 | 82 | 78 | 72 | 58 | 74 | 76 | 58 | 56 | 70 | 71 |
-| D3 | Page Templates & Partial Library | 58 | 56 | 54 | 54 | 52 | 50 | 60 | 56 | 56 | 52 | 56 | 50 | 44 | 46 | 54 | 53 |
+| D3 | Page Templates & Partial Library | 72 | 70 | 66 | 66 | 62 | 60 | 72 | 66 | 68 | 64 | 68 | 62 | 56 | 58 | 66 | 66 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 74 | 74 | 72 | 72 | 66 | 72 | 82 | 84 | 74 | 70 | 74 | 74 | 62 | 62 | 74 | 73 |
-| D6 | Design QA, Documentation & Handover | 34 | 36 | 34 | 36 | 32 | 34 | 40 | 40 | 36 | 34 | 38 | 48 | 34 | 38 | 36 | 37 |
+| D5 | Mobile Parity & Component Adaptation | 78 | 78 | 76 | 76 | 70 | 76 | 86 | 86 | 78 | 74 | 78 | 78 | 66 | 66 | 78 | 77 |
+| D6 | Design QA, Documentation & Handover | 40 | 42 | 38 | 40 | 36 | 40 | 46 | 46 | 40 | 38 | 42 | 52 | 38 | 42 | 40 | 43 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -32,6 +32,9 @@
 > - Finance escalation QA checklists, palette guidance, and responder flow annotations were added to the documentation bundle, increasing D6 quality, organisation, functionality, and QA scores while preparing handover packs for operations sign-off.
 > - Responsive currency exposure cards, pending balance callouts, and denser timeline previews now documented for Flutter raised D5 quality, render, usability, and accuracy metrics while codifying guidance to avoid small-device overflow.
 > - Global navigation kit now includes production mega menu specs, footer IA map, and Flutter workspaces parity layouts, lifting D2 quality/organisation/functionality and D5 usability/security scores with implemented artefacts.
+- Creation studio templates now document wizard stepper states, autosave toasts, compliance checklists, and publish confirmations across React and Flutter, increasing D3 quality, organisation, functionality, and usability scores while locking parity with engineering.
+- Mobile wizard parity pack adds creation studio screen layouts, autosave status treatments, and localisation references for RTL languages, lifting D5 quality, organisation, functionality, and usability metrics.
+- Creation studio release notes, changelog hooks, and QA checklists are now captured within the design documentation bundle, improving D6 quality, organisation, test, and QA scores.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.

@@ -1,6 +1,9 @@
 # Version 1.50 Update Index
 
-## Recently Updated Artefacts (2025-04-08)
+## Recently Updated Artefacts (2025-04-10)
+- **Creation studio parity:** Expanded creation studio documentation across web and Flutter, refreshed task/progress trackers, and updated mobile changelog plus screen catalogue to capture the new wizard, autosave behaviour, slug governance, and publish flow. (`update_task_list.md`, `update_progress_tracker.md`, `user_phone_app_updates/user_app_change_log.md`, `user_phone_app_updates/app_screen_updates.md`, `Design_update_task_list.md`, `Design_update_progress_tracker.md`, `Design_update_milestone_list.md`)
+- **UI logic flows:** Added detailed creation studio logic for user and web applications, covering blueprint selection, autosave orchestration, compliance gating, and publish confirmation telemetry. (`ui-ux_updates/user_application_logic_flow_changes.md`, `ui-ux_updates/web_application_logic_flow_changes.md`)
+- **Design QA alignment:** Re-scored design progress trackers, milestone list, and QA notes to reflect creation studio parity packs, localisation audits, and release artefacts. (`Design_update_progress_tracker.md`, `Design_update_task_list.md`, `Design_update_milestone_list.md`)
 - **Compliance & Data Governance Completion:** Task 2 moved to 100% with SLA metrics, migration, and regression tests logged across backend change docs. (`update_task_list.md`, `update_progress_tracker.md`, `backend_updates/backend_change_log.md`, `backend_updates/api_changes.md`, `backend_updates/routes_updates.md`, `backend_updates/services_changes.md`, `backend_updates/database_change_log.md`, `backend_updates/migrations_updates.md`, `backend_updates/config_changes.md`, `backend_updates/env_updates.md`, `backend_updates/backend_new_files.md`)
 - **Features Update Plan:** Added compliance progress snapshot covering the metrics endpoint, migration, and cross-platform UI updates. (`features_update_plan.md`)
 - **Frontend Artefacts:** Documented GDPR metrics dashboard, advanced filters, and new Vitest coverage for the compliance portal. (`frontend_updates/change_log.md`, `frontend_updates/pages_updates.md`)
