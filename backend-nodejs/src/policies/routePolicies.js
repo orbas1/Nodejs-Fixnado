@@ -1290,6 +1290,32 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.tools.read': {
+    id: 'panel.provider.tools.read',
+    version: '1.0.0',
+    resource: 'panel.provider.tools',
+    action: 'panel.provider.tools:view',
+    description: 'Allow provider managers to view tool sale management data.',
+    requirements: [Permissions.PANEL_PROVIDER_TOOLS],
+    tags: ['panel', 'provider', 'inventory'],
+    severity: 'medium'
+  },
+  'panel.provider.tools.manage': {
+    id: 'panel.provider.tools.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.tools',
+    action: 'panel.provider.tools:manage',
+    description: 'Allow provider managers to create and update tool sale listings and coupons.',
+    requirements: [Permissions.PANEL_PROVIDER_TOOLS],
+    tags: ['panel', 'provider', 'inventory'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      path: req.path,
+      toolSaleProfileId: req.params?.profileId || null,
+      couponId: req.params?.couponId || null
+    })
+  },
   'panel.enterprise.dashboard': {
     id: 'panel.enterprise.dashboard',
     version: '1.0.0',

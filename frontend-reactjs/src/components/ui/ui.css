@@ -280,17 +280,19 @@
 }
 
 .fx-textarea {
-  min-height: 120px;
-  padding-block: var(--fx-space-3);
-  line-height: 1.6;
-  resize: vertical;
-.fx-text-area {
-  min-height: 128px;
-.fx-textarea {
-  min-height: 132px;
-  padding-block: var(--fx-space-3);
-  resize: vertical;
+  width: 100%;
+  min-height: 140px;
+  border-radius: var(--fx-radius-lg);
+  border: 1px solid var(--fx-color-border-subtle);
+  padding: var(--fx-space-4) calc(var(--fx-space-5) + 1px);
+  font-size: 0.95rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--fx-color-text-primary);
+  background: var(--fx-color-surface-base);
   line-height: 1.5;
+  transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
+    box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
+  resize: vertical;
 }
 
 .fx-text-input:focus-visible {
@@ -322,31 +324,10 @@
   right: var(--fx-space-3);
 }
 
+
 .fx-textarea-wrapper {
   position: relative;
   display: flex;
-}
-
-.fx-textarea {
-  width: 100%;
-  min-height: 140px;
-  border-radius: var(--fx-radius-lg);
-  border: 1px solid var(--fx-color-border-subtle);
-  padding: var(--fx-space-4);
-.fx-textarea {
-  width: 100%;
-  min-height: 140px;
-  min-height: 128px;
-  border-radius: var(--fx-radius-lg);
-  border: 1px solid var(--fx-color-border-subtle);
-  padding: var(--fx-space-4) calc(var(--fx-space-5) + 1px);
-  font-size: 0.95rem;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: var(--fx-color-text-primary);
-  background: var(--fx-color-surface-base);
-  transition: border var(--fx-motion-duration-fast) var(--fx-motion-ease-standard),
-    box-shadow var(--fx-motion-duration-fast) var(--fx-motion-ease-standard);
-  resize: vertical;
 }
 
 .fx-textarea:focus-visible {

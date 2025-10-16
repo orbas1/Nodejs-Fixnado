@@ -344,6 +344,62 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseToolSaleCoupon(coupon, index) {
+  if (!coupon) {
+    return { id: `tool-sale-coupon-${index}`, name: 'Coupon', status: 'draft' };
+  }
+  return {
+    id: coupon.id || `tool-sale-coupon-${index}`,
+    name: coupon.name || coupon.code || 'Coupon',
+    code: coupon.code || null,
+    status: coupon.status || 'draft',
+    discountType: coupon.discountType || 'percentage',
+    discountValue: coupon.discountValue != null ? Number(coupon.discountValue) : null,
+    currency: coupon.currency || 'GBP',
+    autoApply: Boolean(coupon.autoApply),
+    startsAt: coupon.startsAt || null,
+    expiresAt: coupon.expiresAt || null
+  };
+}
+
+function normaliseToolSaleListing(listing, index) {
+  const coupons = ensureArray(listing?.coupons).map(normaliseToolSaleCoupon);
+  const inventory = listing?.inventory || {};
+  const metrics = listing?.metrics || {};
+  return {
+    id: listing?.id || `tool-sale-${index}`,
+    name: listing?.name || listing?.tagline || 'Tool listing',
+    tagline: listing?.tagline || '',
+    description: listing?.description || '',
+    heroImageUrl: listing?.heroImageUrl || null,
+    showcaseVideoUrl: listing?.showcaseVideoUrl || null,
+    galleryImages: ensureArray(listing?.galleryImages),
+    tags: ensureArray(listing?.tags),
+    keywordTags: ensureArray(listing?.keywordTags),
+    listing: listing?.listing
+      ? {
+          status: listing.listing.status || 'draft',
+          availability: listing.listing.availability || 'buy',
+          pricePerDay: listing.listing.pricePerDay != null ? Number(listing.listing.pricePerDay) : null,
+          purchasePrice: listing.listing.purchasePrice != null ? Number(listing.listing.purchasePrice) : null,
+          location: listing.listing.location || 'UK-wide',
+          insuredOnly: Boolean(listing.listing.insuredOnly)
+        }
+      : null,
+    inventory: {
+      quantityOnHand: inventory.quantityOnHand ?? 0,
+      quantityReserved: inventory.quantityReserved ?? 0,
+      safetyStock: inventory.safetyStock ?? 0,
+      conditionRating: inventory.conditionRating || 'good'
+    },
+    coupons,
+    metrics: {
+      quantityAvailable: metrics.quantityAvailable ?? Math.max((inventory.quantityOnHand ?? 0) - (inventory.quantityReserved ?? 0), 0),
+      activeCoupons: metrics.activeCoupons ?? coupons.filter((coupon) => coupon.status === 'active').length
+    }
+  };
+}
+
 function normaliseProviderDashboard(payload = {}) {
   const root = payload?.data ?? payload;
   const provider = root.provider || root.profile || {};
@@ -405,6 +461,17 @@ function normaliseProviderDashboard(payload = {}) {
       availability: member.availability ?? member.utilisation ?? 0.8,
       rating: member.rating ?? member.csat ?? 0.95
     })),
+    toolSales: {
+      summary: {
+        totalListings: root.toolSales?.summary?.totalListings ?? 0,
+        draft: root.toolSales?.summary?.draft ?? 0,
+        published: root.toolSales?.summary?.published ?? 0,
+        suspended: root.toolSales?.summary?.suspended ?? 0,
+        totalQuantity: root.toolSales?.summary?.totalQuantity ?? 0,
+        activeCoupons: root.toolSales?.summary?.activeCoupons ?? 0
+      },
+      listings: ensureArray(root.toolSales?.listings).map(normaliseToolSaleListing)
+    },
     serviceManagement: {
       health: ensureArray(serviceDelivery.health || root.serviceHealth).map((metric, index) => ({
         id: metric.id || metric.key || `metric-${index}`,
@@ -589,6 +656,21 @@ function normaliseProviderStorefront(payload = {}) {
     listings,
     playbooks,
     timeline
+  };
+}
+
+function normaliseToolSales(payload = {}) {
+  const root = payload?.data ?? payload;
+  return {
+    summary: {
+      totalListings: root.summary?.totalListings ?? 0,
+      draft: root.summary?.draft ?? 0,
+      published: root.summary?.published ?? 0,
+      suspended: root.summary?.suspended ?? 0,
+      totalQuantity: root.summary?.totalQuantity ?? 0,
+      activeCoupons: root.summary?.activeCoupons ?? 0
+    },
+    listings: ensureArray(root.listings).map(normaliseToolSaleListing)
   };
 }
 
@@ -1559,7 +1641,7 @@ function normaliseAdminDashboard(payload = {}) {
     status: tile.status || null
   }));
 
-  const summary = payload.metrics?.command?.summary || {};
+  const commandSummary = payload.metrics?.command?.summary || {};
 
   const escrowTrend = ensureArray(payload.charts?.escrowTrend?.buckets).map((bucket, index) => ({
     label: bucket.label || `Bucket ${index + 1}`,
@@ -1634,7 +1716,7 @@ function normaliseAdminDashboard(payload = {}) {
     logoUrl: connector.logoUrl || null
   }));
 
-  const summary = payload.security?.summary || {
+  const securitySummary = payload.security?.summary || {
     connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
     connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
     automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
@@ -1643,14 +1725,6 @@ function normaliseAdminDashboard(payload = {}) {
   };
 
   const securityCapabilities = payload.security?.capabilities || {};
-
-  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
-    id: board.id || `board-${index}`,
-    title: board.title || board.name || `Queue ${index + 1}`,
-    summary: board.summary || '',
-    updates: ensureArray(board.updates),
-    owner: board.owner || 'Operations'
-  }));
 
   const complianceControls = ensureArray(payload.queues?.complianceControls).map((control, index) => ({
     id: control.id || `control-${index}`,
@@ -1742,12 +1816,13 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
-          escrowTotal: Number.parseFloat(summary.escrowTotal ?? summary.escrowTotalAmount ?? 0) || 0,
-          escrowTotalLabel: summary.escrowTotalLabel || summary.escrowTotal || '—',
-          slaCompliance: Number.parseFloat(summary.slaCompliance ?? 0) || 0,
-          slaComplianceLabel: summary.slaComplianceLabel || summary.slaCompliance || '—',
-          openDisputes: Number.parseInt(summary.openDisputes ?? 0, 10) || 0,
-          openDisputesLabel: summary.openDisputesLabel || `${summary.openDisputes ?? 0}`
+          escrowTotal:
+            Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
+          escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
+          slaCompliance: Number.parseFloat(commandSummary.slaCompliance ?? 0) || 0,
+          slaComplianceLabel: commandSummary.slaComplianceLabel || commandSummary.slaCompliance || '—',
+          openDisputes: Number.parseInt(commandSummary.openDisputes ?? 0, 10) || 0,
+          openDisputesLabel: commandSummary.openDisputesLabel || `${commandSummary.openDisputes ?? 0}`
         }
       }
     },
@@ -1759,7 +1834,7 @@ function normaliseAdminDashboard(payload = {}) {
       signals: securitySignals,
       automationBacklog,
       connectors,
-      summary,
+      summary: securitySummary,
       capabilities: {
         canManageSignals: Boolean(securityCapabilities.canManageSignals),
         canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
@@ -2849,6 +2924,59 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  toolSales: {
+    summary: {
+      totalListings: 1,
+      draft: 0,
+      published: 1,
+      suspended: 0,
+      totalQuantity: 6,
+      activeCoupons: 1
+    },
+    listings: [
+      {
+        name: 'Thermal imaging kit',
+        tagline: 'Featured diagnostics kit',
+        description: 'Handheld 640x480 thermal imaging kit with live telemetry integration and concierge logistics.',
+        heroImageUrl: 'https://cdn.fixnado.test/tools/thermal.jpg',
+        showcaseVideoUrl: 'https://cdn.fixnado.test/tools/thermal.mp4',
+        galleryImages: [
+          'https://cdn.fixnado.test/tools/thermal-1.jpg',
+          'https://cdn.fixnado.test/tools/thermal-2.jpg'
+        ],
+        tags: ['thermal', 'diagnostics'],
+        keywordTags: ['infrared', 'inspection'],
+        listing: {
+          status: 'approved',
+          availability: 'both',
+          pricePerDay: 140,
+          purchasePrice: 1850,
+          insuredOnly: true,
+          location: 'London Docklands'
+        },
+        inventory: {
+          quantityOnHand: 6,
+          quantityReserved: 1,
+          safetyStock: 1,
+          conditionRating: 'excellent'
+        },
+        coupons: [
+          {
+            name: 'Spring diagnostics',
+            code: 'THERM10',
+            status: 'active',
+            discountType: 'percentage',
+            discountValue: 10,
+            currency: 'GBP'
+          }
+        ],
+        metrics: {
+          quantityAvailable: 5,
+          activeCoupons: 1
+        }
+      }
+    ]
+  },
   servicemen: [
     { name: 'Amina Khan', role: 'Lead Electrical Engineer', availability: 0.68, rating: 0.99 },
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
@@ -3866,6 +3994,8 @@ export async function deleteDisputeHealthEntry(entryId) {
     forceRefresh: true
   });
   return cacheDisputeHealthWorkspace(data);
+}
+
 export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
   const query = toQueryString({ timeframe, category, status });
   return request(`/admin/audit/events${query}`, {
@@ -3941,6 +4071,103 @@ function invalidateProviderCache(companyId) {
     keys.push(`admin-provider:${companyId}`);
   }
   clearPanelCache(keys);
+}
+
+export async function getProviderToolSales(options = {}) {
+  const response = await request('/panel/provider/tools', {
+    cacheKey: 'provider-tool-sales',
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return {
+    data: normaliseToolSales(response.data ?? response),
+    meta: response.meta ?? {}
+  };
+}
+
+export async function createProviderToolSale(payload, options = {}) {
+  const response = await request('/panel/provider/tools', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function updateProviderToolSale(profileId, payload, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  const response = await request(`/panel/provider/tools/${encodeURIComponent(profileId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function deleteProviderToolSale(profileId, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  await request(`/panel/provider/tools/${encodeURIComponent(profileId)}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    cacheKey: null,
+    forceRefresh: true
+  });
+}
+
+export async function createProviderToolSaleCoupon(profileId, payload, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  const response = await request(`/panel/provider/tools/${encodeURIComponent(profileId)}/coupons`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function updateProviderToolSaleCoupon(profileId, couponId, payload, options = {}) {
+  if (!profileId || !couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+  const response = await request(
+    `/panel/provider/tools/${encodeURIComponent(profileId)}/coupons/${encodeURIComponent(couponId)}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true,
+      signal: options?.signal,
+      cacheKey: null
+    }
+  );
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function deleteProviderToolSaleCoupon(profileId, couponId, options = {}) {
+  if (!profileId || !couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+  const response = await request(
+    `/panel/provider/tools/${encodeURIComponent(profileId)}/coupons/${encodeURIComponent(couponId)}`,
+    {
+      method: 'DELETE',
+      forceRefresh: true,
+      signal: options?.signal,
+      cacheKey: null
+    }
+  );
+  return normaliseToolSaleListing(response.data ?? response, 0);
 }
 
 export async function createAdminProvider(payload) {

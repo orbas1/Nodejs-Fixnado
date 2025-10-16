@@ -73,6 +73,36 @@ const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
 
+const ADMIN_ROUTES = [
+  { path: '/admin/dashboard', Component: AdminDashboard },
+  { path: '/admin/profile', Component: AdminProfile },
+  { path: '/admin/disputes/health/:bucketId/history', Component: AdminDisputeHealthHistory },
+  { path: '/admin/home-builder', Component: AdminHomeBuilder },
+  { path: '/admin/blog', Component: AdminBlog },
+  { path: '/admin/rentals', Component: AdminRentals },
+  { path: '/admin/monetisation', Component: AdminMonetization },
+  { path: '/admin/escrows', Component: AdminEscrow },
+  { path: '/admin/bookings', Component: AdminBookings },
+  { path: '/admin/wallets', Component: AdminWallets },
+  { path: '/admin/custom-jobs', Component: AdminCustomJobs },
+  { path: '/admin/roles', Component: AdminRoles },
+  { path: '/admin/preferences', Component: AdminPreferences },
+  { path: '/admin/enterprise', Component: AdminEnterprise },
+  { path: '/admin/marketplace', Component: AdminMarketplace },
+  { path: '/admin/appearance', Component: AppearanceManagement },
+  { path: '/admin/inbox', Component: AdminInbox },
+  { path: '/admin/purchases', Component: AdminPurchaseManagement },
+  { path: '/admin/website-management', Component: AdminWebsiteManagement },
+  { path: '/admin/live-feed/auditing', Component: AdminLiveFeedAuditing },
+  { path: '/admin/system-settings', Component: AdminSystemSettings },
+  { path: '/admin/taxonomy', Component: AdminTaxonomy },
+  { path: '/admin/seo', Component: AdminSeo },
+  { path: '/admin/theme-studio', Component: ThemeStudio },
+  { path: '/admin/telemetry', Component: TelemetryDashboard },
+  { path: '/admin/zones', Component: AdminZones },
+  { path: '/admin/legal/:slug?', Component: AdminLegal }
+];
+
 function App() {
   const { t } = useLocale();
   const location = useLocation();
@@ -128,154 +158,17 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/admin" element={<AdminLogin />} />
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminDashboard />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/profile"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminProfile />
-                path="/admin/disputes/health/:bucketId/history"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminDisputeHealthHistory />
-                path="/admin/home-builder"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminHomeBuilder />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/blog"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminBlog />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/rentals"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminRentals />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/monetisation"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminMonetization />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/escrows"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminEscrow />
-                path="/admin/bookings"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminBookings />
-                path="/admin/wallets"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminWallets />
-                path="/admin/custom-jobs"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminCustomJobs />
-                path="/admin/roles"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminRoles />
-                path="/admin/preferences"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminPreferences />
-                path="/admin/enterprise"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminEnterprise />
-                path="/admin/marketplace"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminMarketplace />
-                path="/admin/appearance"
-                element={
-                  <AdminProtectedRoute>
-                    <AppearanceManagement />
-                path="/admin/inbox"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminInbox />
-                path="/admin/purchases"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminPurchaseManagement />
-                path="/admin/website-management"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminWebsiteManagement />
-                path="/admin/live-feed/auditing"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminLiveFeedAuditing />
-                path="/admin/system-settings"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminSystemSettings />
-                path="/admin/taxonomy"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminTaxonomy />
-                path="/admin/seo"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminSeo />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/theme-studio"
-                element={
-                  <AdminProtectedRoute>
-                    <ThemeStudio />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/telemetry"
-                element={
-                  <AdminProtectedRoute>
-                    <TelemetryDashboard />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/zones"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminZones />
-                  </AdminProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/legal/:slug?"
-                element={
-                  <AdminProtectedRoute>
-                    <AdminLegal />
-                  </AdminProtectedRoute>
-                }
-              />
+              {ADMIN_ROUTES.map(({ path, Component }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <AdminProtectedRoute>
+                      <Component />
+                    </AdminProtectedRoute>
+                  }
+                />
+              ))}
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />

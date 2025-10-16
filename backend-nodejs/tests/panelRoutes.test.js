@@ -464,4 +464,100 @@ describe('Panel routes', () => {
 
     expect(response.body).toMatchObject({ message: 'Storefront access restricted to providers' });
   });
+
+  it('allows provider owners to manage tool sale listings and coupons', async () => {
+    const { company, owner } = await createCompanyWithFixtures();
+
+    const createResponse = await withAuth(
+      request(app)
+        .post('/api/panel/provider/tools')
+        .send({
+          name: 'Thermal imaging kit',
+          sku: 'THERM-200',
+          category: 'Diagnostics',
+          quantityOnHand: 5,
+          safetyStock: 1,
+          purchasePrice: 1850,
+          pricePerDay: 140,
+          availability: 'both',
+          status: 'approved',
+          heroImageUrl: 'https://cdn.fixnado.test/tools/thermal.jpg',
+          tags: ['thermal', 'diagnostics'],
+          keywordTags: ['infrared', 'inspection'],
+          shortDescription: 'Calibrated thermal imaging with cloud sync.',
+          longDescription: 'Handheld 640x480 thermal imaging kit with live telemetry integration and concierge logistics.',
+          galleryImages: [
+            'https://cdn.fixnado.test/tools/thermal-1.jpg',
+            'https://cdn.fixnado.test/tools/thermal-2.jpg'
+          ],
+          settings: { featured: true }
+        }),
+      owner.id
+    ).expect(201);
+
+    expect(createResponse.body.data.name).toContain('Thermal');
+    expect(createResponse.body.data.inventory.quantityOnHand).toBe(5);
+
+    const profileId = createResponse.body.data.id;
+
+    const listResponse = await withAuth(
+      request(app).get('/api/panel/provider/tools').query({ companyId: company.id }),
+      owner.id
+    ).expect(200);
+
+    expect(listResponse.body.data.summary.totalListings).toBe(1);
+    expect(listResponse.body.data.listings[0].metrics.quantityAvailable).toBeGreaterThanOrEqual(4);
+
+    const updateResponse = await withAuth(
+      request(app)
+        .put(`/api/panel/provider/tools/${profileId}`)
+        .send({ quantityOnHand: 7, purchasePrice: 2100, status: 'approved', tagline: 'Featured diagnostics kit' }),
+      owner.id
+    ).expect(200);
+
+    expect(updateResponse.body.data.inventory.quantityOnHand).toBe(7);
+    expect(updateResponse.body.data.listing.purchasePrice).toBe(2100);
+    expect(updateResponse.body.data.tagline).toContain('Featured');
+
+    const couponCreate = await withAuth(
+      request(app)
+        .post(`/api/panel/provider/tools/${profileId}/coupons`)
+        .send({
+          name: 'Spring diagnostics',
+          code: 'THERM10',
+          discountType: 'percentage',
+          discountValue: 10,
+          status: 'active'
+        }),
+      owner.id
+    ).expect(201);
+
+    expect(couponCreate.body.data.coupons.length).toBe(1);
+    const couponId = couponCreate.body.data.coupons[0].id;
+
+    const couponUpdate = await withAuth(
+      request(app)
+        .put(`/api/panel/provider/tools/${profileId}/coupons/${couponId}`)
+        .send({ status: 'archived', discountValue: 12 }),
+      owner.id
+    ).expect(200);
+
+    expect(couponUpdate.body.data.coupons[0].status).toBe('archived');
+
+    const couponDelete = await withAuth(
+      request(app).delete(`/api/panel/provider/tools/${profileId}/coupons/${couponId}`),
+      owner.id
+    ).expect(200);
+
+    expect(couponDelete.body.data.coupons.length).toBe(0);
+
+    await withAuth(request(app).delete(`/api/panel/provider/tools/${profileId}`), owner.id).expect(204);
+
+    const afterDelete = await withAuth(
+      request(app).get('/api/panel/provider/tools').query({ companyId: company.id }),
+      owner.id
+    ).expect(200);
+
+    expect(afterDelete.body.data.summary.totalListings).toBe(0);
+  });
 });

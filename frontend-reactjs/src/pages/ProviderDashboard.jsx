@@ -21,6 +21,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -555,6 +556,7 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
   const deliveryBoard = serviceManagement.deliveryBoard ?? [];
@@ -621,6 +623,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCategories')
           }
         : null,
+      {
+        id: 'provider-dashboard-tool-sales',
+        label: t('providerDashboard.toolSalesHeadline'),
+        description: t('providerDashboard.nav.toolSales')
+      },
       serviceCatalogue.length
         ? {
             id: 'provider-dashboard-service-catalogue',
@@ -636,7 +643,15 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, t]);
+  }, [
+    alerts.length,
+    deliveryBoard.length,
+    serviceCatalogue.length,
+    serviceCategories.length,
+    serviceHealth.length,
+    servicePackages.length,
+    t
+  ]);
 
   const heroBadges = useMemo(
     () => [
@@ -949,6 +964,10 @@ export default function ProviderDashboard() {
             </div>
           </section>
         ) : null}
+
+        <div id="provider-dashboard-tool-sales" className="space-y-6">
+          <ToolSalesManagement initialData={toolSales} />
+        </div>
 
         {serviceCatalogue.length ? (
           <section id="provider-dashboard-service-catalogue" aria-labelledby="provider-dashboard-service-catalogue" className="space-y-4">
