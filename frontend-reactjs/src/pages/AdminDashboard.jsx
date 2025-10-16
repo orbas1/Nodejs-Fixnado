@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, CubeIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, GlobeAltIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, EyeIcon, MapIcon } from '@heroicons/react/24/outline';
@@ -1097,6 +1098,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const navigation = [
   const sections = [
   const upcomingManualEntries = manualUpcoming.slice(0, 4).map((entry) => ({
     title: entry.title,
@@ -1123,6 +1125,16 @@ function buildAdminNavigation(payload, complianceContext = null) {
     monetisationSection
   ].filter(Boolean);
 
+  navigation.push({
+    id: 'admin-rentals-link',
+    label: 'Rental management',
+    description: 'Open the dedicated rental operations workspace.',
+    type: 'route',
+    icon: 'assets',
+    href: '/admin/rentals'
+  });
+
+  return navigation;
   return { sections, sidebarLinks };
   sections.push({
     id: 'system-settings-link',
@@ -2156,6 +2168,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/rentals"
+        size="sm"
+        variant="secondary"
+        icon={CubeIcon}
+        iconPosition="start"
+      >
+        Rental management
         to="/admin/live-feed/auditing"
         size="sm"
         variant="secondary"

@@ -121,7 +121,8 @@ const resultBadge = {
   item: 'Work Item',
   record: 'Record',
   configuration: 'Setting',
-  panel: 'Setting'
+  panel: 'Setting',
+  route: 'Workspace'
 };
 
 const navIconMap = {
@@ -174,6 +175,18 @@ const buildSearchIndex = (navigation) =>
     .filter((section) => !section.href)
     .flatMap((section) => {
   navigation.flatMap((section) => {
+    if (section.type === 'route') {
+      return [
+        {
+          id: section.id,
+          type: 'route',
+          label: section.label,
+          description: section.description ?? '',
+          href: section.href
+        }
+      ];
+    }
+
     if (section.href) {
     if (section.to) {
     if (section.type === 'link') {
@@ -433,6 +446,11 @@ const DashboardLayout = ({
   blogPosts = []
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const firstSectionId = useMemo(() => {
+    const first = navigation.find((item) => item.type !== 'route');
+    return first?.id ?? navigation[0]?.id ?? 'overview';
+  }, [navigation]);
+  const [selectedSection, setSelectedSection] = useState(firstSectionId);
   const navigableItems = useMemo(() => navigation.filter((item) => !item.href), [navigation]);
   const initialSectionId = navigableItems[0]?.id ?? null;
   const [selectedSection, setSelectedSection] = useState(initialSectionId);
@@ -478,6 +496,15 @@ const DashboardLayout = ({
 
   useEffect(() => {
     setSelectedSection((current) => {
+      const stillValid = navigation.some((item) => item.id === current && item.type !== 'route');
+      if (stillValid) {
+        return current;
+      }
+      return firstSectionId;
+    });
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigation, firstSectionId]);
       if (current && navigableItems.some((item) => item.id === current)) {
         return current;
       }
@@ -514,6 +541,10 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
+  const activeSection =
+    navigation.find((item) => item.id === selectedSection && item.type !== 'route') ??
+    navigation.find((item) => item.type !== 'route') ??
+    navigation[0];
   const activeSection = navigableItems.find((item) => item.id === selectedSection) ?? navigableItems[0];
   const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0];
   const activeSection = navSections.find((item) => item.id === selectedSection) ?? navSections[0];
@@ -599,6 +630,11 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const isRoute = item.type === 'route' && item.href;
+                    const isActive = !isRoute && item.id === activeSection?.id;
+                    const Icon = getNavIcon(item);
+                    const content = (
+                      <>
                     const isActive = !item.to && item.id === activeSection?.id;
                     const isLink = item.type === 'link';
                     const isActive = !isLink && item.id === activeSection?.id;
@@ -719,11 +755,13 @@ const DashboardLayout = ({
                       </>
                     );
 
+                    if (isRoute) {
                     if (item.href) {
                       return (
                         <Link
                           key={item.id}
                           to={item.href}
+                          className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/90 px-4 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary"
                           className={`${baseClasses} ${stateClasses}`}
                           onClick={() => setMobileNavOpen(false)}
                           aria-label={item.label}
@@ -759,6 +797,11 @@ const DashboardLayout = ({
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedSection(item.id)}
+                        className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          isActive
+                            ? 'border-accent bg-accent text-white shadow-glow'
+                            : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                        }`}
                         className={`${baseClasses} ${stateClasses}`}
                         className={sharedClasses}
                         className={navItemClass}
@@ -835,6 +878,11 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const isRoute = item.type === 'route' && item.href;
+            const isActive = !isRoute && item.id === activeSection?.id;
+            const Icon = getNavIcon(item);
+            const content = (
+              <>
             const isActive = !item.to && item.id === activeSection?.id;
             const isLink = item.type === 'link';
             const isActive = !isLink && item.id === activeSection?.id;
@@ -914,19 +962,21 @@ const DashboardLayout = ({
                 {!navCollapsed && (
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{item.label}</p>
-                    {item.description ? (
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                    ) : null}
+                    {item.description ? <p className="text-xs text-slate-500">{item.description}</p> : null}
                   </div>
                 )}
               </>
             );
 
+            if (isRoute) {
             if (item.href) {
               return (
                 <Link
                   key={item.id}
                   to={item.href}
+                  className={`group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white/80 px-3 py-3 text-left text-primary/80 transition hover:border-accent/40 hover:text-primary ${navCollapsed ? 'justify-center px-2' : ''}`}
+                  title={navCollapsed ? item.label : undefined}
+                >
                   className={baseClasses}
                   title={navCollapsed ? item.label : undefined}
                 >
@@ -958,6 +1008,11 @@ const DashboardLayout = ({
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedSection(item.id)}
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+                } ${navCollapsed ? 'justify-center px-2' : ''}`}
                 className={baseClasses}
                 className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
                 className={baseClasses}
@@ -1054,7 +1109,11 @@ const DashboardLayout = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedSection(result.targetSection);
+                              if (result.type === 'route' && result.href) {
+                                navigate(result.href);
+                              } else if (result.targetSection) {
+                                setSelectedSection(result.targetSection);
+                              }
                               setSearchQuery('');
                               setSearchResults([]);
                             }}

@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   Booking,
   InventoryItem,
@@ -19,6 +20,7 @@ const RENTAL_STATUS_TRANSITIONS = {
   disputed: []
 };
 
+const DEPOSIT_STATUSES = new Set(['pending', 'held', 'released', 'forfeited', 'partially_released']);
 const RENTAL_DETAIL_INCLUDE = [
   {
     model: InventoryItem,
@@ -265,6 +267,315 @@ export async function requestRentalAgreement({
     );
 
     return rental.reload({ transaction, include: RENTAL_DETAIL_INCLUDE });
+  });
+}
+
+function cloneMetadata(meta) {
+  if (!meta || typeof meta !== 'object') {
+    return {};
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(meta));
+  } catch (_error) {
+    return {};
+  }
+}
+
+function toIsoOrNull(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  } catch (_error) {
+    return null;
+  }
+}
+
+export async function updateRentalAgreementDetails(
+  rentalId,
+  {
+    actorId,
+    actorRole = 'admin',
+    rentalStartAt,
+    rentalEndAt,
+    pickupAt,
+    returnDueAt,
+    depositAmount,
+    depositCurrency,
+    depositStatus,
+    dailyRate,
+    rateCurrency,
+    notes,
+    logisticsNotes,
+    bookingId,
+    marketplaceItemId,
+    regionId,
+    renterId,
+    companyId,
+    meta: metaOverrides
+  }
+) {
+  return sequelize.transaction(async (transaction) => {
+    const rental = await RentalAgreement.findByPk(rentalId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!rental) {
+      throw rentalError('Rental agreement not found', 404);
+    }
+
+    const updates = {};
+    const changeLog = {};
+
+    let nextRentalStart = rental.rentalStartAt ? new Date(rental.rentalStartAt) : null;
+    if (rentalStartAt !== undefined) {
+      nextRentalStart = rentalStartAt ? ensureDate(rentalStartAt, 'rentalStartAt', { allowNull: true }) : null;
+      const previous = rental.rentalStartAt ? new Date(rental.rentalStartAt) : null;
+      const previousIso = toIsoOrNull(previous);
+      const nextIso = toIsoOrNull(nextRentalStart);
+      if (previousIso !== nextIso) {
+        updates.rentalStartAt = nextRentalStart;
+        changeLog.rentalStartAt = { previous: previousIso, next: nextIso };
+      }
+    }
+
+    let nextRentalEnd = rental.rentalEndAt ? new Date(rental.rentalEndAt) : null;
+    if (rentalEndAt !== undefined) {
+      nextRentalEnd = rentalEndAt ? ensureDate(rentalEndAt, 'rentalEndAt', { allowNull: true }) : null;
+      const previous = rental.rentalEndAt ? new Date(rental.rentalEndAt) : null;
+      const previousIso = toIsoOrNull(previous);
+      const nextIso = toIsoOrNull(nextRentalEnd);
+      if (previousIso !== nextIso) {
+        updates.rentalEndAt = nextRentalEnd;
+        changeLog.rentalEndAt = { previous: previousIso, next: nextIso };
+      }
+    }
+
+    let nextPickupAt = rental.pickupAt ? new Date(rental.pickupAt) : null;
+    if (pickupAt !== undefined) {
+      nextPickupAt = pickupAt ? ensureDate(pickupAt, 'pickupAt', { allowNull: true }) : null;
+      const previous = rental.pickupAt ? new Date(rental.pickupAt) : null;
+      const previousIso = toIsoOrNull(previous);
+      const nextIso = toIsoOrNull(nextPickupAt);
+      if (previousIso !== nextIso) {
+        updates.pickupAt = nextPickupAt;
+        changeLog.pickupAt = { previous: previousIso, next: nextIso };
+      }
+    }
+
+    let nextReturnDue = rental.returnDueAt ? new Date(rental.returnDueAt) : null;
+    if (returnDueAt !== undefined) {
+      nextReturnDue = returnDueAt ? ensureDate(returnDueAt, 'returnDueAt', { allowNull: true }) : null;
+      const previous = rental.returnDueAt ? new Date(rental.returnDueAt) : null;
+      const previousIso = toIsoOrNull(previous);
+      const nextIso = toIsoOrNull(nextReturnDue);
+      if (previousIso !== nextIso) {
+        updates.returnDueAt = nextReturnDue;
+        changeLog.returnDueAt = { previous: previousIso, next: nextIso };
+      }
+    }
+
+    if (nextRentalStart && nextRentalEnd && nextRentalEnd <= nextRentalStart) {
+      throw rentalError('rentalEndAt must be after rentalStartAt');
+    }
+
+    if (nextPickupAt && nextReturnDue && nextReturnDue <= nextPickupAt) {
+      throw rentalError('returnDueAt must be after pickupAt');
+    }
+
+    if (depositAmount !== undefined) {
+      const next = depositAmount === null || depositAmount === '' ? null : Number(depositAmount);
+      if (next !== null && !Number.isFinite(next)) {
+        throw rentalError('depositAmount must be a valid number');
+      }
+      const previous = rental.depositAmount != null ? Number(rental.depositAmount) : null;
+      if (previous !== next) {
+        updates.depositAmount = next;
+        changeLog.depositAmount = { previous, next };
+      }
+    }
+
+    if (dailyRate !== undefined) {
+      const next = dailyRate === null || dailyRate === '' ? null : Number(dailyRate);
+      if (next !== null && !Number.isFinite(next)) {
+        throw rentalError('dailyRate must be a valid number');
+      }
+      const previous = rental.dailyRate != null ? Number(rental.dailyRate) : null;
+      if (previous !== next) {
+        updates.dailyRate = next;
+        changeLog.dailyRate = { previous, next };
+      }
+    }
+
+    if (depositCurrency !== undefined) {
+      const next = depositCurrency ? String(depositCurrency).trim().toUpperCase() : null;
+      if (next && next.length !== 3) {
+        throw rentalError('depositCurrency must be a 3-letter ISO code');
+      }
+      const previous = rental.depositCurrency || null;
+      if (previous !== next) {
+        updates.depositCurrency = next;
+        changeLog.depositCurrency = { previous, next };
+      }
+    }
+
+    if (rateCurrency !== undefined) {
+      const next = rateCurrency ? String(rateCurrency).trim().toUpperCase() : null;
+      if (next && next.length !== 3) {
+        throw rentalError('rateCurrency must be a 3-letter ISO code');
+      }
+      const previous = rental.rateCurrency || null;
+      if (previous !== next) {
+        updates.rateCurrency = next;
+        changeLog.rateCurrency = { previous, next };
+      }
+    }
+
+    if (depositStatus !== undefined) {
+      const next = depositStatus ? String(depositStatus).trim().toLowerCase() : null;
+      if (next && !DEPOSIT_STATUSES.has(next)) {
+        throw rentalError('depositStatus is not recognised');
+      }
+      const previous = rental.depositStatus || null;
+      if (previous !== next) {
+        updates.depositStatus = next;
+        changeLog.depositStatus = { previous, next };
+      }
+    }
+
+    if (bookingId !== undefined) {
+      const next = bookingId || null;
+      const previous = rental.bookingId || null;
+      if (previous !== next) {
+        updates.bookingId = next;
+        changeLog.bookingId = { previous, next };
+      }
+    }
+
+    if (marketplaceItemId !== undefined) {
+      const next = marketplaceItemId || null;
+      const previous = rental.marketplaceItemId || null;
+      if (previous !== next) {
+        updates.marketplaceItemId = next;
+        changeLog.marketplaceItemId = { previous, next };
+      }
+    }
+
+    if (regionId !== undefined) {
+      const next = regionId || null;
+      const previous = rental.regionId || null;
+      if (previous !== next) {
+        updates.regionId = next;
+        changeLog.regionId = { previous, next };
+      }
+    }
+
+    if (renterId !== undefined) {
+      const next = renterId || null;
+      const previous = rental.renterId || null;
+      if (previous !== next) {
+        updates.renterId = next;
+        changeLog.renterId = { previous, next };
+      }
+    }
+
+    if (companyId !== undefined) {
+      const next = companyId || null;
+      const previous = rental.companyId || null;
+      if (previous !== next) {
+        updates.companyId = next;
+        changeLog.companyId = { previous, next };
+      }
+    }
+
+    const originalMeta = cloneMetadata(rental.meta);
+    const nextMeta = cloneMetadata(rental.meta);
+    let metaChanged = false;
+
+    if (notes !== undefined) {
+      const trimmed = typeof notes === 'string' ? notes.trim() : notes;
+      const next = trimmed ? trimmed : null;
+      const previous = originalMeta.notes ?? null;
+      if (previous !== next) {
+        nextMeta.notes = next;
+        metaChanged = true;
+        changeLog.notes = { previous, next };
+      }
+    }
+
+    if (logisticsNotes !== undefined) {
+      const trimmed = typeof logisticsNotes === 'string' ? logisticsNotes.trim() : logisticsNotes;
+      const next = trimmed ? trimmed : null;
+      const previous = originalMeta.logisticsNotes ?? null;
+      if (previous !== next) {
+        if (next === null) {
+          delete nextMeta.logisticsNotes;
+        } else {
+          nextMeta.logisticsNotes = next;
+        }
+        metaChanged = true;
+        changeLog.logisticsNotes = { previous, next };
+      }
+    }
+
+    if (metaOverrides && typeof metaOverrides === 'object') {
+      try {
+        const overrideCopy = JSON.parse(JSON.stringify(metaOverrides));
+        nextMeta.adminOverrides = {
+          ...(nextMeta.adminOverrides || {}),
+          ...overrideCopy
+        };
+        metaChanged = true;
+        changeLog.metaOverrides = { previous: originalMeta.adminOverrides ?? null, next: nextMeta.adminOverrides };
+      } catch (_error) {
+        throw rentalError('meta must be a valid JSON object');
+      }
+    }
+
+    if (metaChanged) {
+      updates.meta = nextMeta;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return rental.reload({
+        transaction,
+        include: [
+          InventoryItem,
+          { model: Booking, required: false },
+          { model: RentalCheckpoint, separate: true, order: [['occurredAt', 'ASC']] }
+        ]
+      });
+    }
+
+    await rental.update(updates, { transaction });
+
+    if (Object.keys(changeLog).length && actorId) {
+      await addCheckpoint(
+        rental,
+        {
+          type: 'note',
+          description: 'Rental details updated',
+          recordedBy: actorId,
+          recordedByRole: actorRole,
+          payload: { changes: changeLog }
+        },
+        transaction
+      );
+    }
+
+    return rental.reload({
+      transaction,
+      include: [
+        InventoryItem,
+        { model: Booking, required: false },
+        { model: RentalCheckpoint, separate: true, order: [['occurredAt', 'ASC']] }
+      ]
+    });
   });
 }
 
@@ -940,7 +1251,7 @@ export async function cancelRentalAgreement(rentalId, { actorId, actorRole = 'pr
   });
 }
 
-export function listRentalAgreements({ companyId, renterId, status, limit = 50, offset = 0 } = {}) {
+export function listRentalAgreements({ companyId, renterId, status, search, limit = 50, offset = 0 } = {}) {
   const where = {};
   if (companyId) {
     where.companyId = companyId;
@@ -950,6 +1261,12 @@ export function listRentalAgreements({ companyId, renterId, status, limit = 50, 
   }
   if (status) {
     where.status = status;
+  }
+
+  const searchTerm = typeof search === 'string' ? search.trim() : '';
+  if (searchTerm) {
+    const pattern = `%${searchTerm.replace(/\s+/g, '%')}%`;
+    where[Op.or] = [{ rentalNumber: { [Op.iLike]: pattern } }];
   }
 
   return RentalAgreement.findAll({
