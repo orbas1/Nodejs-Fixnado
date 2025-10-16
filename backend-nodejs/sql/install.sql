@@ -378,3 +378,144 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Serviceman financial management tables
+-- These tables back the Serviceman control centre financial workspace so that
+-- crew leads can manage earnings, expenses, allowances, and payout settings in
+-- production environments.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS serviceman_financial_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  serviceman_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  currency VARCHAR(8) NOT NULL DEFAULT 'GBP',
+  base_hourly_rate NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  overtime_rate NUMERIC(12, 2),
+  callout_fee NUMERIC(12, 2),
+  mileage_rate NUMERIC(8, 2),
+  payout_method VARCHAR(32) NOT NULL DEFAULT 'wallet',
+  payout_schedule VARCHAR(32) NOT NULL DEFAULT 'weekly',
+  tax_rate NUMERIC(5, 2),
+  tax_identifier VARCHAR(64),
+  payout_instructions TEXT,
+  bank_account JSONB NOT NULL DEFAULT '{}'::jsonb,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_serviceman_financial_profiles_serviceman
+  ON serviceman_financial_profiles (serviceman_id);
+
+CREATE TABLE IF NOT EXISTS serviceman_financial_earnings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  serviceman_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+  reference VARCHAR(64),
+  title VARCHAR(160) NOT NULL,
+  amount NUMERIC(14, 2) NOT NULL,
+  currency VARCHAR(8) NOT NULL DEFAULT 'GBP',
+  status VARCHAR(24) NOT NULL DEFAULT 'pending' CHECK (
+    status IN ('pending', 'approved', 'in_progress', 'payable', 'paid', 'withheld')
+  ),
+  due_at TIMESTAMPTZ,
+  paid_at TIMESTAMPTZ,
+  recorded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  notes TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_serviceman_financial_earnings_serviceman
+  ON serviceman_financial_earnings (serviceman_id, status, due_at);
+
+CREATE TABLE IF NOT EXISTS serviceman_expense_claims (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  serviceman_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category VARCHAR(32) NOT NULL DEFAULT 'other' CHECK (
+    category IN ('travel', 'equipment', 'meal', 'accommodation', 'training', 'other')
+  ),
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  amount NUMERIC(12, 2) NOT NULL,
+  currency VARCHAR(8) NOT NULL DEFAULT 'GBP',
+  status VARCHAR(24) NOT NULL DEFAULT 'draft' CHECK (
+    status IN ('draft', 'submitted', 'approved', 'reimbursed', 'rejected')
+  ),
+  submitted_at TIMESTAMPTZ,
+  approved_at TIMESTAMPTZ,
+  approved_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  receipts JSONB NOT NULL DEFAULT '[]'::jsonb,
+  notes TEXT,
+-- Provider calendar configuration
+-- These tables back the provider control centre booking calendar, storing
+-- per-company defaults and custom events that complement live bookings.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS provider_calendar_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  timezone VARCHAR(64) NOT NULL DEFAULT 'Europe/London',
+  week_starts_on VARCHAR(16) NOT NULL DEFAULT 'monday' CHECK (week_starts_on IN ('monday', 'sunday')),
+  default_view VARCHAR(16) NOT NULL DEFAULT 'month' CHECK (default_view IN ('month', 'week', 'day')),
+  workday_start VARCHAR(8) NOT NULL DEFAULT '08:00',
+  workday_end VARCHAR(8) NOT NULL DEFAULT '18:00',
+  allow_overlapping BOOLEAN NOT NULL DEFAULT TRUE,
+  auto_accept_assignments BOOLEAN NOT NULL DEFAULT FALSE,
+  notification_recipients JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT provider_calendar_settings_unique_company UNIQUE (company_id)
+);
+
+CREATE TABLE IF NOT EXISTS provider_calendar_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  start_at TIMESTAMPTZ NOT NULL,
+  end_at TIMESTAMPTZ,
+  status VARCHAR(24) NOT NULL DEFAULT 'planned'
+    CHECK (status IN ('planned', 'confirmed', 'cancelled', 'tentative', 'standby', 'travel')),
+  event_type VARCHAR(24) NOT NULL DEFAULT 'internal'
+    CHECK (event_type IN ('internal', 'hold', 'travel', 'maintenance', 'booking')),
+  visibility VARCHAR(24) NOT NULL DEFAULT 'internal'
+    CHECK (visibility IN ('internal', 'crew', 'public')),
+  created_by UUID,
+  updated_by UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_serviceman_expense_claims_serviceman
+  ON serviceman_expense_claims (serviceman_id, status, submitted_at);
+
+CREATE TABLE IF NOT EXISTS serviceman_allowances (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  serviceman_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(160) NOT NULL,
+  amount NUMERIC(12, 2) NOT NULL,
+  currency VARCHAR(8) NOT NULL DEFAULT 'GBP',
+  cadence VARCHAR(32) NOT NULL DEFAULT 'per_job' CHECK (
+    cadence IN ('per_job', 'per_day', 'per_week', 'per_month')
+  ),
+  effective_from TIMESTAMPTZ,
+  effective_to TIMESTAMPTZ,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_serviceman_allowances_active
+  ON serviceman_allowances (serviceman_id, is_active, effective_from);
+CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_company_time
+  ON provider_calendar_events (company_id, start_at);
+
+CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_booking
+  ON provider_calendar_events (booking_id);
