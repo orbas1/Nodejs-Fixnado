@@ -12,6 +12,19 @@ import {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function isValidEmail(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  return EMAIL_PATTERN.test(trimmed.toLowerCase());
+}
+
 function transformEmailConditions(whereClause) {
   if (!whereClause || typeof whereClause !== 'object') {
     return;
@@ -134,11 +147,24 @@ User.init(
       unique: false,
       validate: {
         isEmail(value) {
+          if (value === null || value === undefined) {
           if (typeof value !== 'string') {
             throw new Error('Validation isEmail on email failed');
           }
 
           let candidate = value;
+          if (typeof value === 'string') {
+            try {
+              const decrypted = decryptString(value, 'user:email');
+              if (decrypted) {
+                candidate = decrypted;
+              }
+            } catch (error) {
+              candidate = value;
+            }
+          }
+
+          if (!isValidEmail(candidate)) {
           try {
             const decrypted = decryptString(value, 'user:email');
             if (decrypted) {

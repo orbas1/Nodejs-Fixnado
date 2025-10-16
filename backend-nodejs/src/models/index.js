@@ -25,6 +25,7 @@ import InventoryAlert from './inventoryAlert.js';
 import RentalAgreement from './rentalAgreement.js';
 import RentalCheckpoint from './rentalCheckpoint.js';
 import ComplianceDocument from './complianceDocument.js';
+import ComplianceControl from './complianceControl.js';
 import InsuredSellerApplication from './insuredSellerApplication.js';
 import MarketplaceModerationAction from './marketplaceModerationAction.js';
 import AdCampaign from './adCampaign.js';
@@ -229,6 +230,11 @@ Company.hasMany(ComplianceDocument, { foreignKey: 'companyId' });
 ComplianceDocument.belongsTo(Company, { foreignKey: 'companyId' });
 ComplianceDocument.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 ComplianceDocument.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+Company.hasMany(ComplianceControl, { foreignKey: 'companyId', as: 'complianceControls' });
+ComplianceControl.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+User.hasMany(ComplianceControl, { foreignKey: 'ownerId', as: 'ownedComplianceControls' });
+ComplianceControl.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
 
 Company.hasOne(InsuredSellerApplication, { foreignKey: 'companyId' });
 InsuredSellerApplication.belongsTo(Company, { foreignKey: 'companyId' });
@@ -540,6 +546,7 @@ export {
   RentalAgreement,
   RentalCheckpoint,
   ComplianceDocument,
+  ComplianceControl,
   InsuredSellerApplication,
   MarketplaceModerationAction,
   AdCampaign,

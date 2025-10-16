@@ -22,6 +22,12 @@ import {
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  createComplianceControlHandler,
+  deleteComplianceControlHandler,
+  listComplianceControlsHandler,
+  updateComplianceAutomationHandler,
+  updateComplianceControlHandler
+} from '../controllers/adminComplianceControlController.js';
   getAdminTaxonomy,
   upsertTaxonomyType,
   archiveTaxonomyType,
@@ -259,6 +265,42 @@ router.delete(
 );
 
 router.get(
+  '/compliance/controls',
+  authenticate,
+  enforcePolicy('admin.compliance.read', { metadata: () => ({ entity: 'controls' }) }),
+  listComplianceControlsHandler
+);
+
+router.post(
+  '/compliance/controls',
+  authenticate,
+  enforcePolicy('admin.compliance.write', { metadata: () => ({ entity: 'controls', action: 'create' }) }),
+  createComplianceControlHandler
+);
+
+router.put(
+  '/compliance/controls/:controlId',
+  authenticate,
+  enforcePolicy('admin.compliance.write', {
+    metadata: (req) => ({ entity: 'controls', action: 'update', controlId: req.params.controlId })
+  }),
+  updateComplianceControlHandler
+);
+
+router.delete(
+  '/compliance/controls/:controlId',
+  authenticate,
+  enforcePolicy('admin.compliance.write', {
+    metadata: (req) => ({ entity: 'controls', action: 'delete', controlId: req.params.controlId })
+  }),
+  deleteComplianceControlHandler
+);
+
+router.put(
+  '/compliance/controls/automation',
+  authenticate,
+  enforcePolicy('admin.compliance.write', { metadata: () => ({ entity: 'controls', action: 'automation' }) }),
+  updateComplianceAutomationHandler
   '/taxonomy',
   authenticate,
   enforcePolicy('admin.taxonomy.read', { metadata: () => ({ scope: 'taxonomy' }) }),

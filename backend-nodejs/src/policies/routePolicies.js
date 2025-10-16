@@ -256,6 +256,25 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'affiliate'],
     severity: 'high'
   },
+  'admin.compliance.read': {
+    id: 'admin.compliance.read',
+    version: '1.0.0',
+    resource: 'admin.compliance',
+    action: 'admin.compliance:read',
+    description: 'Allow compliance operators to view and monitor control libraries.',
+    requirements: [Permissions.ADMIN_COMPLIANCE_READ],
+    tags: ['admin', 'compliance'],
+    severity: 'high'
+  },
+  'admin.compliance.write': {
+    id: 'admin.compliance.write',
+    version: '1.0.0',
+    resource: 'admin.compliance',
+    action: 'admin.compliance:write',
+    description: 'Allow compliance operators to manage control libraries and automation guardrails.',
+    requirements: [Permissions.ADMIN_COMPLIANCE_WRITE],
+    tags: ['admin', 'compliance'],
+    severity: 'critical'
   'admin.taxonomy.read': {
     id: 'admin.taxonomy.read',
     version: '1.0.0',

@@ -6,6 +6,10 @@ import {
   Order,
   Booking,
   ComplianceDocument,
+  ComplianceControl,
+  InventoryAlert,
+  AnalyticsPipelineRun,
+  InsuredSellerApplication,
   Company,
   AnalyticsPipelineRun,
   InsuredSellerApplication
@@ -393,7 +397,75 @@ function mapAutomationTask(task, timezone) {
 
 async function computeComplianceControls(timezone) {
   const now = DateTime.now().setZone(timezone);
-  const upcoming = await ComplianceDocument.findAll({
+  const upcomingControls = await ComplianceControl.findAll({
+    where: {
+      status: { [Op.ne]: 'retired' },
+      nextReviewAt: {
+        [Op.not]: null,
+        [Op.lte]: now.plus({ days: 14 }).toJSDate()
+      }
+    },
+    include: [
+      { model: Company, as: 'company', attributes: ['id', 'contactName', 'legalStructure'], required: false },
+      { model: User, as: 'owner', attributes: ['firstName', 'lastName'], required: false }
+    ],
+    order: [['nextReviewAt', 'ASC']],
+    limit: 6
+  });
+
+  if (upcomingControls.length) {
+    return upcomingControls.map((control) => {
+      const dueAt = control.nextReviewAt ? DateTime.fromJSDate(control.nextReviewAt).setZone(timezone) : null;
+      const diffDays = dueAt ? Math.round(dueAt.diff(now, 'days').days) : null;
+      let due = 'No review scheduled';
+      if (diffDays != null) {
+        if (diffDays < 0) {
+          due = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+        } else if (diffDays === 0) {
+          due = 'Due today';
+        } else if (diffDays === 1) {
+          due = 'Due tomorrow';
+        } else {
+          due = `Due in ${diffDays} days`;
+        }
+      }
+
+      let tone = 'info';
+      if (diffDays != null) {
+        if (diffDays < 0 || diffDays <= 1) {
+          tone = 'danger';
+        } else if (diffDays <= 3) {
+          tone = 'warning';
+        } else if (diffDays > 7) {
+          tone = 'success';
+        }
+      }
+
+      const ownerName = control.owner
+        ? [control.owner.firstName, control.owner.lastName].filter(Boolean).join(' ').trim()
+        : null;
+      const ownerLabel = ownerName ? `${ownerName} • ${control.ownerTeam}` : control.ownerTeam;
+      const company = control.company;
+      const detailParts = [
+        `${control.category.replace(/_/g, ' ')} • ${control.controlType}`,
+        company?.contactName || company?.legalStructure || 'multi-provider scope'
+      ];
+      if (control.evidenceRequired) {
+        detailParts.push('Evidence required');
+      }
+
+      return {
+        id: control.id,
+        name: control.title,
+        detail: detailParts.join(' • '),
+        due,
+        owner: ownerLabel,
+        tone
+      };
+    });
+  }
+
+  const upcomingDocuments = await ComplianceDocument.findAll({
     where: {
       expiryAt: {
         [Op.not]: null,
@@ -405,51 +477,52 @@ async function computeComplianceControls(timezone) {
     limit: 4
   });
 
-  if (!upcoming.length) {
-    return [
-      {
-        id: 'fallback-policy',
-        name: 'Scheduled compliance sweep',
-        detail: 'No expiring documentation detected in the next 14 days. Automated reminders remain armed for new submissions.',
-        due: 'Next window',
-        owner: 'Compliance Ops',
-        tone: 'success'
+  if (upcomingDocuments.length) {
+    return upcomingDocuments.map((doc) => {
+      const expiry = DateTime.fromJSDate(doc.expiryAt).setZone(timezone);
+      const diffDays = Math.max(0, Math.round(expiry.diff(now, 'days').days));
+      let due;
+      if (diffDays === 0) {
+        due = 'Due today';
+      } else if (diffDays === 1) {
+        due = 'Due tomorrow';
+      } else {
+        due = `Due in ${diffDays} days`;
       }
-    ];
+
+      let tone = 'info';
+      if (diffDays <= 1) {
+        tone = 'danger';
+      } else if (diffDays <= 3) {
+        tone = 'warning';
+      }
+
+      const company = doc.Company;
+      const owner = company?.contactName ? `${company.contactName} team` : 'Compliance Ops';
+      const detail = `Certificate ${doc.type} for ${company?.legalStructure ?? 'provider'} expiring ${expiry.toFormat('dd LLL')}.`;
+
+      return {
+        id: doc.id,
+        name: doc.fileName,
+        detail,
+        due,
+        owner,
+        tone
+      };
+    });
   }
 
-  return upcoming.map((doc) => {
-    const expiry = DateTime.fromJSDate(doc.expiryAt).setZone(timezone);
-    const diffDays = Math.max(0, Math.round(expiry.diff(now, 'days').days));
-    let due;
-    if (diffDays === 0) {
-      due = 'Due today';
-    } else if (diffDays === 1) {
-      due = 'Due tomorrow';
-    } else {
-      due = `Due in ${diffDays} days`;
+  return [
+    {
+      id: 'fallback-policy',
+      name: 'Scheduled compliance sweep',
+      detail:
+        'No expiring documentation detected in the next 14 days. Automated reminders remain armed for new submissions.',
+      due: 'Next window',
+      owner: 'Compliance Ops',
+      tone: 'success'
     }
-
-    let tone = 'info';
-    if (diffDays <= 1) {
-      tone = 'danger';
-    } else if (diffDays <= 3) {
-      tone = 'warning';
-    }
-
-    const company = doc.Company;
-    const owner = company?.contactName ? `${company.contactName} team` : 'Compliance Ops';
-    const detail = `Certificate ${doc.type} for ${company?.legalStructure ?? 'provider'} expiring ${expiry.toFormat('dd LLL')}.`;
-
-    return {
-      id: doc.id,
-      name: doc.fileName,
-      detail,
-      due,
-      owner,
-      tone
-    };
-  });
+  ];
 }
 
 async function computeQueueInsights(range, timezone) {

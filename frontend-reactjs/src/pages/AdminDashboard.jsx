@@ -8,6 +8,14 @@ import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
+import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
+import {
+  fetchComplianceControls,
+  createComplianceControl as createComplianceControlRequest,
+  updateComplianceControl as updateComplianceControlRequest,
+  deleteComplianceControl as deleteComplianceControlRequest,
+  updateComplianceAutomation
+} from '../api/adminComplianceClient.js';
 import {
   Button,
   SegmentedControl,
@@ -662,7 +670,7 @@ function automationStatusLabel(tone) {
   return 'In progress';
 }
 
-function buildAdminNavigation(payload) {
+function buildAdminNavigation(payload, complianceContext = null) {
   if (!payload) {
     return [];
   }
@@ -676,6 +684,9 @@ function buildAdminNavigation(payload) {
   const automationBacklog = payload.security?.automationBacklog ?? [];
   const queueBoards = payload.queues?.boards ?? [];
   const complianceControls = payload.queues?.complianceControls ?? [];
+  const complianceRegistry = Array.isArray(complianceContext?.payload?.controls)
+    ? complianceContext.payload.controls
+    : [];
   const auditTimeline = payload.audit?.timeline ?? [];
   const manualInsights = Array.isArray(payload.overview?.manualInsights)
     ? payload.overview.manualInsights.filter((item) => typeof item === 'string' && item.trim().length > 0)
@@ -685,6 +696,20 @@ function buildAdminNavigation(payload) {
         (entry) => entry && typeof entry.title === 'string' && typeof entry.when === 'string'
       )
     : [];
+
+  const upcomingCompliance = (complianceRegistry.length
+    ? complianceRegistry.map((control) => ({
+        title: control.title,
+        when: control.dueLabel ||
+          (control.nextReviewAt ? new Date(control.nextReviewAt).toLocaleDateString() : 'Scheduled'),
+        status: control.ownerTeam || control.owner?.name || 'Compliance Ops'
+      }))
+    : complianceControls.map((control) => ({
+        title: control.name,
+        when: control.due,
+        status: control.owner
+      })))
+    .slice(0, 4);
 
   const overview = {
     id: 'overview',
@@ -732,11 +757,7 @@ function buildAdminNavigation(payload) {
             }
           : null
       ].filter(Boolean),
-      upcoming: complianceControls.slice(0, 4).map((control) => ({
-        title: control.name,
-        when: control.due,
-        status: control.owner
-      })),
+      upcoming: upcomingCompliance,
       insights: [
         ...securitySignals.map((signal) => `${signal.label}: ${signal.valueLabel} • ${signal.caption}`),
         automationBacklog.length
@@ -835,21 +856,37 @@ function buildAdminNavigation(payload) {
       }
     : null;
 
-  const complianceSection = complianceControls.length
+  const complianceSection = complianceContext
     ? {
         id: 'compliance-controls',
         label: 'Compliance controls',
-        description: 'Expiring attestations and their current owners over the next 14 days.',
-        type: 'list',
+        description:
+          'Control registry, evidence trail, and automation guardrails keeping Fixnado audit-ready across regions.',
+        type: 'compliance-controls',
+        icon: 'compliance',
         data: {
-          items: complianceControls.map((control) => ({
-            title: control.name,
-            description: `${control.detail} • Owner: ${control.owner}`,
-            status: `${control.due} • ${complianceStatusLabel(control.tone)}`
-          }))
-        }
+          loading: Boolean(complianceContext.loading),
+          error: complianceContext.error,
+          ...(complianceContext.payload || {})
+        },
+        actions: complianceContext.actions
       }
-    : null;
+    : complianceControls.length
+      ? {
+          id: 'compliance-controls',
+          label: 'Compliance controls',
+          description: 'Expiring attestations and their current owners over the next 14 days.',
+          type: 'list',
+          icon: 'compliance',
+          data: {
+            items: complianceControls.map((control) => ({
+              title: control.name,
+              description: `${control.detail} • Owner: ${control.owner}`,
+              status: `${control.due} • ${complianceStatusLabel(control.tone)}`
+            }))
+          }
+        }
+      : null;
 
   const automationSection = automationBacklog.length
     ? {
@@ -978,6 +1015,7 @@ export default function AdminDashboard() {
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [affiliateState, setAffiliateState] = useState({ loading: true, data: null, error: null });
+  const [complianceState, setComplianceState] = useState({ loading: true, error: null, payload: null });
   const [overviewSettings, setOverviewSettings] = useState(null);
   const [overviewSettingsForm, setOverviewSettingsForm] = useState(null);
   const [overviewSettingsLoading, setOverviewSettingsLoading] = useState(true);
@@ -1023,6 +1061,64 @@ export default function AdminDashboard() {
     [timeframe, logout, navigate]
   );
 
+  const loadComplianceControls = useCallback(
+    async ({ signal } = {}) => {
+      setComplianceState((current) => ({ ...current, loading: true, error: null }));
+      try {
+        const payload = await fetchComplianceControls({ signal });
+        setComplianceState({ loading: false, error: null, payload });
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          return;
+        }
+        setComplianceState((current) => ({ ...current, loading: false, error, payload: current.payload }));
+      }
+    },
+    []
+  );
+
+  const handleCreateControl = useCallback(
+    async (payload) => {
+      await createComplianceControlRequest(payload);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleUpdateControl = useCallback(
+    async (controlId, payload) => {
+      await updateComplianceControlRequest(controlId, payload);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleDeleteControl = useCallback(
+    async (controlId) => {
+      await deleteComplianceControlRequest(controlId);
+      await loadComplianceControls();
+    },
+    [loadComplianceControls]
+  );
+
+  const handleUpdateAutomation = useCallback(async (settings) => {
+    const updated = await updateComplianceAutomation(settings);
+    setComplianceState((current) => ({
+      ...current,
+      payload: current.payload
+        ? { ...current.payload, automation: updated }
+        : {
+            controls: [],
+            summary: { total: 0, overdue: 0, dueSoon: 0, monitoring: 0 },
+            filters: { statuses: [], categories: [], reviewFrequencies: [], controlTypes: [], ownerTeams: [] },
+            evidence: [],
+            exceptions: [],
+            automation: updated
+          }
+    }));
+    return updated;
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     loadDashboard({ signal: controller.signal, timeframe });
@@ -1045,6 +1141,10 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    loadComplianceControls({ signal: controller.signal });
+    return () => controller.abort();
+  }, [loadComplianceControls]);
     let isMounted = true;
     const controller = new AbortController();
     (async () => {
@@ -1079,13 +1179,46 @@ export default function AdminDashboard() {
 
   const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
 
+  const complianceSectionContext = useMemo(() => {
+    const payload =
+      complianceState.payload ?? {
+        controls: [],
+        summary: { total: 0, overdue: 0, dueSoon: 0, monitoring: 0 },
+        filters: { statuses: [], categories: [], reviewFrequencies: [], controlTypes: [], ownerTeams: [] },
+        automation: {},
+        evidence: [],
+        exceptions: []
+      };
+    return {
+      loading: complianceState.loading,
+      error: complianceState.error,
+      payload,
+      actions: {
+        refresh: () => loadComplianceControls(),
+        createControl: handleCreateControl,
+        updateControl: handleUpdateControl,
+        deleteControl: handleDeleteControl,
+        updateAutomation: handleUpdateAutomation
+      }
+    };
+  }, [
+    complianceState.loading,
+    complianceState.error,
+    complianceState.payload,
+    loadComplianceControls,
+    handleCreateControl,
+    handleUpdateControl,
+    handleDeleteControl,
+    handleUpdateAutomation
+  ]);
+
   const navigation = useMemo(() => {
-    const sections = state.data ? buildAdminNavigation(state.data) : [];
+    const sections = state.data ? buildAdminNavigation(state.data, complianceSectionContext) : [];
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
     return sections;
-  }, [state.data, affiliateSection]);
+  }, [state.data, affiliateSection, complianceSectionContext]);
   const dashboardPayload = state.data ? { navigation } : null;
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
