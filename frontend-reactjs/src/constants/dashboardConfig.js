@@ -82,6 +82,11 @@ export const DASHBOARD_ROLES = [
       { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       {
+        id: 'onboarding-management',
+        label: 'Onboarding management',
+        icon: 'documents',
+        type: 'route',
+        href: '/dashboards/provider/onboarding'
         id: 'storefront-control',
         label: 'Storefront control centre',
         description: 'Manage storefront branding, catalogue, and incentives.',

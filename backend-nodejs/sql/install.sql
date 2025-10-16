@@ -380,6 +380,26 @@ CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
 
 -- ---------------------------------------------------------------------------
+-- Provider onboarding control centre tables
+-- These tables power the SME onboarding workspace within the provider
+-- control centre. They capture tasks, regulatory requirements, and timeline
+-- notes so the experience delivers full CRUD coverage when launched in
+-- production environments.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingTask" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL CHECK (status IN ('not_started', 'in_progress', 'blocked', 'completed')),
+  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  due_date TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
 -- Serviceman financial management tables
 -- These tables back the Serviceman control centre financial workspace so that
 -- crew leads can manage earnings, expenses, allowances, and payout settings in
@@ -428,6 +448,25 @@ CREATE TABLE IF NOT EXISTS serviceman_financial_earnings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_task_company
+  ON "ProviderOnboardingTask" (company_id, status, stage);
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingRequirement" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  name VARCHAR(180) NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL CHECK (type IN ('document', 'insurance', 'payment', 'training', 'integration', 'other')),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'submitted', 'approved', 'rejected', 'waived')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  reviewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  document_id UUID REFERENCES "ComplianceDocument"(id) ON DELETE SET NULL,
+  external_url TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  due_date TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
 CREATE INDEX IF NOT EXISTS idx_serviceman_financial_earnings_serviceman
   ON serviceman_financial_earnings (serviceman_id, status, due_at);
 
@@ -491,6 +530,19 @@ CREATE TABLE IF NOT EXISTS provider_calendar_events (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_requirement_company
+  ON "ProviderOnboardingRequirement" (company_id, status, type);
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingNote" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('update', 'risk', 'decision', 'note')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  visibility TEXT NOT NULL CHECK (visibility IN ('internal', 'shared')),
+  summary VARCHAR(180) NOT NULL,
+  body TEXT,
+  follow_up_at TIMESTAMPTZ,
 CREATE INDEX IF NOT EXISTS idx_serviceman_expense_claims_serviceman
   ON serviceman_expense_claims (serviceman_id, status, submitted_at);
 
@@ -512,6 +564,8 @@ CREATE TABLE IF NOT EXISTS serviceman_allowances (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_note_company
+  ON "ProviderOnboardingNote" (company_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_serviceman_allowances_active
   ON serviceman_allowances (serviceman_id, is_active, effective_from);
 CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_company_time
