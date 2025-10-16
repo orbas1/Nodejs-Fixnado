@@ -190,6 +190,7 @@ export const RBAC_MATRIX = {
       Permissions.PAYMENTS_RELEASE,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_AUDIT_READ
       Permissions.ADMIN_SECURITY_POSTURE_READ
     ],
     navigation: {
@@ -224,6 +225,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_PLATFORM_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_AUDIT_READ,
+      Permissions.ADMIN_AUDIT_WRITE,
       Permissions.ADMIN_COMPLIANCE_READ,
       Permissions.ADMIN_COMPLIANCE_WRITE,
       Permissions.ADMIN_TAXONOMY_READ,

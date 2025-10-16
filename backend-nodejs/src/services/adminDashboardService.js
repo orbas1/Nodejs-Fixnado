@@ -14,6 +14,7 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import { listAdminAuditEvents } from './adminAuditEventService.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
 import { getOverviewSettings } from './adminDashboardSettingsService.js';
 import { getSecurityPosture } from './securityPostureService.js';
@@ -606,8 +607,48 @@ async function computeQueueInsights(range, timezone) {
   ];
 }
 
-async function buildAuditTimeline(range, timezone) {
+async function buildAuditTimeline(range, timezone, timeframeKey) {
   const now = DateTime.now().setZone(timezone);
+  let manualPayload;
+
+  try {
+    manualPayload = await listAdminAuditEvents({ timeframe: timeframeKey, timezone });
+  } catch (error) {
+    manualPayload = {
+      events: [],
+      meta: {
+        timeframe: timeframeKey,
+        timeframeLabel: TIMEFRAMES[timeframeKey]?.label ?? timeframeKey,
+        timezone,
+        range: { start: range.start.toISO(), end: range.end.toISO() },
+        countsByCategory: {},
+        countsByStatus: {},
+        lastUpdated: now.toISO()
+      }
+    };
+  }
+
+  const manualEvents = manualPayload.events.map((event) => {
+    const occurred = event.occurredAt
+      ? DateTime.fromISO(event.occurredAt).setZone(timezone)
+      : now;
+    const due = event.dueAt ? DateTime.fromISO(event.dueAt).setZone(timezone) : null;
+    return {
+      id: event.id,
+      event: event.title,
+      summary: event.summary,
+      owner: event.ownerName,
+      ownerTeam: event.ownerTeam,
+      status: event.status,
+      category: event.category,
+      attachments: event.attachments ?? [],
+      occurredAt: occurred,
+      occurredAtLabel: occurred.toFormat('HH:mm'),
+      dueAt: due,
+      source: 'manual',
+      metadata: event.metadata ?? {}
+    };
+  });
 
   const latestPipeline = await AnalyticsPipelineRun.findOne({
     order: [['startedAt', 'DESC']]
@@ -620,48 +661,142 @@ async function buildAuditTimeline(range, timezone) {
 
   const latestDispute = await Dispute.findOne({ order: [['updatedAt', 'DESC']] });
 
-  const timeline = [];
+  const derivedEvents = [];
 
   if (latestPipeline) {
     const timestamp = DateTime.fromJSDate(latestPipeline.finishedAt ?? latestPipeline.startedAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `pipeline-${latestPipeline.id}`,
       event: 'Analytics pipeline run',
+      summary: `${numberFormatter.format(latestPipeline.eventsProcessed ?? 0)} events processed • ${numberFormatter.format(
+        latestPipeline.eventsFailed ?? 0
+      )} failed`,
       owner: latestPipeline.triggeredBy ?? 'Data Platform',
-      status: latestPipeline.status === 'failed' ? 'Attention' : 'Completed'
+      ownerTeam: 'Data Platform',
+      status: latestPipeline.status === 'failed' ? 'blocked' : 'completed',
+      category: 'pipeline',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        runId: latestPipeline.id,
+        status: latestPipeline.status,
+        eventsProcessed: latestPipeline.eventsProcessed,
+        eventsFailed: latestPipeline.eventsFailed
+      }
     });
   }
 
   if (latestCompliance) {
     const timestamp = DateTime.fromJSDate(latestCompliance.updatedAt ?? latestCompliance.submittedAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `compliance-${latestCompliance.id}`,
       event: `${latestCompliance.type} review`,
+      summary: latestCompliance.notes ?? latestCompliance.metadata?.summary ?? 'Latest compliance review update',
       owner: latestCompliance.Company?.contactName ?? 'Compliance Ops',
-      status: latestCompliance.status === 'approved' ? 'Completed' : 'In progress'
+      ownerTeam: 'Compliance',
+      status: latestCompliance.status === 'approved' ? 'completed' : 'in_progress',
+      category: 'compliance',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        complianceId: latestCompliance.id,
+        status: latestCompliance.status
+      }
     });
   }
 
   if (latestDispute) {
     const timestamp = DateTime.fromJSDate(latestDispute.updatedAt ?? latestDispute.createdAt).setZone(timezone);
-    timeline.push({
-      time: timestamp.toFormat('HH:mm'),
+    derivedEvents.push({
+      id: `dispute-${latestDispute.id}`,
       event: 'Dispute status review',
+      summary: `Current status ${latestDispute.status}`,
       owner: 'Support',
-      status: latestDispute.status === 'resolved' ? 'Completed' : 'In progress'
+      ownerTeam: 'Support',
+      status: latestDispute.status === 'resolved' ? 'completed' : 'in_progress',
+      category: 'dispute',
+      attachments: [],
+      occurredAt: timestamp,
+      occurredAtLabel: timestamp.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {
+        disputeId: latestDispute.id,
+        status: latestDispute.status
+      }
     });
   }
 
-  if (!timeline.length) {
-    timeline.push({
-      time: now.toFormat('HH:mm'),
+  const combined = [...manualEvents, ...derivedEvents];
+
+  if (!combined.length) {
+    combined.push({
+      id: 'audit-placeholder',
       event: 'No audit activity recorded',
+      summary: 'Create a task or investigate upcoming checkpoints to populate the audit trail.',
       owner: 'Systems',
-      status: 'Scheduled'
+      ownerTeam: 'Operations',
+      status: 'scheduled',
+      category: 'other',
+      attachments: [],
+      occurredAt: now,
+      occurredAtLabel: now.toFormat('HH:mm'),
+      dueAt: null,
+      source: 'system',
+      metadata: {}
     });
   }
 
-  return timeline.sort((a, b) => a.time.localeCompare(b.time));
+  const sorted = combined.sort((a, b) => {
+    const aTime = a.occurredAt ?? now;
+    const bTime = b.occurredAt ?? now;
+    return bTime.toMillis() - aTime.toMillis();
+  });
+
+  const countsByCategory = sorted.reduce((acc, entry) => {
+    acc[entry.category] = (acc[entry.category] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const countsByStatus = sorted.reduce((acc, entry) => {
+    acc[entry.status] = (acc[entry.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    events: sorted.map((entry) => ({
+      id: entry.id,
+      time: entry.occurredAtLabel,
+      event: entry.event,
+      owner: entry.owner,
+      ownerTeam: entry.ownerTeam,
+      status: entry.status,
+      category: entry.category,
+      summary: entry.summary,
+      attachments: entry.attachments,
+      occurredAt: entry.occurredAt.toISO(),
+      dueAt: entry.dueAt ? entry.dueAt.toISO() : null,
+      source: entry.source,
+      metadata: entry.metadata
+    })),
+    summary: {
+      countsByCategory,
+      countsByStatus,
+      manualCounts: manualPayload.meta?.countsByCategory ?? {},
+      manualStatusCounts: manualPayload.meta?.countsByStatus ?? {},
+      timeframe: manualPayload.meta?.timeframe ?? timeframeKey,
+      timeframeLabel: manualPayload.meta?.timeframeLabel ?? TIMEFRAMES[timeframeKey]?.label ?? timeframeKey,
+      timezone: manualPayload.meta?.timezone ?? timezone,
+      range: manualPayload.meta?.range ?? { start: range.start.toISO(), end: range.end.toISO() },
+      lastUpdated: manualPayload.meta?.lastUpdated ?? now.toISO()
+    }
+  };
 }
 
 export async function buildAdminDashboard({
@@ -862,6 +997,8 @@ export async function buildAdminDashboard({
     computeDisputeSeries(currentBuckets),
     computeComplianceControls(timezone),
     computeQueueInsights(range, timezone),
+    buildAuditTimeline(range, timezone, key),
+    computeSecuritySignals(timezone)
     buildAuditTimeline(range, timezone),
     getSecurityPosture({ timezone, includeInactive: true })
   ]);

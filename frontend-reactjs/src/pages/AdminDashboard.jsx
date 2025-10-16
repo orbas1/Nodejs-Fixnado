@@ -904,6 +904,23 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
+  const auditEvents = Array.isArray(payload.audit?.timeline?.events)
+    ? payload.audit.timeline.events
+    : [];
+  const auditSummary = payload.audit?.timeline?.summary ?? {};
+
+  const auditSection = {
+    id: 'audit-log',
+    label: 'Audit timeline',
+    description: 'Manage manual audit checkpoints alongside system-generated controls.',
+    icon: 'documents',
+    type: 'audit-timeline',
+    data: {
+      events: auditEvents,
+      summary: auditSummary,
+      initialTimeframe: auditSummary.timeframe ?? payload.timeframe ?? DEFAULT_TIMEFRAME
+    }
+  };
   const monetisation = payload.platform?.monetisation;
   const monetisationSection = monetisation
     ? {

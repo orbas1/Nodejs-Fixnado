@@ -146,6 +146,12 @@ User.init(
       field: 'email_encrypted',
       unique: false,
       validate: {
+        isEncryptedEmail(value) {
+          if (value == null) {
+            throw new Error('Validation isEmail on email failed');
+          }
+          const decrypted = this.get('email');
+          if (!decrypted || !validator.isEmail(decrypted)) {
         isEmail(value) {
           if (value === null || value === undefined) {
           if (typeof value !== 'string') {

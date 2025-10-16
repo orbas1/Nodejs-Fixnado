@@ -60,6 +60,7 @@ export async function authenticate(req, res, next) {
         userAgent: req.headers['user-agent'],
         metadata: { path: req.originalUrl }
       });
+      return res.status(401).json({ message: 'Missing authorization header' });
       return res.status(401).json({ message: missingMessage });
     }
 
@@ -163,6 +164,11 @@ export async function authenticate(req, res, next) {
       decision: 'allow',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
+      metadata: {
+        sessionId: session?.id ?? null,
+        tokenSource: bearerToken ? 'authorization' : 'cookie',
+        sidPresent: Boolean(payload.sid)
+      }
       metadata: { sessionId: session?.id ?? null }
     });
 
@@ -210,7 +216,16 @@ export function authorize(requirements = [], options = {}) {
 
 export function requireStorefrontRole(req, res, next) {
   const personaHeader = `${req.headers['x-fixnado-persona'] ?? ''}`.toLowerCase();
-  if (personaHeader && !['provider', 'admin', 'operations'].includes(personaHeader)) {
+  const roleHeader = `${req.headers['x-fixnado-role'] ?? ''}`.toLowerCase();
+  const context = personaHeader || roleHeader;
+
+  if (!context) {
+    return res.status(401).json({ message: 'Storefront access restricted to providers' });
+  }
+
+  const canonicalContext = context === 'company' ? 'provider' : context;
+  const allowedContexts = new Set(['provider', 'provider_admin', 'admin', 'operations']);
+  if (!allowedContexts.has(canonicalContext)) {
     return res.status(403).json({ message: 'Persona not authorised for storefront operations' });
   }
 

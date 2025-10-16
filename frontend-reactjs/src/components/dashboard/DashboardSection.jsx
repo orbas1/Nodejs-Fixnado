@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import AuditTimelineSection from '../audit-timeline/AuditTimelineSection.jsx';
 import ComplianceControlSection from './compliance/ComplianceControlSection.jsx';
 import RentalManagementSection from './rentals/RentalManagementSection.jsx';
 import CustomerSettingsSection from './CustomerSettingsSection.jsx';
@@ -1675,6 +1676,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'audit-timeline':
+      return <AuditTimelineSection section={section} />;
     case 'compliance-controls':
       return <ComplianceControlSection section={section} />;
     case 'wallet':

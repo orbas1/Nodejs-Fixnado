@@ -216,6 +216,33 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.audit.read': {
+    id: 'admin.audit.read',
+    version: '1.0.0',
+    resource: 'admin.audit',
+    action: 'admin.audit:read',
+    description: 'Allow administrators to review audit timeline events and evidence.',
+    requirements: [Permissions.ADMIN_AUDIT_READ],
+    tags: ['admin', 'audit'],
+    severity: 'high',
+    metadata: (req) => ({
+      timeframe: req.query?.timeframe || '7d',
+      category: req.query?.category || 'all'
+    })
+  },
+  'admin.audit.write': {
+    id: 'admin.audit.write',
+    version: '1.0.0',
+    resource: 'admin.audit',
+    action: 'admin.audit:write',
+    description: 'Allow administrators to curate audit timeline events, attachments, and owners.',
+    requirements: [Permissions.ADMIN_AUDIT_WRITE],
+    tags: ['admin', 'audit'],
+    severity: 'critical',
+    metadata: (req) => ({
+      method: req.method,
+      eventId: req.params?.id || null
+    })
   'admin.security.posture.read': {
     id: 'admin.security.posture.read',
     version: '1.0.0',

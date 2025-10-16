@@ -17,6 +17,7 @@ const {
   InventoryItem,
   InventoryAlert,
   AnalyticsPipelineRun,
+  AdminAuditEvent
   SecuritySignalConfig,
   SecurityAutomationTask,
   TelemetryConnector
@@ -315,6 +316,24 @@ describe('buildAdminDashboard', () => {
       metadata: {}
     });
 
+    await AdminAuditEvent.create({
+      title: 'Manual risk review',
+      summary: 'Validating bespoke evidence package',
+      category: 'security',
+      status: 'in_progress',
+      ownerName: 'Security Ops',
+      ownerTeam: 'Security',
+      occurredAt: now.minus({ hours: 2 }).toJSDate(),
+      dueAt: now.plus({ hours: 1 }).toJSDate(),
+      attachments: [
+        {
+          label: 'Risk workbook',
+          url: 'https://example.com/risk-workbook.pdf'
+        }
+      ],
+      metadata: { ticket: 'SEC-101' },
+      createdBy: provider.id
+    });
     await updateOverviewSettings({
       metrics: {
         escrow: { label: 'Escrow readiness', caption: 'Manual override for {{count}} engagements' }
@@ -458,6 +477,11 @@ describe('buildAdminDashboard', () => {
     expect(dashboard.queues.boards.some((board) => board.title === 'Manual operations board')).toBe(true);
     expect(dashboard.queues.complianceControls.some((control) => control.name === 'Manual compliance')).toBe(true);
 
+    expect(dashboard.audit.timeline.events.length).toBeGreaterThan(0);
+    const manualEntry = dashboard.audit.timeline.events.find((event) => event.event === 'Manual risk review');
+    expect(manualEntry).toBeTruthy();
+    expect(manualEntry.attachments).toHaveLength(1);
+    expect(dashboard.audit.timeline.summary.countsByCategory.security).toBeGreaterThanOrEqual(1);
     expect(dashboard.audit.timeline.length).toBeGreaterThan(0);
     expect(dashboard.audit.timeline.some((entry) => entry.event === 'Manual audit')).toBe(true);
     expect(dashboard.metrics.command.summary.escrowTotal).toBeGreaterThan(0);

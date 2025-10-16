@@ -22,6 +22,14 @@ import {
   deactivateAffiliateCommissionRuleHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  listAuditEventsHandler,
+  createAuditEventHandler,
+  updateAuditEventHandler,
+  deleteAuditEventHandler,
+  listAuditEventValidators,
+  createAuditEventValidators,
+  updateAuditEventValidators
+} from '../controllers/adminAuditEventController.js';
   createComplianceControlHandler,
   deleteComplianceControlHandler,
   listComplianceControlsHandler,
@@ -58,6 +66,40 @@ router.get(
   dashboard
 );
 router.get(
+  '/audit/events',
+  authenticate,
+  enforcePolicy('admin.audit.read', {
+    metadata: (req) => ({
+      section: 'audit-timeline',
+      timeframe: req.query.timeframe || '7d'
+    })
+  }),
+  listAuditEventValidators,
+  listAuditEventsHandler
+);
+router.post(
+  '/audit/events',
+  authenticate,
+  enforcePolicy('admin.audit.write', { metadata: () => ({ section: 'audit-timeline', action: 'create' }) }),
+  createAuditEventValidators,
+  createAuditEventHandler
+);
+router.put(
+  '/audit/events/:id',
+  authenticate,
+  enforcePolicy('admin.audit.write', {
+    metadata: (req) => ({ section: 'audit-timeline', action: 'update', eventId: req.params.id })
+  }),
+  updateAuditEventValidators,
+  updateAuditEventHandler
+);
+router.delete(
+  '/audit/events/:id',
+  authenticate,
+  enforcePolicy('admin.audit.write', {
+    metadata: (req) => ({ section: 'audit-timeline', action: 'delete', eventId: req.params.id })
+  }),
+  deleteAuditEventHandler
   '/dashboard/overview-settings',
   authenticate,
   enforcePolicy('admin.dashboard.view', {
