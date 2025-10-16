@@ -83,6 +83,10 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import RbacRole from './rbacRole.js';
+import RbacRolePermission from './rbacRolePermission.js';
+import RbacRoleInheritance from './rbacRoleInheritance.js';
+import RbacRoleAssignment from './rbacRoleAssignment.js';
 import AdminProfile from './adminProfile.js';
 import AdminDelegate from './adminDelegate.js';
 import DisputeHealthBucket from './disputeHealthBucket.js';
@@ -683,6 +687,19 @@ BlogTag.belongsToMany(BlogPost, {
 BlogPost.hasMany(BlogMedia, { foreignKey: 'postId', as: 'media' });
 BlogMedia.belongsTo(BlogPost, { foreignKey: 'postId', as: 'post' });
 
+RbacRole.hasMany(RbacRolePermission, { foreignKey: 'roleId', as: 'permissionEntries' });
+RbacRolePermission.belongsTo(RbacRole, { foreignKey: 'roleId', as: 'role' });
+
+RbacRole.hasMany(RbacRoleInheritance, { foreignKey: 'roleId', as: 'inheritanceEntries' });
+RbacRoleInheritance.belongsTo(RbacRole, { foreignKey: 'roleId', as: 'role' });
+RbacRoleInheritance.belongsTo(RbacRole, { foreignKey: 'parentRoleId', as: 'parentRole' });
+
+RbacRole.hasMany(RbacRoleAssignment, { foreignKey: 'roleId', as: 'assignments' });
+RbacRoleAssignment.belongsTo(RbacRole, { foreignKey: 'roleId', as: 'role' });
+
+User.hasMany(RbacRoleAssignment, { foreignKey: 'userId', as: 'roleAssignments' });
+RbacRoleAssignment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+RbacRoleAssignment.belongsTo(User, { foreignKey: 'assignedBy', as: 'assignedByUser' });
 HomePage.hasMany(HomePageSection, {
   foreignKey: 'homePageId',
   as: 'sections',
@@ -800,6 +817,10 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  RbacRole,
+  RbacRolePermission,
+  RbacRoleInheritance,
+  RbacRoleAssignment
   AdminProfile,
   AdminDelegate
   DisputeHealthBucket,

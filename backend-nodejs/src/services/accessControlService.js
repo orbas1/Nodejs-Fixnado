@@ -7,50 +7,68 @@ import {
   normaliseRole,
   toCanonicalRole
 } from '../constants/permissions.js';
+import { PUBLIC_PERMISSIONS } from '../constants/rbacMatrix.js';
 import {
-  PUBLIC_PERMISSIONS,
-  RBAC_MATRIX,
-  enumerateRoles,
-  getRoleDefinition
-} from '../constants/rbacMatrix.js';
+  getCachedRoleDefinition,
+  listCachedRoleDefinitions,
+  refreshRoleCache,
+  subscribeToRoleCache
+} from './rbacService.js';
 
 export { CanonicalRoles, Permissions } from '../constants/permissions.js';
 
 const ROLE_PERMISSIONS = new Map();
 
-function composePermissions(role, visited = new Set()) {
-  if (ROLE_PERMISSIONS.has(role)) {
-    return ROLE_PERMISSIONS.get(role);
-  }
+function rebuildRolePermissionCache(snapshot) {
+  const definitions =
+    snapshot instanceof Map
+      ? snapshot
+      : new Map(listCachedRoleDefinitions().map((definition) => [definition.key, definition]));
 
-  const definition = getRoleDefinition(role);
-  const aggregate = new Set();
+  ROLE_PERMISSIONS.clear();
 
-  if (!definition) {
+  function compose(role, visited = new Set()) {
+    if (ROLE_PERMISSIONS.has(role)) {
+      return ROLE_PERMISSIONS.get(role);
+    }
+
+    const definition = definitions.get(role);
+    const aggregate = new Set();
+
+    if (!definition) {
+      ROLE_PERMISSIONS.set(role, aggregate);
+      return aggregate;
+    }
+
+    if (visited.has(role)) {
+      return ROLE_PERMISSIONS.get(role) ?? aggregate;
+    }
+
+    visited.add(role);
+
+    (definition.inherits ?? []).forEach((parentRole) => {
+      const inherited = compose(parentRole, visited);
+      inherited.forEach((permission) => aggregate.add(permission));
+    });
+
+    (definition.permissions ?? []).forEach((permission) => aggregate.add(permission));
+
     ROLE_PERMISSIONS.set(role, aggregate);
     return aggregate;
   }
 
-  if (visited.has(role)) {
-    // Circular dependency guard – return the aggregate captured so far.
-    return ROLE_PERMISSIONS.get(role) ?? aggregate;
-  }
-
-  visited.add(role);
-
-  (definition.inherits ?? []).forEach((parentRole) => {
-    const inherited = composePermissions(parentRole, visited);
-    inherited.forEach((permission) => aggregate.add(permission));
+  definitions.forEach((_, role) => {
+    compose(role);
   });
-
-  (definition.permissions ?? []).forEach((permission) => aggregate.add(permission));
-
-  ROLE_PERMISSIONS.set(role, aggregate);
-  return aggregate;
 }
 
-enumerateRoles().forEach((role) => {
-  composePermissions(role);
+rebuildRolePermissionCache();
+subscribeToRoleCache((snapshot) => {
+  rebuildRolePermissionCache(snapshot);
+});
+
+refreshRoleCache().catch((error) => {
+  console.error('[rbac] Failed to refresh role cache', { message: error.message });
 });
 
 function normalise(value) {
@@ -216,11 +234,10 @@ export function listPermissionsForRole(role) {
 
 export function describeRole(role) {
   const canonical = ROLE_ALIASES.get(normaliseRole(role)) ?? role;
-  if (!RBAC_MATRIX[canonical]) {
+  const definition = getCachedRoleDefinition(canonical);
+  if (!definition) {
     return null;
   }
-
-  const definition = RBAC_MATRIX[canonical];
 
   return {
     role: canonical,
@@ -228,8 +245,8 @@ export function describeRole(role) {
     description: definition.description,
     inherits: [...(definition.inherits ?? [])],
     permissions: listPermissionsForRole(canonical),
-    navigation: definition.navigation,
-    dataVisibility: definition.dataVisibility
+    navigation: definition.navigation ?? {},
+    dataVisibility: definition.dataVisibility ?? {}
   };
 }
 

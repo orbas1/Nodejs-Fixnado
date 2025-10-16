@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { BanknotesIcon, MapIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
@@ -2328,6 +2329,13 @@ export default function AdminDashboard() {
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
+    sections.push({
+      id: 'role-management-link',
+      label: 'Role management',
+      description: 'Manage roles, permissions, and member assignments.',
+      type: 'link',
+      href: '/admin/roles'
+    });
     sections.push(profileSettingsSection);
     return sections;
   }, [state.data, affiliateSection, profileSettingsSection]);
@@ -2972,6 +2980,13 @@ export default function AdminDashboard() {
         Monetisation controls
       </Button>
       <Button
+        to="/admin/roles"
+        size="sm"
+        variant="secondary"
+        icon={ShieldCheckIcon}
+        iconPosition="start"
+      >
+        Role management
         to="/admin/preferences"
         size="sm"
         variant="secondary"

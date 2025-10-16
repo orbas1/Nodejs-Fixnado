@@ -35,6 +35,15 @@ import {
   createAffiliateReferralHandler,
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
+import {
+  listRbacRoles,
+  getRbacRole,
+  createRbacRole,
+  updateRbacRole,
+  archiveRbacRole,
+  assignRbacRole,
+  revokeRbacAssignment
+} from '../controllers/rbacController.js';
 import { fetchAdminProfile, saveAdminProfile } from '../controllers/adminProfileController.js';
 import {
   fetchAdminPreferences,
@@ -677,6 +686,60 @@ router.delete(
 );
 
 router.get(
+  '/rbac/roles',
+  authenticate,
+  enforcePolicy('admin.rbac.read', { metadata: () => ({ scope: 'roles' }) }),
+  listRbacRoles
+);
+router.post(
+  '/rbac/roles',
+  authenticate,
+  enforcePolicy('admin.rbac.write', { metadata: () => ({ action: 'create-role' }) }),
+  createRbacRole
+);
+router.get(
+  '/rbac/roles/:key',
+  authenticate,
+  enforcePolicy('admin.rbac.read', {
+    metadata: (req) => ({ scope: 'role', roleKey: req.params.key })
+  }),
+  getRbacRole
+);
+router.put(
+  '/rbac/roles/:key',
+  authenticate,
+  enforcePolicy('admin.rbac.write', {
+    metadata: (req) => ({ action: 'update-role', roleKey: req.params.key })
+  }),
+  updateRbacRole
+);
+router.delete(
+  '/rbac/roles/:key',
+  authenticate,
+  enforcePolicy('admin.rbac.write', {
+    metadata: (req) => ({ action: 'archive-role', roleKey: req.params.key })
+  }),
+  archiveRbacRole
+);
+router.post(
+  '/rbac/roles/:key/assignments',
+  authenticate,
+  enforcePolicy('admin.rbac.write', {
+    metadata: (req) => ({ action: 'assign-role', roleKey: req.params.key })
+  }),
+  assignRbacRole
+);
+router.delete(
+  '/rbac/roles/:key/assignments/:assignmentId',
+  authenticate,
+  enforcePolicy('admin.rbac.write', {
+    metadata: (req) => ({
+      action: 'revoke-assignment',
+      roleKey: req.params.key,
+      assignmentId: req.params.assignmentId
+    })
+  }),
+  revokeRbacAssignment
   '/disputes/health',
   authenticate,
   enforcePolicy('finance.disputes.read'),

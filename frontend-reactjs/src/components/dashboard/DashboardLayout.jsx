@@ -520,6 +520,11 @@ const DashboardLayout = ({
   initialSectionId = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const firstInteractiveSection = useMemo(() => {
+    const interactive = navigation.find((item) => item.type !== 'link');
+    return interactive?.id ?? navigation[0]?.id ?? 'overview';
+  }, [navigation]);
+  const [selectedSection, setSelectedSection] = useState(firstInteractiveSection);
   const [selectedSection, setSelectedSection] = useState(
     initialSectionId && navigation.some((item) => item.id === initialSectionId)
       ? initialSectionId
@@ -585,6 +590,10 @@ const DashboardLayout = ({
   );
 
   useEffect(() => {
+    setSelectedSection(firstInteractiveSection);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigation, firstInteractiveSection]);
     setSelectedSection(resolveInitialSection(navigation));
     if (!navigation.length) return;
     setSelectedSection((current) => {
@@ -661,6 +670,9 @@ const DashboardLayout = ({
     );
   }, [searchQuery, searchIndex]);
 
+  const activeSection = navigation.find((item) => item.id === selectedSection && item.type !== 'link')
+    ?? navigation.find((item) => item.type !== 'link')
+    ?? navigation[0];
   const activeSection =
     navigation.find((item) => item.id === selectedSection && !item.href) ??
     navigation.find((item) => !item.href) ??
@@ -771,6 +783,13 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
+                    const isLink = item.type === 'link' && item.href;
+                    const isActive = !isLink && item.id === activeSection?.id;
+                    const Icon = getNavIcon(item);
+                    const handleItemClick = () => {
+                      if (isLink) {
+                        setMobileNavOpen(false);
+                        navigate(item.href);
                     const isLink = Boolean(item.href);
                     const isActive = !isLink && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
@@ -847,6 +866,7 @@ const DashboardLayout = ({
                       <button
                         key={item.id}
                         type="button"
+                        onClick={handleItemClick}
                         onClick={() => {
                           if (isLink) {
                             setMobileNavOpen(false);
@@ -1049,6 +1069,12 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
+            const isLink = item.type === 'link' && item.href;
+            const isActive = !isLink && item.id === activeSection?.id;
+            const Icon = getNavIcon(item);
+            const handleItemClick = () => {
+              if (isLink) {
+                navigate(item.href);
             const isLink = Boolean(item.href);
             const isActive = !isLink && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
@@ -1121,6 +1147,7 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
+                onClick={handleItemClick}
                 onClick={() => {
                   if (isLink) {
                     navigate(item.href);

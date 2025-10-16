@@ -216,6 +216,34 @@ const ROUTE_POLICIES = {
     tags: ['admin', 'platform'],
     severity: 'critical'
   },
+  'admin.rbac.read': {
+    id: 'admin.rbac.read',
+    version: '1.0.0',
+    resource: 'admin.rbac',
+    action: 'admin.rbac:read',
+    description: 'Allow administrators to inspect RBAC definitions and assignments.',
+    requirements: [Permissions.ADMIN_RBAC_READ],
+    tags: ['admin', 'security'],
+    severity: 'high',
+    metadata: (req) => ({
+      scope: req?.params?.key ? 'role' : 'collection',
+      roleKey: req?.params?.key ?? null
+    })
+  },
+  'admin.rbac.write': {
+    id: 'admin.rbac.write',
+    version: '1.0.0',
+    resource: 'admin.rbac',
+    action: 'admin.rbac:write',
+    description: 'Allow administrators to create, update, and revoke RBAC roles and assignments.',
+    requirements: [Permissions.ADMIN_RBAC_WRITE],
+    tags: ['admin', 'security'],
+    severity: 'critical',
+    metadata: (req) => ({
+      roleKey: req?.params?.key ?? null,
+      assignmentId: req?.params?.assignmentId ?? null,
+      method: req?.method ?? null
+    })
   'admin.profile.read': {
     id: 'admin.profile.read',
     version: '1.0.0',
