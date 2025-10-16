@@ -60,6 +60,27 @@ export function AdminSessionProvider({ children }) {
     }
   }, []);
 
+  const refresh = useCallback(async () => {
+    try {
+      const profile = await fetchCurrentUser();
+      setState((current) => ({
+        status: 'authenticated',
+        user: profile,
+        session:
+          current.session ?? {
+            role: profile?.type ?? 'admin',
+            expiresAt: null,
+            issuedAt: null
+          },
+        error: null
+      }));
+      return profile;
+    } catch (error) {
+      setState((current) => ({ ...current, error }));
+      throw error;
+    }
+  }, []);
+
   const login = useCallback(
     async ({ email, password, securityToken }) => {
       if (pendingLoginRef.current) {
@@ -109,9 +130,10 @@ export function AdminSessionProvider({ children }) {
       loading,
       isAuthenticated,
       login,
-      logout
+      logout,
+      refresh
     };
-  }, [state, login, logout]);
+  }, [state, login, logout, refresh]);
 
   return <AdminSessionContext.Provider value={value}>{children}</AdminSessionContext.Provider>;
 }

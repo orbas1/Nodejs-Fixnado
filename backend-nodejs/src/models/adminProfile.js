@@ -16,6 +16,13 @@ AdminProfile.init(
       unique: true,
       field: 'user_id'
     },
+    displayName: {
+      type: DataTypes.STRING(160),
+      allowNull: true,
+      field: 'display_name'
+    },
+    jobTitle: {
+      type: DataTypes.STRING(160),
     jobTitle: {
       type: DataTypes.STRING(120),
       allowNull: true,
@@ -25,6 +32,9 @@ AdminProfile.init(
       type: DataTypes.STRING(120),
       allowNull: true
     },
+    pronouns: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     phoneNumber: {
       type: DataTypes.STRING(80),
       allowNull: true,
@@ -34,6 +44,47 @@ AdminProfile.init(
       type: DataTypes.TEXT,
       allowNull: true,
       field: 'avatar_url'
+    },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    contactEmail: {
+      type: DataTypes.STRING(254),
+      allowNull: true,
+      field: 'contact_email'
+    },
+    backupEmail: {
+      type: DataTypes.STRING(254),
+      allowNull: true,
+      field: 'backup_email'
+    },
+    contactPhone: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      field: 'contact_phone'
+    },
+    location: {
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
+    timezone: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+    language: {
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+    theme: {
+      type: DataTypes.STRING(16),
+      allowNull: true
+    },
+    workingHours: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+      field: 'working_hours'
     },
     timezone: {
       type: DataTypes.STRING(80),
@@ -72,6 +123,39 @@ AdminProfile.init(
       defaultValue: {},
       field: 'notification_preferences'
     },
+    securityPreferences: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+      field: 'security_preferences'
+    },
+    delegates: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: []
+    },
+    escalationContacts: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      field: 'escalation_contacts'
+    },
+    outOfOffice: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+      field: 'out_of_office'
+    },
+    resourceLinks: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      field: 'resource_links'
+    },
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {}
     notificationEmails: {
       type: DataTypes.JSONB,
       allowNull: false,

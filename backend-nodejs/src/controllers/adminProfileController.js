@@ -1,3 +1,9 @@
+import { getAdminProfile, upsertAdminProfile } from '../services/adminProfileService.js';
+
+export async function fetchAdminProfile(req, res, next) {
+  try {
+    const profile = await getAdminProfile(req.user?.id);
+    res.json({ profile });
 import {
   getAdminProfileSettings,
   updateAdminProfileSettings,
@@ -15,6 +21,13 @@ export async function fetchAdminProfileSettings(req, res, next) {
   }
 }
 
+export async function saveAdminProfile(req, res, next) {
+  try {
+    const profile = await upsertAdminProfile(req.user?.id, req.body ?? {}, req.user?.id);
+    res.json({ profile });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(error.statusCode ?? 422).json({
 export async function saveAdminProfileSettings(req, res, next) {
   try {
     const payload = await updateAdminProfileSettings({ userId: req.user.id, payload: req.body });

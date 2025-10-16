@@ -35,6 +35,7 @@ import {
   createAffiliateReferralHandler,
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
+import { fetchAdminProfile, saveAdminProfile } from '../controllers/adminProfileController.js';
 import {
   fetchAdminPreferences,
   saveAdminPreferences
@@ -183,6 +184,16 @@ router.get(
   dashboard
 );
 router.get(
+  '/profile',
+  authenticate,
+  enforcePolicy('admin.profile.read', { metadata: () => ({ section: 'profile' }) }),
+  fetchAdminProfile
+);
+router.put(
+  '/profile',
+  authenticate,
+  enforcePolicy('admin.profile.write', { metadata: () => ({ section: 'profile' }) }),
+  saveAdminProfile
   '/audit/events',
   authenticate,
   enforcePolicy('admin.audit.read', {

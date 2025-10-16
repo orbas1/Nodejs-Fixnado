@@ -1,3 +1,6 @@
+const PROFILE_ENDPOINT = '/api/admin/profile';
+
+async function handleResponse(response) {
 const PROFILE_ENDPOINT = '/api/admin/profile-settings';
 
 const DEFAULT_NOTIFICATIONS = {
@@ -14,6 +17,20 @@ async function handleResponse(response, fallbackMessage) {
     return response.json();
   }
 
+  let errorBody = {};
+  try {
+    errorBody = await response.json();
+  } catch {
+    // ignore
+  }
+
+  const error = new Error(errorBody?.message || 'Unable to process admin profile request');
+  error.status = response.status;
+  error.details = errorBody?.details;
+  throw error;
+}
+
+export async function fetchAdminProfile({ signal } = {}) {
   let errorPayload = null;
   try {
     errorPayload = await response.json();
@@ -98,6 +115,11 @@ export async function getAdminProfileSettings({ signal } = {}) {
     signal
   });
 
+  const payload = await handleResponse(response);
+  return payload?.profile ?? payload;
+}
+
+export async function saveAdminProfile(profile, { signal } = {}) {
   const payload = await handleResponse(response, 'Failed to load profile settings');
   return normaliseProfilePayload(payload);
 }
@@ -110,6 +132,12 @@ export async function updateAdminProfileSettings(body) {
       'Content-Type': 'application/json'
     },
     credentials: 'include',
+    body: JSON.stringify(profile),
+    signal
+  });
+
+  const payload = await handleResponse(response);
+  return payload?.profile ?? payload;
     body: JSON.stringify(body)
   });
 

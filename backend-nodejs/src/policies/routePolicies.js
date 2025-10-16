@@ -221,6 +221,11 @@ const ROUTE_POLICIES = {
     version: '1.0.0',
     resource: 'admin.profile',
     action: 'admin.profile:read',
+    description: 'Allow administrators to review their control tower profile and preferences.',
+    requirements: [Permissions.ADMIN_PROFILE_READ],
+    tags: ['admin', 'profile'],
+    severity: 'medium',
+    metadata: (req) => ({ persona: req.headers['x-fixnado-persona'] || null })
     description: 'Allow platform administrators to view and audit their control centre profile settings.',
     requirements: [Permissions.ADMIN_PROFILE_READ],
     tags: ['admin', 'profile'],
@@ -231,6 +236,11 @@ const ROUTE_POLICIES = {
     version: '1.0.0',
     resource: 'admin.profile',
     action: 'admin.profile:write',
+    description: 'Allow administrators to update contact, security, and notification preferences.',
+    requirements: [Permissions.ADMIN_PROFILE_WRITE],
+    tags: ['admin', 'profile'],
+    severity: 'high',
+    metadata: (req) => ({ persona: req.headers['x-fixnado-persona'] || null })
     description: 'Allow platform administrators to edit profile, address, and delegate permissions.',
     requirements: [Permissions.ADMIN_PROFILE_WRITE],
     tags: ['admin', 'profile'],

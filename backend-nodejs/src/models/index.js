@@ -62,6 +62,7 @@ import WebsiteContentBlock from './websiteContentBlock.js';
 import WebsiteNavigationMenu from './websiteNavigationMenu.js';
 import WebsiteNavigationItem from './websiteNavigationItem.js';
 import AffiliateProfile from './affiliateProfile.js';
+import AdminProfile from './adminProfile.js';
 import AffiliateCommissionRule from './affiliateCommissionRule.js';
 import AffiliateReferral from './affiliateReferral.js';
 import AffiliateLedgerEntry from './affiliateLedgerEntry.js';
@@ -559,6 +560,9 @@ ServiceZoneCoverage.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' 
 User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
 AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
+AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 AffiliateProfile.hasMany(AffiliateReferral, { foreignKey: 'affiliateProfileId', as: 'referrals' });
 AffiliateReferral.belongsTo(AffiliateProfile, { foreignKey: 'affiliateProfileId', as: 'affiliate' });
 AffiliateReferral.belongsTo(User, { foreignKey: 'referredUserId', as: 'referredUser' });
@@ -775,6 +779,7 @@ export {
   WebsiteNavigationMenu,
   WebsiteNavigationItem,
   AffiliateProfile,
+  AdminProfile,
   AffiliateCommissionRule,
   AffiliateReferral,
   AffiliateLedgerEntry,

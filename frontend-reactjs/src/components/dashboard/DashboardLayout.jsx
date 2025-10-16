@@ -362,6 +362,15 @@ const buildSearchIndex = (navigation) =>
       });
     }
 
+    if (Array.isArray(section.searchable)) {
+      entries.push(
+        ...section.searchable.map((item) => ({
+          id: `${section.id}-${item.id}`,
+          type: 'configuration',
+          label: item.label,
+          description: item.description ?? '',
+          targetSection: item.targetSection ?? section.id
+        }))
     if (section.type === 'marketplace-workspace' && section.data?.summary) {
       const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
       entries.push(
@@ -689,6 +698,12 @@ const DashboardLayout = ({
       }
       return <DashboardOverview analytics={activeSection.analytics} />;
     }
+    if (typeof activeSection.render === 'function') {
+      return activeSection.render();
+    }
+    if (activeSection.component) {
+      const Component = activeSection.component;
+      return <Component {...(activeSection.componentProps ?? {})} />;
     if (activeSection.type === 'custom' && typeof activeSection.render === 'function') {
       return activeSection.render();
     if (activeSection.id === 'customer-control') {
