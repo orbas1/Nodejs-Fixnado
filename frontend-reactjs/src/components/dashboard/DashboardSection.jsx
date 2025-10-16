@@ -24,6 +24,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1725,7 +1726,6 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona, context = {} }) => {
-const DashboardSection = ({ section, features = {}, persona }) => {
   if (section.type === 'automation' || section.id === 'automation-backlog') {
     return <AutomationBacklogSection section={section} features={features} persona={persona} />;
   }
@@ -1749,13 +1749,12 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
     case 'component':
       return <ComponentSection section={section} />;
-    case 'settings':
-      return persona === 'user' ? (
-        <CustomerSettingsSection section={section} />
-      ) : (
-        <SettingsSection section={section} />
-      );
+    case 'serviceman-profile-settings':
+      return <ServicemanProfileSettingsSection section={section} />;
     case 'settings': {
+      if (persona === 'user') {
+        return <CustomerSettingsSection section={section} />;
+      }
       const sectionLabel = section?.label?.toLowerCase?.() ?? '';
       const shouldRenderAccountSettings =
         persona === 'user' ||
@@ -1802,11 +1801,6 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
-    case 'component': {
-      const Component = section.component;
-      if (!Component) return null;
-      return <Component {...(section.data ?? {})} />;
-    }
     case 'history':
       return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:

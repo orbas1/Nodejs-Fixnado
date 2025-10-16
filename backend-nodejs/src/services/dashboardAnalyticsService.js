@@ -3452,6 +3452,15 @@ async function loadServicemanData(context) {
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'profile-settings',
+        label: 'Profile Settings',
+        description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
+        }
       }
     ]
   };

@@ -1445,6 +1445,16 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile Settings',
+        description: 'Keep your crew profile, emergency contacts, and gear assignments current.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'Updates sync instantly with provider leadership dashboards and dispatch automations.'
+        }
       }
     ]
   },
