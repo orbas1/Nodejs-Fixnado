@@ -8,6 +8,10 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import CustomerSettingsSection from './CustomerSettingsSection.jsx';
+import WalletSection from './wallet/WalletSection.jsx';
+import ServiceOrdersWorkspace from './service-orders/index.js';
+import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
+import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1629,6 +1633,9 @@ const DashboardSection = ({ section, features = {}, persona }) => {
     case 'grid':
       return <GridSection section={section} />;
     case 'board':
+      if (section.id === 'orders') {
+        return <ServiceOrdersWorkspace section={section} />;
+      }
       return <BoardSection section={section} />;
     case 'table':
       return <TableSection section={section} />;
@@ -1644,12 +1651,35 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       ) : (
         <SettingsSection section={section} />
       );
+    case 'settings': {
+      const sectionLabel = section?.label?.toLowerCase?.() ?? '';
+      const shouldRenderAccountSettings =
+        persona === 'user' ||
+        features?.accountSettings === true ||
+        features?.accountSettingsBeta === true ||
+        sectionLabel.includes('account settings');
+
+      if (shouldRenderAccountSettings) {
+        return <AccountSettingsManager initialSnapshot={section} />;
+      }
+
+      return <SettingsSection section={section} />;
+    }
     case 'calendar':
       return <CalendarSection section={section} />;
     case 'availability':
       return <AvailabilitySection section={section} />;
     case 'zones':
       return <ZonePlannerSection section={section} />;
+    case 'wallet':
+      return <WalletSection section={section} />;
+    case 'component': {
+      const Component = section.component;
+      if (!Component) return null;
+      return <Component {...(section.data ?? {})} />;
+    }
+    case 'history':
+      return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:
       return null;
   }
@@ -1657,6 +1687,7 @@ const DashboardSection = ({ section, features = {}, persona }) => {
 
 DashboardSection.propTypes = {
   section: PropTypes.shape({
+    id: PropTypes.string,
     type: PropTypes.string.isRequired,
     access: PropTypes.shape({
       label: PropTypes.string,

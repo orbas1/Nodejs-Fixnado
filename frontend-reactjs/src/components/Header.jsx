@@ -8,12 +8,13 @@ import {
   UserCircleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { Popover, Transition, Dialog } from '@headlessui/react';
+import { Popover, Transition, Dialog, Menu } from '@headlessui/react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { LOGO_URL } from '../constants/branding';
 import { useLocale } from '../hooks/useLocale.js';
 import { useSession } from '../hooks/useSession.js';
+import { useProfile } from '../hooks/useProfile.js';
 import LanguageSelector from './LanguageSelector.jsx';
 import { buildMobileNavigation, buildPrimaryNavigation } from '../constants/navigationConfig.js';
 
@@ -167,7 +168,9 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useLocale();
   const { isAuthenticated, dashboards } = useSession();
-  const showAuthenticatedNavigation = Boolean(isAuthenticated);
+  const { profile } = useProfile();
+
+  const { firstName, lastName, email } = profile ?? {};
 
   const primaryNavigation = useMemo(
     () => buildPrimaryNavigation({ t, dashboards }),
@@ -179,15 +182,63 @@ export default function Header() {
     [dashboards, isAuthenticated, t]
   );
 
+  const hasPrimaryNavigation = primaryNavigation.length > 0;
   const activeDashboard = dashboards?.[0] ?? 'user';
-  const accountLink = isAuthenticated ? `/dashboards/${activeDashboard}` : '/login';
-  const accountLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
+  const dashboardLink = `/dashboards/${activeDashboard}`;
+  const loginLink = '/login';
+  const mobilePrimaryLink = isAuthenticated ? dashboardLink : loginLink;
+  const mobilePrimaryLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
+  const mobilePrimaryDescription = isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta');
+
+  const accountDisplayName = useMemo(() => {
+    if (!isAuthenticated) {
+      return '';
+    }
+
+    const safeFirst = typeof firstName === 'string' ? firstName.trim() : '';
+    const safeLast = typeof lastName === 'string' ? lastName.trim() : '';
+    if (safeFirst || safeLast) {
+      return [safeFirst, safeLast].filter(Boolean).join(' ');
+    }
+
+    const safeEmail = typeof email === 'string' ? email.trim() : '';
+    return safeEmail;
+  }, [email, firstName, isAuthenticated, lastName]);
+
+  const accountInitials = useMemo(() => {
+    if (!isAuthenticated) {
+      return 'FX';
+    }
+
+    const safeFirst = typeof firstName === 'string' ? firstName.trim() : '';
+    const safeLast = typeof lastName === 'string' ? lastName.trim() : '';
+    const combinedInitials = `${safeFirst ? safeFirst[0] : ''}${safeLast ? safeLast[0] : ''}`.trim();
+    if (combinedInitials) {
+      return combinedInitials.toUpperCase();
+    }
+
+    const safeEmail = typeof email === 'string' ? email.trim() : '';
+    if (safeEmail) {
+      return safeEmail.slice(0, 2).toUpperCase();
+    }
+
+    if (accountDisplayName) {
+      return accountDisplayName.slice(0, 2).toUpperCase();
+    }
+
+    return 'FX';
+  }, [accountDisplayName, email, firstName, isAuthenticated, lastName]);
+
+  const accountMenuLabel = accountDisplayName
+    ? `${accountDisplayName} • ${t('nav.accountMenu')}`
+    : t('nav.accountMenu');
+  const accountMenuTitle = accountDisplayName || t('nav.accountMenu');
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 lg:px-6">
-        <div className="flex items-center gap-4">
-          {showAuthenticatedNavigation ? (
+        <div className="flex items-center gap-4 lg:flex-1">
+          {hasPrimaryNavigation ? (
             <button
               type="button"
               className="inline-flex rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-accent/40 hover:text-accent lg:hidden"
@@ -202,7 +253,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {showAuthenticatedNavigation ? (
+        {hasPrimaryNavigation ? (
           <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
             {primaryNavigation.map((section) => (
               <Popover className="relative" key={section.id}>
@@ -241,8 +292,8 @@ export default function Header() {
           </nav>
         ) : null}
 
-        <div className="flex items-center gap-3">
-          {showAuthenticatedNavigation ? (
+        <div className="flex items-center gap-3 lg:flex-1 lg:justify-end">
+          {isAuthenticated ? (
             <>
               <Popover className="hidden lg:block">
                 <Popover.Button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-accent/40 hover:text-accent">
@@ -294,26 +345,117 @@ export default function Header() {
             </>
           ) : null}
 
-          <LanguageSelector />
+          {!isAuthenticated ? <LanguageSelector /> : null}
 
-          <NavLink
-            to={accountLink}
-            className={({ isActive }) =>
-              clsx(
-                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
-                isActive
-                  ? 'border-accent bg-accent text-white shadow-glow'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
-              )
-            }
-          >
-            <UserCircleIcon className="h-5 w-5" />
-            <span>{accountLabel}</span>
-          </NavLink>
+          {isAuthenticated ? (
+            <NavLink
+              to="/account/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'hidden items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition lg:inline-flex',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              {t('nav.profile')}
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/register"
+              className={({ isActive }) =>
+                clsx(
+                  'hidden items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition lg:inline-flex',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              {t('nav.register')}
+            </NavLink>
+          )}
+
+          {isAuthenticated ? (
+            <Menu as="div" className="relative">
+              <Menu.Button
+                aria-label={accountMenuLabel}
+                title={accountMenuTitle}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent hover:bg-slate-100"
+              >
+                <span className="sr-only">{accountMenuLabel}</span>
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold uppercase text-white shadow-lg shadow-accent/30"
+                >
+                  {accountInitials}
+                </span>
+              </Menu.Button>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-150"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-100"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-3 w-72 origin-top-right rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl focus:outline-none">
+                  <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold uppercase text-white shadow-lg shadow-accent/30">
+                      {accountInitials}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{accountMenuTitle}</p>
+                      {email ? <p className="truncate text-xs text-slate-500">{email}</p> : null}
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <NavLink
+                          to="/account/profile"
+                          className={clsx(
+                            'flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition',
+                            active
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-slate-200 text-slate-700 hover:border-accent/40 hover:text-accent'
+                          )}
+                        >
+                          {t('nav.profile')}
+                          <ChevronDownIcon className="h-4 w-4 -rotate-90" />
+                        </NavLink>
+                      )}
+                    </Menu.Item>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-slate-200 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('nav.languageSelector')}</p>
+                    <LanguageSelector variant="menu" className="mt-3 w-full" />
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          ) : (
+            <NavLink
+              to={loginLink}
+              className={({ isActive }) =>
+                clsx(
+                  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition',
+                  isActive
+                    ? 'border-accent bg-accent text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:text-accent'
+                )
+              }
+            >
+              <UserCircleIcon className="h-5 w-5" />
+              <span>{t('nav.login')}</span>
+            </NavLink>
+          )}
         </div>
       </div>
 
-      <Transition.Root show={mobileOpen && showAuthenticatedNavigation} as={Fragment}>
+      <Transition.Root show={mobileOpen && hasPrimaryNavigation} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setMobileOpen}>
           <Transition.Child
             as={Fragment}
@@ -341,7 +483,6 @@ export default function Header() {
                 <div className="flex items-center justify-between">
                   <Link to="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
                     <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Fixnado</span>
                   </Link>
                   <button
                     type="button"
@@ -374,13 +515,13 @@ export default function Header() {
 
                 <div className="mt-auto space-y-3 border-t border-slate-200 pt-4">
                   <MobileLink
-                    title={accountLabel}
-                    description={isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta')}
-                    href={accountLink}
+                    title={mobilePrimaryLabel}
+                    description={mobilePrimaryDescription}
+                    href={mobilePrimaryLink}
                     onNavigate={() => setMobileOpen(false)}
                   />
                   {mobileNavigation
-                    .filter((item) => item.href !== accountLink)
+                    .filter((item) => item.href !== mobilePrimaryLink)
                     .map((item) => (
                       <MobileLink
                         key={item.id}

@@ -87,6 +87,7 @@ export const esES = {
     'nav.communications': 'Comunicaciones',
     'nav.login': 'Iniciar sesión',
     'nav.register': 'Registrar',
+    'nav.profile': 'Perfil',
     'nav.getStarted': 'Comenzar',
     'nav.languageSelector': 'Idioma',
 
