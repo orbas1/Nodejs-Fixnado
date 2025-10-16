@@ -163,6 +163,9 @@ const formatRelativeTime = (timestamp) => {
 
 const buildSearchIndex = (navigation) =>
   navigation.flatMap((section) => {
+    if (section.to) {
+      return [];
+    }
     const entries = [
       {
         id: section.id,
@@ -443,19 +446,27 @@ const DashboardLayout = ({
                 </div>
                 <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
                   {navigation.map((item) => {
-                    const isActive = item.id === activeSection?.id;
+                    const isActive = !item.to && item.id === activeSection?.id;
                     const Icon = getNavIcon(item);
+                    const handleClick = () => {
+                      if (item.to) {
+                        navigate(item.to);
+                        setMobileNavOpen(false);
+                        return;
+                      }
+                      setSelectedSection(item.id);
+                    };
                     return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedSection(item.id)}
+                        onClick={handleClick}
                         className={`group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                           isActive
                             ? 'border-accent bg-accent text-white shadow-glow'
                             : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
                         }`}
-                        aria-pressed={isActive}
+                        aria-pressed={isActive || undefined}
                       >
                         <span
                           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
@@ -526,20 +537,27 @@ const DashboardLayout = ({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
           {navigation.map((item) => {
-            const isActive = item.id === activeSection?.id;
+            const isActive = !item.to && item.id === activeSection?.id;
             const Icon = getNavIcon(item);
+            const handleClick = () => {
+              if (item.to) {
+                navigate(item.to);
+                return;
+              }
+              setSelectedSection(item.id);
+            };
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedSection(item.id)}
+                onClick={handleClick}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
                   isActive
                     ? 'border-accent bg-accent text-white shadow-glow'
                     : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
                 } ${navCollapsed ? 'justify-center px-2' : ''}`}
                 title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
+                aria-pressed={isActive || undefined}
               >
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${

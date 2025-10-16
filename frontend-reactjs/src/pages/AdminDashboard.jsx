@@ -133,10 +133,35 @@ function buildAffiliateGovernanceSection(affiliateState) {
       panels: [
         {
           id: 'programme-settings',
-          title: 'Programme guardrails',
-          description: 'Applies to both the enterprise web portal and the mobile command centre.',
+          title: settings.programmeName || 'Affiliate programme',
+          description:
+            settings.programmeTagline || 'Applies to both the enterprise web portal and the mobile command centre.',
           status: settings.autoApproveReferrals ? 'Auto approval enabled' : 'Manual approval',
           items: [
+            settings.contactEmail
+              ? {
+                  id: 'contact-email',
+                  label: 'Partner desk email',
+                  helper: 'Primary contact for affiliate operations',
+                  value: settings.contactEmail
+                }
+              : null,
+            settings.partnerPortalUrl
+              ? {
+                  id: 'partner-portal',
+                  label: 'Partner portal',
+                  helper: 'Opens in a new window',
+                  value: settings.partnerPortalUrl
+                }
+              : null,
+            settings.onboardingGuideUrl
+              ? {
+                  id: 'guide',
+                  label: 'Onboarding guide',
+                  helper: 'Shareable setup playbook for new partners',
+                  value: settings.onboardingGuideUrl
+                }
+              : null,
             {
               id: 'payout-cadence',
               label: 'Payout cadence',
@@ -533,6 +558,14 @@ export default function AdminDashboard() {
     if (affiliateSection) {
       sections.push(affiliateSection);
     }
+    sections.push({
+      id: 'admin-monetisation-link',
+      label: 'Monetisation workspace',
+      description: 'Open the revenue and affiliate control centre.',
+      type: 'link',
+      icon: 'finance',
+      to: '/admin/monetisation'
+    });
     return sections;
   }, [state.data, affiliateSection]);
   const dashboardPayload = state.data ? { navigation } : null;

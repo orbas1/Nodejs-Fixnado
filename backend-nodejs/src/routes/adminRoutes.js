@@ -15,7 +15,15 @@ import {
   saveAffiliateSettingsHandler,
   listAffiliateCommissionRulesHandler,
   upsertAffiliateCommissionRuleHandler,
-  deactivateAffiliateCommissionRuleHandler
+  deactivateAffiliateCommissionRuleHandler,
+  listAffiliateProfilesHandler,
+  createAffiliateProfileHandler,
+  updateAffiliateProfileHandler,
+  listAffiliateLedgerEntriesHandler,
+  createAffiliateLedgerEntryHandler,
+  listAffiliateReferralsHandler,
+  createAffiliateReferralHandler,
+  updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import { authenticate } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
@@ -104,6 +112,64 @@ router.delete(
     metadata: (req) => ({ entity: 'commission-rules', ruleId: req.params.id })
   }),
   deactivateAffiliateCommissionRuleHandler
+);
+
+router.get(
+  '/affiliate/profiles',
+  authenticate,
+  enforcePolicy('admin.affiliates.read', { metadata: () => ({ entity: 'profiles' }) }),
+  listAffiliateProfilesHandler
+);
+router.post(
+  '/affiliate/profiles',
+  authenticate,
+  enforcePolicy('admin.affiliates.write', { metadata: () => ({ entity: 'profiles' }) }),
+  createAffiliateProfileHandler
+);
+router.patch(
+  '/affiliate/profiles/:id',
+  authenticate,
+  enforcePolicy('admin.affiliates.write', {
+    metadata: (req) => ({ entity: 'profiles', profileId: req.params.id })
+  }),
+  updateAffiliateProfileHandler
+);
+router.get(
+  '/affiliate/profiles/:id/ledger',
+  authenticate,
+  enforcePolicy('admin.affiliates.read', {
+    metadata: (req) => ({ entity: 'ledger', profileId: req.params.id })
+  }),
+  listAffiliateLedgerEntriesHandler
+);
+router.post(
+  '/affiliate/profiles/:id/ledger',
+  authenticate,
+  enforcePolicy('admin.affiliates.write', {
+    metadata: (req) => ({ entity: 'ledger', profileId: req.params.id })
+  }),
+  createAffiliateLedgerEntryHandler
+);
+
+router.get(
+  '/affiliate/referrals',
+  authenticate,
+  enforcePolicy('admin.affiliates.read', { metadata: () => ({ entity: 'referrals' }) }),
+  listAffiliateReferralsHandler
+);
+router.post(
+  '/affiliate/referrals',
+  authenticate,
+  enforcePolicy('admin.affiliates.write', { metadata: () => ({ entity: 'referrals' }) }),
+  createAffiliateReferralHandler
+);
+router.patch(
+  '/affiliate/referrals/:id',
+  authenticate,
+  enforcePolicy('admin.affiliates.write', {
+    metadata: (req) => ({ entity: 'referrals', referralId: req.params.id })
+  }),
+  updateAffiliateReferralHandler
 );
 
 export default router;
