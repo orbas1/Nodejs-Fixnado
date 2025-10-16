@@ -5,12 +5,12 @@ import './ui.css';
 
 export default function FormField({
   id,
-  label,
-  optionalLabel,
-  hint,
-  error,
+  label = undefined,
+  optionalLabel = undefined,
+  hint = undefined,
+  error = undefined,
   children,
-  className
+  className = undefined
 }) {
   const describedBy = [];
 
@@ -64,10 +64,3 @@ FormField.propTypes = {
   className: PropTypes.string
 };
 
-FormField.defaultProps = {
-  label: undefined,
-  optionalLabel: undefined,
-  hint: undefined,
-  error: undefined,
-  className: undefined
-};
