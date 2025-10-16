@@ -1,6 +1,7 @@
 import CustomerProfileSection from './CustomerProfileSection.jsx';
 import CustomerContactsSection from './CustomerContactsSection.jsx';
 import CustomerLocationsSection from './CustomerLocationsSection.jsx';
+import CustomerCouponsSection from './CustomerCouponsSection.jsx';
 import useCustomerControl from './useCustomerControl.js';
 
 const CustomerControlWorkspace = () => {
@@ -11,17 +12,22 @@ const CustomerControlWorkspace = () => {
       profile,
       contacts,
       locations,
+      coupons,
       personaSummary,
       profileStatus,
       contactStatus,
       locationStatus,
+      couponStatus,
       profileSaving,
       contactSaving,
       locationSaving,
+      couponSaving,
       contactModalOpen,
       locationModalOpen,
       activeContact,
-      activeLocation
+      activeLocation,
+      couponModalOpen,
+      activeCoupon
     },
     actions: {
       reload,
@@ -37,7 +43,12 @@ const CustomerControlWorkspace = () => {
       openEditLocation,
       closeLocationModal,
       handleLocationSubmit,
-      handleDeleteLocation
+      handleDeleteLocation,
+      openCreateCoupon,
+      openEditCoupon,
+      closeCouponModal,
+      handleCouponSubmit,
+      handleDeleteCoupon
     }
   } = useCustomerControl();
 
@@ -107,6 +118,19 @@ const CustomerControlWorkspace = () => {
         activeLocation={activeLocation}
         onCloseModal={closeLocationModal}
         onSubmit={handleLocationSubmit}
+      />
+
+      <CustomerCouponsSection
+        coupons={coupons}
+        status={couponStatus}
+        saving={couponSaving}
+        onCreate={openCreateCoupon}
+        onEdit={openEditCoupon}
+        onDelete={handleDeleteCoupon}
+        modalOpen={couponModalOpen}
+        activeCoupon={activeCoupon}
+        onCloseModal={closeCouponModal}
+        onSubmit={handleCouponSubmit}
       />
     </div>
   );
