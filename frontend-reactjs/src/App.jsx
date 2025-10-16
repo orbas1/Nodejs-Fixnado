@@ -34,6 +34,7 @@ const Communications = lazy(() => import('./pages/Communications.jsx'));
 const CreationStudio = lazy(() => import('./pages/CreationStudio.jsx'));
 const DashboardHub = lazy(() => import('./pages/DashboardHub.jsx'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard.jsx'));
+const OrderWorkspace = lazy(() => import('./pages/OrderWorkspace.jsx'));
 const FinanceOverview = lazy(() => import('./pages/FinanceOverview.jsx'));
 const GeoMatching = lazy(() => import('./pages/GeoMatching.jsx'));
 const Blog = lazy(() => import('./pages/Blog.jsx'));
@@ -157,6 +158,7 @@ function App() {
               <Route path="/dashboards" element={<DashboardHub />} />
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
+              <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="*" element={<NotFound />} />

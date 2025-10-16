@@ -10,6 +10,7 @@ export const DASHBOARD_ROLES = [
       { id: 'customer-control', label: 'Customer Control Centre', icon: 'control' },
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
       { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
+      { id: 'history', label: 'Order History', icon: 'documents' },
       { id: 'availability', label: 'Availability Planner', icon: 'availability' },
       { id: 'rentals', label: 'Asset Management', icon: 'assets' },
       { id: 'support', label: 'Support & Communications', icon: 'support' },

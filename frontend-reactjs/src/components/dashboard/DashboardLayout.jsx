@@ -126,6 +126,7 @@ const navIconMap = {
   profile: UserCircleIcon,
   calendar: CalendarDaysIcon,
   pipeline: ClipboardDocumentListIcon,
+  history: ClipboardDocumentListIcon,
   availability: UsersIcon,
   control: Squares2X2Icon,
   assets: CubeIcon,

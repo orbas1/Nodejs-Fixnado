@@ -391,7 +391,7 @@ const config = {
   },
   finance: {
     defaultCurrency: (process.env.FINANCE_DEFAULT_CURRENCY || 'GBP').toUpperCase(),
-    commissionRates: jsonFromEnv('FINANCE_COMMISSION_RATES', { default: 0.025 }),
+    commissionRates: jsonFromEnv('FINANCE_COMMISSION_RATES', { default: 0.025, 'scheduled:high': 0.12 }),
     taxRates: jsonFromEnv('FINANCE_TAX_RATES', { GBP: 0.2 }),
     exchangeRates: jsonFromEnv('FINANCE_EXCHANGE_RATES', { GBP: 1, EUR: 1.17, USD: 1.27 }),
     slaTargetsMinutes: jsonFromEnv('FINANCE_SLA_TARGET_MINUTES', {
