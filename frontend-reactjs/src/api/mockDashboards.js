@@ -1781,6 +1781,24 @@ const mockDashboards = {
             label: 'Crew Ads Insights',
             features: ['campaigns', 'guardrails']
           }
+        },
+        communications: {
+          tenantId: 'fixnado-demo',
+          participant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
         }
       },
     navigation: [
@@ -2003,6 +2021,32 @@ const mockDashboards = {
               ]
             }
           ]
+        }
+      },
+      {
+        id: 'inbox',
+        icon: 'support',
+        label: 'Crew Inbox',
+        description: 'Coordinate live chat, quick replies, and escalation guardrails.',
+        type: 'serviceman-inbox',
+        data: {
+          defaultParticipantId: 'PART-2210',
+          currentParticipant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          tenantId: 'fixnado-demo',
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
         }
       },
       {

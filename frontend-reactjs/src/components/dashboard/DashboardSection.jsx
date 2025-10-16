@@ -26,6 +26,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
 import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
 import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
 
@@ -1691,6 +1692,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
           prefetchedOverview={section.data?.overview ?? null}
         />
       );
+    case 'serviceman-inbox':
+      return <ServicemanInboxWorkspace section={section} context={context} />;
     case 'service-management':
       return <ServiceManagementSection section={section} />;
     case 'audit-timeline':
