@@ -185,3 +185,72 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
+
+-- Tool rental management tables
+CREATE TABLE IF NOT EXISTS tool_rental_assets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  inventory_item_id UUID,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  description TEXT,
+  rental_rate NUMERIC(12, 2),
+  rental_rate_currency CHAR(3),
+  deposit_amount NUMERIC(12, 2),
+  deposit_currency CHAR(3),
+  min_hire_days INTEGER NOT NULL DEFAULT 1,
+  max_hire_days INTEGER,
+  quantity_available INTEGER NOT NULL DEFAULT 0,
+  availability_status TEXT NOT NULL DEFAULT 'available',
+  seo_title TEXT,
+  seo_description TEXT,
+  keyword_tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+  hero_image_url TEXT,
+  gallery JSONB NOT NULL DEFAULT '[]'::jsonb,
+  showcase_video_url TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tool_rental_assets_company_slug ON tool_rental_assets (company_id, slug);
+CREATE INDEX IF NOT EXISTS idx_tool_rental_assets_company_status ON tool_rental_assets (company_id, availability_status);
+
+CREATE TABLE IF NOT EXISTS tool_rental_pricing_tiers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  asset_id UUID NOT NULL REFERENCES tool_rental_assets(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  duration_days INTEGER NOT NULL DEFAULT 1,
+  price NUMERIC(12, 2) NOT NULL,
+  currency CHAR(3) NOT NULL,
+  deposit_amount NUMERIC(12, 2),
+  deposit_currency CHAR(3),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tool_rental_pricing_asset ON tool_rental_pricing_tiers (asset_id, duration_days);
+
+CREATE TABLE IF NOT EXISTS tool_rental_coupons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  asset_id UUID REFERENCES tool_rental_assets(id) ON DELETE SET NULL,
+  code TEXT NOT NULL,
+  description TEXT,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+  discount_value NUMERIC(10, 2) NOT NULL,
+  currency CHAR(3),
+  max_redemptions INTEGER,
+  per_customer_limit INTEGER,
+  valid_from TIMESTAMPTZ,
+  valid_until TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'expired', 'disabled')),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tool_rental_coupons_company_code ON tool_rental_coupons (company_id, code);
+CREATE INDEX IF NOT EXISTS idx_tool_rental_coupons_company_status ON tool_rental_coupons (company_id, status);

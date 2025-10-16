@@ -21,6 +21,8 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
+import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -561,6 +563,7 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const companyId = state.meta?.companyId || provider?.id || null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -588,6 +591,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.alerts')
           }
         : null,
+      {
+        id: 'provider-dashboard-tool-rentals',
+        label: 'Tool hire & rentals',
+        description: 'Manage hire catalogue, pricing, and deposits'
+      },
       {
         id: 'provider-dashboard-pipeline',
         label: t('providerDashboard.pipelineHeadline'),
@@ -843,6 +851,12 @@ export default function ProviderDashboard() {
               ))}
             </div>
           </section>
+        ) : null}
+
+        {companyId ? (
+          <ToolRentalProvider companyId={companyId}>
+            <ToolRentalWorkspace />
+          </ToolRentalProvider>
         ) : null}
 
         <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
