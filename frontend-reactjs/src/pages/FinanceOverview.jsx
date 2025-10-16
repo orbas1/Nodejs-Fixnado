@@ -440,14 +440,26 @@ const FinanceOverview = () => {
     refreshOverview();
   }, [refreshOverview]);
 
-  const payments = overview?.payments ?? [];
-  const payouts = overview?.payouts ?? [];
-  const invoices = overview?.invoices ?? [];
-  const disputes = overview?.disputes ?? [];
-  const paymentRows = useMemo(() => payments.slice(0, 75), [payments]);
-  const payoutItems = useMemo(() => payouts.slice(0, 50), [payouts]);
-  const invoiceItems = useMemo(() => invoices.slice(0, 50), [invoices]);
-  const disputeItems = useMemo(() => disputes.slice(0, 50), [disputes]);
+  const paymentsSource = overview?.payments;
+  const payoutsSource = overview?.payouts;
+  const invoicesSource = overview?.invoices;
+  const disputesSource = overview?.disputes;
+  const paymentRows = useMemo(
+    () => (Array.isArray(paymentsSource) ? paymentsSource.slice(0, 75) : []),
+    [paymentsSource]
+  );
+  const payoutItems = useMemo(
+    () => (Array.isArray(payoutsSource) ? payoutsSource.slice(0, 50) : []),
+    [payoutsSource]
+  );
+  const invoiceItems = useMemo(
+    () => (Array.isArray(invoicesSource) ? invoicesSource.slice(0, 50) : []),
+    [invoicesSource]
+  );
+  const disputeItems = useMemo(
+    () => (Array.isArray(disputesSource) ? disputesSource.slice(0, 50) : []),
+    [disputesSource]
+  );
   const currencyTotals = useMemo(() => {
     if (!report?.currencyTotals) {
       return [];
