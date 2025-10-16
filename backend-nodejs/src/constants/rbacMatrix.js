@@ -198,6 +198,7 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_SERVICES_READ,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
+      Permissions.ADMIN_COMMAND_METRICS_READ
       Permissions.ADMIN_AUTOMATION_READ
       Permissions.ADMIN_PURCHASE_READ,
       Permissions.ADMIN_PURCHASE_WRITE
@@ -243,6 +244,8 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE,
       Permissions.ADMIN_AFFILIATE_READ,
       Permissions.ADMIN_AFFILIATE_WRITE,
+      Permissions.ADMIN_COMMAND_METRICS_READ,
+      Permissions.ADMIN_COMMAND_METRICS_WRITE,
       Permissions.ADMIN_USER_READ,
       Permissions.ADMIN_USER_WRITE,
       Permissions.ADMIN_USER_INVITE,

@@ -30,6 +30,12 @@ import {
   updateAffiliateReferralHandler
 } from '../controllers/adminAffiliateController.js';
 import {
+  getCommandMetricsConfiguration,
+  saveCommandMetricSettings,
+  createCommandMetricCardHandler,
+  updateCommandMetricCardHandler,
+  deleteCommandMetricCardHandler
+} from '../controllers/commandMetricsController.js';
   listQueuesHandler,
   getQueueHandler,
   createQueueHandler,
@@ -592,6 +598,44 @@ router.delete(
 );
 
 router.get(
+  '/command-metrics/config',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.read', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'configuration' })
+  }),
+  getCommandMetricsConfiguration
+);
+router.put(
+  '/command-metrics/settings',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'settings' })
+  }),
+  saveCommandMetricSettings
+);
+router.post(
+  '/command-metrics/cards',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: () => ({ entity: 'command-metrics', scope: 'cards', method: 'create' })
+  }),
+  createCommandMetricCardHandler
+);
+router.patch(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  updateCommandMetricCardHandler
+);
+router.delete(
+  '/command-metrics/cards/:id',
+  authenticate,
+  enforcePolicy('admin.commandMetrics.write', {
+    metadata: (req) => ({ entity: 'command-metrics', scope: 'cards', cardId: req.params.id, method: req.method })
+  }),
+  deleteCommandMetricCardHandler
   '/operations/queues',
   authenticate,
   enforcePolicy('admin.operations.queues.read', {

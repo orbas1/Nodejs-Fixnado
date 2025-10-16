@@ -82,6 +82,8 @@ import FinanceWebhookEvent from './financeWebhookEvent.js';
 import MessageHistory from './messageHistory.js';
 import StorefrontRevisionLog from './storefrontRevisionLog.js';
 import WarehouseExportRun from './warehouseExportRun.js';
+import CommandMetricSetting from './commandMetricSetting.js';
+import CommandMetricCard from './commandMetricCard.js';
 import OperationsQueueBoard from './operationsQueueBoard.js';
 import OperationsQueueUpdate from './operationsQueueUpdate.js';
 import AutomationInitiative from './automationInitiative.js';
@@ -781,6 +783,8 @@ export {
   MessageHistory,
   StorefrontRevisionLog,
   WarehouseExportRun,
+  CommandMetricSetting,
+  CommandMetricCard
   OperationsQueueBoard,
   OperationsQueueUpdate
   AutomationInitiative

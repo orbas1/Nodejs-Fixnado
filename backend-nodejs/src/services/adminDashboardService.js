@@ -14,6 +14,10 @@ import {
   AnalyticsPipelineRun,
   InsuredSellerApplication
 } from '../models/index.js';
+import {
+  getCommandMetricSettingsSnapshot,
+  listActiveCommandMetricCards
+} from './commandMetricsConfigService.js';
 import { listQueueBoards } from './operationsQueueService.js';
 import { listAutomationInitiativesForDashboard } from './automationBacklogService.js';
 import { summariseInboxForDashboard } from './adminInboxService.js';
@@ -134,6 +138,16 @@ function determineDeltaTone(change) {
   return 'warning';
 }
 
+function formatPercentLabel(value) {
+  if (value == null) {
+    return null;
+  }
+  const numeric = Number.parseFloat(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  const decimals = Number.isInteger(numeric) ? 0 : 1;
+  return `${numeric.toFixed(decimals).replace(/\.0$/, '')}%`;
 function applyTemplate(template, context = {}) {
   if (typeof template !== 'string') {
     return null;
@@ -150,36 +164,48 @@ function applyTemplate(template, context = {}) {
 
 function determineMetricStatus(metricId, value, context = {}) {
   if (metricId === 'escrow') {
-    if (value >= context.targetHigh) {
+    const targetHigh = context.targetHigh != null ? context.targetHigh : Number.POSITIVE_INFINITY;
+    const targetMedium = context.targetMedium != null ? context.targetMedium : targetHigh;
+    if (value >= targetHigh) {
       return { tone: 'success', label: 'Stabilised' };
     }
-    if (value >= context.targetMedium) {
+    if (value >= targetMedium) {
       return { tone: 'info', label: 'Tracking plan' };
     }
     return { tone: 'warning', label: 'Watchlist' };
   }
 
   if (metricId === 'disputes') {
-    if (value <= context.thresholdLow) {
+    const thresholdLow = context.thresholdLow != null ? context.thresholdLow : 0;
+    const thresholdMedium = context.thresholdMedium != null ? context.thresholdMedium : thresholdLow + 1;
+    if (value <= thresholdLow) {
       return { tone: 'success', label: 'Managed' };
     }
-    if (value <= context.thresholdMedium) {
+    if (value <= thresholdMedium) {
       return { tone: 'warning', label: 'Monitor' };
     }
     return { tone: 'danger', label: 'Action required' };
   }
 
   if (metricId === 'jobs') {
-    if (value >= context.targetHigh) {
+    const targetHigh = context.targetHigh != null ? context.targetHigh : Number.POSITIVE_INFINITY;
+    const targetMedium = context.targetMedium != null ? context.targetMedium : targetHigh;
+    if (value >= targetHigh) {
       return { tone: 'warning', label: 'Peak period' };
     }
-    if (value >= context.targetMedium) {
+    if (value >= targetMedium) {
       return { tone: 'info', label: 'On track' };
     }
     return { tone: 'success', label: 'Capacity available' };
   }
 
   if (metricId === 'sla') {
+    const target = context.target != null ? context.target : 97;
+    const warning = context.warning != null ? context.warning : Math.max(94, target - 3);
+    if (value >= target) {
+      return { tone: 'success', label: 'On target' };
+    }
+    if (value >= warning) {
     const goal = Number.isFinite(context.goal) ? context.goal : 97;
     const warningThreshold = Number.isFinite(context.warningThreshold)
       ? context.warningThreshold
@@ -915,6 +941,11 @@ export async function buildAdminDashboard({
   const currentBuckets = createBuckets(range.start, range.end, bucket, timezone);
   const previousBuckets = createBuckets(previous.start, previous.end, bucket, timezone);
 
+  const settingsPromise = getCommandMetricSettingsSnapshot();
+  const customCardsPromise = listActiveCommandMetricCards();
+
+  const [currentEscrow, previousEscrow, openDisputes, previousOpenDisputes, liveOrders, previousLiveOrders, activeZones, sla,
+    previousSla, disputeMedianResponse] = await Promise.all([
   const overviewSettingsPromise = getOverviewSettings();
   const [
     currentEscrow,
@@ -1033,6 +1064,94 @@ export async function buildAdminDashboard({
     ? previousOpenDisputes
     : Math.max(openDisputes, 1);
 
+  const [escrowSeries, disputeSeries, complianceControls, queueInsights, auditTimeline, security] = await Promise.all([
+    computeEscrowSeries(currentBuckets),
+    computeDisputeSeries(currentBuckets),
+    computeComplianceControls(timezone),
+    computeQueueInsights(range, timezone),
+    buildAuditTimeline(range, timezone),
+    computeSecuritySignals(timezone)
+  ]);
+
+  const automationBacklog = await computeAutomationBacklog(security.pipelineTotals, timezone);
+  const securitySignals = security.signals;
+
+  const previousEscrowAverage = previousBuckets.length
+    ? previousEscrow.totalAmount / previousBuckets.length
+    : previousEscrow.totalAmount;
+
+  const trendSeries = escrowSeries.map((entry) => ({
+    label: entry.label,
+    value: Number.isFinite(entry.value) ? entry.value : 0,
+    target: Number.isFinite(previousEscrowAverage)
+      ? previousEscrowAverage / 1_000_000
+      : 0
+  }));
+
+  const settings = await settingsPromise;
+  const customCardConfigs = await customCardsPromise;
+
+  const summaryHighlights = Array.isArray(settings.summary?.highlightNotes)
+    ? settings.summary.highlightNotes
+    : [];
+
+  const escrowConfig = settings.metrics?.escrow ?? {};
+  const disputesConfig = settings.metrics?.disputes ?? {};
+  const jobsConfig = settings.metrics?.jobs ?? {};
+  const slaConfig = settings.metrics?.sla ?? {};
+
+  const escrowTargetHigh = escrowConfig.targetHigh != null
+    ? escrowConfig.targetHigh
+    : previousEscrow.totalAmount * 1.05;
+  const escrowTargetMedium = escrowConfig.targetMedium != null
+    ? escrowConfig.targetMedium
+    : previousEscrow.totalAmount * 0.9;
+  const escrowCaptionParts = [`Across ${numberFormatter.format(currentEscrow.count)} funded engagements`];
+  if (escrowConfig.captionNote) {
+    escrowCaptionParts.push(escrowConfig.captionNote);
+  }
+
+  const disputeThresholdLow = disputesConfig.thresholdLow != null
+    ? disputesConfig.thresholdLow
+    : Math.max(2, Math.round(previousOpenDisputes * 0.7));
+  const disputeThresholdMedium = disputesConfig.thresholdMedium != null
+    ? disputesConfig.thresholdMedium
+    : Math.max(5, Math.round(previousOpenDisputes * 1.1));
+  const disputeCaptionParts = [];
+  if (disputeMedianResponse != null) {
+    disputeCaptionParts.push(`Median response ${numberFormatter.format(disputeMedianResponse)} minutes`);
+  }
+  if (disputesConfig.targetMedianMinutes != null) {
+    disputeCaptionParts.push(`Target ≤ ${numberFormatter.format(disputesConfig.targetMedianMinutes)} minutes`);
+  }
+  if (!disputeCaptionParts.length) {
+    disputeCaptionParts.push('Median response within 1 hour');
+  }
+  if (disputesConfig.captionNote) {
+    disputeCaptionParts.push(disputesConfig.captionNote);
+  }
+
+  const jobsTargetHigh = jobsConfig.targetHigh != null
+    ? jobsConfig.targetHigh
+    : Math.max(20, previousLiveOrders * 1.2);
+  const jobsTargetMedium = jobsConfig.targetMedium != null
+    ? jobsConfig.targetMedium
+    : Math.max(10, previousLiveOrders * 0.9);
+  const jobsCaptionParts = [`Coverage across ${numberFormatter.format(activeZones)} zones`];
+  if (jobsConfig.captionNote) {
+    jobsCaptionParts.push(jobsConfig.captionNote);
+  }
+
+  const slaTarget = slaConfig.target != null ? slaConfig.target : 97;
+  const slaWarning = slaConfig.warning != null ? slaConfig.warning : 94;
+  const slaGoalLabel = formatPercentLabel(slaTarget) ?? '97%';
+  const slaCaptionParts = [
+    `Goal ≥ ${slaGoalLabel} • ${numberFormatter.format(sla.completed)} completed`
+  ];
+  if (slaConfig.captionNote) {
+    slaCaptionParts.push(slaConfig.captionNote);
+  }
+
   const commandTiles = [
     {
       id: 'escrow',
@@ -1044,6 +1163,10 @@ export async function buildAdminDashboard({
       valueLabel: formatter.format(currentEscrow.totalAmount),
       delta: percentFormatter.format(escrowChange),
       deltaTone: determineDeltaTone(escrowChange),
+      caption: escrowCaptionParts.join(' • '),
+      status: determineMetricStatus('escrow', currentEscrow.totalAmount, {
+        targetHigh: escrowTargetHigh,
+        targetMedium: escrowTargetMedium
       caption: escrowCaption,
       status: determineMetricStatus('escrow', currentEscrow.totalAmount, {
         targetHigh: escrowTargetHighBase * escrowHighMultiplier,
@@ -1057,6 +1180,10 @@ export async function buildAdminDashboard({
       valueLabel: numberFormatter.format(openDisputes),
       delta: percentFormatter.format(disputesChange),
       deltaTone: determineDeltaTone(-disputesChange),
+      caption: disputeCaptionParts.join(' • '),
+      status: determineMetricStatus('disputes', openDisputes, {
+        thresholdLow: disputeThresholdLow,
+        thresholdMedium: disputeThresholdMedium
       caption: disputesCaption,
       status: determineMetricStatus('disputes', openDisputes, {
         thresholdLow: Math.max(2, Math.round(disputesLowBase * disputesLowMultiplier)),
@@ -1070,6 +1197,10 @@ export async function buildAdminDashboard({
       valueLabel: numberFormatter.format(liveOrders),
       delta: percentFormatter.format(liveJobsChange),
       deltaTone: determineDeltaTone(liveJobsChange),
+      caption: jobsCaptionParts.join(' • '),
+      status: determineMetricStatus('jobs', liveOrders, {
+        targetHigh: jobsTargetHigh,
+        targetMedium: jobsTargetMedium
       caption: jobsCaption,
       status: determineMetricStatus('jobs', liveOrders, {
         targetHigh: Math.max(20, Math.round(jobsTargetHighBase * jobsHighMultiplier)),
@@ -1083,6 +1214,22 @@ export async function buildAdminDashboard({
       valueLabel: `${sla.value.toFixed(1)}%`,
       delta: percentFormatter.format(slaChange),
       deltaTone: determineDeltaTone(slaChange),
+      caption: slaCaptionParts.join(' • '),
+      status: determineMetricStatus('sla', sla.value, {
+        target: slaTarget,
+        warning: slaWarning
+      })
+    }
+  ];
+
+  const customCards = customCardConfigs.map((card) => ({
+    id: card.id,
+    title: card.title,
+    tone: card.tone,
+    details: card.details,
+    mediaUrl: card.mediaUrl,
+    mediaAlt: card.mediaAlt,
+    cta: card.cta
       caption: slaCaption,
       status: determineMetricStatus('sla', sla.value, { goal: slaGoal, warningThreshold: slaWarning })
     }
@@ -1258,8 +1405,11 @@ export async function buildAdminDashboard({
           slaCompliance: sla.value,
           slaComplianceLabel: `${sla.value.toFixed(1)}%`,
           openDisputes,
-          openDisputesLabel: numberFormatter.format(openDisputes)
-        }
+          openDisputesLabel: numberFormatter.format(openDisputes),
+          notes: summaryHighlights,
+          configUpdatedAt: settings.metadata?.updatedAt ?? null
+        },
+        customCards
       }
     },
     charts: {
