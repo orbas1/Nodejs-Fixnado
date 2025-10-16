@@ -84,7 +84,7 @@ function detectInitialLocale(explicitInitialLocale) {
   return 'en-GB';
 }
 
-export function LocaleProvider({ children, initialLocale }) {
+export function LocaleProvider({ children, initialLocale = undefined }) {
   const [locale, setLocaleState] = useState(() => detectInitialLocale(initialLocale));
 
   const dictionary = dictionaries[locale] ?? dictionaries['en-GB'];
@@ -201,10 +201,6 @@ export function LocaleProvider({ children, initialLocale }) {
 LocaleProvider.propTypes = {
   children: PropTypes.node.isRequired,
   initialLocale: PropTypes.string
-};
-
-LocaleProvider.defaultProps = {
-  initialLocale: undefined
 };
 
 export function useLocaleContext() {

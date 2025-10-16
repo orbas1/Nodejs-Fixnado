@@ -3,11 +3,11 @@
 | Task # | Task Name | Design Quality % | Design Organisation % | Design Position % | Design Text Grade % | Design Colour Grade % | Design Render Grade % | Compliance Grade % | Security Grade % | Design Functionality Grade % | Design Images Grade % | Design Usability Grade % | Bugs-less Grade % | Test Grade % | QA Grade % | Design Accuracy Grade % | Overall Grade % |
 |--------|-----------|------------------|-----------------------|-------------------|---------------------|-----------------------|-----------------------|-------------------|-----------------|-----------------------------|----------------------|-------------------------|------------------|-------------|-----------|-----------------------|----------------|
 | D1 | Token & System Foundation | 68 | 74 | 66 | 70 | 80 | 66 | 84 | 86 | 72 | 62 | 70 | 74 | 56 | 60 | 68 | 71 |
-| D2 | Navigation & IA Harmonisation | 74 | 76 | 72 | 70 | 62 | 68 | 84 | 80 | 74 | 60 | 76 | 78 | 60 | 58 | 72 | 73 |
-| D3 | Page Templates & Partial Library | 80 | 78 | 74 | 74 | 68 | 68 | 80 | 74 | 76 | 72 | 76 | 70 | 64 | 66 | 74 | 74 |
+| D2 | Navigation & IA Harmonisation | 78 | 80 | 76 | 72 | 64 | 72 | 86 | 84 | 78 | 62 | 80 | 78 | 64 | 62 | 76 | 77 |
+| D3 | Page Templates & Partial Library | 84 | 82 | 78 | 78 | 72 | 72 | 84 | 78 | 80 | 80 | 76 | 68 | 72 | 70 | 78 | 79 |
 | D4 | Theme & Visual Narrative Development | 20 | 22 | 18 | 24 | 20 | 18 | 26 | 24 | 20 | 20 | 26 | 36 | 18 | 20 | 22 | 22 |
-| D5 | Mobile Parity & Component Adaptation | 84 | 82 | 80 | 80 | 74 | 80 | 90 | 90 | 82 | 78 | 84 | 82 | 72 | 72 | 84 | 82 |
-| D6 | Design QA, Documentation & Handover | 50 | 52 | 48 | 50 | 44 | 50 | 56 | 56 | 50 | 48 | 52 | 60 | 46 | 50 | 48 | 52 |
+| D5 | Mobile Parity & Component Adaptation | 86 | 84 | 82 | 82 | 76 | 82 | 92 | 92 | 84 | 82 | 86 | 76 | 78 | 78 | 86 | 85 |
+| D6 | Design QA, Documentation & Handover | 56 | 58 | 54 | 56 | 48 | 54 | 60 | 60 | 56 | 54 | 64 | 52 | 56 | 56 | 54 | 57 |
 
 > **Scoring Notes:**
 > - Baseline metrics reflect current readiness prior to accelerated execution. Only foundational token and accessibility research (Task D1) show measurable progress.
@@ -37,7 +37,9 @@
 - Creation studio release notes, changelog hooks, and QA checklists are now captured within the design documentation bundle, improving D6 quality, organisation, test, and QA scores.
 - Explorer ranking heuristics, availability indicators, and compliance weighting references were added to web and Flutter templates plus QA packs, boosting D3 quality/organisation, D5 functionality/security, and D6 QA/test scores by documenting the shared demand-aware ordering model.
 - Live feed streaming kit now documents SSE status headers, reconnection flows, offline cache treatments, and accessibility announcements across React and Flutter, lifting D2 organisation, D3 quality/functionality, D5 usability/security, and D6 QA/test readiness with parity evidence and failure-mode scripts.
+- Error resilience schematics now cover the React error boundary, route failure overlays, and telemetry badges alongside the full-screen 404 template, nudging D2, D3, and D6 quality/organisation/QA scores upward with documented recovery journeys.
 - Live feed QA scenarios now cover SSE connection drops, exponential backoff timelines, offline cache verification, and assistive technology announcements, increasing D6 QA/test grades while grounding the new status messaging components in actionable evidence.
+- Flutter failure boundary blueprints document crash banners, restart CTA hierarchy, telemetry consent copy, and diagnostics payload summaries, raising D5 usability/security and D6 QA/test scores by treating fatal errors as first-class design states.
 
 ## Action Items to Improve Scores
 1. Accelerate token export automation and accessibility validation to raise D1 Quality and QA scores before dependent tasks commence.
@@ -45,4 +47,5 @@
 3. Prioritise partial template production for home and dashboard pages to demonstrate tangible improvements in D3 render and usability scores.
 4. Prototype emo and premium themes early to detect imagery or contrast issues impacting D4 colour and accuracy grades.
 5. Align Flutter and web component libraries through shared Storybook/Widgetbook sessions to lift D5 functionality and accuracy marks.
-6. Establish design QA workflow with test automation (visual diffs, accessibility audits) to strengthen D6 test and QA grades ahead of implementation.
+6. Schedule crash recovery usability testing covering the React error boundary, 404 fallback, and Flutter fatal boundary to validate copy comprehension, restart affordances, and telemetry consent flows.
+7. Establish design QA workflow with test automation (visual diffs, accessibility audits) to strengthen D6 test and QA grades ahead of implementation.

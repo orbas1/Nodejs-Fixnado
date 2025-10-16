@@ -30,6 +30,7 @@ Primary objectives:
 - Refactor forms with inline validation, progressive disclosure for advanced settings, and security copy for sensitive actions.
 - Encode explorer ranking heuristics combining zone demand weighting, company compliance scores, availability preferences, and price cues with analytics instrumentation so search results and dashboards consume consistent ordering guidance.
 - Document live feed SSE interface patterns with status indicators, reconnection toasts, offline banners, and filter-aware refresh cues so the React experience communicates stream health and retry behaviour in real time.
+- Capture global error boundary, support escalation, and 404 fallback templates with telemetry hooks so shell failures deliver actionable messaging while feeding diagnostics pipelines.
 
 ### User & Provider Applications (Flutter)
 - Align navigation architecture with the updated web IA while using platform-native components (Material 3) skinned by shared tokens.
@@ -43,6 +44,7 @@ Primary objectives:
 - Layer consent acknowledgement overlays that reference the ledger templates and block navigation until required policies are accepted, aligning copy with the web banner system.
 - Bring explorer ranking parity to mobile by documenting demand/compliance weighting, availability modifiers, and offline fallback ordering so Flutter cards list compliant in-zone providers ahead of out-of-region stock.
 - Capture live feed streaming parity guidelines covering Riverpod controller states, connection banners, offline cache surfaces, and haptic/voiceover announcements so Flutter operators receive the same telemetry as web crews.
+- Define fatal error boundary visuals with restart CTA hierarchy, telemetry consent copy, and diagnostics summaries ensuring Flutter crash flows align with React recovery experiences.
 
 ### Shared Design Assets
 - Maintain unified iconography, illustration, and photography guidelines with emo-themed overlays and cultural localisation tips.

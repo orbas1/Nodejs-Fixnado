@@ -9,3 +9,5 @@
 - Normalised GDPR request payloads to trim emails, attach Riverpod-provided justification, and persist audit messages for offline replay.
 - Implemented `/api/compliance/data-warehouse/runs` client support with paginated fetch, manual trigger POSTs, and polling of long-running exports using exponential backoff tuned for mobile connectivity constraints.
 - Mapped warehouse export responses into strongly typed models capturing dataset, region, actor, record counts, checksums, storage paths, and retention deadlines so the UI can surface actionable operations context without additional API calls.
+
+- Integrated crash telemetry client posting to `/telemetry/mobile-crashes`, including authentication headers, request correlation IDs, and retry-safe error handling so mobile fatal errors arrive in the observability pipeline without duplicating HTTP clients.

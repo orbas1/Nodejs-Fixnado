@@ -13,3 +13,5 @@
 - Launched the Creation Studio screen with blueprint carousel entry, multi-step form, autosave status chip, slug validator, compliance checklist, and publish CTA wired into the new repository/controller so providers can configure services end-to-end without desktop fallback.
 - Updated the Explorer screen and supporting view state to apply demand/compliance-aware ranking, availability highlights, and offline fallback ordering so in-zone providers and rentable stock surface ahead of out-of-region listings with parity to the React heuristics.
 - Refreshed the Live Feed screen with connection pulse indicators, offline banners, SSE-driven snapshots, and filter-aware restarts so mobile operators receive parity streaming feedback with the React experience.
+
+- Added fatal crash recovery screen that displays diagnostics reference ID, restart CTA, and support contact options while respecting localisation tokens and reduced motion settings, matching the new Flutter `AppFailureBoundary`.

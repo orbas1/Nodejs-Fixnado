@@ -5,9 +5,9 @@
 | 1 | Security & Secrets Hardening | Platform Security Guild | 2.5 weeks | Risk assessment outcomes, vault access | 100% |
 | 2 | Compliance & Data Governance | Data Platform Guild | 3 weeks | Task 1, legal review slots | 100% |
 | 3 | Payments, Escrow & Finance Orchestration | Payments Tiger Team | 3 weeks | Tasks 1–2 schemas & security | 100% |
-| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 74% |
+| 4 | Experience & Navigation Overhaul | Web Experience Crew | 4 weeks | Task 1 RBAC matrix, Task 3 finance APIs | 80% |
 | 5 | Intelligence, Integrations & Automation Hub | Integrations Strike Team | 3 weeks | Tasks 1–3 security + API groundwork | 0% |
-| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 28% |
+| 6 | Mobile Parity & Stabilisation | Mobile Excellence Pod | 3.5 weeks | Tasks 1–5 endpoints + tokens | 36% |
 | 7 | Observability, Testing & Quality Automation | Quality Engineering Guild | 3 weeks | Tasks 1–6 feature completion | 14% |
 | 8 | Documentation, Release & Change Management | Release Management PMO | 2 weeks | Tasks 1–7 artefacts | 0% |
 
@@ -111,7 +111,7 @@
 - **Logic:** Routing guards, feature toggles, error boundaries.
 - **Design:** Visual refresh, imagery, accessibility guidance.
 
-**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%. Explorer search now applies demand-aware ranking across React and Flutter, uses compliance telemetry and availability heuristics, and ships parity tests plus mobile zoning filters so marketplace, storefront, and dashboard journeys surface the highest quality operators by default. Live feed streaming now delivers SSE snapshots, connection-state messaging, and filter-aware reconnection logic across React and Flutter with backend policy regression coverage, raising Task 4 execution to 74% with production telemetry and design artefacts captured.
+**Progress Notes:** Delivered the creation studio experience across web and mobile with a production-grade wizard, autosave workflow, slug validation, and compliance checklist alignment. React now consumes a hardened creation client with blueprint fetch, draft persistence, and publish actions while exposing rich navigation entries in the solutions mega menu. Flutter gained a parity Creation Studio screen, Riverpod controller, repository, and widget tests verifying autosave and publish orchestration, with navigation updated to surface the feature for provider, enterprise, and admin roles. Multi-locale translations, design trackers, and task artefacts were refreshed to document the new flows, lifting Task 4 readiness to 45%. Explorer search now applies demand-aware ranking across React and Flutter, uses compliance telemetry and availability heuristics, and ships parity tests plus mobile zoning filters so marketplace, storefront, and dashboard journeys surface the highest quality operators by default. Live feed streaming now delivers SSE snapshots, connection-state messaging, and filter-aware reconnection logic across React and Flutter with backend policy regression coverage, raising Task 4 execution to 74% with production telemetry and design artefacts captured. Router-level error boundaries, telemetry hooks, and a full-screen 404 page now wrap the React experience so navigation failures recover with actionable messaging while crash diagnostics reach observability pipelines, pushing the experience overhaul deeper into production territory.
 
 ## Task 5 – Intelligence, Integrations & Automation Hub (0%)
 **Objective:** Launch integration console, AI orchestration, and automation capabilities with full observability.
@@ -159,7 +159,7 @@
 - **Logic:** Offline sync, error handling, remote config rollouts.
 - **Design:** Mobile UI patterns, accessibility for large text/dark mode.
 
-**Progress Notes:** Flutter's live feed controller now manages SSE snapshots with exponential backoff, cached snapshot pruning, and parity status messaging while the feed screen exposes connection pulses and offline banners. Repository and controller unit tests document the stream contract and reconnection logic, lifting Task 6 parity execution to 28% with production guidance published for mobile crews.
+**Progress Notes:** Flutter's live feed controller now manages SSE snapshots with exponential backoff, cached snapshot pruning, and parity status messaging while the feed screen exposes connection pulses and offline banners. Repository and controller unit tests document the stream contract and reconnection logic, lifting Task 6 parity execution to 28% with production guidance published for mobile crews. Fatal error handling is now centralised through a mobile failure boundary and diagnostics reporter that captures crash payloads, invites users to relaunch, and disposes bootstrap resources cleanly, directly improving stabilisation readiness and unlocking parity telemetry for operations.
 
 ## Task 7 – Observability, Testing & Quality Automation (12%)
 **Objective:** Create unified telemetry, automated testing, and quality gates for enterprise release readiness.

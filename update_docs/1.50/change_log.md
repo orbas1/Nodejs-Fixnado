@@ -92,3 +92,8 @@
 
 ## Historical Reference
 - Removed all provider phone app artifacts (documentation, evaluations, tests, and UI assets) from the update package to reflect the retirement of the provider mobile experience.
+
+## 2025-04-12 – Shell Resilience & Crash Diagnostics
+- Wrapped the React application shell in production-grade error boundaries with telemetry-backed fallbacks, full-screen 404 page, and locale-aware messaging so routing failures surface recovery guidance while streaming correlation IDs to observability.
+- Delivered Flutter fatal error boundary and diagnostics reporter wiring restart loops, HTTP client disposal, and structured crash payloads into the telemetry endpoint to stabilise mobile parity while equipping SRE with actionable data.
+- Updated cross-functional trackers, design artefacts, and UX documentation to capture new resilience flows, restart copy, and telemetry requirements for both web and mobile shells.
