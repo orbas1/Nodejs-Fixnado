@@ -44,6 +44,7 @@ export const Permissions = Object.freeze({
   SERVICES_MANAGE: 'services:manage',
   SERVICES_BOOK: 'services:book',
   SUPPORT_TICKETS: 'support:tickets:manage',
+  CUSTOMER_CONTROL_MANAGE: 'customer:control:manage',
   USER_DIRECTORY: 'user:directory:view',
   ZONES_MATCH: 'zones:match',
   ZONES_PREVIEW: 'zones:preview'

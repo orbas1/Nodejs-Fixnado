@@ -108,6 +108,13 @@ const mockDashboards = {
         }
       },
       {
+        id: 'customer-control',
+        icon: 'control',
+        label: 'Customer Control Centre',
+        description: 'Manage customer profile, escalation contacts, and service locations.',
+        type: 'module'
+      },
+      {
         id: 'calendar',
         icon: 'calendar',
         label: 'Service Calendar',
