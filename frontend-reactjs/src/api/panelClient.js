@@ -2301,6 +2301,7 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
+          escrowTotal: Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
           escrowTotal:
             Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
           escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
@@ -5803,6 +5804,99 @@ function invalidateProviderCache(companyId) {
   clearPanelCache(keys);
 }
 
+function normaliseProviderServiceman(record) {
+  const availabilities = ensureArray(record.availabilities).map((entry) => ({
+    id: entry.id,
+    dayOfWeek: entry.dayOfWeek ?? entry.day_of_week ?? 0,
+    startTime: entry.startTime ?? entry.start_time ?? '08:00',
+    endTime: entry.endTime ?? entry.end_time ?? '17:00',
+    timezone: entry.timezone ?? 'Europe/London',
+    isActive: Boolean(entry.isActive ?? entry.is_active ?? true)
+  }));
+
+  const zones = ensureArray(record.zones ?? record.zoneLinks).map((entry) => ({
+    id: entry.id,
+    zoneId: entry.zoneId ?? entry.zone_id ?? entry.id,
+    isPrimary: Boolean(entry.isPrimary ?? entry.is_primary ?? false),
+    zone: entry.zone
+      ? {
+          id: entry.zone.id,
+          name: entry.zone.name,
+          demandLevel: entry.zone.demandLevel ?? entry.zone.demand_level ?? null
+        }
+      : null
+  }));
+
+  const media = ensureArray(record.media).map((item, index) => ({
+    id: item.id,
+    url: item.url,
+    label: item.label ?? null,
+    type: item.type ?? 'gallery',
+    isPrimary: Boolean(item.isPrimary ?? item.is_primary ?? false),
+    sortOrder: Number.isFinite(Number(item.sortOrder ?? item.sort_order))
+      ? Number(item.sortOrder ?? item.sort_order)
+      : index,
+    notes: item.notes ?? null
+  }));
+
+  return {
+    id: record.id,
+    companyId: record.companyId ?? record.company_id ?? null,
+    name: record.name ?? 'Crew member',
+    role: record.role ?? null,
+    email: record.email ?? null,
+    phone: record.phone ?? null,
+    status: record.status ?? 'inactive',
+    availabilityStatus: record.availabilityStatus ?? record.availability_status ?? 'available',
+    availabilityPercentage: Number.isFinite(Number(record.availabilityPercentage ?? record.availability_percentage))
+      ? Number(record.availabilityPercentage ?? record.availability_percentage)
+      : 0,
+    hourlyRate: record.hourlyRate ?? record.hourly_rate ?? null,
+    currency: record.currency ?? 'GBP',
+    avatarUrl: record.avatarUrl ?? record.avatar_url ?? null,
+    bio: record.bio ?? null,
+    notes: record.notes ?? null,
+    skills: ensureArray(record.skills).map((skill) => String(skill)),
+    certifications: record.certifications ?? null,
+    availabilities,
+    zones,
+    media,
+    meta: record.meta ?? {},
+    createdAt: record.createdAt ? new Date(record.createdAt).toISOString() : null,
+    updatedAt: record.updatedAt ? new Date(record.updatedAt).toISOString() : null
+  };
+}
+
+function normaliseProviderServicemanEnums(enums = {}) {
+  return {
+    statuses: ensureArray(enums.statuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    availabilityStatuses: ensureArray(enums.availabilityStatuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    daysOfWeek: ensureArray(enums.daysOfWeek).map((option) => ({
+      value: Number(option.value ?? option.id ?? option ?? 0),
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    timezones: ensureArray(enums.timezones).length ? ensureArray(enums.timezones) : ['Europe/London', 'UTC'],
+    mediaTypes: ensureArray(enums.mediaTypes).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    currencies: ensureArray(enums.currencies).length ? ensureArray(enums.currencies) : ['GBP', 'EUR', 'USD'],
+    zones: ensureArray(enums.zones).map((zone) => ({
+      id: zone.id ?? zone.zoneId ?? zone.value,
+      name: zone.name ?? zone.label ?? 'Coverage zone'
+    }))
+  };
+}
+
+function invalidateProviderServicemenCache(companyId) {
+  const cacheKey = companyId ? `provider-servicemen:${companyId}` : 'provider-servicemen';
+  clearPanelCache([cacheKey, 'provider-dashboard']);
 export async function getProviderToolSales(options = {}) {
   const response = await request('/panel/provider/tools', {
     cacheKey: 'provider-tool-sales',
@@ -6046,6 +6140,67 @@ export async function deleteAdminProviderCoverage(companyId, coverageId) {
     forceRefresh: true
   });
   invalidateProviderCache(companyId);
+}
+
+export async function listProviderServicemen(options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    cacheKey: `provider-servicemen${cacheKeySuffix}`,
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  const root = response?.data ?? response ?? {};
+  const payload = root.data ?? root;
+  return {
+    servicemen: ensureArray(payload.servicemen).map(normaliseProviderServiceman),
+    enums: normaliseProviderServicemanEnums(payload.enums)
+  };
+}
+
+export async function createProviderServiceman(companyId, payload) {
+  const query = toQueryString({ companyId });
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function updateProviderServiceman(companyId, servicemanId, payload) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  const response = await request(
+    `/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true
+    }
+  );
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function deleteProviderServiceman(companyId, servicemanId) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  await request(`/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderServicemenCache(companyId ?? null);
 }
 
 export const getEnterprisePanel = withFallback(

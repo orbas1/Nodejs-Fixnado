@@ -6,6 +6,7 @@ import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import ServicemanManagementSection from '../features/providerServicemen/ServicemanManagementSection.jsx';
 import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
   CalendarDaysIcon,
@@ -110,46 +111,6 @@ AlertBanner.propTypes = {
     message: PropTypes.string.isRequired,
     actionHref: PropTypes.string,
     actionLabel: PropTypes.string
-  }).isRequired
-};
-
-function ServicemanRow({ member }) {
-  const { t, format } = useLocale();
-  const availability = typeof member.availability === 'number' ? member.availability : 0;
-  const availabilityTone = availability > 0.75 ? 'success' : availability < 0.5 ? 'warning' : 'neutral';
-  const availabilityLabel = format.percentage(availability, { maximumFractionDigits: 0 });
-  const satisfactionLabel = format.percentage(member.rating ?? 0, { maximumFractionDigits: 0 });
-
-  return (
-    <li
-      className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4 transition hover:border-primary/40"
-      data-qa={`provider-dashboard-serviceman-${member.id}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-primary">{member.name}</p>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{member.role}</p>
-        </div>
-        <StatusPill tone={availabilityTone}>
-          {t('providerDashboard.servicemanAvailability', { value: availabilityLabel })}
-        </StatusPill>
-      </div>
-      <p className="text-xs text-slate-500">
-        {t('providerDashboard.servicemanSatisfaction', {
-          value: satisfactionLabel
-        })}
-      </p>
-    </li>
-  );
-}
-
-ServicemanRow.propTypes = {
-  member: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    name: PropTypes.string.isRequired,
-    role: PropTypes.string,
-    availability: PropTypes.number,
-    rating: PropTypes.number
   }).isRequired
 };
 
@@ -1108,19 +1069,10 @@ export default function ProviderDashboard() {
         ) : null}
 
         <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.servicemenSection')}</h2>
-          </header>
-          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {servicemen.length === 0 ? (
-              <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                {t('providerDashboard.servicemenEmpty')}
-              </li>
-            ) : (
-              servicemen.map((member) => <ServicemanRow key={member.id} member={member} />)
-            )}
-          </ul>
+          <ServicemanManagementSection
+            companyId={state.meta?.companyId ?? provider?.id ?? null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
         </section>
       </DashboardShell>
 

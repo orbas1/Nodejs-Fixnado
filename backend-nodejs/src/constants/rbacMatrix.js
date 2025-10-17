@@ -106,6 +106,7 @@ export const RBAC_MATRIX = {
       Permissions.PANEL_PROVIDER_TOOLS,
       Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
+      Permissions.PROVIDER_CREW_MANAGE,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
       Permissions.PROVIDER_ESCROW_READ,

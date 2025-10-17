@@ -5,6 +5,11 @@ import {
   getProviderStorefrontHandler
 } from '../controllers/panelController.js';
 import {
+  listProviderServicemenHandler,
+  createProviderServicemanHandler,
+  updateProviderServicemanHandler,
+  deleteProviderServicemanHandler
+} from '../controllers/providerServicemanController.js';
   getProviderEnterpriseUpgrade,
   createProviderEnterpriseUpgrade,
   updateProviderEnterpriseUpgrade
@@ -70,6 +75,50 @@ router.get(
   getProviderDashboardHandler
 );
 router.get(
+  '/provider/servicemen',
+  authenticate,
+  enforcePolicy('panel.provider.servicemen.manage', {
+    metadata: (req) => ({
+      companyId: req.query.companyId ?? null,
+      method: 'list'
+    })
+  }),
+  listProviderServicemenHandler
+);
+router.post(
+  '/provider/servicemen',
+  authenticate,
+  enforcePolicy('panel.provider.servicemen.manage', {
+    metadata: (req) => ({
+      companyId: req.query.companyId ?? null,
+      method: 'create'
+    })
+  }),
+  createProviderServicemanHandler
+);
+router.put(
+  '/provider/servicemen/:servicemanId',
+  authenticate,
+  enforcePolicy('panel.provider.servicemen.manage', {
+    metadata: (req) => ({
+      companyId: req.query.companyId ?? null,
+      servicemanId: req.params.servicemanId ?? null,
+      method: 'update'
+    })
+  }),
+  updateProviderServicemanHandler
+);
+router.delete(
+  '/provider/servicemen/:servicemanId',
+  authenticate,
+  enforcePolicy('panel.provider.servicemen.manage', {
+    metadata: (req) => ({
+      companyId: req.query.companyId ?? null,
+      servicemanId: req.params.servicemanId ?? null,
+      method: 'delete'
+    })
+  }),
+  deleteProviderServicemanHandler
   '/provider/enterprise-upgrade',
   authenticate,
   enforcePolicy('panel.provider.enterpriseUpgrade.view', {

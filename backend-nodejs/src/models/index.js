@@ -27,6 +27,10 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderServiceman from './providerServiceman.js';
+import ProviderServicemanAvailability from './providerServicemanAvailability.js';
+import ProviderServicemanZone from './providerServicemanZone.js';
+import ProviderServicemanMedia from './providerServicemanMedia.js';
 import ProviderTaxProfile from './providerTaxProfile.js';
 import ProviderTaxFiling from './providerTaxFiling.js';
 import ProviderByokIntegration from './providerByokIntegration.js';
@@ -359,6 +363,38 @@ ProviderStorefrontCoupon.belongsTo(ProviderStorefront, { foreignKey: 'storefront
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 
+Company.hasMany(ProviderServiceman, { foreignKey: 'companyId', as: 'servicemen' });
+ProviderServiceman.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderServiceman.hasMany(ProviderServicemanAvailability, {
+  foreignKey: 'servicemanId',
+  as: 'availabilities'
+});
+ProviderServicemanAvailability.belongsTo(ProviderServiceman, {
+  foreignKey: 'servicemanId',
+  as: 'serviceman'
+});
+
+ProviderServiceman.hasMany(ProviderServicemanZone, { foreignKey: 'servicemanId', as: 'zoneLinks' });
+ProviderServicemanZone.belongsTo(ProviderServiceman, { foreignKey: 'servicemanId', as: 'serviceman' });
+ProviderServicemanZone.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
+ServiceZone.hasMany(ProviderServicemanZone, { foreignKey: 'zoneId', as: 'servicemanLinks' });
+
+ProviderServiceman.belongsToMany(ServiceZone, {
+  through: ProviderServicemanZone,
+  foreignKey: 'servicemanId',
+  otherKey: 'zoneId',
+  as: 'zones'
+});
+ServiceZone.belongsToMany(ProviderServiceman, {
+  through: ProviderServicemanZone,
+  foreignKey: 'zoneId',
+  otherKey: 'servicemanId',
+  as: 'servicemen'
+});
+
+ProviderServiceman.hasMany(ProviderServicemanMedia, { foreignKey: 'servicemanId', as: 'media' });
+ProviderServicemanMedia.belongsTo(ProviderServiceman, { foreignKey: 'servicemanId', as: 'serviceman' });
 Company.hasMany(ProviderCrewMember, { foreignKey: 'companyId', as: 'crewMembers' });
 ProviderCrewMember.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
@@ -1290,6 +1326,13 @@ export {
   WalletConfiguration,
   WalletAccount,
   WalletTransaction,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
+  ProviderServiceman,
+  ProviderServicemanAvailability,
+  ProviderServicemanZone,
+  ProviderServicemanMedia,
   WalletPaymentMethod,
   ProviderProfile,
   ProviderContact,

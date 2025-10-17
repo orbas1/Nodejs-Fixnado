@@ -81,6 +81,7 @@ export const DASHBOARD_ROLES = [
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
       { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
+      { id: 'servicemen', label: 'Serviceman Management', icon: 'crew' },
       {
         id: 'inventory-management',
         label: 'Inventory management',
