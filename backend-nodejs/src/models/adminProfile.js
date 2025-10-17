@@ -23,20 +23,19 @@ AdminProfile.init(
     },
     jobTitle: {
       type: DataTypes.STRING(160),
-    jobTitle: {
-      type: DataTypes.STRING(120),
       allowNull: true,
       field: 'job_title'
     },
     department: {
-      type: DataTypes.STRING(120),
+      type: DataTypes.STRING(160),
       allowNull: true
     },
     pronouns: {
       type: DataTypes.STRING(80),
       allowNull: true
+    },
     phoneNumber: {
-      type: DataTypes.STRING(80),
+      type: DataTypes.STRING(64),
       allowNull: true,
       field: 'phone_number'
     },
@@ -69,15 +68,15 @@ AdminProfile.init(
       allowNull: true
     },
     timezone: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.STRING(80),
       allowNull: true
     },
     language: {
-      type: DataTypes.STRING(32),
+      type: DataTypes.STRING(64),
       allowNull: true
     },
     theme: {
-      type: DataTypes.STRING(16),
+      type: DataTypes.STRING(32),
       allowNull: true
     },
     workingHours: {
@@ -85,10 +84,6 @@ AdminProfile.init(
       allowNull: false,
       defaultValue: {},
       field: 'working_hours'
-    },
-    timezone: {
-      type: DataTypes.STRING(80),
-      allowNull: true
     },
     addressLine1: {
       type: DataTypes.STRING(255),
@@ -156,6 +151,7 @@ AdminProfile.init(
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: {}
+    },
     notificationEmails: {
       type: DataTypes.JSONB,
       allowNull: false,
@@ -166,7 +162,8 @@ AdminProfile.init(
   {
     sequelize,
     modelName: 'AdminProfile',
-    tableName: 'AdminProfile'
+    tableName: 'admin_profiles',
+    underscored: true
   }
 );
 

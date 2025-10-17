@@ -11,6 +11,7 @@ import {
 } from '../controllers/analyticsDashboardController.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorizePersonaAccess } from '../middleware/personaAccess.js';
+import providerByokRoutes from './providerByokRoutes.js';
 
 const router = Router();
 
@@ -67,5 +68,20 @@ router.get('/dashboards/:persona/export', personaValidators(), personaAccessCont
 router.get('/dashboards/:persona', personaValidators(), personaAccessControl(), getPersonaDashboardHandler);
 router.get('/dashboards/:persona/export', authenticate, authorizePersonaAccess, personaValidators(), exportPersonaDashboardHandler);
 router.get('/dashboards/:persona', authenticate, authorizePersonaAccess, personaValidators(), getPersonaDashboardHandler);
+
+const ensureProviderPersona = (req, res, next) => {
+  if (req.params.persona?.toLowerCase() !== 'provider') {
+    return res.status(404).json({ message: 'persona_not_supported' });
+  }
+  return next();
+};
+
+router.use(
+  '/dashboards/:persona/byok',
+  authenticate,
+  authorizePersonaAccess,
+  ensureProviderPersona,
+  providerByokRoutes
+);
 
 export default router;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { useSearchParams } from 'react-router-dom';
 import ConversationList from '../../components/communications/ConversationList.jsx';
@@ -15,6 +16,7 @@ import {
   postMessage,
   updateParticipantPreferences,
   createVideoSession,
+  createConversation,
   CommunicationsApiError,
   fetchInboxSettings,
   saveInboxSettings,
@@ -36,16 +38,85 @@ import {
   formatRoleLabel
 } from '../../constants/accessControl.js';
 
+const VARIANT_COPY = {
+  default: {
+    eyebrow: 'Inbox',
+    title: 'Messaging & AI assist',
+    description: 'A clean, social-style space for every conversation.',
+    badgeActive: 'Live routing enabled',
+    badgePaused: 'Live routing paused',
+    accessTitle: 'Communications workspace is limited',
+    accessDescription:
+      'Messaging is reserved for Fixnado provider, enterprise, and operations cohorts. Switch to an authorised workspace role or request access so conversations remain governed.',
+    creatorName: 'Team member',
+    createTitle: 'Start a new conversation',
+    createDescription: 'Invite participants and spin up a fresh inbox thread with AI assist on standby.',
+    createButton: 'Start conversation',
+    createSuccess: 'Conversation created and ready to chat.'
+  },
+  serviceman: {
+    eyebrow: 'Crew inbox',
+    title: 'Job communications',
+    description:
+      'Coordinate dispatch updates, upload job evidence, and escalate blockers without leaving the cockpit.',
+    badgeActive: 'Crew routing live',
+    badgePaused: 'Crew routing paused',
+    accessTitle: 'Crew messaging is limited',
+    accessDescription:
+      'Switch to an authorised crew or operations persona to manage inbox conversations, or request access from operations enablement.',
+    creatorName: 'Crew lead',
+    createTitle: 'Raise a new job chat',
+    createDescription:
+      'Loop in building contacts, drop job context, and let AI suggestions draft the first response.',
+    createButton: 'Open conversation',
+    createSuccess: 'Chat ready — you have been added to the thread.'
+  }
+};
 
-function Communications() {
+const DEFAULT_CREATE_DRAFT = {
+  subject: '',
+  customerName: '',
+  customerReference: '',
+  customerType: 'user',
+  jobId: '',
+  location: '',
+  initialMessage: '',
+  aiAssistEnabled: true
+};
+
+function Communications({
+  variant = 'default',
+  allowedRoles = COMMUNICATIONS_ALLOWED_ROLES,
+  initialParticipantId = '',
+  embedded = false,
+  heroActions = null,
+  currentParticipant = null,
+  onConversationCreated = null,
+  onWorkspaceMetricsChange = null
+}) {
   const [sessionRole, setSessionRole] = useState(() =>
     normaliseRole(resolveSessionTelemetryContext().role)
   );
-  const hasAccess = useMemo(() => hasCommunicationsAccess(sessionRole), [sessionRole]);
+  const telemetryContext = useMemo(() => resolveSessionTelemetryContext(), []);
+  const copy = VARIANT_COPY[variant] ?? VARIANT_COPY.default;
+  const resolvedAllowedRoles = useMemo(
+    () => (Array.isArray(allowedRoles) && allowedRoles.length > 0 ? allowedRoles : COMMUNICATIONS_ALLOWED_ROLES),
+    [allowedRoles]
+  );
+  const allowedRoleLabels = useMemo(
+    () => resolvedAllowedRoles.map((role) => formatRoleLabel(role)),
+    [resolvedAllowedRoles]
+  );
+  const hasAccess = useMemo(
+    () => hasCommunicationsAccess(sessionRole, resolvedAllowedRoles),
+    [sessionRole, resolvedAllowedRoles]
+  );
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialParticipant = searchParams.get('participantId') || '';
-  const [participantInput, setParticipantInput] = useState(initialParticipant);
-  const [participantId, setParticipantId] = useState(initialParticipant);
+  const urlParticipant = searchParams.get('participantId') || '';
+  const resolvedInitialParticipant = urlParticipant || initialParticipantId || '';
+  const [participantInput, setParticipantInput] = useState(resolvedInitialParticipant);
+  const [participantId, setParticipantId] = useState(resolvedInitialParticipant);
+  const hasUrlParticipant = Boolean(urlParticipant);
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -112,8 +183,13 @@ function Communications() {
   });
   const [editingEscalationId, setEditingEscalationId] = useState(null);
   const [editingEscalationDraft, setEditingEscalationDraft] = useState(null);
+  const [createDraft, setCreateDraft] = useState({ ...DEFAULT_CREATE_DRAFT });
+  const [creatingConversation, setCreatingConversation] = useState(false);
+  const [createConversationError, setCreateConversationError] = useState(null);
+  const [createConversationSuccess, setCreateConversationSuccess] = useState(null);
   const messagesViewportRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const createSuccessTimeoutRef = useRef(null);
 
   const normaliseQuickReplies = useCallback((items) => {
     return [...items].sort((a, b) => {
@@ -166,8 +242,21 @@ function Communications() {
     };
   }, []);
 
+  useEffect(() => () => {
+    if (createSuccessTimeoutRef.current) {
+      clearTimeout(createSuccessTimeoutRef.current);
+    }
+  }, []);
+
   useEffect(() => {
-    if (initialParticipant) {
+    if (!hasUrlParticipant && initialParticipantId && !participantId) {
+      setParticipantInput(initialParticipantId);
+      setParticipantId(initialParticipantId);
+    }
+  }, [hasUrlParticipant, initialParticipantId, participantId]);
+
+  useEffect(() => {
+    if (hasUrlParticipant || initialParticipantId) {
       return;
     }
     if (typeof window === 'undefined') {
@@ -179,7 +268,7 @@ function Communications() {
       setParticipantId(storedParticipant);
       setSearchParams({ participantId: storedParticipant });
     }
-  }, [initialParticipant, participantId, setSearchParams]);
+  }, [hasUrlParticipant, initialParticipantId, participantId, setSearchParams]);
 
   useEffect(() => {
     if (!hasAccess) {
@@ -213,6 +302,43 @@ function Communications() {
       cancelled = true;
     };
   }, [applySettingsPayload, hasAccess]);
+
+  useEffect(() => {
+    if (typeof onWorkspaceMetricsChange !== 'function') {
+      return;
+    }
+
+    if (!hasAccess) {
+      onWorkspaceMetricsChange({
+        conversations: 0,
+        activeThreads: 0,
+        entryPoints: 0,
+        quickReplies: 0,
+        escalationRules: 0
+      });
+    }
+  }, [hasAccess, onWorkspaceMetricsChange]);
+
+  useEffect(() => {
+    if (!hasAccess || typeof onWorkspaceMetricsChange !== 'function') {
+      return;
+    }
+
+    onWorkspaceMetricsChange({
+      conversations: conversations.length,
+      activeThreads: conversations.length,
+      entryPoints: entryPoints.length,
+      quickReplies: quickReplies.length,
+      escalationRules: escalationRules.length
+    });
+  }, [
+    conversations,
+    entryPoints,
+    quickReplies,
+    escalationRules,
+    hasAccess,
+    onWorkspaceMetricsChange
+  ]);
 
   useEffect(() => {
     if (!participantId) {
@@ -534,6 +660,169 @@ function Communications() {
       enabled: true
     });
   }, []);
+
+  const handleCreateFieldChange = useCallback((field, value) => {
+    setCreateDraft((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }, []);
+
+  const handleCreateConversation = useCallback(
+    async (event) => {
+      event.preventDefault();
+      setCreateConversationError(null);
+      setCreateConversationSuccess(null);
+
+      const subject = createDraft.subject.trim();
+      const customerReference = createDraft.customerReference.trim();
+      const initialMessage = createDraft.initialMessage.trim();
+
+      if (subject.length < 3) {
+        setCreateConversationError('Subject must be at least three characters long.');
+        return;
+      }
+      if (!customerReference) {
+        setCreateConversationError('Customer reference is required to link the chat.');
+        return;
+      }
+
+      setCreatingConversation(true);
+      try {
+        const creatorReference =
+          currentParticipant?.participantReferenceId ||
+          telemetryContext.userId ||
+          telemetryContext.tenantId ||
+          'serviceman';
+        const creatorRole = normaliseRole(currentParticipant?.role || sessionRole || 'serviceman');
+        const creatorType = currentParticipant?.participantType || creatorRole || 'serviceman';
+        const creatorDisplayName = currentParticipant?.displayName || copy.creatorName;
+
+        const conversation = await createConversation({
+          subject,
+          createdBy: {
+            id: creatorReference,
+            type: creatorType
+          },
+          participants: [
+            {
+              participantType: creatorType,
+              participantReferenceId: creatorReference,
+              displayName: creatorDisplayName,
+              role: creatorRole || 'serviceman',
+              aiAssistEnabled: true,
+              notificationsEnabled: true,
+              videoEnabled: true,
+              timezone: currentParticipant?.timezone || inboxConfiguration.timezone || 'Europe/London'
+            },
+            {
+              participantType: createDraft.customerType || 'user',
+              participantReferenceId: customerReference,
+              displayName: createDraft.customerName.trim() || 'Customer contact',
+              role: 'customer',
+              aiAssistEnabled: true,
+              notificationsEnabled: true,
+              videoEnabled: true,
+              timezone: inboxConfiguration.timezone || 'Europe/London'
+            }
+          ],
+          metadata: {
+            jobId: createDraft.jobId ? createDraft.jobId.trim() : undefined,
+            location: createDraft.location ? createDraft.location.trim() : undefined
+          },
+          aiAssist: {
+            defaultEnabled: createDraft.aiAssistEnabled,
+            displayName: inboxConfiguration.aiAssistDisplayName,
+            description: inboxConfiguration.aiAssistDescription
+          }
+        });
+
+        setConversations((current) => {
+          const existingIds = new Set(current.map((item) => item.id));
+          if (existingIds.has(conversation.id)) {
+            return current.map((item) => (item.id === conversation.id ? conversation : item));
+          }
+          return [conversation, ...current];
+        });
+
+        const viewerParticipant = conversation.participants?.find(
+          (participant) =>
+            participant.participantReferenceId === creatorReference && participant.participantType === creatorType
+        );
+
+        if (viewerParticipant) {
+          setParticipantInput(viewerParticipant.id);
+          setParticipantId(viewerParticipant.id);
+          setSearchParams({ participantId: viewerParticipant.id });
+          try {
+            if (typeof window !== 'undefined') {
+              window.localStorage?.setItem('fx.profile.participantId', viewerParticipant.id);
+            }
+          } catch (storageError) {
+            console.warn('Unable to persist participant id', storageError);
+          }
+        }
+
+        setActiveConversationId(conversation.id);
+
+        if (viewerParticipant && initialMessage) {
+          try {
+            await postMessage(conversation.id, {
+              senderParticipantId: viewerParticipant.id,
+              body: initialMessage
+            });
+          } catch (messageError) {
+            console.warn('Failed to send initial message', messageError);
+            setComposerPrefill(initialMessage);
+          }
+        } else if (initialMessage) {
+          setComposerPrefill(initialMessage);
+        } else {
+          setComposerPrefill('');
+        }
+
+        setCreateDraft({ ...DEFAULT_CREATE_DRAFT });
+        setCreateConversationSuccess(copy.createSuccess);
+        if (createSuccessTimeoutRef.current) {
+          clearTimeout(createSuccessTimeoutRef.current);
+        }
+        createSuccessTimeoutRef.current = setTimeout(() => {
+          setCreateConversationSuccess(null);
+        }, 4000);
+
+        if (typeof onConversationCreated === 'function') {
+          onConversationCreated(conversation);
+        }
+      } catch (caught) {
+        setCreateConversationError(
+          caught instanceof Error ? caught.message : 'Unable to start conversation. Please try again.'
+        );
+      } finally {
+        setCreatingConversation(false);
+      }
+    },
+    [
+      copy.createSuccess,
+      createDraft,
+      currentParticipant,
+      inboxConfiguration.aiAssistDescription,
+      inboxConfiguration.aiAssistDisplayName,
+      inboxConfiguration.timezone,
+      onConversationCreated,
+      setSearchParams,
+      setActiveConversationId,
+      setComposerPrefill,
+      setConversations,
+      setCreateConversationError,
+      setCreateConversationSuccess,
+      setCreateDraft,
+      setParticipantId,
+      setParticipantInput,
+      setCreatingConversation,
+      sessionRole,
+      telemetryContext
+    ]
+  );
 
   const handleNewEntryPointChange = useCallback((field, value) => {
     setNewEntryPoint((current) => ({
@@ -966,16 +1255,22 @@ function Communications() {
       });
   }, [editingEscalationId]);
 
+  const outerClassName = embedded
+    ? 'w-full space-y-6'
+    : 'relative mx-auto w-full max-w-6xl px-4 py-12';
+  const shellClassName = embedded
+    ? 'relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/60'
+    : 'relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-10 shadow-xl shadow-slate-200/80';
+  const creatorDisplayName = currentParticipant?.displayName || copy.creatorName;
+  const creatorRoleLabel = formatRoleLabel(currentParticipant?.role || sessionRole || 'serviceman');
+
   if (!hasAccess) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-4xl flex-col items-center justify-center px-4 py-12 text-center">
         <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-10 shadow-lg shadow-amber-100">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-600">Access restricted</p>
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">Communications workspace is limited</h1>
-          <p className="mt-3 text-sm text-slate-600">
-            Messaging is reserved for Fixnado provider, enterprise, and operations cohorts. Switch to an authorised
-            workspace role or request access from operations enablement so conversations remain governed.
-          </p>
+          <h1 className="mt-4 text-2xl font-semibold text-slate-900">{copy.accessTitle}</h1>
+          <p className="mt-3 text-sm text-slate-600">{copy.accessDescription}</p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:text-amber-600"
@@ -1002,7 +1297,7 @@ function Communications() {
             <div className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
               <dt className="font-semibold uppercase tracking-[0.25em] text-slate-500">Authorised cohorts</dt>
               <dd className="mt-2 text-sm font-semibold text-slate-900">
-                {COMMUNICATIONS_ALLOWED_ROLES.map((role) => formatRoleLabel(role)).join(', ')}
+                {allowedRoleLabels.join(', ')}
               </dd>
             </div>
           </dl>
@@ -1012,35 +1307,169 @@ function Communications() {
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-10 shadow-xl shadow-slate-200/80">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className={outerClassName}>
+      <div className={shellClassName}>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <header className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Inbox</p>
-            <h1 className="text-3xl font-semibold text-slate-900">Messaging &amp; AI assist</h1>
-            <p className="text-sm text-slate-500">A clean, social-style space for every conversation.</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{copy.eyebrow}</p>
+            <h1 className="text-3xl font-semibold text-slate-900">{copy.title}</h1>
+            <p className="text-sm text-slate-500">{copy.description}</p>
           </header>
-          <div
-            className={clsx(
-              'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/20',
-              inboxConfiguration.liveRoutingEnabled
-                ? 'bg-slate-900/90 text-white'
-                : 'bg-slate-200 text-slate-600'
-            )}
-          >
-            <span
+          <div className="flex flex-col items-end gap-3">
+            {heroActions ? <div className="flex flex-wrap justify-end gap-2">{heroActions}</div> : null}
+            <div
               className={clsx(
-                'inline-flex h-2 w-2 rounded-full',
-                inboxConfiguration.liveRoutingEnabled ? 'animate-pulse bg-emerald-400' : 'bg-slate-400'
+                'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/20',
+                inboxConfiguration.liveRoutingEnabled
+                  ? 'bg-slate-900/90 text-white'
+                  : 'bg-slate-200 text-slate-600'
               )}
-              aria-hidden="true"
-            />
-            {inboxConfiguration.liveRoutingEnabled ? 'Live routing enabled' : 'Live routing paused'}
+            >
+              <span
+                className={clsx(
+                  'inline-flex h-2 w-2 rounded-full',
+                  inboxConfiguration.liveRoutingEnabled ? 'animate-pulse bg-emerald-400' : 'bg-slate-400'
+                )}
+                aria-hidden="true"
+              />
+              {inboxConfiguration.liveRoutingEnabled ? copy.badgeActive : copy.badgePaused}
+            </div>
           </div>
         </div>
 
-        
         <div className="mt-6 space-y-6">
+          <form
+            onSubmit={handleCreateConversation}
+            className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm"
+          >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700">{copy.createTitle}</h2>
+                <p className="mt-1 text-xs text-slate-500">{copy.createDescription}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2 text-xs">
+                {createConversationError ? (
+                  <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-600">
+                    {createConversationError}
+                  </span>
+                ) : null}
+                {createConversationSuccess ? (
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-600">
+                    {createConversationSuccess}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <p className="mt-3 text-[11px] uppercase tracking-[0.3em] text-slate-400">
+              You will appear as {creatorDisplayName} · {creatorRoleLabel}
+            </p>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Subject
+                <input
+                  type="text"
+                  value={createDraft.subject}
+                  onChange={(event) => handleCreateFieldChange('subject', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                  placeholder="Leak investigation for unit 12"
+                  minLength={3}
+                  required
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Customer name
+                <input
+                  type="text"
+                  value={createDraft.customerName}
+                  onChange={(event) => handleCreateFieldChange('customerName', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                  placeholder="Jordan (Facilities Lead)"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Customer reference
+                <input
+                  type="text"
+                  value={createDraft.customerReference}
+                  onChange={(event) => handleCreateFieldChange('customerReference', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                  placeholder="FAC-1029"
+                  required
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Participant type
+                <select
+                  value={createDraft.customerType}
+                  onChange={(event) => handleCreateFieldChange('customerType', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                >
+                  <option value="user">Client contact</option>
+                  <option value="company">Company stakeholder</option>
+                  <option value="enterprise">Enterprise team</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Job / order ID
+                <input
+                  type="text"
+                  value={createDraft.jobId}
+                  onChange={(event) => handleCreateFieldChange('jobId', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                  placeholder="JOB-4732"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                Location or asset
+                <input
+                  type="text"
+                  value={createDraft.location}
+                  onChange={(event) => handleCreateFieldChange('location', event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                  placeholder="Tower B · Pump room"
+                />
+              </label>
+            </div>
+            <label className="mt-4 flex flex-col gap-1 text-xs font-medium text-slate-600">
+              Initial message
+              <textarea
+                rows={3}
+                value={createDraft.initialMessage}
+                onChange={(event) => handleCreateFieldChange('initialMessage', event.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                placeholder="Hi team — sharing a quick update before arrival."
+              />
+            </label>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-sky-500"
+                  checked={createDraft.aiAssistEnabled}
+                  onChange={(event) => handleCreateFieldChange('aiAssistEnabled', event.target.checked)}
+                />
+                <span>Keep AI suggestions enabled</span>
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded-full bg-sky-500 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:opacity-60"
+                  disabled={creatingConversation}
+                >
+                  {creatingConversation ? 'Creating…' : copy.createButton}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreateDraft({ ...DEFAULT_CREATE_DRAFT })}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                  disabled={creatingConversation}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </form>
+
           <InboxSettingsForm
             configuration={inboxConfiguration}
             loading={settingsLoading}
@@ -1269,5 +1698,33 @@ function Communications() {
     </div>
   );
 }
+
+Communications.propTypes = {
+  variant: PropTypes.oneOf(['default', 'serviceman']),
+  allowedRoles: PropTypes.arrayOf(PropTypes.string),
+  initialParticipantId: PropTypes.string,
+  embedded: PropTypes.bool,
+  heroActions: PropTypes.node,
+  currentParticipant: PropTypes.shape({
+    participantReferenceId: PropTypes.string,
+    participantType: PropTypes.string,
+    displayName: PropTypes.string,
+    role: PropTypes.string,
+    timezone: PropTypes.string
+  }),
+  onConversationCreated: PropTypes.func,
+  onWorkspaceMetricsChange: PropTypes.func
+};
+
+Communications.defaultProps = {
+  variant: 'default',
+  allowedRoles: COMMUNICATIONS_ALLOWED_ROLES,
+  initialParticipantId: '',
+  embedded: false,
+  heroActions: null,
+  currentParticipant: null,
+  onConversationCreated: null,
+  onWorkspaceMetricsChange: null
+};
 
 export default Communications;

@@ -28,10 +28,12 @@ function sanitiseAccount(instance) {
   if (!instance) return null;
   const account = instance.get({ plain: true });
   account.balance = toNumber(account.balance);
-  account.pending = toNumber(account.pending);
+  account.holdBalance = toNumber(account.holdBalance);
+  account.pending = account.holdBalance;
   account.spendingLimit = account.spendingLimit != null ? toNumber(account.spendingLimit) : null;
   account.autopayoutThreshold =
     account.autopayoutThreshold != null ? toNumber(account.autopayoutThreshold) : null;
+  account.displayName = account.displayName || account.alias || 'Wallet account';
   return account;
 }
 
@@ -165,25 +167,33 @@ export async function createWalletAccount({
   autopayoutEnabled = false,
   autopayoutThreshold = null,
   spendingLimit = null,
-  actorId = null,
-  actorRole = null
+  actorId = null
 }) {
   if (!userId && !companyId) {
     throw createServiceError('userId or companyId is required to create a wallet account');
   }
 
+  const ownerId = userId || companyId;
+  const ownerType = userId ? 'customer' : 'company';
+  const resolvedAlias = alias?.trim?.() || null;
+  const displayName = resolvedAlias || (ownerType === 'customer' ? 'Customer wallet' : 'Company wallet');
+
   const account = await WalletAccount.create({
+    ownerId,
+    ownerType,
     userId,
     companyId,
     currency,
-    alias,
-    metadata,
+    displayName,
+    alias: resolvedAlias || displayName,
+    metadata: metadata && typeof metadata === 'object' ? metadata : {},
     autopayoutEnabled: Boolean(autopayoutEnabled),
     autopayoutThreshold: autopayoutThreshold != null ? normaliseAmount(autopayoutThreshold) : null,
     spendingLimit: spendingLimit != null ? normaliseAmount(spendingLimit) : null,
     createdBy: actorId || null,
     updatedBy: actorId || null,
-    status: 'active'
+    status: 'active',
+    lastReconciledAt: new Date()
   });
 
   return sanitiseAccount(account);
@@ -227,11 +237,12 @@ async function buildAccountSummary(account) {
 
   const lastTransaction = recentTransactions[0] ? sanitiseTransaction(recentTransactions[0]) : null;
   const recent = recentTransactions.map((transaction) => sanitiseTransaction(transaction));
+  const pending = toNumber(account.holdBalance);
 
   return {
     balance: toNumber(account.balance),
-    pending: toNumber(account.pending),
-    available: toNumber(account.balance) - toNumber(account.pending),
+    pending,
+    available: toNumber(account.balance) - pending,
     lifetimeCredits: toNumber(creditTotal || 0),
     lifetimeDebits: toNumber(debitTotal || 0),
     lastTransaction,
@@ -419,7 +430,7 @@ export async function createWalletTransaction(accountId, payload, { actorId = nu
     }
 
     const balanceBefore = toNumber(account.balance);
-    const pendingBefore = toNumber(account.pending);
+    const pendingBefore = toNumber(account.holdBalance);
     let balanceAfter = balanceBefore;
     let pendingAfter = pendingBefore;
 
@@ -454,11 +465,14 @@ export async function createWalletTransaction(accountId, payload, { actorId = nu
     await account.update(
       {
         balance: balanceAfter,
-        pending: pendingAfter,
-        updatedBy: actorId || account.updatedBy
+        holdBalance: pendingAfter,
+        updatedBy: actorId || account.updatedBy,
+        lastReconciledAt: payload.occurredAt ? new Date(payload.occurredAt) : new Date()
       },
       { transaction }
     );
+    account.balance = balanceAfter;
+    account.holdBalance = pendingAfter;
 
     const record = await WalletTransaction.create(
       {
@@ -467,6 +481,7 @@ export async function createWalletTransaction(accountId, payload, { actorId = nu
         amount,
         currency: account.currency,
         description: payload.description || null,
+        referenceType: payload.referenceType || null,
         referenceId: payload.referenceId || null,
         actorId: actorId || null,
         actorRole: actorRole || null,
@@ -474,6 +489,7 @@ export async function createWalletTransaction(accountId, payload, { actorId = nu
         balanceAfter,
         pendingBefore,
         pendingAfter,
+        runningBalance: balanceAfter,
         metadata: payload.metadata || {},
         occurredAt: payload.occurredAt ? new Date(payload.occurredAt) : new Date()
       },
@@ -594,6 +610,105 @@ export async function updateWalletPaymentMethod(
   }
 
   return sanitiseMethod(await WalletPaymentMethod.findByPk(method.id));
+}
+
+export async function deleteWalletPaymentMethod(accountId, methodId, { actorId = null } = {}) {
+  const method = await WalletPaymentMethod.findOne({
+    where: { id: methodId, walletAccountId: accountId }
+  });
+
+  if (!method) {
+    throw createServiceError('Payment method not found', 404);
+  }
+
+  const wasDefault = method.isDefaultPayout;
+  await method.destroy();
+
+  if (wasDefault) {
+    await WalletAccount.update(
+      { autopayoutMethodId: null, autopayoutEnabled: false, updatedBy: actorId || null },
+      { where: { id: accountId } }
+    );
+  }
+}
+
+function escapeCsvValue(value) {
+  if (value == null) {
+    return '';
+  }
+  const stringValue = String(value);
+  if (stringValue.includes('"') || stringValue.includes(',') || stringValue.includes('\n')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+export async function exportWalletTransactions(
+  accountId,
+  { type = null, startDate = null, endDate = null } = {}
+) {
+  const account = await WalletAccount.findByPk(accountId);
+  if (!account) {
+    throw createServiceError('Wallet account not found', 404);
+  }
+
+  const where = { walletAccountId: account.id };
+  if (type) {
+    where.type = Array.isArray(type) ? { [Op.in]: type } : type;
+  }
+  if (startDate || endDate) {
+    where.occurredAt = {};
+    if (startDate) {
+      where.occurredAt[Op.gte] = new Date(startDate);
+    }
+    if (endDate) {
+      where.occurredAt[Op.lte] = new Date(endDate);
+    }
+  }
+
+  const entries = await WalletTransaction.findAll({
+    where,
+    order: [['occurredAt', 'DESC']]
+  });
+
+  const rows = [
+    [
+      'Transaction ID',
+      'Occurred At',
+      'Type',
+      'Amount',
+      'Currency',
+      'Balance Before',
+      'Balance After',
+      'Pending Before',
+      'Pending After',
+      'Reference Type',
+      'Reference ID',
+      'Description'
+    ]
+  ];
+
+  entries.forEach((entry) => {
+    rows.push([
+      entry.id,
+      entry.occurredAt ? new Date(entry.occurredAt).toISOString() : '',
+      entry.type,
+      toNumber(entry.amount),
+      entry.currency,
+      toNumber(entry.balanceBefore),
+      toNumber(entry.balanceAfter),
+      toNumber(entry.pendingBefore),
+      toNumber(entry.pendingAfter),
+      entry.referenceType || '',
+      entry.referenceId || '',
+      entry.description || ''
+    ]);
+  });
+
+  const csv = rows.map((row) => row.map((value) => escapeCsvValue(value)).join(',')).join('\n');
+  const filename = `wallet-${account.id}-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+
+  return { filename, csv };
 }
 
 export async function getWalletOverview({ userId = null, companyId = null }) {

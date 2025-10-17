@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, TextInput, FormField, Checkbox, StatusPill, Spinner } from '../../../../components/ui/index.js';
 import ProviderTaxManagementPanel from './ProviderTaxManagementPanel.jsx';
 import { resolveStatusTone } from './ProviderSummaryGrid.jsx';
+import ProviderDocumentsSection from './documents/ProviderDocumentsSection.jsx';
 
 function TextArea({ id, value, onChange, rows = 4 }) {
   return (
@@ -973,6 +974,13 @@ function ProviderDetailWorkspace({ selected, enums, detailLoading, detailError, 
               </table>
             </div>
           </div>
+          <ProviderDocumentsSection
+            companyId={selected?.company?.id}
+            company={selected?.company}
+            documents={selectedDocuments}
+            handlers={handlers}
+            links={selected?.links}
+          />
 
           <div className="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -1087,6 +1095,12 @@ ProviderDetailWorkspace.propTypes = {
     onCreateTaxFiling: PropTypes.func,
     onUpdateTaxFiling: PropTypes.func,
     onDeleteTaxFiling: PropTypes.func
+    onFetchComplianceSummary: PropTypes.func,
+    onSubmitComplianceDocument: PropTypes.func,
+    onReviewComplianceDocument: PropTypes.func,
+    onEvaluateCompliance: PropTypes.func,
+    onToggleComplianceBadge: PropTypes.func,
+    onSuspendCompliance: PropTypes.func
   })
 };
 

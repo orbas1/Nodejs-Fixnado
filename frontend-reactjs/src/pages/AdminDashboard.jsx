@@ -1,12 +1,25 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, WalletIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, ClipboardDocumentListIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import {
+  BanknotesIcon,
+  MapIcon,
+  ShieldCheckIcon,
+  ClipboardDocumentListIcon,
+  WalletIcon,
+  Cog8ToothIcon,
+  BuildingOfficeIcon,
+  WrenchScrewdriverIcon,
+  SwatchIcon,
+  CubeIcon,
+  Squares2X2Icon,
+  GlobeAltIcon,
+  EyeIcon,
+  TagIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  TrashIcon
+} from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
 import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
 import {
@@ -26,22 +39,15 @@ import {
   upsertAdminProviderCoverage,
   deleteAdminProviderCoverage
 } from '../api/panelClient.js';
-import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
+import {
+  getProviderComplianceSummary,
+  submitProviderComplianceDocument,
+  reviewProviderComplianceDocument,
+  evaluateProviderCompliance,
+  toggleProviderBadge,
+  suspendProviderCompliance
+} from '../api/providerComplianceClient.js';
 import { listEnterpriseAccounts, DEFAULT_SUMMARY } from '../api/enterpriseAdminClient.js';
-import { BanknotesIcon, MapIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, SwatchIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, CubeIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, GlobeAltIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, EyeIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, Cog8ToothIcon, MapIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
-import { Dialog, Transition } from '@headlessui/react';
-import { BanknotesIcon, MapIcon, Cog6ToothIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { BanknotesIcon, MapIcon, TagIcon } from '@heroicons/react/24/outline';
-import DashboardLayout from '../components/dashboard/DashboardLayout.jsx';
-import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
-import { getAdminDashboard, PanelApiError } from '../api/panelClient.js';
 import {
   archiveAdminServiceCategory,
   archiveAdminServiceListing,
@@ -52,14 +58,6 @@ import {
   updateAdminServiceListing,
   updateAdminServiceListingStatus
 } from '../api/adminServiceClient.js';
-import { Button, SegmentedControl, StatusPill } from '../components/ui/index.js';
-import {
-  fetchComplianceControls,
-  createComplianceControl as createComplianceControlRequest,
-  updateComplianceControl as updateComplianceControlRequest,
-  deleteComplianceControl as deleteComplianceControlRequest,
-  updateComplianceAutomation
-} from '../api/adminComplianceClient.js';
 import {
   Button,
   SegmentedControl,
@@ -68,6 +66,13 @@ import {
   Spinner,
   FormField
 } from '../components/ui/index.js';
+import {
+  fetchComplianceControls,
+  createComplianceControl as createComplianceControlRequest,
+  updateComplianceControl as updateComplianceControlRequest,
+  deleteComplianceControl as deleteComplianceControlRequest,
+  updateComplianceAutomation
+} from '../api/adminComplianceClient.js';
 import { useAdminSession } from '../providers/AdminSessionProvider.jsx';
 import { getAdminAffiliateSettings } from '../api/affiliateClient.js';
 import AdminProfileSettingsPanel from '../components/admin/profile/AdminProfileSettingsPanel.jsx';
@@ -2550,11 +2555,16 @@ export default function AdminDashboard() {
         const result = await updateAdminProviderTaxProfile(companyId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
+  const handleFetchComplianceSummary = useCallback(
+    async (companyId, options = {}) => {
+      try {
+        return await getProviderComplianceSummary(companyId, options);
       } catch (error) {
         const panelError =
           error instanceof PanelApiError
             ? error
             : new PanelApiError('Unable to update tax profile', error?.status ?? 500, { cause: error });
+            : new PanelApiError('Unable to load compliance summary', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
@@ -2568,11 +2578,45 @@ export default function AdminDashboard() {
         const result = await createAdminProviderTaxFiling(companyId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
+    [handleProviderAuthError]
+  );
+
+  const handleSubmitComplianceDocument = useCallback(
+    async (companyId, payload) => {
+      try {
+        const document = await submitProviderComplianceDocument({ ...payload, companyId });
+        await Promise.all([
+          loadProviderDetail(companyId, { forceRefresh: true }),
+          loadProviderDirectory({ forceRefresh: true })
+        ]);
+        return document;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to upload document', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleReviewComplianceDocument = useCallback(
+    async (companyId, documentId, payload) => {
+      try {
+        const document = await reviewProviderComplianceDocument(documentId, payload);
+        await Promise.all([
+          loadProviderDetail(companyId, { forceRefresh: true }),
+          loadProviderDirectory({ forceRefresh: true })
+        ]);
+        return document;
       } catch (error) {
         const panelError =
           error instanceof PanelApiError
             ? error
             : new PanelApiError('Unable to create tax filing', error?.status ?? 500, { cause: error });
+            : new PanelApiError('Unable to review document', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
@@ -2586,11 +2630,24 @@ export default function AdminDashboard() {
         const result = await updateAdminProviderTaxFiling(companyId, filingId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleEvaluateCompliance = useCallback(
+    async (companyId, payload = {}) => {
+      try {
+        const application = await evaluateProviderCompliance(companyId, payload);
+        await Promise.all([
+          loadProviderDetail(companyId, { forceRefresh: true }),
+          loadProviderDirectory({ forceRefresh: true })
+        ]);
+        return application;
       } catch (error) {
         const panelError =
           error instanceof PanelApiError
             ? error
             : new PanelApiError('Unable to update tax filing', error?.status ?? 500, { cause: error });
+            : new PanelApiError('Unable to evaluate compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
@@ -2603,16 +2660,51 @@ export default function AdminDashboard() {
       try {
         await deleteAdminProviderTaxFiling(companyId, filingId);
         await loadProviderDetail(companyId, { forceRefresh: true });
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleToggleBadgeVisibility = useCallback(
+    async (companyId, visible, actorId = null) => {
+      try {
+        const application = await toggleProviderBadge(companyId, { visible, actorId });
+        await Promise.all([
+          loadProviderDetail(companyId, { forceRefresh: true }),
+          loadProviderDirectory({ forceRefresh: true })
+        ]);
+        return application;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update badge visibility', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+  );
+
+  const handleSuspendProviderCompliance = useCallback(
+    async (companyId, payload) => {
+      try {
+        const application = await suspendProviderCompliance(companyId, payload);
+        await Promise.all([
+          loadProviderDetail(companyId, { forceRefresh: true }),
+          loadProviderDirectory({ forceRefresh: true })
+        ]);
+        return application;
       } catch (error) {
         const panelError =
           error instanceof PanelApiError
             ? error
             : new PanelApiError('Unable to delete tax filing', error?.status ?? 500, { cause: error });
+            : new PanelApiError('Unable to suspend provider compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
     [loadProviderDetail, handleProviderAuthError]
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
   const providerHandlers = useMemo(
@@ -2630,6 +2722,12 @@ export default function AdminDashboard() {
       onCreateTaxFiling: handleCreateProviderTaxFiling,
       onUpdateTaxFiling: handleUpdateProviderTaxFiling,
       onDeleteTaxFiling: handleDeleteProviderTaxFiling
+      onFetchComplianceSummary: handleFetchComplianceSummary,
+      onSubmitComplianceDocument: handleSubmitComplianceDocument,
+      onReviewComplianceDocument: handleReviewComplianceDocument,
+      onEvaluateCompliance: handleEvaluateCompliance,
+      onToggleComplianceBadge: handleToggleBadgeVisibility,
+      onSuspendCompliance: handleSuspendProviderCompliance
     }),
     [
       handleRefreshProviderDirectory,
@@ -2645,6 +2743,12 @@ export default function AdminDashboard() {
       handleCreateProviderTaxFiling,
       handleUpdateProviderTaxFiling,
       handleDeleteProviderTaxFiling
+      handleFetchComplianceSummary,
+      handleSubmitComplianceDocument,
+      handleReviewComplianceDocument,
+      handleEvaluateCompliance,
+      handleToggleBadgeVisibility,
+      handleSuspendProviderCompliance
     ]
   );
 

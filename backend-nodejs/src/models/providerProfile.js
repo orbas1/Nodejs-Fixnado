@@ -80,6 +80,31 @@ ProviderProfile.init(
       type: DataTypes.STRING(160),
       allowNull: true
     },
+    tagline: {
+      field: 'tagline',
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
+    missionStatement: {
+      field: 'mission_statement',
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    brandPrimaryColor: {
+      field: 'brand_primary_color',
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+    brandSecondaryColor: {
+      field: 'brand_secondary_color',
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+    brandFont: {
+      field: 'brand_font',
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
     operationsNotes: {
       field: 'operations_notes',
       type: DataTypes.TEXT,
@@ -88,6 +113,57 @@ ProviderProfile.init(
     coverageNotes: {
       field: 'coverage_notes',
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    supportHours: {
+      field: 'support_hours',
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {}
+    },
+    socialLinks: {
+      field: 'social_links',
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    mediaGallery: {
+      field: 'media_gallery',
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    dispatchRadiusKm: {
+      field: 'dispatch_radius_km',
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    preferredResponseMinutes: {
+      field: 'preferred_response_minutes',
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    billingEmail: {
+      field: 'billing_email',
+      type: DataTypes.STRING(180),
+      allowNull: true,
+      validate: {
+        isEmail: true
+      }
+    },
+    billingPhone: {
+      field: 'billing_phone',
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    operationsPlaybookUrl: {
+      field: 'operations_playbook_url',
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    insurancePolicyUrl: {
+      field: 'insurance_policy_url',
+      type: DataTypes.STRING(255),
       allowNull: true
     },
     averageRating: {

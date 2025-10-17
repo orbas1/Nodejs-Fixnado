@@ -1781,14 +1781,32 @@ const mockDashboards = {
             label: 'Crew Ads Insights',
             features: ['campaigns', 'guardrails']
           }
+        },
+        communications: {
+          tenantId: 'fixnado-demo',
+          participant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
         }
       },
     navigation: [
       {
         id: 'overview',
         icon: 'profile',
-        label: 'Profile Overview',
-        description: 'Assignments, travel, and quality trends for Jordan’s crew.',
+        label: 'Control Centre Overview',
+        description: 'Launchpad for assignments, availability, and asset controls.',
         type: 'overview',
         analytics: {
           metrics: [
@@ -1851,6 +1869,51 @@ const mockDashboards = {
             'Schedule calibration kit swap before Friday to avoid delays.',
             'Average CSAT improved 0.2 points after new completion checklist.',
             'Confirm spare PPE stock before next hospital rotation.'
+          ]
+        }
+      },
+      {
+        id: 'escrows',
+        icon: 'finance',
+        label: 'Escrow Management',
+        description: 'Release readiness, notes, and work logs aligned with finance.',
+        type: 'serviceman-escrows',
+        data: {
+          summary: {
+            totalAmountFormatted: '£48.2k',
+            readyForRelease: 3,
+            onHold: 2,
+            active: 5
+          },
+          upcoming: [
+            {
+              id: 'ESC-4821',
+              title: 'Hospital sterilisation',
+              autoReleaseAt: '2025-03-18T16:00:00Z',
+              amountFormatted: '£8,200',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4794',
+              title: 'University access control',
+              autoReleaseAt: '2025-03-19T18:30:00Z',
+              amountFormatted: '£6,450',
+              status: 'pending'
+            },
+            {
+              id: 'ESC-4760',
+              title: 'Retail lighting retrofit',
+              autoReleaseAt: '2025-03-20T15:00:00Z',
+              amountFormatted: '£4,980',
+              status: 'funded'
+            },
+            {
+              id: 'ESC-4712',
+              title: 'Emergency HVAC follow-up',
+              autoReleaseAt: '2025-03-22T09:30:00Z',
+              amountFormatted: '£3,300',
+              status: 'pending'
+            }
           ]
         }
       },
@@ -2006,6 +2069,52 @@ const mockDashboards = {
         }
       },
       {
+        id: 'booking-management',
+        icon: 'pipeline',
+        label: 'Booking Management',
+        description: 'Manage jobs, notes, and crew preferences without leaving the cockpit.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: 'SRV-2210',
+            timezone: 'Europe/London',
+            summary: {
+              totalAssignments: 28,
+              scheduledAssignments: 7,
+              activeAssignments: 5,
+              awaitingResponse: 3,
+              completedThisMonth: 21,
+              slaAtRisk: 1,
+              revenueEarned: 18450,
+              averageTravelMinutes: 26
+            }
+        id: 'inbox',
+        icon: 'support',
+        label: 'Crew Inbox',
+        description: 'Coordinate live chat, quick replies, and escalation guardrails.',
+        type: 'serviceman-inbox',
+        data: {
+          defaultParticipantId: 'PART-2210',
+          currentParticipant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          tenantId: 'fixnado-demo',
+          summary: {
+            activeThreads: 6,
+            awaitingResponse: 2,
+            entryPoints: 4,
+            quickReplies: 9,
+            escalationRules: 3
+          }
+        }
+      },
+      {
         id: 'toolkit',
         icon: 'assets',
         label: 'Asset Kit',
@@ -2019,6 +2128,228 @@ const mockDashboards = {
             ['PPE kit – medical', 'In delivery', 'Valid · due 03 Jul', 'Restock after hospital job'],
             ['MEWP harness', 'Inspection due', 'Expired 10 Mar', 'Book inspection slot']
           ]
+        }
+      },
+      {
+        id: 'financial-management',
+        icon: 'finance',
+        label: 'Financial management',
+        description: 'Monitor payouts, reimbursements, and allowances in one place.',
+        type: 'serviceman-finance',
+        data: {
+          context: {
+            servicemanId: 'SRV-2210',
+            serviceman: {
+              id: 'SRV-2210',
+              name: 'Jordan Miles',
+              role: 'Lead technician',
+              region: 'Metro North'
+            }
+          },
+          profile: {
+            currency: 'GBP',
+            baseHourlyRate: 28,
+            overtimeRate: 36,
+            calloutFee: 65,
+            mileageRate: 0.45,
+            payoutMethod: 'wallet',
+            payoutSchedule: 'weekly',
+            taxRate: 22,
+            taxIdentifier: 'UTR-210394',
+            payoutInstructions:
+              'Release weekly payouts every Friday by 17:00. Apply hazard premium when assignments include hospital sterilisation.',
+            bankAccount: {
+              accountName: 'Jordan Miles',
+              accountNumber: '****1122',
+              sortCode: '04-00-15',
+              iban: null,
+              bic: null
+            },
+            updatedAt: '2025-03-18T09:30:00.000Z'
+          },
+          summary: {
+            earnings: { total: 4200, outstanding: 860, payable: 1250, paid: 2090 },
+            expenses: { total: 740, awaitingReimbursement: 180, reimbursed: 560 },
+            allowances: { active: 3, inactive: 1 }
+          },
+          earnings: {
+            items: [
+              {
+                id: 'earn-2451',
+                title: 'Hospital sterilisation · completion bonus',
+                reference: 'EARN-2451',
+                amount: 1250,
+                currency: 'GBP',
+                status: 'payable',
+                dueAt: '2025-03-21T12:00:00.000Z',
+                paidAt: null,
+                notes: 'Awaiting QA acceptance and invoice coding.',
+                createdAt: '2025-03-18T08:00:00.000Z',
+                updatedAt: '2025-03-18T08:00:00.000Z'
+              },
+              {
+                id: 'earn-2442',
+                title: 'Emergency HVAC call-out',
+                reference: 'EARN-2442',
+                amount: 1200,
+                currency: 'GBP',
+                status: 'paid',
+                dueAt: '2025-03-14T09:00:00.000Z',
+                paidAt: '2025-03-15T16:30:00.000Z',
+                notes: 'Paid via wallet top-up after completion sign-off.',
+                createdAt: '2025-03-14T07:15:00.000Z',
+                updatedAt: '2025-03-15T16:30:00.000Z'
+              },
+              {
+                id: 'earn-2427',
+                title: 'Weekend standby retainer',
+                reference: 'EARN-2427',
+                amount: 890,
+                currency: 'GBP',
+                status: 'paid',
+                dueAt: '2025-03-10T08:00:00.000Z',
+                paidAt: '2025-03-11T09:45:00.000Z',
+                notes: 'Auto-released after weekend rota completion.',
+                createdAt: '2025-03-09T18:00:00.000Z',
+                updatedAt: '2025-03-11T09:45:00.000Z'
+              },
+              {
+                id: 'earn-2460',
+                title: 'University access control upgrade',
+                reference: 'EARN-2460',
+                amount: 860,
+                currency: 'GBP',
+                status: 'approved',
+                dueAt: '2025-03-25T17:00:00.000Z',
+                paidAt: null,
+                notes: 'Finance to release after integration checklist upload.',
+                createdAt: '2025-03-18T12:30:00.000Z',
+                updatedAt: '2025-03-18T12:30:00.000Z'
+              }
+            ],
+            meta: {
+              total: 4,
+              outstanding: 860,
+              payable: 1250,
+              paid: 2090
+            }
+          },
+          expenses: {
+            items: [
+              {
+                id: 'exp-905',
+                title: 'Hospital parking reimbursement',
+                description: 'Parking for sterile services deployment.',
+                category: 'travel',
+                amount: 180,
+                currency: 'GBP',
+                status: 'submitted',
+                submittedAt: '2025-03-17T19:10:00.000Z',
+                approvedAt: null,
+                receipts: [
+                  {
+                    id: 'rcpt-101',
+                    label: 'Parking receipt',
+                    url: 'https://assets.fixnado.example/receipts/rcpt-101.pdf',
+                    uploadedAt: '2025-03-17T19:15:00.000Z'
+                  }
+                ],
+                notes: 'Awaiting facilities manager approval.',
+                createdAt: '2025-03-17T19:10:00.000Z',
+                updatedAt: '2025-03-17T19:15:00.000Z'
+              },
+              {
+                id: 'exp-881',
+                title: 'Sterilisation PPE kit',
+                description: 'Replacement PPE ordered for hospital project.',
+                category: 'equipment',
+                amount: 560,
+                currency: 'GBP',
+                status: 'reimbursed',
+                submittedAt: '2025-03-08T10:00:00.000Z',
+                approvedAt: '2025-03-09T14:30:00.000Z',
+                receipts: [
+                  {
+                    id: 'rcpt-102',
+                    label: 'PPE supplier invoice',
+                    url: 'https://assets.fixnado.example/receipts/rcpt-102.jpg',
+                    uploadedAt: '2025-03-08T10:05:00.000Z'
+                  }
+                ],
+                notes: 'Paid via provider cost centre.',
+                createdAt: '2025-03-08T10:00:00.000Z',
+                updatedAt: '2025-03-10T08:15:00.000Z'
+              }
+            ],
+            meta: {
+              total: 2,
+              awaitingReimbursement: 180,
+              reimbursed: 560
+            }
+          },
+          allowances: {
+            items: [
+              {
+                id: 'allow-201',
+                name: 'On-call retainer',
+                amount: 120,
+                currency: 'GBP',
+                cadence: 'per_week',
+                effectiveFrom: '2025-01-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-202',
+                name: 'Hospital sterilisation premium',
+                amount: 85,
+                currency: 'GBP',
+                cadence: 'per_job',
+                effectiveFrom: '2025-02-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-203',
+                name: 'Metro travel uplift',
+                amount: 25,
+                currency: 'GBP',
+                cadence: 'per_day',
+                effectiveFrom: '2024-11-01T00:00:00.000Z',
+                effectiveTo: null,
+                isActive: true
+              },
+              {
+                id: 'allow-180',
+                name: 'Winter hazard bonus',
+                amount: 50,
+                currency: 'GBP',
+                cadence: 'per_day',
+                effectiveFrom: '2024-12-01T00:00:00.000Z',
+                effectiveTo: '2025-02-28T00:00:00.000Z',
+                isActive: false
+              }
+            ]
+          },
+          documents: {
+            receipts: [
+              {
+                id: 'rcpt-101',
+                label: 'Parking receipt',
+                url: 'https://assets.fixnado.example/receipts/rcpt-101.pdf'
+              },
+              {
+                id: 'rcpt-102',
+                label: 'PPE supplier invoice',
+                url: 'https://assets.fixnado.example/receipts/rcpt-102.jpg'
+              }
+            ]
+          },
+          permissions: {
+            canManagePayments: true,
+            canSubmitExpenses: true,
+            canManageAllowances: true
+          }
         }
       },
       {
@@ -2046,6 +2377,285 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'id-verification',
+        icon: 'compliance',
+        label: 'ID Verification',
+        description: 'Identity records, document governance, and reviewer notes.',
+        type: 'serviceman-identity',
+        data: {
+          verification: {
+            servicemanId: 'SRV-2210',
+            status: 'in_review',
+            riskRating: 'medium',
+            verificationLevel: 'enhanced',
+            requestedAt: '2025-02-10T09:12:00Z',
+            submittedAt: '2025-02-11T16:45:00Z',
+            approvedAt: null,
+            expiresAt: '2026-02-10T00:00:00Z',
+            reviewer: {
+              id: 'USR-8890',
+              name: 'Clara Benton',
+              email: 'clara.benton@fixnado.example'
+            },
+            notes: 'Awaiting utility clearance confirmation before final approval.'
+          },
+          documents: [
+            {
+              id: 'doc-passport',
+              documentType: 'passport',
+              status: 'approved',
+              documentNumber: '502993741',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2021-04-14',
+              expiresAt: '2031-04-13',
+              fileUrl: 'https://cdn.fixnado.example/documents/passport-jordan-miles.pdf',
+              notes: 'Verified against original by compliance on 12 Feb 2025.'
+            },
+            {
+              id: 'doc-driving-licence',
+              documentType: 'driving_license',
+              status: 'in_review',
+              documentNumber: 'MILEJ8021985A99',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2022-08-01',
+              expiresAt: '2032-07-31',
+              fileUrl: 'https://cdn.fixnado.example/documents/licence-jordan-miles.pdf',
+              notes: 'DVLA status refresh scheduled for 18 Feb 2025.'
+            },
+            {
+              id: 'doc-work-permit',
+              documentType: 'work_permit',
+              status: 'pending',
+              documentNumber: 'UK-WP-77421',
+              issuingCountry: 'United Kingdom',
+              issuedAt: null,
+              expiresAt: null,
+              fileUrl: '',
+              notes: 'Awaiting upload from crew coordinator.'
+            }
+          ],
+          checks: [
+            {
+              id: 'check-reference',
+              label: 'Professional reference validation',
+              owner: 'Operations Pod Beta',
+              status: 'in_progress',
+              dueAt: '2025-02-18',
+              completedAt: null
+            },
+            {
+              id: 'check-criminal',
+              label: 'Enhanced background screening',
+              owner: 'Compliance',
+              status: 'completed',
+              dueAt: '2025-02-12',
+              completedAt: '2025-02-12'
+            },
+            {
+              id: 'check-mvr',
+              label: 'Motor vehicle record pull',
+              owner: 'Fleet Safety',
+              status: 'not_started',
+              dueAt: '2025-02-20',
+              completedAt: null
+            }
+          ],
+          watchers: [
+            {
+              id: 'watcher-clara',
+              role: 'compliance_lead',
+              user: {
+                id: 'USR-8890',
+                name: 'Clara Benton',
+                email: 'clara.benton@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-samir',
+              role: 'operations_lead',
+              user: {
+                id: 'USR-7721',
+                name: 'Samir Patel',
+                email: 'samir.patel@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-lina',
+              role: 'safety_officer',
+              user: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez',
+                email: 'lina.alvarez@fixnado.example'
+              }
+            }
+          ],
+          events: [
+            {
+              id: 'event-1',
+              summary: 'Reviewer assigned to enhanced check',
+              eventType: 'assignment',
+              occurredAt: '2025-02-10T10:05:00Z',
+              actor: {
+                id: 'USR-7721',
+                name: 'Samir Patel'
+              }
+            },
+            {
+              id: 'event-2',
+              summary: 'Submitted passport document',
+              eventType: 'document_update',
+              occurredAt: '2025-02-11T16:40:00Z',
+              actor: {
+                id: 'SRV-2210',
+                name: 'Jordan Miles'
+              }
+            },
+            {
+              id: 'event-3',
+              summary: 'Background screening cleared',
+              eventType: 'compliance_check',
+              occurredAt: '2025-02-12T09:30:00Z',
+              actor: {
+                id: 'USR-8890',
+                name: 'Clara Benton'
+              }
+            },
+            {
+              id: 'event-4',
+              summary: 'Requested updated vehicle documents',
+              eventType: 'note',
+              occurredAt: '2025-02-13T14:15:00Z',
+              actor: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez'
+              }
+            }
+          ],
+          referenceData: {
+            statuses: ['pending', 'in_review', 'approved', 'rejected', 'suspended'],
+            riskRatings: ['low', 'medium', 'high', 'critical'],
+            verificationLevels: ['standard', 'enhanced', 'expedited'],
+            documentTypes: ['passport', 'driving_license', 'id_card', 'work_permit', 'insurance_certificate'],
+            documentStatuses: ['pending', 'in_review', 'approved', 'rejected', 'expired'],
+            checkStatuses: ['not_started', 'in_progress', 'completed', 'blocked'],
+            watcherRoles: ['operations_lead', 'compliance_lead', 'safety_officer', 'account_manager'],
+            eventTypes: ['note', 'document_update', 'assignment', 'compliance_check', 'system_alert']
+          }
+        }
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: {
+            general: {
+              heroTitle: 'Metro North rapid response crew',
+              heroSubtitle: 'Trusted specialists on every critical dispatch',
+              heroTagline: 'Average arrival under 90 minutes across Metro North.',
+              callToActionLabel: 'Book this crew',
+              callToActionUrl: 'https://app.fixnado.com/bookings',
+              heroImageUrl: 'https://cdn.fixnado.com/images/crews/metro-north-hero.jpg',
+              aboutContent:
+                'Jordan Miles leads a Fixnado certified crew covering high-priority facilities, event resets, and compliance call-outs.'
+            },
+            branding: {
+              primaryColor: '#1D4ED8',
+              accentColor: '#0EA5E9',
+              theme: 'dark',
+              layout: 'spotlight',
+              logoUrl: 'https://cdn.fixnado.com/images/logos/metro-north.svg',
+              galleryMedia: [
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-1.jpg',
+                  altText: 'Crew installing HVAC units'
+                },
+                {
+                  url: 'https://cdn.fixnado.com/images/crews/gallery-2.jpg',
+                  altText: 'Technician completing compliance checklist'
+                }
+              ]
+            },
+            contact: {
+              contactEmail: 'crew@fixnado.com',
+              contactPhone: '+44 20 1234 5678',
+              emergencyPhone: '+44 20 7654 3210',
+              bookingUrl: 'https://app.fixnado.com/bookings',
+              serviceAreas: ['Metro North', 'Central Loop'],
+              serviceTags: ['HVAC', 'sanitation', 'rapid response'],
+              contactHours: [
+                { label: 'Weekdays', value: '06:00 - 20:00' },
+                { label: 'Weekends', value: '08:00 - 18:00' }
+              ],
+              languages: ['English'],
+              socialLinks: {
+                facebook: '',
+                instagram: '',
+                linkedin: 'https://www.linkedin.com/company/fixnado',
+                youtube: '',
+                twitter: ''
+              }
+            },
+            operations: {
+              allowOnlineBooking: true,
+              enableEnquiryForm: true,
+              showTravelRadius: true,
+              travelRadiusKm: 25,
+              averageResponseMinutes: 90,
+              emergencySupport: true
+            },
+            content: {
+              highlights: ['Fixnado certified', 'Rapid arrival guarantee', 'Concierge messaging'],
+              testimonials: [
+                {
+                  name: 'Avery Harper',
+                  role: 'Facilities Director',
+                  quote: 'Jordan’s crew is on site faster than any vendor we have used.'
+                }
+              ],
+              featuredProjects: [
+                {
+                  title: 'Hospital isolation reset',
+                  summary: 'Completed sanitisation and filter replacements within 12 hours.',
+                  imageUrl: 'https://cdn.fixnado.com/images/projects/hospital-reset.jpg',
+                  link: 'https://app.fixnado.com/cases/hospital-reset'
+                }
+              ]
+            },
+            seo: {
+              seoTitle: 'Jordan Miles Crew | Fixnado Metro North Technicians',
+              seoDescription:
+                'Book the Metro North crew for rapid FM, HVAC, and sanitation assignments with audited travel buffers.',
+              seoKeywords: ['fixnado crew', 'metro north technicians'],
+              seoIndexable: true,
+              seoMetaImageUrl: 'https://cdn.fixnado.com/images/social/metro-north-og.jpg'
+            },
+            access: {
+              allowedRoles: ['serviceman', 'provider'],
+              publishedAt: new Date().toISOString()
+            }
+          },
+          meta: {
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'SRV-2210',
+            allowedRoles: ['serviceman', 'provider']
+          }
+        }
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile Settings',
+        description: 'Keep your crew profile, emergency contacts, and gear assignments current.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'Updates sync instantly with provider leadership dashboards and dispatch automations.'
+        }
+        id: 'serviceman-disputes',
+        icon: 'compliance',
+        label: 'Dispute Management',
+        description: 'Manage crew dispute cases, action items, and evidence.',
+        type: 'component'
       }
     ]
   },
@@ -2317,6 +2927,17 @@ const mockDashboards = {
         }
       },
       {
+        id: 'escrow-management',
+        icon: 'finance',
+        label: 'Escrow management',
+        description: 'Escrow funding status, approvals, and release readiness.',
+        type: 'component',
+        meta: {
+          api: 'provider-escrows',
+          providerId: 'PRV-1108'
+        }
+      },
+      {
         id: 'inventory',
         icon: 'assets',
         label: 'Tools & Materials',
@@ -2427,7 +3048,143 @@ const mockDashboards = {
         }
       },
       {
+        id: 'full-inbox',
+        icon: 'support',
+        label: 'Full inbox',
+        description: 'Configure routing, quick replies, and escalation guardrails.',
+        type: 'provider-inbox',
+        data: {
+          tenantId: 'provider-demo',
+          summary: {
+            entryPoints: 3,
+            quickReplies: 5,
+            escalationRules: 2,
+            liveRoutingEnabled: true,
+            timezone: 'Europe/London',
+            updatedAt: '2024-01-15T10:00:00.000Z'
+          },
+          capabilities: { allowManage: true },
+          snapshot: {
+            configuration: {
+              liveRoutingEnabled: true,
+              defaultGreeting: 'Welcome to Fixnado support – let us know how we can help.',
+              aiAssistDisplayName: 'Fixnado Assist',
+              aiAssistDescription: 'Drafts replies, triages intent, and surfaces account context.',
+              timezone: 'Europe/London',
+              quietHoursStart: '20:00',
+              quietHoursEnd: '06:00',
+              updatedAt: '2024-01-15T10:00:00.000Z'
+            },
+            entryPoints: [
+              {
+                id: 'ep-web',
+                key: 'web_widget',
+                label: 'Web widget',
+                description: 'Appears on provider storefronts and pricing pages.',
+                icon: '💬',
+                defaultMessage:
+                  'Need help finalising a quote? Message us and we will respond in under 2 minutes.',
+                enabled: true,
+                displayOrder: 0,
+                imageUrl: '',
+                ctaLabel: 'Open chat',
+                ctaUrl: '/contact'
+              },
+              {
+                id: 'ep-checkout',
+                key: 'checkout',
+                label: 'Checkout reassurance',
+                description: 'Guides customers through SME checkout flows.',
+                icon: '💳',
+                defaultMessage:
+                  'Have a question about billing or deposits? Our concierge will resolve it immediately.',
+                enabled: true,
+                displayOrder: 1,
+                imageUrl: '',
+                ctaLabel: 'Secure booking',
+                ctaUrl: '/checkout'
+              },
+              {
+                id: 'ep-mobile',
+                key: 'mobile_app',
+                label: 'Mobile app inbox',
+                description: 'Native widget for the field app.',
+                icon: '📱',
+                defaultMessage: 'Share on-site photos or handover updates directly with HQ.',
+                enabled: true,
+                displayOrder: 2,
+                imageUrl: '',
+                ctaLabel: 'Open app',
+                ctaUrl: 'fixnado://inbox'
+              }
+            ],
+            quickReplies: [
+              {
+                id: 'qr-ack',
+                title: 'Acknowledgement',
+                body:
+                  'Thanks for contacting Fixnado. A coordinator is reviewing this now and will reply within 10 minutes.',
+                category: 'general',
+                sortOrder: 1,
+                allowedRoles: ['provider_admin', 'provider_manager']
+              },
+              {
+                id: 'qr-sla',
+                title: 'SLA reminder',
+                body:
+                  'Our service crew is on the way and will arrive within the agreed SLA window. We will keep you updated.',
+                category: 'operations',
+                sortOrder: 2,
+                allowedRoles: ['provider_manager', 'crew_lead']
+              },
+              {
+                id: 'qr-escalation',
+                title: 'Escalation notice',
+                body:
+                  'We have escalated this conversation to the operations lead and will respond with an action plan shortly.',
+                category: 'operations',
+                sortOrder: 3,
+                allowedRoles: ['provider_admin']
+              }
+            ],
+            escalationRules: [
+              {
+                id: 'er-keyword',
+                name: 'Safety keywords',
+                description: 'Escalate when safety incidents are reported.',
+                triggerType: 'keyword',
+                triggerMetadata: { keywords: ['injury', 'gas leak', 'fire'] },
+                targetType: 'team',
+                targetReference: 'ops-safety',
+                targetLabel: 'Operations safety desk',
+                allowedRoles: ['provider_admin'],
+                slaMinutes: 5,
+                responseTemplate:
+                  'Thanks for flagging this. The safety team has been alerted and will call you immediately.',
+                active: true
+              },
+              {
+                id: 'er-inactivity',
+                name: 'Inactivity >15m',
+                description: 'Ensure urgent threads are never left unattended.',
+                triggerType: 'inactivity',
+                triggerMetadata: { minutesWithoutReply: 15 },
+                targetType: 'user',
+                targetReference: 'operations.lead@fixnado.com',
+                targetLabel: 'Operations lead',
+                allowedRoles: ['provider_manager', 'provider_admin'],
+                slaMinutes: 15,
+                responseTemplate: 'We are looping in our operations lead to assist and will reply with an update shortly.',
+                active: true
+              }
+            ]
+          }
+        }
+      },
+      {
         id: 'servicemen',
+        icon: 'crew',
+        label: 'Serviceman Directory',
         icon: 'crew',
         label: 'Serviceman Directory',
         description: 'Manage roster, certifications, and contact details.',
@@ -2764,6 +3521,16 @@ const mockDashboards = {
               ]
             }
           ]
+        }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile settings',
+        description: 'Manage identity, branding, support hours, key contacts, and coverage.',
+        type: 'provider-settings',
+        data: {
+          companyId: 'PRV-1108'
         }
       }
     ]
