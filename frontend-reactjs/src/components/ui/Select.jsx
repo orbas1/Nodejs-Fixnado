@@ -4,6 +4,8 @@ import clsx from 'clsx';
 import './ui.css';
 
 const Select = forwardRef(function Select(
+  { id, label, optionalLabel, hint, error, options, className, selectClassName, children, ...rest },
+  { id, label, optionalLabel, hint, error, options = [], className, selectClassName, ...rest },
   {
     id,
     label,
@@ -14,6 +16,9 @@ const Select = forwardRef(function Select(
     children,
     className,
     selectClassName,
+    className,
+    selectClassName,
+    children,
     ...rest
   },
   ref
@@ -30,6 +35,15 @@ const Select = forwardRef(function Select(
     describedBy.push(`${fieldId}-error`);
   }
 
+  const resolvedOptions = Array.isArray(options) ? options : [];
+  const optionNodes = Array.isArray(options) && options.length > 0
+    ? options.map((option) => (
+        <option key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+        </option>
+      ))
+    : children;
+
   return (
     <div className={clsx('fx-field', className)}>
       {label ? (
@@ -42,16 +56,18 @@ const Select = forwardRef(function Select(
         ref={ref}
         id={fieldId}
         className={clsx('fx-text-input', error && 'fx-text-input--error', selectClassName)}
+        className={clsx('fx-select', 'fx-text-input', error && 'fx-text-input--error', selectClassName)}
+        className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
       >
-        {options.map((option) => (
+        {resolvedOptions.map((option) => (
           <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}
-        {children}
+        {optionNodes}
       </select>
       {hint ? (
         <p id={`${fieldId}-hint`} className="fx-field__hint">
@@ -85,6 +101,8 @@ Select.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   selectClassName: PropTypes.string
+  selectClassName: PropTypes.string,
+  children: PropTypes.node
 };
 
 Select.defaultProps = {
@@ -97,6 +115,11 @@ Select.defaultProps = {
   children: null,
   className: undefined,
   selectClassName: undefined
+  options: undefined,
+  className: undefined,
+  selectClassName: undefined
+  selectClassName: undefined,
+  children: undefined
 };
 
 export default Select;

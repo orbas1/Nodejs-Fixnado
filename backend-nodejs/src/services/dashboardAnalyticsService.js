@@ -2,8 +2,11 @@ import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import config from '../config/index.js';
 import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessPolicy.js';
+import { getFixnadoWorkspaceSnapshot } from './fixnadoAdsService.js';
+import { getBookingCalendar } from './bookingCalendarService.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
 import { getUserProfileSettings } from './userProfileService.js';
+import { getProviderCalendar } from './providerCalendarService.js';
 import {
   AdCampaign,
   Booking,
@@ -16,9 +19,15 @@ import {
   CampaignInvoice,
   Company,
   ComplianceDocument,
+  Conversation,
   ConversationParticipant,
+  CommunicationsInboxConfiguration,
+  CommunicationsEntryPoint,
+  CommunicationsQuickReply,
+  CommunicationsEscalationRule,
   Dispute,
   Escrow,
+  MessageDelivery,
   InventoryAlert,
   InventoryItem,
   Order,
@@ -31,6 +40,11 @@ import { listTasks as listAccountSupportTasks } from './accountSupportService.js
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
 import { getProviderByokSnapshot } from './providerByokService.js';
+import { getInboxSettings } from './communicationsInboxService.js';
+import { getServicemanIdentitySnapshot } from './servicemanIdentityService.js';
+import { getServicemanMetricsBundle } from './servicemanMetricsService.js';
+import { getServicemanFinanceWorkspace } from './servicemanFinanceService.js';
+import { getServicemanWebsitePreferences } from './servicemanWebsitePreferencesService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -347,6 +361,21 @@ async function resolveUserId({ userId }) {
   return fallback?.id ?? null;
 }
 
+async function resolveServicemanId({ servicemanId }) {
+  const coerced = normaliseUuid(servicemanId);
+  if (coerced) {
+    return coerced;
+  }
+
+  const fallback = await User.findOne({
+    where: { type: 'servicemen' },
+    attributes: ['id'],
+    order: [['createdAt', 'ASC']]
+  });
+
+  return fallback?.id ?? null;
+}
+
 function humanise(value) {
   if (!value) {
     return '';
@@ -644,6 +673,14 @@ async function loadUserData(context) {
         : `${formatNumber(rentalsInUse)} rental asset${rentalsInUse === 1 ? '' : 's'} currently in the field`
     ]
   };
+
+  const calendarMonth = window.end?.toFormat?.('yyyy-LL') || DateTime.now().setZone(window.timezone).toFormat('yyyy-LL');
+  const calendarData = await getBookingCalendar({
+    customerId: userId,
+    companyId,
+    month: calendarMonth,
+    timezone: window.timezone
+  });
 
   const orderBoardColumns = [
     {
@@ -1385,6 +1422,14 @@ async function loadUserData(context) {
         sidebar: overviewSidebar
       },
       {
+        id: 'calendar',
+        icon: 'calendar',
+        label: 'Service Calendar',
+        description: 'Plan visits, assignments, and follow-ups in one view.',
+        type: 'calendar',
+        data: calendarData
+      },
+      {
         id: 'orders',
         label: 'Service Orders',
         description: 'Escrow, delivery, and follow-up pipeline.',
@@ -1910,6 +1955,8 @@ async function loadProviderData(context) {
   const { providerId, companyId, window } = context;
 
   const campaignFilter = companyId ? { companyId } : undefined;
+  const tenantId = companyId ?? providerId ?? null;
+  let inboxSnapshotError = null;
 
   const [
     assignments,
@@ -1921,7 +1968,8 @@ async function loadProviderData(context) {
     campaignMetrics,
     previousCampaignMetrics,
     campaignInvoices,
-    campaignSignals
+    campaignSignals,
+    inboxSnapshot
   ] = await Promise.all([
     BookingAssignment.findAll({
       where: {
@@ -2048,7 +2096,17 @@ async function loadProviderData(context) {
       },
       order: [['detectedAt', 'DESC']],
       limit: EXPORT_ROW_LIMIT
-    })
+    }),
+    tenantId
+      ? getInboxSettings(tenantId).catch((error) => {
+          inboxSnapshotError = error;
+          console.warn('Failed to load provider inbox settings', {
+            tenantId,
+            message: error?.message
+          });
+          return null;
+        })
+      : Promise.resolve(null)
   ]);
 
   const byokSnapshot = await getProviderByokSnapshot({ companyId });
@@ -2197,6 +2255,46 @@ async function loadProviderData(context) {
     description: alert.metadata?.note || 'Resolve alert to restore asset health.',
     status: alert.status
   }));
+
+  const inboxSummary = inboxSnapshot
+    ? {
+        entryPoints: inboxSnapshot.entryPoints?.length ?? 0,
+        quickReplies: inboxSnapshot.quickReplies?.length ?? 0,
+        escalationRules: inboxSnapshot.escalationRules?.length ?? 0,
+        liveRoutingEnabled: Boolean(inboxSnapshot.configuration?.liveRoutingEnabled),
+        timezone: inboxSnapshot.configuration?.timezone ?? DEFAULT_TIMEZONE,
+        updatedAt: toIso(inboxSnapshot.configuration?.updatedAt)
+      }
+    : null;
+
+  const inboxSectionData = {
+    tenantId,
+    summary: inboxSummary,
+    snapshot: inboxSnapshot,
+    error: null,
+    capabilities: {
+      allowManage: Boolean(tenantId),
+      allowTemplates: Boolean(tenantId),
+      allowEscalations: Boolean(tenantId)
+    }
+  };
+
+  if (!tenantId) {
+    inboxSectionData.error = 'Assign this provider to a company to unlock inbox controls.';
+    inboxSectionData.snapshot = null;
+  } else if (inboxSnapshotError) {
+    inboxSectionData.error = 'Unable to load inbox configuration. Try refreshing the dashboard.';
+  }
+
+  const inboxSection = {
+    id: 'full-inbox',
+    label: 'Full inbox',
+    description:
+      'Manage routing, quick replies, and escalation guardrails for provider communications.',
+    type: 'provider-inbox',
+    icon: 'support',
+    data: inboxSectionData
+  };
 
   const rentalsByItem = rentals.reduce((acc, rental) => {
     const activeStatuses = new Set([
@@ -2866,6 +2964,28 @@ async function loadProviderData(context) {
     creativeInsights: uniqueContentInsights
   };
 
+  let calendarSection = null;
+  try {
+    const calendarSnapshot = await getProviderCalendar({
+      companyId,
+      start: window.start?.toISO?.() ?? null,
+      end: window.end?.toISO?.() ?? null,
+      timezone: window.timezone
+    });
+    calendarSection = {
+      id: 'calendar',
+      label: 'Operations Calendar',
+      description: 'Plan bookings, holds, and travel across crews.',
+      type: 'provider-calendar',
+      data: {
+        ...calendarSnapshot.data,
+        meta: calendarSnapshot.meta
+      }
+    };
+  } catch (error) {
+    console.warn('[dashboard] Failed to load provider calendar snapshot', error);
+  }
+
   const navigation = [
     {
       id: 'overview',
@@ -2874,6 +2994,7 @@ async function loadProviderData(context) {
       type: 'overview',
       analytics: overview
     },
+    calendarSection,
     {
       id: 'workboard',
       label: 'Workboard',
@@ -2889,6 +3010,17 @@ async function loadProviderData(context) {
       data: {
         headers: ['Rental', 'Status', 'Pickup', 'Return Due', 'Deposit'],
         rows: rentalRows
+      }
+    },
+    {
+      id: 'escrow-management',
+      label: 'Escrow management',
+      description: 'Provider escrow funding, release readiness, and dispute notes.',
+      type: 'component',
+      meta: {
+        api: 'provider-escrows',
+        providerId: providerId ?? null,
+        companyId: companyId ?? null
       }
     },
     {
@@ -2925,8 +3057,11 @@ async function loadProviderData(context) {
           { id: 'tools', label: 'Tools', items: toolsInventory }
         ]
       }
-    }
+    },
+    inboxSection
   ];
+    }
+  ].filter(Boolean);
 
   const adsSection = annotateAdsSection('provider', {
     id: 'fixnado-ads',
@@ -2983,11 +3118,27 @@ async function loadProviderData(context) {
           conversions: currentCampaignTotals.conversions,
           share: adsShare,
           jobs: adsSourcedCount
-        }
+        },
+        inbox: inboxSummary
+          ? {
+              entryPoints: inboxSummary.entryPoints,
+              quickReplies: inboxSummary.quickReplies,
+              escalationRules: inboxSummary.escalationRules,
+              liveRoutingEnabled: inboxSummary.liveRoutingEnabled,
+              timezone: inboxSummary.timezone,
+              updatedAt: inboxSummary.updatedAt
+            }
+          : null
       },
       byok: byokSnapshot.summary,
       features: {
-        ads: buildAdsFeatureMetadata('provider')
+        ads: buildAdsFeatureMetadata('provider'),
+        inbox: {
+          available: Boolean(tenantId && !inboxSnapshotError),
+          level: 'manage',
+          label: 'Full inbox',
+          actions: ['routing', 'templates', 'escalations']
+        }
       }
     },
     navigation
@@ -2995,11 +3146,16 @@ async function loadProviderData(context) {
 }
 
 async function loadServicemanData(context) {
-  const { providerId, window } = context;
+  const { providerId, servicemanId, window } = context;
+
+  const identityOwnerId = servicemanId ?? providerId;
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, identitySnapshot] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, metricsBundle] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
+  const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3026,8 +3182,19 @@ async function loadServicemanData(context) {
       where: providerFilter,
       limit: EXPORT_ROW_LIMIT,
       order: [['updatedAt', 'DESC']]
-    })
+    }),
+    identityOwnerId ? getServicemanIdentitySnapshot(identityOwnerId) : Promise.resolve(null)
+    getServicemanMetricsBundle({ includeInactiveCards: true })
+    providerId
+      ? getServicemanFinanceWorkspace({ servicemanId: providerId, limit: 6 }).catch((error) => {
+          console.warn('Failed to load serviceman finance workspace', error);
+          return null;
+        })
+      : Promise.resolve(null)
+    getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null }))
   ]);
+
+  const { settings: metricsSettings, cards: metricsCards } = metricsBundle;
 
   const providerIds = Array.from(
     new Set(assignments.map((assignment) => assignment.providerId).filter(Boolean))
@@ -3100,6 +3267,16 @@ async function loadServicemanData(context) {
   const adsSourcedCount = assignments.filter(
     (assignment) => assignment.Booking?.meta?.source === 'fixnado_ads'
   ).length;
+  const pendingAssignments = assignments.filter((assignment) => assignment.status === 'pending').length;
+
+  const slaAtRiskCount = assignments.filter((assignment) => {
+    const booking = assignment.Booking;
+    if (!booking?.slaExpiresAt || ['completed', 'cancelled'].includes(booking.status)) {
+      return false;
+    }
+    const expiry = DateTime.fromJSDate(booking.slaExpiresAt).setZone(window.timezone);
+    return expiry <= window.end.plus({ hours: 6 });
+  }).length;
 
   const bookingCurrency = assignments[0]?.Booking?.currency ?? 'GBP';
 
@@ -3398,6 +3575,98 @@ async function loadServicemanData(context) {
     }
   ];
 
+  const tenantId = providerId ? String(providerId) : 'fixnado-demo';
+
+  let crewParticipantRecord = null;
+  let activeThreadCount = 0;
+  let awaitingResponseCount = 0;
+
+  if (crewLead?.id) {
+    const crewParticipants = await ConversationParticipant.findAll({
+      where: {
+        participantReferenceId: crewLead.id,
+        participantType: 'serviceman'
+      },
+      include: [
+        {
+          model: Conversation,
+          as: 'conversation',
+          attributes: ['id', 'updatedAt']
+        }
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: 25
+    });
+
+    crewParticipantRecord = crewParticipants[0] ?? null;
+
+    const participantIds = [];
+    const conversationIds = new Set();
+    crewParticipants.forEach((participant) => {
+      if (participant.conversationId) {
+        conversationIds.add(participant.conversationId);
+      }
+      participantIds.push(participant.id);
+    });
+
+    activeThreadCount = conversationIds.size;
+
+    if (participantIds.length > 0) {
+      awaitingResponseCount = await MessageDelivery.count({
+        where: {
+          participantId: { [Op.in]: participantIds },
+          status: 'pending'
+        }
+      });
+    }
+  }
+
+  const inboxConfiguration = await CommunicationsInboxConfiguration.findOne({ where: { tenantId } });
+  let entryPointCount = 0;
+  let quickReplyCount = 0;
+  let escalationRuleCount = 0;
+
+  if (inboxConfiguration) {
+    const configurationId = inboxConfiguration.id;
+    const [entryPointsTotal, quickRepliesTotal, escalationTotal] = await Promise.all([
+      CommunicationsEntryPoint.count({ where: { configurationId } }),
+      CommunicationsQuickReply.count({ where: { configurationId } }),
+      CommunicationsEscalationRule.count({ where: { configurationId } })
+    ]);
+    entryPointCount = entryPointsTotal;
+    quickReplyCount = quickRepliesTotal;
+    escalationRuleCount = escalationTotal;
+  }
+
+  const crewParticipantPayload = crewParticipantRecord
+    ? {
+        participantId: crewParticipantRecord.id,
+        participantReferenceId: crewParticipantRecord.participantReferenceId,
+        participantType: crewParticipantRecord.participantType,
+        displayName: crewParticipantRecord.displayName,
+        role: crewParticipantRecord.role,
+        timezone: crewParticipantRecord.timezone
+      }
+    : crewLead
+      ? {
+          participantId: null,
+          participantReferenceId: crewLead.id,
+          participantType: 'serviceman',
+          displayName: crewLead.name,
+          role: 'serviceman',
+          timezone: window.timezone
+        }
+      : null;
+
+  const inboxSummary = {
+    activeThreads: activeThreadCount,
+    awaitingResponse: awaitingResponseCount,
+    entryPoints: entryPointCount,
+    quickReplies: quickReplyCount,
+    escalationRules: escalationRuleCount
+  };
+  const fixnadoSnapshot = await getFixnadoWorkspaceSnapshot({ windowDays: 30 });
+
   return {
     persona: 'serviceman',
     name: PERSONA_METADATA.serviceman.name,
@@ -3425,8 +3694,22 @@ async function loadServicemanData(context) {
         autoMatched: autoMatchedCount,
         adsSourced: adsSourcedCount
       },
+      identity: identitySnapshot
+        ? {
+            status: identitySnapshot.verification?.status ?? 'pending',
+            riskRating: identitySnapshot.verification?.riskRating ?? 'medium',
+            verificationLevel: identitySnapshot.verification?.verificationLevel ?? 'standard',
+            reviewer: identitySnapshot.verification?.reviewer ?? null,
+            expiresAt: identitySnapshot.verification?.expiresAt ?? null
+          }
+        : null,
       features: {
         ads: buildAdsFeatureMetadata('serviceman')
+      },
+      communications: {
+        tenantId,
+        participant: crewParticipantPayload,
+        summary: inboxSummary
       }
     },
     navigation: [
@@ -3438,11 +3721,40 @@ async function loadServicemanData(context) {
         analytics: overview
       },
       {
+        id: 'metrics',
+        label: 'Metrics',
+        description: 'Crew KPIs, readiness checklists, and automation guardrails.',
+        type: 'serviceman-metrics',
+        access: {
+          label: 'Crew metrics control',
+          level: 'manage',
+          features: ['targets', 'checklists', 'automation']
+        },
+        data: {
+          settings: metricsSettings,
+          cards: metricsCards,
+          metadata: metricsSettings?.metadata ?? {},
+          operations: metricsSettings?.operations ?? {}
+        }
+      },
+      {
         id: 'schedule',
         label: 'Schedule Board',
         description: 'Daily and weekly workload.',
         type: 'board',
         data: { columns: boardColumns }
+      },
+      {
+        id: 'inbox',
+        label: 'Crew Inbox',
+        description: 'Manage crew messaging, AI assist, and escalation guardrails.',
+        type: 'serviceman-inbox',
+        data: {
+          defaultParticipantId: crewParticipantPayload?.participantId ?? null,
+          currentParticipant: crewParticipantPayload,
+          tenantId,
+          summary: inboxSummary
+        }
       },
       {
         id: 'bid-pipeline',
@@ -3452,18 +3764,94 @@ async function loadServicemanData(context) {
         data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
       },
       {
+        id: 'booking-management',
+        label: 'Booking Management',
+        description: 'Update bookings, notes, and crew preferences in real time.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: providerId ?? null,
+            timezone: window.timezone,
+            summary: {
+              totalAssignments: assignments.length,
+              scheduledAssignments: scheduled,
+              activeAssignments: inProgress,
+              awaitingResponse: pendingAssignments,
+              completedThisMonth: completed,
+              slaAtRisk: slaAtRiskCount,
+              revenueEarned: revenue,
+              averageTravelMinutes: avgTravelMinutes,
+              currency: bookingCurrency
+            }
+          }
+        }
+      },
+      {
         id: 'service-catalogue',
         label: 'Service Catalogue',
         description: 'Performance of services offered to Fixnado clients.',
         type: 'grid',
         data: { cards: serviceCards }
       },
+      ...(identitySnapshot
+        ? [
+            {
+              id: 'id-verification',
+              label: 'ID Verification',
+              description: 'Identity records, document governance, and reviewer notes.',
+              type: 'serviceman-identity',
+              data: identitySnapshot
+            }
+          ]
+        : []),
       {
         id: 'automation',
         label: 'Automation & Growth',
         description: 'Auto-match, routing, and acquisition insights.',
         type: 'list',
         data: { items: automationItems }
+      },
+      {
+        id: 'financial-management',
+        label: 'Financial management',
+        description: 'Track payouts, reimbursements, and allowances in real time.',
+        type: 'serviceman-finance',
+        data:
+          financeWorkspace ?? {
+            context: { servicemanId: providerId ?? null },
+            summary: { earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 }, expenses: { total: 0, reimbursed: 0 } },
+            permissions: { canManagePayments: false, canSubmitExpenses: false, canManageAllowances: false },
+            earnings: { items: [], meta: { total: 0 } },
+            expenses: { items: [], meta: { total: 0 } },
+            allowances: { items: [] }
+          }
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: websitePreferences?.preferences ?? null,
+          meta: websitePreferences?.meta ?? null
+        }
+        id: 'profile-settings',
+        label: 'Profile Settings',
+        description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
+        }
+        id: 'serviceman-disputes',
+        label: 'Dispute Management',
+        description: 'Open and track dispute cases, assignments, and supporting evidence.',
+        type: 'component'
+        id: 'fixnado-ads',
+        label: 'Fixnado Ads',
+        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+        icon: 'analytics',
+        type: 'fixnado-ads',
+        data: fixnadoSnapshot
       }
     ]
   };
@@ -3616,12 +4004,16 @@ async function resolveContext(persona, query, window) {
         providerId: normaliseUuid(query.providerId ?? defaults.providerId),
         companyId: await resolveCompanyId({ companyId: query.companyId ?? defaults.companyId })
       };
-    case 'serviceman':
+    case 'serviceman': {
+      const fallbackId = query.servicemanId ?? query.providerId ?? defaults.servicemanId ?? defaults.providerId;
+      const resolvedServicemanId = await resolveServicemanId({ servicemanId: fallbackId });
       return {
         persona,
         window,
-        providerId: normaliseUuid(query.providerId ?? defaults.providerId)
+        providerId: resolvedServicemanId,
+        servicemanId: resolvedServicemanId
       };
+    }
     case 'enterprise':
       return {
         persona,

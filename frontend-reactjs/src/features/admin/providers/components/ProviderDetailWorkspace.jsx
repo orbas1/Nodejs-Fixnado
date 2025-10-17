@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, TextInput, FormField, Checkbox, StatusPill, Spinner } from '../../../../components/ui/index.js';
 import { resolveStatusTone } from './ProviderSummaryGrid.jsx';
+import ProviderDocumentsSection from './documents/ProviderDocumentsSection.jsx';
 
 function TextArea({ id, value, onChange, rows = 4 }) {
   return (
@@ -899,59 +900,13 @@ function ProviderDetailWorkspace({ selected, enums, detailLoading, detailError, 
             </div>
           </div>
 
-          <div className="rounded-2xl border border-accent/10 bg-white p-6 shadow-sm">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">Compliance documents</h4>
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-600">
-                <thead className="bg-secondary/40 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2">Document</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Expiry</th>
-                    <th className="px-3 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {selectedDocuments.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-3 py-4 text-center text-sm text-slate-500">
-                        No compliance documents uploaded yet.
-                      </td>
-                    </tr>
-                  ) : null}
-                  {selectedDocuments.map((document) => (
-                    <tr key={document.id}>
-                      <td className="px-3 py-3">
-                        <div className="font-medium text-primary">{document.type}</div>
-                        <div className="text-xs text-slate-500">{document.fileName}</div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <StatusPill tone={document.status === 'approved' ? 'success' : 'warning'}>
-                          {document.status}
-                        </StatusPill>
-                      </td>
-                      <td className="px-3 py-3 text-sm">
-                        {document.expiryAt ? new Date(document.expiryAt).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-3 py-3 text-sm">
-                        {document.downloadUrl ? (
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => window.open(document.downloadUrl, '_blank', 'noopener')}
-                          >
-                            Download
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-slate-400">No download</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <ProviderDocumentsSection
+            companyId={selected?.company?.id}
+            company={selected?.company}
+            documents={selectedDocuments}
+            handlers={handlers}
+            links={selected?.links}
+          />
 
           <div className="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -1054,7 +1009,13 @@ ProviderDetailWorkspace.propTypes = {
     onDeleteContact: PropTypes.func,
     onUpsertCoverage: PropTypes.func,
     onDeleteCoverage: PropTypes.func,
-    onArchiveProvider: PropTypes.func
+    onArchiveProvider: PropTypes.func,
+    onFetchComplianceSummary: PropTypes.func,
+    onSubmitComplianceDocument: PropTypes.func,
+    onReviewComplianceDocument: PropTypes.func,
+    onEvaluateCompliance: PropTypes.func,
+    onToggleComplianceBadge: PropTypes.func,
+    onSuspendCompliance: PropTypes.func
   })
 };
 

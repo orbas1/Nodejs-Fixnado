@@ -64,7 +64,9 @@ WalletPaymentMethod.init(
     sequelize,
     modelName: 'WalletPaymentMethod',
     tableName: 'wallet_payment_methods',
-    underscored: true
+    underscored: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   }
 );
 

@@ -10,3 +10,4 @@ export { default as StatusPill } from './StatusPill.jsx';
 export { default as Select } from './Select.jsx';
 export { default as TextInput } from './TextInput.jsx';
 export { default as TextArea } from './TextArea.jsx';
+export { default as Textarea } from './Textarea.jsx';

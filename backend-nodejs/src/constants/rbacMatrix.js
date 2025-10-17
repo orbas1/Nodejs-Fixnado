@@ -37,8 +37,8 @@ export const RBAC_MATRIX = {
       Permissions.WALLET_VIEW,
       Permissions.WALLET_MANAGE,
       Permissions.WALLET_TRANSACT,
-      Permissions.WALLET_METHOD_MANAGE
-      Permissions.CUSTOMER_CONTROL_MANAGE
+      Permissions.WALLET_METHOD_MANAGE,
+      Permissions.CUSTOMER_CONTROL_MANAGE,
       Permissions.ACCOUNT_SETTINGS_MANAGE
     ],
     navigation: {
@@ -63,7 +63,20 @@ export const RBAC_MATRIX = {
       Permissions.MATERIALS_VIEW,
       Permissions.INVENTORY_READ,
       Permissions.SERVICES_MANAGE,
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_IDENTITY_MANAGE
+      Permissions.SERVICEMAN_METRICS_READ,
+      Permissions.SERVICEMAN_METRICS_WRITE
+      Permissions.SERVICEMAN_WEBSITE_READ,
+      Permissions.SERVICEMAN_WEBSITE_WRITE
+      Permissions.SERVICEMAN_PROFILE_MANAGE
+      Permissions.SERVICEMAN_BOOKINGS_VIEW,
+      Permissions.SERVICEMAN_BOOKINGS_MANAGE,
       Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_ESCROW_VIEW,
+      Permissions.SERVICEMAN_ESCROW_MANAGE
+      Permissions.SERVICEMAN_CONTROL_MANAGE
     ],
     navigation: {
       landing: '/app/workqueue',
@@ -85,12 +98,21 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_PROVIDER_UPGRADE,
+      Permissions.PANEL_PROVIDER_TOOLS,
       Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
+      Permissions.PROVIDER_ESCROW_READ,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
+      Permissions.REPORTING_DOWNLOAD,
+      Permissions.PROVIDER_CREW_VIEW,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
+      Permissions.PROVIDER_CALENDAR_VIEW,
+      Permissions.PROVIDER_CALENDAR_MANAGE,
       Permissions.REPORTING_DOWNLOAD
     ],
     navigation: {
@@ -153,10 +175,14 @@ export const RBAC_MATRIX = {
       Permissions.FINANCE_PAYOUT_MANAGE,
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.DISPUTE_MANAGE,
+      Permissions.PROVIDER_ESCROW_READ,
+      Permissions.PROVIDER_ESCROW_WRITE,
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
       Permissions.PROVIDER_ONBOARD,
-      Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
     ],
     navigation: {
       landing: '/app/provider/admin',
