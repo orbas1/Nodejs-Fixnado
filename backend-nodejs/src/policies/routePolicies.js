@@ -74,6 +74,21 @@ const ROUTE_POLICIES = {
       companyId: req.query?.companyId || req.body?.companyId || null
     })
   },
+  'provider.control.disputes': {
+    id: 'provider.control.disputes',
+    version: '1.0.0',
+    resource: 'provider.control',
+    action: 'provider.control:disputes',
+    description:
+      'Allow provider personas to manage dispute cases, evidence, notes, and follow-up tasks within the SME control centre.',
+    requirements: [Permissions.PROVIDER_DISPUTE_MANAGE],
+    tags: ['provider', 'workspace', 'disputes'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      companyId: req.query?.companyId || req.body?.companyId || null
+    })
+  },
   'panel.provider.services.view': {
     id: 'panel.provider.services.view',
     version: '1.0.0',

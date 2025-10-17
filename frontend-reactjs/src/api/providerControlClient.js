@@ -1,6 +1,14 @@
-import { PanelApiError } from './panelClient.js';
-
 const jsonHeaders = { 'Content-Type': 'application/json' };
+
+class PanelApiError extends Error {
+  constructor(message, status, { code, cause } = {}) {
+    super(message);
+    this.name = 'PanelApiError';
+    this.status = status;
+    this.code = code;
+    this.cause = cause;
+  }
+}
 
 function toQueryString(params = {}) {
   const searchParams = new URLSearchParams();
@@ -384,6 +392,177 @@ export async function deleteCrewDelegation(delegationId, options = {}) {
   );
 }
 
+const DISPUTE_BASE_PATH = '/provider-control/disputes';
+
+function normaliseDisputeWorkspace(response = {}) {
+  const cases = Array.isArray(response.cases) ? response.cases : [];
+  const metrics = {
+    statusCounts: {
+      draft: 0,
+      open: 0,
+      under_review: 0,
+      awaiting_customer: 0,
+      resolved: 0,
+      closed: 0,
+      ...(response.metrics?.statusCounts ?? {})
+    },
+    requiresFollowUp: response.metrics?.requiresFollowUp ?? 0,
+    overdue: response.metrics?.overdue ?? 0,
+    activeTasks: response.metrics?.activeTasks ?? 0,
+    totalDisputedAmount: response.metrics?.totalDisputedAmount ?? 0,
+    totalCases: response.metrics?.totalCases ?? cases.length
+  };
+
+  return { cases, metrics };
+}
+
+export async function fetchProviderDisputes(options = {}) {
+  const query = toQueryString({ companyId: options.companyId });
+  const response = await request(`${DISPUTE_BASE_PATH}${query}`, { signal: options.signal });
+  return normaliseDisputeWorkspace(response ?? {});
+}
+
+export async function createProviderDisputeCase(payload, options = {}) {
+  const response = await request(`${DISPUTE_BASE_PATH}${toQueryString({ companyId: options.companyId })}`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+    headers: jsonHeaders,
+    signal: options.signal
+  });
+  return response?.case ?? response;
+}
+
+export async function updateProviderDisputeCase(disputeCaseId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.case ?? response;
+}
+
+export async function deleteProviderDisputeCase(disputeCaseId, options = {}) {
+  await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'DELETE',
+      signal: options.signal
+    }
+  );
+}
+
+export async function createProviderDisputeTask(disputeCaseId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/tasks${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.task ?? response;
+}
+
+export async function updateProviderDisputeTask(disputeCaseId, taskId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/tasks/${encodeURIComponent(taskId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.task ?? response;
+}
+
+export async function deleteProviderDisputeTask(disputeCaseId, taskId, options = {}) {
+  await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/tasks/${encodeURIComponent(taskId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'DELETE',
+      signal: options.signal
+    }
+  );
+}
+
+export async function createProviderDisputeNote(disputeCaseId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/notes${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.note ?? response;
+}
+
+export async function updateProviderDisputeNote(disputeCaseId, noteId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/notes/${encodeURIComponent(noteId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.note ?? response;
+}
+
+export async function deleteProviderDisputeNote(disputeCaseId, noteId, options = {}) {
+  await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/notes/${encodeURIComponent(noteId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'DELETE',
+      signal: options.signal
+    }
+  );
+}
+
+export async function createProviderDisputeEvidence(disputeCaseId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/evidence${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.evidence ?? response;
+}
+
+export async function updateProviderDisputeEvidence(disputeCaseId, evidenceId, payload, options = {}) {
+  const response = await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/evidence/${encodeURIComponent(evidenceId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload ?? {}),
+      headers: jsonHeaders,
+      signal: options.signal
+    }
+  );
+  return response?.evidence ?? response;
+}
+
+export async function deleteProviderDisputeEvidence(disputeCaseId, evidenceId, options = {}) {
+  await request(
+    `${DISPUTE_BASE_PATH}/${encodeURIComponent(disputeCaseId)}/evidence/${encodeURIComponent(evidenceId)}${toQueryString({ companyId: options.companyId })}`,
+    {
+      method: 'DELETE',
+      signal: options.signal
+    }
+  );
+}
+
 export default {
   getProviderCrewControl,
   createProviderCrewMember,
@@ -394,5 +573,18 @@ export default {
   upsertCrewDeployment,
   deleteCrewDeployment,
   upsertCrewDelegation,
-  deleteCrewDelegation
+  deleteCrewDelegation,
+  fetchProviderDisputes,
+  createProviderDisputeCase,
+  updateProviderDisputeCase,
+  deleteProviderDisputeCase,
+  createProviderDisputeTask,
+  updateProviderDisputeTask,
+  deleteProviderDisputeTask,
+  createProviderDisputeNote,
+  updateProviderDisputeNote,
+  deleteProviderDisputeNote,
+  createProviderDisputeEvidence,
+  updateProviderDisputeEvidence,
+  deleteProviderDisputeEvidence
 };

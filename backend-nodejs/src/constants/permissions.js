@@ -102,6 +102,7 @@ export const Permissions = Object.freeze({
   PANEL_ENTERPRISE: 'panel:enterprise:view',
   PANEL_STOREFRONT: 'panel:storefront:view',
   PROVIDER_CREW_MANAGE: 'provider:crew:manage',
+  PROVIDER_DISPUTE_MANAGE: 'provider:disputes:manage',
   PANEL_PROVIDER_SERVICEMAN_FINANCE_VIEW: 'panel:provider:serviceman-finance:view',
   PANEL_PROVIDER_SERVICEMAN_FINANCE_MANAGE: 'panel:provider:serviceman-finance:manage',
   PAYMENTS_CAPTURE: 'payments:capture',

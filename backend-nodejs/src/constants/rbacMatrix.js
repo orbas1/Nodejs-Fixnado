@@ -107,6 +107,7 @@ export const RBAC_MATRIX = {
       Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
       Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_DISPUTE_MANAGE,
       Permissions.AFFILIATE_DASHBOARD,
       Permissions.AFFILIATE_REFERRALS,
       Permissions.PROVIDER_ESCROW_READ,
@@ -116,6 +117,7 @@ export const RBAC_MATRIX = {
       Permissions.PROVIDER_CREW_VIEW,
       Permissions.PROVIDER_CREW_MANAGE,
       Permissions.PROVIDER_CREW_SCHEDULE
+      Permissions.PROVIDER_DISPUTE_MANAGE,
       Permissions.PROVIDER_CALENDAR_VIEW,
       Permissions.PROVIDER_CALENDAR_MANAGE,
       Permissions.REPORTING_DOWNLOAD
@@ -187,7 +189,8 @@ export const RBAC_MATRIX = {
       Permissions.PROVIDER_ONBOARD,
       Permissions.MESSAGING_ESCALATE,
       Permissions.PROVIDER_CREW_MANAGE,
-      Permissions.PROVIDER_CREW_SCHEDULE
+      Permissions.PROVIDER_CREW_SCHEDULE,
+      Permissions.PROVIDER_DISPUTE_MANAGE
     ],
     navigation: {
       landing: '/app/provider/admin',

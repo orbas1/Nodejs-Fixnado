@@ -112,6 +112,13 @@ export const DASHBOARD_ROLES = [
       },
       { id: 'escrow-management', label: 'Escrow Management', icon: 'finance' },
       {
+        id: 'provider-disputes',
+        label: 'Disputes',
+        icon: 'compliance',
+        type: 'route',
+        href: '/dashboards/provider/disputes'
+      },
+      {
         id: 'serviceman-payments',
         label: 'Crew Payments & Commissions',
         icon: 'finance'
@@ -147,7 +154,7 @@ export const DASHBOARD_ROLES = [
       { id: 'overview', label: 'Revenue Overview', icon: 'finance' },
       { id: 'escrows', label: 'Escrow Pipeline', icon: 'pipeline' },
       { id: 'payouts', label: 'Payout Approvals', icon: 'assets' },
-      { id: 'disputes', label: 'Dispute Resolution', icon: 'compliance' },
+      { id: 'disputes', label: 'Disputes', icon: 'compliance' },
       { id: 'reports', label: 'Exports & Reports', icon: 'automation' }
     ]
   },
@@ -179,7 +186,7 @@ export const DASHBOARD_ROLES = [
       },
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
-      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' },
+      { id: 'serviceman-disputes', label: 'Disputes', icon: 'compliance' },
       { id: 'fixnado-ads', label: 'Fixnado Ads', icon: 'analytics' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
       {
@@ -190,7 +197,7 @@ export const DASHBOARD_ROLES = [
       },
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
-      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
+      { id: 'serviceman-disputes', label: 'Disputes', icon: 'compliance' }
       }
     ]
   },

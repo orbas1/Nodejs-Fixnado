@@ -702,6 +702,85 @@ CREATE TABLE IF NOT EXISTS serviceman_allowances (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS provider_dispute_cases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  dispute_id UUID REFERENCES "Dispute"(id) ON DELETE SET NULL,
+  case_number TEXT NOT NULL,
+  title_encrypted TEXT NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('billing', 'service_quality', 'damage', 'timeline', 'compliance', 'other')),
+  status TEXT NOT NULL CHECK (status IN ('draft', 'open', 'under_review', 'awaiting_customer', 'resolved', 'closed')),
+  severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  summary_encrypted TEXT,
+  next_step_encrypted TEXT,
+  assigned_team_encrypted TEXT,
+  assigned_owner_encrypted TEXT,
+  resolution_notes_encrypted TEXT,
+  external_reference_encrypted TEXT,
+  amount_disputed NUMERIC(12, 2),
+  currency TEXT NOT NULL DEFAULT 'GBP',
+  opened_at TIMESTAMPTZ,
+  due_at TIMESTAMPTZ,
+  resolved_at TIMESTAMPTZ,
+  sla_due_at TIMESTAMPTZ,
+  requires_follow_up BOOLEAN NOT NULL DEFAULT FALSE,
+  last_reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, case_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_dispute_cases_company_status
+  ON provider_dispute_cases (company_id, status);
+
+CREATE TABLE IF NOT EXISTS provider_dispute_tasks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dispute_case_id UUID NOT NULL REFERENCES provider_dispute_cases(id) ON DELETE CASCADE,
+  label_encrypted TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+  due_at TIMESTAMPTZ,
+  assigned_to_encrypted TEXT,
+  instructions_encrypted TEXT,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_dispute_tasks_case_status
+  ON provider_dispute_tasks (dispute_case_id, status);
+
+CREATE TABLE IF NOT EXISTS provider_dispute_notes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dispute_case_id UUID NOT NULL REFERENCES provider_dispute_cases(id) ON DELETE CASCADE,
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  note_type TEXT NOT NULL CHECK (note_type IN ('update', 'call', 'decision', 'escalation', 'reminder', 'other')),
+  visibility TEXT NOT NULL CHECK (visibility IN ('customer', 'internal', 'provider', 'finance', 'compliance')),
+  body_encrypted TEXT NOT NULL,
+  next_steps_encrypted TEXT,
+  pinned BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_dispute_notes_case
+  ON provider_dispute_notes (dispute_case_id, note_type);
+
+CREATE TABLE IF NOT EXISTS provider_dispute_evidence (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dispute_case_id UUID NOT NULL REFERENCES provider_dispute_cases(id) ON DELETE CASCADE,
+  uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  label_encrypted TEXT NOT NULL,
+  file_url_encrypted TEXT NOT NULL,
+  file_type_encrypted TEXT,
+  thumbnail_url_encrypted TEXT,
+  notes_encrypted TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_dispute_evidence_case
+  ON provider_dispute_evidence (dispute_case_id);
+
 CREATE INDEX IF NOT EXISTS provider_crew_member_company_status_idx
   ON "ProviderCrewMember" (company_id, status, employment_type);
 CREATE INDEX IF NOT EXISTS provider_crew_availability_day_idx

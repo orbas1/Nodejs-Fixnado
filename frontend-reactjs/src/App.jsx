@@ -25,6 +25,7 @@ const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeployme
 const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
 const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
 const ProviderServices = lazy(() => import('./pages/ProviderServices.jsx'));
+const ProviderDisputes = lazy(() => import('./pages/ProviderDisputes.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
 const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
@@ -77,6 +78,7 @@ const CustomerSettingsDevPreview = import.meta.env.DEV
   : null;
 const ServicemanTaxDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ServicemanTaxDevPreview.jsx'))
+  : null;
 const ProviderAdsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
   : null;
@@ -481,6 +483,16 @@ function App() {
                     <ProviderServices />
                   </ProviderProtectedRoute>
                 }
+              />
+              <Route
+                path="/dashboards/provider/disputes"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderDisputes />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboards/provider/profile"
                 element={<Navigate to="/dashboards/provider?section=profile-settings" replace />}
               />
@@ -492,6 +504,7 @@ function App() {
               ) : null}
               {import.meta.env.DEV && ServicemanTaxDevPreview ? (
                 <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
+              ) : null}
               {import.meta.env.DEV && ProviderAdsDevPreview ? (
                 <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}

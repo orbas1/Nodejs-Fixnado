@@ -42,6 +42,7 @@ import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index
 import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
 import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
 import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
+import ProviderDisputesWorkspace from '../../modules/providerDisputes/ProviderDisputesWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -84,7 +85,8 @@ SectionHeader.propTypes = {
 
 const componentRegistry = {
   'serviceman-booking-management': ServicemanBookingManagementWorkspace,
-  'provider-booking-management': ProviderBookingManagementWorkspace
+  'provider-booking-management': ProviderBookingManagementWorkspace,
+  'provider-disputes': ProviderDisputesWorkspace
 };
 
 const ComponentSection = ({ section }) => {

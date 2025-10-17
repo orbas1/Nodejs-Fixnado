@@ -200,6 +200,7 @@ ErrorState.defaultProps = {
   onRetry: undefined
 };
 import ServicemanDisputeWorkspace from '../servicemanControl/ServicemanDisputeWorkspace.jsx';
+import ProviderDisputesWorkspace from '../../modules/providerDisputes/ProviderDisputesWorkspace.jsx';
 
 const stateBadgeMap = {
   enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -942,6 +943,10 @@ const DashboardLayout = ({
 
     if (activeSection.id === 'serviceman-disputes') {
       return <ServicemanDisputeWorkspace />;
+    }
+
+    if (activeSection.id === 'provider-disputes') {
+      return <ProviderDisputesWorkspace />;
     }
 
     if (activeSection.component) {

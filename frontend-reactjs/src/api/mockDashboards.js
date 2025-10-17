@@ -2665,6 +2665,23 @@ const mockDashboards = {
         }
       },
       {
+        id: 'provider-disputes',
+        icon: 'compliance',
+        label: 'Dispute Management',
+        description: 'Coordinate finance, operations, and evidence packs for SME disputes.',
+        type: 'component',
+        componentKey: 'provider-disputes',
+        props: {
+          companyId: 'PRV-1108'
+        },
+        meta: {
+          route: '/dashboards/provider/disputes',
+          offline: true,
+          openCases: 1,
+          underReview: 1
+        }
+      },
+      {
         id: 'inventory',
         icon: 'assets',
         label: 'Tools & Materials',
