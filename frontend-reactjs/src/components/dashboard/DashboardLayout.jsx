@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -273,7 +273,9 @@ const DashboardLayoutInner = ({
   toggleMeta = null,
   toggleReason = null,
   onLogout,
-  blogPosts = []
+  blogPosts = [],
+  initialSectionId = null,
+  onSectionChange = null
 }) => {
   const { panel, closePanel } = useDashboardOverlay();
   const persona = dashboard?.persona ?? roleMeta.id;
@@ -283,18 +285,55 @@ const DashboardLayoutInner = ({
     () => combineNavigation(persona, rawNavigation, fallbackNavigation),
     [persona, rawNavigation, fallbackNavigation]
   );
-  const [selectedSection, setSelectedSection] = useState(navigationWithMenu[0]?.id ?? 'overview');
+  const [selectedSection, setSelectedSection] = useState(() => {
+    if (initialSectionId && navigationWithMenu.some((item) => item.id === initialSectionId)) {
+      return initialSectionId;
+    }
+
+    return navigationWithMenu[0]?.id ?? 'overview';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleSelectSection = useCallback(
+    (sectionId, { silent = false } = {}) => {
+      if (!sectionId) {
+        return;
+      }
+
+      setSelectedSection((current) => {
+        if (current === sectionId) {
+          return current;
+        }
+
+        if (!silent && onSectionChange) {
+          onSectionChange(sectionId);
+        }
+
+        return sectionId;
+      });
+    },
+    [onSectionChange]
+  );
+
   useEffect(() => {
-    setSelectedSection(navigationWithMenu[0]?.id ?? 'overview');
+    const fallbackId = navigationWithMenu[0]?.id ?? 'overview';
+    if (!fallbackId && !initialSectionId) {
+      return;
+    }
+
+    const hasInitial = initialSectionId
+      ? navigationWithMenu.some((item) => item.id === initialSectionId)
+      : false;
+    const nextId = hasInitial ? initialSectionId : fallbackId;
+
+    handleSelectSection(nextId, { silent: hasInitial });
     setSearchQuery('');
     setSearchResults([]);
-  }, [navigationWithMenu]);
+  }, [navigationWithMenu, initialSectionId, handleSelectSection]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -348,7 +387,7 @@ const DashboardLayoutInner = ({
         roleMeta={roleMeta}
         navigation={navigationWithMenu}
         activeSectionId={activeSection?.id}
-        onSelectSection={setSelectedSection}
+        onSelectSection={handleSelectSection}
         onLogout={onLogout}
       />
       <DashboardNavigationSidebar
@@ -357,7 +396,7 @@ const DashboardLayoutInner = ({
         roleMeta={roleMeta}
         navigation={navigationWithMenu}
         activeSectionId={activeSection?.id}
-        onSelectSection={setSelectedSection}
+        onSelectSection={handleSelectSection}
       />
 
       <main className="flex-1 min-h-screen">
@@ -372,7 +411,7 @@ const DashboardLayoutInner = ({
           onSearchChange={setSearchQuery}
           searchResults={searchResults}
           onSelectResult={(result) => {
-            setSelectedSection(result.targetSection);
+            handleSelectSection(result.targetSection);
             setSearchQuery('');
             setSearchResults([]);
           }}
@@ -445,7 +484,9 @@ DashboardLayoutInner.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired
     })
-  )
+  ),
+  initialSectionId: PropTypes.string,
+  onSectionChange: PropTypes.func
 };
 
 DashboardLayoutInner.defaultProps = {
@@ -457,7 +498,9 @@ DashboardLayoutInner.defaultProps = {
   toggleMeta: null,
   toggleReason: null,
   onLogout: null,
-  blogPosts: []
+  blogPosts: [],
+  initialSectionId: null,
+  onSectionChange: null
 };
 
 DashboardLayout.propTypes = DashboardLayoutInner.propTypes;
