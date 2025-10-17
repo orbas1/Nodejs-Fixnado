@@ -646,6 +646,62 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseEnterpriseUpgrade(upgrade = null) {
+  if (!upgrade) {
+    return null;
+  }
+
+  return {
+    id: upgrade.id || null,
+    status: upgrade.status || 'draft',
+    summary: upgrade.summary || null,
+    requestedAt: upgrade.requestedAt || null,
+    targetGoLive: upgrade.targetGoLive || null,
+    seats: upgrade.seats != null ? Number(upgrade.seats) : null,
+    contractValue: upgrade.contractValue != null ? Number(upgrade.contractValue) : null,
+    currency: upgrade.currency || 'GBP',
+    automationScope: upgrade.automationScope || null,
+    enterpriseFeatures: ensureArray(upgrade.enterpriseFeatures),
+    onboardingManager: upgrade.onboardingManager || null,
+    notes: upgrade.notes || null,
+    lastDecisionAt: upgrade.lastDecisionAt || null,
+    createdAt: upgrade.createdAt || null,
+    updatedAt: upgrade.updatedAt || null,
+    contacts: ensureArray(upgrade.contacts).map((contact, index) => ({
+      id: contact.id || `upgrade-contact-${index}`,
+      name: contact.name || 'Stakeholder',
+      role: contact.role || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      influenceLevel: contact.influenceLevel || null,
+      primaryContact: Boolean(contact.primaryContact)
+    })),
+    sites: ensureArray(upgrade.sites).map((site, index) => ({
+      id: site.id || `upgrade-site-${index}`,
+      siteName: site.siteName || site.name || 'Expansion site',
+      region: site.region || null,
+      headcount: site.headcount != null ? Number(site.headcount) : null,
+      goLiveDate: site.goLiveDate || null,
+      imageUrl: site.imageUrl || null,
+      notes: site.notes || null
+    })),
+    checklist: ensureArray(upgrade.checklist).map((item, index) => ({
+      id: item.id || `upgrade-checklist-${index}`,
+      label: item.label || item.name || 'Upgrade task',
+      status: item.status || 'not_started',
+      owner: item.owner || null,
+      dueDate: item.dueDate || null,
+      notes: item.notes || null,
+      sortOrder: item.sortOrder != null ? Number(item.sortOrder) : index
+    })),
+    documents: ensureArray(upgrade.documents).map((doc, index) => ({
+      id: doc.id || `upgrade-document-${index}`,
+      title: doc.title || 'Document',
+      type: doc.type || null,
+      url: doc.url || '#',
+      thumbnailUrl: doc.thumbnailUrl || null,
+      description: doc.description || null
+    }))
 function normaliseCalendarSnapshot(snapshot) {
   if (!snapshot) {
     return null;
@@ -727,6 +783,7 @@ function normaliseProviderDashboard(payload = {}) {
   const finances = root.finances || root.finance || {};
   const serviceDelivery = root.serviceDelivery || root.delivery || {};
   const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
+  const upgrade = normaliseEnterpriseUpgrade(root.enterpriseUpgrade || root.enterprise_upgrade);
   const ads = normaliseProviderAds(root.ads || {});
 
   return {
@@ -861,6 +918,7 @@ function normaliseProviderDashboard(payload = {}) {
         coverage: ensureArray(service.coverage)
       }))
     },
+    enterpriseUpgrade: upgrade
     servicemanFinance: normaliseServicemanFinance(
       root.servicemanFinance || root.servicemanFinanceSnapshot || {}
     )
@@ -3712,6 +3770,110 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  enterpriseUpgrade: {
+    id: 'upgrade-request-fallback',
+    status: 'in_review',
+    summary:
+      'Preparing to scale Metro Power Services to enterprise tier with multi-site rollout, enhanced automation, and compliance tooling.',
+    requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    targetGoLive: new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString(),
+    seats: 45,
+    contractValue: 185000,
+    currency: 'GBP',
+    automationScope: 'Rollout playbooks across seven strategic sites, integrate SSO, and enable automated compliance attestations.',
+    enterpriseFeatures: ['dedicated_success', 'advanced_analytics', 'sso', 'compliance_reporting'],
+    onboardingManager: 'Priya Patel',
+    notes: 'Awaiting signed SOW from enterprise procurement. Security review scheduled for next week.',
+    lastDecisionAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    contacts: [
+      {
+        id: 'upgrade-contact-1',
+        name: 'Lena Howard',
+        role: 'Operations Director',
+        email: 'lena.howard@metropower.example',
+        phone: '+44 20 7946 1122',
+        influenceLevel: 'Decision maker',
+        primaryContact: true
+      },
+      {
+        id: 'upgrade-contact-2',
+        name: 'Jacob Miller',
+        role: 'Head of Facilities',
+        email: 'jacob.miller@metropower.example',
+        phone: '+44 20 7946 1135',
+        influenceLevel: 'Sponsor',
+        primaryContact: false
+      }
+    ],
+    sites: [
+      {
+        id: 'upgrade-site-hq',
+        siteName: 'Finova HQ',
+        region: 'City of London',
+        headcount: 12,
+        goLiveDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Requires redundant UPS upgrades and remote monitoring telemetry.'
+      },
+      {
+        id: 'upgrade-site-glasgow',
+        siteName: 'Northbank Data Centre',
+        region: 'Glasgow',
+        headcount: 8,
+        goLiveDate: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Needs carbon reporting integration and safety briefing refresh.'
+      }
+    ],
+    checklist: [
+      {
+        id: 'upgrade-checklist-discovery',
+        label: 'Enterprise discovery workshop',
+        status: 'complete',
+        owner: 'Priya Patel',
+        dueDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+        notes: 'Captured all compliance prerequisites and data residency requirements.',
+        sortOrder: 0
+      },
+      {
+        id: 'upgrade-checklist-security',
+        label: 'Security architecture review',
+        status: 'in_progress',
+        owner: 'Marcus Lee',
+        dueDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
+        notes: 'SSO integration staged; awaiting pen-test sign-off.',
+        sortOrder: 1
+      },
+      {
+        id: 'upgrade-checklist-training',
+        label: 'Enterprise operator training plan',
+        status: 'not_started',
+        owner: 'Lena Howard',
+        dueDate: new Date(Date.now() + 18 * 24 * 3600 * 1000).toISOString(),
+        notes: null,
+        sortOrder: 2
+      }
+    ],
+    documents: [
+      {
+        id: 'upgrade-document-sow',
+        title: 'Enterprise SOW draft',
+        type: 'contract',
+        url: 'https://cdn.fixnado.com/docs/metro-power-sow.pdf',
+        thumbnailUrl: null,
+        description: 'Statement of work covering rollout scope, milestones, and commercial terms.'
+      },
+      {
+        id: 'upgrade-document-journey',
+        title: 'Customer journey blueprint',
+        type: 'playbook',
+        url: 'https://cdn.fixnado.com/docs/metro-power-journey.png',
+        thumbnailUrl: 'https://cdn.fixnado.com/docs/thumbnails/metro-power-journey.png',
+        description: 'High-level flow for procurement to live operations, including telemetry checkpoints.'
+      }
+    ]
   calendar: {
     calendar: {
       monthLabel: fallbackCalendarMonthLabel,
@@ -5156,6 +5318,26 @@ export const getProviderStorefront = withFallback(
   }
 );
 
+export async function createProviderEnterpriseUpgrade(payload) {
+  const { data } = await request('/panel/provider/enterprise-upgrade', {
+    method: 'POST',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
+
+export async function updateProviderEnterpriseUpgrade(requestId, payload) {
+  const { data } = await request(`/panel/provider/enterprise-upgrade/${encodeURIComponent(requestId)}`, {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
 function buildStorefrontHeaders(options = {}, includeContentType = false) {
   const headers = {
     'X-Fixnado-Role': options?.role ?? 'company',

@@ -23,6 +23,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
 import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
 import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
 import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
@@ -573,6 +574,7 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
   const adsWorkspace = state.data?.ads || null;
   const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
   const hasAdsWorkspace = Boolean(adsWorkspace);
@@ -682,6 +684,11 @@ export default function ProviderDashboard() {
             description: 'Campaigns, creatives, and targeting'
           }
         : null,
+      {
+        id: 'provider-dashboard-enterprise-upgrade',
+        label: t('providerDashboard.enterpriseUpgradeHeadline'),
+        description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -1080,6 +1087,10 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
+        <EnterpriseUpgradeSection
+          upgrade={enterpriseUpgrade}
+          onRefresh={() => loadDashboard({ forceRefresh: true })}
+        />
         {hasAdsWorkspace ? (
           <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -1541,6 +1541,26 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.enterpriseUpgrade.view': {
+    id: 'panel.provider.enterpriseUpgrade.view',
+    version: '1.0.0',
+    resource: 'panel.provider.enterpriseUpgrade',
+    action: 'panel.provider.enterpriseUpgrade:view',
+    description: 'Allow provider managers to inspect enterprise upgrade readiness data.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
+  'panel.provider.enterpriseUpgrade.manage': {
+    id: 'panel.provider.enterpriseUpgrade.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.enterpriseUpgrade',
+    action: 'panel.provider.enterpriseUpgrade:manage',
+    description: 'Allow provider managers to plan enterprise upgrades and manage rollout inputs.',
+    requirements: [Permissions.PANEL_PROVIDER_UPGRADE],
+    tags: ['panel', 'provider'],
+    severity: 'high'
+  },
   'panel.provider.servicemen.finance.read': {
     id: 'panel.provider.servicemen.finance.read',
     version: '1.0.0',

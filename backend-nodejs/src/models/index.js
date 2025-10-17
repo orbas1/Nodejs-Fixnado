@@ -139,6 +139,11 @@ import EnterpriseAccount from './enterpriseAccount.js';
 import EnterpriseSite from './enterpriseSite.js';
 import EnterpriseStakeholder from './enterpriseStakeholder.js';
 import EnterprisePlaybook from './enterprisePlaybook.js';
+import EnterpriseUpgradeRequest from './enterpriseUpgradeRequest.js';
+import EnterpriseUpgradeContact from './enterpriseUpgradeContact.js';
+import EnterpriseUpgradeSite from './enterpriseUpgradeSite.js';
+import EnterpriseUpgradeChecklistItem from './enterpriseUpgradeChecklistItem.js';
+import EnterpriseUpgradeDocument from './enterpriseUpgradeDocument.js';
 import AppearanceProfile from './appearanceProfile.js';
 import AppearanceAsset from './appearanceAsset.js';
 import AppearanceVariant from './appearanceVariant.js';
@@ -251,6 +256,57 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
+Company.hasMany(EnterpriseUpgradeRequest, {
+  foreignKey: 'companyId',
+  as: 'enterpriseUpgrades',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeRequest.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeContact, {
+  foreignKey: 'upgradeRequestId',
+  as: 'contacts',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeContact.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeSite, {
+  foreignKey: 'upgradeRequestId',
+  as: 'sites',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeSite.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeChecklistItem, {
+  foreignKey: 'upgradeRequestId',
+  as: 'checklistItems',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeChecklistItem.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeDocument, {
+  foreignKey: 'upgradeRequestId',
+  as: 'documents',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeDocument.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
 Company.hasOne(ProviderCalendarSetting, { foreignKey: 'companyId', as: 'calendarSetting' });
 ProviderCalendarSetting.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
@@ -1173,6 +1229,11 @@ export {
   EnterpriseSite,
   EnterpriseStakeholder,
   EnterprisePlaybook,
+  EnterpriseUpgradeRequest,
+  EnterpriseUpgradeContact,
+  EnterpriseUpgradeSite,
+  EnterpriseUpgradeChecklistItem,
+  EnterpriseUpgradeDocument,
   AppearanceProfile,
   AppearanceAsset,
   AppearanceVariant,
