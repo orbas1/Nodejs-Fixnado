@@ -3253,11 +3253,162 @@ const mockDashboards = {
       {
         id: 'profile-settings',
         icon: 'settings',
-        label: 'Profile settings',
-        description: 'Manage identity, branding, support hours, key contacts, and coverage.',
+        label: 'Provider profile',
+        description: 'Maintain identity, branding, escalation contacts, and coverage readiness.',
         type: 'provider-settings',
         data: {
-          companyId: 'PRV-1108'
+          companyId: 'PRV-1108',
+          disableRemoteFetch: true,
+          snapshot: {
+            profile: {
+              displayName: 'MetroFix Services',
+              tradingName: 'MetroFix',
+              tagline: 'Rapid facilities response across Greater London.',
+              missionStatement:
+                'MetroFix Services deliver 24/7 reactive and planned maintenance for commercial clients across Greater London. Teams specialise in HVAC, electrical, and carpentry disciplines with strict SLA cover.',
+              supportEmail: 'support@metrofix.co.uk',
+              supportPhone: '+44 20 7946 0010',
+              billingEmail: 'billing@metrofix.co.uk',
+              billingPhone: '+44 20 7946 0099',
+              websiteUrl: 'https://metrofix.example.com',
+              operationsPlaybookUrl: 'https://metrofix.example.com/playbooks/operations.pdf',
+              insurancePolicyUrl: 'https://metrofix.example.com/documents/insurance.pdf',
+              dispatchRadiusKm: 65,
+              preferredResponseMinutes: 120,
+              serviceRegions: ['Greater London', 'Home Counties']
+            },
+            branding: {
+              logoUrl: 'https://cdn.fixnado.com/providers/metrofix/logo.svg',
+              heroImageUrl: 'https://cdn.fixnado.com/providers/metrofix/hero.jpg',
+              brandPrimaryColor: '#1F4B99',
+              brandSecondaryColor: '#F4A340',
+              brandFont: 'Inter',
+              mediaGallery: [
+                {
+                  id: 'media-hq',
+                  label: 'Operations HQ',
+                  url: 'https://cdn.fixnado.com/providers/metrofix/hq.jpg'
+                },
+                {
+                  id: 'media-crew',
+                  label: 'Field crew',
+                  url: 'https://cdn.fixnado.com/providers/metrofix/crew.jpg'
+                }
+              ]
+            },
+            operations: {
+              operationsNotes:
+                'Crews operate in pods of two with mandatory 30-minute post-job QA using Fixnado mobile forms.',
+              coverageNotes:
+                'Standby crews are pre-staged in Croydon and Watford for after-hours callouts.',
+              supportHours: {
+                monday: { enabled: true, start: '07:00', end: '19:00' },
+                tuesday: { enabled: true, start: '07:00', end: '19:00' },
+                wednesday: { enabled: true, start: '07:00', end: '19:00' },
+                thursday: { enabled: true, start: '07:00', end: '19:00' },
+                friday: { enabled: true, start: '07:00', end: '19:00' },
+                saturday: { enabled: true, start: '08:00', end: '16:00' },
+                sunday: { enabled: false, start: null, end: null }
+              },
+              socialLinks: [
+                { id: 'link-website', label: 'Website', url: 'https://metrofix.example.com' },
+                {
+                  id: 'link-linkedin',
+                  label: 'LinkedIn',
+                  url: 'https://www.linkedin.com/company/metrofix-services'
+                },
+                {
+                  id: 'link-status',
+                  label: 'Status page',
+                  url: 'https://status.metrofix.example.com'
+                }
+              ]
+            },
+            contacts: [
+              {
+                id: 'contact-ops',
+                name: 'Lana Cortez',
+                role: 'Operations Director',
+                email: 'lana.cortez@metrofix.co.uk',
+                phone: '+44 20 7946 0101',
+                type: 'operations',
+                isPrimary: true,
+                notes: 'Primary escalation contact for enterprise contracts.',
+                avatarUrl: 'https://cdn.fixnado.com/providers/metrofix/team/lana.jpg'
+              },
+              {
+                id: 'contact-support',
+                name: 'Darius Patel',
+                role: 'Support Lead',
+                email: 'support.lead@metrofix.co.uk',
+                phone: '+44 20 7946 0199',
+                type: 'support',
+                isPrimary: false,
+                notes: 'Runs evening concierge rota and after-hours notifications.',
+                avatarUrl: 'https://cdn.fixnado.com/providers/metrofix/team/darius.jpg'
+              },
+              {
+                id: 'contact-finance',
+                name: 'Priya Ngu',
+                role: 'Finance Controller',
+                email: 'finance@metrofix.co.uk',
+                phone: '+44 20 7946 0188',
+                type: 'finance',
+                isPrimary: false,
+                notes: 'Handles invoice approvals and credit control.',
+                avatarUrl: 'https://cdn.fixnado.com/providers/metrofix/team/priya.jpg'
+              }
+            ],
+            coverage: [
+              {
+                id: 'coverage-london',
+                zoneId: 'zone-london',
+                zoneName: 'Greater London',
+                coverageType: 'primary',
+                slaMinutes: 120,
+                maxCapacity: 24,
+                notes: 'Core metro crews cover within two-hour response across London boroughs.',
+                metadata: {
+                  vans: '12',
+                  crews: '6'
+                }
+              },
+              {
+                id: 'coverage-southeast',
+                zoneId: 'zone-southeast',
+                zoneName: 'South East Corridor',
+                coverageType: 'secondary',
+                slaMinutes: 180,
+                maxCapacity: 12,
+                notes: 'Standby roster covering M25 orbital clients.',
+                metadata: {
+                  standbyCrews: '3',
+                  weekend: 'On-call'
+                }
+              }
+            ],
+            enums: {
+              contactTypes: ['operations', 'support', 'finance', 'compliance', 'sales', 'owner'],
+              coverageTypes: ['primary', 'secondary', 'standby'],
+              serviceZones: [
+                { id: 'zone-london', label: 'Greater London' },
+                { id: 'zone-southeast', label: 'South East Corridor' },
+                { id: 'zone-home-counties', label: 'Home Counties' }
+              ],
+              supportDays: [
+                { id: 'monday', label: 'Monday' },
+                { id: 'tuesday', label: 'Tuesday' },
+                { id: 'wednesday', label: 'Wednesday' },
+                { id: 'thursday', label: 'Thursday' },
+                { id: 'friday', label: 'Friday' },
+                { id: 'saturday', label: 'Saturday' },
+                { id: 'sunday', label: 'Sunday' }
+              ]
+            },
+            links: {
+              storefront: '/providers/metrofix-services'
+            }
+          }
         }
       }
     ]

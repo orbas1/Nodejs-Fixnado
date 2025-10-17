@@ -198,21 +198,37 @@ function createCoverageDraft(coverage = {}, serviceZones = [], coverageTypes = [
 
 function ProviderProfileSettingsWorkspace({ section }) {
   const companyId = section?.data?.companyId ?? null;
+  const disableRemoteFetch = section?.data?.disableRemoteFetch === true;
+  const initialSnapshot = useMemo(
+    () => section?.data?.settings ?? section?.data?.snapshot ?? null,
+    [section]
+  );
+  const initialSupportDays = useMemo(
+    () =>
+      initialSnapshot?.enums?.supportDays?.length
+        ? initialSnapshot.enums.supportDays
+        : DEFAULT_SUPPORT_DAYS,
+    [initialSnapshot]
+  );
 
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
-  const [enums, setEnums] = useState({
-    contactTypes: [],
-    coverageTypes: [],
-    serviceZones: [],
-    supportDays: DEFAULT_SUPPORT_DAYS
-  });
-  const [links, setLinks] = useState({ storefront: null });
-  const [identityForm, setIdentityForm] = useState(() => createIdentityState());
-  const [brandingForm, setBrandingForm] = useState(() => createBrandingState());
-  const [operationsForm, setOperationsForm] = useState(() => createOperationsState({}, DEFAULT_SUPPORT_DAYS));
-  const [contacts, setContacts] = useState([]);
-  const [coverage, setCoverage] = useState([]);
+  const [loading, setLoading] = useState(!initialSnapshot);
+  const [fatalError, setFatalError] = useState(null);
+  const [refreshError, setRefreshError] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(Boolean(initialSnapshot));
+  const [enums, setEnums] = useState(() => ({
+    contactTypes: initialSnapshot?.enums?.contactTypes ?? [],
+    coverageTypes: initialSnapshot?.enums?.coverageTypes ?? [],
+    serviceZones: initialSnapshot?.enums?.serviceZones ?? [],
+    supportDays: initialSupportDays
+  }));
+  const [links, setLinks] = useState(() => initialSnapshot?.links ?? { storefront: null });
+  const [identityForm, setIdentityForm] = useState(() => createIdentityState(initialSnapshot?.profile));
+  const [brandingForm, setBrandingForm] = useState(() => createBrandingState(initialSnapshot?.branding));
+  const [operationsForm, setOperationsForm] = useState(() =>
+    createOperationsState(initialSnapshot?.operations, initialSupportDays)
+  );
+  const [contacts, setContacts] = useState(() => initialSnapshot?.contacts ?? []);
+  const [coverage, setCoverage] = useState(() => initialSnapshot?.coverage ?? []);
 
   const [identitySaving, setIdentitySaving] = useState(false);
   const [brandingSaving, setBrandingSaving] = useState(false);
@@ -243,51 +259,85 @@ function ProviderProfileSettingsWorkspace({ section }) {
     [enums.supportDays]
   );
 
-  const applySettings = useCallback((payload) => {
-    const settings = payload?.data ?? payload;
-    if (!settings) {
-      return;
-    }
+  const applySettings = useCallback(
+    (payload) => {
+      const settings = payload?.data ?? payload;
+      if (!settings) {
+        return;
+      }
 
-    const nextEnums = {
-      contactTypes: settings.enums?.contactTypes ?? [],
-      coverageTypes: settings.enums?.coverageTypes ?? [],
-      serviceZones: settings.enums?.serviceZones ?? [],
-      supportDays: settings.enums?.supportDays ?? DEFAULT_SUPPORT_DAYS
-    };
+      const nextEnums = {
+        contactTypes: settings.enums?.contactTypes ?? [],
+        coverageTypes: settings.enums?.coverageTypes ?? [],
+        serviceZones: settings.enums?.serviceZones ?? [],
+        supportDays: settings.enums?.supportDays?.length
+          ? settings.enums.supportDays
+          : DEFAULT_SUPPORT_DAYS
+      };
 
-    setEnums(nextEnums);
-    setLinks(settings.links ?? { storefront: null });
-    setIdentityForm(createIdentityState(settings.profile));
-    setBrandingForm(createBrandingState(settings.branding));
-    setOperationsForm(createOperationsState(settings.operations, nextEnums.supportDays));
-    setContacts(settings.contacts ?? []);
-    setCoverage(settings.coverage ?? []);
-  }, []);
+      setEnums(nextEnums);
+      setLinks(settings.links ?? { storefront: null });
+      setIdentityForm(createIdentityState(settings.profile));
+      setBrandingForm(createBrandingState(settings.branding));
+      setOperationsForm(createOperationsState(settings.operations, nextEnums.supportDays));
+      setContacts(settings.contacts ?? []);
+      setCoverage(settings.coverage ?? []);
+      setHasLoaded(true);
+      setFatalError(null);
+      setRefreshError(null);
+    },
+    []
+  );
 
   const loadSettings = useCallback(
     async (options = {}) => {
-      setLoading(true);
-      setLoadError(null);
+      const background = options.background === true;
+      if (!background) {
+        setLoading(true);
+        setRefreshError(null);
+        setFatalError(null);
+      }
       try {
         const response = await getProviderSettings({ companyId, forceRefresh: options.forceRefresh });
         applySettings(response);
       } catch (error) {
-        setLoadError(extractErrorMessage(error, 'Unable to load provider settings.'));
+        const message = extractErrorMessage(error, 'Unable to load provider settings.');
+        if (!hasLoaded && !initialSnapshot) {
+          setFatalError(message);
+        } else {
+          setRefreshError(message);
+        }
       } finally {
-        setLoading(false);
+        if (!background) {
+          setLoading(false);
+        }
       }
     },
-    [applySettings, companyId]
+    [applySettings, companyId, hasLoaded, initialSnapshot]
   );
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (disableRemoteFetch) {
+      return;
+    }
+    loadSettings({ background: Boolean(initialSnapshot) });
+  }, [disableRemoteFetch, initialSnapshot, loadSettings]);
+
+  useEffect(() => {
+    if (!initialSnapshot) {
+      return;
+    }
+    applySettings(initialSnapshot);
+    setLoading(false);
+  }, [applySettings, initialSnapshot]);
 
   const handleRefresh = useCallback(() => {
+    if (disableRemoteFetch) {
+      setRefreshError('Live refresh is disabled in this environment.');
+      return;
+    }
     loadSettings({ forceRefresh: true });
-  }, [loadSettings]);
+  }, [disableRemoteFetch, loadSettings]);
 
   const handleIdentityFieldChange = useCallback((field, value) => {
     setIdentityForm((current) => ({ ...current, [field]: value }));
@@ -731,12 +781,12 @@ function ProviderProfileSettingsWorkspace({ section }) {
     );
   }
 
-  if (loadError) {
+  if (!hasLoaded && fatalError) {
     return (
       <div className="space-y-4 rounded-3xl border border-rose-200 bg-rose-50 p-6 text-slate-700">
         <div>
           <h2 className="text-lg font-semibold text-rose-700">Unable to load profile settings</h2>
-          <p className="text-sm text-rose-600">{loadError}</p>
+          <p className="text-sm text-rose-600">{fatalError}</p>
         </div>
         <Button type="button" variant="secondary" icon={ArrowPathIcon} onClick={handleRefresh}>
           Retry loading
@@ -754,10 +804,24 @@ function ProviderProfileSettingsWorkspace({ section }) {
             Maintain the information Fixnado surfaces to customers, dispatch, and finance. Updates sync instantly across storefronts, quotes, automation, and dashboards.
           </p>
         </div>
-        <Button type="button" variant="secondary" size="sm" icon={ArrowPathIcon} onClick={handleRefresh}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          icon={ArrowPathIcon}
+          onClick={handleRefresh}
+          disabled={disableRemoteFetch}
+          title={disableRemoteFetch ? 'Live refresh requires the provider settings service.' : undefined}
+        >
           Refresh snapshot
         </Button>
       </div>
+
+      {refreshError ? (
+        <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+          {refreshError}
+        </div>
+      ) : null}
 
       <div className="space-y-8">
         <IdentityForm
@@ -848,7 +912,10 @@ function ProviderProfileSettingsWorkspace({ section }) {
 ProviderProfileSettingsWorkspace.propTypes = {
   section: PropTypes.shape({
     data: PropTypes.shape({
-      companyId: PropTypes.string
+      companyId: PropTypes.string,
+      disableRemoteFetch: PropTypes.bool,
+      snapshot: PropTypes.object,
+      settings: PropTypes.object
     })
   })
 };

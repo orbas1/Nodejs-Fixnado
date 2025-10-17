@@ -68,6 +68,13 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      {
+        id: 'profile-settings',
+        label: 'Provider profile',
+        icon: 'settings',
+        description: 'Edit identity, branding, support hours, and coverage.',
+        href: '/dashboards/provider/profile'
+      },
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       {
@@ -97,6 +104,8 @@ export const DASHBOARD_ROLES = [
         icon: 'documents',
         type: 'route',
         href: '/dashboards/provider/onboarding'
+      },
+      {
         id: 'storefront-control',
         label: 'Storefront control centre',
         description: 'Manage storefront branding, catalogue, and incentives.',
