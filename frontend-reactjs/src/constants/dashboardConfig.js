@@ -171,6 +171,12 @@ export const DASHBOARD_ROLES = [
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
       { id: 'id-verification', label: 'ID Verification', icon: 'compliance' },
       { id: 'financial-management', label: 'Financial management', icon: 'finance' },
+      {
+        id: 'tax-management',
+        label: 'Tax management',
+        icon: 'finance',
+        href: '/dashboards/serviceman/tax'
+      },
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
       { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' },
@@ -181,6 +187,10 @@ export const DASHBOARD_ROLES = [
         label: 'BYOK management',
         icon: 'compliance',
         href: '/dashboards/serviceman/byok'
+      },
+      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
+      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
+      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
       }
     ]
   },

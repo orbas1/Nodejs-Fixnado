@@ -181,6 +181,10 @@ import ServicemanFinancialProfile from './servicemanFinancialProfile.js';
 import ServicemanFinancialEarning from './servicemanFinancialEarning.js';
 import ServicemanExpenseClaim from './servicemanExpenseClaim.js';
 import ServicemanAllowance from './servicemanAllowance.js';
+import ServicemanTaxProfile from './servicemanTaxProfile.js';
+import ServicemanTaxFiling from './servicemanTaxFiling.js';
+import ServicemanTaxTask from './servicemanTaxTask.js';
+import ServicemanTaxDocument from './servicemanTaxDocument.js';
 import HomePage from './homePage.js';
 import HomePageSection from './homePageSection.js';
 import HomePageComponent from './homePageComponent.js';
@@ -687,6 +691,41 @@ PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
   ServicemanAllowance.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
   ServicemanAllowance.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
   ServicemanAllowance.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
+
+  User.hasOne(ServicemanTaxProfile, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanTaxProfile'
+  });
+  ServicemanTaxProfile.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+
+  User.hasMany(ServicemanTaxFiling, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanTaxFilings'
+  });
+  ServicemanTaxFiling.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanTaxFiling.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+  ServicemanTaxFiling.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
+
+  ServicemanTaxFiling.hasMany(ServicemanTaxTask, { foreignKey: 'filingId', as: 'tasks' });
+  ServicemanTaxTask.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
+  ServicemanTaxFiling.hasMany(ServicemanTaxDocument, { foreignKey: 'filingId', as: 'documents' });
+  ServicemanTaxDocument.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
+
+  User.hasMany(ServicemanTaxTask, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanTaxTasks'
+  });
+  ServicemanTaxTask.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanTaxTask.belongsTo(User, { foreignKey: 'assignedTo', as: 'assignee' });
+  ServicemanTaxTask.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+  ServicemanTaxTask.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
+
+  User.hasMany(ServicemanTaxDocument, {
+    foreignKey: 'servicemanId',
+    as: 'servicemanTaxDocuments'
+  });
+  ServicemanTaxDocument.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+  ServicemanTaxDocument.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
 
   FinanceTransactionHistory.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
   Payment.hasMany(FinanceTransactionHistory, { foreignKey: 'paymentId', as: 'history' });
@@ -1425,6 +1464,10 @@ export {
   ServicemanFinancialEarning,
   ServicemanExpenseClaim,
   ServicemanAllowance,
+  ServicemanTaxProfile,
+  ServicemanTaxFiling,
+  ServicemanTaxTask,
+  ServicemanTaxDocument,
   HomePage,
   HomePageSection,
   HomePageComponent,

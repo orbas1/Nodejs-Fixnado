@@ -46,6 +46,19 @@ const ROUTE_POLICIES = {
       surface: req.route?.path || null
     })
   },
+  'serviceman.tax.manage': {
+    id: 'serviceman.tax.manage',
+    version: '1.0.0',
+    resource: 'serviceman.tax',
+    action: 'serviceman.tax:manage',
+    description:
+      'Allow crew personas to manage tax profiles, filings, remittances, tasks, and compliance documents for the serviceman control centre.',
+    requirements: [Permissions.SERVICEMAN_TAX_MANAGE],
+    tags: ['serviceman', 'tax', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      surface: req.route?.path || null
   'provider.control.crew': {
     id: 'provider.control.crew',
     version: '1.0.0',

@@ -130,6 +130,7 @@ export const Permissions = Object.freeze({
   SERVICEMAN_CUSTOM_JOBS_REPORTS: 'serviceman:custom-jobs:reports',
   SERVICEMAN_ESCROW_VIEW: 'serviceman:escrow:view',
   SERVICEMAN_ESCROW_MANAGE: 'serviceman:escrow:manage',
+  SERVICEMAN_TAX_MANAGE: 'serviceman:tax:manage',
   SUPPORT_TICKETS: 'support:tickets:manage',
   SERVICEMAN_WEBSITE_READ: 'serviceman:website:read',
   SERVICEMAN_WEBSITE_WRITE: 'serviceman:website:write',

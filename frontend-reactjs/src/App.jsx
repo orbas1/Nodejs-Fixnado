@@ -75,6 +75,8 @@ const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CustomerSettingsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
   : null;
+const ServicemanTaxDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/ServicemanTaxDevPreview.jsx'))
 const ProviderAdsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
   : null;
@@ -84,6 +86,9 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
 const ServicemanByokWorkspace = lazy(() =>
   import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
+);
+const ServicemanTaxWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/tax/ServicemanTaxWorkspace.jsx')
 );
 
 const ADMIN_ROUTES = [
@@ -454,6 +459,14 @@ function App() {
                 }
               />
               <Route
+                path="/dashboards/serviceman/tax"
+                element={
+                  <ServicemanProtectedRoute>
+                    <ServicemanTaxWorkspace />
+                  </ServicemanProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboards/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
@@ -477,6 +490,8 @@ function App() {
               {import.meta.env.DEV && CustomerSettingsDevPreview ? (
                 <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
               ) : null}
+              {import.meta.env.DEV && ServicemanTaxDevPreview ? (
+                <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
               {import.meta.env.DEV && ProviderAdsDevPreview ? (
                 <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}

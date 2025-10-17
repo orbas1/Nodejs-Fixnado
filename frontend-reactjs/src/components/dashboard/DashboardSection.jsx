@@ -33,6 +33,7 @@ import { ProviderInboxModule } from '../../modules/providerInbox/index.js';
 import IdentityVerificationSection from './serviceman/IdentityVerificationSection.jsx';
 import { ServicemanMetricsSection } from '../../modules/servicemanMetrics/index.js';
 import ServicemanFinanceWorkspace from '../../modules/servicemanFinance/ServicemanFinanceWorkspace.jsx';
+import ServicemanTaxWorkspace from '../../modules/servicemanControlCentre/tax/ServicemanTaxWorkspace.jsx';
 import { ServicemanWebsitePreferencesSection } from '../../features/servicemanWebsitePreferences/index.js';
 import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
 import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
@@ -1727,6 +1728,8 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       return <ServiceManagementSection section={section} />;
     case 'serviceman-finance':
       return <ServicemanFinanceWorkspace initialData={section.data ?? {}} />;
+    case 'serviceman-tax':
+      return <ServicemanTaxWorkspace initialSnapshot={section.data ?? {}} />;
     case 'audit-timeline':
       return <AuditTimelineSection section={section} />;
     case 'compliance-controls':
