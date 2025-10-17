@@ -6,6 +6,7 @@ import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import { WebsitePreferencesSection } from '../features/providerWebsitePreferences/index.js';
 import {
   ChartBarIcon,
   ClockIcon,
@@ -561,6 +562,7 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const websitePreferences = state.data?.websitePreferences ?? null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -628,6 +630,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      {
+        id: 'provider-dashboard-website-preferences',
+        label: t('providerDashboard.websitePreferencesHeadline'),
+        description: t('providerDashboard.nav.websitePreferences')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -720,6 +727,21 @@ export default function ProviderDashboard() {
   if (!hasProviderAccess) {
     return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
+
+  const handleWebsitePreferencesUpdated = useCallback((nextPreferences) => {
+    setState((current) => {
+      if (!current.data) {
+        return current;
+      }
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          websitePreferences: nextPreferences
+        }
+      };
+    });
+  }, []);
 
   return (
     <div data-qa="provider-dashboard">
@@ -963,6 +985,12 @@ export default function ProviderDashboard() {
             </ul>
           </section>
         ) : null}
+
+        <WebsitePreferencesSection
+          provider={provider}
+          initialPreferences={websitePreferences}
+          onUpdated={handleWebsitePreferencesUpdated}
+        />
 
         <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
           <header className="flex items-center gap-3">

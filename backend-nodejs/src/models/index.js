@@ -19,6 +19,7 @@ import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
+import ProviderWebsitePreference from './providerWebsitePreference.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
 import Booking from './booking.js';
@@ -178,6 +179,9 @@ Company.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 Company.hasOne(ProviderProfile, { foreignKey: 'companyId', as: 'profile' });
 ProviderProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderWebsitePreference, { foreignKey: 'companyId', as: 'websitePreferences' });
+ProviderWebsitePreference.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderContact, { foreignKey: 'companyId', as: 'contacts' });
 ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
@@ -891,6 +895,7 @@ export {
   WalletAccount,
   WalletTransaction
   ProviderProfile,
+  ProviderWebsitePreference,
   ProviderContact,
   ProviderCoverage
   RbacRole,

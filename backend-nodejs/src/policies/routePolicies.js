@@ -1290,6 +1290,20 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.website': {
+    id: 'panel.provider.website',
+    version: '1.0.0',
+    resource: 'panel.provider.website',
+    action: 'panel.provider:website',
+    description: 'Allow provider operators to manage storefront branding and website preferences.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider', 'website'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      actorId: req.user?.id || null
+    })
+  },
   'panel.enterprise.dashboard': {
     id: 'panel.enterprise.dashboard',
     version: '1.0.0',

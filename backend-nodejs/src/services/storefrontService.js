@@ -8,7 +8,7 @@ import {
   RentalAgreement,
   User
 } from '../models/index.js';
-import { resolveCompanyId } from './panelService.js';
+import { resolveCompanyId } from './companyAccessService.js';
 
 const ACTIVE_RENTAL_STATUSES = new Set([
   'approved',

@@ -185,3 +185,30 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
+
+-- Provider website preferences for control centre configuration
+CREATE TABLE IF NOT EXISTS provider_website_preferences (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  slug VARCHAR(160) NOT NULL,
+  custom_domain VARCHAR(255),
+  hero JSONB NOT NULL DEFAULT '{}'::jsonb,
+  branding JSONB NOT NULL DEFAULT '{}'::jsonb,
+  media JSONB NOT NULL DEFAULT '{}'::jsonb,
+  support JSONB NOT NULL DEFAULT '{}'::jsonb,
+  seo JSONB NOT NULL DEFAULT '{}'::jsonb,
+  social_links JSONB NOT NULL DEFAULT '[]'::jsonb,
+  trust JSONB NOT NULL DEFAULT '{}'::jsonb,
+  modules JSONB NOT NULL DEFAULT '{}'::jsonb,
+  featured_projects JSONB NOT NULL DEFAULT '[]'::jsonb,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT provider_website_preferences_company_id_key UNIQUE (company_id),
+  CONSTRAINT fk_provider_website_company
+    FOREIGN KEY (company_id) REFERENCES "Company"(id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_website_preferences_slug
+  ON provider_website_preferences (slug);
