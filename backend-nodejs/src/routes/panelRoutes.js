@@ -5,6 +5,9 @@ import {
   getProviderStorefrontHandler
 } from '../controllers/panelController.js';
 import {
+  getProviderWebsitePreferencesHandler,
+  updateProviderWebsitePreferencesHandler
+} from '../controllers/providerWebsitePreferencesController.js';
   listProviderServicemenHandler,
   createProviderServicemanHandler,
   updateProviderServicemanHandler,
@@ -75,6 +78,20 @@ router.get(
   getProviderDashboardHandler
 );
 router.get(
+  '/provider/website-preferences',
+  authenticate,
+  enforcePolicy('panel.provider.website', {
+    metadata: () => ({ section: 'provider-website-preferences', action: 'read' })
+  }),
+  getProviderWebsitePreferencesHandler
+);
+router.put(
+  '/provider/website-preferences',
+  authenticate,
+  enforcePolicy('panel.provider.website', {
+    metadata: () => ({ section: 'provider-website-preferences', action: 'update' })
+  }),
+  updateProviderWebsitePreferencesHandler
   '/provider/servicemen',
   authenticate,
   enforcePolicy('panel.provider.servicemen.manage', {

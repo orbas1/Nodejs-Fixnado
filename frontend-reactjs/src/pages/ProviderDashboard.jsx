@@ -6,6 +6,7 @@ import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import { WebsitePreferencesSection } from '../features/providerWebsitePreferences/index.js';
 import ServicemanManagementSection from '../features/providerServicemen/ServicemanManagementSection.jsx';
 import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
@@ -535,6 +536,7 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const websitePreferences = state.data?.websitePreferences ?? null;
   const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
   const adsWorkspace = state.data?.ads || null;
   const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
@@ -649,6 +651,11 @@ export default function ProviderDashboard() {
         id: 'provider-dashboard-enterprise-upgrade',
         label: t('providerDashboard.enterpriseUpgradeHeadline'),
         description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
+      {
+        id: 'provider-dashboard-website-preferences',
+        label: t('providerDashboard.websitePreferencesHeadline'),
+        description: t('providerDashboard.nav.websitePreferences')
       },
       {
         id: 'provider-dashboard-servicemen',
@@ -768,6 +775,21 @@ export default function ProviderDashboard() {
   if (!hasProviderAccess) {
     return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
+
+  const handleWebsitePreferencesUpdated = useCallback((nextPreferences) => {
+    setState((current) => {
+      if (!current.data) {
+        return current;
+      }
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          websitePreferences: nextPreferences
+        }
+      };
+    });
+  }, []);
 
   return (
     <div data-qa="provider-dashboard">
@@ -1048,6 +1070,11 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
+        <WebsitePreferencesSection
+          provider={provider}
+          initialPreferences={websitePreferences}
+          onUpdated={handleWebsitePreferencesUpdated}
+        />
         <EnterpriseUpgradeSection
           upgrade={enterpriseUpgrade}
           onRefresh={() => loadDashboard({ forceRefresh: true })}

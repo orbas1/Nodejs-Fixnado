@@ -14,6 +14,7 @@ import {
   InventoryItem,
   MarketplaceItem,
   MarketplaceModerationAction,
+  ProviderWebsitePreference,
   RentalAgreement,
   Service,
   ServiceZone,
@@ -22,6 +23,8 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { normaliseProviderWebsitePreference } from './providerWebsitePreferencesService.js';
+import { buildHttpError, resolveCompanyForActor, resolveCompanyId, toSlug } from './companyAccessService.js';
 import { getEnterpriseUpgradeByCompany } from './providerUpgradeService.js';
 import { getServicemanPaymentsWorkspace } from './servicemanFinanceService.js';
 import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
@@ -34,12 +37,6 @@ import {
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
 const PLATFORM_COMMISSION_FALLBACK = 0.025;
-
-function buildHttpError(statusCode, message) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-}
 
 function clamp(value, min = 0, max = 1) {
   if (!Number.isFinite(value)) {
@@ -66,18 +63,6 @@ function average(values = [], fallback = 0) {
   }
   const total = valid.reduce((sum, value) => sum + value, 0);
   return total / valid.length;
-}
-
-function toSlug(input, fallback) {
-  if (typeof input === 'string' && input.trim()) {
-    return input
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60);
-  }
-  return fallback;
 }
 
 function sanitiseString(value) {
@@ -489,6 +474,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     serviceZones,
     marketplaceItems,
     rentals,
+    websitePreferenceRecord
     adsWorkspace
   ] = await Promise.all([
     Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
@@ -509,6 +495,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
     MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
     RentalAgreement.findAll({ where: { companyId } }),
+    ProviderWebsitePreference.findOne({ where: { companyId }, raw: true })
+  ]);
     buildProviderCampaignWorkspace({ company, actor })
   ]);
     toolSaleProfiles
@@ -815,6 +803,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     wallet: walletSection
   };
 
+  data.websitePreferences = normaliseProviderWebsitePreference(websitePreferenceRecord, company);
   try {
     const servicemanFinance = await getServicemanPaymentsWorkspace({
       companyId,

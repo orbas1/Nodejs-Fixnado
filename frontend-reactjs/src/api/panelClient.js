@@ -232,6 +232,224 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function trimToNull(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function normaliseWebsitePreferences(raw = {}, provider = {}) {
+  const slug = trimToNull(raw.slug) || trimToNull(provider.slug) || 'provider';
+  const customDomain = trimToNull(raw.customDomain);
+  const previewUrl = trimToNull(raw.previewUrl)
+    || (customDomain ? `https://${customDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '')}` : `/providers/${slug}`);
+
+  const hero = raw.hero || {};
+  const branding = raw.branding || {};
+  const media = raw.media || {};
+  const support = raw.support || {};
+  const seo = raw.seo || {};
+  const trust = raw.trust || {};
+  const modules = raw.modules || {};
+
+  return {
+    slug,
+    customDomain,
+    previewUrl,
+    hero: {
+      heading:
+        trimToNull(hero.heading) ||
+        `Showcase ${provider.tradingName || provider.name || provider.legalName || 'provider'}`,
+      subheading:
+        trimToNull(hero.subheading) ||
+        'Curate hero messaging, supporting copy, and highlights for enterprise buyers.',
+      tagline: trimToNull(hero.tagline) || 'Escrow-backed • Telemetry visible • Enterprise ready',
+      highlights: ensureArray(hero.highlights)
+        .map((highlight) => trimToNull(highlight))
+        .filter(Boolean),
+      mediaAlignment: trimToNull(hero.mediaAlignment) || 'right',
+      primaryCta: {
+        label: trimToNull(hero.primaryCta?.label) || 'View storefront',
+        url: trimToNull(hero.primaryCta?.url) || `/providers/${slug}`,
+        behaviour: trimToNull(hero.primaryCta?.behaviour) || 'link'
+      },
+      secondaryCta: {
+        label: trimToNull(hero.secondaryCta?.label) || 'Book discovery call',
+        url: trimToNull(hero.secondaryCta?.url) || 'https://fixnado.com/contact',
+        behaviour: trimToNull(hero.secondaryCta?.behaviour) || 'link'
+      }
+    },
+    branding: {
+      theme: trimToNull(branding.theme) || 'light',
+      brandColor: trimToNull(branding.brandColor) || '#0f172a',
+      accentColor: trimToNull(branding.accentColor) || '#38bdf8',
+      backgroundColor: trimToNull(branding.backgroundColor) || '#f8fafc',
+      textTone: trimToNull(branding.textTone) || 'dark',
+      layout: trimToNull(branding.layout) || 'modular',
+      typography: trimToNull(branding.typography) || 'sans-serif'
+    },
+    media: {
+      logoUrl: trimToNull(media.logoUrl) || null,
+      heroImageUrl: trimToNull(media.heroImageUrl) || null,
+      brandImageUrl: trimToNull(media.brandImageUrl) || null,
+      brandVideoUrl: trimToNull(media.brandVideoUrl) || null,
+      gallery: ensureArray(media.gallery)
+        .map((item, index) => {
+          const imageUrl = trimToNull(item?.imageUrl);
+          if (!imageUrl) {
+            return null;
+          }
+          return {
+            id: trimToNull(item?.id) || `gallery-${index + 1}`,
+            title: trimToNull(item?.title) || `Showcase asset ${index + 1}`,
+            caption: trimToNull(item?.caption) || trimToNull(item?.description) || null,
+            imageUrl,
+            altText: trimToNull(item?.altText) || trimToNull(item?.title) || 'Showcase image'
+          };
+        })
+        .filter(Boolean)
+    },
+    support: {
+      email: trimToNull(support.email) || trimToNull(provider.supportEmail) || null,
+      phone: trimToNull(support.phone) || trimToNull(provider.supportPhone) || null,
+      hours: trimToNull(support.hours) || '24/7 concierge for enterprise programmes',
+      responseTime: trimToNull(support.responseTime) || 'Under 60 minutes',
+      conciergeName: trimToNull(support.conciergeName) || null,
+      channels: ensureArray(support.channels)
+        .map((channel, index) => {
+          const destination = trimToNull(channel?.destination) || trimToNull(channel?.value);
+          if (!destination) {
+            return null;
+          }
+          const type = trimToNull(channel?.type) || 'email';
+          return {
+            id: trimToNull(channel?.id) || `channel-${index + 1}`,
+            type,
+            label: trimToNull(channel?.label) || type.toUpperCase(),
+            destination,
+            notes: trimToNull(channel?.notes) || trimToNull(channel?.description) || null
+          };
+        })
+        .filter(Boolean)
+    },
+    seo: {
+      title:
+        trimToNull(seo.title) ||
+        `${provider.tradingName || provider.name || 'Provider'} • Fixnado marketplace`,
+      description:
+        trimToNull(seo.description) ||
+        'Control metadata, social previews, and discoverability for your storefront.',
+      keywords: ensureArray(seo.keywords)
+        .flatMap((keyword) => (typeof keyword === 'string' ? keyword.split(',') : []))
+        .map((keyword) => trimToNull(keyword))
+        .filter(Boolean),
+      ogImageUrl: trimToNull(seo.ogImageUrl) || null
+    },
+    socialLinks: ensureArray(raw.socialLinks)
+      .map((link, index) => {
+        const url = trimToNull(link?.url);
+        if (!url) {
+          return null;
+        }
+        return {
+          id: trimToNull(link?.id) || `social-${index + 1}`,
+          label: trimToNull(link?.label) || `Link ${index + 1}`,
+          url,
+          icon: trimToNull(link?.icon) || null
+        };
+      })
+      .filter(Boolean),
+    trust: {
+      showTrustScore:
+        typeof trust.showTrustScore === 'boolean' ? trust.showTrustScore : true,
+      showResponseTime:
+        typeof trust.showResponseTime === 'boolean' ? trust.showResponseTime : true,
+      testimonialsEnabled:
+        typeof trust.testimonialsEnabled === 'boolean' ? trust.testimonialsEnabled : true,
+      testimonials: ensureArray(trust.testimonials)
+        .map((item, index) => {
+          const quote = trimToNull(item?.quote) || trimToNull(item?.body);
+          if (!quote) {
+            return null;
+          }
+          return {
+            id: trimToNull(item?.id) || `testimonial-${index + 1}`,
+            quote,
+            author: trimToNull(item?.author) || trimToNull(item?.client) || 'Enterprise partner',
+            role: trimToNull(item?.role) || trimToNull(item?.title) || null
+          };
+        })
+        .filter(Boolean),
+      badges: ensureArray(trust.badges)
+        .map((badge, index) => {
+          const label = trimToNull(badge?.label);
+          if (!label) {
+            return null;
+          }
+          return {
+            id: trimToNull(badge?.id) || `badge-${index + 1}`,
+            label,
+            description: trimToNull(badge?.description) || trimToNull(badge?.caption) || null,
+            iconUrl: trimToNull(badge?.iconUrl) || trimToNull(badge?.imageUrl) || null,
+            evidenceUrl: trimToNull(badge?.evidenceUrl) || null
+          };
+        })
+        .filter(Boolean),
+      metrics: ensureArray(trust.metrics)
+        .map((metric, index) => ({
+          id: trimToNull(metric?.id) || `metric-${index + 1}`,
+          label: trimToNull(metric?.label) || `Metric ${index + 1}`,
+          value: trimToNull(metric?.value) || null,
+          format: trimToNull(metric?.format) || 'number'
+        }))
+        .filter((metric) => metric.value),
+      reviewWidget: {
+        enabled: typeof trust.reviewWidget?.enabled === 'boolean' ? trust.reviewWidget.enabled : false,
+        display: trimToNull(trust.reviewWidget?.display) || 'inline',
+        providerId: trimToNull(trust.reviewWidget?.providerId) || null,
+        url: trimToNull(trust.reviewWidget?.url) || null
+      }
+    },
+    modules: {
+      showProjects: typeof modules.showProjects === 'boolean' ? modules.showProjects : true,
+      showCertifications:
+        typeof modules.showCertifications === 'boolean' ? modules.showCertifications : true,
+      showAvailability:
+        typeof modules.showAvailability === 'boolean' ? modules.showAvailability : true,
+      allowEnquiryForm:
+        typeof modules.allowEnquiryForm === 'boolean' ? modules.allowEnquiryForm : true,
+      enableLiveChat: typeof modules.enableLiveChat === 'boolean' ? modules.enableLiveChat : false,
+      allowDownloads:
+        typeof modules.allowDownloads === 'boolean' ? modules.allowDownloads : true,
+      highlightGeoCoverage:
+        typeof modules.highlightGeoCoverage === 'boolean' ? modules.highlightGeoCoverage : true
+    },
+    featuredProjects: ensureArray(raw.featuredProjects)
+      .map((project, index) => {
+        const title = trimToNull(project?.title);
+        const summary = trimToNull(project?.summary) || trimToNull(project?.description);
+        const imageUrl = trimToNull(project?.imageUrl);
+        return {
+          id: trimToNull(project?.id) || `project-${index + 1}`,
+          title: title || `Programme ${index + 1}`,
+          summary: summary || null,
+          imageUrl,
+          ctaLabel: trimToNull(project?.ctaLabel) || trimToNull(project?.ctaText) || null,
+          ctaUrl: trimToNull(project?.ctaUrl) || null
+        };
+      })
+      .filter((project) => project.imageUrl || project.summary || project.ctaUrl),
+    metadata: {
+      notes: trimToNull(raw.metadata?.notes) || null,
+      lastPublishedAt: trimToNull(raw.metadata?.lastPublishedAt) || null,
+      updatedAt: trimToNull(raw.metadata?.updatedAt) || null,
+      updatedBy: trimToNull(raw.metadata?.updatedBy) || null,
+      createdAt: trimToNull(raw.metadata?.createdAt) || null,
+      createdBy: trimToNull(raw.metadata?.createdBy) || null
+    }
+  };
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -790,16 +1008,18 @@ function normaliseProviderDashboard(payload = {}) {
   const upgrade = normaliseEnterpriseUpgrade(root.enterpriseUpgrade || root.enterprise_upgrade);
   const ads = normaliseProviderAds(root.ads || {});
 
+  const providerDetails = {
+    name: provider.legalName || provider.name || 'Provider',
+    tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
+    region: provider.region || provider.operatingRegion || 'United Kingdom',
+    slug: provider.slug || root.slug || 'provider',
+    onboardingStatus: provider.onboardingStatus || 'active',
+    supportEmail: provider.supportEmail || provider.contactEmail || root.contactEmail || null,
+    supportPhone: provider.supportPhone || provider.contactPhone || root.contactPhone || null
+  };
+
   return {
-    provider: {
-      name: provider.legalName || provider.name || 'Provider',
-      tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
-      region: provider.region || provider.operatingRegion || 'United Kingdom',
-      slug: provider.slug || root.slug || 'provider',
-      onboardingStatus: provider.onboardingStatus || 'active',
-      supportEmail: provider.supportEmail || provider.contactEmail || root.contactEmail || null,
-      supportPhone: provider.supportPhone || provider.contactPhone || root.contactPhone || null
-    },
+    provider: providerDetails,
     metrics: {
       utilisation: metrics.utilisation ?? metrics.capacityUtilisation ?? 0.74,
       slaHitRate: metrics.slaHitRate ?? metrics.sla ?? 0.96,
@@ -922,6 +1142,7 @@ function normaliseProviderDashboard(payload = {}) {
         coverage: ensureArray(service.coverage)
       }))
     },
+    websitePreferences: normaliseWebsitePreferences(root.websitePreferences || root.website || {}, providerDetails)
     enterpriseUpgrade: upgrade
     servicemanFinance: normaliseServicemanFinance(
       root.servicemanFinance || root.servicemanFinanceSnapshot || {}
@@ -4268,6 +4489,189 @@ const providerFallback = normaliseProviderDashboard({
       coverage: ['Docklands', 'Canary Wharf']
     }
   ],
+  websitePreferences: {
+    slug: 'metro-power-services',
+    customDomain: 'metro-power.services',
+    hero: {
+      heading: 'Telemetry-first field engineering',
+      subheading:
+        'Showcase Metro Power programme strength, concierge support, and telemetry-backed reporting to enterprise buyers.',
+      tagline: 'Escrow-backed • Telemetry visible • Enterprise ready',
+      highlights: [
+        'London & South East coverage',
+        'Critical power + HVAC specialists',
+        'Escrow protected engagements'
+      ],
+      mediaAlignment: 'left',
+      primaryCta: {
+        label: 'View storefront',
+        url: '/providers/metro-power-services',
+        behaviour: 'link'
+      },
+      secondaryCta: {
+        label: 'Book discovery call',
+        url: 'https://metro-power.services/discovery',
+        behaviour: 'link'
+      }
+    },
+    branding: {
+      theme: 'light',
+      brandColor: '#0b1d3a',
+      accentColor: '#38bdf8',
+      backgroundColor: '#f1f5f9',
+      textTone: 'dark',
+      layout: 'modular',
+      typography: 'Inter'
+    },
+    media: {
+      logoUrl: 'https://cdn.fixnado.com/providers/metro-power/logo.svg',
+      heroImageUrl: 'https://cdn.fixnado.com/providers/metro-power/hero.jpg',
+      brandImageUrl: 'https://cdn.fixnado.com/providers/metro-power/team.jpg',
+      brandVideoUrl: 'https://cdn.fixnado.com/providers/metro-power/showreel.mp4',
+      gallery: [
+        {
+          id: 'gallery-1',
+          title: 'Riverside Campus UPS overhaul',
+          caption: 'Telemetry-backed upgrade completed within a live estate.',
+          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-1.jpg',
+          altText: 'Metro Power team installing UPS cabinets'
+        },
+        {
+          id: 'gallery-2',
+          title: 'Northbank chilled water retrofit',
+          caption: 'HVAC retrofit with zero downtime for occupiers.',
+          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-2.jpg',
+          altText: 'Engineer calibrating chilled water plant'
+        }
+      ]
+    },
+    support: {
+      email: 'concierge@metropower.example',
+      phone: '+44 20 7946 0010',
+      hours: '24/7 concierge for enterprise programmes',
+      responseTime: 'Under 45 minutes',
+      conciergeName: 'Amina Khan',
+      channels: [
+        {
+          id: 'channel-email',
+          type: 'email',
+          label: 'Email',
+          destination: 'concierge@metropower.example',
+          notes: 'Direct to programme concierge'
+        },
+        {
+          id: 'channel-phone',
+          type: 'phone',
+          label: 'Ops hotline',
+          destination: '+44 20 7946 0010',
+          notes: 'Escalations within 15 minutes'
+        },
+        {
+          id: 'channel-slack',
+          type: 'slack',
+          label: 'Slack Connect',
+          destination: 'slack://channel?team=T12345&id=C67890',
+          notes: 'Available for enterprise workstreams'
+        }
+      ]
+    },
+    seo: {
+      title: 'Metro Power Services • Fixnado enterprise provider',
+      description:
+        'Certified critical power and HVAC specialists delivering telemetry-backed programmes across London & South East.',
+      keywords: ['critical power', 'hvac', 'telemetry', 'enterprise facilities'],
+      ogImageUrl: 'https://cdn.fixnado.com/providers/metro-power/og-image.jpg'
+    },
+    socialLinks: [
+      {
+        id: 'social-linkedin',
+        label: 'LinkedIn',
+        url: 'https://www.linkedin.com/company/metro-power-services/',
+        icon: 'linkedin'
+      },
+      {
+        id: 'social-youtube',
+        label: 'YouTube',
+        url: 'https://www.youtube.com/@metropower-services',
+        icon: 'youtube'
+      }
+    ],
+    trust: {
+      showTrustScore: true,
+      showResponseTime: true,
+      testimonialsEnabled: true,
+      testimonials: [
+        {
+          id: 'testimonial-finova',
+          quote: 'Metro Power orchestrated a complex UPS modernisation with zero downtime.',
+          author: 'Sophie Turner',
+          role: 'Operations Director, Finova HQ'
+        },
+        {
+          id: 'testimonial-northbank',
+          quote: 'Telemetry insights and concierge support kept our refurbishment on track.',
+          author: 'James Holloway',
+          role: 'Facilities Lead, Northbank Campus'
+        }
+      ],
+      badges: [
+        {
+          id: 'badge-iso',
+          label: 'ISO 9001',
+          description: 'Certified quality management for field operations.',
+          iconUrl: 'https://cdn.fixnado.com/badges/iso9001.svg',
+          evidenceUrl: 'https://metro-power.services/certificates/iso9001.pdf'
+        },
+        {
+          id: 'badge-escrow',
+          label: 'Fixnado Escrow+',
+          description: 'Enhanced escrow safeguards for enterprise engagements.',
+          iconUrl: 'https://cdn.fixnado.com/badges/escrow-plus.svg',
+          evidenceUrl: 'https://metro-power.services/policies/escrow-plus'
+        }
+      ],
+      metrics: [
+        { id: 'metric-sla', label: 'SLA compliance', value: '98%', format: 'percent' },
+        { id: 'metric-response', label: 'Median response time', value: '42m', format: 'duration' }
+      ],
+      reviewWidget: {
+        enabled: true,
+        display: 'inline',
+        providerId: 'trustpilot-metro-power',
+        url: 'https://trustpilot.com/review/metro-power.services'
+      }
+    },
+    modules: {
+      showProjects: true,
+      showCertifications: true,
+      showAvailability: true,
+      allowEnquiryForm: true,
+      enableLiveChat: false,
+      allowDownloads: true,
+      highlightGeoCoverage: true
+    },
+    featuredProjects: [
+      {
+        id: 'project-riverside',
+        title: 'Riverside Campus UPS upgrade',
+        summary: 'Critical power refresh with IoT telemetry across three towers.',
+        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/riverside.jpg',
+        ctaLabel: 'Read case study',
+        ctaUrl: 'https://metro-power.services/case-studies/riverside-ups'
+      },
+      {
+        id: 'project-northbank',
+        title: 'Northbank HVAC modernisation',
+        summary: 'Telemetry-enabled HVAC retrofit delivering 18% energy savings.',
+        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/northbank.jpg',
+        ctaLabel: 'Download programme pack',
+        ctaUrl: 'https://metro-power.services/resources/northbank-pack.pdf'
+      }
+    ],
+    metadata: {
+      notes: 'Last published after Q1 sustainability refresh.',
+      lastPublishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString()
+    }
   ads: {
     company: {
       id: 'gigvora-company-001',
@@ -4469,6 +4873,8 @@ const providerFallback = normaliseProviderDashboard({
     ]
   }
 });
+
+const providerWebsitePreferencesFallback = providerFallback.websitePreferences;
 
 const storefrontFallback = normaliseProviderStorefront({
   storefront: {
@@ -5265,7 +5671,7 @@ function withFallback(normaliser, fallback, fetcherFactory) {
       const resolvedMeta = serverMeta
         ? { ...(transportMeta ?? {}), ...serverMeta }
         : { ...(transportMeta ?? {}) };
-      const normalised = normaliser(payload);
+      const normalised = normaliser(payload, options);
       if (resolvedMeta.fromCache && resolvedMeta.stale) {
         return { data: normalised, meta: { ...resolvedMeta, fallback: true } };
       }
@@ -5638,6 +6044,40 @@ export const getProviderStorefront = withFallback(
   }
 );
 
+export const getProviderWebsitePreferences = withFallback(
+  (payload, options = {}) =>
+    normaliseWebsitePreferences(payload, options?.provider ?? providerFallback.provider),
+  providerWebsitePreferencesFallback,
+  (options = {}) =>
+    request('/panel/provider/website-preferences', {
+      cacheKey: 'provider-website-preferences',
+      ttl: 30000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    })
+);
+
+export async function updateProviderWebsitePreferences(payload, options = {}) {
+  if (!payload || typeof payload !== 'object') {
+    throw new PanelApiError('Invalid website preference payload', 400);
+  }
+
+  const response = await request('/panel/provider/website-preferences', {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+
+  clearPanelCache(['provider-dashboard', 'provider-website-preferences', 'provider-storefront']);
+
+  const normalised = normaliseWebsitePreferences(
+    response.data ?? response,
+    options?.provider ?? providerFallback.provider
+  );
+
+  return normalised;
 export async function createProviderEnterpriseUpgrade(payload) {
   const { data } = await request('/panel/provider/enterprise-upgrade', {
     method: 'POST',
