@@ -262,6 +262,164 @@ function normaliseQueueAttachments(rawAttachments) {
     .filter(Boolean);
 }
 
+function normaliseCampaignCreative(rawCreative = {}) {
+  return {
+    id: rawCreative.id || rawCreative.campaignCreativeId || null,
+    campaignId: rawCreative.campaignId || null,
+    campaignName: rawCreative.campaignName || null,
+    flightId: rawCreative.flightId || null,
+    flightName: rawCreative.flightName || null,
+    name: rawCreative.name || 'Creative asset',
+    format: rawCreative.format || 'image',
+    status: rawCreative.status || 'draft',
+    headline: rawCreative.headline || '',
+    description: rawCreative.description || '',
+    callToAction: rawCreative.callToAction || '',
+    assetUrl: rawCreative.assetUrl || '',
+    thumbnailUrl: rawCreative.thumbnailUrl || null,
+    metadata: rawCreative.metadata || {},
+    updatedAt: rawCreative.updatedAt || null
+  };
+}
+
+function normaliseCampaignSegment(rawSegment = {}) {
+  return {
+    id: rawSegment.id || null,
+    campaignId: rawSegment.campaignId || null,
+    campaignName: rawSegment.campaignName || null,
+    name: rawSegment.name || 'Audience segment',
+    segmentType: rawSegment.segmentType || 'custom',
+    status: rawSegment.status || 'draft',
+    sizeEstimate: rawSegment.sizeEstimate ?? null,
+    engagementRate: rawSegment.engagementRate ?? null,
+    syncedAt: rawSegment.syncedAt || null,
+    metadata: rawSegment.metadata || {}
+  };
+}
+
+function normaliseCampaignPlacement(rawPlacement = {}) {
+  return {
+    id: rawPlacement.id || null,
+    campaignId: rawPlacement.campaignId || null,
+    campaignName: rawPlacement.campaignName || null,
+    flightId: rawPlacement.flightId || null,
+    flightName: rawPlacement.flightName || null,
+    channel: rawPlacement.channel || 'marketplace',
+    format: rawPlacement.format || 'native',
+    status: rawPlacement.status || 'planned',
+    bidAmount: rawPlacement.bidAmount != null ? Number(rawPlacement.bidAmount) : null,
+    bidCurrency: rawPlacement.bidCurrency || 'GBP',
+    cpm: rawPlacement.cpm != null ? Number(rawPlacement.cpm) : null,
+    inventorySource: rawPlacement.inventorySource || null,
+    metadata: rawPlacement.metadata || {},
+    updatedAt: rawPlacement.updatedAt || null
+  };
+}
+
+function normaliseCampaignInvoice(rawInvoice = {}) {
+  return {
+    id: rawInvoice.id || null,
+    campaignId: rawInvoice.campaignId || null,
+    campaignName: rawInvoice.campaignName || null,
+    invoiceNumber: rawInvoice.invoiceNumber || rawInvoice.id || 'Invoice',
+    status: rawInvoice.status || 'draft',
+    currency: rawInvoice.currency || 'GBP',
+    amountDue: rawInvoice.amountDue != null ? Number(rawInvoice.amountDue) : null,
+    amountPaid: rawInvoice.amountPaid != null ? Number(rawInvoice.amountPaid) : null,
+    dueDate: rawInvoice.dueDate || null,
+    issuedAt: rawInvoice.issuedAt || null,
+    periodStart: rawInvoice.periodStart || null,
+    periodEnd: rawInvoice.periodEnd || null,
+    metadata: rawInvoice.metadata || {}
+  };
+}
+
+function normaliseCampaignFraudSignal(rawSignal = {}) {
+  return {
+    id: rawSignal.id || null,
+    campaignId: rawSignal.campaignId || null,
+    flightId: rawSignal.flightId || null,
+    title: rawSignal.title || 'Campaign alert',
+    signalType: rawSignal.signalType || 'insight',
+    severity: rawSignal.severity || 'medium',
+    detectedAt: rawSignal.detectedAt || null,
+    metadata: rawSignal.metadata || {}
+  };
+}
+
+function normaliseProviderAds(rawAds = {}) {
+  const overview = rawAds.overview || {};
+  const company = rawAds.company || {};
+
+  return {
+    generatedAt: rawAds.generatedAt || null,
+    company: {
+      id: company.id || null,
+      name: company.name || company.contactName || 'Gigvora provider'
+    },
+    overview: {
+      spendMonthToDate: overview.spendMonthToDate != null ? Number(overview.spendMonthToDate) : 0,
+      revenueMonthToDate: overview.revenueMonthToDate != null ? Number(overview.revenueMonthToDate) : 0,
+      impressions: overview.impressions ?? 0,
+      clicks: overview.clicks ?? 0,
+      conversions: overview.conversions ?? 0,
+      ctr: overview.ctr ?? 0,
+      cvr: overview.cvr ?? 0,
+      roas: overview.roas ?? 0,
+      lastMetricAt: overview.lastMetricAt || null
+    },
+    campaigns: ensureArray(rawAds.campaigns).map((campaign, index) => ({
+      id: campaign.id || `campaign-${index}`,
+      name: campaign.name || 'Campaign',
+      status: campaign.status || 'draft',
+      objective: campaign.objective || 'Awareness',
+      campaignType: campaign.campaignType || 'ppc',
+      pacingStrategy: campaign.pacingStrategy || 'even',
+      bidStrategy: campaign.bidStrategy || 'cpc',
+      currency: campaign.currency || 'GBP',
+      totalBudget: campaign.totalBudget != null ? Number(campaign.totalBudget) : null,
+      dailySpendCap: campaign.dailySpendCap != null ? Number(campaign.dailySpendCap) : null,
+      spend: campaign.spend != null ? Number(campaign.spend) : 0,
+      revenue: campaign.revenue != null ? Number(campaign.revenue) : 0,
+      impressions: campaign.impressions ?? 0,
+      clicks: campaign.clicks ?? 0,
+      conversions: campaign.conversions ?? 0,
+      ctr: campaign.ctr ?? 0,
+      cvr: campaign.cvr ?? 0,
+      roas: campaign.roas ?? 0,
+      pacing: campaign.pacing ?? null,
+      startAt: campaign.startAt || null,
+      endAt: campaign.endAt || null,
+      metadata: campaign.metadata || {},
+      flights: ensureArray(campaign.flights).map((flight, flightIndex) => ({
+        id: flight.id || `flight-${index}-${flightIndex}`,
+        name: flight.name || 'Flight',
+        status: flight.status || 'scheduled',
+        startAt: flight.startAt || null,
+        endAt: flight.endAt || null,
+        budget: flight.budget != null ? Number(flight.budget) : null,
+        dailySpendCap: flight.dailySpendCap != null ? Number(flight.dailySpendCap) : null
+      })),
+      creatives: ensureArray(campaign.creatives).map(normaliseCampaignCreative),
+      audienceSegments: ensureArray(campaign.audienceSegments).map(normaliseCampaignSegment),
+      placements: ensureArray(campaign.placements).map(normaliseCampaignPlacement),
+      invoices: ensureArray(campaign.invoices).map(normaliseCampaignInvoice),
+      fraudSignals: ensureArray(campaign.fraudSignals).map(normaliseCampaignFraudSignal),
+      targetingRules: ensureArray(campaign.targetingRules).map((rule, ruleIndex) => ({
+        id: rule.id || `targeting-${index}-${ruleIndex}`,
+        ruleType: rule.ruleType || 'zone',
+        operator: rule.operator || 'include',
+        payload: rule.payload || {}
+      }))
+    })),
+    creatives: ensureArray(rawAds.creatives).map(normaliseCampaignCreative),
+    audienceSegments: ensureArray(rawAds.audienceSegments).map(normaliseCampaignSegment),
+    placements: ensureArray(rawAds.placements).map(normaliseCampaignPlacement),
+    invoices: ensureArray(rawAds.invoices).map(normaliseCampaignInvoice),
+    fraudSignals: ensureArray(rawAds.fraudSignals).map(normaliseCampaignFraudSignal)
+  };
+}
+
 function normaliseQueueUpdate(update, boardId, index) {
   if (!update || typeof update !== 'object') {
     const fallbackHeadline = typeof update === 'string' && update.trim().length ? update.trim() : `Update ${index + 1}`;
@@ -312,6 +470,150 @@ function toNullableNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normaliseServicemanPayment(payment, index = 0) {
+  if (!payment || typeof payment !== 'object') {
+    return null;
+  }
+
+  const serviceman = payment.serviceman || {};
+  const booking = payment.booking || {};
+  const commissionRule = payment.commissionRule || payment.rule || null;
+
+  const servicemanName =
+    serviceman.name || payment.servicemanName || serviceman.displayName || 'Serviceman';
+
+  return {
+    id: payment.id || `serviceman-payment-${index}`,
+    companyId: payment.companyId ?? null,
+    amount: toNumber(payment.amount ?? payment.value ?? 0, 0),
+    currency: typeof payment.currency === 'string' && payment.currency.trim().length
+      ? payment.currency.trim().toUpperCase()
+      : 'GBP',
+    status: payment.status || 'scheduled',
+    dueDate: payment.dueDate || payment.due_date || null,
+    paidAt: payment.paidAt || payment.paid_at || null,
+    commissionRate: toNullableNumber(payment.commissionRate ?? payment.rate ?? null),
+    commissionAmount: toNullableNumber(payment.commissionAmount ?? payment.commission ?? null),
+    notes: payment.notes ?? '',
+    metadata: payment.metadata && typeof payment.metadata === 'object' ? payment.metadata : {},
+    serviceman: {
+      id: serviceman.id ?? payment.servicemanId ?? null,
+      name: servicemanName,
+      role: serviceman.role || payment.servicemanRole || serviceman.type || 'Crew'
+    },
+    booking: booking && Object.keys(booking).length
+      ? {
+          id: booking.id ?? payment.bookingId ?? null,
+          reference: booking.reference || booking.bookingReference || booking.id || null,
+          service: booking.service || booking.serviceName || null,
+          status: booking.status || null
+        }
+      : null,
+    commissionRule: commissionRule
+      ? {
+          id: commissionRule.id ?? null,
+          name: commissionRule.name || 'Commission rule',
+          rateType: commissionRule.rateType || 'percentage',
+          rateValue: toNullableNumber(commissionRule.rateValue ?? commissionRule.rate ?? null),
+          approvalStatus: commissionRule.approvalStatus || 'draft',
+          autoApply: Boolean(commissionRule.autoApply),
+          isDefault: Boolean(commissionRule.isDefault)
+        }
+      : null,
+    createdAt: payment.createdAt || payment.created_at || null,
+    updatedAt: payment.updatedAt || payment.updated_at || null
+  };
+}
+
+function normaliseServicemanCommissionRule(rule, index = 0) {
+  if (!rule || typeof rule !== 'object') {
+    return {
+      id: `commission-rule-${index}`,
+      name: 'Commission rule',
+      description: '',
+      rateType: 'percentage',
+      rateValue: 0,
+      autoApply: false,
+      isDefault: false,
+      approvalStatus: 'draft',
+      appliesToRole: null,
+      serviceCategory: null,
+      minimumBookingValue: null,
+      maximumCommissionValue: null,
+      effectiveFrom: null,
+      effectiveTo: null,
+      metadata: {},
+      companyId: null,
+      createdAt: null,
+      updatedAt: null
+    };
+  }
+
+  return {
+    id: rule.id || `commission-rule-${index}`,
+    name: rule.name || 'Commission rule',
+    description: rule.description || '',
+    rateType: rule.rateType || 'percentage',
+    rateValue: toNumber(rule.rateValue ?? rule.rate ?? 0, 0),
+    autoApply: Boolean(rule.autoApply),
+    isDefault: Boolean(rule.isDefault),
+    approvalStatus: rule.approvalStatus || 'draft',
+    appliesToRole: rule.appliesToRole || null,
+    serviceCategory: rule.serviceCategory || null,
+    minimumBookingValue: toNullableNumber(rule.minimumBookingValue ?? rule.minimumBooking ?? null),
+    maximumCommissionValue: toNullableNumber(rule.maximumCommissionValue ?? null),
+    effectiveFrom: rule.effectiveFrom || null,
+    effectiveTo: rule.effectiveTo || null,
+    metadata: rule.metadata && typeof rule.metadata === 'object' ? rule.metadata : {},
+    companyId: rule.companyId ?? null,
+    createdAt: rule.createdAt || null,
+    updatedAt: rule.updatedAt || null
+  };
+}
+
+function normaliseServicemanFinance(finance = {}) {
+  const summary = finance.summary || {};
+  const upcoming = ensureArray(finance.upcoming)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const history = finance.history || {};
+  const historyItems = ensureArray(history.items)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const commissions = finance.commissions || {};
+  const commissionRules = ensureArray(commissions.rules)
+    .map((rule, index) => normaliseServicemanCommissionRule(rule, index))
+    .filter(Boolean);
+
+  return {
+    companyId: finance.companyId ?? null,
+    summary: {
+      outstandingTotal: toNumber(summary.outstandingTotal ?? summary.outstanding ?? 0, 0),
+      paidLast30Days: toNumber(summary.paidLast30Days ?? summary.paidLast30 ?? 0, 0),
+      avgCommissionRate: toNumber(summary.avgCommissionRate ?? summary.averageRate ?? 0, 0),
+      upcomingCount:
+        typeof summary.upcomingCount === 'number' && Number.isFinite(summary.upcomingCount)
+          ? summary.upcomingCount
+          : upcoming.length,
+      commissionPaid: toNumber(summary.commissionPaid ?? 0, 0),
+      commissionOutstanding: toNumber(summary.commissionOutstanding ?? 0, 0)
+    },
+    upcoming,
+    history: {
+      items: historyItems,
+      total: history.total ?? history.count ?? historyItems.length,
+      limit: history.limit ?? history.pageSize ?? historyItems.length,
+      offset: history.offset ?? history.page ?? 0
+    },
+    commissions: {
+      rules: commissionRules,
+      activeRules:
+        commissions.activeRules ?? commissionRules.filter((rule) => rule.approvalStatus === 'approved').length,
+      defaultRuleId: commissions.defaultRuleId ?? commissionRules.find((rule) => rule.isDefault)?.id ?? null
+    }
+  };
+}
+
 function normaliseOption(option, fallbackValue = 'value', fallbackLabel = 'Label') {
   if (!option || typeof option !== 'object') {
     return { value: fallbackValue, label: fallbackLabel };
@@ -344,6 +646,136 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseEnterpriseUpgrade(upgrade = null) {
+  if (!upgrade) {
+    return null;
+  }
+
+  return {
+    id: upgrade.id || null,
+    status: upgrade.status || 'draft',
+    summary: upgrade.summary || null,
+    requestedAt: upgrade.requestedAt || null,
+    targetGoLive: upgrade.targetGoLive || null,
+    seats: upgrade.seats != null ? Number(upgrade.seats) : null,
+    contractValue: upgrade.contractValue != null ? Number(upgrade.contractValue) : null,
+    currency: upgrade.currency || 'GBP',
+    automationScope: upgrade.automationScope || null,
+    enterpriseFeatures: ensureArray(upgrade.enterpriseFeatures),
+    onboardingManager: upgrade.onboardingManager || null,
+    notes: upgrade.notes || null,
+    lastDecisionAt: upgrade.lastDecisionAt || null,
+    createdAt: upgrade.createdAt || null,
+    updatedAt: upgrade.updatedAt || null,
+    contacts: ensureArray(upgrade.contacts).map((contact, index) => ({
+      id: contact.id || `upgrade-contact-${index}`,
+      name: contact.name || 'Stakeholder',
+      role: contact.role || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      influenceLevel: contact.influenceLevel || null,
+      primaryContact: Boolean(contact.primaryContact)
+    })),
+    sites: ensureArray(upgrade.sites).map((site, index) => ({
+      id: site.id || `upgrade-site-${index}`,
+      siteName: site.siteName || site.name || 'Expansion site',
+      region: site.region || null,
+      headcount: site.headcount != null ? Number(site.headcount) : null,
+      goLiveDate: site.goLiveDate || null,
+      imageUrl: site.imageUrl || null,
+      notes: site.notes || null
+    })),
+    checklist: ensureArray(upgrade.checklist).map((item, index) => ({
+      id: item.id || `upgrade-checklist-${index}`,
+      label: item.label || item.name || 'Upgrade task',
+      status: item.status || 'not_started',
+      owner: item.owner || null,
+      dueDate: item.dueDate || null,
+      notes: item.notes || null,
+      sortOrder: item.sortOrder != null ? Number(item.sortOrder) : index
+    })),
+    documents: ensureArray(upgrade.documents).map((doc, index) => ({
+      id: doc.id || `upgrade-document-${index}`,
+      title: doc.title || 'Document',
+      type: doc.type || null,
+      url: doc.url || '#',
+      thumbnailUrl: doc.thumbnailUrl || null,
+      description: doc.description || null
+    }))
+function normaliseCalendarSnapshot(snapshot) {
+  if (!snapshot) {
+    return null;
+  }
+
+  const root = snapshot.data ?? snapshot;
+  const meta = snapshot.meta ?? root.meta ?? {};
+
+  return {
+    calendar: root.calendar ?? {},
+    summary: root.summary ?? {},
+    bookings: ensureArray(root.bookings),
+    events: ensureArray(root.events),
+    settings: root.settings ?? {},
+    options: root.options ?? {},
+    permissions: root.permissions ?? {},
+    links: root.links ?? {},
+    meta
+function normaliseToolSaleCoupon(coupon, index) {
+  if (!coupon) {
+    return { id: `tool-sale-coupon-${index}`, name: 'Coupon', status: 'draft' };
+  }
+  return {
+    id: coupon.id || `tool-sale-coupon-${index}`,
+    name: coupon.name || coupon.code || 'Coupon',
+    code: coupon.code || null,
+    status: coupon.status || 'draft',
+    discountType: coupon.discountType || 'percentage',
+    discountValue: coupon.discountValue != null ? Number(coupon.discountValue) : null,
+    currency: coupon.currency || 'GBP',
+    autoApply: Boolean(coupon.autoApply),
+    startsAt: coupon.startsAt || null,
+    expiresAt: coupon.expiresAt || null
+  };
+}
+
+function normaliseToolSaleListing(listing, index) {
+  const coupons = ensureArray(listing?.coupons).map(normaliseToolSaleCoupon);
+  const inventory = listing?.inventory || {};
+  const metrics = listing?.metrics || {};
+  return {
+    id: listing?.id || `tool-sale-${index}`,
+    name: listing?.name || listing?.tagline || 'Tool listing',
+    tagline: listing?.tagline || '',
+    description: listing?.description || '',
+    heroImageUrl: listing?.heroImageUrl || null,
+    showcaseVideoUrl: listing?.showcaseVideoUrl || null,
+    galleryImages: ensureArray(listing?.galleryImages),
+    tags: ensureArray(listing?.tags),
+    keywordTags: ensureArray(listing?.keywordTags),
+    listing: listing?.listing
+      ? {
+          status: listing.listing.status || 'draft',
+          availability: listing.listing.availability || 'buy',
+          pricePerDay: listing.listing.pricePerDay != null ? Number(listing.listing.pricePerDay) : null,
+          purchasePrice: listing.listing.purchasePrice != null ? Number(listing.listing.purchasePrice) : null,
+          location: listing.listing.location || 'UK-wide',
+          insuredOnly: Boolean(listing.listing.insuredOnly)
+        }
+      : null,
+    inventory: {
+      quantityOnHand: inventory.quantityOnHand ?? 0,
+      quantityReserved: inventory.quantityReserved ?? 0,
+      safetyStock: inventory.safetyStock ?? 0,
+      conditionRating: inventory.conditionRating || 'good'
+    },
+    coupons,
+    metrics: {
+      quantityAvailable: metrics.quantityAvailable ?? Math.max((inventory.quantityOnHand ?? 0) - (inventory.quantityReserved ?? 0), 0),
+      activeCoupons: metrics.activeCoupons ?? coupons.filter((coupon) => coupon.status === 'active').length
+    }
+  };
+}
+
 function normaliseProviderDashboard(payload = {}) {
   const root = payload?.data ?? payload;
   const provider = root.provider || root.profile || {};
@@ -351,6 +783,8 @@ function normaliseProviderDashboard(payload = {}) {
   const finances = root.finances || root.finance || {};
   const serviceDelivery = root.serviceDelivery || root.delivery || {};
   const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
+  const upgrade = normaliseEnterpriseUpgrade(root.enterpriseUpgrade || root.enterprise_upgrade);
+  const ads = normaliseProviderAds(root.ads || {});
 
   return {
     provider: {
@@ -405,6 +839,17 @@ function normaliseProviderDashboard(payload = {}) {
       availability: member.availability ?? member.utilisation ?? 0.8,
       rating: member.rating ?? member.csat ?? 0.95
     })),
+    toolSales: {
+      summary: {
+        totalListings: root.toolSales?.summary?.totalListings ?? 0,
+        draft: root.toolSales?.summary?.draft ?? 0,
+        published: root.toolSales?.summary?.published ?? 0,
+        suspended: root.toolSales?.summary?.suspended ?? 0,
+        totalQuantity: root.toolSales?.summary?.totalQuantity ?? 0,
+        activeCoupons: root.toolSales?.summary?.activeCoupons ?? 0
+      },
+      listings: ensureArray(root.toolSales?.listings).map(normaliseToolSaleListing)
+    },
     serviceManagement: {
       health: ensureArray(serviceDelivery.health || root.serviceHealth).map((metric, index) => ({
         id: metric.id || metric.key || `metric-${index}`,
@@ -472,7 +917,13 @@ function normaliseProviderDashboard(payload = {}) {
         tags: ensureArray(service.tags),
         coverage: ensureArray(service.coverage)
       }))
-    }
+    },
+    enterpriseUpgrade: upgrade
+    servicemanFinance: normaliseServicemanFinance(
+      root.servicemanFinance || root.servicemanFinanceSnapshot || {}
+    )
+    ads
+    calendar: normaliseCalendarSnapshot(root.calendar)
   };
 }
 
@@ -589,6 +1040,118 @@ function normaliseProviderStorefront(payload = {}) {
     listings,
     playbooks,
     timeline
+  };
+}
+
+function normaliseToolSales(payload = {}) {
+  const root = payload?.data ?? payload;
+  return {
+    summary: {
+      totalListings: root.summary?.totalListings ?? 0,
+      draft: root.summary?.draft ?? 0,
+      published: root.summary?.published ?? 0,
+      suspended: root.summary?.suspended ?? 0,
+      totalQuantity: root.summary?.totalQuantity ?? 0,
+      activeCoupons: root.summary?.activeCoupons ?? 0
+    },
+    listings: ensureArray(root.listings).map(normaliseToolSaleListing)
+function normaliseStorefrontSettings(storefront = {}) {
+  return {
+    id: storefront.id || 'storefront',
+    companyId: storefront.companyId || storefront.company_id || null,
+    name: storefront.name || 'Provider storefront',
+    slug: storefront.slug || 'provider-storefront',
+    tagline: storefront.tagline || '',
+    description: storefront.description || '',
+    heroImageUrl: storefront.heroImageUrl || storefront.hero_image_url || '',
+    contactEmail: storefront.contactEmail || storefront.contact_email || '',
+    contactPhone: storefront.contactPhone || storefront.contact_phone || '',
+    primaryColor: storefront.primaryColor || storefront.primary_color || '#0f172a',
+    accentColor: storefront.accentColor || storefront.accent_color || '#38bdf8',
+    status: storefront.status || 'draft',
+    isPublished: Boolean(storefront.isPublished ?? storefront.is_published ?? false),
+    publishedAt: storefront.publishedAt || storefront.published_at || null,
+    reviewRequired: Boolean(storefront.reviewRequired ?? storefront.review_required ?? false),
+    metadata: typeof storefront.metadata === 'object' && storefront.metadata ? storefront.metadata : {}
+  };
+}
+
+function normaliseStorefrontInventory(item = {}, index = 0) {
+  return {
+    id: item.id || `inventory-${index}`,
+    storefrontId: item.storefrontId || item.storefront_id || null,
+    sku: item.sku || `SKU-${index}`,
+    name: item.name || 'Inventory item',
+    summary: item.summary || '',
+    description: item.description || '',
+    priceAmount: item.priceAmount != null ? Number(item.priceAmount) : Number(item.price_amount ?? 0),
+    priceCurrency: item.priceCurrency || item.price_currency || 'GBP',
+    stockOnHand: item.stockOnHand != null ? Number(item.stockOnHand) : Number(item.stock_on_hand ?? 0),
+    reorderPoint: item.reorderPoint != null ? Number(item.reorderPoint) : Number(item.reorder_point ?? 0),
+    restockAt: item.restockAt || item.restock_at || null,
+    visibility: item.visibility || 'public',
+    featured: Boolean(item.featured),
+    imageUrl: item.imageUrl || item.image_url || '',
+    metadata: typeof item.metadata === 'object' && item.metadata ? item.metadata : {}
+  };
+}
+
+function normaliseStorefrontCoupon(coupon = {}, index = 0) {
+  return {
+    id: coupon.id || `coupon-${index}`,
+    storefrontId: coupon.storefrontId || coupon.storefront_id || null,
+    code: coupon.code || `COUPON-${index}`,
+    name: coupon.name || 'Promotion',
+    description: coupon.description || '',
+    discountType: coupon.discountType || coupon.discount_type || 'percentage',
+    discountValue: coupon.discountValue != null ? Number(coupon.discountValue) : Number(coupon.discount_value ?? 0),
+    minOrderTotal:
+      coupon.minOrderTotal != null
+        ? Number(coupon.minOrderTotal)
+        : coupon.min_order_total != null
+          ? Number(coupon.min_order_total)
+          : null,
+    maxDiscountValue:
+      coupon.maxDiscountValue != null
+        ? Number(coupon.maxDiscountValue)
+        : coupon.max_discount_value != null
+          ? Number(coupon.max_discount_value)
+          : null,
+    startsAt: coupon.startsAt || coupon.starts_at || null,
+    endsAt: coupon.endsAt || coupon.ends_at || null,
+    usageLimit:
+      coupon.usageLimit != null ? Number(coupon.usageLimit) : coupon.usage_limit != null ? Number(coupon.usage_limit) : null,
+    usageCount:
+      coupon.usageCount != null ? Number(coupon.usageCount) : coupon.usage_count != null ? Number(coupon.usage_count) : 0,
+    status: coupon.status || 'draft',
+    appliesTo: coupon.appliesTo || coupon.applies_to || '',
+    metadata: typeof coupon.metadata === 'object' && coupon.metadata ? coupon.metadata : {}
+  };
+}
+
+function normaliseProviderStorefrontWorkspace(payload = {}) {
+  const root = payload?.data ?? payload;
+  const storefront = normaliseStorefrontSettings(root.storefront || {});
+  const inventory = ensureArray(root.inventory).map((item, index) => normaliseStorefrontInventory(item, index));
+  const coupons = ensureArray(root.coupons).map((item, index) => normaliseStorefrontCoupon(item, index));
+  const inventoryMeta = root.inventoryMeta || {
+    total: inventory.length,
+    published: inventory.filter((item) => item.visibility === 'public').length,
+    archived: inventory.filter((item) => item.visibility === 'archived').length,
+    lowStock: inventory.filter((item) => item.stockOnHand <= item.reorderPoint).length
+  };
+  const couponMeta = root.couponMeta || {
+    total: coupons.length,
+    active: coupons.filter((coupon) => coupon.status === 'active').length,
+    expiringSoon: coupons.filter((coupon) => coupon.endsAt).length
+  };
+
+  return {
+    storefront,
+    inventory,
+    coupons,
+    inventoryMeta,
+    couponMeta
   };
 }
 
@@ -1559,7 +2122,7 @@ function normaliseAdminDashboard(payload = {}) {
     status: tile.status || null
   }));
 
-  const summary = payload.metrics?.command?.summary || {};
+  const commandSummary = payload.metrics?.command?.summary || {};
 
   const escrowTrend = ensureArray(payload.charts?.escrowTrend?.buckets).map((bucket, index) => ({
     label: bucket.label || `Bucket ${index + 1}`,
@@ -1634,7 +2197,7 @@ function normaliseAdminDashboard(payload = {}) {
     logoUrl: connector.logoUrl || null
   }));
 
-  const summary = payload.security?.summary || {
+  const securitySummary = payload.security?.summary || {
     connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
     connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
     automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
@@ -1643,14 +2206,6 @@ function normaliseAdminDashboard(payload = {}) {
   };
 
   const securityCapabilities = payload.security?.capabilities || {};
-
-  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
-    id: board.id || `board-${index}`,
-    title: board.title || board.name || `Queue ${index + 1}`,
-    summary: board.summary || '',
-    updates: ensureArray(board.updates),
-    owner: board.owner || 'Operations'
-  }));
 
   const complianceControls = ensureArray(payload.queues?.complianceControls).map((control, index) => ({
     id: control.id || `control-${index}`,
@@ -1742,12 +2297,13 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
-          escrowTotal: Number.parseFloat(summary.escrowTotal ?? summary.escrowTotalAmount ?? 0) || 0,
-          escrowTotalLabel: summary.escrowTotalLabel || summary.escrowTotal || '—',
-          slaCompliance: Number.parseFloat(summary.slaCompliance ?? 0) || 0,
-          slaComplianceLabel: summary.slaComplianceLabel || summary.slaCompliance || '—',
-          openDisputes: Number.parseInt(summary.openDisputes ?? 0, 10) || 0,
-          openDisputesLabel: summary.openDisputesLabel || `${summary.openDisputes ?? 0}`
+          escrowTotal:
+            Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
+          escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
+          slaCompliance: Number.parseFloat(commandSummary.slaCompliance ?? 0) || 0,
+          slaComplianceLabel: commandSummary.slaComplianceLabel || commandSummary.slaCompliance || '—',
+          openDisputes: Number.parseInt(commandSummary.openDisputes ?? 0, 10) || 0,
+          openDisputesLabel: commandSummary.openDisputesLabel || `${commandSummary.openDisputes ?? 0}`
         }
       }
     },
@@ -1759,7 +2315,7 @@ function normaliseAdminDashboard(payload = {}) {
       signals: securitySignals,
       automationBacklog,
       connectors,
-      summary,
+      summary: securitySummary,
       capabilities: {
         canManageSignals: Boolean(securityCapabilities.canManageSignals),
         canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
@@ -2794,6 +3350,39 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
   }
 });
 
+const fallbackCalendarNow = new Date();
+const fallbackCalendarMonthLabel = fallbackCalendarNow.toLocaleDateString('en-GB', {
+  month: 'long',
+  year: 'numeric'
+});
+const fallbackCalendarRangeStart = new Date(
+  Date.UTC(fallbackCalendarNow.getUTCFullYear(), fallbackCalendarNow.getUTCMonth(), 1)
+).toISOString();
+const fallbackCalendarRangeEnd = new Date(
+  Date.UTC(fallbackCalendarNow.getUTCFullYear(), fallbackCalendarNow.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+).toISOString();
+const fallbackCalendarWeeks = (() => {
+  const start = new Date(fallbackCalendarRangeStart);
+  const weeks = [];
+  for (let week = 0; week < 5; week += 1) {
+    const days = [];
+    for (let day = 0; day < 7; day += 1) {
+      const current = new Date(start);
+      current.setUTCDate(start.getUTCDate() + week * 7 + day);
+      days.push({
+        date: current.getUTCDate().toString(),
+        iso: current.toISOString().slice(0, 10),
+        isCurrentMonth: current.getUTCMonth() === start.getUTCMonth(),
+        isToday: false,
+        capacity: null,
+        events: []
+      });
+    }
+    weeks.push(days);
+  }
+  return weeks;
+})();
+
 const providerFallback = normaliseProviderDashboard({
   provider: {
     legalName: 'Metro Power Services',
@@ -2849,11 +3438,250 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  toolSales: {
+    summary: {
+      totalListings: 1,
+      draft: 0,
+      published: 1,
+      suspended: 0,
+      totalQuantity: 6,
+      activeCoupons: 1
+    },
+    listings: [
+      {
+        name: 'Thermal imaging kit',
+        tagline: 'Featured diagnostics kit',
+        description: 'Handheld 640x480 thermal imaging kit with live telemetry integration and concierge logistics.',
+        heroImageUrl: 'https://cdn.fixnado.test/tools/thermal.jpg',
+        showcaseVideoUrl: 'https://cdn.fixnado.test/tools/thermal.mp4',
+        galleryImages: [
+          'https://cdn.fixnado.test/tools/thermal-1.jpg',
+          'https://cdn.fixnado.test/tools/thermal-2.jpg'
+        ],
+        tags: ['thermal', 'diagnostics'],
+        keywordTags: ['infrared', 'inspection'],
+        listing: {
+          status: 'approved',
+          availability: 'both',
+          pricePerDay: 140,
+          purchasePrice: 1850,
+          insuredOnly: true,
+          location: 'London Docklands'
+        },
+        inventory: {
+          quantityOnHand: 6,
+          quantityReserved: 1,
+          safetyStock: 1,
+          conditionRating: 'excellent'
+        },
+        coupons: [
+          {
+            name: 'Spring diagnostics',
+            code: 'THERM10',
+            status: 'active',
+            discountType: 'percentage',
+            discountValue: 10,
+            currency: 'GBP'
+          }
+        ],
+        metrics: {
+          quantityAvailable: 5,
+          activeCoupons: 1
+        }
+      }
+    ]
+  },
   servicemen: [
     { name: 'Amina Khan', role: 'Lead Electrical Engineer', availability: 0.68, rating: 0.99 },
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
     { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
   ],
+  servicemanFinance: {
+    companyId: 'provider-metro-power',
+    summary: {
+      outstandingTotal: 4200,
+      paidLast30Days: 22600,
+      avgCommissionRate: 0.18,
+      upcomingCount: 3,
+      commissionPaid: 12600,
+      commissionOutstanding: 4200
+    },
+    upcoming: [
+      {
+        id: 'payment-upcoming-1',
+        serviceman: { id: 'crew-1', name: 'Amina Khan', role: 'Lead Electrical Engineer' },
+        amount: 2400,
+        currency: 'GBP',
+        status: 'scheduled',
+        dueDate: new Date(Date.now() + 86400000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.15,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4801',
+          reference: 'BK-4801',
+          service: 'Critical power maintenance',
+          status: 'scheduled'
+        },
+        notes: 'Release once compliance evidence uploaded.',
+        metadata: { milestone: 'Stage 2' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-default',
+          name: 'Default performance',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          approvalStatus: 'approved',
+          autoApply: true,
+          isDefault: true
+        }
+      },
+      {
+        id: 'payment-upcoming-2',
+        serviceman: { id: 'crew-2', name: 'Owen Davies', role: 'HVAC Specialist' },
+        amount: 1800,
+        currency: 'GBP',
+        status: 'pending',
+        dueDate: new Date(Date.now() + 172800000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.2,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4820',
+          reference: 'BK-4820',
+          service: 'HVAC emergency call-out',
+          status: 'in_progress'
+        },
+        notes: 'Hold until photographic evidence reviewed.',
+        metadata: { milestone: 'Completion' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      },
+      {
+        id: 'payment-upcoming-3',
+        serviceman: { id: 'crew-3', name: 'Sophie Chen', role: 'Compliance Coordinator' },
+        amount: 1000,
+        currency: 'GBP',
+        status: 'approved',
+        dueDate: new Date(Date.now() + 259200000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.12,
+        commissionAmount: 120,
+        booking: {
+          id: 'booking-4825',
+          reference: 'BK-4825',
+          service: 'Compliance audit closeout',
+          status: 'awaiting_assignment'
+        },
+        notes: 'Auto-approve when documentation uploaded.',
+        metadata: { stage: 'Audit' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-admin',
+          name: 'Coordinator baseline',
+          rateType: 'percentage',
+          rateValue: 0.12,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      }
+    ],
+    history: {
+      items: [
+        {
+          id: 'payment-history-1',
+          serviceman: { id: 'crew-4', name: 'Ibrahim Adeyemi', role: 'Field Engineer' },
+          amount: 3600,
+          currency: 'GBP',
+          status: 'paid',
+          dueDate: new Date(Date.now() - 1209600000).toISOString(),
+          paidAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRate: 0.18,
+          commissionAmount: 648,
+          booking: {
+            id: 'booking-4701',
+            reference: 'BK-4701',
+            service: 'Generator upgrade',
+            status: 'completed'
+          },
+          notes: 'Paid after QA sign-off.',
+          metadata: { invoice: 'INV-3384' },
+          createdAt: new Date(Date.now() - 1296000000).toISOString(),
+          updatedAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRule: {
+            id: 'commission-default',
+            name: 'Default performance',
+            rateType: 'percentage',
+            rateValue: 0.15,
+            approvalStatus: 'approved',
+            autoApply: true,
+            isDefault: true
+          }
+        }
+      ],
+      total: 4,
+      limit: 6,
+      offset: 0
+    },
+    commissions: {
+      rules: [
+        {
+          id: 'commission-default',
+          name: 'Default performance',
+          description: 'Applies to scheduled jobs under £10k where QA checks are green.',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          autoApply: true,
+          isDefault: true,
+          approvalStatus: 'approved',
+          appliesToRole: 'Lead engineer',
+          serviceCategory: 'Critical power',
+          minimumBookingValue: 500,
+          maximumCommissionValue: null,
+          effectiveFrom: new Date(Date.now() - 864000000).toISOString(),
+          effectiveTo: null,
+          metadata: { window: 'standard' },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 864000000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          description: 'Applies 20% commission to emergency HVAC call-outs completed within SLA.',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          autoApply: false,
+          isDefault: false,
+          approvalStatus: 'approved',
+          appliesToRole: 'HVAC Specialist',
+          serviceCategory: 'HVAC emergency response',
+          minimumBookingValue: 0,
+          maximumCommissionValue: 2200,
+          effectiveFrom: new Date(Date.now() - 432000000).toISOString(),
+          effectiveTo: null,
+          metadata: { slaMinutes: 60 },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 432000000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ],
+      activeRules: 2,
+      defaultRuleId: 'commission-default'
+    }
+  },
   serviceDelivery: {
     health: [
       { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
@@ -2942,6 +3770,235 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  enterpriseUpgrade: {
+    id: 'upgrade-request-fallback',
+    status: 'in_review',
+    summary:
+      'Preparing to scale Metro Power Services to enterprise tier with multi-site rollout, enhanced automation, and compliance tooling.',
+    requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    targetGoLive: new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString(),
+    seats: 45,
+    contractValue: 185000,
+    currency: 'GBP',
+    automationScope: 'Rollout playbooks across seven strategic sites, integrate SSO, and enable automated compliance attestations.',
+    enterpriseFeatures: ['dedicated_success', 'advanced_analytics', 'sso', 'compliance_reporting'],
+    onboardingManager: 'Priya Patel',
+    notes: 'Awaiting signed SOW from enterprise procurement. Security review scheduled for next week.',
+    lastDecisionAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    contacts: [
+      {
+        id: 'upgrade-contact-1',
+        name: 'Lena Howard',
+        role: 'Operations Director',
+        email: 'lena.howard@metropower.example',
+        phone: '+44 20 7946 1122',
+        influenceLevel: 'Decision maker',
+        primaryContact: true
+      },
+      {
+        id: 'upgrade-contact-2',
+        name: 'Jacob Miller',
+        role: 'Head of Facilities',
+        email: 'jacob.miller@metropower.example',
+        phone: '+44 20 7946 1135',
+        influenceLevel: 'Sponsor',
+        primaryContact: false
+      }
+    ],
+    sites: [
+      {
+        id: 'upgrade-site-hq',
+        siteName: 'Finova HQ',
+        region: 'City of London',
+        headcount: 12,
+        goLiveDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Requires redundant UPS upgrades and remote monitoring telemetry.'
+      },
+      {
+        id: 'upgrade-site-glasgow',
+        siteName: 'Northbank Data Centre',
+        region: 'Glasgow',
+        headcount: 8,
+        goLiveDate: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Needs carbon reporting integration and safety briefing refresh.'
+      }
+    ],
+    checklist: [
+      {
+        id: 'upgrade-checklist-discovery',
+        label: 'Enterprise discovery workshop',
+        status: 'complete',
+        owner: 'Priya Patel',
+        dueDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+        notes: 'Captured all compliance prerequisites and data residency requirements.',
+        sortOrder: 0
+      },
+      {
+        id: 'upgrade-checklist-security',
+        label: 'Security architecture review',
+        status: 'in_progress',
+        owner: 'Marcus Lee',
+        dueDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
+        notes: 'SSO integration staged; awaiting pen-test sign-off.',
+        sortOrder: 1
+      },
+      {
+        id: 'upgrade-checklist-training',
+        label: 'Enterprise operator training plan',
+        status: 'not_started',
+        owner: 'Lena Howard',
+        dueDate: new Date(Date.now() + 18 * 24 * 3600 * 1000).toISOString(),
+        notes: null,
+        sortOrder: 2
+      }
+    ],
+    documents: [
+      {
+        id: 'upgrade-document-sow',
+        title: 'Enterprise SOW draft',
+        type: 'contract',
+        url: 'https://cdn.fixnado.com/docs/metro-power-sow.pdf',
+        thumbnailUrl: null,
+        description: 'Statement of work covering rollout scope, milestones, and commercial terms.'
+      },
+      {
+        id: 'upgrade-document-journey',
+        title: 'Customer journey blueprint',
+        type: 'playbook',
+        url: 'https://cdn.fixnado.com/docs/metro-power-journey.png',
+        thumbnailUrl: 'https://cdn.fixnado.com/docs/thumbnails/metro-power-journey.png',
+        description: 'High-level flow for procurement to live operations, including telemetry checkpoints.'
+      }
+    ]
+  calendar: {
+    calendar: {
+      monthLabel: fallbackCalendarMonthLabel,
+      rangeStart: fallbackCalendarRangeStart,
+      rangeEnd: fallbackCalendarRangeEnd,
+      legend: [
+        { id: 'booking-confirmed', label: 'Confirmed booking', status: 'confirmed' },
+        { id: 'booking-pending', label: 'Pending booking', status: 'pending' },
+        { id: 'booking-risk', label: 'Escalation / hold', status: 'risk' },
+        { id: 'event-standby', label: 'Standby window', status: 'standby' },
+        { id: 'event-travel', label: 'Travel', status: 'travel' }
+      ],
+      weeks: fallbackCalendarWeeks
+    },
+    summary: {
+      totals: {
+        total: 6,
+        active: 3,
+        byStatus: {
+          scheduled: 3,
+          completed: 2,
+          pending: 1
+        }
+      },
+      utilisation: 0.58,
+      holds: 1,
+      travel: 2,
+      upcoming: 4
+    },
+    bookings: [
+      {
+        id: 'fallback-booking-1',
+        title: 'Lift maintenance — Riverside Campus',
+        status: 'scheduled',
+        type: 'scheduled',
+        start: new Date(Date.now() + 86400000).toISOString(),
+        end: new Date(Date.now() + 97200000).toISOString(),
+        zoneId: 'zone-central',
+        zoneName: 'Central London',
+        customerName: 'Finova HQ',
+        value: 6800,
+        currency: 'GBP'
+      },
+      {
+        id: 'fallback-booking-2',
+        title: 'Generator inspection — Northbank',
+        status: 'pending',
+        type: 'scheduled',
+        start: new Date(Date.now() + 259200000).toISOString(),
+        end: new Date(Date.now() + 273600000).toISOString(),
+        zoneId: 'zone-central',
+        zoneName: 'Central London',
+        customerName: 'Northbank Serviced Offices',
+        value: 2400,
+        currency: 'GBP'
+      }
+    ],
+    events: [
+      {
+        id: 'fallback-event-standby',
+        title: 'Crew standby window',
+        status: 'planned',
+        type: 'hold',
+        visibility: 'crew',
+        start: new Date(Date.now() + 172800000).toISOString(),
+        end: new Date(Date.now() + 190800000).toISOString()
+      },
+      {
+        id: 'fallback-event-travel',
+        title: 'Travel to Riverside Campus',
+        status: 'travel',
+        type: 'travel',
+        visibility: 'internal',
+        start: new Date(Date.now() + 86400000).toISOString(),
+        end: new Date(Date.now() + 90000000).toISOString()
+      }
+    ],
+    settings: {
+      timezone: 'Europe/London',
+      weekStartsOn: 'monday',
+      defaultView: 'month',
+      workdayStart: '08:00',
+      workdayEnd: '18:00',
+      allowOverlapping: true,
+      autoAcceptAssignments: false,
+      notificationRecipients: ['ops@metropower.example']
+    },
+    options: {
+      zones: [
+        { id: 'zone-central', label: 'Central London' },
+        { id: 'zone-east', label: 'East Borough' }
+      ],
+      eventTypes: [
+        { value: 'internal', label: 'Internal activity' },
+        { value: 'hold', label: 'Scheduling hold' },
+        { value: 'travel', label: 'Travel window' }
+      ],
+      eventStatuses: [
+        { value: 'planned', label: 'Planned' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'travel', label: 'Travel' }
+      ],
+      bookingStatuses: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'scheduled', label: 'Scheduled' },
+        { value: 'completed', label: 'Completed' }
+      ]
+    },
+    permissions: {
+      canManageBookings: true,
+      canManageEvents: true,
+      canEditSettings: true
+    },
+    links: {
+      fetch: '/api/providers/calendar?companyId=provider-metro-power',
+      events: '/api/providers/calendar/events',
+      settings: '/api/providers/calendar/settings',
+      bookings: '/api/providers/calendar/bookings'
+    },
+    meta: {
+      companyId: 'provider-metro-power',
+      timezone: 'Europe/London',
+      generatedAt: new Date().toISOString()
+    }
+  },
   servicePackages: [
     {
       id: 'critical-response',
@@ -3027,7 +4084,207 @@ const providerFallback = normaliseProviderDashboard({
       tags: ['IoT', 'Analytics', 'Sustainability'],
       coverage: ['Docklands', 'Canary Wharf']
     }
-  ]
+  ],
+  ads: {
+    company: {
+      id: 'gigvora-company-001',
+      name: 'Gigvora Facilities Ltd'
+    },
+    overview: {
+      spendMonthToDate: 18400,
+      revenueMonthToDate: 46800,
+      impressions: 128000,
+      clicks: 6400,
+      conversions: 420,
+      ctr: 0.05,
+      cvr: 0.065,
+      roas: 2.54,
+      lastMetricAt: new Date().toISOString()
+    },
+    campaigns: [
+      {
+        id: 'gigvora-q2-surge',
+        name: 'Gigvora Q2 surge',
+        status: 'active',
+        objective: 'Lead generation',
+        campaignType: 'ppc',
+        pacingStrategy: 'even',
+        bidStrategy: 'cpc',
+        currency: 'GBP',
+        totalBudget: 35000,
+        dailySpendCap: 1800,
+        spend: 18400,
+        revenue: 46800,
+        impressions: 128000,
+        clicks: 6400,
+        conversions: 420,
+        ctr: 0.05,
+        cvr: 0.0656,
+        roas: 2.5435,
+        pacing: 0.525,
+        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        metadata: { goal: 'Grow enterprise bookings' },
+        flights: [
+          {
+            id: 'gigvora-flight-enterprise',
+            name: 'Enterprise facilities',
+            status: 'active',
+            startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+            endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            budget: 20000,
+            dailySpendCap: 1000
+          }
+        ],
+        creatives: [
+          {
+            id: 'gigvora-creative-hero',
+            name: 'Hero marketplace display',
+            format: 'image',
+            status: 'active',
+            assetUrl: '/media/campaigns/gigvora-hero.jpg',
+            thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+            headline: 'Telemetry-secured facility response',
+            description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+            callToAction: 'Book a walkthrough',
+            metadata: { variant: 'A' }
+          }
+        ],
+        audienceSegments: [
+          {
+            id: 'gigvora-segment-enterprise',
+            name: 'Enterprise FM leads',
+            segmentType: 'lookalike',
+            status: 'active',
+            sizeEstimate: 5400,
+            engagementRate: 0.082,
+            syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            metadata: { source: 'CRM sync' }
+          }
+        ],
+        placements: [
+          {
+            id: 'gigvora-placement-marketplace',
+            channel: 'marketplace',
+            format: 'native',
+            status: 'active',
+            bidAmount: 4.5,
+            bidCurrency: 'GBP',
+            cpm: 36.2,
+            inventorySource: 'Gigvora marketplace hero',
+            metadata: { position: 'homepage-top' }
+          }
+        ],
+        invoices: [
+          {
+            id: 'gigvora-invoice-ads-001',
+            invoiceNumber: 'ADS-001',
+            status: 'issued',
+            currency: 'GBP',
+            amountDue: 7200,
+            amountPaid: 3600,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            issuedAt: new Date().toISOString(),
+            metadata: { period: '2025-04' }
+          }
+        ],
+        fraudSignals: [
+          {
+            id: 'gigvora-signal-overspend',
+            signalType: 'overspend',
+            severity: 'medium',
+            detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            metadata: { variance: 0.18 }
+          }
+        ],
+        targetingRules: [
+          {
+            id: 'gigvora-target-zone',
+            ruleType: 'zone',
+            operator: 'include',
+            payload: { zones: ['City of London', 'Docklands'] }
+          },
+          {
+            id: 'gigvora-target-role',
+            ruleType: 'audience',
+            operator: 'include',
+            payload: { roles: ['Facilities director', 'Operations lead'] }
+          }
+        ]
+      }
+    ],
+    creatives: [
+      {
+        id: 'gigvora-creative-hero',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Hero marketplace display',
+        format: 'image',
+        status: 'active',
+        assetUrl: '/media/campaigns/gigvora-hero.jpg',
+        thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+        headline: 'Telemetry-secured facility response',
+        description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+        callToAction: 'Book a walkthrough',
+        updatedAt: new Date().toISOString()
+      }
+    ],
+    audienceSegments: [
+      {
+        id: 'gigvora-segment-enterprise',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Enterprise FM leads',
+        segmentType: 'lookalike',
+        status: 'active',
+        sizeEstimate: 5400,
+        engagementRate: 0.082,
+        syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        metadata: { source: 'CRM sync' }
+      }
+    ],
+    placements: [
+      {
+        id: 'gigvora-placement-marketplace',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        channel: 'marketplace',
+        format: 'native',
+        status: 'active',
+        bidAmount: 4.5,
+        bidCurrency: 'GBP',
+        cpm: 36.2,
+        inventorySource: 'Gigvora marketplace hero',
+        updatedAt: new Date().toISOString(),
+        metadata: { position: 'homepage-top' }
+      }
+    ],
+    invoices: [
+      {
+        id: 'gigvora-invoice-ads-001',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        invoiceNumber: 'ADS-001',
+        status: 'issued',
+        currency: 'GBP',
+        amountDue: 7200,
+        amountPaid: 3600,
+        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        issuedAt: new Date().toISOString(),
+        metadata: { period: '2025-04' }
+      }
+    ],
+    fraudSignals: [
+      {
+        id: 'gigvora-signal-overspend',
+        campaignId: 'gigvora-q2-surge',
+        signalType: 'overspend',
+        severity: 'medium',
+        detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        metadata: { variance: 0.18 }
+      }
+    ]
+  }
 });
 
 const storefrontFallback = normaliseProviderStorefront({
@@ -3196,6 +4453,130 @@ const storefrontFallback = normaliseProviderStorefront({
       detail: 'Approved listing following compliance refresh and updated imagery.'
     }
   ]
+});
+
+const storefrontWorkspaceFallback = normaliseProviderStorefrontWorkspace({
+  storefront: {
+    id: 'demo-storefront',
+    companyId: 'metro-power-services',
+    name: 'Metro Power Services Storefront',
+    slug: 'metro-power-services',
+    tagline: 'Trusted electrical resilience partners',
+    description:
+      'Operate your storefront with confidence. Update hero imagery, contact details, and compliance badges from one control centre.',
+    heroImageUrl: '/media/storefront/metro-power-hero.jpg',
+    contactEmail: 'hello@metropower.example',
+    contactPhone: '+44 20 7946 0010',
+    primaryColor: '#0f172a',
+    accentColor: '#38bdf8',
+    status: 'live',
+    isPublished: true,
+    publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    reviewRequired: false,
+    metadata: {}
+  },
+  inventory: [
+    {
+      id: 'inventory-1',
+      storefrontId: 'demo-storefront',
+      sku: 'GEN-13KVA',
+      name: '13kVA generator kit',
+      summary: 'Escrow-backed generator with logistics concierge.',
+      description: 'Includes ATS switchgear, telemetry sensors, and 24/7 dispatch readiness.',
+      priceAmount: 420,
+      priceCurrency: 'GBP',
+      stockOnHand: 4,
+      reorderPoint: 1,
+      restockAt: null,
+      visibility: 'public',
+      featured: true,
+      imageUrl: '/media/storefront/inventory-generator.jpg',
+      metadata: { category: 'Critical power', insuranceRequired: true }
+    },
+    {
+      id: 'inventory-2',
+      storefrontId: 'demo-storefront',
+      sku: 'HVAC-TUNE',
+      name: 'HVAC telemetry kit',
+      summary: 'SaaS-connected telemetry module for HVAC systems.',
+      description: 'Installs in under two hours with remote monitoring and alerting.',
+      priceAmount: 260,
+      priceCurrency: 'GBP',
+      stockOnHand: 7,
+      reorderPoint: 2,
+      restockAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
+      visibility: 'public',
+      featured: false,
+      imageUrl: '/media/storefront/inventory-hvac.jpg',
+      metadata: { category: 'HVAC', certifications: ['F-Gas Category 1'] }
+    },
+    {
+      id: 'inventory-3',
+      storefrontId: 'demo-storefront',
+      sku: 'ROOF-KIT',
+      name: 'Roof access safety kit',
+      summary: 'Full fall-arrest kit with telemetry enabled anchor points.',
+      description: 'Restore marketplace visibility by closing out outstanding safety findings.',
+      priceAmount: 120,
+      priceCurrency: 'GBP',
+      stockOnHand: 1,
+      reorderPoint: 2,
+      restockAt: null,
+      visibility: 'archived',
+      featured: false,
+      imageUrl: '/media/storefront/inventory-roof.jpg',
+      metadata: { category: 'Safety', status: 'awaiting_inspection' }
+    }
+  ],
+  coupons: [
+    {
+      id: 'coupon-1',
+      storefrontId: 'demo-storefront',
+      code: 'WELCOME10',
+      name: 'Welcome 10%',
+      description: 'Applies to new enterprise storefront orders booked this quarter.',
+      discountType: 'percentage',
+      discountValue: 10,
+      minOrderTotal: 500,
+      maxDiscountValue: 1500,
+      startsAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+      usageLimit: 25,
+      usageCount: 6,
+      status: 'active',
+      appliesTo: 'All generator rentals',
+      metadata: { channel: 'enterprise' }
+    },
+    {
+      id: 'coupon-2',
+      storefrontId: 'demo-storefront',
+      code: 'FLEET25',
+      name: 'Fleet bundle £250 off',
+      description: 'Fixed discount on HVAC telemetry bundles booked in a single order.',
+      discountType: 'fixed',
+      discountValue: 250,
+      minOrderTotal: 1500,
+      maxDiscountValue: null,
+      startsAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
+      usageLimit: null,
+      usageCount: 2,
+      status: 'scheduled',
+      appliesTo: 'HVAC telemetry kit',
+      metadata: { channel: 'campaign' }
+    }
+  ],
+  inventoryMeta: {
+    total: 3,
+    published: 2,
+    archived: 1,
+    lowStock: 1
+  },
+  couponMeta: {
+    total: 2,
+    active: 1,
+    expiringSoon: 1
+  }
 });
 
 const enterpriseFallback = normaliseEnterprisePanel({
@@ -3866,6 +5247,8 @@ export async function deleteDisputeHealthEntry(entryId) {
     forceRefresh: true
   });
   return cacheDisputeHealthWorkspace(data);
+}
+
 export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
   const query = toQueryString({ timeframe, category, status });
   return request(`/admin/audit/events${query}`, {
@@ -3935,12 +5318,267 @@ export const getProviderStorefront = withFallback(
   }
 );
 
+export async function createProviderEnterpriseUpgrade(payload) {
+  const { data } = await request('/panel/provider/enterprise-upgrade', {
+    method: 'POST',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
+
+export async function updateProviderEnterpriseUpgrade(requestId, payload) {
+  const { data } = await request(`/panel/provider/enterprise-upgrade/${encodeURIComponent(requestId)}`, {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+function buildStorefrontHeaders(options = {}, includeContentType = false) {
+  const headers = {
+    'X-Fixnado-Role': options?.role ?? 'company',
+    'X-Fixnado-Persona': options?.persona ?? 'provider'
+  };
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
+
+export const getProviderStorefrontWorkspace = withFallback(
+  normaliseProviderStorefrontWorkspace,
+  storefrontWorkspaceFallback,
+  (options = {}) => {
+    const query = toQueryString({ companyId: options?.companyId });
+    const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+    return request(`/panel/provider/storefront/workspace${query}`, {
+      cacheKey: `provider-storefront-workspace${cacheKeySuffix}`,
+      ttl: 20000,
+      headers: buildStorefrontHeaders(options),
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    });
+  }
+);
+
+export async function updateProviderStorefrontSettings(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/settings${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const storefront = response?.data ?? response;
+  return normaliseStorefrontSettings(storefront);
+}
+
+export async function createProviderStorefrontInventory(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory${query}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const inventory = response?.data ?? response;
+  return normaliseStorefrontInventory(inventory);
+}
+
+export async function updateProviderStorefrontInventory(inventoryId, payload, options = {}) {
+  if (!inventoryId) {
+    throw new PanelApiError('Inventory identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory/${encodeURIComponent(inventoryId)}${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const inventory = response?.data ?? response;
+  return normaliseStorefrontInventory(inventory);
+}
+
+export async function archiveProviderStorefrontInventory(inventoryId, options = {}) {
+  if (!inventoryId) {
+    throw new PanelApiError('Inventory identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/inventory/${encodeURIComponent(inventoryId)}${query}`, {
+    method: 'DELETE',
+    headers: buildStorefrontHeaders(options),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  return response?.data ?? response;
+}
+
+export async function createProviderStorefrontCoupon(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons${query}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const coupon = response?.data ?? response;
+  return normaliseStorefrontCoupon(coupon);
+}
+
+export async function updateProviderStorefrontCoupon(couponId, payload, options = {}) {
+  if (!couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons/${encodeURIComponent(couponId)}${query}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  const coupon = response?.data ?? response;
+  return normaliseStorefrontCoupon(coupon);
+}
+
+export async function updateProviderStorefrontCouponStatus(couponId, status, options = {}) {
+  if (!couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/storefront/coupons/${encodeURIComponent(couponId)}/status${query}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+    headers: buildStorefrontHeaders(options, true),
+    cacheKey: null,
+    forceRefresh: true
+  });
+
+  return response?.data ?? response;
+}
+
 function invalidateProviderCache(companyId) {
   const keys = ['admin-providers'];
   if (companyId) {
     keys.push(`admin-provider:${companyId}`);
   }
   clearPanelCache(keys);
+}
+
+export async function getProviderToolSales(options = {}) {
+  const response = await request('/panel/provider/tools', {
+    cacheKey: 'provider-tool-sales',
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return {
+    data: normaliseToolSales(response.data ?? response),
+    meta: response.meta ?? {}
+  };
+}
+
+export async function createProviderToolSale(payload, options = {}) {
+  const response = await request('/panel/provider/tools', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function updateProviderToolSale(profileId, payload, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  const response = await request(`/panel/provider/tools/${encodeURIComponent(profileId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function deleteProviderToolSale(profileId, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  await request(`/panel/provider/tools/${encodeURIComponent(profileId)}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    cacheKey: null,
+    forceRefresh: true
+  });
+}
+
+export async function createProviderToolSaleCoupon(profileId, payload, options = {}) {
+  if (!profileId) {
+    throw new PanelApiError('Tool sale profile identifier required', 400);
+  }
+  const response = await request(`/panel/provider/tools/${encodeURIComponent(profileId)}/coupons`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    signal: options?.signal,
+    cacheKey: null
+  });
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function updateProviderToolSaleCoupon(profileId, couponId, payload, options = {}) {
+  if (!profileId || !couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+  const response = await request(
+    `/panel/provider/tools/${encodeURIComponent(profileId)}/coupons/${encodeURIComponent(couponId)}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true,
+      signal: options?.signal,
+      cacheKey: null
+    }
+  );
+  return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+export async function deleteProviderToolSaleCoupon(profileId, couponId, options = {}) {
+  if (!profileId || !couponId) {
+    throw new PanelApiError('Coupon identifier required', 400);
+  }
+  const response = await request(
+    `/panel/provider/tools/${encodeURIComponent(profileId)}/coupons/${encodeURIComponent(couponId)}`,
+    {
+      method: 'DELETE',
+      forceRefresh: true,
+      signal: options?.signal,
+      cacheKey: null
+    }
+  );
+  return normaliseToolSaleListing(response.data ?? response, 0);
 }
 
 export async function createAdminProvider(payload) {
@@ -4099,7 +5737,7 @@ export function clearPanelCache(keys) {
   });
 }
 
-export { PanelApiError };
+export { PanelApiError, normaliseServicemanFinance, normaliseServicemanPayment, normaliseServicemanCommissionRule };
 
 export const formatters = {
   percentage: (value) => percentageFormatter.format(value),

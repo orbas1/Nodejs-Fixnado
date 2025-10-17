@@ -20,31 +20,6 @@ WalletAccount.init(
       type: DataTypes.UUID,
       allowNull: false
     },
-    displayName: {
-      field: 'display_name',
-      type: DataTypes.STRING(160),
-      allowNull: false
-    },
-    status: {
-      type: DataTypes.STRING(24),
-      allowNull: false,
-      defaultValue: 'active'
-    },
-    balance: {
-      type: DataTypes.DECIMAL(14, 2),
-      allowNull: false,
-      defaultValue: 0
-    },
-    holdBalance: {
-      field: 'hold_balance',
-      type: DataTypes.DECIMAL(14, 2),
-      allowNull: false,
-      defaultValue: 0
-    },
-    currency: {
-      type: DataTypes.STRING(8),
-      allowNull: false,
-      defaultValue: 'GBP'
     userId: {
       field: 'user_id',
       type: DataTypes.UUID,
@@ -53,6 +28,15 @@ WalletAccount.init(
     companyId: {
       field: 'company_id',
       type: DataTypes.UUID,
+      allowNull: true
+    },
+    displayName: {
+      field: 'display_name',
+      type: DataTypes.STRING(160),
+      allowNull: false
+    },
+    alias: {
+      type: DataTypes.STRING(80),
       allowNull: true
     },
     currency: {
@@ -64,7 +48,8 @@ WalletAccount.init(
       allowNull: false,
       defaultValue: '0.00'
     },
-    pending: {
+    holdBalance: {
+      field: 'hold_balance',
       type: DataTypes.DECIMAL(14, 2),
       allowNull: false,
       defaultValue: '0.00'
@@ -73,10 +58,6 @@ WalletAccount.init(
       type: DataTypes.ENUM('active', 'suspended', 'closed'),
       allowNull: false,
       defaultValue: 'active'
-    },
-    alias: {
-      type: DataTypes.STRING(80),
-      allowNull: true
     },
     metadata: {
       type: DataTypes.JSONB,
@@ -127,7 +108,6 @@ WalletAccount.init(
     underscored: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
-    underscored: true
   }
 );
 

@@ -1,7 +1,3 @@
-import AdminMonetizationWorkspace from '../features/affiliateMonetization/AdminMonetizationWorkspace.jsx';
-
-export default function AdminMonetization() {
-  return <AdminMonetizationWorkspace />;
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import PageHeader from '../components/blueprints/PageHeader.jsx';

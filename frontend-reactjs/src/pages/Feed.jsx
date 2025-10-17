@@ -43,7 +43,11 @@ const formatUserName = (userId, role) => {
 };
 
 const FEED_TABS = [
-  { id: 'live', label: 'Live jobs', description: 'Broadcast and respond to bespoke work requests.' },
+  {
+    id: 'timeline',
+    label: 'Timeline',
+    description: 'Welcome back — share updates, celebrate wins, and stay close to your Fixnado network.'
+  },
   { id: 'marketplace', label: 'Marketplace', description: 'Track saved inventory and manage procurement.' },
   { id: 'insights', label: 'Operations digest', description: 'Monitor account usage and recent activity.' }
 ];
@@ -307,7 +311,7 @@ function UserPersonaCard() {
 
 export default function Feed() {
   const [marketplaceState, setMarketplaceState] = useState({ loading: true, items: [], error: null });
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState('timeline');
   const { saved, purchases, saveListing, removeSavedListing, recordPurchase } = useMarketplaceInventory();
 
   useEffect(() => {
@@ -338,9 +342,6 @@ export default function Feed() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="grid gap-8 lg:grid-cols-12">
-        <aside className="space-y-6 lg:col-span-4">
-          <UserPersonaCard />
-        </aside>
         <div className="space-y-10 lg:col-span-8">
           <nav className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3 text-sm font-semibold text-slate-500">
             {FEED_TABS.map((tab) => (
@@ -360,7 +361,7 @@ export default function Feed() {
           </nav>
           <p className="text-sm text-slate-500">{FEED_TABS.find((tab) => tab.id === activeTab)?.description}</p>
 
-          {activeTab === 'live' ? (
+          {activeTab === 'timeline' ? (
             <LiveFeed />
           ) : null}
           {activeTab === 'marketplace' ? (
@@ -375,6 +376,9 @@ export default function Feed() {
           ) : null}
           {activeTab === 'insights' ? <InsightsSection saved={saved} purchases={purchases} /> : null}
         </div>
+        <aside className="space-y-6 lg:col-span-4">
+          <UserPersonaCard />
+        </aside>
       </div>
     </div>
   );

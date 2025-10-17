@@ -52,7 +52,11 @@ const WalletTransactionsPanel = ({
   meta,
   filter,
   onFilterChange,
-  onPaginate
+  onPaginate,
+  onOpenLedger,
+  onExport,
+  exporting = false,
+  exportError = null
 }) => (
   <div className="space-y-5 rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -60,24 +64,36 @@ const WalletTransactionsPanel = ({
         <h3 className="text-lg font-semibold text-primary">Transaction history</h3>
         <p className="text-sm text-slate-600">Latest wallet activity including holds, releases, and adjustments.</p>
       </div>
-      <div className="flex items-center gap-3">
-        <label className="text-xs font-semibold text-slate-500" htmlFor="wallet-transaction-filter">
-          Filter
-        </label>
-        <select
-          id="wallet-transaction-filter"
-          className="rounded-2xl border border-slate-200 bg-white px-3 py-1 text-sm"
-          value={filter}
-          onChange={(event) => onFilterChange(event.target.value)}
-        >
-          <option value="all">All activity</option>
-          <option value="credit">Credits</option>
-          <option value="debit">Debits</option>
-          <option value="hold">Holds</option>
-          <option value="release">Releases</option>
-        </select>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-semibold text-slate-500" htmlFor="wallet-transaction-filter">
+            Filter
+          </label>
+          <select
+            id="wallet-transaction-filter"
+            className="rounded-2xl border border-slate-200 bg-white px-3 py-1 text-sm"
+            value={filter}
+            onChange={(event) => onFilterChange(event.target.value)}
+          >
+            <option value="all">All activity</option>
+            <option value="credit">Credits</option>
+            <option value="debit">Debits</option>
+            <option value="hold">Holds</option>
+            <option value="release">Releases</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onOpenLedger}>
+            Open full ledger
+          </Button>
+          <Button type="button" size="sm" onClick={onExport} disabled={exporting}>
+            {exporting ? 'Exporting…' : 'Download CSV'}
+          </Button>
+        </div>
       </div>
     </div>
+
+    {exportError ? <p className="text-xs text-rose-600">{exportError}</p> : null}
 
     {loading ? (
       <div className="flex items-center justify-center py-10">
@@ -154,7 +170,16 @@ WalletTransactionsPanel.propTypes = {
   }).isRequired,
   filter: PropTypes.string.isRequired,
   onFilterChange: PropTypes.func.isRequired,
-  onPaginate: PropTypes.func.isRequired
+  onPaginate: PropTypes.func.isRequired,
+  onOpenLedger: PropTypes.func.isRequired,
+  onExport: PropTypes.func.isRequired,
+  exporting: PropTypes.bool,
+  exportError: PropTypes.string
+};
+
+WalletTransactionsPanel.defaultProps = {
+  exporting: false,
+  exportError: null
 };
 
 export default WalletTransactionsPanel;
