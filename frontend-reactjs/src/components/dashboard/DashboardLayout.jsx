@@ -1,32 +1,7 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Bars3BottomLeftIcon,
-  ArrowLeftOnRectangleIcon,
-  MagnifyingGlassIcon,
-  ArrowTopRightOnSquareIcon,
-  ArrowPathIcon,
-  ArrowDownTrayIcon,
-  ExclamationTriangleIcon,
-  Squares2X2Icon,
-  UserCircleIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
-  WrenchScrewdriverIcon,
-  InboxStackIcon,
-  Cog8ToothIcon,
-  UsersIcon,
-  ChartPieIcon,
-  BuildingOfficeIcon,
-  ShieldCheckIcon,
-  MapIcon,
-  BoltIcon,
-  BanknotesIcon,
-  ClipboardDocumentCheckIcon,
-  CubeIcon
-} from '@heroicons/react/24/outline';
-import { Dialog, Transition } from '@headlessui/react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import DashboardOverview from './DashboardOverview.jsx';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
@@ -34,121 +9,11 @@ import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 import DashboardBlogRail from './DashboardBlogRail.jsx';
 import DashboardDetailDrawer from './DashboardDetailDrawer.jsx';
 import { DashboardOverlayProvider, useDashboardOverlay } from './DashboardOverlayContext.jsx';
+import DashboardHeaderBar from './DashboardHeaderBar.jsx';
+import DashboardNavigationDrawer from './navigation/DashboardNavigationDrawer.jsx';
+import DashboardNavigationSidebar from './navigation/DashboardNavigationSidebar.jsx';
 import { DASHBOARD_MENU_OVERRIDES } from '../../constants/dashboard/navigation/menuOverrides.js';
 
-const stateBadgeMap = {
-  enabled: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  pilot: 'bg-amber-100 text-amber-700 border-amber-200',
-  staging: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  disabled: 'bg-slate-100 text-slate-600 border-slate-200',
-  sunset: 'bg-rose-100 text-rose-700 border-rose-200'
-};
-
-const formatToggleDate = (iso) => {
-  if (!iso) return '—';
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-  return parsed.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const ToggleSummary = ({ toggle = null, reason = null }) => {
-  if (!toggle) {
-    return null;
-  }
-  const badgeClass = stateBadgeMap[toggle.state] ?? 'bg-slate-100 text-slate-600 border-slate-200';
-  const parsedRollout = Number.parseFloat(toggle.rollout ?? 0);
-  const rolloutValue = Number.isFinite(parsedRollout) ? parsedRollout : 0;
-  return (
-    <div className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm" data-qa="dashboard-toggle-summary">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Feature toggle</p>
-          <p className="text-sm font-semibold text-slate-900">analytics-dashboards</p>
-        </div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass}`} data-qa="dashboard-toggle-chip">
-          {toggle.state ?? 'unknown'}
-        </span>
-      </div>
-      <dl className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-500">
-        <div>
-          <dt className="font-medium text-slate-600">Owner</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-owner">{toggle.owner || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-600">Ticket</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-ticket">{toggle.ticket || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-600">Last modified</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-modified">{formatToggleDate(toggle.lastModifiedAt)}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-600">Rollout</dt>
-          <dd className="mt-1" data-qa="dashboard-toggle-rollout">{Math.round(rolloutValue * 100)}%</dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="font-medium text-slate-600">Reason</dt>
-          <dd className="mt-1 capitalize" data-qa="dashboard-toggle-reason">{reason?.replace('-', ' ') || 'enabled'}</dd>
-        </div>
-      </dl>
-    </div>
-  );
-};
-
-ToggleSummary.propTypes = {
-  toggle: PropTypes.shape({
-    state: PropTypes.string,
-    rollout: PropTypes.number,
-    owner: PropTypes.string,
-    ticket: PropTypes.string,
-    lastModifiedAt: PropTypes.string
-  }),
-  reason: PropTypes.string
-};
-
-const resultBadge = {
-  section: 'Section',
-  card: 'Summary',
-  column: 'Stage',
-  item: 'Work Item',
-  record: 'Record',
-  configuration: 'Setting',
-  panel: 'Setting'
-};
-
-const navIconMap = {
-  profile: UserCircleIcon,
-  calendar: CalendarDaysIcon,
-  pipeline: ClipboardDocumentListIcon,
-  availability: UsersIcon,
-  assets: CubeIcon,
-  support: InboxStackIcon,
-  settings: Cog8ToothIcon,
-  crew: WrenchScrewdriverIcon,
-  compliance: ShieldCheckIcon,
-  enterprise: BuildingOfficeIcon,
-  finance: BanknotesIcon,
-  analytics: ChartPieIcon,
-  automation: BoltIcon,
-  map: MapIcon,
-  documents: ClipboardDocumentCheckIcon
-};
-
-const getNavIcon = (item) => {
-  if (!item?.icon) {
-    return Squares2X2Icon;
-  }
-
-  return navIconMap[item.icon] ?? Squares2X2Icon;
-};
 
 const deriveMenuLabel = (item) => {
   if (item?.menuLabel) {
@@ -469,6 +334,7 @@ const DashboardLayoutInner = ({
   };
 
   const registeredOptions = registeredRoles.filter((role) => role.registered);
+  const relativeLastRefreshed = formatRelativeTime(lastRefreshed);
 
   if (error && !dashboard) {
     return <ErrorState message={error} onRetry={onRefresh} />;
@@ -476,330 +342,48 @@ const DashboardLayoutInner = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-secondary/60 to-white text-primary flex">
-      <Transition.Root show={mobileNavOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-40 lg:hidden" onClose={setMobileNavOpen}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-200"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-150"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
-          </Transition.Child>
-
-          <div className="fixed inset-y-0 left-0 flex max-w-xs w-full">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-200"
-              enterFrom="-translate-x-full"
-              enterTo="translate-x-0"
-              leave="ease-in duration-150"
-              leaveFrom="translate-x-0"
-              leaveTo="-translate-x-full"
-            >
-              <Dialog.Panel className="relative flex w-full flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/60 to-white p-6 shadow-2xl">
-                <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
-                <div className="flex items-center justify-between gap-3">
-                  <Link to="/dashboards" className="flex items-center gap-2 text-primary" onClick={() => setMobileNavOpen(false)}>
-                    <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
-                    <div className="leading-tight">
-                      <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
-                      <p className="text-lg font-semibold">{roleMeta.name}</p>
-                    </div>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
-                    aria-label="Close navigation"
-                  >
-                    <Squares2X2Icon className="h-5 w-5" />
-                  </button>
-                </div>
-                <nav className="mt-8 flex-1 space-y-2 overflow-y-auto">
-                  {navigationWithMenu.map((item) => {
-                    const isActive = item.id === activeSection?.id;
-                    const Icon = getNavIcon(item);
-                    const baseClasses =
-                      'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition';
-                    const stateClasses = isActive
-                      ? 'border-accent bg-accent text-white shadow-glow'
-                      : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary';
-                    const iconClasses = isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-                    const content = (
-                      <>
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold" title={item.label}>
-                            {item.menuLabel}
-                          </p>
-                          {item.description ? (
-                            <p className="sr-only">{item.description}</p>
-                          ) : null}
-                        </div>
-                      </>
-                    );
-
-                    if (item.href) {
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          className={`${baseClasses} ${stateClasses}`}
-                          onClick={() => setMobileNavOpen(false)}
-                          aria-label={item.label}
-                        >
-                          {content}
-                        </Link>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedSection(item.id)}
-                        className={`${baseClasses} ${stateClasses}`}
-                        aria-pressed={isActive}
-                      >
-                        {content}
-                      </button>
-                    );
-                  })}
-                </nav>
-                <div className="mt-6 space-y-3">
-                  <Link
-                    to="/"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                    onClick={() => setMobileNavOpen(false)}
-                  >
-                    <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                  </Link>
-                  {onLogout ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileNavOpen(false);
-                        onLogout();
-                      }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                    >
-                      <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                    </button>
-                  ) : null}
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </Dialog>
-      </Transition.Root>
-      <aside
-        className={`hidden lg:flex ${navCollapsed ? 'w-24' : 'w-80 xl:w-96'} flex-col border-r border-accent/10 bg-gradient-to-b from-white via-secondary/40 to-white transition-[width] duration-300`}
-      >
-        <div className="flex items-center justify-between border-b border-accent/10 px-6 py-5">
-          <Link to="/dashboards" className="flex items-center gap-2 text-primary" title="Dashboard hub">
-            <Bars3BottomLeftIcon className="h-6 w-6 text-accent" />
-            {!navCollapsed && (
-              <div className="leading-tight">
-                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">Fixnado</p>
-                <p className="text-lg font-semibold">{roleMeta.name}</p>
-              </div>
-            )}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setNavCollapsed((value) => !value)}
-            className="rounded-full border border-accent/20 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
-            aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          >
-            <Squares2X2Icon className={`h-5 w-5 transition-transform ${navCollapsed ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
-          {navigationWithMenu.map((item) => {
-            const isActive = item.id === activeSection?.id;
-            const Icon = getNavIcon(item);
-            const baseClasses =
-              'group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition';
-            const stateClasses = isActive
-              ? 'border-accent bg-accent text-white shadow-glow'
-              : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary';
-            const spacingClasses = navCollapsed ? 'justify-center px-2' : '';
-            const iconClasses = isActive
-              ? 'bg-white/20 text-white'
-              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent';
-            const content = (
-              <>
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClasses}`}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                {!navCollapsed && (
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold" title={item.label}>
-                      {item.menuLabel}
-                    </p>
-                    {item.description ? <p className="sr-only">{item.description}</p> : null}
-                  </div>
-                )}
-              </>
-            );
-
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                  title={navCollapsed ? item.label : undefined}
-                  aria-label={item.label}
-                >
-                  {content}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedSection(item.id)}
-                className={`${baseClasses} ${stateClasses} ${spacingClasses}`}
-                title={navCollapsed ? item.label : undefined}
-                aria-pressed={isActive}
-              >
-                {content}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+      <DashboardNavigationDrawer
+        open={mobileNavOpen}
+        onClose={setMobileNavOpen}
+        roleMeta={roleMeta}
+        navigation={navigationWithMenu}
+        activeSectionId={activeSection?.id}
+        onSelectSection={setSelectedSection}
+        onLogout={onLogout}
+      />
+      <DashboardNavigationSidebar
+        collapsed={navCollapsed}
+        onToggleCollapse={() => setNavCollapsed((value) => !value)}
+        roleMeta={roleMeta}
+        navigation={navigationWithMenu}
+        activeSectionId={activeSection?.id}
+        onSelectSection={setSelectedSection}
+      />
 
       <main className="flex-1 min-h-screen">
-        <div className="sticky top-0 z-10 border-b border-accent/10 bg-white/90 backdrop-blur px-8 py-6">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center justify-between gap-3 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 shadow-sm transition hover:border-accent hover:text-primary"
-              >
-                <Bars3BottomLeftIcon className="h-5 w-5 text-accent" /> Menu
-              </button>
-              {lastRefreshed && (
-                <p className="text-xs text-primary/60">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold text-primary">{activeSection?.label ?? roleMeta.name}</h1>
-                <span className="rounded-full border border-slate-200 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  {roleMeta.persona}
-                </span>
-              </div>
-              {lastRefreshed && (
-                <p className="hidden text-xs text-primary/60 lg:block">Refreshed {formatRelativeTime(lastRefreshed)}</p>
-              )}
-              <ToggleSummary toggle={toggleMeta} reason={toggleReason} />
-            </div>
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex w-full flex-col gap-2 sm:w-64">
-                <label className="text-xs uppercase tracking-wide text-primary/60" htmlFor="roleSwitcher">
-                  Switch workspace
-                </label>
-                <select
-                  id="roleSwitcher"
-                  value={roleMeta.id}
-                  onChange={(event) => navigate(`/dashboards/${event.target.value}`)}
-                  className="rounded-xl border border-accent/20 bg-white px-4 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {registeredOptions.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="relative w-full sm:w-80">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search jobs, orders, analytics, automations..."
-                  className="w-full rounded-full bg-white border border-accent/20 py-3 pl-12 pr-4 text-sm text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-                {searchResults.length > 0 && (
-                  <div className="absolute inset-x-0 top-14 z-20 rounded-2xl border border-accent/10 bg-white shadow-glow">
-                    <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                      {searchResults.map((result) => (
-                        <li key={result.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedSection(result.targetSection);
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
-                            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
-                          >
-                            <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-primary/80">
-                              {resultBadge[result.type] ?? 'Result'}
-                            </span>
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-primary">{result.label}</p>
-                              <p className="text-xs text-slate-500">{result.description}</p>
-                            </div>
-                            <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-slate-400" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 sm:self-end">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
-                >
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
-                </Link>
-                {onLogout ? (
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
-                  >
-                    <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-                </button>
-                {exportHref && (
-                  <a
-                    href={exportHref}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-primary/90"
-                  >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> Download CSV
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeaderBar
+          activeSection={activeSection}
+          persona={roleMeta.persona}
+          roleMeta={roleMeta}
+          lastRefreshedLabel={relativeLastRefreshed}
+          toggleMeta={toggleMeta}
+          toggleReason={toggleReason}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchResults={searchResults}
+          onSelectResult={(result) => {
+            setSelectedSection(result.targetSection);
+            setSearchQuery('');
+            setSearchResults([]);
+          }}
+          registeredRoles={registeredOptions}
+          onSwitchRole={(roleId) => navigate(`/dashboards/${roleId}`)}
+          onRefresh={onRefresh}
+          loading={loading}
+          exportHref={exportHref}
+          onLogout={onLogout}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
+        />
 
         {loading && !dashboard ? (
           <Skeleton />
