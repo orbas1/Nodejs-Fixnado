@@ -51,6 +51,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
+import { ServicemanOverviewModule } from '../../features/servicemanControlCentre/index.js';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
@@ -917,6 +918,11 @@ const DashboardLayout = ({
             <DashboardOverview analytics={activeSection.analytics} />
             <CustomerOverviewControl />
           </div>
+        );
+      }
+      if (persona === 'serviceman') {
+        return (
+          <ServicemanOverviewModule analytics={activeSection.analytics} metadata={dashboard?.metadata} />
         );
       }
       return <DashboardOverview analytics={activeSection.analytics} />;

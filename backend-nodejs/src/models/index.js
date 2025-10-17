@@ -17,6 +17,10 @@ import EscrowMilestone from './escrowMilestone.js';
 import EscrowNote from './escrowNote.js';
 import EscrowWorkLog from './escrowWorkLog.js';
 import Dispute from './dispute.js';
+import ServicemanProfile from './servicemanProfile.js';
+import ServicemanShiftRule from './servicemanShiftRule.js';
+import ServicemanCertification from './servicemanCertification.js';
+import ServicemanEquipmentItem from './servicemanEquipmentItem.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
@@ -215,6 +219,14 @@ ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasOne(ServicemanProfile, { foreignKey: 'userId', as: 'servicemanProfile' });
+ServicemanProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+ServicemanProfile.hasMany(ServicemanShiftRule, { foreignKey: 'profileId', as: 'shiftRules' });
+ServicemanShiftRule.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanCertification, { foreignKey: 'profileId', as: 'certifications' });
+ServicemanCertification.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanEquipmentItem, { foreignKey: 'profileId', as: 'equipment' });
+ServicemanEquipmentItem.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
 User.hasOne(ServicemanIdentity, { foreignKey: 'servicemanId', as: 'identityProfile' });
 ServicemanIdentity.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
 ServicemanIdentity.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
@@ -1167,9 +1179,16 @@ export {
     EscrowNote,
     EscrowWorkLog,
   Dispute,
+  ServicemanProfile,
+  ServicemanShiftRule,
+  ServicemanCertification,
+  ServicemanEquipmentItem,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,
   ZoneAnalyticsSnapshot,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
   Booking,
   BookingAssignment,
   BookingBid,
@@ -1220,11 +1239,14 @@ export {
   MessageDelivery,
   AccountSupportTask,
   AccountSupportTaskUpdate,
+  AdminUserProfile,
+  CustomJobBid,
+  CustomJobBidMessage,
+  PlatformSetting,
   CommunicationsInboxConfiguration,
   CommunicationsEntryPoint,
   CommunicationsQuickReply,
   CommunicationsEscalationRule,
-  PlatformSetting,
   BlogPost,
   BlogCategory,
   BlogTag,
@@ -1282,6 +1304,9 @@ export {
   DisputeHealthEntry,
   CommandMetricSetting,
   CommandMetricCard,
+  OperationsQueueBoard,
+  OperationsQueueUpdate,
+  AutomationInitiative,
   ServicemanMetricSetting,
   ServicemanMetricCard,
   OperationsQueueBoard,
@@ -1330,6 +1355,7 @@ export {
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
+  CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,
   CustomerDisputeCase,
@@ -1344,6 +1370,8 @@ export {
   ServicemanByokConnector,
   ServicemanByokAuditEvent
 };
+
+export default sequelize;
 
 export { default as ServicemanPayment, SERVICEMAN_PAYMENT_STATUSES } from './servicemanPayment.js';
 export { default as ServicemanCommissionRule, SERVICEMAN_COMMISSION_RATE_TYPES, SERVICEMAN_COMMISSION_APPROVAL_STATUSES } from './servicemanCommissionRule.js';
