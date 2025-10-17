@@ -144,6 +144,8 @@ export async function resolveCompanyId(companyId) {
   return firstCompany.id;
 }
 
+export { resolveCompanyForActor };
+
 function formatBookingForPipeline(booking, timezone = 'UTC') {
   const scheduledStart = booking.scheduledStart
     ? DateTime.fromJSDate(booking.scheduledStart).setZone(timezone)

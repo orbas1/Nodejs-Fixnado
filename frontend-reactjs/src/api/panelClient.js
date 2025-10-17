@@ -1559,7 +1559,7 @@ function normaliseAdminDashboard(payload = {}) {
     status: tile.status || null
   }));
 
-  const summary = payload.metrics?.command?.summary || {};
+  const commandSummary = payload.metrics?.command?.summary || {};
 
   const escrowTrend = ensureArray(payload.charts?.escrowTrend?.buckets).map((bucket, index) => ({
     label: bucket.label || `Bucket ${index + 1}`,
@@ -1634,7 +1634,7 @@ function normaliseAdminDashboard(payload = {}) {
     logoUrl: connector.logoUrl || null
   }));
 
-  const summary = payload.security?.summary || {
+  const securitySummary = payload.security?.summary || {
     connectorsHealthy: connectors.filter((connector) => connector.status === 'healthy').length,
     connectorsAttention: connectors.filter((connector) => connector.status !== 'healthy').length,
     automationOpen: automationBacklog.filter((item) => item.status !== 'Completed').length,
@@ -1643,14 +1643,6 @@ function normaliseAdminDashboard(payload = {}) {
   };
 
   const securityCapabilities = payload.security?.capabilities || {};
-
-  const queueBoards = ensureArray(payload.queues?.boards).map((board, index) => ({
-    id: board.id || `board-${index}`,
-    title: board.title || board.name || `Queue ${index + 1}`,
-    summary: board.summary || '',
-    updates: ensureArray(board.updates),
-    owner: board.owner || 'Operations'
-  }));
 
   const complianceControls = ensureArray(payload.queues?.complianceControls).map((control, index) => ({
     id: control.id || `control-${index}`,
@@ -1742,12 +1734,12 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
-          escrowTotal: Number.parseFloat(summary.escrowTotal ?? summary.escrowTotalAmount ?? 0) || 0,
-          escrowTotalLabel: summary.escrowTotalLabel || summary.escrowTotal || '—',
-          slaCompliance: Number.parseFloat(summary.slaCompliance ?? 0) || 0,
-          slaComplianceLabel: summary.slaComplianceLabel || summary.slaCompliance || '—',
-          openDisputes: Number.parseInt(summary.openDisputes ?? 0, 10) || 0,
-          openDisputesLabel: summary.openDisputesLabel || `${summary.openDisputes ?? 0}`
+          escrowTotal: Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
+          escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
+          slaCompliance: Number.parseFloat(commandSummary.slaCompliance ?? 0) || 0,
+          slaComplianceLabel: commandSummary.slaComplianceLabel || commandSummary.slaCompliance || '—',
+          openDisputes: Number.parseInt(commandSummary.openDisputes ?? 0, 10) || 0,
+          openDisputesLabel: commandSummary.openDisputesLabel || `${commandSummary.openDisputes ?? 0}`
         }
       }
     },
@@ -1759,7 +1751,7 @@ function normaliseAdminDashboard(payload = {}) {
       signals: securitySignals,
       automationBacklog,
       connectors,
-      summary,
+      summary: securitySummary,
       capabilities: {
         canManageSignals: Boolean(securityCapabilities.canManageSignals),
         canManageAutomation: Boolean(securityCapabilities.canManageAutomation),
@@ -3866,6 +3858,8 @@ export async function deleteDisputeHealthEntry(entryId) {
     forceRefresh: true
   });
   return cacheDisputeHealthWorkspace(data);
+}
+
 export function listAdminAuditEvents({ timeframe = '7d', category, status, signal, forceRefresh = false } = {}) {
   const query = toQueryString({ timeframe, category, status });
   return request(`/admin/audit/events${query}`, {
@@ -3941,6 +3935,101 @@ function invalidateProviderCache(companyId) {
     keys.push(`admin-provider:${companyId}`);
   }
   clearPanelCache(keys);
+}
+
+function normaliseProviderServiceman(record) {
+  const availabilities = ensureArray(record.availabilities).map((entry) => ({
+    id: entry.id,
+    dayOfWeek: entry.dayOfWeek ?? entry.day_of_week ?? 0,
+    startTime: entry.startTime ?? entry.start_time ?? '08:00',
+    endTime: entry.endTime ?? entry.end_time ?? '17:00',
+    timezone: entry.timezone ?? 'Europe/London',
+    isActive: Boolean(entry.isActive ?? entry.is_active ?? true)
+  }));
+
+  const zones = ensureArray(record.zones ?? record.zoneLinks).map((entry) => ({
+    id: entry.id,
+    zoneId: entry.zoneId ?? entry.zone_id ?? entry.id,
+    isPrimary: Boolean(entry.isPrimary ?? entry.is_primary ?? false),
+    zone: entry.zone
+      ? {
+          id: entry.zone.id,
+          name: entry.zone.name,
+          demandLevel: entry.zone.demandLevel ?? entry.zone.demand_level ?? null
+        }
+      : null
+  }));
+
+  const media = ensureArray(record.media).map((item, index) => ({
+    id: item.id,
+    url: item.url,
+    label: item.label ?? null,
+    type: item.type ?? 'gallery',
+    isPrimary: Boolean(item.isPrimary ?? item.is_primary ?? false),
+    sortOrder: Number.isFinite(Number(item.sortOrder ?? item.sort_order))
+      ? Number(item.sortOrder ?? item.sort_order)
+      : index,
+    notes: item.notes ?? null
+  }));
+
+  return {
+    id: record.id,
+    companyId: record.companyId ?? record.company_id ?? null,
+    name: record.name ?? 'Crew member',
+    role: record.role ?? null,
+    email: record.email ?? null,
+    phone: record.phone ?? null,
+    status: record.status ?? 'inactive',
+    availabilityStatus: record.availabilityStatus ?? record.availability_status ?? 'available',
+    availabilityPercentage: Number.isFinite(Number(record.availabilityPercentage ?? record.availability_percentage))
+      ? Number(record.availabilityPercentage ?? record.availability_percentage)
+      : 0,
+    hourlyRate: record.hourlyRate ?? record.hourly_rate ?? null,
+    currency: record.currency ?? 'GBP',
+    avatarUrl: record.avatarUrl ?? record.avatar_url ?? null,
+    bio: record.bio ?? null,
+    notes: record.notes ?? null,
+    skills: ensureArray(record.skills).map((skill) => String(skill)),
+    certifications: record.certifications ?? null,
+    availabilities,
+    zones,
+    media,
+    meta: record.meta ?? {},
+    createdAt: record.createdAt ? new Date(record.createdAt).toISOString() : null,
+    updatedAt: record.updatedAt ? new Date(record.updatedAt).toISOString() : null
+  };
+}
+
+function normaliseProviderServicemanEnums(enums = {}) {
+  return {
+    statuses: ensureArray(enums.statuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    availabilityStatuses: ensureArray(enums.availabilityStatuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    daysOfWeek: ensureArray(enums.daysOfWeek).map((option) => ({
+      value: Number(option.value ?? option.id ?? option ?? 0),
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    timezones: ensureArray(enums.timezones).length ? ensureArray(enums.timezones) : ['Europe/London', 'UTC'],
+    mediaTypes: ensureArray(enums.mediaTypes).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    currencies: ensureArray(enums.currencies).length ? ensureArray(enums.currencies) : ['GBP', 'EUR', 'USD'],
+    zones: ensureArray(enums.zones).map((zone) => ({
+      id: zone.id ?? zone.zoneId ?? zone.value,
+      name: zone.name ?? zone.label ?? 'Coverage zone'
+    }))
+  };
+}
+
+function invalidateProviderServicemenCache(companyId) {
+  const cacheKey = companyId ? `provider-servicemen:${companyId}` : 'provider-servicemen';
+  clearPanelCache([cacheKey, 'provider-dashboard']);
 }
 
 export async function createAdminProvider(payload) {
@@ -4036,6 +4125,67 @@ export async function deleteAdminProviderCoverage(companyId, coverageId) {
     forceRefresh: true
   });
   invalidateProviderCache(companyId);
+}
+
+export async function listProviderServicemen(options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    cacheKey: `provider-servicemen${cacheKeySuffix}`,
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  const root = response?.data ?? response ?? {};
+  const payload = root.data ?? root;
+  return {
+    servicemen: ensureArray(payload.servicemen).map(normaliseProviderServiceman),
+    enums: normaliseProviderServicemanEnums(payload.enums)
+  };
+}
+
+export async function createProviderServiceman(companyId, payload) {
+  const query = toQueryString({ companyId });
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function updateProviderServiceman(companyId, servicemanId, payload) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  const response = await request(
+    `/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true
+    }
+  );
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function deleteProviderServiceman(companyId, servicemanId) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  await request(`/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderServicemenCache(companyId ?? null);
 }
 
 export const getEnterprisePanel = withFallback(

@@ -14,6 +14,23 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null,
       surface: req.route?.path || null
+    })
+  },
+  'panel.provider.servicemen.manage': {
+    id: 'panel.provider.servicemen.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.servicemen',
+    action: 'panel.provider.servicemen:manage',
+    description: 'Allow provider operations teams to manage servicemen rosters, availability, and media.',
+    requirements: [Permissions.PROVIDER_CREW_MANAGE],
+    tags: ['provider', 'servicemen', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      method: req.method,
+      companyId: req.query?.companyId || null,
+      servicemanId: req.params?.servicemanId || null
+    })
+  },
   'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
