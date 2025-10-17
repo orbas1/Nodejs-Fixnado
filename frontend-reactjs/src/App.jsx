@@ -10,6 +10,7 @@ import { useLocale } from './hooks/useLocale.js';
 import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
+import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
 import ConsentBanner from './components/legal/ConsentBanner.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -21,6 +22,10 @@ const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeploymentManagement.jsx'));
+const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
+const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
+const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
+const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
@@ -69,10 +74,46 @@ const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CustomerSettingsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
   : null;
+const ProviderAdsDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
+  : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
+const ServicemanByokWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
+);
+
+const ADMIN_ROUTES = [
+  { path: '/admin/dashboard', Component: AdminDashboard },
+  { path: '/admin/profile', Component: AdminProfile },
+  { path: '/admin/disputes/health/:bucketId/history', Component: AdminDisputeHealthHistory },
+  { path: '/admin/home-builder', Component: AdminHomeBuilder },
+  { path: '/admin/blog', Component: AdminBlog },
+  { path: '/admin/rentals', Component: AdminRentals },
+  { path: '/admin/monetisation', Component: AdminMonetization },
+  { path: '/admin/escrows', Component: AdminEscrow },
+  { path: '/admin/bookings', Component: AdminBookings },
+  { path: '/admin/wallets', Component: AdminWallets },
+  { path: '/admin/custom-jobs', Component: AdminCustomJobs },
+  { path: '/admin/roles', Component: AdminRoles },
+  { path: '/admin/preferences', Component: AdminPreferences },
+  { path: '/admin/enterprise', Component: AdminEnterprise },
+  { path: '/admin/marketplace', Component: AdminMarketplace },
+  { path: '/admin/appearance', Component: AppearanceManagement },
+  { path: '/admin/inbox', Component: AdminInbox },
+  { path: '/admin/purchases', Component: AdminPurchaseManagement },
+  { path: '/admin/website-management', Component: AdminWebsiteManagement },
+  { path: '/admin/live-feed/auditing', Component: AdminLiveFeedAuditing },
+  { path: '/admin/system-settings', Component: AdminSystemSettings },
+  { path: '/admin/taxonomy', Component: AdminTaxonomy },
+  { path: '/admin/seo', Component: AdminSeo },
+  { path: '/admin/theme-studio', Component: ThemeStudio },
+  { path: '/admin/telemetry', Component: TelemetryDashboard },
+  { path: '/admin/zones', Component: AdminZones },
+  { path: '/admin/legal/:slug?', Component: AdminLegal }
+];
 
 function App() {
   const { t } = useLocale();
@@ -107,10 +148,26 @@ function App() {
               <Route path="/feed" element={<Feed />} />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
               <Route
+                path="/provider/custom-jobs"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderCustomJobs />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
                 path="/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
                     <ProviderStorefront />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
+                path="/provider/inventory"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderInventory />
                   </ProviderProtectedRoute>
                 }
               />
@@ -129,6 +186,17 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/admin" element={<AdminLogin />} />
+              {ADMIN_ROUTES.map(({ path, Component }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <AdminProtectedRoute>
+                      <Component />
+                    </AdminProtectedRoute>
+                  }
+                />
+              ))}
               <Route
                 path="/admin/dashboard"
                 element={
@@ -357,14 +425,38 @@ function App() {
                 }
               />
               <Route path="/dashboards" element={<DashboardHub />} />
+              <Route
+                path="/dashboards/provider/onboarding"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderOnboardingManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
+              <Route
+                path="/dashboards/serviceman/byok"
+                element={
+                  <ServicemanProtectedRoute>
+                    <ServicemanByokWorkspace />
+                  </ServicemanProtectedRoute>
+                path="/dashboards/provider/storefront"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderStorefrontControl />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="/legal/:slug" element={<Terms />} />
               {import.meta.env.DEV && CustomerSettingsDevPreview ? (
                 <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
+              ) : null}
+              {import.meta.env.DEV && ProviderAdsDevPreview ? (
+                <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>
