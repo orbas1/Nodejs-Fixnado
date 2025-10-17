@@ -27,6 +27,8 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderTaxProfile from './providerTaxProfile.js';
+import ProviderTaxFiling from './providerTaxFiling.js';
 import ProviderByokIntegration from './providerByokIntegration.js';
 import ProviderByokAuditLog from './providerByokAuditLog.js';
 import ProviderCrewMember from './providerCrewMember.js';
@@ -274,6 +276,11 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
+Company.hasOne(ProviderTaxProfile, { foreignKey: 'companyId', as: 'taxProfile' });
+ProviderTaxProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderTaxFiling, { foreignKey: 'companyId', as: 'taxFilings' });
+ProviderTaxFiling.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderByokIntegration, { foreignKey: 'companyId', as: 'byokIntegrations' });
 ProviderByokIntegration.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
@@ -1283,6 +1290,12 @@ export {
   WalletConfiguration,
   WalletAccount,
   WalletTransaction,
+  WalletPaymentMethod,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
+  ProviderTaxProfile,
+  ProviderTaxFiling,
   ProviderProfile,
   ProviderContact,
   ProviderCoverage,

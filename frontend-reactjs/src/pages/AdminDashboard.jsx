@@ -30,6 +30,10 @@ import {
   createAdminProvider,
   updateAdminProvider,
   archiveAdminProvider,
+  updateAdminProviderTaxProfile,
+  createAdminProviderTaxFiling,
+  updateAdminProviderTaxFiling,
+  deleteAdminProviderTaxFiling,
   upsertAdminProviderContact,
   deleteAdminProviderContact,
   upsertAdminProviderCoverage,
@@ -2545,6 +2549,12 @@ export default function AdminDashboard() {
     [loadProviderDirectory, handleProviderAuthError]
   );
 
+  const handleUpdateProviderTaxProfile = useCallback(
+    async (companyId, payload) => {
+      try {
+        const result = await updateAdminProviderTaxProfile(companyId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
   const handleFetchComplianceSummary = useCallback(
     async (companyId, options = {}) => {
       try {
@@ -2553,11 +2563,21 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
+            : new PanelApiError('Unable to update tax profile', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to load compliance summary', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleCreateProviderTaxFiling = useCallback(
+    async (companyId, payload) => {
+      try {
+        const result = await createAdminProviderTaxFiling(companyId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
     [handleProviderAuthError]
   );
 
@@ -2595,11 +2615,21 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
+            : new PanelApiError('Unable to create tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to review document', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleUpdateProviderTaxFiling = useCallback(
+    async (companyId, filingId, payload) => {
+      try {
+        const result = await updateAdminProviderTaxFiling(companyId, filingId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
     [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
@@ -2616,11 +2646,20 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
+            : new PanelApiError('Unable to update tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to evaluate compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleDeleteProviderTaxFiling = useCallback(
+    async (companyId, filingId) => {
+      try {
+        await deleteAdminProviderTaxFiling(companyId, filingId);
+        await loadProviderDetail(companyId, { forceRefresh: true });
     [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
@@ -2658,11 +2697,13 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
+            : new PanelApiError('Unable to delete tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to suspend provider compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
+    [loadProviderDetail, handleProviderAuthError]
     [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
@@ -2677,6 +2718,10 @@ export default function AdminDashboard() {
       onUpsertCoverage: handleUpsertProviderCoverage,
       onDeleteCoverage: handleDeleteProviderCoverage,
       onArchiveProvider: handleArchiveProvider,
+      onUpdateTaxProfile: handleUpdateProviderTaxProfile,
+      onCreateTaxFiling: handleCreateProviderTaxFiling,
+      onUpdateTaxFiling: handleUpdateProviderTaxFiling,
+      onDeleteTaxFiling: handleDeleteProviderTaxFiling
       onFetchComplianceSummary: handleFetchComplianceSummary,
       onSubmitComplianceDocument: handleSubmitComplianceDocument,
       onReviewComplianceDocument: handleReviewComplianceDocument,
@@ -2694,6 +2739,10 @@ export default function AdminDashboard() {
       handleUpsertProviderCoverage,
       handleDeleteProviderCoverage,
       handleArchiveProvider,
+      handleUpdateProviderTaxProfile,
+      handleCreateProviderTaxFiling,
+      handleUpdateProviderTaxFiling,
+      handleDeleteProviderTaxFiling
       handleFetchComplianceSummary,
       handleSubmitComplianceDocument,
       handleReviewComplianceDocument,
