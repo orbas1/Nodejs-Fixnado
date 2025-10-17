@@ -23,6 +23,10 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderCrewMember from './providerCrewMember.js';
+import ProviderCrewAvailability from './providerCrewAvailability.js';
+import ProviderCrewDeployment from './providerCrewDeployment.js';
+import ProviderCrewDelegation from './providerCrewDelegation.js';
 import ProviderOnboardingTask from './providerOnboardingTask.js';
 import ProviderOnboardingRequirement from './providerOnboardingRequirement.js';
 import ProviderOnboardingNote from './providerOnboardingNote.js';
@@ -328,6 +332,50 @@ ProviderStorefrontCoupon.belongsTo(ProviderStorefront, { foreignKey: 'storefront
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
 
+Company.hasMany(ProviderCrewMember, { foreignKey: 'companyId', as: 'crewMembers' });
+ProviderCrewMember.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewAvailability, {
+  foreignKey: 'crewMemberId',
+  as: 'availability',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ProviderCrewAvailability.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'CASCADE'
+});
+Company.hasMany(ProviderCrewAvailability, { foreignKey: 'companyId', as: 'crewAvailability' });
+ProviderCrewAvailability.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewDeployment, {
+  foreignKey: 'crewMemberId',
+  as: 'deployments',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ProviderCrewDeployment.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'CASCADE'
+});
+Company.hasMany(ProviderCrewDeployment, { foreignKey: 'companyId', as: 'crewDeployments' });
+ProviderCrewDeployment.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewDelegation, {
+  foreignKey: 'crewMemberId',
+  as: 'delegations',
+  onDelete: 'SET NULL',
+  hooks: true
+});
+ProviderCrewDelegation.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'SET NULL'
+});
+Company.hasMany(ProviderCrewDelegation, { foreignKey: 'companyId', as: 'delegations' });
+ProviderCrewDelegation.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderOnboardingTask, { foreignKey: 'companyId', as: 'onboardingTasks' });
 ProviderOnboardingTask.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 ProviderOnboardingTask.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
@@ -1205,6 +1253,13 @@ export {
   WalletConfiguration,
   WalletAccount,
   WalletTransaction,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
+  ProviderCrewMember,
+  ProviderCrewAvailability,
+  ProviderCrewDeployment,
+  ProviderCrewDelegation,
   ProviderEscrowPolicy,
   ProviderProfile,
   ProviderContact,

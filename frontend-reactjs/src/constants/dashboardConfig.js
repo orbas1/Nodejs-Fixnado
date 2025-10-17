@@ -70,6 +70,14 @@ export const DASHBOARD_ROLES = [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
+      {
+        id: 'crew-control-centre',
+        label: 'Crew control centre',
+        description: 'Manage deployments, rota coverage, and delegations.',
+        icon: 'crew',
+        type: 'route',
+        href: '/dashboards/provider/crew-control'
+      },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
       { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },

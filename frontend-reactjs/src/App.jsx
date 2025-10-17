@@ -21,6 +21,7 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeploymentManagement.jsx'));
 const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
 const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
@@ -415,6 +416,14 @@ function App() {
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />
+              <Route
+                path="/dashboards/provider/crew-control"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderDeploymentManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards" element={<DashboardHub />} />
               <Route
                 path="/dashboards/provider/onboarding"
