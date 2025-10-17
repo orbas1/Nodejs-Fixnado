@@ -3048,8 +3048,14 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
-  const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
+  const [
+    assignments,
+    previousAssignments,
+    bids,
+    services,
+    financeWorkspace,
+    websitePreferences
+  ] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3082,7 +3088,7 @@ async function loadServicemanData(context) {
           console.warn('Failed to load serviceman finance workspace', error);
           return null;
         })
-      : Promise.resolve(null)
+      : Promise.resolve(null),
     getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null }))
   ]);
 
@@ -3557,6 +3563,140 @@ async function loadServicemanData(context) {
   };
   const fixnadoSnapshot = await getFixnadoWorkspaceSnapshot({ windowDays: 30 });
 
+  const navigation = [
+    {
+      id: 'overview',
+      label: 'Crew Overview',
+      description: 'Assignments, travel buffers, and earnings.',
+      type: 'overview',
+      analytics: overview
+    },
+    {
+      id: 'schedule',
+      label: 'Schedule Board',
+      description: 'Daily and weekly workload.',
+      type: 'board',
+      data: { columns: boardColumns }
+    },
+    {
+      id: 'inbox',
+      label: 'Crew Inbox',
+      description: 'Manage crew messaging, AI assist, and escalation guardrails.',
+      type: 'serviceman-inbox',
+      data: {
+        defaultParticipantId: crewParticipantPayload?.participantId ?? null,
+        currentParticipant: crewParticipantPayload,
+        tenantId,
+        summary: inboxSummary
+      }
+    },
+    {
+      id: 'bid-pipeline',
+      label: 'Bid Pipeline',
+      description: 'Track bids from submission through award.',
+      type: 'board',
+      data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
+    },
+    {
+      id: 'booking-management',
+      label: 'Booking Management',
+      description: 'Update bookings, notes, and crew preferences in real time.',
+      type: 'component',
+      componentKey: 'serviceman-booking-management',
+      props: {
+        initialWorkspace: {
+          servicemanId: providerId ?? null,
+          timezone: window.timezone,
+          summary: {
+            totalAssignments: assignments.length,
+            scheduledAssignments: scheduled,
+            activeAssignments: inProgress,
+            awaitingResponse: pendingAssignments,
+            completedThisMonth: completed,
+            slaAtRisk: slaAtRiskCount,
+            revenueEarned: revenue,
+            averageTravelMinutes: avgTravelMinutes,
+            currency: bookingCurrency
+          }
+        }
+      }
+    },
+    {
+      id: 'service-catalogue',
+      label: 'Service Catalogue',
+      description: 'Performance of services offered to Fixnado clients.',
+      type: 'grid',
+      data: { cards: serviceCards }
+    },
+    {
+      id: 'automation',
+      label: 'Automation & Growth',
+      description: 'Auto-match, routing, and acquisition insights.',
+      type: 'list',
+      data: { items: automationItems }
+    }
+  ];
+
+  const financeSection = {
+    id: 'financial-management',
+    label: 'Financial management',
+    description: 'Track payouts, reimbursements, and allowances in real time.',
+    type: 'serviceman-finance',
+    data:
+      financeWorkspace ?? {
+        context: { servicemanId: providerId ?? null },
+        summary: { earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 }, expenses: { total: 0, reimbursed: 0 } },
+        permissions: { canManagePayments: false, canSubmitExpenses: false, canManageAllowances: false },
+        earnings: { items: [], meta: { total: 0 } },
+        expenses: { items: [], meta: { total: 0 } },
+        allowances: { items: [] }
+      }
+  };
+
+  const websitePreferencesSection = {
+    id: 'website-preferences',
+    label: 'Website Preferences',
+    description: 'Control microsite branding, booking intake, and publishing readiness.',
+    type: 'serviceman-website-preferences',
+    icon: 'builder',
+    data: {
+      initialPreferences: websitePreferences?.preferences ?? null,
+      meta: websitePreferences?.meta ?? null
+    }
+  };
+
+  const profileSettingsSection = {
+    id: 'profile-settings',
+    label: 'Profile Settings',
+    description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
+    type: 'serviceman-profile-settings',
+    data: {
+      helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
+    }
+  };
+
+  const disputeSection = {
+    id: 'serviceman-disputes',
+    label: 'Dispute Management',
+    description: 'Open and track dispute cases, assignments, and supporting evidence.',
+    type: 'component'
+  };
+
+  navigation.push(financeSection, websitePreferencesSection, profileSettingsSection, disputeSection);
+
+  const adsSection = annotateAdsSection('serviceman', {
+    id: 'fixnado-ads',
+    label: 'Fixnado Ads',
+    description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+    icon: 'analytics',
+    type: 'fixnado-ads',
+    data: fixnadoSnapshot
+  });
+
+  if (adsSection) {
+    navigation.push(adsSection);
+  }
+
   return {
     persona: 'serviceman',
     name: PERSONA_METADATA.serviceman.name,
@@ -3593,120 +3733,7 @@ async function loadServicemanData(context) {
         summary: inboxSummary
       }
     },
-    navigation: [
-      {
-        id: 'overview',
-        label: 'Crew Overview',
-        description: 'Assignments, travel buffers, and earnings.',
-        type: 'overview',
-        analytics: overview
-      },
-      {
-        id: 'schedule',
-        label: 'Schedule Board',
-        description: 'Daily and weekly workload.',
-        type: 'board',
-        data: { columns: boardColumns }
-      },
-      {
-        id: 'inbox',
-        label: 'Crew Inbox',
-        description: 'Manage crew messaging, AI assist, and escalation guardrails.',
-        type: 'serviceman-inbox',
-        data: {
-          defaultParticipantId: crewParticipantPayload?.participantId ?? null,
-          currentParticipant: crewParticipantPayload,
-          tenantId,
-          summary: inboxSummary
-        }
-      },
-      {
-        id: 'bid-pipeline',
-        label: 'Bid Pipeline',
-        description: 'Track bids from submission through award.',
-        type: 'board',
-        data: { columns: bidColumns.map(({ title, items }) => ({ title, items })) }
-      },
-      {
-        id: 'booking-management',
-        label: 'Booking Management',
-        description: 'Update bookings, notes, and crew preferences in real time.',
-        type: 'component',
-        componentKey: 'serviceman-booking-management',
-        props: {
-          initialWorkspace: {
-            servicemanId: providerId ?? null,
-            timezone: window.timezone,
-            summary: {
-              totalAssignments: assignments.length,
-              scheduledAssignments: scheduled,
-              activeAssignments: inProgress,
-              awaitingResponse: pendingAssignments,
-              completedThisMonth: completed,
-              slaAtRisk: slaAtRiskCount,
-              revenueEarned: revenue,
-              averageTravelMinutes: avgTravelMinutes,
-              currency: bookingCurrency
-            }
-          }
-        }
-      },
-      {
-        id: 'service-catalogue',
-        label: 'Service Catalogue',
-        description: 'Performance of services offered to Fixnado clients.',
-        type: 'grid',
-        data: { cards: serviceCards }
-      },
-      {
-        id: 'automation',
-        label: 'Automation & Growth',
-        description: 'Auto-match, routing, and acquisition insights.',
-        type: 'list',
-        data: { items: automationItems }
-      },
-      {
-        id: 'financial-management',
-        label: 'Financial management',
-        description: 'Track payouts, reimbursements, and allowances in real time.',
-        type: 'serviceman-finance',
-        data:
-          financeWorkspace ?? {
-            context: { servicemanId: providerId ?? null },
-            summary: { earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 }, expenses: { total: 0, reimbursed: 0 } },
-            permissions: { canManagePayments: false, canSubmitExpenses: false, canManageAllowances: false },
-            earnings: { items: [], meta: { total: 0 } },
-            expenses: { items: [], meta: { total: 0 } },
-            allowances: { items: [] }
-          }
-        id: 'website-preferences',
-        icon: 'builder',
-        label: 'Website Preferences',
-        description: 'Control microsite branding, booking intake, and publishing readiness.',
-        type: 'serviceman-website-preferences',
-        data: {
-          initialPreferences: websitePreferences?.preferences ?? null,
-          meta: websitePreferences?.meta ?? null
-        }
-        id: 'profile-settings',
-        label: 'Profile Settings',
-        description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
-        type: 'serviceman-profile-settings',
-        data: {
-          helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
-        }
-        id: 'serviceman-disputes',
-        label: 'Dispute Management',
-        description: 'Open and track dispute cases, assignments, and supporting evidence.',
-        type: 'component'
-        id: 'fixnado-ads',
-        label: 'Fixnado Ads',
-        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
-        icon: 'analytics',
-        type: 'fixnado-ads',
-        data: fixnadoSnapshot
-      }
-    ]
+    navigation
   };
 }
 
