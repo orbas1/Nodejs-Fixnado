@@ -136,6 +136,8 @@ async function ensureUniqueSlug(baseSlug, transaction, excludePostId = null) {
     candidate = `${sanitizedBase}-${attempt}`;
   }
   return candidate;
+}
+
 const ALLOWED_TAG_ROLES = new Set(['admin', 'provider', 'finance', 'serviceman', 'user', 'enterprise']);
 const TAG_SORT_FIELDS = new Set(['name', 'updatedAt', 'createdAt']);
 const TAG_SORT_DIRECTIONS = new Set(['asc', 'desc']);

@@ -160,6 +160,10 @@ export function formatTransaction(instance, account) {
     referenceId: plain.referenceId || null,
     description: plain.description || '',
     actorId: plain.actorId || null,
+    balanceBefore: plain.balanceBefore != null ? toNumber(plain.balanceBefore) : null,
+    balanceAfter: plain.balanceAfter != null ? toNumber(plain.balanceAfter) : null,
+    pendingBefore: plain.pendingBefore != null ? toNumber(plain.pendingBefore) : null,
+    pendingAfter: plain.pendingAfter != null ? toNumber(plain.pendingAfter) : null,
     runningBalance:
       plain.runningBalance != null
         ? toNumber(plain.runningBalance)
@@ -180,6 +184,7 @@ export function formatAccount(account, { lastTransaction = null, pendingPayout =
     status: plain.status,
     balance: toNumber(plain.balance),
     holdBalance: toNumber(plain.holdBalance),
+    pending: toNumber(plain.holdBalance),
     currency: plain.currency,
     lastReconciledAt: plain.lastReconciledAt ? new Date(plain.lastReconciledAt).toISOString() : null,
     metadata: plain.metadata ?? {},

@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import AutomationBacklogSection from './AutomationBacklogSection.jsx';
 import AccountSupportSection from './AccountSupportSection.jsx';
 import {
   ArrowTrendingUpIcon,
@@ -27,6 +28,18 @@ import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
 import { ProviderProfileSettingsWorkspace } from '../../features/providerControlCentre/index.js';
+import ProviderByokManagementSection from './provider/ProviderByokManagementSection.jsx';
+import { ProviderInboxModule } from '../../modules/providerInbox/index.js';
+import IdentityVerificationSection from './serviceman/IdentityVerificationSection.jsx';
+import { ServicemanMetricsSection } from '../../modules/servicemanMetrics/index.js';
+import ServicemanFinanceWorkspace from '../../modules/servicemanFinance/ServicemanFinanceWorkspace.jsx';
+import { ServicemanWebsitePreferencesSection } from '../../features/servicemanWebsitePreferences/index.js';
+import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
+import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
+import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index.js';
+import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
+import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
+import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -67,8 +80,15 @@ SectionHeader.propTypes = {
   }).isRequired
 };
 
+const componentRegistry = {
+  'serviceman-booking-management': ServicemanBookingManagementWorkspace
+};
+
 const ComponentSection = ({ section }) => {
-  const Component = section.Component ?? section.component ?? null;
+  const Component =
+    section.Component ??
+    section.component ??
+    (section.componentKey ? componentRegistry[section.componentKey] ?? null : null);
   return (
     <div className="space-y-4">
       <SectionHeader section={section} />
@@ -1615,7 +1635,6 @@ ZonePlannerSection.propTypes = {
 };
 
 const DashboardSection = ({ section, features = {}, persona, context = {} }) => {
-const DashboardSection = ({ section, features = {}, persona }) => {
   if (section.type === 'automation' || section.id === 'automation-backlog') {
     return <AutomationBacklogSection section={section} features={features} persona={persona} />;
   }
@@ -1637,18 +1656,22 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <InventorySection section={section} />;
     case 'ads':
       return <FixnadoAdsSection section={section} features={features} persona={persona} />;
+    case 'fixnado-ads':
+      return (
+        <FixnadoAdsProvider network={section.data?.network} initialSnapshot={section.data}>
+          <FixnadoAdsWorkspace section={section} />
+        </FixnadoAdsProvider>
+      );
     case 'component':
       return <ComponentSection section={section} />;
-    case 'settings':
-      return persona === 'user' ? (
-        <CustomerSettingsSection section={section} />
-      ) : (
-        <SettingsSection section={section} />
-      );
+    case 'serviceman-profile-settings':
+      return <ServicemanProfileSettingsSection section={section} />;
     case 'settings': {
+      if (persona === 'user') {
+        return <CustomerSettingsSection section={section} />;
+      }
       const sectionLabel = section?.label?.toLowerCase?.() ?? '';
       const shouldRenderAccountSettings =
-        persona === 'user' ||
         features?.accountSettings === true ||
         features?.accountSettingsBeta === true ||
         sectionLabel.includes('account settings');
@@ -1671,6 +1694,16 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <AccountSupportSection section={section} context={context} />;
     case 'provider-management':
       return <ProviderManagementSection section={section} />;
+    case 'provider-inbox':
+      return (
+        <ProviderInboxModule
+          tenantId={section.data?.tenantId ?? null}
+          initialSnapshot={section.data?.snapshot ?? null}
+          summary={section.data?.summary ?? null}
+          capabilities={section.data?.capabilities ?? null}
+          error={section.data?.error ?? null}
+        />
+      );
     case 'dispute-workspace':
       return <DisputeHealthWorkspace section={section} />;
     case 'provider-settings':
@@ -1686,19 +1719,38 @@ const DashboardSection = ({ section, features = {}, persona }) => {
           prefetchedOverview={section.data?.overview ?? null}
         />
       );
+    case 'serviceman-inbox':
+      return <ServicemanInboxWorkspace section={section} context={context} />;
     case 'service-management':
       return <ServiceManagementSection section={section} />;
+    case 'serviceman-finance':
+      return <ServicemanFinanceWorkspace initialData={section.data ?? {}} />;
     case 'audit-timeline':
       return <AuditTimelineSection section={section} />;
     case 'compliance-controls':
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'byok-management':
+      return <ProviderByokManagementSection section={section} />;
+    case 'serviceman-identity':
+      return <IdentityVerificationSection section={section} />;
+    case 'serviceman-metrics':
+      return <ServicemanMetricsSection section={section} />;
+    case 'serviceman-escrows':
+      return <ServicemanEscrowWorkspace section={section} />;
     case 'component': {
       const Component = section.component;
       if (!Component) return null;
       return <Component {...(section.data ?? {})} />;
     }
+    case 'serviceman-website-preferences':
+      return (
+        <div className="space-y-6">
+          <SectionHeader section={section} />
+          <ServicemanWebsitePreferencesSection data={section.data} />
+        </div>
+      );
     case 'history':
       return <OrderHistoryManager section={section} features={features} persona={persona} />;
     default:
@@ -1710,6 +1762,8 @@ DashboardSection.propTypes = {
   section: PropTypes.shape({
     id: PropTypes.string,
     type: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    description: PropTypes.string,
     access: PropTypes.shape({
       label: PropTypes.string,
       level: PropTypes.string,
