@@ -131,6 +131,35 @@ export async function getWalletSummary(params = {}) {
   return body?.overview ?? null;
 }
 
+export async function deleteWalletPaymentMethod(accountId, methodId) {
+  const response = await fetch(`${API_BASE}/accounts/${accountId}/payment-methods/${methodId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    await handleResponse(response, 'Unable to remove payment method');
+  }
+  return true;
+}
+
+export async function exportWalletTransactions(accountId, params = {}) {
+  const response = await fetch(
+    `${API_BASE}/accounts/${accountId}/transactions/export${toQueryString(params)}`,
+    {
+      credentials: 'include'
+    }
+  );
+  if (!response.ok) {
+    await handleResponse(response, 'Unable to export wallet transactions');
+  }
+
+  const disposition = response.headers.get('content-disposition') || '';
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch ? filenameMatch[1] : `wallet-${accountId}-transactions.csv`;
+  const blob = await response.blob();
+  return { filename, blob };
+}
+
 export default {
   getWalletAccounts,
   createWalletAccount,
@@ -141,5 +170,7 @@ export default {
   getWalletPaymentMethods,
   createWalletPaymentMethod,
   updateWalletPaymentMethod,
+  deleteWalletPaymentMethod,
+  exportWalletTransactions,
   getWalletSummary
 };

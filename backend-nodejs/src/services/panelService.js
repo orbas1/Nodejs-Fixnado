@@ -17,9 +17,19 @@ import {
   RentalAgreement,
   Service,
   ServiceZone,
+  ToolSaleProfile,
+  ToolSaleCoupon,
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getEnterpriseUpgradeByCompany } from './providerUpgradeService.js';
+import { getServicemanPaymentsWorkspace } from './servicemanFinanceService.js';
+import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
+import { getProviderCalendar } from './providerCalendarService.js';
+import {
+  getWalletOverview as getCompanyWalletOverview,
+  listWalletTransactions as listCompanyWalletTransactions
+} from './walletService.js';
 
 const ACTIVE_BOOKING_STATUSES = ['scheduled', 'in_progress', 'awaiting_assignment'];
 const COMPLETED_BOOKING_STATUSES = ['completed'];
@@ -83,7 +93,7 @@ function resolvePlatformCommissionRate() {
   return PLATFORM_COMMISSION_FALLBACK;
 }
 
-async function resolveCompanyForActor({ companyId, actor }) {
+export async function resolveCompanyForActor({ companyId, actor }) {
   if (!actor?.id) {
     throw buildHttpError(403, 'forbidden');
   }
@@ -464,11 +474,45 @@ function identifySupportChannels(company) {
 }
 
 export async function buildProviderDashboard({ companyId: inputCompanyId, actor } = {}) {
-  const { company } = await resolveCompanyForActor({ companyId: inputCompanyId, actor });
+  const { company, actor: resolvedActor } = await resolveCompanyForActor({
+    companyId: inputCompanyId,
+    actor
+  });
   const companyId = company.id;
   const now = DateTime.now();
 
-  const [bookings, inventoryItems, inventoryAlerts, complianceDocs, serviceZones, marketplaceItems, rentals] =
+  const [
+    bookings,
+    inventoryItems,
+    inventoryAlerts,
+    complianceDocs,
+    serviceZones,
+    marketplaceItems,
+    rentals,
+    adsWorkspace
+  ] = await Promise.all([
+    Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
+    InventoryItem.findAll({ where: { companyId }, raw: true }),
+    InventoryAlert.findAll({
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['id', 'name', 'companyId'],
+          required: true,
+          where: { companyId }
+        }
+      ],
+      order: [['triggeredAt', 'DESC']],
+      limit: 10
+    }),
+    ComplianceDocument.findAll({ where: { companyId } }),
+    ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
+    MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
+    RentalAgreement.findAll({ where: { companyId } }),
+    buildProviderCampaignWorkspace({ company, actor })
+  ]);
+    toolSaleProfiles
+  ] =
     await Promise.all([
       Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
       InventoryItem.findAll({ where: { companyId }, raw: true }),
@@ -487,7 +531,15 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       ComplianceDocument.findAll({ where: { companyId } }),
       ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
       MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
-      RentalAgreement.findAll({ where: { companyId } })
+      RentalAgreement.findAll({ where: { companyId } }),
+      ToolSaleProfile.findAll({
+        where: { companyId },
+        include: [
+          { model: ToolSaleCoupon, as: 'coupons' },
+          { model: InventoryItem, as: 'inventoryItem' },
+          { model: MarketplaceItem, as: 'marketplaceItem' }
+        ]
+      })
     ]);
 
   const bookingIds = bookings.map((booking) => booking.id);
@@ -531,6 +583,161 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     serviceZones,
     sentimentScore: reviewAverage / 5
   });
+
+  const enterpriseUpgradeRecord = await getEnterpriseUpgradeByCompany(companyId);
+  const enterpriseUpgrade = enterpriseUpgradeRecord
+    ? {
+        id: enterpriseUpgradeRecord.id,
+        status: enterpriseUpgradeRecord.status,
+        summary: enterpriseUpgradeRecord.summary,
+        requestedAt: enterpriseUpgradeRecord.requestedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.requestedAt)).toISO()
+          : null,
+        targetGoLive: enterpriseUpgradeRecord.targetGoLive
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.targetGoLive)).toISO()
+          : null,
+        seats: enterpriseUpgradeRecord.seats ?? null,
+        contractValue:
+          enterpriseUpgradeRecord.contractValue != null
+            ? Number(enterpriseUpgradeRecord.contractValue)
+            : null,
+        currency: enterpriseUpgradeRecord.currency ?? 'GBP',
+        automationScope: enterpriseUpgradeRecord.automationScope ?? null,
+        enterpriseFeatures: Array.isArray(enterpriseUpgradeRecord.enterpriseFeatures)
+          ? enterpriseUpgradeRecord.enterpriseFeatures
+          : [],
+        onboardingManager: enterpriseUpgradeRecord.onboardingManager ?? null,
+        notes: enterpriseUpgradeRecord.notes ?? null,
+        lastDecisionAt: enterpriseUpgradeRecord.lastDecisionAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.lastDecisionAt)).toISO()
+          : null,
+        createdAt: enterpriseUpgradeRecord.createdAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.createdAt)).toISO()
+          : null,
+        updatedAt: enterpriseUpgradeRecord.updatedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.updatedAt)).toISO()
+          : null,
+        contacts: (enterpriseUpgradeRecord.contacts ?? []).map((contact) => ({
+          id: contact.id,
+          name: contact.name,
+          role: contact.role ?? null,
+          email: contact.email ?? null,
+          phone: contact.phone ?? null,
+          influenceLevel: contact.influenceLevel ?? null,
+          primaryContact: Boolean(contact.primaryContact)
+        })),
+        sites: (enterpriseUpgradeRecord.sites ?? []).map((site) => ({
+          id: site.id,
+          siteName: site.siteName,
+          region: site.region ?? null,
+          headcount: site.headcount ?? null,
+          goLiveDate: site.goLiveDate
+            ? DateTime.fromJSDate(new Date(site.goLiveDate)).toISODate()
+            : null,
+          imageUrl: site.imageUrl ?? null,
+          notes: site.notes ?? null
+        })),
+        checklist: (enterpriseUpgradeRecord.checklist ?? []).map((item) => ({
+          id: item.id,
+          label: item.label,
+          status: item.status,
+          owner: item.owner ?? null,
+          dueDate: item.dueDate
+            ? DateTime.fromJSDate(new Date(item.dueDate)).toISODate()
+            : null,
+          notes: item.notes ?? null,
+          sortOrder: item.sortOrder ?? 0
+        })),
+        documents: (enterpriseUpgradeRecord.documents ?? []).map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type ?? null,
+          url: doc.url,
+          thumbnailUrl: doc.thumbnailUrl ?? null,
+          description: doc.description ?? null
+        }))
+      }
+    : null;
+  const walletPolicy = {
+    canManage: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
+    canTransact: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
+    canEditMethods: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin'
+  };
+
+  let walletSection = null;
+  try {
+    const walletOverview = await getCompanyWalletOverview({ companyId });
+    if (walletOverview) {
+      let transactions = null;
+      if (walletOverview.account?.id) {
+        try {
+          transactions = await listCompanyWalletTransactions(walletOverview.account.id, { limit: 10 });
+        } catch (transactionError) {
+          transactions = {
+            items: walletOverview.summary?.recentTransactions ?? [],
+            total: walletOverview.summary?.recentTransactions?.length ?? 0,
+            limit: 10,
+            offset: 0,
+            error: transactionError instanceof Error ? transactionError.message : 'Unable to load transactions'
+          };
+        }
+      }
+
+      walletSection = {
+        id: 'provider-dashboard-wallet',
+        data: {
+          account: walletOverview.account ?? null,
+          accountId: walletOverview.account?.id ?? null,
+          summary: walletOverview.summary ?? null,
+          methods: walletOverview.methods ?? [],
+          autopayout: walletOverview.autopayout ?? null,
+          currency: walletOverview.account?.currency || walletOverview.summary?.currency || 'GBP',
+          policy: walletPolicy,
+          company: walletOverview.company ?? { id: companyId, name: company.contactName },
+          user: walletOverview.user ?? null,
+          transactions
+        }
+      };
+    } else {
+      walletSection = {
+        id: 'provider-dashboard-wallet',
+        data: {
+          account: null,
+          accountId: null,
+          summary: null,
+          methods: [],
+          autopayout: null,
+          currency: 'GBP',
+          policy: walletPolicy,
+          company: { id: companyId, name: company.contactName },
+          user: null,
+          transactions: null
+        }
+      };
+    }
+  } catch (walletError) {
+    walletSection = {
+      id: 'provider-dashboard-wallet',
+      data: {
+        account: null,
+        accountId: null,
+        summary: null,
+        methods: [],
+        autopayout: null,
+        currency: 'GBP',
+        policy: walletPolicy,
+        company: { id: companyId, name: company.contactName },
+        user: null,
+        transactions: {
+          items: [],
+          total: 0,
+          limit: 10,
+          offset: 0,
+          error: walletError instanceof Error ? walletError.message : 'Unable to load wallet overview'
+        }
+      }
+    };
+  }
 
   const data = {
     provider: {
@@ -580,6 +787,8 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       })),
       deals: buildDeals(marketplaceItems, now)
     },
+    ads: adsWorkspace,
+    toolSales: buildToolSalesOverview(toolSaleProfiles),
     crews,
     rentals: {
       active: rentals.filter((rental) => ['in_use', 'pickup_scheduled'].includes(rental.status)).length,
@@ -600,8 +809,33 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       }
     },
     trust: trustScore,
-    alerts
+    alerts,
+    enterpriseUpgrade
+    calendar: null
+    wallet: walletSection
   };
+
+  try {
+    const servicemanFinance = await getServicemanPaymentsWorkspace({
+      companyId,
+      actor,
+      limit: 10,
+      offset: 0
+    });
+    data.servicemanFinance = servicemanFinance;
+  } catch (error) {
+    console.warn('[panel] Unable to load serviceman finance workspace', {
+      companyId,
+      message: error?.message || error
+    });
+    const calendarSnapshot = await getProviderCalendar({ companyId });
+    data.calendar = {
+      ...calendarSnapshot.data,
+      meta: calendarSnapshot.meta
+    };
+  } catch (error) {
+    console.warn('[panel] Failed to load provider calendar snapshot for dashboard', error);
+  }
 
   const meta = {
     companyId,
@@ -736,6 +970,89 @@ function buildMaterialsAndTools(inventoryItems = [], slug) {
     materials: materials.slice(0, 6),
     tools: tools.slice(0, 6)
   };
+}
+
+function formatToolSaleCoupon(coupon) {
+  if (!coupon) {
+    return null;
+  }
+  const entry = typeof coupon.toJSON === 'function' ? coupon.toJSON() : coupon;
+  return {
+    id: entry.id,
+    name: entry.name,
+    code: entry.code,
+    status: entry.status,
+    discountType: entry.discountType,
+    discountValue: entry.discountValue != null ? Number(entry.discountValue) : null,
+    currency: entry.currency,
+    autoApply: Boolean(entry.autoApply),
+    startsAt: entry.startsAt ? DateTime.fromJSDate(entry.startsAt).toISODate() : null,
+    expiresAt: entry.expiresAt ? DateTime.fromJSDate(entry.expiresAt).toISODate() : null
+  };
+}
+
+function formatToolSaleProfileForDashboard(profile) {
+  const json = typeof profile.toJSON === 'function' ? profile.toJSON() : profile;
+  const inventory = json.inventoryItem || {};
+  const listing = json.marketplaceItem || {};
+  const coupons = Array.isArray(json.coupons) ? json.coupons.map(formatToolSaleCoupon).filter(Boolean) : [];
+  const quantityOnHand = Number.parseInt(inventory.quantityOnHand ?? 0, 10) || 0;
+  const quantityReserved = Number.parseInt(inventory.quantityReserved ?? 0, 10) || 0;
+  const quantityAvailable = Math.max(quantityOnHand - quantityReserved, 0);
+
+  return {
+    id: json.id,
+    name: listing.title || inventory.name || json.tagline || 'Tool listing',
+    tagline: json.tagline || '',
+    description: json.longDescription || json.shortDescription || listing.description || '',
+    heroImageUrl: json.heroImageUrl || null,
+    showcaseVideoUrl: json.showcaseVideoUrl || null,
+    galleryImages: Array.isArray(json.galleryImages) ? json.galleryImages.slice(0, 6) : [],
+    tags: Array.isArray(json.tags) ? json.tags : [],
+    keywordTags: Array.isArray(json.keywordTags) ? json.keywordTags : [],
+    listing: json.marketplaceItemId
+      ? {
+          id: json.marketplaceItemId,
+          status: listing.status || 'draft',
+          availability: listing.availability || 'buy',
+          pricePerDay: listing.pricePerDay != null ? Number(listing.pricePerDay) : null,
+          purchasePrice: listing.purchasePrice != null ? Number(listing.purchasePrice) : null,
+          location: listing.location || 'UK-wide',
+          insuredOnly: Boolean(listing.insuredOnly)
+        }
+      : null,
+    inventory: json.inventoryItemId
+      ? {
+          id: json.inventoryItemId,
+          quantityOnHand,
+          quantityReserved,
+          safetyStock: Number.parseInt(inventory.safetyStock ?? 0, 10) || 0,
+          conditionRating: inventory.conditionRating || 'good'
+        }
+      : null,
+    coupons,
+    metrics: {
+      quantityAvailable,
+      activeCoupons: coupons.filter((coupon) => coupon?.status === 'active').length
+    }
+  };
+}
+
+function buildToolSalesOverview(toolSaleProfiles = []) {
+  const listings = toolSaleProfiles.map(formatToolSaleProfileForDashboard);
+  const summary = {
+    totalListings: listings.length,
+    draft: listings.filter((item) => item.listing?.status === 'draft').length,
+    published: listings.filter((item) => item.listing?.status === 'approved').length,
+    suspended: listings.filter((item) => item.listing?.status === 'suspended').length,
+    totalQuantity: listings.reduce((sum, item) => sum + (item.inventory?.quantityOnHand ?? 0), 0),
+    activeCoupons: listings.reduce(
+      (sum, item) => sum + item.coupons.filter((coupon) => coupon?.status === 'active').length,
+      0
+    )
+  };
+
+  return { summary, listings };
 }
 
 function buildServiceZonesOverview(serviceZones = []) {

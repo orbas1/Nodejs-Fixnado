@@ -1734,73 +1734,72 @@ const mockDashboards = {
     name: 'Crew Performance Cockpit',
     headline: 'Stay ahead of assignments, travel buffers, availability, and compliance.',
     window: createWindow(),
-      metadata: {
-        crewMember: {
-          id: 'SRV-2210',
-          name: 'Jordan Miles',
-          role: 'Lead field technician',
-          region: 'Metro North'
-        },
-        crewLead: {
-          id: 'SRV-2210',
-          name: 'Jordan Miles',
-          role: 'Lead technician',
-          assignments: 28,
-          completed: 21,
-          active: 7
-        },
-        crew: [
-          { id: 'SRV-2210', name: 'Jordan Miles', role: 'Lead technician', assignments: 28, completed: 21, active: 7 },
-          { id: 'SRV-1984', name: 'Eden Clarke', role: 'Field technician', assignments: 19, completed: 14, active: 5 },
-          { id: 'SRV-1776', name: 'Kai Edwards', role: 'Field technician', assignments: 17, completed: 12, active: 5 },
-          { id: 'SRV-1630', name: 'Morgan Shaw', role: 'Field technician', assignments: 15, completed: 10, active: 5 }
-        ],
-        region: 'Metro North',
-        velocity: {
-          travelMinutes: 26,
-          previousTravelMinutes: 29,
-          weekly: [
-            { label: 'Week 1', accepted: 7, autoMatches: 3 },
-            { label: 'Week 2', accepted: 6, autoMatches: 2 },
-            { label: 'Week 3', accepted: 8, autoMatches: 4 },
-            { label: 'Week 4', accepted: 7, autoMatches: 3 }
-          ]
-        },
-        totals: {
-          completed: 21,
-          inProgress: 5,
-          scheduled: 7,
-          revenue: 18450,
-          autoMatched: 9,
-          adsSourced: 4
-        },
-        features: {
-          ads: {
-            available: true,
-            level: 'view',
-            label: 'Crew Ads Insights',
-            features: ['campaigns', 'guardrails']
-          }
+    metadata: {
+      providerId: 'SRV-2210',
+      region: 'Metro North',
+      crewLead: { id: 'SRV-2210', name: 'Jordan Miles', role: 'Lead technician', assignments: 28, completed: 21, active: 7 },
+      crew: [
+        { id: 'SRV-2210', name: 'Jordan Miles', role: 'Lead technician', assignments: 28, completed: 21, active: 7 },
+        { id: 'SRV-1984', name: 'Eden Clarke', role: 'Field technician', assignments: 19, completed: 14, active: 5 },
+        { id: 'SRV-1776', name: 'Kai Edwards', role: 'Field technician', assignments: 17, completed: 12, active: 5 }
+      ],
+      velocity: {
+        travelMinutes: 26,
+        previousTravelMinutes: 29,
+        weekly: [
+          { label: 'Week 1', accepted: 7, autoMatches: 3 },
+          { label: 'Week 2', accepted: 6, autoMatches: 2 },
+          { label: 'Week 3', accepted: 8, autoMatches: 4 },
+          { label: 'Week 4', accepted: 7, autoMatches: 3 }
+        ]
+      },
+      totals: {
+        completed: 21,
+        inProgress: 5,
+        scheduled: 7,
+        revenue: 18450,
+        autoMatched: 9,
+        adsSourced: 4
+      },
+      features: {
+        ads: {
+          available: true,
+          level: 'manage',
+          label: 'Crew Ads Insights',
+          features: ['campaigns', 'guardrails', 'budgeting']
         }
       },
+      communications: {
+        tenantId: 'fixnado-demo',
+        participant: {
+          participantId: 'PART-2210',
+          participantReferenceId: 'SRV-2210',
+          participantType: 'serviceman',
+          displayName: 'Jordan Miles',
+          role: 'serviceman',
+          timezone: 'Europe/London'
+        },
+        summary: { activeThreads: 6, awaitingResponse: 2, entryPoints: 4, quickReplies: 9, escalationRules: 3 }
+      }
+    },
     navigation: [
       {
         id: 'overview',
         icon: 'profile',
-        label: 'Profile Overview',
-        description: 'Assignments, travel, and quality trends for Jordan’s crew.',
+        label: 'Control Centre Overview',
+        description: 'Launchpad for assignments, availability, and asset controls.',
         type: 'overview',
         analytics: {
           metrics: [
             { label: 'Active assignments', value: '12', change: '+2 vs prior window', trend: 'up' },
             { label: 'On-time arrivals', value: '92%', change: '+4 pts vs target', trend: 'up' },
             { label: 'Completion quality', value: '4.8★', change: '+0.2 vs prior window', trend: 'up' },
-            { label: 'Travel time', value: '26m', change: '-3m avg travel', trend: 'down' }
+            { label: 'Travel buffer', value: '26m', change: '-3m vs prior window', trend: 'down' }
           ],
           charts: [
             {
               id: 'jobs-completed',
-              title: 'Jobs Completed per Day',
+              title: 'Jobs completed per day',
               description: 'Dispatch throughput for the crew.',
               type: 'line',
               dataKey: 'jobs',
@@ -1814,8 +1813,8 @@ const mockDashboards = {
             },
             {
               id: 'travel-time',
-              title: 'Travel vs On-Site Time',
-              description: 'Minutes spent commuting compared to time on job.',
+              title: 'Travel vs on-site time',
+              description: 'Minutes commuting compared to time on job.',
               type: 'area',
               dataKey: 'travel',
               secondaryKey: 'onSite',
@@ -1825,32 +1824,17 @@ const mockDashboards = {
                 { name: 'Week 3', travel: 120, onSite: 480 },
                 { name: 'Week 4', travel: 118, onSite: 510 }
               ]
-            },
-            {
-              id: 'qa-scores',
-              title: 'QA Inspection Scores',
-              description: 'Latest field quality audits by property type.',
-              type: 'bar',
-              dataKey: 'score',
-              data: [
-                { name: 'Healthcare', score: 4.9 },
-                { name: 'Hospitality', score: 4.6 },
-                { name: 'Retail', score: 4.5 },
-                { name: 'Public sector', score: 4.7 }
-              ]
             }
           ],
           upcoming: [
-            { title: 'High-rise elevator reset', when: '18 Mar · 08:30', status: 'Dispatch from depot' },
-            { title: 'Hospital sterilisation', when: '18 Mar · 13:15', status: 'Crew brief 1h prior' },
-            { title: 'University access control', when: '19 Mar · 09:00', status: 'Prep QA checklist' },
-            { title: 'Weekly debrief', when: '19 Mar · 17:30', status: 'Ops manager sync' }
+            { title: 'Thermal imaging survey', when: '18 Mar · 08:30', status: 'Confirmed' },
+            { title: 'Retail lighting retrofit', when: '20 Mar · 09:15', status: 'Prep call 19 Mar' },
+            { title: 'Emergency HVAC standby', when: '23 Mar · All day', status: 'Standby pod' }
           ],
           insights: [
-            'Combine two downtown tickets to reclaim 18 minutes of travel.',
-            'Schedule calibration kit swap before Friday to avoid delays.',
-            'Average CSAT improved 0.2 points after new completion checklist.',
-            'Confirm spare PPE stock before next hospital rotation.'
+            'Bundle metro visits to keep travel buffers under 30 minutes.',
+            'Two repeat clients renewed after sub-24 hour response times.',
+            'Escalation guardrails triggered once this window – review quick replies.'
           ]
         }
       },
@@ -1862,6 +1846,7 @@ const mockDashboards = {
         type: 'calendar',
         data: {
           month: 'March 2025',
+          timezone: 'Europe/London',
           legend: [
             { label: 'Confirmed job', status: 'confirmed' },
             { label: 'Travel / logistics', status: 'travel' },
@@ -1870,49 +1855,22 @@ const mockDashboards = {
           ],
           weeks: [
             [
-              { date: '24', isCurrentMonth: false, events: [] },
-              { date: '25', isCurrentMonth: false, events: [] },
-              { date: '26', isCurrentMonth: false, events: [] },
-              { date: '27', isCurrentMonth: false, events: [] },
-              { date: '28', isCurrentMonth: false, events: [] },
               { date: '1', isCurrentMonth: true, events: [{ title: 'Depot inventory', status: 'travel', time: '07:00' }] },
-              { date: '2', isCurrentMonth: true, events: [] }
-            ],
-            [
+              { date: '2', isCurrentMonth: true, events: [] },
               { date: '3', isCurrentMonth: true, events: [{ title: 'Thermal imaging survey', status: 'confirmed', time: '08:30' }] },
               { date: '4', isCurrentMonth: true, events: [{ title: 'Retail lighting retrofit', status: 'confirmed', time: '09:15' }] },
               { date: '5', isCurrentMonth: true, events: [{ title: 'Escalation check-in', status: 'risk', time: '16:00' }] },
               { date: '6', isCurrentMonth: true, events: [{ title: 'Crew learning block', status: 'standby', time: '13:00' }] },
-              { date: '7', isCurrentMonth: true, events: [] },
-              { date: '8', isCurrentMonth: true, events: [{ title: 'Emergency HVAC', status: 'confirmed', time: '07:30' }] },
-              { date: '9', isCurrentMonth: true, events: [] }
+              { date: '7', isCurrentMonth: true, events: [] }
             ],
             [
+              { date: '8', isCurrentMonth: true, events: [{ title: 'Emergency HVAC', status: 'confirmed', time: '07:30' }] },
+              { date: '9', isCurrentMonth: true, events: [] },
               { date: '10', isCurrentMonth: true, events: [{ title: 'Depot restock', status: 'travel', time: '08:00' }] },
               { date: '11', isCurrentMonth: true, events: [{ title: 'Commercial deep clean', status: 'confirmed', time: '10:00' }] },
               { date: '12', isCurrentMonth: true, events: [{ title: 'Hospital sterilisation', status: 'confirmed', time: '13:15' }] },
               { date: '13', isCurrentMonth: true, events: [{ title: 'Escrow audit support', status: 'standby', time: 'All day' }] },
-              { date: '14', isCurrentMonth: true, events: [] },
-              { date: '15', isCurrentMonth: true, events: [{ title: 'Permit pickup', status: 'travel', time: '11:30' }] },
-              { date: '16', isCurrentMonth: true, events: [] }
-            ],
-            [
-              { date: '17', isCurrentMonth: true, events: [{ title: 'Escrow release audit', status: 'standby', time: '09:00' }] },
-              { date: '18', isCurrentMonth: true, events: [{ title: 'High-rise elevator reset', status: 'confirmed', time: '08:30' }] },
-              { date: '19', isCurrentMonth: true, isToday: true, events: [{ title: 'University access control', status: 'confirmed', time: '09:00' }] },
-              { date: '20', isCurrentMonth: true, events: [{ title: 'Field coaching', status: 'standby', time: '14:00' }] },
-              { date: '21', isCurrentMonth: true, events: [{ title: 'Fleet vehicle inspection', status: 'travel', time: '10:00' }] },
-              { date: '22', isCurrentMonth: true, events: [{ title: 'Crew rest day', status: 'standby', time: 'All day' }] },
-              { date: '23', isCurrentMonth: true, events: [] }
-            ],
-            [
-              { date: '24', isCurrentMonth: true, events: [{ title: 'Access control rollout', status: 'confirmed', time: '08:45' }] },
-              { date: '25', isCurrentMonth: true, events: [{ title: 'Retail chain audit', status: 'confirmed', time: '12:30' }] },
-              { date: '26', isCurrentMonth: true, events: [{ title: 'Hospital QA review', status: 'risk', time: '16:30' }] },
-              { date: '27', isCurrentMonth: true, events: [{ title: 'Quarterly board prep', status: 'standby', time: 'All day' }] },
-              { date: '28', isCurrentMonth: true, events: [{ title: 'Tooling calibration', status: 'travel', time: '08:00' }] },
-              { date: '29', isCurrentMonth: true, events: [] },
-              { date: '30', isCurrentMonth: true, events: [] }
+              { date: '14', isCurrentMonth: true, events: [] }
             ]
           ]
         }
@@ -1949,18 +1907,6 @@ const mockDashboards = {
                 { day: 'Wed 19', status: 'Booked', window: '09:00-15:00' },
                 { day: 'Thu 20', status: 'Booked', window: '09:00-17:00' },
                 { day: 'Fri 21', status: 'OOO', window: 'Training' }
-              ]
-            },
-            {
-              name: 'Specialist Pool',
-              role: 'HVAC escalation',
-              status: 'Second line',
-              allocations: [
-                { day: 'Mon 17', status: 'Standby', window: 'All day' },
-                { day: 'Tue 18', status: 'Standby', window: 'All day' },
-                { day: 'Wed 19', status: 'Travel', window: '10:00-12:00' },
-                { day: 'Thu 20', status: 'Booked', window: '12:00-20:00' },
-                { day: 'Fri 21', status: 'Booked', window: '07:00-15:00' }
               ]
             }
           ]
@@ -2006,19 +1952,136 @@ const mockDashboards = {
         }
       },
       {
-        id: 'toolkit',
-        icon: 'assets',
-        label: 'Asset Kit',
-        description: 'Track issued equipment, calibration, and readiness.',
-        type: 'table',
+        id: 'booking-management',
+        icon: 'pipeline',
+        label: 'Booking Management',
+        description: 'Manage jobs, notes, and crew preferences without leaving the cockpit.',
+        type: 'component',
+        componentKey: 'serviceman-booking-management',
+        props: {
+          initialWorkspace: {
+            servicemanId: 'SRV-2210',
+            timezone: 'Europe/London',
+            summary: {
+              totalAssignments: 28,
+              scheduledAssignments: 7,
+              activeAssignments: 5,
+              awaitingResponse: 3,
+              completedThisMonth: 21,
+              slaAtRisk: 1,
+              revenueEarned: 18450,
+              averageTravelMinutes: 26,
+              currency: 'GBP'
+            }
+          }
+        }
+      },
+      {
+        id: 'inbox',
+        icon: 'support',
+        label: 'Crew Inbox',
+        description: 'Coordinate live chat, quick replies, and escalation guardrails.',
+        type: 'serviceman-inbox',
         data: {
-          headers: ['Asset', 'Status', 'Calibration', 'Next action'],
-          rows: [
-            ['Thermal imaging camera', 'In field', 'Valid · due 28 Apr', 'Return to depot 22 Mar'],
-            ['Respirator set', 'Ready', 'Valid · due 12 Jun', 'Fit test with apprentices'],
-            ['PPE kit – medical', 'In delivery', 'Valid · due 03 Jul', 'Restock after hospital job'],
-            ['MEWP harness', 'Inspection due', 'Expired 10 Mar', 'Book inspection slot']
+          defaultParticipantId: 'PART-2210',
+          currentParticipant: {
+            participantId: 'PART-2210',
+            participantReferenceId: 'SRV-2210',
+            participantType: 'serviceman',
+            displayName: 'Jordan Miles',
+            role: 'serviceman',
+            timezone: 'Europe/London'
+          },
+          tenantId: 'fixnado-demo',
+          summary: { activeThreads: 6, awaitingResponse: 2, entryPoints: 4, quickReplies: 9, escalationRules: 3 }
+        }
+      },
+      {
+        id: 'service-catalogue',
+        icon: 'pipeline',
+        label: 'Service Catalogue',
+        description: 'Performance of services offered to Fixnado clients.',
+        type: 'grid',
+        data: {
+          cards: [
+            {
+              title: 'Emergency HVAC',
+              details: ['8 completed • 3 active', 'Avg value £850', '3 auto-matched wins', 'Top source: Fixnado Ads'],
+              accent: 'from-sky-50 via-white to-indigo-100'
+            },
+            {
+              title: 'Hospital sanitisation',
+              details: ['6 completed • 2 active', 'Avg value £1.1k', '1 auto-matched win', 'Top source: Marketplace'],
+              accent: 'from-emerald-50 via-white to-emerald-100'
+            },
+            {
+              title: 'Access control resets',
+              details: ['4 completed • 1 active', 'Avg value £620', '2 auto-matched wins', 'Top source: Partner referral'],
+              accent: 'from-amber-50 via-white to-amber-100'
+            }
           ]
+        }
+      },
+      {
+        id: 'automation',
+        icon: 'automation',
+        label: 'Automation & Growth',
+        description: 'Auto-match, routing, and acquisition insights.',
+        type: 'list',
+        data: {
+          items: [
+            {
+              title: 'Auto-match performance',
+              description: '32% of jobs auto-routed to your crew this window.',
+              status: 'On track'
+            },
+            {
+              title: 'Fixnado Ads impact',
+              description: '4 jobs sourced via Fixnado Ads in the current window.',
+              status: 'Active campaigns'
+            },
+            {
+              title: 'Travel buffer health',
+              description: 'Average buffer 26 mins across 28 jobs.',
+              status: 'Efficient routing'
+            }
+          ]
+        }
+      },
+      {
+        id: 'financial-management',
+        icon: 'finance',
+        label: 'Financial management',
+        description: 'Track payouts, reimbursements, and allowances in real time.',
+        type: 'serviceman-finance',
+        data: {
+          context: { servicemanId: 'SRV-2210' },
+          summary: {
+            earnings: { total: 18450, outstanding: 2450, payable: 8200, paid: 7800 },
+            expenses: { total: 1250, reimbursed: 930 }
+          },
+          permissions: { canManagePayments: true, canSubmitExpenses: true, canManageAllowances: true },
+          earnings: {
+            items: [
+              { id: 'earn-001', label: 'Hospital sanitisation', amount: 2100, status: 'paid', updatedAt: '2025-03-12T09:45:00Z' },
+              { id: 'earn-002', label: 'Emergency HVAC', amount: 1450, status: 'payable', updatedAt: '2025-03-16T11:30:00Z' },
+              { id: 'earn-003', label: 'Retail lighting retrofit', amount: 980, status: 'pending', updatedAt: '2025-03-18T15:00:00Z' }
+            ],
+            meta: { total: 3 }
+          },
+          expenses: {
+            items: [
+              { id: 'exp-001', label: 'PPE restock', amount: 180, status: 'reimbursed', updatedAt: '2025-03-10T08:15:00Z' },
+              { id: 'exp-002', label: 'Tool calibration', amount: 220, status: 'pending', updatedAt: '2025-03-17T10:10:00Z' }
+            ],
+            meta: { total: 2 }
+          },
+          allowances: {
+            items: [
+              { id: 'allow-001', label: 'Metro travel stipend', amount: 120, period: 'weekly', status: 'active' },
+              { id: 'allow-002', label: 'Night response bonus', amount: 80, period: 'per assignment', status: 'active' }
+            ]
+          }
         }
       },
       {
@@ -2045,6 +2108,280 @@ const mockDashboards = {
               status: 'Action required'
             }
           ]
+        }
+      },
+      {
+        id: 'id-verification',
+        icon: 'compliance',
+        label: 'ID Verification',
+        description: 'Identity records, document governance, and reviewer notes.',
+        type: 'serviceman-identity',
+        data: {
+          verification: {
+            servicemanId: 'SRV-2210',
+            status: 'in_review',
+            riskRating: 'medium',
+            verificationLevel: 'enhanced',
+            requestedAt: '2025-02-10T09:12:00Z',
+            submittedAt: '2025-02-11T16:45:00Z',
+            approvedAt: null,
+            expiresAt: '2026-02-10T00:00:00Z',
+            reviewer: {
+              id: 'USR-8890',
+              name: 'Clara Benton',
+              email: 'clara.benton@fixnado.example'
+            },
+            notes: 'Awaiting utility clearance confirmation before final approval.'
+          },
+          documents: [
+            {
+              id: 'doc-passport',
+              documentType: 'passport',
+              status: 'approved',
+              documentNumber: '502993741',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2021-04-14',
+              expiresAt: '2031-04-13',
+              fileUrl: 'https://cdn.fixnado.example/documents/passport-jordan-miles.pdf',
+              notes: 'Verified against original by compliance on 12 Feb 2025.'
+            },
+            {
+              id: 'doc-driving-licence',
+              documentType: 'driving_license',
+              status: 'in_review',
+              documentNumber: 'MILEJ8021985A99',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2022-08-01',
+              expiresAt: '2032-07-31',
+              fileUrl: 'https://cdn.fixnado.example/documents/licence-jordan-miles.pdf',
+              notes: 'DVLA status refresh scheduled for 18 Feb 2025.'
+            },
+            {
+              id: 'doc-work-permit',
+              documentType: 'work_permit',
+              status: 'pending',
+              documentNumber: 'UK-WP-77421',
+              issuingCountry: 'United Kingdom',
+              issuedAt: null,
+              expiresAt: null,
+              fileUrl: '',
+              notes: 'Awaiting upload from crew coordinator.'
+            }
+          ],
+          checks: [
+            {
+              id: 'check-reference',
+              label: 'Professional reference validation',
+              owner: 'Operations Pod Beta',
+              status: 'in_progress',
+              dueAt: '2025-02-18',
+              completedAt: null
+            },
+            {
+              id: 'check-criminal',
+              label: 'Enhanced background screening',
+              owner: 'Compliance',
+              status: 'completed',
+              dueAt: '2025-02-12',
+              completedAt: '2025-02-12'
+            },
+            {
+              id: 'check-mvr',
+              label: 'Motor vehicle record pull',
+              owner: 'Fleet Safety',
+              status: 'not_started',
+              dueAt: '2025-02-20',
+              completedAt: null
+            }
+          ],
+          watchers: [
+            {
+              id: 'watcher-clara',
+              role: 'compliance_lead',
+              user: {
+                id: 'USR-8890',
+                name: 'Clara Benton',
+                email: 'clara.benton@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-samir',
+              role: 'operations_lead',
+              user: {
+                id: 'USR-7721',
+                name: 'Samir Patel',
+                email: 'samir.patel@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-lina',
+              role: 'safety_officer',
+              user: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez',
+                email: 'lina.alvarez@fixnado.example'
+              }
+            }
+          ],
+          events: [
+            {
+              id: 'event-1',
+              summary: 'Reviewer assigned to enhanced check',
+              eventType: 'assignment',
+              occurredAt: '2025-02-10T10:05:00Z',
+              actor: {
+                id: 'USR-7721',
+                name: 'Samir Patel'
+              }
+            },
+            {
+              id: 'event-2',
+              summary: 'Submitted passport document',
+              eventType: 'document_update',
+              occurredAt: '2025-02-11T16:40:00Z',
+              actor: {
+                id: 'SRV-2210',
+                name: 'Jordan Miles'
+              }
+            },
+            {
+              id: 'event-3',
+              summary: 'Background screening cleared',
+              eventType: 'compliance_check',
+              occurredAt: '2025-02-12T09:30:00Z',
+              actor: {
+                id: 'USR-8890',
+                name: 'Clara Benton'
+              }
+            },
+            {
+              id: 'event-4',
+              summary: 'Requested updated vehicle documents',
+              eventType: 'note',
+              occurredAt: '2025-02-13T14:15:00Z',
+              actor: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez'
+              }
+            }
+          ],
+          referenceData: {
+            statuses: ['pending', 'in_review', 'approved', 'rejected', 'suspended'],
+            riskRatings: ['low', 'medium', 'high', 'critical'],
+            verificationLevels: ['standard', 'enhanced', 'expedited'],
+            documentTypes: ['passport', 'driving_license', 'id_card', 'work_permit', 'insurance_certificate'],
+            documentStatuses: ['pending', 'in_review', 'approved', 'rejected', 'expired'],
+            checkStatuses: ['not_started', 'in_progress', 'completed', 'blocked'],
+            watcherRoles: ['operations_lead', 'compliance_lead', 'safety_officer', 'account_manager'],
+            eventTypes: ['note', 'document_update', 'assignment', 'compliance_check', 'system_alert']
+          }
+        }
+        id: 'website-preferences',
+        icon: 'builder',
+        label: 'Website Preferences',
+        description: 'Control microsite branding, booking intake, and publishing readiness.',
+        type: 'serviceman-website-preferences',
+        data: {
+          initialPreferences: {
+            profile: {
+              headline: 'Metro North rapid response crew',
+              description: 'Fixnado certified technicians specialising in emergency HVAC and compliance resets.',
+              heroImageUrl: 'https://cdn.fixnado.com/images/crews/metro-north-hero.jpg',
+              logoUrl: 'https://cdn.fixnado.com/images/logos/metro-north.svg'
+            },
+            contact: {
+              contactEmail: 'crew@fixnado.com',
+              contactPhone: '+44 20 7123 4567',
+              bookingUrl: 'https://app.fixnado.com/bookings'
+            },
+            gallery: [
+              { id: 'gallery-1', url: 'https://cdn.fixnado.com/images/crews/gallery-1.jpg' },
+              { id: 'gallery-2', url: 'https://cdn.fixnado.com/images/crews/gallery-2.jpg' }
+            ],
+            seo: {
+              title: 'Metro North Fixnado crew',
+              description: 'Rapid response Fixnado technicians for hospitals, universities, and high-density sites.',
+              keywords: ['fixnado crew', 'metro north technicians'],
+              indexable: true
+            }
+          },
+          meta: { updatedAt: '2025-03-15T12:00:00Z', updatedBy: 'SRV-2210' }
+        }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile Settings',
+        description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
+        type: 'serviceman-profile-settings',
+        data: {
+          helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
+        }
+      },
+      {
+        id: 'serviceman-disputes',
+        icon: 'compliance',
+        label: 'Dispute Management',
+        description: 'Open and track dispute cases, assignments, and supporting evidence.',
+        type: 'component'
+      },
+      {
+        id: 'fixnado-ads',
+        icon: 'analytics',
+        label: 'Fixnado Ads',
+        description: 'Spin up rapid response placements and manage Fixnado campaigns.',
+        type: 'fixnado-ads',
+        data: {
+          network: 'fixnado',
+          summary: { window: 'Last 30 days', spend: 2450, conversions: 18, creatives: 6, fraudAlerts: 1 },
+          campaignsMeta: { count: 2 },
+          campaigns: [
+            {
+              id: 'camp-rapid-response',
+              name: 'Rapid response metro',
+              status: 'active',
+              budget: 3000,
+              spend: 1850,
+              impressions: 48000,
+              clicks: 2300,
+              conversions: 14,
+              createdAt: '2025-02-10T09:00:00Z',
+              updatedAt: '2025-03-18T08:30:00Z'
+            },
+            {
+              id: 'camp-sterilisation',
+              name: 'Hospital sterilisation blitz',
+              status: 'paused',
+              budget: 1800,
+              spend: 600,
+              impressions: 16000,
+              clicks: 640,
+              conversions: 4,
+              createdAt: '2025-02-28T11:00:00Z',
+              updatedAt: '2025-03-15T15:10:00Z'
+            }
+          ],
+          creatives: [
+            { id: 'creative-1', name: 'Metro rapid crew', type: 'image', status: 'approved' },
+            { id: 'creative-2', name: 'Sterilisation hero', type: 'video', status: 'under_review' }
+          ],
+          targetingRules: [
+            { id: 'target-region', type: 'region', value: 'Greater London' },
+            { id: 'target-industry', type: 'industry', value: 'Healthcare' }
+          ],
+          metrics: [
+            { id: 'metric-1', campaignId: 'camp-rapid-response', date: '2025-03-17', impressions: 3200, clicks: 140, conversions: 5, spend: 110 },
+            { id: 'metric-2', campaignId: 'camp-rapid-response', date: '2025-03-18', impressions: 3400, clicks: 150, conversions: 4, spend: 115 }
+          ],
+          fraudSignals: [
+            { id: 'fraud-1', campaignId: 'camp-rapid-response', severity: 'medium', message: 'Spike in proxy clicks detected.' }
+          ],
+          flights: [
+            { id: 'flight-1', campaignId: 'camp-rapid-response', startDate: '2025-03-01', endDate: '2025-03-31', budget: 1800 },
+            { id: 'flight-2', campaignId: 'camp-sterilisation', startDate: '2025-03-05', endDate: '2025-03-25', budget: 900 }
+          ],
+          filters: { status: 'all', search: '' },
+          activeCampaignId: 'camp-rapid-response'
         }
       }
     ]
@@ -2317,6 +2654,17 @@ const mockDashboards = {
         }
       },
       {
+        id: 'escrow-management',
+        icon: 'finance',
+        label: 'Escrow management',
+        description: 'Escrow funding status, approvals, and release readiness.',
+        type: 'component',
+        meta: {
+          api: 'provider-escrows',
+          providerId: 'PRV-1108'
+        }
+      },
+      {
         id: 'inventory',
         icon: 'assets',
         label: 'Tools & Materials',
@@ -2427,7 +2775,143 @@ const mockDashboards = {
         }
       },
       {
+        id: 'full-inbox',
+        icon: 'support',
+        label: 'Full inbox',
+        description: 'Configure routing, quick replies, and escalation guardrails.',
+        type: 'provider-inbox',
+        data: {
+          tenantId: 'provider-demo',
+          summary: {
+            entryPoints: 3,
+            quickReplies: 5,
+            escalationRules: 2,
+            liveRoutingEnabled: true,
+            timezone: 'Europe/London',
+            updatedAt: '2024-01-15T10:00:00.000Z'
+          },
+          capabilities: { allowManage: true },
+          snapshot: {
+            configuration: {
+              liveRoutingEnabled: true,
+              defaultGreeting: 'Welcome to Fixnado support – let us know how we can help.',
+              aiAssistDisplayName: 'Fixnado Assist',
+              aiAssistDescription: 'Drafts replies, triages intent, and surfaces account context.',
+              timezone: 'Europe/London',
+              quietHoursStart: '20:00',
+              quietHoursEnd: '06:00',
+              updatedAt: '2024-01-15T10:00:00.000Z'
+            },
+            entryPoints: [
+              {
+                id: 'ep-web',
+                key: 'web_widget',
+                label: 'Web widget',
+                description: 'Appears on provider storefronts and pricing pages.',
+                icon: '💬',
+                defaultMessage:
+                  'Need help finalising a quote? Message us and we will respond in under 2 minutes.',
+                enabled: true,
+                displayOrder: 0,
+                imageUrl: '',
+                ctaLabel: 'Open chat',
+                ctaUrl: '/contact'
+              },
+              {
+                id: 'ep-checkout',
+                key: 'checkout',
+                label: 'Checkout reassurance',
+                description: 'Guides customers through SME checkout flows.',
+                icon: '💳',
+                defaultMessage:
+                  'Have a question about billing or deposits? Our concierge will resolve it immediately.',
+                enabled: true,
+                displayOrder: 1,
+                imageUrl: '',
+                ctaLabel: 'Secure booking',
+                ctaUrl: '/checkout'
+              },
+              {
+                id: 'ep-mobile',
+                key: 'mobile_app',
+                label: 'Mobile app inbox',
+                description: 'Native widget for the field app.',
+                icon: '📱',
+                defaultMessage: 'Share on-site photos or handover updates directly with HQ.',
+                enabled: true,
+                displayOrder: 2,
+                imageUrl: '',
+                ctaLabel: 'Open app',
+                ctaUrl: 'fixnado://inbox'
+              }
+            ],
+            quickReplies: [
+              {
+                id: 'qr-ack',
+                title: 'Acknowledgement',
+                body:
+                  'Thanks for contacting Fixnado. A coordinator is reviewing this now and will reply within 10 minutes.',
+                category: 'general',
+                sortOrder: 1,
+                allowedRoles: ['provider_admin', 'provider_manager']
+              },
+              {
+                id: 'qr-sla',
+                title: 'SLA reminder',
+                body:
+                  'Our service crew is on the way and will arrive within the agreed SLA window. We will keep you updated.',
+                category: 'operations',
+                sortOrder: 2,
+                allowedRoles: ['provider_manager', 'crew_lead']
+              },
+              {
+                id: 'qr-escalation',
+                title: 'Escalation notice',
+                body:
+                  'We have escalated this conversation to the operations lead and will respond with an action plan shortly.',
+                category: 'operations',
+                sortOrder: 3,
+                allowedRoles: ['provider_admin']
+              }
+            ],
+            escalationRules: [
+              {
+                id: 'er-keyword',
+                name: 'Safety keywords',
+                description: 'Escalate when safety incidents are reported.',
+                triggerType: 'keyword',
+                triggerMetadata: { keywords: ['injury', 'gas leak', 'fire'] },
+                targetType: 'team',
+                targetReference: 'ops-safety',
+                targetLabel: 'Operations safety desk',
+                allowedRoles: ['provider_admin'],
+                slaMinutes: 5,
+                responseTemplate:
+                  'Thanks for flagging this. The safety team has been alerted and will call you immediately.',
+                active: true
+              },
+              {
+                id: 'er-inactivity',
+                name: 'Inactivity >15m',
+                description: 'Ensure urgent threads are never left unattended.',
+                triggerType: 'inactivity',
+                triggerMetadata: { minutesWithoutReply: 15 },
+                targetType: 'user',
+                targetReference: 'operations.lead@fixnado.com',
+                targetLabel: 'Operations lead',
+                allowedRoles: ['provider_manager', 'provider_admin'],
+                slaMinutes: 15,
+                responseTemplate: 'We are looping in our operations lead to assist and will reply with an update shortly.',
+                active: true
+              }
+            ]
+          }
+        }
+      },
+      {
         id: 'servicemen',
+        icon: 'crew',
+        label: 'Serviceman Directory',
         icon: 'crew',
         label: 'Serviceman Directory',
         description: 'Manage roster, certifications, and contact details.',
@@ -2764,6 +3248,16 @@ const mockDashboards = {
               ]
             }
           ]
+        }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile settings',
+        description: 'Manage identity, branding, support hours, key contacts, and coverage.',
+        type: 'provider-settings',
+        data: {
+          companyId: 'PRV-1108'
         }
       }
     ]

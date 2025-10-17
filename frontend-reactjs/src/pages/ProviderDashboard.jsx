@@ -7,7 +7,9 @@ import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
 import ServicemanManagementSection from '../features/providerServicemen/ServicemanManagementSection.jsx';
+import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
+  CalendarDaysIcon,
   ChartBarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -22,6 +24,14 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
+import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
+import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
+import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
+import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
+import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
+import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
+import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -513,14 +523,23 @@ export default function ProviderDashboard() {
   const metrics = state.data?.metrics;
   const revenue = state.data?.revenue;
   const alerts = state.data?.alerts ?? [];
+  const walletSection = state.data?.wallet ?? null;
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
+  const servicemen = state.data?.servicemen ?? [];
+  const servicemanFinance = state.data?.servicemanFinance ?? null;
+  const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
   const deliveryBoard = serviceManagement.deliveryBoard ?? [];
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
+  const adsWorkspace = state.data?.ads || null;
+  const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
+  const hasAdsWorkspace = Boolean(adsWorkspace);
+  const companyId = state.meta?.companyId || provider?.id || null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -528,6 +547,8 @@ export default function ProviderDashboard() {
     if (metrics.utilisation < 0.55) return 'warning';
     return 'success';
   }, [metrics]);
+
+  const hasCalendarAccess = Boolean(state.meta?.companyId);
 
   const navigation = useMemo(() => {
     const items = [
@@ -541,6 +562,18 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      servicemanFinance
+        ? {
+            id: 'provider-dashboard-serviceman-payments',
+            label: t('providerPayments.headline'),
+            description: t('providerPayments.navDescription')
+      walletSection
+        ? {
+            id: walletSection.id || 'provider-dashboard-wallet',
+            label: t('providerDashboard.walletHeadline'),
+            description: t('providerDashboard.nav.wallet')
+          }
+        : null,
       alerts.length > 0
         ? {
             id: 'provider-dashboard-alerts',
@@ -548,6 +581,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.alerts')
           }
         : null,
+      {
+        id: 'provider-dashboard-tool-rentals',
+        label: 'Tool hire & rentals',
+        description: 'Manage hire catalogue, pricing, and deposits'
+      },
       {
         id: 'provider-dashboard-pipeline',
         label: t('providerDashboard.pipelineHeadline'),
@@ -558,6 +596,13 @@ export default function ProviderDashboard() {
             id: 'provider-dashboard-service-health',
             label: t('providerDashboard.serviceHealthHeadline'),
             description: t('providerDashboard.nav.serviceHealth')
+          }
+        : null,
+      hasCalendarAccess
+        ? {
+            id: 'provider-dashboard-calendar',
+            label: t('providerDashboard.calendarHeadline'),
+            description: t('providerDashboard.nav.calendar')
           }
         : null,
       deliveryBoard.length
@@ -581,6 +626,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCategories')
           }
         : null,
+      {
+        id: 'provider-dashboard-tool-sales',
+        label: t('providerDashboard.toolSalesHeadline'),
+        description: t('providerDashboard.nav.toolSales')
+      },
       serviceCatalogue.length
         ? {
             id: 'provider-dashboard-service-catalogue',
@@ -588,6 +638,18 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      hasAdsWorkspace
+        ? {
+            id: 'provider-dashboard-ads',
+            label: 'Gigvora ads',
+            description: 'Campaigns, creatives, and targeting'
+          }
+        : null,
+      {
+        id: 'provider-dashboard-enterprise-upgrade',
+        label: t('providerDashboard.enterpriseUpgradeHeadline'),
+        description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -596,7 +658,21 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, t]);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
+  }, [
+    alerts.length,
+    deliveryBoard.length,
+    hasAdsWorkspace,
+    hasCalendarAccess,
+    serviceCatalogue.length,
+    serviceCategories.length,
+    serviceHealth.length,
+    servicePackages.length,
+    t
+    t,
+    walletSection?.id,
+    walletSection
+  ]);
 
   const heroBadges = useMemo(
     () => [
@@ -613,6 +689,18 @@ export default function ProviderDashboard() {
   );
 
   const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
+
+  const calendarInitialSnapshot = useMemo(() => {
+    if (state.data?.calendar) {
+      return state.data.calendar;
+    }
+    if (state.meta?.companyId) {
+      return { meta: { companyId: state.meta.companyId } };
+    }
+    return null;
+  }, [state.data?.calendar, state.meta?.companyId]);
+
+  const renderCalendarSection = hasCalendarAccess && (calendarInitialSnapshot || !state.loading);
   const onboardingKey = provider?.onboardingStatus
     ? `providerDashboard.onboardingStatus.${provider.onboardingStatus}`
     : 'providerDashboard.onboardingStatus.active';
@@ -791,6 +879,15 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
+        {servicemanFinance ? (
+          <ServicemanPaymentsSection
+            initialWorkspace={servicemanFinance}
+            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
+        ) : null}
+        {walletSection ? <WalletSection section={walletSection} /> : null}
+
         {alerts.length > 0 ? (
           <section id="provider-dashboard-alerts" aria-labelledby="provider-dashboard-alerts" className="space-y-4">
             <header className="flex items-center gap-3">
@@ -803,6 +900,12 @@ export default function ProviderDashboard() {
               ))}
             </div>
           </section>
+        ) : null}
+
+        {companyId ? (
+          <ToolRentalProvider companyId={companyId}>
+            <ToolRentalWorkspace />
+          </ToolRentalProvider>
         ) : null}
 
         <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
@@ -868,6 +971,23 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
+        {renderCalendarSection ? (
+          <section id="provider-dashboard-calendar" aria-labelledby="provider-dashboard-calendar" className="space-y-4">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <CalendarDaysIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <div>
+                  <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.calendarHeadline')}</h2>
+                  <p className="text-xs text-slate-500">{t('providerDashboard.calendarDescription')}</p>
+                </div>
+              </div>
+            </header>
+            <ProviderCalendarProvider initialSnapshot={calendarInitialSnapshot ?? {}}>
+              <ProviderCalendarWorkspace />
+            </ProviderCalendarProvider>
+          </section>
+        ) : null}
+
         {deliveryBoard.length ? (
           <section id="provider-dashboard-service-delivery" aria-labelledby="provider-dashboard-service-delivery" className="space-y-4">
             <header className="flex items-center gap-3">
@@ -910,6 +1030,10 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
+        <div id="provider-dashboard-tool-sales" className="space-y-6">
+          <ToolSalesManagement initialData={toolSales} />
+        </div>
+
         {serviceCatalogue.length ? (
           <section id="provider-dashboard-service-catalogue" aria-labelledby="provider-dashboard-service-catalogue" className="space-y-4">
             <header className="flex items-center gap-3">
@@ -921,6 +1045,26 @@ export default function ProviderDashboard() {
                 <ServiceCatalogueCard key={service.id} service={service} />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        <EnterpriseUpgradeSection
+          upgrade={enterpriseUpgrade}
+          onRefresh={() => loadDashboard({ forceRefresh: true })}
+        />
+        {hasAdsWorkspace ? (
+          <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 id="provider-dashboard-ads-heading" className="text-lg font-semibold text-primary">
+                  Gigvora ads & campaigns
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Build campaigns, curate creatives, and manage placement strategy without leaving the provider workspace.
+                </p>
+              </div>
+            </header>
+            <ProviderAdsWorkspace companyId={adsCompanyId} initialData={adsWorkspace} />
           </section>
         ) : null}
 

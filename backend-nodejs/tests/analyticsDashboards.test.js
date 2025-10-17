@@ -676,6 +676,10 @@ describe('Persona analytics dashboards', () => {
     const providerOverview = providerNavigation.find((section) => section.id === 'overview');
     expect(providerOverview?.analytics?.metrics?.[0]?.label).toBe('Assignments Received');
 
+    const calendarSection = providerNavigation.find((section) => section.id === 'calendar');
+    expect(calendarSection?.type).toBe('provider-calendar');
+    expect(calendarSection?.data?.settings?.timezone).toBe('Europe/London');
+
     const rentalsTable = providerNavigation.find((section) => section.id === 'rentals');
     expect(rentalsTable?.data?.rows?.[0]?.[0]).toBe('RA-001');
 
