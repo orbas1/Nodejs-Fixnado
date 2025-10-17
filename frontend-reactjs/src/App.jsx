@@ -442,12 +442,19 @@ function App() {
                   <ServicemanProtectedRoute>
                     <ServicemanByokWorkspace />
                   </ServicemanProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboards/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
                     <ProviderStorefrontControl />
                   </ProviderProtectedRoute>
                 }
+              />
+              <Route
+                path="/dashboards/provider/profile"
+                element={<Navigate to="/dashboards/provider?section=profile-settings" replace />}
               />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
