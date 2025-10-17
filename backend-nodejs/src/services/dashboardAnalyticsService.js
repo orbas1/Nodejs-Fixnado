@@ -3086,12 +3086,15 @@ async function loadProviderData(context) {
 
   navigation.push({
     id: 'profile-settings',
-    label: 'Profile settings',
-    description: 'Manage provider identity, branding, support hours, contacts, and coverage.',
+    label: 'Provider profile',
+    description: 'Maintain identity, branding, support availability, escalation contacts, and coverage zones.',
     type: 'provider-settings',
     data: {
       companyId: companyId ?? null
     }
+  });
+
+  navigation.push({
     id: 'byok-management',
     label: 'BYOK Management',
     description: 'Manage provider-owned API keys, rotation guardrails, and validation runs.',

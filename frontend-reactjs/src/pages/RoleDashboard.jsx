@@ -12,7 +12,7 @@ import ServicemanCustomJobsWorkspace from '../features/servicemanCustomJobs/Serv
 
 const RoleDashboard = () => {
   const { roleId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId) || null;
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
@@ -60,6 +60,11 @@ const RoleDashboard = () => {
       }
     }
     return params;
+  }, [searchParams]);
+
+  const initialSectionId = useMemo(() => {
+    const sectionParam = searchParams.get('section');
+    return sectionParam && sectionParam.trim().length > 0 ? sectionParam : null;
   }, [searchParams]);
 
   const hydrateBlogRail = useCallback(async () => {
@@ -294,6 +299,18 @@ const RoleDashboard = () => {
       toggleMeta={toggle}
       toggleReason={toggleReason}
       blogPosts={blogPosts}
+      initialSectionId={initialSectionId ?? undefined}
+      onSectionChange={(nextSection) => {
+        if (!nextSection) return;
+        setSearchParams((current) => {
+          const next = new URLSearchParams(current);
+          if (next.get('section') === nextSection) {
+            return next;
+          }
+          next.set('section', nextSection);
+          return next;
+        });
+      }}
     />
   );
 };
