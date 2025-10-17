@@ -13,6 +13,18 @@ import {
   BuildingOfficeIcon,
   CalendarDaysIcon,
   ChartPieIcon,
+  BuildingOfficeIcon,
+  ShieldCheckIcon,
+  MapIcon,
+  BoltIcon,
+  BanknotesIcon,
+    ClipboardDocumentCheckIcon,
+    CubeIcon,
+    QueueListIcon,
+    PaintBrushIcon,
+    TagIcon,
+    KeyIcon
+  } from '@heroicons/react/24/outline';
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
   Cog8ToothIcon,
@@ -317,6 +329,8 @@ const navIconMap = {
   documents: ClipboardDocumentCheckIcon,
   operations: QueueListIcon,
   marketplace: WrenchScrewdriverIcon,
+  seo: TagIcon,
+  byok: KeyIcon
   builder: PaintBrushIcon,
   seo: TagIcon,
   storefront: BuildingStorefrontIcon

@@ -27,6 +27,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import ProviderByokManagementSection from './provider/ProviderByokManagementSection.jsx';
 import { ProviderInboxModule } from '../../modules/providerInbox/index.js';
 import IdentityVerificationSection from './serviceman/IdentityVerificationSection.jsx';
 import { ServicemanMetricsSection } from '../../modules/servicemanMetrics/index.js';
@@ -1727,6 +1728,8 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'byok-management':
+      return <ProviderByokManagementSection section={section} />;
     case 'serviceman-identity':
       return <IdentityVerificationSection section={section} />;
     case 'serviceman-metrics':

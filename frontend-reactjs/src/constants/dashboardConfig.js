@@ -103,6 +103,7 @@ export const DASHBOARD_ROLES = [
         href: '/dashboards/provider/storefront'
       },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
+      { id: 'byok-management', label: 'Key Management', icon: 'byok' },
       { id: 'documents', label: 'Document management', icon: 'documents' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]

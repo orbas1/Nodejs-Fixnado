@@ -39,6 +39,7 @@ import { listCustomerServiceManagement } from './customerServiceManagementServic
 import { listTasks as listAccountSupportTasks } from './accountSupportService.js';
 import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
+import { getProviderByokSnapshot } from './providerByokService.js';
 import { getInboxSettings } from './communicationsInboxService.js';
 import { getServicemanIdentitySnapshot } from './servicemanIdentityService.js';
 import { getServicemanMetricsBundle } from './servicemanMetricsService.js';
@@ -2108,6 +2109,8 @@ async function loadProviderData(context) {
       : Promise.resolve(null)
   ]);
 
+  const byokSnapshot = await getProviderByokSnapshot({ companyId });
+
   const totalAssignments = assignments.length;
   const previousTotal = previousAssignments.length;
   const accepted = assignments.filter((assignment) => assignment.status === 'accepted').length;
@@ -3081,6 +3084,14 @@ async function loadProviderData(context) {
     data: { items: alertItems }
   });
 
+  navigation.push({
+    id: 'byok-management',
+    label: 'BYOK Management',
+    description: 'Manage provider-owned API keys, rotation guardrails, and validation runs.',
+    type: 'byok-management',
+    data: byokSnapshot
+  });
+
   return {
     persona: 'provider',
     name: PERSONA_METADATA.provider.name,
@@ -3119,6 +3130,7 @@ async function loadProviderData(context) {
             }
           : null
       },
+      byok: byokSnapshot.summary,
       features: {
         ads: buildAdsFeatureMetadata('provider'),
         inbox: {

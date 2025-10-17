@@ -23,6 +23,8 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderByokIntegration from './providerByokIntegration.js';
+import ProviderByokAuditLog from './providerByokAuditLog.js';
 import ProviderCrewMember from './providerCrewMember.js';
 import ProviderCrewAvailability from './providerCrewAvailability.js';
 import ProviderCrewDeployment from './providerCrewDeployment.js';
@@ -260,6 +262,12 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
+Company.hasMany(ProviderByokIntegration, { foreignKey: 'companyId', as: 'byokIntegrations' });
+ProviderByokIntegration.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderByokIntegration.hasMany(ProviderByokAuditLog, { foreignKey: 'integrationId', as: 'auditLogs' });
+ProviderByokAuditLog.belongsTo(ProviderByokIntegration, { foreignKey: 'integrationId', as: 'integration' });
+ProviderByokAuditLog.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(EnterpriseUpgradeRequest, {
   foreignKey: 'companyId',
   as: 'enterpriseUpgrades',
