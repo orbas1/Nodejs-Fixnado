@@ -3916,6 +3916,143 @@ export const getProviderDashboard = withFallback(
     })
 );
 
+export function getProviderSettings(options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const cacheKeySuffix = options?.companyId ? `:${options.companyId}` : '';
+  return request(`/panel/provider/settings${query}`, {
+    cacheKey: `provider-settings${cacheKeySuffix}`,
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+}
+
+function invalidateProviderSettingsCache(companyId) {
+  const keys = ['provider-settings'];
+  if (companyId) {
+    keys.push(`provider-settings:${companyId}`);
+  }
+  clearPanelCache(keys);
+}
+
+export async function updateProviderSettingsProfile(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/profile${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsBranding(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/branding${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsOperations(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/operations${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function createProviderSettingsContact(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts${query}`, {
+    method: 'POST',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsContact(contactId, payload, options = {}) {
+  if (!contactId) {
+    throw new Error('contactId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts/${encodeURIComponent(contactId)}${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function deleteProviderSettingsContact(contactId, options = {}) {
+  if (!contactId) {
+    throw new Error('contactId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts/${encodeURIComponent(contactId)}${query}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function createProviderSettingsCoverage(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage${query}`, {
+    method: 'POST',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsCoverage(coverageId, payload, options = {}) {
+  if (!coverageId) {
+    throw new Error('coverageId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage/${encodeURIComponent(coverageId)}${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function deleteProviderSettingsCoverage(coverageId, options = {}) {
+  if (!coverageId) {
+    throw new Error('coverageId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage/${encodeURIComponent(coverageId)}${query}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
 export const getProviderStorefront = withFallback(
   normaliseProviderStorefront,
   storefrontFallback,

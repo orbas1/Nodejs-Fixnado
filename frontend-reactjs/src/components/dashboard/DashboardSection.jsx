@@ -26,6 +26,7 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import { ProviderProfileSettingsWorkspace } from '../../features/providerControlCentre/index.js';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -1672,6 +1673,8 @@ const DashboardSection = ({ section, features = {}, persona }) => {
       return <ProviderManagementSection section={section} />;
     case 'dispute-workspace':
       return <DisputeHealthWorkspace section={section} />;
+    case 'provider-settings':
+      return <ProviderProfileSettingsWorkspace section={section} />;
     case 'operations-queues':
       return <OperationsQueuesSection section={section} />;
     case 'user-management':

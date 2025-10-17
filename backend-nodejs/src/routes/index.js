@@ -38,6 +38,7 @@ import walletRoutes from './walletRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
+import providerSettingsRoutes from './providerSettingsRoutes.js';
 
 const v1Router = Router();
 
@@ -63,6 +64,7 @@ v1Router.use('/admin/marketplace', adminMarketplaceRoutes);
 v1Router.use('/campaigns', campaignRoutes);
 v1Router.use('/communications', communicationsRoutes);
 v1Router.use('/analytics', analyticsPipelineRoutes);
+v1Router.use('/panel/provider/settings', providerSettingsRoutes);
 v1Router.use('/panel', panelRoutes);
 v1Router.use('/business-fronts', businessFrontRoutes);
 v1Router.use('/blog', blogRoutes);

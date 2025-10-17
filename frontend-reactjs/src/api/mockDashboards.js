@@ -2765,6 +2765,16 @@ const mockDashboards = {
             }
           ]
         }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile settings',
+        description: 'Manage identity, branding, support hours, key contacts, and coverage.',
+        type: 'provider-settings',
+        data: {
+          companyId: 'PRV-1108'
+        }
       }
     ]
   },

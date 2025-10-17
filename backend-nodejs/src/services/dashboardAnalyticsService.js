@@ -2963,6 +2963,16 @@ async function loadProviderData(context) {
     data: { items: alertItems }
   });
 
+  navigation.push({
+    id: 'profile-settings',
+    label: 'Profile settings',
+    description: 'Manage provider identity, branding, support hours, contacts, and coverage.',
+    type: 'provider-settings',
+    data: {
+      companyId: companyId ?? null
+    }
+  });
+
   return {
     persona: 'provider',
     name: PERSONA_METADATA.provider.name,
