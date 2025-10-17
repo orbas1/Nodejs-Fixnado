@@ -3,13 +3,15 @@ export const COMMUNICATIONS_ALLOWED_ROLES = [
   'enterprise',
   'admin',
   'support',
-  'operations'
+  'operations',
+  'serviceman'
 ];
 
 export const BUSINESS_FRONT_ALLOWED_ROLES = ['enterprise', 'admin'];
 export const PROVIDER_EXPERIENCE_ALLOWED_ROLES = ['provider', 'admin'];
 export const PROVIDER_STOREFRONT_ALLOWED_ROLES = PROVIDER_EXPERIENCE_ALLOWED_ROLES;
 export const CREATION_STUDIO_ALLOWED_ROLES = ['provider', 'enterprise', 'admin'];
+export const SERVICEMAN_ALLOWED_ROLES = ['serviceman', 'servicemen', 'admin', 'operations', 'operations_admin'];
 
 export const ROLE_DISPLAY_NAMES = {
   guest: 'Guest access',
@@ -30,9 +32,14 @@ export const normaliseRole = (role) => {
   return role.trim().toLowerCase();
 };
 
-export const hasCommunicationsAccess = (role) => {
+export const hasCommunicationsAccess = (role, allowedRoles = COMMUNICATIONS_ALLOWED_ROLES) => {
   const resolved = normaliseRole(role);
-  return resolved ? COMMUNICATIONS_ALLOWED_ROLES.includes(resolved) : false;
+  if (!resolved) {
+    return false;
+  }
+
+  const roles = Array.isArray(allowedRoles) && allowedRoles.length > 0 ? allowedRoles : COMMUNICATIONS_ALLOWED_ROLES;
+  return roles.map(normaliseRole).includes(resolved);
 };
 
 export const formatRoleLabel = (role) => {

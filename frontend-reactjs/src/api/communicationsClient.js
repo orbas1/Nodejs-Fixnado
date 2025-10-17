@@ -31,6 +31,11 @@ function buildRequestHeaders(additional = {}) {
   return headers;
 }
 
+const resolveRequestOptions = (options = {}) => ({
+  signal: options.signal,
+  headers: options.headers
+});
+
 async function requestJson(path, { method = 'GET', body, signal, headers } = {}) {
   const response = await fetch(path, {
     method,
@@ -58,7 +63,11 @@ async function requestJson(path, { method = 'GET', body, signal, headers } = {})
 }
 
 export async function createConversation(payload, options = {}) {
-  return requestJson('/api/communications', { method: 'POST', body: payload, signal: options.signal });
+  return requestJson('/api/communications', {
+    method: 'POST',
+    body: payload,
+    ...resolveRequestOptions(options)
+  });
 }
 
 export async function listConversations(participantId, options = {}) {
@@ -66,7 +75,7 @@ export async function listConversations(participantId, options = {}) {
   if (options.limit) {
     params.set('limit', String(options.limit));
   }
-  return requestJson(`/api/communications?${params.toString()}`, { signal: options.signal });
+  return requestJson(`/api/communications?${params.toString()}`, resolveRequestOptions(options));
 }
 
 export async function fetchConversation(conversationId, options = {}) {
@@ -75,14 +84,14 @@ export async function fetchConversation(conversationId, options = {}) {
     params.set('limit', String(options.limit));
   }
   const url = params.size > 0 ? `/api/communications/${conversationId}?${params.toString()}` : `/api/communications/${conversationId}`;
-  return requestJson(url, { signal: options.signal });
+  return requestJson(url, resolveRequestOptions(options));
 }
 
 export async function postMessage(conversationId, payload, options = {}) {
   return requestJson(`/api/communications/${conversationId}/messages`, {
     method: 'POST',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -90,7 +99,7 @@ export async function updateParticipantPreferences(conversationId, participantId
   return requestJson(`/api/communications/${conversationId}/participants/${participantId}`, {
     method: 'PATCH',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -98,19 +107,19 @@ export async function createVideoSession(conversationId, payload, options = {}) 
   return requestJson(`/api/communications/${conversationId}/video-session`, {
     method: 'POST',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
 export async function fetchInboxSettings(options = {}) {
-  return requestJson('/api/communications/settings/inbox', { signal: options.signal });
+  return requestJson('/api/communications/settings/inbox', resolveRequestOptions(options));
 }
 
 export async function saveInboxSettings(payload, options = {}) {
   return requestJson('/api/communications/settings/inbox', {
     method: 'PUT',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -118,7 +127,7 @@ export async function createInboxEntryPoint(payload, options = {}) {
   return requestJson('/api/communications/settings/inbox/entry-points', {
     method: 'POST',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -126,14 +135,14 @@ export async function updateInboxEntryPoint(entryPointId, payload, options = {})
   return requestJson(`/api/communications/settings/inbox/entry-points/${entryPointId}`, {
     method: 'PATCH',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
 export async function deleteInboxEntryPoint(entryPointId, options = {}) {
   return requestJson(`/api/communications/settings/inbox/entry-points/${entryPointId}`, {
     method: 'DELETE',
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -141,7 +150,7 @@ export async function createInboxQuickReply(payload, options = {}) {
   return requestJson('/api/communications/settings/inbox/quick-replies', {
     method: 'POST',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -149,14 +158,14 @@ export async function updateInboxQuickReply(quickReplyId, payload, options = {})
   return requestJson(`/api/communications/settings/inbox/quick-replies/${quickReplyId}`, {
     method: 'PATCH',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
 export async function deleteInboxQuickReply(quickReplyId, options = {}) {
   return requestJson(`/api/communications/settings/inbox/quick-replies/${quickReplyId}`, {
     method: 'DELETE',
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -164,7 +173,7 @@ export async function createInboxEscalationRule(payload, options = {}) {
   return requestJson('/api/communications/settings/inbox/escalations', {
     method: 'POST',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
@@ -172,14 +181,14 @@ export async function updateInboxEscalationRule(escalationId, payload, options =
   return requestJson(`/api/communications/settings/inbox/escalations/${escalationId}`, {
     method: 'PATCH',
     body: payload,
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 
 export async function deleteInboxEscalationRule(escalationId, options = {}) {
   return requestJson(`/api/communications/settings/inbox/escalations/${escalationId}`, {
     method: 'DELETE',
-    signal: options.signal
+    ...resolveRequestOptions(options)
   });
 }
 

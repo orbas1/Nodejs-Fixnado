@@ -1,6 +1,14 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
+import {
+  FaceSmileIcon,
+  HandThumbUpIcon,
+  HeartIcon,
+  MegaphoneIcon,
+  PhotoIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline';
 import Spinner from './ui/Spinner.jsx';
 import {
   fetchLiveFeed,
@@ -28,6 +36,175 @@ const INITIAL_FORM_STATE = {
 const CATEGORY_SUGGESTIONS = ['Emergency response', 'Facilities', 'Renovation', 'IT Support', 'Special project'];
 
 const currencyFormatters = new Map();
+
+const FEED_TABS = [
+  {
+    id: 'timeline',
+    label: 'Timeline',
+    description: 'Celebrate wins, share learnings, and stay close to your Fixnado network.'
+  },
+  {
+    id: 'custom',
+    label: 'Custom jobs',
+    description: 'Broadcast bespoke work requests and manage provider responses in real time.'
+  },
+  {
+    id: 'marketplace',
+    label: 'Marketplace',
+    description: 'Browse curated marketplace packages, bundles, and on-demand availability.'
+  }
+];
+
+const TIMELINE_REACTIONS = [
+  { id: 'like', label: 'Like', icon: HandThumbUpIcon },
+  { id: 'celebrate', label: 'Celebrate', icon: SparklesIcon },
+  { id: 'support', label: 'Support', icon: HeartIcon }
+];
+
+const TIMELINE_ADS = [
+  {
+    id: 'ad-1',
+    title: 'Sponsored • Fixnado Ads Studio',
+    body: 'Launch co-branded field marketing in under an hour with approved creative and audience targeting.',
+    ctaLabel: 'Plan campaign',
+    ctaHref: '/marketing',
+    image:
+      'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'ad-2',
+    title: 'Sponsored • Workforce Certification',
+    body: 'Upskill crews with safety, HV, and confined space credentials verified directly in Fixnado.',
+    ctaLabel: 'View programmes',
+    ctaHref: '/services#training',
+    image:
+      'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=800&q=80'
+  }
+];
+
+const INITIAL_TIMELINE_POSTS = [
+  {
+    id: 'timeline-1',
+    author: {
+      name: 'Amelia Thompson',
+      role: 'Operations Lead',
+      company: 'Northwind Renewables',
+      avatar: 'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=160&q=80'
+    },
+    headline: 'Field crews mobilised in record time',
+    content:
+      'Storm surge workstream wrapped 18 hours ahead of schedule thanks to the Leeds and Aberdeen crews. Huge appreciation for keeping safety moments tight and sharing shift videos in the workspace.',
+    media: [
+      'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=900&q=80'
+    ],
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    reactions: { like: 18, celebrate: 12, support: 4 },
+    userReaction: null,
+    comments: [
+      {
+        id: 'timeline-1-comment-1',
+        author: {
+          name: 'Miguel Rivera',
+          role: 'Dispatch coordinator',
+          company: 'Fixnado HQ'
+        },
+        content: 'Team looked unstoppable — appreciate the handoff notes! Will bundle these into the template.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString()
+      },
+      {
+        id: 'timeline-1-comment-2',
+        author: {
+          name: 'Priya Natarajan',
+          role: 'Field engineer',
+          company: 'Fixnado Partner'
+        },
+        content: 'Posting thermal drone captures later today for the knowledge base ✨.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString()
+      }
+    ]
+  },
+  {
+    id: 'timeline-2',
+    author: {
+      name: 'Daniela Cruz',
+      role: 'Customer success',
+      company: 'Fixnado HQ',
+      avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=160&q=80'
+    },
+    headline: 'New partner onboarding kit live',
+    content:
+      'Rolled out a refreshed onboarding journey with compliance checklists, sample briefs, and billing walkthroughs. Drop feedback if you see gaps before we scale it to LATAM providers next week.',
+    media: [
+      'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=900&q=80'
+    ],
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    reactions: { like: 32, celebrate: 9, support: 7 },
+    userReaction: null,
+    comments: [
+      {
+        id: 'timeline-2-comment-1',
+        author: {
+          name: 'Aaron Bell',
+          role: 'Marketplace lead',
+          company: 'Fixnado HQ'
+        },
+        content: 'Love the self-serve billing videos. Will surface them in the marketplace workspace.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString()
+      }
+    ]
+  },
+  {
+    id: 'timeline-3',
+    author: {
+      name: 'Khadija Al-Farsi',
+      role: 'Service delivery',
+      company: 'Vertex Logistics',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80'
+    },
+    headline: 'Marketplace pilot hits 97% satisfaction',
+    content:
+      'First two weeks of the overnight maintenance bundle closed with 97% CSAT and zero escalations. Thanks to everyone who jumped on feedback calls and iterated the workflow in real time.',
+    media: [],
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    reactions: { like: 21, celebrate: 16, support: 5 },
+    userReaction: null,
+    comments: []
+  }
+];
+
+const MARKETPLACE_SPOTLIGHTS = [
+  {
+    id: 'marketplace-1',
+    title: 'Rapid response drone inspection',
+    description: '48-hour turnaround with FAA-certified pilots, annotated reports, and thermal overlays.',
+    price: 'From $1,850',
+    rating: 4.9,
+    reviews: 128,
+    tags: ['Inspection', 'Aerial', 'Thermal'],
+    image: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 'marketplace-2',
+    title: 'HVAC preventative maintenance bundle',
+    description: 'Quarterly servicing across multi-site portfolios with energy efficiency reporting.',
+    price: 'From $2,400',
+    rating: 4.8,
+    reviews: 96,
+    tags: ['Facilities', 'Maintenance'],
+    image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 'marketplace-3',
+    title: 'After-hours emergency coverage team',
+    description: 'Certified technicians on rotating rosters covering critical incidents in under 90 minutes.',
+    price: 'Subscription',
+    rating: 5,
+    reviews: 64,
+    tags: ['Emergency', 'Staffing'],
+    image: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80'
+  }
+];
 
 function formatCurrency(value, currency = 'USD') {
   if (value == null || value === '') {
@@ -98,6 +275,426 @@ function personName(person) {
   const parts = [person.firstName, person.lastName].filter(Boolean);
   return parts.length > 0 ? parts.join(' ') : 'Anonymous';
 }
+
+function TimelineFeed({
+  posts,
+  composer,
+  onComposerChange,
+  onComposerSubmit,
+  onReact,
+  commentDrafts,
+  onCommentDraftChange,
+  onCommentSubmit,
+  condensed,
+  canPost
+}) {
+  const displayedPosts = useMemo(() => {
+    if (!Array.isArray(posts) || posts.length === 0) {
+      return [];
+    }
+    return condensed ? posts.slice(0, 2) : posts;
+  }, [posts, condensed]);
+
+  const feedItems = useMemo(() => {
+    if (displayedPosts.length === 0) {
+      return [];
+    }
+
+    const items = [];
+    let adIndex = 0;
+
+    displayedPosts.forEach((post, index) => {
+      items.push({ type: 'post', value: post });
+      if (!condensed && (index + 1) % 2 === 0 && adIndex < TIMELINE_ADS.length) {
+        items.push({ type: 'ad', value: TIMELINE_ADS[adIndex] });
+        adIndex += 1;
+      }
+    });
+
+    return items;
+  }, [displayedPosts, condensed]);
+
+  return (
+    <div className="space-y-6">
+      {canPost && !condensed ? (
+        <form
+          onSubmit={onComposerSubmit}
+          className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-inner"
+        >
+          <h3 className="text-lg font-semibold text-primary">Share an update</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Spotlight wins, shout-out teammates, or rally support for upcoming projects.
+          </p>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label htmlFor="timeline-headline" className="sr-only">
+                Headline
+              </label>
+              <input
+                id="timeline-headline"
+                type="text"
+                value={composer.headline}
+                onChange={(event) => onComposerChange({ headline: event.target.value })}
+                placeholder="Add a headline (optional)"
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="timeline-body" className="sr-only">
+                Update
+              </label>
+              <textarea
+                id="timeline-body"
+                value={composer.content}
+                onChange={(event) => onComposerChange({ content: event.target.value })}
+                placeholder="Tell your network what happened, what you learned, or who deserves the credit"
+                rows={4}
+                className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="timeline-media" className="sr-only">
+                Media links
+              </label>
+              <input
+                id="timeline-media"
+                type="text"
+                value={composer.media}
+                onChange={(event) => onComposerChange({ media: event.target.value })}
+                placeholder="Paste image or video URLs to include (separate with commas)"
+                className="w-full rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+                <PhotoIcon className="h-4 w-4" aria-hidden="true" />
+                Media ready
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+                <SparklesIcon className="h-4 w-4" aria-hidden="true" />
+                Celebrate wins
+              </span>
+            </div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-accent disabled:cursor-not-allowed disabled:bg-slate-300"
+              disabled={!composer.content.trim()}
+            >
+              Post to timeline
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {feedItems.length === 0 ? (
+        <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
+          Be the first to post — share highlights, photos, or lessons learned with the wider team.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {feedItems.map((item) =>
+            item.type === 'post' ? (
+              <TimelinePost
+                key={item.value.id}
+                post={item.value}
+                reactionOptions={TIMELINE_REACTIONS}
+                onReact={onReact}
+                commentDraft={commentDrafts[item.value.id] ?? ''}
+                onCommentDraftChange={onCommentDraftChange}
+                onCommentSubmit={onCommentSubmit}
+                canPost={canPost}
+              />
+            ) : (
+              <TimelineAdCard key={item.value.id} ad={item.value} />
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+TimelineFeed.propTypes = {
+  posts: PropTypes.arrayOf(PropTypes.object),
+  composer: PropTypes.shape({
+    headline: PropTypes.string,
+    content: PropTypes.string,
+    media: PropTypes.string
+  }).isRequired,
+  onComposerChange: PropTypes.func.isRequired,
+  onComposerSubmit: PropTypes.func.isRequired,
+  onReact: PropTypes.func.isRequired,
+  commentDrafts: PropTypes.object.isRequired,
+  onCommentDraftChange: PropTypes.func.isRequired,
+  onCommentSubmit: PropTypes.func.isRequired,
+  condensed: PropTypes.bool,
+  canPost: PropTypes.bool
+};
+
+TimelineFeed.defaultProps = {
+  posts: [],
+  condensed: false,
+  canPost: true
+};
+
+function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentDraftChange, onCommentSubmit, canPost }) {
+  const hasMedia = Array.isArray(post.media) && post.media.length > 0;
+  const totalComments = post.comments?.length ?? 0;
+
+  return (
+    <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg">
+      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+            {post.author?.avatar ? (
+              <img src={post.author.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
+            ) : null}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-primary">{post.author?.name ?? 'Fixnado member'}</p>
+            <p className="text-xs text-slate-500">
+              {[post.author?.role, post.author?.company].filter(Boolean).join(' • ') || 'Network update'}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-[0.3em] text-slate-400">{formatRelativeTime(post.createdAt)}</p>
+          </div>
+        </div>
+        <div className="text-right text-xs uppercase tracking-[0.3em] text-accent">Community spotlight</div>
+      </header>
+      {post.headline ? <h3 className="mt-4 text-lg font-semibold text-primary">{post.headline}</h3> : null}
+      {post.content ? (
+        <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">{post.content}</p>
+      ) : null}
+      {hasMedia ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {post.media.slice(0, 4).map((media) => (
+            <a
+              key={media}
+              href={media}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative block overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+            >
+              <img src={media} alt="Timeline media" className="h-48 w-full object-cover transition duration-200 group-hover:scale-105" loading="lazy" />
+            </a>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 text-xs text-slate-500">
+        <span>
+          {reactionOptions
+            .map((reaction) => `${post.reactions?.[reaction.id] ?? 0} ${reaction.label.toLowerCase()}${(post.reactions?.[reaction.id] ?? 0) === 1 ? '' : 's'}`)
+            .join(' • ')}
+        </span>
+        <span>{totalComments} comment{totalComments === 1 ? '' : 's'}</span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        {reactionOptions.map((reaction) => {
+          const Icon = reaction.icon;
+          const isActive = post.userReaction === reaction.id;
+          return (
+            <button
+              key={reaction.id}
+              type="button"
+              onClick={() => onReact(post.id, reaction.id)}
+              className={clsx(
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
+                isActive
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-accent hover:text-accent',
+                !canPost && 'cursor-not-allowed opacity-60 hover:border-slate-200 hover:text-slate-600'
+              )}
+              disabled={!canPost}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {reaction.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 space-y-4">
+        {Array.isArray(post.comments) && post.comments.length > 0 ? (
+          <div className="space-y-4">
+            {post.comments.map((comment) => (
+              <div key={comment.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-semibold text-slate-500">{comment.author?.name ?? 'Team member'}</span>
+                  <span>{formatRelativeTime(comment.createdAt)}</span>
+                </div>
+                <p className="mt-2 whitespace-pre-line">{comment.content}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                  {[comment.author?.role, comment.author?.company].filter(Boolean).join(' • ')}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!canPost) {
+              return;
+            }
+            onCommentSubmit(event, post.id);
+          }}
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+        >
+          <label htmlFor={`timeline-comment-${post.id}`} className="sr-only">
+            Add a comment
+          </label>
+          <textarea
+            id={`timeline-comment-${post.id}`}
+            value={commentDraft}
+            onChange={(event) => onCommentDraftChange(post.id, event.target.value)}
+            placeholder={canPost ? 'Add a supportive note or follow-up question' : 'Sign in to reply'}
+            rows={2}
+            className="w-full resize-none rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none disabled:bg-slate-100"
+            disabled={!canPost}
+          />
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+            <span className="inline-flex items-center gap-2">
+              <FaceSmileIcon className="h-4 w-4" aria-hidden="true" />
+              Be encouraging and constructive.
+            </span>
+            <button
+              type="submit"
+              className="rounded-full bg-accent px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-primary disabled:cursor-not-allowed disabled:bg-slate-300"
+              disabled={!canPost || !commentDraft.trim()}
+            >
+              Comment
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+  );
+}
+
+TimelinePost.propTypes = {
+  post: PropTypes.object.isRequired,
+  reactionOptions: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.string.isRequired })).isRequired,
+  onReact: PropTypes.func.isRequired,
+  commentDraft: PropTypes.string.isRequired,
+  onCommentDraftChange: PropTypes.func.isRequired,
+  onCommentSubmit: PropTypes.func.isRequired,
+  canPost: PropTypes.bool
+};
+
+TimelinePost.defaultProps = {
+  canPost: true
+};
+
+function TimelineAdCard({ ad }) {
+  return (
+    <aside className="overflow-hidden rounded-3xl border border-dashed border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-100 shadow-inner">
+      <div className="grid gap-4 p-6 sm:grid-cols-3 sm:items-center">
+        <div className="sm:col-span-2">
+          <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-amber-700">
+            <MegaphoneIcon className="h-4 w-4" aria-hidden="true" />
+            Sponsored
+          </div>
+          <h3 className="mt-3 text-lg font-semibold text-primary">{ad.title}</h3>
+          <p className="mt-2 text-sm text-slate-600">{ad.body}</p>
+          <a
+            href={ad.ctaHref}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-primary"
+          >
+            {ad.ctaLabel}
+          </a>
+        </div>
+        <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+          <img src={ad.image} alt="Sponsored" className="h-full w-full object-cover" loading="lazy" />
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+TimelineAdCard.propTypes = {
+  ad: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    body: PropTypes.string.isRequired,
+    ctaLabel: PropTypes.string.isRequired,
+    ctaHref: PropTypes.string.isRequired,
+    image: PropTypes.string.isRequired
+  }).isRequired
+};
+
+function MarketplaceFeed({ condensed }) {
+  if (MARKETPLACE_SPOTLIGHTS.length === 0) {
+    return (
+      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
+        Marketplace listings will appear here as soon as teams publish new bundles.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {MARKETPLACE_SPOTLIGHTS.map((listing) => (
+        <article
+          key={listing.id}
+          className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg"
+        >
+          <div className="grid gap-4 sm:grid-cols-3 sm:items-center">
+            <div className="relative h-44 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+              <img src={listing.image} alt="Marketplace spotlight" className="h-full w-full object-cover" loading="lazy" />
+            </div>
+            <div className="sm:col-span-2 space-y-3">
+              <header>
+                <h3 className="text-lg font-semibold text-primary">{listing.title}</h3>
+                <p className="mt-1 text-sm text-slate-500">{listing.description}</p>
+              </header>
+              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+                  {listing.price}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+                  {listing.rating}★ ({listing.reviews} reviews)
+                </span>
+                {listing.tags.map((tag) => (
+                  <span
+                    key={`${listing.id}-${tag}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-slate-500">
+                  Ideal for teams needing predictable coverage and rich service analytics.
+                </p>
+                {!condensed ? (
+                  <a
+                    href="/services#marketplace"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent"
+                  >
+                    Request details
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+MarketplaceFeed.propTypes = {
+  condensed: PropTypes.bool
+};
+
+MarketplaceFeed.defaultProps = {
+  condensed: false
+};
 
 function useZones(shouldLoad) {
   const [zones, setZones] = useState([]);
@@ -851,6 +1448,11 @@ export default function LiveFeed({ condensed = false }) {
   const canBid = role === 'servicemen' || role === 'company';
   const canMessage = role === 'user' || role === 'company';
 
+  const [activeTab, setActiveTab] = useState('timeline');
+  const [timelinePosts, setTimelinePosts] = useState(() => INITIAL_TIMELINE_POSTS);
+  const [timelineComposer, setTimelineComposer] = useState({ headline: '', content: '', media: '' });
+  const [timelineCommentDrafts, setTimelineCommentDrafts] = useState({});
+
   const [filters, setFilters] = useState({ zoneId: '', includeOutOfZone: false, outOfZoneOnly: false });
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -864,7 +1466,25 @@ export default function LiveFeed({ condensed = false }) {
   const [bidStatus, setBidStatus] = useState({});
   const [messageStatus, setMessageStatus] = useState({});
 
-  const { zones, loading: zoneLoading } = useZones(canCreate || (!condensed && canView));
+  const activeTabConfig = useMemo(
+    () => FEED_TABS.find((tab) => tab.id === activeTab) ?? FEED_TABS[0],
+    [activeTab]
+  );
+  const memberRoleLabel = useMemo(() => {
+    switch (role) {
+      case 'company':
+        return 'Company admin';
+      case 'servicemen':
+        return 'Service partner';
+      case 'user':
+        return 'Client team';
+      default:
+        return 'Community member';
+    }
+  }, [role]);
+
+  const shouldLoadZones = activeTab === 'custom' && (canCreate || (!condensed && canView));
+  const { zones, loading: zoneLoading } = useZones(shouldLoadZones);
   const maxStreamPosts = useMemo(() => (condensed ? 6 : undefined), [condensed]);
 
   useEffect(() => {
@@ -874,6 +1494,11 @@ export default function LiveFeed({ condensed = false }) {
       setFeedError(null);
       setLastUpdated(null);
       setStreamStatus({ connected: false, reconnecting: false, error: null });
+      return;
+    }
+
+    if (activeTab !== 'custom') {
+      setLoading(false);
       return;
     }
 
@@ -912,10 +1537,15 @@ export default function LiveFeed({ condensed = false }) {
       cancelled = true;
       controller.abort();
     };
-  }, [canView, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, condensed]);
+  }, [canView, activeTab, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, condensed]);
 
   useEffect(() => {
-    if (!canView) {
+    if (!canView || activeTab !== 'custom') {
+      setStreamStatus((current) => ({
+        connected: false,
+        reconnecting: false,
+        error: activeTab === 'custom' ? current.error : null
+      }));
       return undefined;
     }
 
@@ -1027,7 +1657,120 @@ export default function LiveFeed({ condensed = false }) {
       closed = true;
       source.close();
     };
-  }, [canView, filters.includeOutOfZone, filters.outOfZoneOnly, filters.zoneId, maxStreamPosts]);
+  }, [canView, activeTab, filters.includeOutOfZone, filters.outOfZoneOnly, filters.zoneId, maxStreamPosts]);
+
+  const handleTimelineComposerChange = (patch) => {
+    setTimelineComposer((current) => ({ ...current, ...patch }));
+  };
+
+  const handleTimelineComposerSubmit = (event) => {
+    event.preventDefault();
+    if (!canView || !timelineComposer.content.trim()) {
+      return;
+    }
+
+    const mediaUrls = timelineComposer.media
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+
+    const postId = `timeline-${Date.now()}`;
+    const newPost = {
+      id: postId,
+      author: {
+        name: 'You',
+        role: memberRoleLabel,
+        company: 'Fixnado network'
+      },
+      headline: timelineComposer.headline.trim(),
+      content: timelineComposer.content.trim(),
+      media: mediaUrls,
+      createdAt: new Date().toISOString(),
+      reactions: { like: 0, celebrate: 0, support: 0 },
+      userReaction: null,
+      comments: []
+    };
+
+    setTimelinePosts((current) => [newPost, ...current]);
+    setTimelineComposer({ headline: '', content: '', media: '' });
+    setTimelineCommentDrafts((current) => ({ ...current, [postId]: '' }));
+  };
+
+  const handleTimelineReact = (postId, reactionId) => {
+    if (!canView) {
+      return;
+    }
+
+    setTimelinePosts((current) =>
+      current.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        const reactions = {
+          like: post.reactions?.like ?? 0,
+          celebrate: post.reactions?.celebrate ?? 0,
+          support: post.reactions?.support ?? 0
+        };
+
+        const previousReaction = post.userReaction;
+        if (previousReaction && reactions[previousReaction] > 0) {
+          reactions[previousReaction] -= 1;
+        }
+
+        let userReaction = null;
+        if (previousReaction !== reactionId) {
+          reactions[reactionId] = (reactions[reactionId] ?? 0) + 1;
+          userReaction = reactionId;
+        }
+
+        return {
+          ...post,
+          reactions,
+          userReaction
+        };
+      })
+    );
+  };
+
+  const handleTimelineCommentDraftChange = (postId, value) => {
+    setTimelineCommentDrafts((current) => ({ ...current, [postId]: value }));
+  };
+
+  const handleTimelineCommentSubmit = (event, postId) => {
+    event.preventDefault();
+    if (!canView) {
+      return;
+    }
+
+    const draft = (timelineCommentDrafts[postId] ?? '').trim();
+    if (!draft) {
+      return;
+    }
+
+    const comment = {
+      id: `${postId}-comment-${Date.now()}`,
+      author: {
+        name: 'You',
+        role: memberRoleLabel,
+        company: 'Fixnado network'
+      },
+      content: draft,
+      createdAt: new Date().toISOString()
+    };
+
+    setTimelinePosts((current) =>
+      current.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: Array.isArray(post.comments) ? [...post.comments, comment] : [comment]
+            }
+          : post
+      )
+    );
+    setTimelineCommentDrafts((current) => ({ ...current, [postId]: '' }));
+  };
 
   const handleFormChange = (patch) => {
     setFormState((current) => ({ ...current, ...patch }));
@@ -1095,173 +1838,232 @@ export default function LiveFeed({ condensed = false }) {
   };
 
   const visiblePosts = useMemo(() => (condensed ? posts.slice(0, 3) : posts), [condensed, posts]);
+  const timelineLastUpdateLabel = timelinePosts.length > 0 ? formatRelativeTime(timelinePosts[0].createdAt) : null;
 
   return (
     <section className="bg-white/80 backdrop-blur border border-slate-200 rounded-3xl shadow-glow">
       <div className="px-6 py-6 space-y-6">
-        <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-primary">Live feed</h2>
-            <p className="text-sm text-slate-500">
-              Real-time briefs, custom job requests, and bid activity across your network.
-            </p>
-          </div>
-          {!condensed ? (
-            <div className="flex flex-col items-end space-y-1 text-right text-xs text-slate-500">
-              <div
-                className={clsx(
-                  'inline-flex items-center gap-2 font-semibold',
-                  streamStatus.connected
-                    ? 'text-emerald-600'
-                    : streamStatus.reconnecting
-                      ? 'text-amber-600'
-                      : 'text-slate-500'
-                )}
-              >
-                <span
-                  className={clsx(
-                    'h-2 w-2 rounded-full',
-                    streamStatus.connected
-                      ? 'bg-emerald-500 animate-pulse'
-                      : streamStatus.reconnecting
-                        ? 'bg-amber-500 animate-pulse'
-                        : 'bg-slate-300'
-                  )}
-                  aria-hidden="true"
-                />
-                {streamStatus.connected
-                  ? 'Streaming live updates'
-                  : streamStatus.reconnecting
-                    ? 'Reconnecting…'
-                    : 'Live updates paused'}
-              </div>
-              <div>
-                {lastUpdated
-                  ? `Last update ${formatRelativeTime(lastUpdated)}`
-                  : 'Awaiting first refresh'}
-              </div>
-              {streamStatus.error ? (
-                <p className="text-rose-500">{streamStatus.error}</p>
+        <header className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold text-primary">
+                {activeTab === 'timeline'
+                  ? 'Network timeline'
+                  : activeTab === 'custom'
+                    ? 'Custom job feed'
+                    : 'Marketplace feed'}
+              </h2>
+              <p className="text-sm text-slate-500">{activeTabConfig.description}</p>
+              {activeTab === 'timeline' && timelineLastUpdateLabel ? (
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Latest update {timelineLastUpdateLabel}
+                </p>
               ) : null}
             </div>
-          ) : (
-            <a href="/feed" className="text-sm font-semibold text-accent hover:text-primary">
-              View provider workspace
-            </a>
-          )}
+            {!condensed && activeTab === 'custom' ? (
+              <div className="flex flex-col items-end space-y-1 text-right text-xs text-slate-500">
+                <div
+                  className={clsx(
+                    'inline-flex items-center gap-2 font-semibold',
+                    streamStatus.connected
+                      ? 'text-emerald-600'
+                      : streamStatus.reconnecting
+                        ? 'text-amber-600'
+                        : 'text-slate-500'
+                  )}
+                >
+                  <span
+                    className={clsx(
+                      'h-2 w-2 rounded-full',
+                      streamStatus.connected
+                        ? 'bg-emerald-500 animate-pulse'
+                        : streamStatus.reconnecting
+                          ? 'bg-amber-500 animate-pulse'
+                          : 'bg-slate-300'
+                    )}
+                    aria-hidden="true"
+                  />
+                  {streamStatus.connected
+                    ? 'Streaming live updates'
+                    : streamStatus.reconnecting
+                      ? 'Reconnecting…'
+                      : 'Live updates paused'}
+                </div>
+                <div>
+                  {lastUpdated
+                    ? `Last update ${formatRelativeTime(lastUpdated)}`
+                    : 'Awaiting first refresh'}
+                </div>
+                {streamStatus.error ? <p className="text-rose-500">{streamStatus.error}</p> : null}
+              </div>
+            ) : null}
+          </div>
+          <nav className={clsx('flex flex-wrap gap-2', condensed ? 'pt-1' : 'pt-2')}>
+            {FEED_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={clsx(
+                  'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
+                  activeTab === tab.id
+                    ? 'border-primary bg-primary text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary'
+                )}
+              >
+                {tab.label}
+                {tab.id === 'timeline' && tab.id === activeTab ? (
+                  <span className="hidden rounded-full bg-white/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.3em] sm:inline-block">
+                    Default
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </nav>
         </header>
 
-        {!condensed && canView ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-slate-200 bg-white/70 p-4">
-            <div className="flex items-center gap-2">
-              <label htmlFor="live-feed-zone" className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Zone
-              </label>
-              <select
-                id="live-feed-zone"
-                value={filters.zoneId}
-                onChange={(event) => setFilters((current) => ({ ...current, zoneId: event.target.value }))}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-accent focus:outline-none"
-              >
-                <option value="">All zones</option>
-                {zones.map((zone) => (
-                  <option key={zone.id} value={zone.id}>
-                    {zone.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              <input
-                type="checkbox"
-                checked={filters.includeOutOfZone}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    includeOutOfZone: event.target.checked,
-                    outOfZoneOnly: event.target.checked ? current.outOfZoneOnly : false
-                  }))
-                }
-                className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
-              />
-              Include out-of-zone
-            </label>
-            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              <input
-                type="checkbox"
-                checked={filters.outOfZoneOnly}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    outOfZoneOnly: event.target.checked,
-                    includeOutOfZone: event.target.checked ? true : current.includeOutOfZone
-                  }))
-                }
-                className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
-              />
-              Out-of-zone only
-            </label>
-          </div>
+        {activeTab === 'timeline' ? (
+          <Fragment>
+            {!canView ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
+                <p className="text-sm font-semibold text-primary">Sign in to publish updates and join the conversation.</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  You can still explore highlights from across the Fixnado network timeline.
+                </p>
+              </div>
+            ) : null}
+            <TimelineFeed
+              posts={timelinePosts}
+              composer={timelineComposer}
+              onComposerChange={handleTimelineComposerChange}
+              onComposerSubmit={handleTimelineComposerSubmit}
+              onReact={handleTimelineReact}
+              commentDrafts={timelineCommentDrafts}
+              onCommentDraftChange={handleTimelineCommentDraftChange}
+              onCommentSubmit={handleTimelineCommentSubmit}
+              condensed={condensed || !canView}
+              canPost={canView}
+            />
+          </Fragment>
         ) : null}
 
-        {!canView ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
-            <p className="text-sm font-semibold text-primary">
-              Sign in with a Fixnado account to unlock live feed intelligence.
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              Providers see high-signal job requests, can bid instantly, and manage negotiations in one place.
-            </p>
-          </div>
-        ) : (
+        {activeTab === 'marketplace' ? <MarketplaceFeed condensed={condensed} /> : null}
+
+        {activeTab === 'custom' ? (
           <Fragment>
-            {canCreate && !condensed ? (
-              <JobComposer
-                form={formState}
-                onChange={handleFormChange}
-                onSubmit={handleCreatePost}
-                submitting={formSubmitting}
-                error={formError}
-                successMessage={formSuccess}
-                zones={zones}
-                zoneLoading={zoneLoading}
-              />
+            {!condensed && canView ? (
+              <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-slate-200 bg-white/70 p-4">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="live-feed-zone" className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    Zone
+                  </label>
+                  <select
+                    id="live-feed-zone"
+                    value={filters.zoneId}
+                    onChange={(event) => setFilters((current) => ({ ...current, zoneId: event.target.value }))}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-accent focus:outline-none"
+                  >
+                    <option value="">All zones</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={filters.includeOutOfZone}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        includeOutOfZone: event.target.checked,
+                        outOfZoneOnly: event.target.checked ? current.outOfZoneOnly : false
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
+                  />
+                  Include out-of-zone
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={filters.outOfZoneOnly}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        outOfZoneOnly: event.target.checked,
+                        includeOutOfZone: event.target.checked ? true : current.includeOutOfZone
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
+                  />
+                  Out-of-zone only
+                </label>
+              </div>
             ) : null}
 
-            {loading ? (
-              <div className="flex justify-center py-16">
-                <Spinner className="h-8 w-8 text-primary" />
-              </div>
-            ) : feedError ? (
-              <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-600">
-                {feedError}
-              </div>
-            ) : visiblePosts.length === 0 ? (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
-                No live posts match your filters yet. Adjust your filters or publish a new job to get responses.
+            {!canView ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
+                <p className="text-sm font-semibold text-primary">
+                  Sign in with a Fixnado account to unlock live feed intelligence.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Providers see high-signal job requests, can bid instantly, and manage negotiations in one place.
+                </p>
               </div>
             ) : (
-              <div className="space-y-5">
-                {visiblePosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    canBid={canBid && !condensed}
-                    canMessage={canMessage && !condensed}
-                    onBidSubmit={handleBidSubmit}
-                    onMessageSubmit={canMessage && !condensed ? handleBidMessageSubmit : undefined}
-                    bidStatus={bidStatus[post.id] ?? { state: 'idle' }}
-                    messageStatus={Object.fromEntries(
-                      Object.entries(messageStatus)
-                        .filter(([key]) => key.startsWith(`${post.id}:`))
-                        .map(([key, value]) => [key.split(':')[1], value])
-                    )}
+              <Fragment>
+                {canCreate && !condensed ? (
+                  <JobComposer
+                    form={formState}
+                    onChange={handleFormChange}
+                    onSubmit={handleCreatePost}
+                    submitting={formSubmitting}
+                    error={formError}
+                    successMessage={formSuccess}
+                    zones={zones}
+                    zoneLoading={zoneLoading}
                   />
-                ))}
-              </div>
+                ) : null}
+
+                {loading ? (
+                  <div className="flex justify-center py-16">
+                    <Spinner className="h-8 w-8 text-primary" />
+                  </div>
+                ) : feedError ? (
+                  <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-600">
+                    {feedError}
+                  </div>
+                ) : visiblePosts.length === 0 ? (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
+                    No live posts match your filters yet. Adjust your filters or publish a new job to get responses.
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {visiblePosts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        canBid={canBid && !condensed}
+                        canMessage={canMessage && !condensed}
+                        onBidSubmit={handleBidSubmit}
+                        onMessageSubmit={canMessage && !condensed ? handleBidMessageSubmit : undefined}
+                        bidStatus={bidStatus[post.id] ?? { state: 'idle' }}
+                        messageStatus={Object.fromEntries(
+                          Object.entries(messageStatus)
+                            .filter(([key]) => key.startsWith(`${post.id}:`))
+                            .map(([key, value]) => [key.split(':')[1], value])
+                        )}
+                      />
+                    ))}
+                  </div>
+                )}
+              </Fragment>
             )}
           </Fragment>
-        )}
+        ) : null}
       </div>
     </section>
   );
