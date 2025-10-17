@@ -69,12 +69,15 @@ const softenGradient = (accent) => {
   return softened.join(' ');
 };
 
-const SectionHeader = ({ section }) => (
-  <div className="mb-6 space-y-2">
-    <h2 className="text-2xl font-semibold text-primary" title={section.description ?? section.label}>
-      {section.label}
-    </h2>
-    {section.description ? <p className="sr-only">{section.description}</p> : null}
+const SectionHeader = ({ section, actions = null }) => (
+  <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-2">
+      <h2 className="text-2xl font-semibold text-primary" title={section.description ?? section.label}>
+        {section.label}
+      </h2>
+      {section.description ? <p className="sr-only">{section.description}</p> : null}
+    </div>
+    {actions ? <div className="flex items-center gap-3">{actions}</div> : null}
   </div>
 );
 
@@ -82,7 +85,12 @@ SectionHeader.propTypes = {
   section: PropTypes.shape({
     label: PropTypes.string.isRequired,
     description: PropTypes.string
-  }).isRequired
+  }).isRequired,
+  actions: PropTypes.node
+};
+
+SectionHeader.defaultProps = {
+  actions: null
 };
 
 const componentRegistry = {
@@ -102,8 +110,11 @@ const ComponentSection = ({ section }) => {
       {Component ? (
         <Component {...componentProps} />
       ) : (
-        <div className="rounded-2xl border border-accent/10 bg-white p-6 text-sm text-slate-600">
-          This dashboard module has not been configured yet.
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+          <p className="font-semibold">This module is currently unavailable.</p>
+          <p className="mt-2 text-xs text-rose-600/80">
+            Refresh the dashboard or contact your Fixnado administrator if the issue continues.
+          </p>
         </div>
       )}
     </div>
@@ -344,7 +355,42 @@ BoardSection.propTypes = {
 };
 
 const AvailabilitySection = ({ section }) => {
+  const { openPanel } = useDashboardOverlay();
   const { summary = {}, days = [], resources = [] } = section.data ?? {};
+
+  const openResource = (resource) => {
+    const meta = [];
+    if (resource.role) {
+      meta.push({ label: 'Role', value: resource.role });
+    }
+    if (resource.status) {
+      meta.push({ label: 'Status', value: resource.status });
+    }
+
+    openPanel({
+      title: resource.name,
+      subtitle: section.label,
+      meta,
+      body: (
+        <div className="space-y-3 text-sm text-primary/80">
+          {days.map((day) => {
+            const slot = resource.allocations?.find((entry) => entry.day === day);
+            return (
+              <div
+                key={`${resource.name}-${day}-detail`}
+                className="rounded-2xl border border-accent/15 bg-secondary px-4 py-3"
+              >
+                <p className="text-xs uppercase tracking-[0.3em] text-primary/50">{day}</p>
+                <p className="mt-1 text-sm font-semibold text-primary">{slot?.status ?? 'Not assigned'}</p>
+                {slot?.window ? <p className="text-xs text-primary/60">{slot.window}</p> : null}
+              </div>
+            );
+          })}
+        </div>
+      )
+    });
+  };
+
   return (
     <div>
       <SectionHeader section={section} />
@@ -376,7 +422,14 @@ const AvailabilitySection = ({ section }) => {
             {resources.map((resource) => (
               <tr key={resource.name} className="align-top">
                 <td className="px-4 py-4">
-                  <div className="font-semibold text-primary">{resource.name}</div>
+                  <button
+                    type="button"
+                    onClick={() => openResource(resource)}
+                    className="rounded-full border border-transparent px-2 py-1 text-left text-sm font-semibold text-primary transition hover:border-accent/40 hover:text-accent"
+                    aria-label={`Open ${resource.name} schedule`}
+                  >
+                    {resource.name}
+                  </button>
                   {resource.status && <div className="text-xs text-slate-500">{resource.status}</div>}
                 </td>
                 <td className="px-4 py-4 text-sm text-slate-500">{resource.role}</td>
@@ -428,11 +481,95 @@ AvailabilitySection.propTypes = {
 };
 
 const TableSection = ({ section }) => {
+  const { openPanel } = useDashboardOverlay();
   const headers = section.data?.headers ?? [];
   const rows = section.data?.rows ?? [];
+
+  const openFullTable = () => {
+    openPanel({
+      title: section.label,
+      subtitle: 'Full table view',
+      meta: [
+        { label: 'Records', value: rows.length },
+        { label: 'Columns', value: headers.length }
+      ],
+      body: (
+        <div className="max-h-[70vh] overflow-auto rounded-2xl border border-accent/10">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead className="bg-secondary text-primary">
+              <tr>
+                {headers.map((header) => (
+                  <th key={header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-primary/10 text-primary">
+              {rows.map((row, rowIndex) => (
+                <tr key={`drawer-row-${rowIndex}`} className="hover:bg-secondary/60">
+                  {row.map((value, cellIndex) => (
+                    <td key={`drawer-row-${rowIndex}-${cellIndex}`} className="px-4 py-3 align-top">
+                      {value}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    });
+  };
+
+  const openRowDetail = (row, rowIndex) => {
+    openPanel({
+      title: section.label,
+      subtitle: `Record ${rowIndex + 1}`,
+      meta: headers
+        .filter((header) => Boolean(header))
+        .slice(0, 2)
+        .map((header, index) => ({
+          label: header,
+          value: row[index] ?? '—'
+        })),
+      body: (
+        <dl className="space-y-3">
+          {row.map((value, cellIndex) => (
+            <div
+              key={`${section.id}-row-${rowIndex}-cell-${cellIndex}`}
+              className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3"
+            >
+              <dt className="text-[0.65rem] uppercase tracking-[0.3em] text-primary/60">
+                {headers[cellIndex] ?? `Column ${cellIndex + 1}`}
+              </dt>
+              <dd className="mt-2 text-sm text-primary">{value ?? '—'}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    });
+  };
+
   return (
     <div>
-      <SectionHeader section={section} />
+      <SectionHeader
+        section={section}
+        actions={
+          rows.length
+            ? [
+                <button
+                  type="button"
+                  key="expand"
+                  onClick={openFullTable}
+                  className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-xs font-semibold text-primary transition hover:border-accent hover:text-accent"
+                >
+                  Expand
+                </button>
+              ]
+            : null
+        }
+      />
       <div className="overflow-hidden rounded-2xl border border-accent/10 bg-white shadow-md">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-secondary text-primary">
@@ -446,7 +583,20 @@ const TableSection = ({ section }) => {
           </thead>
           <tbody className="divide-y divide-primary/10 text-slate-700">
             {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-secondary/70">
+              <tr
+                key={rowIndex}
+                className="cursor-pointer transition hover:bg-secondary/70 focus-within:bg-secondary/70"
+                onClick={() => openRowDetail(row, rowIndex)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openRowDetail(row, rowIndex);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open details for row ${rowIndex + 1}`}
+              >
                 {row.map((value, cellIndex) => (
                   <td key={cellIndex} className="px-4 py-3 align-top">
                     {value}
@@ -467,46 +617,110 @@ TableSection.propTypes = {
     description: PropTypes.string,
     data: PropTypes.shape({
       headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-      rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired
+      rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.node)).isRequired
     }).isRequired
   }).isRequired
 };
 
 const ListSection = ({ section }) => {
+  const { openPanel } = useDashboardOverlay();
   const items = section.data?.items ?? [];
+
+  const openItem = (item) => {
+    const actions = [];
+    if (item.href) {
+      const external = /^https?:\/\//i.test(item.href);
+      actions.push({
+        label: item.cta ?? 'Open',
+        href: item.href,
+        external,
+        target: item.target ?? (external ? '_blank' : '_self'),
+        variant: 'primary'
+      });
+    }
+
+    const meta = [];
+    if (item.status) {
+      meta.push({ label: 'Status', value: item.status });
+    }
+    if (item.owner) {
+      meta.push({ label: 'Owner', value: item.owner });
+    }
+    if (item.updatedAt) {
+      meta.push({ label: 'Updated', value: item.updatedAt });
+    }
+
+    openPanel({
+      title: item.title,
+      subtitle: section.label,
+      meta,
+      actions,
+      body: (
+        <div className="space-y-4 text-sm text-primary/80">
+          {item.description ? <p>{item.description}</p> : null}
+          {Array.isArray(item.details) && item.details.length ? (
+            <ul className="space-y-2">
+              {item.details.map((detail) => (
+                <li key={detail} className="flex items-start gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-primary/40" />
+                  <span>{detail}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {item.notes ? <p className="italic text-primary/60">{item.notes}</p> : null}
+        </div>
+      )
+    });
+  };
+
   return (
     <div>
       <SectionHeader section={section} />
       <div className="space-y-4">
-        {items.map((item) => (
-          <div key={item.title} className="rounded-2xl border border-accent/10 bg-white p-5 shadow-md">
-            <div className="flex flex-col gap-1">
-              <p className="text-base font-semibold text-primary">{item.title}</p>
-              <p className="text-sm text-slate-600">{item.description}</p>
-              <span className="text-xs uppercase tracking-wide text-primary/60">{item.status}</span>
-              {item.href ? (
-                item.href.startsWith('http') ? (
-                  <a
-                    href={item.href}
-                    target={item.target ?? '_blank'}
-                    rel="noreferrer"
-                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+        {items.map((item) => {
+          const external = item.href ? /^https?:\/\//i.test(item.href) : false;
+          return (
+            <div key={item.title} className="rounded-2xl border border-accent/10 bg-white p-5 shadow-md">
+              <div className="flex flex-col gap-1">
+                <p className="text-base font-semibold text-primary">{item.title}</p>
+                {item.description ? <p className="text-sm text-slate-600">{item.description}</p> : null}
+                {item.status ? (
+                  <span className="text-xs uppercase tracking-wide text-primary/60">{item.status}</span>
+                ) : null}
+                {item.href ? (
+                  external ? (
+                    <a
+                      href={item.href}
+                      target={item.target ?? '_blank'}
+                      rel="noreferrer"
+                      className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                    >
+                      {item.cta ?? 'Open link'}
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      target={item.target ?? '_self'}
+                      className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
+                    >
+                      {item.cta ?? 'Open workspace'}
+                    </Link>
+                  )
+                ) : null}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => openItem(item)}
+                    className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-secondary px-3 py-1 text-xs font-semibold text-primary transition hover:border-accent hover:text-accent"
                   >
-                    {item.cta ?? 'Open link'}
-                  </a>
-                ) : (
-                  <Link
-                    to={item.href}
-                    target={item.target ?? '_self'}
-                    className="mt-3 inline-flex w-max items-center gap-2 rounded-full border border-accent/20 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40"
-                  >
-                    {item.cta ?? 'Open workspace'}
-                  </Link>
-                )
-              ) : null}
+                    Details
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -520,11 +734,15 @@ ListSection.propTypes = {
       items: PropTypes.arrayOf(
         PropTypes.shape({
           title: PropTypes.string.isRequired,
-          description: PropTypes.string.isRequired,
-          status: PropTypes.string.isRequired,
+          description: PropTypes.string,
+          status: PropTypes.string,
           href: PropTypes.string,
           target: PropTypes.string,
-          cta: PropTypes.string
+          cta: PropTypes.string,
+          owner: PropTypes.string,
+          updatedAt: PropTypes.string,
+          details: PropTypes.arrayOf(PropTypes.string),
+          notes: PropTypes.string
         })
       ).isRequired
     }).isRequired

@@ -70,7 +70,7 @@ export default function DashboardDetailDrawer({ panel, onClose }) {
                 ) : null}
 
                 <div className="flex-1 overflow-y-auto px-6 py-6 text-sm text-primary">
-                  {panel?.body ? panel.body : <p className="text-sm text-primary/70">No additional details.</p>}
+                  {panel?.body ?? null}
                 </div>
 
                 {panel?.actions?.length ? (
