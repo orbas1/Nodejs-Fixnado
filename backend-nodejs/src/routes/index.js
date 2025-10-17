@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
+import { authenticate } from '../middleware/auth.js';
 import serviceRoutes from './serviceRoutes.js';
 import feedRoutes from './feedRoutes.js';
 import searchRoutes from './searchRoutes.js';
@@ -38,6 +39,7 @@ import walletRoutes from './walletRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
+import servicemanControlRoutes from './servicemanControlRoutes.js';
 
 const v1Router = Router();
 
@@ -79,6 +81,7 @@ v1Router.use('/settings', userSettingsRoutes);
 v1Router.use('/wallet', walletRoutes);
 v1Router.use('/service-orders', serviceOrderRoutes);
 v1Router.use('/customer-control', customerControlRoutes);
+v1Router.use('/serviceman/control-centre', authenticate, servicemanControlRoutes);
 v1Router.use('/account', accountRoutes);
 
 const router = Router();

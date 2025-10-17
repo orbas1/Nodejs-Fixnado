@@ -1,6 +1,5 @@
 import { DataTypes, Model, Op } from 'sequelize';
 import isEmail from 'validator/lib/isEmail.js';
-import validator from 'validator';
 import sequelize from '../config/database.js';
 import {
   decryptString,
@@ -149,46 +148,22 @@ User.init(
         isEncryptedEmail(value) {
           if (typeof value !== 'string' || value.trim() === '') {
             throw new Error('Encrypted email payload must be present.');
-        isEmail(value) {
-          const decrypted = typeof value === 'string' && value ? decryptString(value, 'user:email') : null;
-          const candidate = (decrypted ?? this.email ?? '').trim();
-          if (!EMAIL_PATTERN.test(candidate)) {
-        isEncryptedEmail(value) {
-          if (value == null) {
-            throw new Error('Validation isEmail on email failed');
           }
-          const decrypted = this.get('email');
-          if (!decrypted || !validator.isEmail(decrypted)) {
+        },
         isEmail(value) {
-          if (value === null || value === undefined) {
-          if (typeof value !== 'string') {
-            throw new Error('Validation isEmail on email failed');
-          }
-
-          let candidate = value;
-          if (typeof value === 'string') {
+          let candidate = '';
+          if (typeof value === 'string' && value) {
             try {
-              const decrypted = decryptString(value, 'user:email');
-              if (decrypted) {
-                candidate = decrypted;
-              }
+              candidate = decryptString(value, 'user:email');
             } catch (error) {
               candidate = value;
             }
+          } else if (typeof this.email === 'string') {
+            candidate = this.email;
           }
 
-          if (!isValidEmail(candidate)) {
-          try {
-            const decrypted = decryptString(value, 'user:email');
-            if (decrypted) {
-              candidate = decrypted;
-            }
-          } catch (error) {
-            // If decryption fails we fall back to the raw value which will fail validation below.
-          }
-
-          const normalised = normaliseEmail(candidate);
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalised)) {
+          const trimmed = (candidate ?? '').trim();
+          if (!trimmed || !isValidEmail(trimmed)) {
             throw new Error('Validation isEmail on email failed');
           }
         }
@@ -197,35 +172,18 @@ User.init(
         if (typeof value !== 'string') {
           throw new TypeError('email must be a string');
         }
+
         const trimmed = value.trim();
         if (!trimmed) {
           throw new Error('email cannot be empty');
         }
 
-        if (!isEmail(trimmed)) {
-        if (!isEmail(trimmed)) {
-        if (!EMAIL_PATTERN.test(trimmed)) {
-          throw new Error('Validation isEmail on email failed');
-        }
-        if (!trimmed) {
-          throw new Error('email cannot be empty');
-        }
-        if (!isEmail(trimmed, { allow_utf8_local_part: false })) {
-          throw new Error('email must be a valid address');
-        }
-        if (!EMAIL_PATTERN.test(trimmed)) {
-          throw new Error('email must be a valid email address');
-        }
-        if (!trimmed) {
-          throw new Error('email cannot be empty');
-        }
-
         const normalised = normaliseEmail(trimmed);
-        if (!validator.isEmail(normalised)) {
+        if (!isEmail(normalised)) {
           throw new Error('email must be a valid email address');
         }
 
-        const { encrypted, hash } = protectEmail(trimmed);
+        const { encrypted, hash } = protectEmail(normalised);
         this.setDataValue('email', encrypted);
         this.setDataValue('emailHash', hash);
       },

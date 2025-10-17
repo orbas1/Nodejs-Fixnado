@@ -1186,8 +1186,8 @@ const mockDashboards = {
       {
         id: 'overview',
         icon: 'profile',
-        label: 'Profile Overview',
-        description: 'Assignments, travel, and quality trends for Jordan’s crew.',
+        label: 'Control Centre Overview',
+        description: 'Launchpad for assignments, availability, and asset controls.',
         type: 'overview',
         analytics: {
           metrics: [

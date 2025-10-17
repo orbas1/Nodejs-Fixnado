@@ -15,6 +15,10 @@ import Escrow from './escrow.js';
 import EscrowMilestone from './escrowMilestone.js';
 import EscrowNote from './escrowNote.js';
 import Dispute from './dispute.js';
+import ServicemanProfile from './servicemanProfile.js';
+import ServicemanShiftRule from './servicemanShiftRule.js';
+import ServicemanCertification from './servicemanCertification.js';
+import ServicemanEquipmentItem from './servicemanEquipmentItem.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
@@ -156,6 +160,15 @@ User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' })
 UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(ServicemanProfile, { foreignKey: 'userId', as: 'servicemanProfile' });
+ServicemanProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+ServicemanProfile.hasMany(ServicemanShiftRule, { foreignKey: 'profileId', as: 'shiftRules' });
+ServicemanShiftRule.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanCertification, { foreignKey: 'profileId', as: 'certifications' });
+ServicemanCertification.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanEquipmentItem, { foreignKey: 'profileId', as: 'equipment' });
+ServicemanEquipmentItem.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
 
 CustomerAccountSetting.hasMany(CustomerNotificationRecipient, {
   foreignKey: 'accountSettingId',
@@ -781,7 +794,6 @@ HomePage.hasMany(HomePageComponent, {
   hooks: true
 });
 HomePageComponent.belongsTo(HomePage, { foreignKey: 'homePageId', as: 'page' });
-export default sequelize;
 WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
 WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
 
@@ -808,17 +820,22 @@ export {
   EscrowMilestone,
   EscrowNote,
   Dispute,
+  ServicemanProfile,
+  ServicemanShiftRule,
+  ServicemanCertification,
+  ServicemanEquipmentItem,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,
   ZoneAnalyticsSnapshot,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
   Booking,
   BookingAssignment,
   BookingBid,
   BookingBidComment,
   BookingTemplate,
   BookingHistoryEntry,
-  CustomJobBid,
-  CustomJobBidMessage,
   InventoryItem,
   InventoryLedgerEntry,
   InventoryAlert,
@@ -843,11 +860,14 @@ export {
   MessageDelivery,
   AccountSupportTask,
   AccountSupportTaskUpdate,
+  AdminUserProfile,
+  CustomJobBid,
+  CustomJobBidMessage,
+  PlatformSetting,
   CommunicationsInboxConfiguration,
   CommunicationsEntryPoint,
   CommunicationsQuickReply,
   CommunicationsEscalationRule,
-  PlatformSetting,
   BlogPost,
   BlogCategory,
   BlogTag,
@@ -883,62 +903,56 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
-  ProviderProfile,
-  ProviderContact,
-  ProviderCoverage
+  WalletTransaction,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
-  AdminProfile,
-  AdminDelegate
+  RbacRoleAssignment,
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
-  WalletAccount,
-  WalletTransaction,
-  WalletPaymentMethod
+  ServiceTaxonomyCategory,
+  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
+  CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
-  CustomerCoupon,
-  CustomerAccountSetting,
-  CustomerNotificationRecipient,
+  CustomerDisputeEvidence,
   InboxQueue,
   InboxConfiguration,
   InboxTemplate
 };
+
+export default sequelize;
+
