@@ -135,6 +135,7 @@ export const DASHBOARD_ROLES = [
       { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
+      { id: 'custom-jobs', label: 'Custom Jobs & Bids', icon: 'pipeline' },
       { id: 'wallet', label: 'Wallet & Earnings', icon: 'finance' },
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },

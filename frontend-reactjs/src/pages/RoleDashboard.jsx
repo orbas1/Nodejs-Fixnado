@@ -8,6 +8,7 @@ import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
 import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
 import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
+import ServicemanCustomJobsWorkspace from '../features/servicemanCustomJobs/ServicemanCustomJobsWorkspace.jsx';
 
 const RoleDashboard = () => {
   const { roleId } = useParams();
@@ -219,6 +220,30 @@ const RoleDashboard = () => {
     }
   }, [refreshPersonaAccess, refreshToggles, runDashboardFetch, toggleEnabled]);
 
+  const enhancedDashboard = useMemo(() => {
+    if (!dashboard || !Array.isArray(dashboard.navigation)) {
+      return dashboard;
+    }
+
+    const navigation = dashboard.navigation.map((item) => {
+      if (item?.type === 'component' && item.componentKey === 'serviceman-custom-jobs') {
+        const snapshot = item.data ?? {};
+        return {
+          ...item,
+          component: ServicemanCustomJobsWorkspace,
+          componentProps: {
+            summary: snapshot.summary ?? null,
+            board: snapshot.board ?? null
+          }
+        };
+      }
+
+      return item;
+    });
+
+    return { ...dashboard, navigation };
+  }, [dashboard]);
+
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;
   }
@@ -260,7 +285,7 @@ const RoleDashboard = () => {
     <DashboardLayout
       roleMeta={roleMeta}
       registeredRoles={registeredRoles}
-      dashboard={dashboard}
+      dashboard={enhancedDashboard}
       loading={loading}
       error={error}
       onRefresh={handleRefresh}
