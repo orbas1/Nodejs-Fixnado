@@ -81,6 +81,7 @@ export const DASHBOARD_ROLES = [
       },
       { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
+      { id: 'serviceman-payments', label: 'Crew Payments & Commissions', icon: 'finance' },
       {
         id: 'onboarding-management',
         label: 'Onboarding management',

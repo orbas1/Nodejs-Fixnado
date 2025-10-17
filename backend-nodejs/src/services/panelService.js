@@ -22,6 +22,7 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getServicemanPaymentsWorkspace } from './servicemanFinanceService.js';
 import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
 import { getProviderCalendar } from './providerCalendarService.js';
 import {
@@ -737,6 +738,18 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
   };
 
   try {
+    const servicemanFinance = await getServicemanPaymentsWorkspace({
+      companyId,
+      actor,
+      limit: 10,
+      offset: 0
+    });
+    data.servicemanFinance = servicemanFinance;
+  } catch (error) {
+    console.warn('[panel] Unable to load serviceman finance workspace', {
+      companyId,
+      message: error?.message || error
+    });
     const calendarSnapshot = await getProviderCalendar({ companyId });
     data.calendar = {
       ...calendarSnapshot.data,

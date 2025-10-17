@@ -23,6 +23,7 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
 import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
 import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
 import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
@@ -564,6 +565,7 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const servicemanFinance = state.data?.servicemanFinance ?? null;
   const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
@@ -597,6 +599,11 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      servicemanFinance
+        ? {
+            id: 'provider-dashboard-serviceman-payments',
+            label: t('providerPayments.headline'),
+            description: t('providerPayments.navDescription')
       walletSection
         ? {
             id: walletSection.id || 'provider-dashboard-wallet',
@@ -683,6 +690,7 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
   }, [
     alerts.length,
     deliveryBoard.length,
@@ -903,6 +911,13 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
+        {servicemanFinance ? (
+          <ServicemanPaymentsSection
+            initialWorkspace={servicemanFinance}
+            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
+        ) : null}
         {walletSection ? <WalletSection section={walletSection} /> : null}
 
         {alerts.length > 0 ? (
