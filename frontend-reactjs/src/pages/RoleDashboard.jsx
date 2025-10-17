@@ -8,10 +8,11 @@ import DashboardAccessGate from '../components/dashboard/DashboardAccessGate.jsx
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
 import DashboardUnauthorized from '../components/dashboard/DashboardUnauthorized.jsx';
 import { usePersonaAccess } from '../hooks/usePersonaAccess.js';
+import ServicemanCustomJobsWorkspace from '../features/servicemanCustomJobs/ServicemanCustomJobsWorkspace.jsx';
 
 const RoleDashboard = () => {
   const { roleId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const roleMeta = DASHBOARD_ROLES.find((role) => role.id === roleId) || null;
   const registeredRoles = useMemo(() => DASHBOARD_ROLES.filter((role) => role.registered), []);
@@ -59,6 +60,11 @@ const RoleDashboard = () => {
       }
     }
     return params;
+  }, [searchParams]);
+
+  const initialSectionId = useMemo(() => {
+    const sectionParam = searchParams.get('section');
+    return sectionParam && sectionParam.trim().length > 0 ? sectionParam : null;
   }, [searchParams]);
 
   const hydrateBlogRail = useCallback(async () => {
@@ -219,6 +225,30 @@ const RoleDashboard = () => {
     }
   }, [refreshPersonaAccess, refreshToggles, runDashboardFetch, toggleEnabled]);
 
+  const enhancedDashboard = useMemo(() => {
+    if (!dashboard || !Array.isArray(dashboard.navigation)) {
+      return dashboard;
+    }
+
+    const navigation = dashboard.navigation.map((item) => {
+      if (item?.type === 'component' && item.componentKey === 'serviceman-custom-jobs') {
+        const snapshot = item.data ?? {};
+        return {
+          ...item,
+          component: ServicemanCustomJobsWorkspace,
+          componentProps: {
+            summary: snapshot.summary ?? null,
+            board: snapshot.board ?? null
+          }
+        };
+      }
+
+      return item;
+    });
+
+    return { ...dashboard, navigation };
+  }, [dashboard]);
+
   if (!roleMeta) {
     return <Navigate to="/dashboards" replace />;
   }
@@ -260,7 +290,7 @@ const RoleDashboard = () => {
     <DashboardLayout
       roleMeta={roleMeta}
       registeredRoles={registeredRoles}
-      dashboard={dashboard}
+      dashboard={enhancedDashboard}
       loading={loading}
       error={error}
       onRefresh={handleRefresh}
@@ -269,6 +299,18 @@ const RoleDashboard = () => {
       toggleMeta={toggle}
       toggleReason={toggleReason}
       blogPosts={blogPosts}
+      initialSectionId={initialSectionId ?? undefined}
+      onSectionChange={(nextSection) => {
+        if (!nextSection) return;
+        setSearchParams((current) => {
+          const next = new URLSearchParams(current);
+          if (next.get('section') === nextSection) {
+            return next;
+          }
+          next.set('section', nextSection);
+          return next;
+        });
+      }}
     />
   );
 };

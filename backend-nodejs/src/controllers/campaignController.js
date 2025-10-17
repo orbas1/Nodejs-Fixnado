@@ -29,12 +29,14 @@ export async function createCampaign(req, res, next) {
 
 export async function listCampaigns(req, res, next) {
   try {
-    const { companyId, status, limit, offset } = req.query;
+    const { companyId, status, limit, offset, includeMetrics, includeFraudSignals } = req.query;
     const campaigns = await listCampaignRecords({
       companyId,
       status,
       limit: limit ? Number.parseInt(limit, 10) : undefined,
-      offset: offset ? Number.parseInt(offset, 10) : undefined
+      offset: offset ? Number.parseInt(offset, 10) : undefined,
+      includeMetrics: includeMetrics === 'true',
+      includeFraudSignals: includeFraudSignals === 'true'
     });
     res.json(campaigns.map((campaign) => campaign.toJSON()));
   } catch (error) {
@@ -46,7 +48,9 @@ export async function getCampaign(req, res, next) {
   try {
     const campaign = await getCampaignById(req.params.campaignId, {
       includeMetrics: req.query.includeMetrics === 'true',
-      includeFraudSignals: req.query.includeFraudSignals === 'true'
+      includeFraudSignals: req.query.includeFraudSignals === 'true',
+      includeCreativeFlight: req.query.includeCreativeFlight === 'true',
+      includePlacementFlight: req.query.includePlacementFlight === 'true'
     });
     res.json(campaign.toJSON());
   } catch (error) {

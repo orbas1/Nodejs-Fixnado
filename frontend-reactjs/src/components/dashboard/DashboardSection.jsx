@@ -27,11 +27,17 @@ import WalletSection from './wallet/WalletSection.jsx';
 import ServiceOrdersWorkspace from './service-orders/index.js';
 import OrderHistoryManager from '../orders/OrderHistoryManager.jsx';
 import { AccountSettingsManager } from '../../features/accountSettings/index.js';
+import { ProviderProfileSettingsWorkspace } from '../../features/providerControlCentre/index.js';
+import ProviderByokManagementSection from './provider/ProviderByokManagementSection.jsx';
+import { ProviderInboxModule } from '../../modules/providerInbox/index.js';
+import IdentityVerificationSection from './serviceman/IdentityVerificationSection.jsx';
+import { ServicemanMetricsSection } from '../../modules/servicemanMetrics/index.js';
 import ServicemanFinanceWorkspace from '../../modules/servicemanFinance/ServicemanFinanceWorkspace.jsx';
 import ServicemanTaxWorkspace from '../../modules/servicemanControlCentre/tax/ServicemanTaxWorkspace.jsx';
 import { ServicemanWebsitePreferencesSection } from '../../features/servicemanWebsitePreferences/index.js';
 import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
 import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
+import ProviderBookingManagementWorkspace from '../../modules/providerBookingManagement/ProviderBookingManagementWorkspace.jsx';
 import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index.js';
 import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
 import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
@@ -77,7 +83,8 @@ SectionHeader.propTypes = {
 };
 
 const componentRegistry = {
-  'serviceman-booking-management': ServicemanBookingManagementWorkspace
+  'serviceman-booking-management': ServicemanBookingManagementWorkspace,
+  'provider-booking-management': ProviderBookingManagementWorkspace
 };
 
 const ComponentSection = ({ section }) => {
@@ -1690,8 +1697,20 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       return <AccountSupportSection section={section} context={context} />;
     case 'provider-management':
       return <ProviderManagementSection section={section} />;
+    case 'provider-inbox':
+      return (
+        <ProviderInboxModule
+          tenantId={section.data?.tenantId ?? null}
+          initialSnapshot={section.data?.snapshot ?? null}
+          summary={section.data?.summary ?? null}
+          capabilities={section.data?.capabilities ?? null}
+          error={section.data?.error ?? null}
+        />
+      );
     case 'dispute-workspace':
       return <DisputeHealthWorkspace section={section} />;
+    case 'provider-settings':
+      return <ProviderProfileSettingsWorkspace section={section} />;
     case 'operations-queues':
       return <OperationsQueuesSection section={section} />;
     case 'user-management':
@@ -1717,6 +1736,12 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       return <ComplianceControlSection section={section} />;
     case 'wallet':
       return <WalletSection section={section} />;
+    case 'byok-management':
+      return <ProviderByokManagementSection section={section} />;
+    case 'serviceman-identity':
+      return <IdentityVerificationSection section={section} />;
+    case 'serviceman-metrics':
+      return <ServicemanMetricsSection section={section} />;
     case 'serviceman-escrows':
       return <ServicemanEscrowWorkspace section={section} />;
     case 'component': {

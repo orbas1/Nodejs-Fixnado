@@ -21,7 +21,10 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeploymentManagement.jsx'));
+const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
 const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
+const ProviderServices = lazy(() => import('./pages/ProviderServices.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
 const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
@@ -74,6 +77,8 @@ const CustomerSettingsDevPreview = import.meta.env.DEV
   : null;
 const ServicemanTaxDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ServicemanTaxDevPreview.jsx'))
+const ProviderAdsDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
   : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
@@ -169,6 +174,14 @@ function App() {
                 element={
                   <ProviderProtectedRoute>
                     <ProviderInventory />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
+                path="/provider/services"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderServices />
                   </ProviderProtectedRoute>
                 }
               />
@@ -417,7 +430,23 @@ function App() {
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />
+              <Route
+                path="/dashboards/provider/crew-control"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderDeploymentManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards" element={<DashboardHub />} />
+              <Route
+                path="/dashboards/provider/onboarding"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderOnboardingManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
@@ -445,6 +474,16 @@ function App() {
                   </ProviderProtectedRoute>
                 }
               />
+              <Route
+                path="/dashboards/provider/services"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderServices />
+                  </ProviderProtectedRoute>
+                }
+                path="/dashboards/provider/profile"
+                element={<Navigate to="/dashboards/provider?section=profile-settings" replace />}
+              />
               <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
               <Route path="/legal/terms" element={<Terms />} />
               <Route path="/legal/:slug" element={<Terms />} />
@@ -453,6 +492,8 @@ function App() {
               ) : null}
               {import.meta.env.DEV && ServicemanTaxDevPreview ? (
                 <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
+              {import.meta.env.DEV && ProviderAdsDevPreview ? (
+                <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>

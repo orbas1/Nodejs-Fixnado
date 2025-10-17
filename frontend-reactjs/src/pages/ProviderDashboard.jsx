@@ -6,6 +6,8 @@ import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
+import { WebsitePreferencesSection } from '../features/providerWebsitePreferences/index.js';
+import ServicemanManagementSection from '../features/providerServicemen/ServicemanManagementSection.jsx';
 import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
 import {
   CalendarDaysIcon,
@@ -23,9 +25,15 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
+import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
+import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
+import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
+import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
 import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
 import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
 import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
+import { ProviderBookingManagementWorkspace } from '../modules/providerBookingManagement/index.js';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -105,46 +113,6 @@ AlertBanner.propTypes = {
     message: PropTypes.string.isRequired,
     actionHref: PropTypes.string,
     actionLabel: PropTypes.string
-  }).isRequired
-};
-
-function ServicemanRow({ member }) {
-  const { t, format } = useLocale();
-  const availability = typeof member.availability === 'number' ? member.availability : 0;
-  const availabilityTone = availability > 0.75 ? 'success' : availability < 0.5 ? 'warning' : 'neutral';
-  const availabilityLabel = format.percentage(availability, { maximumFractionDigits: 0 });
-  const satisfactionLabel = format.percentage(member.rating ?? 0, { maximumFractionDigits: 0 });
-
-  return (
-    <li
-      className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4 transition hover:border-primary/40"
-      data-qa={`provider-dashboard-serviceman-${member.id}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-primary">{member.name}</p>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{member.role}</p>
-        </div>
-        <StatusPill tone={availabilityTone}>
-          {t('providerDashboard.servicemanAvailability', { value: availabilityLabel })}
-        </StatusPill>
-      </div>
-      <p className="text-xs text-slate-500">
-        {t('providerDashboard.servicemanSatisfaction', {
-          value: satisfactionLabel
-        })}
-      </p>
-    </li>
-  );
-}
-
-ServicemanRow.propTypes = {
-  member: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    name: PropTypes.string.isRequired,
-    role: PropTypes.string,
-    availability: PropTypes.number,
-    rating: PropTypes.number
   }).isRequired
 };
 
@@ -561,6 +529,7 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const servicemanFinance = state.data?.servicemanFinance ?? null;
   const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
@@ -568,6 +537,12 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const websitePreferences = state.data?.websitePreferences ?? null;
+  const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
+  const adsWorkspace = state.data?.ads || null;
+  const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
+  const hasAdsWorkspace = Boolean(adsWorkspace);
+  const companyId = state.meta?.companyId || provider?.id || null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -590,6 +565,13 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      servicemanFinance
+        ? {
+            id: 'provider-dashboard-serviceman-payments',
+            label: t('providerPayments.headline'),
+            description: t('providerPayments.navDescription')
+          }
+        : null,
       walletSection
         ? {
             id: walletSection.id || 'provider-dashboard-wallet',
@@ -605,9 +587,19 @@ export default function ProviderDashboard() {
           }
         : null,
       {
+        id: 'provider-dashboard-tool-rentals',
+        label: 'Tool hire & rentals',
+        description: 'Manage hire catalogue, pricing, and deposits'
+      },
+      {
         id: 'provider-dashboard-pipeline',
         label: t('providerDashboard.pipelineHeadline'),
         description: t('providerDashboard.nav.pipeline')
+      },
+      {
+        id: 'provider-dashboard-booking-management',
+        label: 'Booking management',
+        description: 'Dispatch, scheduling, and SLA guardrails'
       },
       serviceHealth.length
         ? {
@@ -656,6 +648,23 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      hasAdsWorkspace
+        ? {
+            id: 'provider-dashboard-ads',
+            label: 'Gigvora ads',
+            description: 'Campaigns, creatives, and targeting'
+          }
+        : null,
+      {
+        id: 'provider-dashboard-enterprise-upgrade',
+        label: t('providerDashboard.enterpriseUpgradeHeadline'),
+        description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
+      {
+        id: 'provider-dashboard-website-preferences',
+        label: t('providerDashboard.websitePreferencesHeadline'),
+        description: t('providerDashboard.nav.websitePreferences')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -664,9 +673,11 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
   }, [
     alerts.length,
     deliveryBoard.length,
+    hasAdsWorkspace,
     hasCalendarAccess,
     serviceCatalogue.length,
     serviceCategories.length,
@@ -772,6 +783,21 @@ export default function ProviderDashboard() {
   if (!hasProviderAccess) {
     return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
+
+  const handleWebsitePreferencesUpdated = useCallback((nextPreferences) => {
+    setState((current) => {
+      if (!current.data) {
+        return current;
+      }
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          websitePreferences: nextPreferences
+        }
+      };
+    });
+  }, []);
 
   return (
     <div data-qa="provider-dashboard">
@@ -883,6 +909,13 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
+        {servicemanFinance ? (
+          <ServicemanPaymentsSection
+            initialWorkspace={servicemanFinance}
+            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
+        ) : null}
         {walletSection ? <WalletSection section={walletSection} /> : null}
 
         {alerts.length > 0 ? (
@@ -896,6 +929,31 @@ export default function ProviderDashboard() {
                 <AlertBanner key={alert.id} alert={alert} />
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {companyId ? (
+          <ToolRentalProvider companyId={companyId}>
+            <ToolRentalWorkspace />
+          </ToolRentalProvider>
+        ) : null}
+
+        {companyId ? (
+          <section
+            id="provider-dashboard-booking-management"
+            aria-labelledby="provider-dashboard-booking-management"
+            className="space-y-4"
+          >
+            <header className="flex items-center gap-3">
+              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <div>
+                <h2 className="text-lg font-semibold text-primary">Booking management</h2>
+                <p className="text-xs text-slate-500">
+                  Dispatch crews, update schedules, and manage SLA guardrails from the provider command centre.
+                </p>
+              </div>
+            </header>
+            <ProviderBookingManagementWorkspace companyId={companyId} />
           </section>
         ) : null}
 
@@ -1039,20 +1097,36 @@ export default function ProviderDashboard() {
           </section>
         ) : null}
 
+        <WebsitePreferencesSection
+          provider={provider}
+          initialPreferences={websitePreferences}
+          onUpdated={handleWebsitePreferencesUpdated}
+        />
+        <EnterpriseUpgradeSection
+          upgrade={enterpriseUpgrade}
+          onRefresh={() => loadDashboard({ forceRefresh: true })}
+        />
+        {hasAdsWorkspace ? (
+          <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 id="provider-dashboard-ads-heading" className="text-lg font-semibold text-primary">
+                  Gigvora ads & campaigns
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Build campaigns, curate creatives, and manage placement strategy without leaving the provider workspace.
+                </p>
+              </div>
+            </header>
+            <ProviderAdsWorkspace companyId={adsCompanyId} initialData={adsWorkspace} />
+          </section>
+        ) : null}
+
         <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.servicemenSection')}</h2>
-          </header>
-          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {servicemen.length === 0 ? (
-              <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                {t('providerDashboard.servicemenEmpty')}
-              </li>
-            ) : (
-              servicemen.map((member) => <ServicemanRow key={member.id} member={member} />)
-            )}
-          </ul>
+          <ServicemanManagementSection
+            companyId={state.meta?.companyId ?? provider?.id ?? null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
         </section>
       </DashboardShell>
 

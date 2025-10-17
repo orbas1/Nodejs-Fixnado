@@ -6,7 +6,7 @@ export const DASHBOARD_ROLES = [
     headline: 'Coordinate service orders, equipment rentals, and support in one workspace.',
     registered: true,
     navigation: [
-      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'overview', label: 'Control Centre Overview', icon: 'profile' },
       { id: 'customer-control', label: 'Customer Control Centre', icon: 'control' },
       { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
       { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
@@ -68,27 +68,72 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      {
+        id: 'profile-settings',
+        label: 'Provider profile',
+        icon: 'settings',
+        description: 'Edit identity, branding, support hours, and coverage.',
+        href: '/dashboards/provider/profile'
+      },
       { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
-      { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
-      { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
-      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       {
-        id: 'inventory-management',
-        label: 'Inventory management',
-        icon: 'assets',
-        href: '/provider/inventory'
+        id: 'crew-control-centre',
+        label: 'Crew Control Centre',
+        description: 'Manage deployments, rota coverage, and delegations.',
+        icon: 'crew',
+        type: 'route',
+        href: '/dashboards/provider/crew-control'
       },
-      { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
+      { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
+      {
+        id: 'custom-jobs',
+        label: 'Custom Jobs',
+        icon: 'documents',
+        type: 'route',
+        href: '/provider/custom-jobs'
+      },
+      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
       { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       {
+        id: 'inventory-management',
+        label: 'Inventory Management',
+        icon: 'assets',
+        type: 'route',
+        href: '/provider/inventory'
+      },
+      {
+        id: 'services-control',
+        label: 'Services Control Centre',
+        description: 'Manage service creation, availability, media, and SEO from one workspace.',
+        icon: 'automation',
+        type: 'route',
+        href: '/provider/services'
+      },
+      { id: 'escrow-management', label: 'Escrow Management', icon: 'finance' },
+      {
+        id: 'serviceman-payments',
+        label: 'Crew Payments & Commissions',
+        icon: 'finance'
+      },
+      {
+        id: 'onboarding-management',
+        label: 'Onboarding Management',
+        icon: 'documents',
+        type: 'route',
+        href: '/dashboards/provider/onboarding'
+      },
+      {
         id: 'storefront-control',
-        label: 'Storefront control centre',
+        label: 'Storefront Control Centre',
         description: 'Manage storefront branding, catalogue, and incentives.',
         icon: 'storefront',
+        type: 'route',
         href: '/dashboards/provider/storefront'
       },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
+      { id: 'byok-management', label: 'Key Management', icon: 'byok' },
+      { id: 'documents', label: 'Document Management', icon: 'documents' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]
   },
@@ -114,13 +159,17 @@ export const DASHBOARD_ROLES = [
     registered: true,
     navigation: [
       { id: 'overview', label: 'Profile Overview', icon: 'profile' },
+      { id: 'metrics', label: 'Metrics', icon: 'analytics' },
       { id: 'escrows', label: 'Escrow Management', icon: 'finance' },
       { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
       { id: 'availability', label: 'Shift Availability', icon: 'availability' },
       { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
+      { id: 'custom-jobs', label: 'Custom Jobs & Bids', icon: 'pipeline' },
       { id: 'wallet', label: 'Wallet & Earnings', icon: 'finance' },
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
+      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
+      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' },
       { id: 'financial-management', label: 'Financial management', icon: 'finance' },
       {
         id: 'tax-management',
@@ -128,6 +177,10 @@ export const DASHBOARD_ROLES = [
         icon: 'finance',
         href: '/dashboards/serviceman/tax'
       },
+      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
+      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
+      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' },
+      { id: 'fixnado-ads', label: 'Fixnado Ads', icon: 'analytics' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
       {
         id: 'byok-management',
@@ -138,6 +191,7 @@ export const DASHBOARD_ROLES = [
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
       { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
+      }
     ]
   },
   {

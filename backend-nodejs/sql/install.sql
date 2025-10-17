@@ -379,7 +379,95 @@ CREATE TABLE IF NOT EXISTS command_metric_cards (
 CREATE INDEX IF NOT EXISTS idx_command_metric_cards_active_order
   ON command_metric_cards (is_active, display_order, created_at);
 
+-- Provider website preferences for control centre configuration
+CREATE TABLE IF NOT EXISTS provider_website_preferences (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  slug VARCHAR(160) NOT NULL,
+  custom_domain VARCHAR(255),
+  hero JSONB NOT NULL DEFAULT '{}'::jsonb,
+  branding JSONB NOT NULL DEFAULT '{}'::jsonb,
+  media JSONB NOT NULL DEFAULT '{}'::jsonb,
+  support JSONB NOT NULL DEFAULT '{}'::jsonb,
+  seo JSONB NOT NULL DEFAULT '{}'::jsonb,
+  social_links JSONB NOT NULL DEFAULT '[]'::jsonb,
+  trust JSONB NOT NULL DEFAULT '{}'::jsonb,
+  modules JSONB NOT NULL DEFAULT '{}'::jsonb,
+  featured_projects JSONB NOT NULL DEFAULT '[]'::jsonb,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT provider_website_preferences_company_id_key UNIQUE (company_id),
+  CONSTRAINT fk_provider_website_company
+    FOREIGN KEY (company_id) REFERENCES "Company"(id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_website_preferences_slug
+  ON provider_website_preferences (slug);
 -- ---------------------------------------------------------------------------
+-- Provider crew deployment, availability, and delegation tables
+-- These power the provider control centre crew management workspace.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "ProviderCrewMember" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  role TEXT,
+  email TEXT,
+  phone TEXT,
+  avatar_url TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'standby', 'leave', 'inactive')),
+  employment_type TEXT NOT NULL DEFAULT 'employee' CHECK (employment_type IN ('employee', 'contractor', 'partner')),
+  timezone TEXT,
+  default_shift_start TIME,
+  default_shift_end TIME,
+  skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+  notes TEXT,
+-- Tool rental management tables
+CREATE TABLE IF NOT EXISTS tool_rental_assets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  inventory_item_id UUID,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  description TEXT,
+  rental_rate NUMERIC(12, 2),
+  rental_rate_currency CHAR(3),
+  deposit_amount NUMERIC(12, 2),
+  deposit_currency CHAR(3),
+  min_hire_days INTEGER NOT NULL DEFAULT 1,
+  max_hire_days INTEGER,
+  quantity_available INTEGER NOT NULL DEFAULT 0,
+  availability_status TEXT NOT NULL DEFAULT 'available',
+  seo_title TEXT,
+  seo_description TEXT,
+  keyword_tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+  hero_image_url TEXT,
+  gallery JSONB NOT NULL DEFAULT '[]'::jsonb,
+  showcase_video_url TEXT,
+-- ---------------------------------------------------------------------------
+-- Provider onboarding control centre tables
+-- These tables power the SME onboarding workspace within the provider
+-- control centre. They capture tasks, regulatory requirements, and timeline
+-- notes so the experience delivers full CRUD coverage when launched in
+-- production environments.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingTask" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL CHECK (status IN ('not_started', 'in_progress', 'blocked', 'completed')),
+  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  due_date TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
 -- Serviceman financial management tables
 -- These tables back the Serviceman control centre financial workspace so that
 -- crew leads can manage earnings, expenses, allowances, and payout settings in
@@ -405,6 +493,30 @@ CREATE TABLE IF NOT EXISTS serviceman_financial_profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS "ProviderCrewAvailability" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID NOT NULL REFERENCES "ProviderCrewMember"(id) ON DELETE CASCADE,
+  day_of_week TEXT NOT NULL CHECK (day_of_week IN ('monday','tuesday','wednesday','thursday','friday','saturday','sunday')),
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available','on_call','unavailable','standby')),
+  location TEXT,
+  effective_from TIMESTAMPTZ,
+  effective_to TIMESTAMPTZ,
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tool_rental_assets_company_slug ON tool_rental_assets (company_id, slug);
+CREATE INDEX IF NOT EXISTS idx_tool_rental_assets_company_status ON tool_rental_assets (company_id, availability_status);
+
+CREATE TABLE IF NOT EXISTS tool_rental_pricing_tiers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  asset_id UUID NOT NULL REFERENCES tool_rental_assets(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  duration_days INTEGER NOT NULL DEFAULT 1,
+  price NUMERIC(12, 2) NOT NULL,
+  currency CHAR(3) NOT NULL,
+  deposit_amount NUMERIC(12, 2),
+  deposit_currency CHAR(3),
 CREATE INDEX IF NOT EXISTS idx_serviceman_financial_profiles_serviceman
   ON serviceman_financial_profiles (serviceman_id);
 
@@ -428,6 +540,53 @@ CREATE TABLE IF NOT EXISTS serviceman_financial_earnings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS "ProviderCrewDeployment" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID NOT NULL REFERENCES "ProviderCrewMember"(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  assignment_type TEXT NOT NULL DEFAULT 'booking' CHECK (assignment_type IN ('booking','project','standby','maintenance','training','support')),
+  reference_id TEXT,
+  start_at TIMESTAMPTZ NOT NULL,
+  end_at TIMESTAMPTZ,
+  location TEXT,
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled','in_progress','completed','cancelled','on_hold')),
+  notes TEXT,
+CREATE INDEX IF NOT EXISTS idx_tool_rental_pricing_asset ON tool_rental_pricing_tiers (asset_id, duration_days);
+
+CREATE TABLE IF NOT EXISTS tool_rental_coupons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL,
+  asset_id UUID REFERENCES tool_rental_assets(id) ON DELETE SET NULL,
+  code TEXT NOT NULL,
+  description TEXT,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+  discount_value NUMERIC(10, 2) NOT NULL,
+  currency CHAR(3),
+  max_redemptions INTEGER,
+  per_customer_limit INTEGER,
+  valid_from TIMESTAMPTZ,
+  valid_until TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'expired', 'disabled')),
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_task_company
+  ON "ProviderOnboardingTask" (company_id, status, stage);
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingRequirement" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  name VARCHAR(180) NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL CHECK (type IN ('document', 'insurance', 'payment', 'training', 'integration', 'other')),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'submitted', 'approved', 'rejected', 'waived')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  reviewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  document_id UUID REFERENCES "ComplianceDocument"(id) ON DELETE SET NULL,
+  external_url TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  due_date TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
 CREATE INDEX IF NOT EXISTS idx_serviceman_financial_earnings_serviceman
   ON serviceman_financial_earnings (serviceman_id, status, due_at);
 
@@ -491,6 +650,37 @@ CREATE TABLE IF NOT EXISTS provider_calendar_events (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS "ProviderCrewDelegation" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  crew_member_id UUID REFERENCES "ProviderCrewMember"(id) ON DELETE SET NULL,
+  delegate_name TEXT NOT NULL,
+  delegate_email TEXT,
+  delegate_phone TEXT,
+  role TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','scheduled','expired','revoked')),
+  scope JSONB NOT NULL DEFAULT '[]'::jsonb,
+  start_at TIMESTAMPTZ,
+  end_at TIMESTAMPTZ,
+  notes TEXT,
+  created_by UUID,
+  updated_by UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tool_rental_coupons_company_code ON tool_rental_coupons (company_id, code);
+CREATE INDEX IF NOT EXISTS idx_tool_rental_coupons_company_status ON tool_rental_coupons (company_id, status);
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_requirement_company
+  ON "ProviderOnboardingRequirement" (company_id, status, type);
+
+CREATE TABLE IF NOT EXISTS "ProviderOnboardingNote" (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES "Company"(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('update', 'risk', 'decision', 'note')),
+  stage TEXT NOT NULL CHECK (stage IN ('intake', 'documents', 'compliance', 'go-live', 'live')),
+  visibility TEXT NOT NULL CHECK (visibility IN ('internal', 'shared')),
+  summary VARCHAR(180) NOT NULL,
+  body TEXT,
+  follow_up_at TIMESTAMPTZ,
 CREATE INDEX IF NOT EXISTS idx_serviceman_expense_claims_serviceman
   ON serviceman_expense_claims (serviceman_id, status, submitted_at);
 
@@ -512,6 +702,16 @@ CREATE TABLE IF NOT EXISTS serviceman_allowances (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS provider_crew_member_company_status_idx
+  ON "ProviderCrewMember" (company_id, status, employment_type);
+CREATE INDEX IF NOT EXISTS provider_crew_availability_day_idx
+  ON "ProviderCrewAvailability" (company_id, crew_member_id, day_of_week);
+CREATE INDEX IF NOT EXISTS provider_crew_deployment_schedule_idx
+  ON "ProviderCrewDeployment" (company_id, crew_member_id, start_at);
+CREATE INDEX IF NOT EXISTS provider_crew_delegation_status_idx
+  ON "ProviderCrewDelegation" (company_id, status);
+CREATE INDEX IF NOT EXISTS idx_provider_onboarding_note_company
+  ON "ProviderOnboardingNote" (company_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_serviceman_allowances_active
   ON serviceman_allowances (serviceman_id, is_active, effective_from);
 CREATE INDEX IF NOT EXISTS idx_provider_calendar_events_company_time

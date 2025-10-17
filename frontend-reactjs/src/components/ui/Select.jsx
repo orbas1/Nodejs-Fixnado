@@ -13,6 +13,9 @@ const Select = forwardRef(function Select(
     hint,
     error,
     options,
+    children,
+    className,
+    selectClassName,
     className,
     selectClassName,
     children,
@@ -52,6 +55,7 @@ const Select = forwardRef(function Select(
       <select
         ref={ref}
         id={fieldId}
+        className={clsx('fx-text-input', error && 'fx-text-input--error', selectClassName)}
         className={clsx('fx-select', 'fx-text-input', error && 'fx-text-input--error', selectClassName)}
         className={clsx('fx-select', error && 'fx-select--error', selectClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
@@ -83,10 +87,10 @@ Select.displayName = 'Select';
 
 Select.propTypes = {
   id: PropTypes.string,
-  label: PropTypes.string,
-  optionalLabel: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
+  label: PropTypes.node,
+  optionalLabel: PropTypes.node,
+  hint: PropTypes.node,
+  error: PropTypes.node,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -94,6 +98,7 @@ Select.propTypes = {
       disabled: PropTypes.bool
     })
   ),
+  children: PropTypes.node,
   className: PropTypes.string,
   selectClassName: PropTypes.string
   selectClassName: PropTypes.string,
@@ -106,6 +111,10 @@ Select.defaultProps = {
   optionalLabel: undefined,
   hint: undefined,
   error: undefined,
+  options: [],
+  children: null,
+  className: undefined,
+  selectClassName: undefined
   options: undefined,
   className: undefined,
   selectClassName: undefined

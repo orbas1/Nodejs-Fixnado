@@ -232,6 +232,228 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function trimToNull(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function normaliseWebsitePreferences(raw = {}, provider = {}) {
+  const slug = trimToNull(raw.slug) || trimToNull(provider.slug) || 'provider';
+  const customDomain = trimToNull(raw.customDomain);
+  const previewUrl = trimToNull(raw.previewUrl)
+    || (customDomain ? `https://${customDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '')}` : `/providers/${slug}`);
+
+  const hero = raw.hero || {};
+  const branding = raw.branding || {};
+  const media = raw.media || {};
+  const support = raw.support || {};
+  const seo = raw.seo || {};
+  const trust = raw.trust || {};
+  const modules = raw.modules || {};
+
+  return {
+    slug,
+    customDomain,
+    previewUrl,
+    hero: {
+      heading:
+        trimToNull(hero.heading) ||
+        `Showcase ${provider.tradingName || provider.name || provider.legalName || 'provider'}`,
+      subheading:
+        trimToNull(hero.subheading) ||
+        'Curate hero messaging, supporting copy, and highlights for enterprise buyers.',
+      tagline: trimToNull(hero.tagline) || 'Escrow-backed • Telemetry visible • Enterprise ready',
+      highlights: ensureArray(hero.highlights)
+        .map((highlight) => trimToNull(highlight))
+        .filter(Boolean),
+      mediaAlignment: trimToNull(hero.mediaAlignment) || 'right',
+      primaryCta: {
+        label: trimToNull(hero.primaryCta?.label) || 'View storefront',
+        url: trimToNull(hero.primaryCta?.url) || `/providers/${slug}`,
+        behaviour: trimToNull(hero.primaryCta?.behaviour) || 'link'
+      },
+      secondaryCta: {
+        label: trimToNull(hero.secondaryCta?.label) || 'Book discovery call',
+        url: trimToNull(hero.secondaryCta?.url) || 'https://fixnado.com/contact',
+        behaviour: trimToNull(hero.secondaryCta?.behaviour) || 'link'
+      }
+    },
+    branding: {
+      theme: trimToNull(branding.theme) || 'light',
+      brandColor: trimToNull(branding.brandColor) || '#0f172a',
+      accentColor: trimToNull(branding.accentColor) || '#38bdf8',
+      backgroundColor: trimToNull(branding.backgroundColor) || '#f8fafc',
+      textTone: trimToNull(branding.textTone) || 'dark',
+      layout: trimToNull(branding.layout) || 'modular',
+      typography: trimToNull(branding.typography) || 'sans-serif'
+    },
+    media: {
+      logoUrl: trimToNull(media.logoUrl) || null,
+      heroImageUrl: trimToNull(media.heroImageUrl) || null,
+      brandImageUrl: trimToNull(media.brandImageUrl) || null,
+      brandVideoUrl: trimToNull(media.brandVideoUrl) || null,
+      gallery: ensureArray(media.gallery)
+        .map((item, index) => {
+          const imageUrl = trimToNull(item?.imageUrl);
+          if (!imageUrl) {
+            return null;
+          }
+          return {
+            id: trimToNull(item?.id) || `gallery-${index + 1}`,
+            title: trimToNull(item?.title) || `Showcase asset ${index + 1}`,
+            caption: trimToNull(item?.caption) || trimToNull(item?.description) || null,
+            imageUrl,
+            altText: trimToNull(item?.altText) || trimToNull(item?.title) || 'Showcase image'
+          };
+        })
+        .filter(Boolean)
+    },
+    support: {
+      email: trimToNull(support.email) || trimToNull(provider.supportEmail) || null,
+      phone: trimToNull(support.phone) || trimToNull(provider.supportPhone) || null,
+      hours: trimToNull(support.hours) || '24/7 concierge for enterprise programmes',
+      responseTime: trimToNull(support.responseTime) || 'Under 60 minutes',
+      conciergeName: trimToNull(support.conciergeName) || null,
+      channels: ensureArray(support.channels)
+        .map((channel, index) => {
+          const destination = trimToNull(channel?.destination) || trimToNull(channel?.value);
+          if (!destination) {
+            return null;
+          }
+          const type = trimToNull(channel?.type) || 'email';
+          return {
+            id: trimToNull(channel?.id) || `channel-${index + 1}`,
+            type,
+            label: trimToNull(channel?.label) || type.toUpperCase(),
+            destination,
+            notes: trimToNull(channel?.notes) || trimToNull(channel?.description) || null
+          };
+        })
+        .filter(Boolean)
+    },
+    seo: {
+      title:
+        trimToNull(seo.title) ||
+        `${provider.tradingName || provider.name || 'Provider'} • Fixnado marketplace`,
+      description:
+        trimToNull(seo.description) ||
+        'Control metadata, social previews, and discoverability for your storefront.',
+      keywords: ensureArray(seo.keywords)
+        .flatMap((keyword) => (typeof keyword === 'string' ? keyword.split(',') : []))
+        .map((keyword) => trimToNull(keyword))
+        .filter(Boolean),
+      ogImageUrl: trimToNull(seo.ogImageUrl) || null
+    },
+    socialLinks: ensureArray(raw.socialLinks)
+      .map((link, index) => {
+        const url = trimToNull(link?.url);
+        if (!url) {
+          return null;
+        }
+        return {
+          id: trimToNull(link?.id) || `social-${index + 1}`,
+          label: trimToNull(link?.label) || `Link ${index + 1}`,
+          url,
+          icon: trimToNull(link?.icon) || null
+        };
+      })
+      .filter(Boolean),
+    trust: {
+      showTrustScore:
+        typeof trust.showTrustScore === 'boolean' ? trust.showTrustScore : true,
+      showResponseTime:
+        typeof trust.showResponseTime === 'boolean' ? trust.showResponseTime : true,
+      testimonialsEnabled:
+        typeof trust.testimonialsEnabled === 'boolean' ? trust.testimonialsEnabled : true,
+      testimonials: ensureArray(trust.testimonials)
+        .map((item, index) => {
+          const quote = trimToNull(item?.quote) || trimToNull(item?.body);
+          if (!quote) {
+            return null;
+          }
+          return {
+            id: trimToNull(item?.id) || `testimonial-${index + 1}`,
+            quote,
+            author: trimToNull(item?.author) || trimToNull(item?.client) || 'Enterprise partner',
+            role: trimToNull(item?.role) || trimToNull(item?.title) || null
+          };
+        })
+        .filter(Boolean),
+      badges: ensureArray(trust.badges)
+        .map((badge, index) => {
+          const label = trimToNull(badge?.label);
+          if (!label) {
+            return null;
+          }
+          return {
+            id: trimToNull(badge?.id) || `badge-${index + 1}`,
+            label,
+            description: trimToNull(badge?.description) || trimToNull(badge?.caption) || null,
+            iconUrl: trimToNull(badge?.iconUrl) || trimToNull(badge?.imageUrl) || null,
+            evidenceUrl: trimToNull(badge?.evidenceUrl) || null
+          };
+        })
+        .filter(Boolean),
+      metrics: ensureArray(trust.metrics)
+        .map((metric, index) => ({
+          id: trimToNull(metric?.id) || `metric-${index + 1}`,
+          label: trimToNull(metric?.label) || `Metric ${index + 1}`,
+          value: trimToNull(metric?.value) || null,
+          format: trimToNull(metric?.format) || 'number'
+        }))
+        .filter((metric) => metric.value),
+      reviewWidget: {
+        enabled: typeof trust.reviewWidget?.enabled === 'boolean' ? trust.reviewWidget.enabled : false,
+        display: trimToNull(trust.reviewWidget?.display) || 'inline',
+        providerId: trimToNull(trust.reviewWidget?.providerId) || null,
+        url: trimToNull(trust.reviewWidget?.url) || null
+      }
+    },
+    modules: {
+      showProjects: typeof modules.showProjects === 'boolean' ? modules.showProjects : true,
+      showCertifications:
+        typeof modules.showCertifications === 'boolean' ? modules.showCertifications : true,
+      showAvailability:
+        typeof modules.showAvailability === 'boolean' ? modules.showAvailability : true,
+      allowEnquiryForm:
+        typeof modules.allowEnquiryForm === 'boolean' ? modules.allowEnquiryForm : true,
+      enableLiveChat: typeof modules.enableLiveChat === 'boolean' ? modules.enableLiveChat : false,
+      allowDownloads:
+        typeof modules.allowDownloads === 'boolean' ? modules.allowDownloads : true,
+      highlightGeoCoverage:
+        typeof modules.highlightGeoCoverage === 'boolean' ? modules.highlightGeoCoverage : true
+    },
+    featuredProjects: ensureArray(raw.featuredProjects)
+      .map((project, index) => {
+        const title = trimToNull(project?.title);
+        const summary = trimToNull(project?.summary) || trimToNull(project?.description);
+        const imageUrl = trimToNull(project?.imageUrl);
+        return {
+          id: trimToNull(project?.id) || `project-${index + 1}`,
+          title: title || `Programme ${index + 1}`,
+          summary: summary || null,
+          imageUrl,
+          ctaLabel: trimToNull(project?.ctaLabel) || trimToNull(project?.ctaText) || null,
+          ctaUrl: trimToNull(project?.ctaUrl) || null
+        };
+      })
+      .filter((project) => project.imageUrl || project.summary || project.ctaUrl),
+    metadata: {
+      notes: trimToNull(raw.metadata?.notes) || null,
+      lastPublishedAt: trimToNull(raw.metadata?.lastPublishedAt) || null,
+      updatedAt: trimToNull(raw.metadata?.updatedAt) || null,
+      updatedBy: trimToNull(raw.metadata?.updatedBy) || null,
+      createdAt: trimToNull(raw.metadata?.createdAt) || null,
+      createdBy: trimToNull(raw.metadata?.createdBy) || null
+    }
+  };
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function normaliseQueueAttachments(rawAttachments) {
   if (!Array.isArray(rawAttachments)) {
     return [];
@@ -260,6 +482,164 @@ function normaliseQueueAttachments(rawAttachments) {
       return { label: label || url, url, type };
     })
     .filter(Boolean);
+}
+
+function normaliseCampaignCreative(rawCreative = {}) {
+  return {
+    id: rawCreative.id || rawCreative.campaignCreativeId || null,
+    campaignId: rawCreative.campaignId || null,
+    campaignName: rawCreative.campaignName || null,
+    flightId: rawCreative.flightId || null,
+    flightName: rawCreative.flightName || null,
+    name: rawCreative.name || 'Creative asset',
+    format: rawCreative.format || 'image',
+    status: rawCreative.status || 'draft',
+    headline: rawCreative.headline || '',
+    description: rawCreative.description || '',
+    callToAction: rawCreative.callToAction || '',
+    assetUrl: rawCreative.assetUrl || '',
+    thumbnailUrl: rawCreative.thumbnailUrl || null,
+    metadata: rawCreative.metadata || {},
+    updatedAt: rawCreative.updatedAt || null
+  };
+}
+
+function normaliseCampaignSegment(rawSegment = {}) {
+  return {
+    id: rawSegment.id || null,
+    campaignId: rawSegment.campaignId || null,
+    campaignName: rawSegment.campaignName || null,
+    name: rawSegment.name || 'Audience segment',
+    segmentType: rawSegment.segmentType || 'custom',
+    status: rawSegment.status || 'draft',
+    sizeEstimate: rawSegment.sizeEstimate ?? null,
+    engagementRate: rawSegment.engagementRate ?? null,
+    syncedAt: rawSegment.syncedAt || null,
+    metadata: rawSegment.metadata || {}
+  };
+}
+
+function normaliseCampaignPlacement(rawPlacement = {}) {
+  return {
+    id: rawPlacement.id || null,
+    campaignId: rawPlacement.campaignId || null,
+    campaignName: rawPlacement.campaignName || null,
+    flightId: rawPlacement.flightId || null,
+    flightName: rawPlacement.flightName || null,
+    channel: rawPlacement.channel || 'marketplace',
+    format: rawPlacement.format || 'native',
+    status: rawPlacement.status || 'planned',
+    bidAmount: rawPlacement.bidAmount != null ? Number(rawPlacement.bidAmount) : null,
+    bidCurrency: rawPlacement.bidCurrency || 'GBP',
+    cpm: rawPlacement.cpm != null ? Number(rawPlacement.cpm) : null,
+    inventorySource: rawPlacement.inventorySource || null,
+    metadata: rawPlacement.metadata || {},
+    updatedAt: rawPlacement.updatedAt || null
+  };
+}
+
+function normaliseCampaignInvoice(rawInvoice = {}) {
+  return {
+    id: rawInvoice.id || null,
+    campaignId: rawInvoice.campaignId || null,
+    campaignName: rawInvoice.campaignName || null,
+    invoiceNumber: rawInvoice.invoiceNumber || rawInvoice.id || 'Invoice',
+    status: rawInvoice.status || 'draft',
+    currency: rawInvoice.currency || 'GBP',
+    amountDue: rawInvoice.amountDue != null ? Number(rawInvoice.amountDue) : null,
+    amountPaid: rawInvoice.amountPaid != null ? Number(rawInvoice.amountPaid) : null,
+    dueDate: rawInvoice.dueDate || null,
+    issuedAt: rawInvoice.issuedAt || null,
+    periodStart: rawInvoice.periodStart || null,
+    periodEnd: rawInvoice.periodEnd || null,
+    metadata: rawInvoice.metadata || {}
+  };
+}
+
+function normaliseCampaignFraudSignal(rawSignal = {}) {
+  return {
+    id: rawSignal.id || null,
+    campaignId: rawSignal.campaignId || null,
+    flightId: rawSignal.flightId || null,
+    title: rawSignal.title || 'Campaign alert',
+    signalType: rawSignal.signalType || 'insight',
+    severity: rawSignal.severity || 'medium',
+    detectedAt: rawSignal.detectedAt || null,
+    metadata: rawSignal.metadata || {}
+  };
+}
+
+function normaliseProviderAds(rawAds = {}) {
+  const overview = rawAds.overview || {};
+  const company = rawAds.company || {};
+
+  return {
+    generatedAt: rawAds.generatedAt || null,
+    company: {
+      id: company.id || null,
+      name: company.name || company.contactName || 'Gigvora provider'
+    },
+    overview: {
+      spendMonthToDate: overview.spendMonthToDate != null ? Number(overview.spendMonthToDate) : 0,
+      revenueMonthToDate: overview.revenueMonthToDate != null ? Number(overview.revenueMonthToDate) : 0,
+      impressions: overview.impressions ?? 0,
+      clicks: overview.clicks ?? 0,
+      conversions: overview.conversions ?? 0,
+      ctr: overview.ctr ?? 0,
+      cvr: overview.cvr ?? 0,
+      roas: overview.roas ?? 0,
+      lastMetricAt: overview.lastMetricAt || null
+    },
+    campaigns: ensureArray(rawAds.campaigns).map((campaign, index) => ({
+      id: campaign.id || `campaign-${index}`,
+      name: campaign.name || 'Campaign',
+      status: campaign.status || 'draft',
+      objective: campaign.objective || 'Awareness',
+      campaignType: campaign.campaignType || 'ppc',
+      pacingStrategy: campaign.pacingStrategy || 'even',
+      bidStrategy: campaign.bidStrategy || 'cpc',
+      currency: campaign.currency || 'GBP',
+      totalBudget: campaign.totalBudget != null ? Number(campaign.totalBudget) : null,
+      dailySpendCap: campaign.dailySpendCap != null ? Number(campaign.dailySpendCap) : null,
+      spend: campaign.spend != null ? Number(campaign.spend) : 0,
+      revenue: campaign.revenue != null ? Number(campaign.revenue) : 0,
+      impressions: campaign.impressions ?? 0,
+      clicks: campaign.clicks ?? 0,
+      conversions: campaign.conversions ?? 0,
+      ctr: campaign.ctr ?? 0,
+      cvr: campaign.cvr ?? 0,
+      roas: campaign.roas ?? 0,
+      pacing: campaign.pacing ?? null,
+      startAt: campaign.startAt || null,
+      endAt: campaign.endAt || null,
+      metadata: campaign.metadata || {},
+      flights: ensureArray(campaign.flights).map((flight, flightIndex) => ({
+        id: flight.id || `flight-${index}-${flightIndex}`,
+        name: flight.name || 'Flight',
+        status: flight.status || 'scheduled',
+        startAt: flight.startAt || null,
+        endAt: flight.endAt || null,
+        budget: flight.budget != null ? Number(flight.budget) : null,
+        dailySpendCap: flight.dailySpendCap != null ? Number(flight.dailySpendCap) : null
+      })),
+      creatives: ensureArray(campaign.creatives).map(normaliseCampaignCreative),
+      audienceSegments: ensureArray(campaign.audienceSegments).map(normaliseCampaignSegment),
+      placements: ensureArray(campaign.placements).map(normaliseCampaignPlacement),
+      invoices: ensureArray(campaign.invoices).map(normaliseCampaignInvoice),
+      fraudSignals: ensureArray(campaign.fraudSignals).map(normaliseCampaignFraudSignal),
+      targetingRules: ensureArray(campaign.targetingRules).map((rule, ruleIndex) => ({
+        id: rule.id || `targeting-${index}-${ruleIndex}`,
+        ruleType: rule.ruleType || 'zone',
+        operator: rule.operator || 'include',
+        payload: rule.payload || {}
+      }))
+    })),
+    creatives: ensureArray(rawAds.creatives).map(normaliseCampaignCreative),
+    audienceSegments: ensureArray(rawAds.audienceSegments).map(normaliseCampaignSegment),
+    placements: ensureArray(rawAds.placements).map(normaliseCampaignPlacement),
+    invoices: ensureArray(rawAds.invoices).map(normaliseCampaignInvoice),
+    fraudSignals: ensureArray(rawAds.fraudSignals).map(normaliseCampaignFraudSignal)
+  };
 }
 
 function normaliseQueueUpdate(update, boardId, index) {
@@ -312,6 +692,150 @@ function toNullableNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normaliseServicemanPayment(payment, index = 0) {
+  if (!payment || typeof payment !== 'object') {
+    return null;
+  }
+
+  const serviceman = payment.serviceman || {};
+  const booking = payment.booking || {};
+  const commissionRule = payment.commissionRule || payment.rule || null;
+
+  const servicemanName =
+    serviceman.name || payment.servicemanName || serviceman.displayName || 'Serviceman';
+
+  return {
+    id: payment.id || `serviceman-payment-${index}`,
+    companyId: payment.companyId ?? null,
+    amount: toNumber(payment.amount ?? payment.value ?? 0, 0),
+    currency: typeof payment.currency === 'string' && payment.currency.trim().length
+      ? payment.currency.trim().toUpperCase()
+      : 'GBP',
+    status: payment.status || 'scheduled',
+    dueDate: payment.dueDate || payment.due_date || null,
+    paidAt: payment.paidAt || payment.paid_at || null,
+    commissionRate: toNullableNumber(payment.commissionRate ?? payment.rate ?? null),
+    commissionAmount: toNullableNumber(payment.commissionAmount ?? payment.commission ?? null),
+    notes: payment.notes ?? '',
+    metadata: payment.metadata && typeof payment.metadata === 'object' ? payment.metadata : {},
+    serviceman: {
+      id: serviceman.id ?? payment.servicemanId ?? null,
+      name: servicemanName,
+      role: serviceman.role || payment.servicemanRole || serviceman.type || 'Crew'
+    },
+    booking: booking && Object.keys(booking).length
+      ? {
+          id: booking.id ?? payment.bookingId ?? null,
+          reference: booking.reference || booking.bookingReference || booking.id || null,
+          service: booking.service || booking.serviceName || null,
+          status: booking.status || null
+        }
+      : null,
+    commissionRule: commissionRule
+      ? {
+          id: commissionRule.id ?? null,
+          name: commissionRule.name || 'Commission rule',
+          rateType: commissionRule.rateType || 'percentage',
+          rateValue: toNullableNumber(commissionRule.rateValue ?? commissionRule.rate ?? null),
+          approvalStatus: commissionRule.approvalStatus || 'draft',
+          autoApply: Boolean(commissionRule.autoApply),
+          isDefault: Boolean(commissionRule.isDefault)
+        }
+      : null,
+    createdAt: payment.createdAt || payment.created_at || null,
+    updatedAt: payment.updatedAt || payment.updated_at || null
+  };
+}
+
+function normaliseServicemanCommissionRule(rule, index = 0) {
+  if (!rule || typeof rule !== 'object') {
+    return {
+      id: `commission-rule-${index}`,
+      name: 'Commission rule',
+      description: '',
+      rateType: 'percentage',
+      rateValue: 0,
+      autoApply: false,
+      isDefault: false,
+      approvalStatus: 'draft',
+      appliesToRole: null,
+      serviceCategory: null,
+      minimumBookingValue: null,
+      maximumCommissionValue: null,
+      effectiveFrom: null,
+      effectiveTo: null,
+      metadata: {},
+      companyId: null,
+      createdAt: null,
+      updatedAt: null
+    };
+  }
+
+  return {
+    id: rule.id || `commission-rule-${index}`,
+    name: rule.name || 'Commission rule',
+    description: rule.description || '',
+    rateType: rule.rateType || 'percentage',
+    rateValue: toNumber(rule.rateValue ?? rule.rate ?? 0, 0),
+    autoApply: Boolean(rule.autoApply),
+    isDefault: Boolean(rule.isDefault),
+    approvalStatus: rule.approvalStatus || 'draft',
+    appliesToRole: rule.appliesToRole || null,
+    serviceCategory: rule.serviceCategory || null,
+    minimumBookingValue: toNullableNumber(rule.minimumBookingValue ?? rule.minimumBooking ?? null),
+    maximumCommissionValue: toNullableNumber(rule.maximumCommissionValue ?? null),
+    effectiveFrom: rule.effectiveFrom || null,
+    effectiveTo: rule.effectiveTo || null,
+    metadata: rule.metadata && typeof rule.metadata === 'object' ? rule.metadata : {},
+    companyId: rule.companyId ?? null,
+    createdAt: rule.createdAt || null,
+    updatedAt: rule.updatedAt || null
+  };
+}
+
+function normaliseServicemanFinance(finance = {}) {
+  const summary = finance.summary || {};
+  const upcoming = ensureArray(finance.upcoming)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const history = finance.history || {};
+  const historyItems = ensureArray(history.items)
+    .map((item, index) => normaliseServicemanPayment(item, index))
+    .filter(Boolean);
+  const commissions = finance.commissions || {};
+  const commissionRules = ensureArray(commissions.rules)
+    .map((rule, index) => normaliseServicemanCommissionRule(rule, index))
+    .filter(Boolean);
+
+  return {
+    companyId: finance.companyId ?? null,
+    summary: {
+      outstandingTotal: toNumber(summary.outstandingTotal ?? summary.outstanding ?? 0, 0),
+      paidLast30Days: toNumber(summary.paidLast30Days ?? summary.paidLast30 ?? 0, 0),
+      avgCommissionRate: toNumber(summary.avgCommissionRate ?? summary.averageRate ?? 0, 0),
+      upcomingCount:
+        typeof summary.upcomingCount === 'number' && Number.isFinite(summary.upcomingCount)
+          ? summary.upcomingCount
+          : upcoming.length,
+      commissionPaid: toNumber(summary.commissionPaid ?? 0, 0),
+      commissionOutstanding: toNumber(summary.commissionOutstanding ?? 0, 0)
+    },
+    upcoming,
+    history: {
+      items: historyItems,
+      total: history.total ?? history.count ?? historyItems.length,
+      limit: history.limit ?? history.pageSize ?? historyItems.length,
+      offset: history.offset ?? history.page ?? 0
+    },
+    commissions: {
+      rules: commissionRules,
+      activeRules:
+        commissions.activeRules ?? commissionRules.filter((rule) => rule.approvalStatus === 'approved').length,
+      defaultRuleId: commissions.defaultRuleId ?? commissionRules.find((rule) => rule.isDefault)?.id ?? null
+    }
+  };
+}
+
 function normaliseOption(option, fallbackValue = 'value', fallbackLabel = 'Label') {
   if (!option || typeof option !== 'object') {
     return { value: fallbackValue, label: fallbackLabel };
@@ -344,6 +868,65 @@ const numberFormatter = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0
 });
 
+function normaliseEnterpriseUpgrade(upgrade = null) {
+  if (!upgrade) {
+    return null;
+  }
+
+  return {
+    id: upgrade.id || null,
+    status: upgrade.status || 'draft',
+    summary: upgrade.summary || null,
+    requestedAt: upgrade.requestedAt || null,
+    targetGoLive: upgrade.targetGoLive || null,
+    seats: upgrade.seats != null ? Number(upgrade.seats) : null,
+    contractValue: upgrade.contractValue != null ? Number(upgrade.contractValue) : null,
+    currency: upgrade.currency || 'GBP',
+    automationScope: upgrade.automationScope || null,
+    enterpriseFeatures: ensureArray(upgrade.enterpriseFeatures),
+    onboardingManager: upgrade.onboardingManager || null,
+    notes: upgrade.notes || null,
+    lastDecisionAt: upgrade.lastDecisionAt || null,
+    createdAt: upgrade.createdAt || null,
+    updatedAt: upgrade.updatedAt || null,
+    contacts: ensureArray(upgrade.contacts).map((contact, index) => ({
+      id: contact.id || `upgrade-contact-${index}`,
+      name: contact.name || 'Stakeholder',
+      role: contact.role || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      influenceLevel: contact.influenceLevel || null,
+      primaryContact: Boolean(contact.primaryContact)
+    })),
+    sites: ensureArray(upgrade.sites).map((site, index) => ({
+      id: site.id || `upgrade-site-${index}`,
+      siteName: site.siteName || site.name || 'Expansion site',
+      region: site.region || null,
+      headcount: site.headcount != null ? Number(site.headcount) : null,
+      goLiveDate: site.goLiveDate || null,
+      imageUrl: site.imageUrl || null,
+      notes: site.notes || null
+    })),
+    checklist: ensureArray(upgrade.checklist).map((item, index) => ({
+      id: item.id || `upgrade-checklist-${index}`,
+      label: item.label || item.name || 'Upgrade task',
+      status: item.status || 'not_started',
+      owner: item.owner || null,
+      dueDate: item.dueDate || null,
+      notes: item.notes || null,
+      sortOrder: item.sortOrder != null ? Number(item.sortOrder) : index
+    })),
+    documents: ensureArray(upgrade.documents).map((doc, index) => ({
+      id: doc.id || `upgrade-document-${index}`,
+      title: doc.title || 'Document',
+      type: doc.type || null,
+      url: doc.url || '#',
+      thumbnailUrl: doc.thumbnailUrl || null,
+      description: doc.description || null
+    }))
+  };
+}
+
 function normaliseCalendarSnapshot(snapshot) {
   if (!snapshot) {
     return null;
@@ -362,6 +945,9 @@ function normaliseCalendarSnapshot(snapshot) {
     permissions: root.permissions ?? {},
     links: root.links ?? {},
     meta
+  };
+}
+
 function normaliseToolSaleCoupon(coupon, index) {
   if (!coupon) {
     return { id: `tool-sale-coupon-${index}`, name: 'Coupon', status: 'draft' };
@@ -425,17 +1011,21 @@ function normaliseProviderDashboard(payload = {}) {
   const finances = root.finances || root.finance || {};
   const serviceDelivery = root.serviceDelivery || root.delivery || {};
   const taxonomy = root.serviceTaxonomy || root.taxonomy || {};
+  const upgrade = normaliseEnterpriseUpgrade(root.enterpriseUpgrade || root.enterprise_upgrade);
+  const ads = normaliseProviderAds(root.ads || {});
+
+  const providerDetails = {
+    name: provider.legalName || provider.name || 'Provider',
+    tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
+    region: provider.region || provider.operatingRegion || 'United Kingdom',
+    slug: provider.slug || root.slug || 'provider',
+    onboardingStatus: provider.onboardingStatus || 'active',
+    supportEmail: provider.supportEmail || provider.contactEmail || root.contactEmail || null,
+    supportPhone: provider.supportPhone || provider.contactPhone || root.contactPhone || null
+  };
 
   return {
-    provider: {
-      name: provider.legalName || provider.name || 'Provider',
-      tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
-      region: provider.region || provider.operatingRegion || 'United Kingdom',
-      slug: provider.slug || root.slug || 'provider',
-      onboardingStatus: provider.onboardingStatus || 'active',
-      supportEmail: provider.supportEmail || provider.contactEmail || root.contactEmail || null,
-      supportPhone: provider.supportPhone || provider.contactPhone || root.contactPhone || null
-    },
+    provider: providerDetails,
     metrics: {
       utilisation: metrics.utilisation ?? metrics.capacityUtilisation ?? 0.74,
       slaHitRate: metrics.slaHitRate ?? metrics.sla ?? 0.96,
@@ -558,6 +1148,12 @@ function normaliseProviderDashboard(payload = {}) {
         coverage: ensureArray(service.coverage)
       }))
     },
+    websitePreferences: normaliseWebsitePreferences(root.websitePreferences || root.website || {}, providerDetails)
+    enterpriseUpgrade: upgrade
+    servicemanFinance: normaliseServicemanFinance(
+      root.servicemanFinance || root.servicemanFinanceSnapshot || {}
+    )
+    ads
     calendar: normaliseCalendarSnapshot(root.calendar)
   };
 }
@@ -1932,6 +2528,7 @@ function normaliseAdminDashboard(payload = {}) {
       command: {
         tiles,
         summary: {
+          escrowTotal: Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
           escrowTotal:
             Number.parseFloat(commandSummary.escrowTotal ?? commandSummary.escrowTotalAmount ?? 0) || 0,
           escrowTotalLabel: commandSummary.escrowTotalLabel || commandSummary.escrowTotal || '—',
@@ -2571,6 +3168,59 @@ function normaliseProviderService(service = {}) {
   };
 }
 
+function normaliseProviderTaxProfile(profile = {}) {
+  return {
+    id: profile.id ?? null,
+    registrationNumber: profile.registrationNumber ?? null,
+    registrationCountry: profile.registrationCountry ?? null,
+    registrationRegion: profile.registrationRegion ?? null,
+    registrationStatus: profile.registrationStatus ?? 'not_registered',
+    registrationStatusLabel: profile.registrationStatusLabel ?? 'Not registered',
+    vatRegistered: Boolean(profile.vatRegistered),
+    registrationEffectiveFrom: toDate(profile.registrationEffectiveFrom),
+    defaultRate: toNumber(profile.defaultRate, 0),
+    thresholdAmount:
+      profile.thresholdAmount !== undefined ? toNumber(profile.thresholdAmount, null) : null,
+    thresholdCurrency: profile.thresholdCurrency ?? 'GBP',
+    filingFrequency: profile.filingFrequency ?? 'annual',
+    filingFrequencyLabel: profile.filingFrequencyLabel ?? 'Annual',
+    nextFilingDueAt: toDate(profile.nextFilingDueAt),
+    lastFiledAt: toDate(profile.lastFiledAt),
+    accountingMethod: profile.accountingMethod ?? 'accrual',
+    accountingMethodLabel: profile.accountingMethodLabel ?? 'Accrual',
+    certificateUrl: profile.certificateUrl ?? null,
+    exemptionReason: profile.exemptionReason ?? null,
+    taxAdvisor: profile.taxAdvisor ?? null,
+    notes: profile.notes ?? null,
+    metadata: isPlainObject(profile.metadata) ? profile.metadata : {},
+    defaultCurrency: profile.defaultCurrency ?? profile.thresholdCurrency ?? 'GBP'
+  };
+}
+
+function normaliseProviderTaxFiling(filing = {}) {
+  return {
+    id: filing.id ?? `tax-filing-${Math.random().toString(36).slice(2, 8)}`,
+    companyId: filing.companyId ?? null,
+    periodStart: toDate(filing.periodStart),
+    periodEnd: toDate(filing.periodEnd),
+    dueAt: toDate(filing.dueAt),
+    filedAt: toDate(filing.filedAt),
+    status: filing.status ?? 'scheduled',
+    statusLabel: filing.statusLabel ?? (filing.status ? filing.status.replace(/_/g, ' ') : 'Scheduled'),
+    taxableSalesAmount:
+      filing.taxableSalesAmount !== undefined ? toNumber(filing.taxableSalesAmount, null) : null,
+    taxCollectedAmount:
+      filing.taxCollectedAmount !== undefined ? toNumber(filing.taxCollectedAmount, null) : null,
+    taxDueAmount: filing.taxDueAmount !== undefined ? toNumber(filing.taxDueAmount, null) : null,
+    currency: filing.currency ?? 'GBP',
+    referenceNumber: filing.referenceNumber ?? null,
+    submittedBy: filing.submittedBy ?? null,
+    supportingDocumentUrl: filing.supportingDocumentUrl ?? null,
+    notes: filing.notes ?? null,
+    metadata: isPlainObject(filing.metadata) ? filing.metadata : {}
+  };
+}
+
 function normaliseAdminProviderDirectory(payload = {}) {
   const summary = payload.summary ?? {};
   const providers = ensureArray(payload.providers).map((provider) => ({
@@ -2662,6 +3312,17 @@ function normaliseAdminProviderDirectory(payload = {}) {
 function normaliseAdminProviderDetail(payload = {}) {
   const company = payload.company ?? {};
   const profile = payload.profile ?? {};
+  const taxProfile = normaliseProviderTaxProfile(payload.taxProfile);
+  const taxFilings = ensureArray(payload.taxFilings).map(normaliseProviderTaxFiling);
+  const taxStats = {
+    overdueCount: toNumber(payload.taxStats?.overdueCount, 0),
+    nextDueAt: toDate(payload.taxStats?.nextDueAt),
+    lastFiledAt: toDate(payload.taxStats?.lastFiledAt),
+    rolling12mCollected: toNumber(payload.taxStats?.rolling12mCollected, 0),
+    rolling12mDue: toNumber(payload.taxStats?.rolling12mDue, 0),
+    vatRegistered: Boolean(payload.taxStats?.vatRegistered ?? taxProfile.vatRegistered),
+    defaultRate: toNumber(payload.taxStats?.defaultRate, taxProfile.defaultRate)
+  };
 
   return {
     company: {
@@ -2709,6 +3370,9 @@ function normaliseAdminProviderDetail(payload = {}) {
     coverage: ensureArray(payload.coverage).map(normaliseProviderCoverage),
     documents: ensureArray(payload.documents).map(normaliseProviderDocument),
     services: ensureArray(payload.services).map(normaliseProviderService),
+    taxProfile,
+    taxFilings,
+    taxStats,
     stats: {
       activeBookings: toNumber(payload.stats?.activeBookings, 0),
       completedBookings30d: toNumber(payload.stats?.completedBookings30d, 0),
@@ -2726,6 +3390,18 @@ function normaliseAdminProviderDetail(payload = {}) {
       riskLevels: ensureArray(payload.enums?.riskLevels).map((option) => normaliseOption(option, 'medium', 'Medium')),
       coverageTypes: ensureArray(payload.enums?.coverageTypes).map((option) => normaliseOption(option, 'primary', 'Primary')),
       insuredStatuses: ensureArray(payload.enums?.insuredStatuses).map((option) => normaliseOption(option, 'not_started', 'Not started')),
+      taxRegistrationStatuses: ensureArray(payload.enums?.taxRegistrationStatuses).map((option) =>
+        normaliseOption(option, 'not_registered', 'Not registered')
+      ),
+      taxAccountingMethods: ensureArray(payload.enums?.taxAccountingMethods).map((option) =>
+        normaliseOption(option, 'accrual', 'Accrual')
+      ),
+      taxFilingFrequencies: ensureArray(payload.enums?.taxFilingFrequencies).map((option) =>
+        normaliseOption(option, 'annual', 'Annual')
+      ),
+      taxFilingStatuses: ensureArray(payload.enums?.taxFilingStatuses).map((option) =>
+        normaliseOption(option, 'scheduled', 'Scheduled')
+      ),
       zones: ensureArray(payload.enums?.zones).map((zone) => ({
         id: zone.id ?? `zone-${Math.random().toString(36).slice(2, 8)}`,
         name: zone.name ?? 'Coverage zone',
@@ -2917,6 +3593,80 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
       downloadUrl: '/api/v1/compliance/documents/doc-insurance/download'
     }
   ],
+  taxProfile: {
+    id: 'tax-profile-metro-power',
+    registrationNumber: 'GB123456789',
+    registrationCountry: 'GB',
+    registrationRegion: 'London',
+    registrationStatus: 'registered',
+    registrationStatusLabel: 'Registered',
+    vatRegistered: true,
+    registrationEffectiveFrom: new Date(Date.now() - 86400000 * 400).toISOString(),
+    defaultRate: 0.2,
+    thresholdAmount: 85000,
+    thresholdCurrency: 'GBP',
+    filingFrequency: 'quarterly',
+    filingFrequencyLabel: 'Quarterly',
+    nextFilingDueAt: new Date(Date.now() + 86400000 * 45).toISOString(),
+    lastFiledAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+    accountingMethod: 'accrual',
+    accountingMethodLabel: 'Accrual',
+    certificateUrl: 'https://cdn.fixnado.example/providers/metro-power/vat-certificate.pdf',
+    exemptionReason: null,
+    taxAdvisor: 'Finsight Advisory LLP',
+    notes: 'VAT returns submitted via HMRC API. Review reverse charge compliance for energy installations.',
+    metadata: { hmrcReference: 'VAT-2025-04' },
+    defaultCurrency: 'GBP'
+  },
+  taxFilings: [
+    {
+      id: 'filing-q1',
+      companyId: 'provider-metro-power',
+      periodStart: new Date('2025-01-01').toISOString(),
+      periodEnd: new Date('2025-03-31').toISOString(),
+      dueAt: new Date('2025-05-07').toISOString(),
+      filedAt: new Date('2025-04-20').toISOString(),
+      status: 'filed',
+      statusLabel: 'Filed',
+      taxableSalesAmount: 215000,
+      taxCollectedAmount: 43000,
+      taxDueAmount: 43000,
+      currency: 'GBP',
+      referenceNumber: 'VAT-Q1-2025',
+      submittedBy: 'Amelia Roberts',
+      supportingDocumentUrl: 'https://cdn.fixnado.example/providers/metro-power/vat-q1-2025.pdf',
+      notes: 'Included emergency generator rentals during red weather alert.',
+      metadata: { hmrcSubmissionId: 'HMRC-12345' }
+    },
+    {
+      id: 'filing-q2',
+      companyId: 'provider-metro-power',
+      periodStart: new Date('2025-04-01').toISOString(),
+      periodEnd: new Date('2025-06-30').toISOString(),
+      dueAt: new Date('2025-08-07').toISOString(),
+      filedAt: null,
+      status: 'scheduled',
+      statusLabel: 'Scheduled',
+      taxableSalesAmount: null,
+      taxCollectedAmount: null,
+      taxDueAmount: null,
+      currency: 'GBP',
+      referenceNumber: null,
+      submittedBy: null,
+      supportingDocumentUrl: null,
+      notes: 'Awaiting bank feed reconciliation before submission.',
+      metadata: {}
+    }
+  ],
+  taxStats: {
+    overdueCount: 0,
+    nextDueAt: new Date('2025-08-07').toISOString(),
+    lastFiledAt: new Date('2025-04-20').toISOString(),
+    rolling12mCollected: 168000,
+    rolling12mDue: 168000,
+    vatRegistered: true,
+    defaultRate: 0.2
+  },
   services: [
     {
       id: 'service-critical',
@@ -2977,6 +3727,31 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
       { value: 'in_review', label: 'In review' },
       { value: 'approved', label: 'Approved' },
       { value: 'suspended', label: 'Suspended' }
+    ],
+    taxRegistrationStatuses: [
+      { value: 'not_registered', label: 'Not registered' },
+      { value: 'pending', label: 'Registration pending' },
+      { value: 'registered', label: 'Registered' },
+      { value: 'suspended', label: 'Suspended' },
+      { value: 'deregistered', label: 'Deregistered' }
+    ],
+    taxAccountingMethods: [
+      { value: 'accrual', label: 'Accrual' },
+      { value: 'cash', label: 'Cash' }
+    ],
+    taxFilingFrequencies: [
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'quarterly', label: 'Quarterly' },
+      { value: 'semi_annual', label: 'Semi-annual' },
+      { value: 'annual', label: 'Annual' }
+    ],
+    taxFilingStatuses: [
+      { value: 'draft', label: 'Draft' },
+      { value: 'scheduled', label: 'Scheduled' },
+      { value: 'filed', label: 'Filed' },
+      { value: 'paid', label: 'Paid' },
+      { value: 'overdue', label: 'Overdue' },
+      { value: 'cancelled', label: 'Cancelled' }
     ],
     zones: [
       { id: 'zone-central', name: 'Central District', companyId: 'provider-metro-power' },
@@ -3131,6 +3906,192 @@ const providerFallback = normaliseProviderDashboard({
     { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
     { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
   ],
+  servicemanFinance: {
+    companyId: 'provider-metro-power',
+    summary: {
+      outstandingTotal: 4200,
+      paidLast30Days: 22600,
+      avgCommissionRate: 0.18,
+      upcomingCount: 3,
+      commissionPaid: 12600,
+      commissionOutstanding: 4200
+    },
+    upcoming: [
+      {
+        id: 'payment-upcoming-1',
+        serviceman: { id: 'crew-1', name: 'Amina Khan', role: 'Lead Electrical Engineer' },
+        amount: 2400,
+        currency: 'GBP',
+        status: 'scheduled',
+        dueDate: new Date(Date.now() + 86400000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.15,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4801',
+          reference: 'BK-4801',
+          service: 'Critical power maintenance',
+          status: 'scheduled'
+        },
+        notes: 'Release once compliance evidence uploaded.',
+        metadata: { milestone: 'Stage 2' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-default',
+          name: 'Default performance',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          approvalStatus: 'approved',
+          autoApply: true,
+          isDefault: true
+        }
+      },
+      {
+        id: 'payment-upcoming-2',
+        serviceman: { id: 'crew-2', name: 'Owen Davies', role: 'HVAC Specialist' },
+        amount: 1800,
+        currency: 'GBP',
+        status: 'pending',
+        dueDate: new Date(Date.now() + 172800000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.2,
+        commissionAmount: 360,
+        booking: {
+          id: 'booking-4820',
+          reference: 'BK-4820',
+          service: 'HVAC emergency call-out',
+          status: 'in_progress'
+        },
+        notes: 'Hold until photographic evidence reviewed.',
+        metadata: { milestone: 'Completion' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      },
+      {
+        id: 'payment-upcoming-3',
+        serviceman: { id: 'crew-3', name: 'Sophie Chen', role: 'Compliance Coordinator' },
+        amount: 1000,
+        currency: 'GBP',
+        status: 'approved',
+        dueDate: new Date(Date.now() + 259200000).toISOString(),
+        paidAt: null,
+        commissionRate: 0.12,
+        commissionAmount: 120,
+        booking: {
+          id: 'booking-4825',
+          reference: 'BK-4825',
+          service: 'Compliance audit closeout',
+          status: 'awaiting_assignment'
+        },
+        notes: 'Auto-approve when documentation uploaded.',
+        metadata: { stage: 'Audit' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commissionRule: {
+          id: 'commission-admin',
+          name: 'Coordinator baseline',
+          rateType: 'percentage',
+          rateValue: 0.12,
+          approvalStatus: 'approved',
+          autoApply: false,
+          isDefault: false
+        }
+      }
+    ],
+    history: {
+      items: [
+        {
+          id: 'payment-history-1',
+          serviceman: { id: 'crew-4', name: 'Ibrahim Adeyemi', role: 'Field Engineer' },
+          amount: 3600,
+          currency: 'GBP',
+          status: 'paid',
+          dueDate: new Date(Date.now() - 1209600000).toISOString(),
+          paidAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRate: 0.18,
+          commissionAmount: 648,
+          booking: {
+            id: 'booking-4701',
+            reference: 'BK-4701',
+            service: 'Generator upgrade',
+            status: 'completed'
+          },
+          notes: 'Paid after QA sign-off.',
+          metadata: { invoice: 'INV-3384' },
+          createdAt: new Date(Date.now() - 1296000000).toISOString(),
+          updatedAt: new Date(Date.now() - 777600000).toISOString(),
+          commissionRule: {
+            id: 'commission-default',
+            name: 'Default performance',
+            rateType: 'percentage',
+            rateValue: 0.15,
+            approvalStatus: 'approved',
+            autoApply: true,
+            isDefault: true
+          }
+        }
+      ],
+      total: 4,
+      limit: 6,
+      offset: 0
+    },
+    commissions: {
+      rules: [
+        {
+          id: 'commission-default',
+          name: 'Default performance',
+          description: 'Applies to scheduled jobs under £10k where QA checks are green.',
+          rateType: 'percentage',
+          rateValue: 0.15,
+          autoApply: true,
+          isDefault: true,
+          approvalStatus: 'approved',
+          appliesToRole: 'Lead engineer',
+          serviceCategory: 'Critical power',
+          minimumBookingValue: 500,
+          maximumCommissionValue: null,
+          effectiveFrom: new Date(Date.now() - 864000000).toISOString(),
+          effectiveTo: null,
+          metadata: { window: 'standard' },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 864000000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+          id: 'commission-hvac',
+          name: 'HVAC emergency uplift',
+          description: 'Applies 20% commission to emergency HVAC call-outs completed within SLA.',
+          rateType: 'percentage',
+          rateValue: 0.2,
+          autoApply: false,
+          isDefault: false,
+          approvalStatus: 'approved',
+          appliesToRole: 'HVAC Specialist',
+          serviceCategory: 'HVAC emergency response',
+          minimumBookingValue: 0,
+          maximumCommissionValue: 2200,
+          effectiveFrom: new Date(Date.now() - 432000000).toISOString(),
+          effectiveTo: null,
+          metadata: { slaMinutes: 60 },
+          companyId: 'provider-metro-power',
+          createdAt: new Date(Date.now() - 432000000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ],
+      activeRules: 2,
+      defaultRuleId: 'commission-default'
+    }
+  },
   serviceDelivery: {
     health: [
       { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
@@ -3219,6 +4180,110 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
+  enterpriseUpgrade: {
+    id: 'upgrade-request-fallback',
+    status: 'in_review',
+    summary:
+      'Preparing to scale Metro Power Services to enterprise tier with multi-site rollout, enhanced automation, and compliance tooling.',
+    requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    targetGoLive: new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString(),
+    seats: 45,
+    contractValue: 185000,
+    currency: 'GBP',
+    automationScope: 'Rollout playbooks across seven strategic sites, integrate SSO, and enable automated compliance attestations.',
+    enterpriseFeatures: ['dedicated_success', 'advanced_analytics', 'sso', 'compliance_reporting'],
+    onboardingManager: 'Priya Patel',
+    notes: 'Awaiting signed SOW from enterprise procurement. Security review scheduled for next week.',
+    lastDecisionAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    contacts: [
+      {
+        id: 'upgrade-contact-1',
+        name: 'Lena Howard',
+        role: 'Operations Director',
+        email: 'lena.howard@metropower.example',
+        phone: '+44 20 7946 1122',
+        influenceLevel: 'Decision maker',
+        primaryContact: true
+      },
+      {
+        id: 'upgrade-contact-2',
+        name: 'Jacob Miller',
+        role: 'Head of Facilities',
+        email: 'jacob.miller@metropower.example',
+        phone: '+44 20 7946 1135',
+        influenceLevel: 'Sponsor',
+        primaryContact: false
+      }
+    ],
+    sites: [
+      {
+        id: 'upgrade-site-hq',
+        siteName: 'Finova HQ',
+        region: 'City of London',
+        headcount: 12,
+        goLiveDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Requires redundant UPS upgrades and remote monitoring telemetry.'
+      },
+      {
+        id: 'upgrade-site-glasgow',
+        siteName: 'Northbank Data Centre',
+        region: 'Glasgow',
+        headcount: 8,
+        goLiveDate: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
+        imageUrl: null,
+        notes: 'Needs carbon reporting integration and safety briefing refresh.'
+      }
+    ],
+    checklist: [
+      {
+        id: 'upgrade-checklist-discovery',
+        label: 'Enterprise discovery workshop',
+        status: 'complete',
+        owner: 'Priya Patel',
+        dueDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+        notes: 'Captured all compliance prerequisites and data residency requirements.',
+        sortOrder: 0
+      },
+      {
+        id: 'upgrade-checklist-security',
+        label: 'Security architecture review',
+        status: 'in_progress',
+        owner: 'Marcus Lee',
+        dueDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
+        notes: 'SSO integration staged; awaiting pen-test sign-off.',
+        sortOrder: 1
+      },
+      {
+        id: 'upgrade-checklist-training',
+        label: 'Enterprise operator training plan',
+        status: 'not_started',
+        owner: 'Lena Howard',
+        dueDate: new Date(Date.now() + 18 * 24 * 3600 * 1000).toISOString(),
+        notes: null,
+        sortOrder: 2
+      }
+    ],
+    documents: [
+      {
+        id: 'upgrade-document-sow',
+        title: 'Enterprise SOW draft',
+        type: 'contract',
+        url: 'https://cdn.fixnado.com/docs/metro-power-sow.pdf',
+        thumbnailUrl: null,
+        description: 'Statement of work covering rollout scope, milestones, and commercial terms.'
+      },
+      {
+        id: 'upgrade-document-journey',
+        title: 'Customer journey blueprint',
+        type: 'playbook',
+        url: 'https://cdn.fixnado.com/docs/metro-power-journey.png',
+        thumbnailUrl: 'https://cdn.fixnado.com/docs/thumbnails/metro-power-journey.png',
+        description: 'High-level flow for procurement to live operations, including telemetry checkpoints.'
+      }
+    ]
   calendar: {
     calendar: {
       monthLabel: fallbackCalendarMonthLabel,
@@ -3429,8 +4494,393 @@ const providerFallback = normaliseProviderDashboard({
       tags: ['IoT', 'Analytics', 'Sustainability'],
       coverage: ['Docklands', 'Canary Wharf']
     }
-  ]
+  ],
+  websitePreferences: {
+    slug: 'metro-power-services',
+    customDomain: 'metro-power.services',
+    hero: {
+      heading: 'Telemetry-first field engineering',
+      subheading:
+        'Showcase Metro Power programme strength, concierge support, and telemetry-backed reporting to enterprise buyers.',
+      tagline: 'Escrow-backed • Telemetry visible • Enterprise ready',
+      highlights: [
+        'London & South East coverage',
+        'Critical power + HVAC specialists',
+        'Escrow protected engagements'
+      ],
+      mediaAlignment: 'left',
+      primaryCta: {
+        label: 'View storefront',
+        url: '/providers/metro-power-services',
+        behaviour: 'link'
+      },
+      secondaryCta: {
+        label: 'Book discovery call',
+        url: 'https://metro-power.services/discovery',
+        behaviour: 'link'
+      }
+    },
+    branding: {
+      theme: 'light',
+      brandColor: '#0b1d3a',
+      accentColor: '#38bdf8',
+      backgroundColor: '#f1f5f9',
+      textTone: 'dark',
+      layout: 'modular',
+      typography: 'Inter'
+    },
+    media: {
+      logoUrl: 'https://cdn.fixnado.com/providers/metro-power/logo.svg',
+      heroImageUrl: 'https://cdn.fixnado.com/providers/metro-power/hero.jpg',
+      brandImageUrl: 'https://cdn.fixnado.com/providers/metro-power/team.jpg',
+      brandVideoUrl: 'https://cdn.fixnado.com/providers/metro-power/showreel.mp4',
+      gallery: [
+        {
+          id: 'gallery-1',
+          title: 'Riverside Campus UPS overhaul',
+          caption: 'Telemetry-backed upgrade completed within a live estate.',
+          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-1.jpg',
+          altText: 'Metro Power team installing UPS cabinets'
+        },
+        {
+          id: 'gallery-2',
+          title: 'Northbank chilled water retrofit',
+          caption: 'HVAC retrofit with zero downtime for occupiers.',
+          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-2.jpg',
+          altText: 'Engineer calibrating chilled water plant'
+        }
+      ]
+    },
+    support: {
+      email: 'concierge@metropower.example',
+      phone: '+44 20 7946 0010',
+      hours: '24/7 concierge for enterprise programmes',
+      responseTime: 'Under 45 minutes',
+      conciergeName: 'Amina Khan',
+      channels: [
+        {
+          id: 'channel-email',
+          type: 'email',
+          label: 'Email',
+          destination: 'concierge@metropower.example',
+          notes: 'Direct to programme concierge'
+        },
+        {
+          id: 'channel-phone',
+          type: 'phone',
+          label: 'Ops hotline',
+          destination: '+44 20 7946 0010',
+          notes: 'Escalations within 15 minutes'
+        },
+        {
+          id: 'channel-slack',
+          type: 'slack',
+          label: 'Slack Connect',
+          destination: 'slack://channel?team=T12345&id=C67890',
+          notes: 'Available for enterprise workstreams'
+        }
+      ]
+    },
+    seo: {
+      title: 'Metro Power Services • Fixnado enterprise provider',
+      description:
+        'Certified critical power and HVAC specialists delivering telemetry-backed programmes across London & South East.',
+      keywords: ['critical power', 'hvac', 'telemetry', 'enterprise facilities'],
+      ogImageUrl: 'https://cdn.fixnado.com/providers/metro-power/og-image.jpg'
+    },
+    socialLinks: [
+      {
+        id: 'social-linkedin',
+        label: 'LinkedIn',
+        url: 'https://www.linkedin.com/company/metro-power-services/',
+        icon: 'linkedin'
+      },
+      {
+        id: 'social-youtube',
+        label: 'YouTube',
+        url: 'https://www.youtube.com/@metropower-services',
+        icon: 'youtube'
+      }
+    ],
+    trust: {
+      showTrustScore: true,
+      showResponseTime: true,
+      testimonialsEnabled: true,
+      testimonials: [
+        {
+          id: 'testimonial-finova',
+          quote: 'Metro Power orchestrated a complex UPS modernisation with zero downtime.',
+          author: 'Sophie Turner',
+          role: 'Operations Director, Finova HQ'
+        },
+        {
+          id: 'testimonial-northbank',
+          quote: 'Telemetry insights and concierge support kept our refurbishment on track.',
+          author: 'James Holloway',
+          role: 'Facilities Lead, Northbank Campus'
+        }
+      ],
+      badges: [
+        {
+          id: 'badge-iso',
+          label: 'ISO 9001',
+          description: 'Certified quality management for field operations.',
+          iconUrl: 'https://cdn.fixnado.com/badges/iso9001.svg',
+          evidenceUrl: 'https://metro-power.services/certificates/iso9001.pdf'
+        },
+        {
+          id: 'badge-escrow',
+          label: 'Fixnado Escrow+',
+          description: 'Enhanced escrow safeguards for enterprise engagements.',
+          iconUrl: 'https://cdn.fixnado.com/badges/escrow-plus.svg',
+          evidenceUrl: 'https://metro-power.services/policies/escrow-plus'
+        }
+      ],
+      metrics: [
+        { id: 'metric-sla', label: 'SLA compliance', value: '98%', format: 'percent' },
+        { id: 'metric-response', label: 'Median response time', value: '42m', format: 'duration' }
+      ],
+      reviewWidget: {
+        enabled: true,
+        display: 'inline',
+        providerId: 'trustpilot-metro-power',
+        url: 'https://trustpilot.com/review/metro-power.services'
+      }
+    },
+    modules: {
+      showProjects: true,
+      showCertifications: true,
+      showAvailability: true,
+      allowEnquiryForm: true,
+      enableLiveChat: false,
+      allowDownloads: true,
+      highlightGeoCoverage: true
+    },
+    featuredProjects: [
+      {
+        id: 'project-riverside',
+        title: 'Riverside Campus UPS upgrade',
+        summary: 'Critical power refresh with IoT telemetry across three towers.',
+        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/riverside.jpg',
+        ctaLabel: 'Read case study',
+        ctaUrl: 'https://metro-power.services/case-studies/riverside-ups'
+      },
+      {
+        id: 'project-northbank',
+        title: 'Northbank HVAC modernisation',
+        summary: 'Telemetry-enabled HVAC retrofit delivering 18% energy savings.',
+        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/northbank.jpg',
+        ctaLabel: 'Download programme pack',
+        ctaUrl: 'https://metro-power.services/resources/northbank-pack.pdf'
+      }
+    ],
+    metadata: {
+      notes: 'Last published after Q1 sustainability refresh.',
+      lastPublishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString()
+    }
+  ads: {
+    company: {
+      id: 'gigvora-company-001',
+      name: 'Gigvora Facilities Ltd'
+    },
+    overview: {
+      spendMonthToDate: 18400,
+      revenueMonthToDate: 46800,
+      impressions: 128000,
+      clicks: 6400,
+      conversions: 420,
+      ctr: 0.05,
+      cvr: 0.065,
+      roas: 2.54,
+      lastMetricAt: new Date().toISOString()
+    },
+    campaigns: [
+      {
+        id: 'gigvora-q2-surge',
+        name: 'Gigvora Q2 surge',
+        status: 'active',
+        objective: 'Lead generation',
+        campaignType: 'ppc',
+        pacingStrategy: 'even',
+        bidStrategy: 'cpc',
+        currency: 'GBP',
+        totalBudget: 35000,
+        dailySpendCap: 1800,
+        spend: 18400,
+        revenue: 46800,
+        impressions: 128000,
+        clicks: 6400,
+        conversions: 420,
+        ctr: 0.05,
+        cvr: 0.0656,
+        roas: 2.5435,
+        pacing: 0.525,
+        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        metadata: { goal: 'Grow enterprise bookings' },
+        flights: [
+          {
+            id: 'gigvora-flight-enterprise',
+            name: 'Enterprise facilities',
+            status: 'active',
+            startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+            endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            budget: 20000,
+            dailySpendCap: 1000
+          }
+        ],
+        creatives: [
+          {
+            id: 'gigvora-creative-hero',
+            name: 'Hero marketplace display',
+            format: 'image',
+            status: 'active',
+            assetUrl: '/media/campaigns/gigvora-hero.jpg',
+            thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+            headline: 'Telemetry-secured facility response',
+            description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+            callToAction: 'Book a walkthrough',
+            metadata: { variant: 'A' }
+          }
+        ],
+        audienceSegments: [
+          {
+            id: 'gigvora-segment-enterprise',
+            name: 'Enterprise FM leads',
+            segmentType: 'lookalike',
+            status: 'active',
+            sizeEstimate: 5400,
+            engagementRate: 0.082,
+            syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            metadata: { source: 'CRM sync' }
+          }
+        ],
+        placements: [
+          {
+            id: 'gigvora-placement-marketplace',
+            channel: 'marketplace',
+            format: 'native',
+            status: 'active',
+            bidAmount: 4.5,
+            bidCurrency: 'GBP',
+            cpm: 36.2,
+            inventorySource: 'Gigvora marketplace hero',
+            metadata: { position: 'homepage-top' }
+          }
+        ],
+        invoices: [
+          {
+            id: 'gigvora-invoice-ads-001',
+            invoiceNumber: 'ADS-001',
+            status: 'issued',
+            currency: 'GBP',
+            amountDue: 7200,
+            amountPaid: 3600,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+            issuedAt: new Date().toISOString(),
+            metadata: { period: '2025-04' }
+          }
+        ],
+        fraudSignals: [
+          {
+            id: 'gigvora-signal-overspend',
+            signalType: 'overspend',
+            severity: 'medium',
+            detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            metadata: { variance: 0.18 }
+          }
+        ],
+        targetingRules: [
+          {
+            id: 'gigvora-target-zone',
+            ruleType: 'zone',
+            operator: 'include',
+            payload: { zones: ['City of London', 'Docklands'] }
+          },
+          {
+            id: 'gigvora-target-role',
+            ruleType: 'audience',
+            operator: 'include',
+            payload: { roles: ['Facilities director', 'Operations lead'] }
+          }
+        ]
+      }
+    ],
+    creatives: [
+      {
+        id: 'gigvora-creative-hero',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Hero marketplace display',
+        format: 'image',
+        status: 'active',
+        assetUrl: '/media/campaigns/gigvora-hero.jpg',
+        thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
+        headline: 'Telemetry-secured facility response',
+        description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
+        callToAction: 'Book a walkthrough',
+        updatedAt: new Date().toISOString()
+      }
+    ],
+    audienceSegments: [
+      {
+        id: 'gigvora-segment-enterprise',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        name: 'Enterprise FM leads',
+        segmentType: 'lookalike',
+        status: 'active',
+        sizeEstimate: 5400,
+        engagementRate: 0.082,
+        syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        metadata: { source: 'CRM sync' }
+      }
+    ],
+    placements: [
+      {
+        id: 'gigvora-placement-marketplace',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        channel: 'marketplace',
+        format: 'native',
+        status: 'active',
+        bidAmount: 4.5,
+        bidCurrency: 'GBP',
+        cpm: 36.2,
+        inventorySource: 'Gigvora marketplace hero',
+        updatedAt: new Date().toISOString(),
+        metadata: { position: 'homepage-top' }
+      }
+    ],
+    invoices: [
+      {
+        id: 'gigvora-invoice-ads-001',
+        campaignId: 'gigvora-q2-surge',
+        campaignName: 'Gigvora Q2 surge',
+        invoiceNumber: 'ADS-001',
+        status: 'issued',
+        currency: 'GBP',
+        amountDue: 7200,
+        amountPaid: 3600,
+        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
+        issuedAt: new Date().toISOString(),
+        metadata: { period: '2025-04' }
+      }
+    ],
+    fraudSignals: [
+      {
+        id: 'gigvora-signal-overspend',
+        campaignId: 'gigvora-q2-surge',
+        signalType: 'overspend',
+        severity: 'medium',
+        detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        metadata: { variance: 0.18 }
+      }
+    ]
+  }
 });
+
+const providerWebsitePreferencesFallback = providerFallback.websitePreferences;
 
 const storefrontFallback = normaliseProviderStorefront({
   storefront: {
@@ -4227,7 +5677,7 @@ function withFallback(normaliser, fallback, fetcherFactory) {
       const resolvedMeta = serverMeta
         ? { ...(transportMeta ?? {}), ...serverMeta }
         : { ...(transportMeta ?? {}) };
-      const normalised = normaliser(payload);
+      const normalised = normaliser(payload, options);
       if (resolvedMeta.fromCache && resolvedMeta.stale) {
         return { data: normalised, meta: { ...resolvedMeta, fallback: true } };
       }
@@ -4444,6 +5894,143 @@ export const getProviderDashboard = withFallback(
     })
 );
 
+export function getProviderSettings(options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const cacheKeySuffix = options?.companyId ? `:${options.companyId}` : '';
+  return request(`/panel/provider/settings${query}`, {
+    cacheKey: `provider-settings${cacheKeySuffix}`,
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+}
+
+function invalidateProviderSettingsCache(companyId) {
+  const keys = ['provider-settings'];
+  if (companyId) {
+    keys.push(`provider-settings:${companyId}`);
+  }
+  clearPanelCache(keys);
+}
+
+export async function updateProviderSettingsProfile(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/profile${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsBranding(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/branding${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsOperations(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/operations${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function createProviderSettingsContact(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts${query}`, {
+    method: 'POST',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsContact(contactId, payload, options = {}) {
+  if (!contactId) {
+    throw new Error('contactId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts/${encodeURIComponent(contactId)}${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function deleteProviderSettingsContact(contactId, options = {}) {
+  if (!contactId) {
+    throw new Error('contactId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/contacts/${encodeURIComponent(contactId)}${query}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function createProviderSettingsCoverage(payload, options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage${query}`, {
+    method: 'POST',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function updateProviderSettingsCoverage(coverageId, payload, options = {}) {
+  if (!coverageId) {
+    throw new Error('coverageId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage/${encodeURIComponent(coverageId)}${query}`, {
+    method: 'PUT',
+    body: payload,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
+export async function deleteProviderSettingsCoverage(coverageId, options = {}) {
+  if (!coverageId) {
+    throw new Error('coverageId is required');
+  }
+  const query = toQueryString({ companyId: options?.companyId });
+  const response = await request(`/panel/provider/settings/coverage/${encodeURIComponent(coverageId)}${query}`, {
+    method: 'DELETE',
+    signal: options?.signal,
+    forceRefresh: true
+  });
+  invalidateProviderSettingsCache(options?.companyId);
+  return response;
+}
+
 export const getProviderStorefront = withFallback(
   normaliseProviderStorefront,
   storefrontFallback,
@@ -4463,6 +6050,60 @@ export const getProviderStorefront = withFallback(
   }
 );
 
+export const getProviderWebsitePreferences = withFallback(
+  (payload, options = {}) =>
+    normaliseWebsitePreferences(payload, options?.provider ?? providerFallback.provider),
+  providerWebsitePreferencesFallback,
+  (options = {}) =>
+    request('/panel/provider/website-preferences', {
+      cacheKey: 'provider-website-preferences',
+      ttl: 30000,
+      forceRefresh: options?.forceRefresh,
+      signal: options?.signal
+    })
+);
+
+export async function updateProviderWebsitePreferences(payload, options = {}) {
+  if (!payload || typeof payload !== 'object') {
+    throw new PanelApiError('Invalid website preference payload', 400);
+  }
+
+  const response = await request('/panel/provider/website-preferences', {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    signal: options?.signal,
+    forceRefresh: true
+  });
+
+  clearPanelCache(['provider-dashboard', 'provider-website-preferences', 'provider-storefront']);
+
+  const normalised = normaliseWebsitePreferences(
+    response.data ?? response,
+    options?.provider ?? providerFallback.provider
+  );
+
+  return normalised;
+export async function createProviderEnterpriseUpgrade(payload) {
+  const { data } = await request('/panel/provider/enterprise-upgrade', {
+    method: 'POST',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
+
+export async function updateProviderEnterpriseUpgrade(requestId, payload) {
+  const { data } = await request(`/panel/provider/enterprise-upgrade/${encodeURIComponent(requestId)}`, {
+    method: 'PUT',
+    body: payload,
+    cacheKey: null,
+    forceRefresh: true
+  });
+  clearPanelCache(['provider-dashboard']);
+  return normaliseEnterpriseUpgrade(data?.data ?? data);
 function buildStorefrontHeaders(options = {}, includeContentType = false) {
   const headers = {
     'X-Fixnado-Role': options?.role ?? 'company',
@@ -4609,6 +6250,99 @@ function invalidateProviderCache(companyId) {
   clearPanelCache(keys);
 }
 
+function normaliseProviderServiceman(record) {
+  const availabilities = ensureArray(record.availabilities).map((entry) => ({
+    id: entry.id,
+    dayOfWeek: entry.dayOfWeek ?? entry.day_of_week ?? 0,
+    startTime: entry.startTime ?? entry.start_time ?? '08:00',
+    endTime: entry.endTime ?? entry.end_time ?? '17:00',
+    timezone: entry.timezone ?? 'Europe/London',
+    isActive: Boolean(entry.isActive ?? entry.is_active ?? true)
+  }));
+
+  const zones = ensureArray(record.zones ?? record.zoneLinks).map((entry) => ({
+    id: entry.id,
+    zoneId: entry.zoneId ?? entry.zone_id ?? entry.id,
+    isPrimary: Boolean(entry.isPrimary ?? entry.is_primary ?? false),
+    zone: entry.zone
+      ? {
+          id: entry.zone.id,
+          name: entry.zone.name,
+          demandLevel: entry.zone.demandLevel ?? entry.zone.demand_level ?? null
+        }
+      : null
+  }));
+
+  const media = ensureArray(record.media).map((item, index) => ({
+    id: item.id,
+    url: item.url,
+    label: item.label ?? null,
+    type: item.type ?? 'gallery',
+    isPrimary: Boolean(item.isPrimary ?? item.is_primary ?? false),
+    sortOrder: Number.isFinite(Number(item.sortOrder ?? item.sort_order))
+      ? Number(item.sortOrder ?? item.sort_order)
+      : index,
+    notes: item.notes ?? null
+  }));
+
+  return {
+    id: record.id,
+    companyId: record.companyId ?? record.company_id ?? null,
+    name: record.name ?? 'Crew member',
+    role: record.role ?? null,
+    email: record.email ?? null,
+    phone: record.phone ?? null,
+    status: record.status ?? 'inactive',
+    availabilityStatus: record.availabilityStatus ?? record.availability_status ?? 'available',
+    availabilityPercentage: Number.isFinite(Number(record.availabilityPercentage ?? record.availability_percentage))
+      ? Number(record.availabilityPercentage ?? record.availability_percentage)
+      : 0,
+    hourlyRate: record.hourlyRate ?? record.hourly_rate ?? null,
+    currency: record.currency ?? 'GBP',
+    avatarUrl: record.avatarUrl ?? record.avatar_url ?? null,
+    bio: record.bio ?? null,
+    notes: record.notes ?? null,
+    skills: ensureArray(record.skills).map((skill) => String(skill)),
+    certifications: record.certifications ?? null,
+    availabilities,
+    zones,
+    media,
+    meta: record.meta ?? {},
+    createdAt: record.createdAt ? new Date(record.createdAt).toISOString() : null,
+    updatedAt: record.updatedAt ? new Date(record.updatedAt).toISOString() : null
+  };
+}
+
+function normaliseProviderServicemanEnums(enums = {}) {
+  return {
+    statuses: ensureArray(enums.statuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    availabilityStatuses: ensureArray(enums.availabilityStatuses).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    daysOfWeek: ensureArray(enums.daysOfWeek).map((option) => ({
+      value: Number(option.value ?? option.id ?? option ?? 0),
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    timezones: ensureArray(enums.timezones).length ? ensureArray(enums.timezones) : ['Europe/London', 'UTC'],
+    mediaTypes: ensureArray(enums.mediaTypes).map((option) => ({
+      value: option.value ?? option.id ?? option,
+      label: option.label ?? option.name ?? String(option.value ?? option)
+    })),
+    currencies: ensureArray(enums.currencies).length ? ensureArray(enums.currencies) : ['GBP', 'EUR', 'USD'],
+    zones: ensureArray(enums.zones).map((zone) => ({
+      id: zone.id ?? zone.zoneId ?? zone.value,
+      name: zone.name ?? zone.label ?? 'Coverage zone'
+    }))
+  };
+}
+
+function invalidateProviderServicemenCache(companyId) {
+  const cacheKey = companyId ? `provider-servicemen:${companyId}` : 'provider-servicemen';
+  clearPanelCache([cacheKey, 'provider-dashboard']);
 export async function getProviderToolSales(options = {}) {
   const response = await request('/panel/provider/tools', {
     cacheKey: 'provider-tool-sales',
@@ -4706,6 +6440,297 @@ export async function deleteProviderToolSaleCoupon(profileId, couponId, options 
   return normaliseToolSaleListing(response.data ?? response, 0);
 }
 
+function normaliseServiceZoneAssignment(entry) {
+  if (!entry) {
+    return null;
+  }
+  const zone = entry.zone || null;
+  const zoneId = entry.zoneId || zone?.id || null;
+  const priority = Number.isFinite(Number(entry.priority)) ? Number(entry.priority) : 1;
+
+  return {
+    id: entry.id ?? null,
+    zoneId,
+    coverageType: entry.coverageType || 'primary',
+    priority,
+    effectiveFrom: entry.effectiveFrom ?? null,
+    effectiveTo: entry.effectiveTo ?? null,
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {},
+    zone: zone
+      ? {
+          id: zone.id ?? zoneId,
+          name: zone.name ?? '',
+          demandLevel: zone.demandLevel ?? null,
+          metadata: zone.metadata && typeof zone.metadata === 'object' ? zone.metadata : {}
+        }
+      : null
+  };
+}
+
+function normaliseServiceAvailabilityWindow(entry) {
+  if (!entry) {
+    return null;
+  }
+  const day = Number.parseInt(entry.dayOfWeek, 10);
+  const maxBookings =
+    entry.maxBookings === null || entry.maxBookings === undefined || entry.maxBookings === ''
+      ? null
+      : Number.parseInt(entry.maxBookings, 10);
+
+  return {
+    id: entry.id ?? null,
+    dayOfWeek: Number.isFinite(day) ? day : 0,
+    startTime: entry.startTime ?? '00:00',
+    endTime: entry.endTime ?? '23:59',
+    maxBookings: Number.isFinite(maxBookings) ? maxBookings : null,
+    label: entry.label ?? '',
+    isActive: entry.isActive !== false,
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {}
+  };
+}
+
+function normaliseServiceMediaAsset(entry) {
+  if (!entry) {
+    return null;
+  }
+  return {
+    id: entry.id ?? null,
+    mediaType: entry.mediaType ?? 'image',
+    url: entry.url ?? '',
+    title: entry.title ?? '',
+    altText: entry.altText ?? '',
+    thumbnailUrl: entry.thumbnailUrl ?? '',
+    sortOrder: Number.isFinite(Number(entry.sortOrder)) ? Number(entry.sortOrder) : 0,
+    isPrimary: Boolean(entry.isPrimary),
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {}
+  };
+}
+
+function normaliseServiceGalleryEntry(entry) {
+  if (!entry) {
+    return null;
+  }
+  if (typeof entry === 'string') {
+    const url = entry.trim();
+    return url ? { url, altText: '' } : null;
+  }
+  if (typeof entry === 'object') {
+    const url = typeof entry.url === 'string' ? entry.url.trim() : '';
+    if (!url) {
+      return null;
+    }
+    const altText =
+      typeof entry.altText === 'string'
+        ? entry.altText
+        : typeof entry.alt === 'string'
+          ? entry.alt
+          : '';
+    return { url, altText };
+  }
+  return null;
+}
+
+function normaliseProviderServiceRecord(service) {
+  if (!service) {
+    return null;
+  }
+
+  const gallery = Array.isArray(service.gallery)
+    ? service.gallery.map(normaliseServiceGalleryEntry).filter(Boolean)
+    : [];
+  const tags = Array.isArray(service.tags)
+    ? service.tags
+    : typeof service.tags === 'string' && service.tags.trim()
+      ? service.tags
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+  const keywordTags = Array.isArray(service.keywordTags) ? service.keywordTags : [];
+  const seo = service.seo && typeof service.seo === 'object' ? service.seo : {};
+  const seoKeywords = Array.isArray(seo.keywords)
+    ? seo.keywords
+    : Array.isArray(service.seoKeywords)
+      ? service.seoKeywords
+      : [];
+
+  return {
+    id: service.id ?? null,
+    slug: service.slug ?? null,
+    companyId: service.companyId ?? null,
+    title: service.title ?? '',
+    status: service.status ?? 'draft',
+    visibility: service.visibility ?? 'restricted',
+    kind: service.kind ?? 'standard',
+    price:
+      typeof service.price === 'number'
+        ? service.price
+        : service.price != null && !Number.isNaN(Number(service.price))
+          ? Number(service.price)
+          : null,
+    currency: service.currency ?? 'USD',
+    tagline: service.tagline ?? '',
+    shortDescription: service.shortDescription ?? '',
+    description: service.description ?? '',
+    displayUrl: service.displayUrl ?? '',
+    heroImageUrl: service.heroImageUrl ?? '',
+    showcaseVideoUrl: service.showcaseVideoUrl ?? '',
+    gallery,
+    tags,
+    keywordTags,
+    seo: {
+      title: seo.title ?? service.seoTitle ?? '',
+      description: seo.description ?? service.seoDescription ?? '',
+      keywords: seoKeywords
+    },
+    crewSize: Number.isFinite(Number(service.crewSize)) ? Number(service.crewSize) : 1,
+    pricingModel: service.pricingModel ?? '',
+    pricingUnit: service.pricingUnit ?? '',
+    categoryId: service.categoryId ?? null,
+    category: service.category ?? null,
+    categoryRef: service.categoryRef ?? null,
+    availabilitySummary: service.availabilitySummary ?? service.availability ?? null,
+    availabilityWindows: Array.isArray(service.availabilityWindows)
+      ? service.availabilityWindows.map(normaliseServiceAvailabilityWindow).filter(Boolean)
+      : [],
+    zoneAssignments: Array.isArray(service.zoneAssignments)
+      ? service.zoneAssignments.map(normaliseServiceZoneAssignment).filter(Boolean)
+      : [],
+    mediaLibrary: Array.isArray(service.mediaLibrary)
+      ? service.mediaLibrary.map(normaliseServiceMediaAsset).filter(Boolean)
+      : [],
+    metrics: service.metrics && typeof service.metrics === 'object' ? service.metrics : {},
+    createdAt: service.createdAt ?? null,
+    updatedAt: service.updatedAt ?? null
+  };
+}
+
+function normaliseProviderServicesWorkspace(response) {
+  const payload = response?.data ?? response ?? {};
+  const summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
+
+  return {
+    companyId: payload.companyId ?? null,
+    summary: {
+      total: summary.total ?? 0,
+      draft: summary.draft ?? 0,
+      published: summary.published ?? 0,
+      paused: summary.paused ?? 0,
+      archived: summary.archived ?? 0,
+      active:
+        summary.active ?? (summary.total != null && summary.archived != null
+          ? summary.total - summary.archived
+          : 0)
+    },
+    services: Array.isArray(payload.services)
+      ? payload.services.map(normaliseProviderServiceRecord).filter(Boolean)
+      : [],
+    categories: Array.isArray(payload.categories)
+      ? payload.categories.map((category) => ({
+          id: category?.id ?? null,
+          name: category?.name ?? '',
+          slug: category?.slug ?? '',
+          description: category?.description ?? ''
+        }))
+      : [],
+    zones: Array.isArray(payload.zones)
+      ? payload.zones.map((zone) => ({
+          id: zone?.id ?? null,
+          name: zone?.name ?? '',
+          demandLevel: zone?.demandLevel ?? null,
+          metadata: zone?.metadata && typeof zone.metadata === 'object' ? zone.metadata : {}
+        }))
+      : []
+  };
+}
+
+function buildProviderServicesPath(options = {}) {
+  const params = new URLSearchParams();
+  if (options.companyId) {
+    params.set('companyId', options.companyId);
+  }
+  if (options.search) {
+    params.set('search', options.search);
+  }
+  if (options.status) {
+    params.set('status', options.status);
+  }
+  if (options.visibility) {
+    params.set('visibility', options.visibility);
+  }
+  const query = params.toString();
+  return query ? `/panel/provider/services?${query}` : '/panel/provider/services';
+}
+
+export async function getProviderServicesWorkspace(options = {}) {
+  const path = buildProviderServicesPath(options);
+  const response = await request(path, {
+    cacheKey: 'provider-services-workspace',
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return {
+    data: normaliseProviderServicesWorkspace(response.data ?? response),
+    meta: response.meta ?? {}
+  };
+}
+
+export async function getProviderServiceDetail(serviceId, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  const params = new URLSearchParams();
+  if (options.companyId) {
+    params.set('companyId', options.companyId);
+  }
+  const query = params.toString();
+  const path = `/panel/provider/services/${encodeURIComponent(serviceId)}${query ? `?${query}` : ''}`;
+  const response = await request(path, {
+    cacheKey: null,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function createProviderService(payload, options = {}) {
+  const response = await request('/panel/provider/services', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    cacheKey: null,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function updateProviderService(serviceId, payload, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  const response = await request(`/panel/provider/services/${encodeURIComponent(serviceId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true,
+    cacheKey: null,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function deleteProviderService(serviceId, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  await request(`/panel/provider/services/${encodeURIComponent(serviceId)}`, {
+    method: 'DELETE',
+    cacheKey: null,
+    forceRefresh: true,
+    signal: options?.signal
+  });
+}
+
 export async function createAdminProvider(payload) {
   const response = await request('/admin/providers', {
     method: 'POST',
@@ -4743,6 +6768,59 @@ export async function archiveAdminProvider(companyId, payload = {}) {
   const normalised = normaliseAdminProviderDetail(response.data ?? response);
   invalidateProviderCache(companyId);
   return normalised;
+}
+
+export async function updateAdminProviderTaxProfile(companyId, payload = {}) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/profile`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxProfile(response.data ?? response);
+}
+
+export async function createAdminProviderTaxFiling(companyId, payload = {}) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/filings`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxFiling(response.data ?? response);
+}
+
+export async function updateAdminProviderTaxFiling(companyId, filingId, payload = {}) {
+  if (!companyId || !filingId) {
+    throw new PanelApiError('Provider tax filing identifier required', 400);
+  }
+  const response = await request(
+    `/admin/providers/${encodeURIComponent(companyId)}/tax/filings/${encodeURIComponent(filingId)}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true
+    }
+  );
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxFiling(response.data ?? response);
+}
+
+export async function deleteAdminProviderTaxFiling(companyId, filingId) {
+  if (!companyId || !filingId) {
+    throw new PanelApiError('Provider tax filing identifier required', 400);
+  }
+  await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/filings/${encodeURIComponent(filingId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
 }
 
 export async function upsertAdminProviderContact(companyId, contactId, payload) {
@@ -4799,6 +6877,67 @@ export async function deleteAdminProviderCoverage(companyId, coverageId) {
     forceRefresh: true
   });
   invalidateProviderCache(companyId);
+}
+
+export async function listProviderServicemen(options = {}) {
+  const query = toQueryString({ companyId: options?.companyId });
+  const cacheKeySuffix = query ? `:${query.slice(1)}` : '';
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    cacheKey: `provider-servicemen${cacheKeySuffix}`,
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  const root = response?.data ?? response ?? {};
+  const payload = root.data ?? root;
+  return {
+    servicemen: ensureArray(payload.servicemen).map(normaliseProviderServiceman),
+    enums: normaliseProviderServicemanEnums(payload.enums)
+  };
+}
+
+export async function createProviderServiceman(companyId, payload) {
+  const query = toQueryString({ companyId });
+  const response = await request(`/panel/provider/servicemen${query}`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function updateProviderServiceman(companyId, servicemanId, payload) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  const response = await request(
+    `/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true
+    }
+  );
+  const root = response?.data ?? response ?? {};
+  const serviceman = normaliseProviderServiceman(root.data ?? root);
+  invalidateProviderServicemenCache(companyId ?? serviceman.companyId ?? null);
+  return serviceman;
+}
+
+export async function deleteProviderServiceman(companyId, servicemanId) {
+  if (!servicemanId) {
+    throw new PanelApiError('Serviceman identifier required', 400);
+  }
+  const query = toQueryString({ companyId });
+  await request(`/panel/provider/servicemen/${encodeURIComponent(servicemanId)}${query}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderServicemenCache(companyId ?? null);
 }
 
 export const getEnterprisePanel = withFallback(
@@ -4862,7 +7001,7 @@ export function clearPanelCache(keys) {
   });
 }
 
-export { PanelApiError };
+export { PanelApiError, normaliseServicemanFinance, normaliseServicemanPayment, normaliseServicemanCommissionRule };
 
 export const formatters = {
   percentage: (value) => percentageFormatter.format(value),
