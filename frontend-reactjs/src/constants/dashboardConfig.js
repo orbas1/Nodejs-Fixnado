@@ -46,6 +46,7 @@ export const DASHBOARD_ROLES = [
       { id: 'user-management', label: 'User management', icon: 'users' },
       { id: 'home-builder', label: 'Home Page Builder', icon: 'builder', href: '/admin/home-builder' },
       { id: 'live-feed-auditing', label: 'Live Feed Auditing', icon: 'analytics' },
+      { id: 'workspace-hub', label: 'Workspace Hub', menuLabel: 'Hub', icon: 'analytics', href: '/dashboards', type: 'route' },
       { id: 'settings', label: 'Platform Settings', icon: 'settings' }
     ]
   },
@@ -68,6 +69,7 @@ export const DASHBOARD_ROLES = [
       { id: 'escrows', label: 'Escrow Pipeline', icon: 'pipeline' },
       { id: 'payouts', label: 'Payout Approvals', icon: 'assets' },
       { id: 'disputes', label: 'Dispute Resolution', icon: 'compliance' },
+      { id: 'workspace-hub', label: 'Workspace Hub', menuLabel: 'Hub', icon: 'analytics', href: '/dashboards', type: 'route' },
       { id: 'reports', label: 'Exports & Reports', icon: 'automation' }
     ]
   },
@@ -92,7 +94,8 @@ export const DASHBOARD_ROLES = [
       { id: 'campaigns', label: 'Campaign Delivery', icon: 'pipeline' },
       { id: 'finance', label: 'Financial Controls', icon: 'finance' },
       { id: 'compliance', label: 'Compliance & Risk', icon: 'compliance' },
-      { id: 'vendors', label: 'Vendor Network', icon: 'crew' }
+      { id: 'vendors', label: 'Vendor Network', icon: 'crew' },
+      { id: 'workspace-hub', label: 'Workspace Hub', menuLabel: 'Hub', icon: 'analytics', href: '/dashboards', type: 'route' }
     ]
   }
 ];

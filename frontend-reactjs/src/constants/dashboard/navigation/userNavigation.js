@@ -37,6 +37,14 @@ export const userNavigation = [
     icon: 'finance'
   },
   {
+    id: 'workspace-hub',
+    label: 'Workspace Hub',
+    menuLabel: 'Hub',
+    icon: 'analytics',
+    href: '/dashboards',
+    type: 'route'
+  },
+  {
     id: 'settings',
     label: 'Account Settings',
     menuLabel: 'Settings',
