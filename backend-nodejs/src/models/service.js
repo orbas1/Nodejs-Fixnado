@@ -29,6 +29,15 @@ Service.init(
       allowNull: false
     },
     description: DataTypes.TEXT,
+    shortDescription: {
+      type: DataTypes.STRING(280),
+      allowNull: true,
+      field: 'short_description'
+    },
+    tagline: {
+      type: DataTypes.STRING(160),
+      allowNull: true
+    },
     category: DataTypes.STRING,
     categoryId: {
       type: DataTypes.UUID,
@@ -54,6 +63,27 @@ Service.init(
       type: DataTypes.STRING,
       defaultValue: 'USD'
     },
+    pricingModel: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      field: 'pricing_model'
+    },
+    pricingUnit: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      field: 'pricing_unit'
+    },
+    crewSize: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      field: 'crew_size'
+    },
+    displayUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'display_url'
+    },
     heroImageUrl: {
       type: DataTypes.STRING,
       allowNull: true
@@ -62,6 +92,11 @@ Service.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: []
+    },
+    showcaseVideoUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'showcase_video_url'
     },
     coverage: {
       type: DataTypes.JSON,
@@ -72,6 +107,28 @@ Service.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: []
+    },
+    keywordTags: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+      field: 'keyword_tags'
+    },
+    seoTitle: {
+      type: DataTypes.STRING(180),
+      allowNull: true,
+      field: 'seo_title'
+    },
+    seoDescription: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'seo_description'
+    },
+    seoKeywords: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+      field: 'seo_keywords'
     },
     metadata: {
       type: DataTypes.JSON,

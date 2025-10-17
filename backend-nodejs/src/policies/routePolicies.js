@@ -29,6 +29,8 @@ const ROUTE_POLICIES = {
       method: req.method,
       companyId: req.query?.companyId || null,
       servicemanId: req.params?.servicemanId || null
+    })
+  },
   'serviceman.control.manage': {
     id: 'serviceman.control.manage',
     version: '1.0.0',
@@ -44,7 +46,6 @@ const ROUTE_POLICIES = {
       surface: req.route?.path || null
     })
   },
-  'account.settings.manage': {
   'provider.control.crew': {
     id: 'provider.control.crew',
     version: '1.0.0',
@@ -58,6 +59,37 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       persona: req.headers['x-fixnado-persona'] || null,
       companyId: req.query?.companyId || req.body?.companyId || null
+    })
+  },
+  'panel.provider.services.view': {
+    id: 'panel.provider.services.view',
+    version: '1.0.0',
+    resource: 'panel.provider.services',
+    action: 'panel.provider.services:view',
+    description:
+      'Allow provider teams to review service catalogue settings, availability windows, and media assets from the control centre.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['provider', 'services', 'workspace'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      method: req.method
+    })
+  },
+  'panel.provider.services.manage': {
+    id: 'panel.provider.services.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.services',
+    action: 'panel.provider.services:manage',
+    description:
+      'Allow provider control centre roles to create and maintain services, zone coverage, availability, media, and SEO assets.',
+    requirements: [Permissions.PANEL_PROVIDER_MANAGE],
+    tags: ['provider', 'services', 'workspace'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      serviceId: req.params?.serviceId || null,
+      method: req.method
     })
   },
   'account.settings.manage': {

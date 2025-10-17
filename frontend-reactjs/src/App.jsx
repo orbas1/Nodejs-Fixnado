@@ -24,6 +24,7 @@ const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
 const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeploymentManagement.jsx'));
 const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
 const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
+const ProviderServices = lazy(() => import('./pages/ProviderServices.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
 const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
 const EnterprisePanel = lazy(() => import('./pages/EnterprisePanel.jsx'));
@@ -168,6 +169,14 @@ function App() {
                 element={
                   <ProviderProtectedRoute>
                     <ProviderInventory />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
+                path="/provider/services"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderServices />
                   </ProviderProtectedRoute>
                 }
               />
@@ -442,10 +451,20 @@ function App() {
                   <ServicemanProtectedRoute>
                     <ServicemanByokWorkspace />
                   </ServicemanProtectedRoute>
+              />
+              <Route
                 path="/dashboards/provider/storefront"
                 element={
                   <ProviderProtectedRoute>
                     <ProviderStorefrontControl />
+                  </ProviderProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboards/provider/services"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderServices />
                   </ProviderProtectedRoute>
                 }
               />

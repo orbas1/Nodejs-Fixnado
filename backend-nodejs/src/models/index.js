@@ -6,6 +6,8 @@ import Company from './company.js';
 import UserPreference from './userPreference.js';
 import Service from './service.js';
 import ServiceCategory from './serviceCategory.js';
+import ServiceAvailabilityWindow from './serviceAvailabilityWindow.js';
+import ServiceMediaAsset from './serviceMediaAsset.js';
 import Post from './post.js';
 import MarketplaceItem from './marketplaceItem.js';
 import ServiceZone from './serviceZone.js';
@@ -1011,6 +1013,22 @@ ServiceZoneCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' })
 Service.hasMany(ServiceZoneCoverage, { foreignKey: 'serviceId', as: 'zoneCoverage' });
 ServiceZoneCoverage.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
 
+Service.hasMany(ServiceAvailabilityWindow, {
+  foreignKey: 'serviceId',
+  as: 'availabilityWindows',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ServiceAvailabilityWindow.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
+
+Service.hasMany(ServiceMediaAsset, {
+  foreignKey: 'serviceId',
+  as: 'mediaAssets',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ServiceMediaAsset.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
+
 User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
 AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -1219,6 +1237,8 @@ export {
   MarketplaceItem,
   ServiceZone,
   ServiceZoneCoverage,
+  ServiceAvailabilityWindow,
+  ServiceMediaAsset,
   Order,
   OrderNote,
   Escrow,

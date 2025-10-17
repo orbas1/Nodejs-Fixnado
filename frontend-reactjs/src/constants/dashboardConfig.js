@@ -72,40 +72,61 @@ export const DASHBOARD_ROLES = [
       { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
       {
         id: 'crew-control-centre',
-        label: 'Crew control centre',
+        label: 'Crew Control Centre',
         description: 'Manage deployments, rota coverage, and delegations.',
         icon: 'crew',
         type: 'route',
         href: '/dashboards/provider/crew-control'
       },
       { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
-      { id: 'custom-jobs', label: 'Custom Jobs', icon: 'documents', href: '/provider/custom-jobs' },
+      {
+        id: 'custom-jobs',
+        label: 'Custom Jobs',
+        icon: 'documents',
+        type: 'route',
+        href: '/provider/custom-jobs'
+      },
       { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
-      { id: 'servicemen', label: 'Serviceman Management', icon: 'crew' },
+      { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
       {
         id: 'inventory-management',
-        label: 'Inventory management',
+        label: 'Inventory Management',
         icon: 'assets',
+        type: 'route',
         href: '/provider/inventory'
       },
-      { id: 'escrow-management', label: 'Escrow management', icon: 'finance' },
-      { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
-      { id: 'serviceman-payments', label: 'Crew Payments & Commissions', icon: 'finance' },
+      {
+        id: 'services-control',
+        label: 'Services Control Centre',
+        description: 'Manage service creation, availability, media, and SEO from one workspace.',
+        icon: 'automation',
+        type: 'route',
+        href: '/provider/services'
+      },
+      { id: 'escrow-management', label: 'Escrow Management', icon: 'finance' },
+      {
+        id: 'serviceman-payments',
+        label: 'Crew Payments & Commissions',
+        icon: 'finance'
+      },
       {
         id: 'onboarding-management',
-        label: 'Onboarding management',
+        label: 'Onboarding Management',
         icon: 'documents',
         type: 'route',
         href: '/dashboards/provider/onboarding'
+      },
+      {
         id: 'storefront-control',
-        label: 'Storefront control centre',
+        label: 'Storefront Control Centre',
         description: 'Manage storefront branding, catalogue, and incentives.',
         icon: 'storefront',
+        type: 'route',
         href: '/dashboards/provider/storefront'
       },
       { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
       { id: 'byok-management', label: 'Key Management', icon: 'byok' },
-      { id: 'documents', label: 'Document management', icon: 'documents' },
+      { id: 'documents', label: 'Document Management', icon: 'documents' },
       { id: 'settings', label: 'Automation Settings', icon: 'automation' }
     ]
   },
@@ -141,7 +162,7 @@ export const DASHBOARD_ROLES = [
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
-      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' }
+      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' },
       { id: 'financial-management', label: 'Financial management', icon: 'finance' },
       { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
       { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
