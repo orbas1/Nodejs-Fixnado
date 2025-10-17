@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   BoltIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
@@ -17,11 +18,13 @@ import StatusPill from '../../components/ui/StatusPill.jsx';
 import StorefrontSettingsForm from './components/StorefrontSettingsForm.jsx';
 import InventorySection from './components/InventorySection.jsx';
 import CouponsSection from './components/CouponsSection.jsx';
+import BusinessFrontComposer from './components/BusinessFrontComposer.jsx';
 import { useStorefrontManagement } from './StorefrontManagementProvider.jsx';
 
 const navigation = [
   { id: 'storefront-overview', label: 'Workspace overview' },
   { id: 'storefront-settings', label: 'Brand & contact details' },
+  { id: 'storefront-business-front', label: 'Business front content' },
   { id: 'storefront-inventory', label: 'Inventory catalogue' },
   { id: 'storefront-coupons', label: 'Coupons & incentives' },
   { id: 'storefront-distribution', label: 'Publishing & distribution' }
@@ -78,12 +81,27 @@ export default function StorefrontManagementWorkspace() {
   const { data, meta, status, error, actions } = useStorefrontManagement();
 
   const storefront = data.storefront;
+  const metadata = storefront.metadata || {};
   const inventory = data.inventory;
   const coupons = data.coupons;
   const inventoryMeta = data.inventoryMeta;
   const couponMeta = data.couponMeta;
 
   const heroBadges = useMemo(() => renderStatusBadge(storefront), [storefront]);
+
+  const businessFrontStats = useMemo(() => {
+    const galleryCount = Array.isArray(metadata.gallery) ? metadata.gallery.length : 0;
+    const experienceCount = Array.isArray(metadata.experiences) ? metadata.experiences.length : 0;
+    const skillsCount = Array.isArray(metadata.skills) ? metadata.skills.length : 0;
+    const tagsCount = Array.isArray(metadata.wordTags) ? metadata.wordTags.length : 0;
+    return {
+      galleryCount,
+      experienceCount,
+      skillsCount,
+      tagsCount,
+      totalAssets: galleryCount + experienceCount
+    };
+  }, [metadata]);
 
   const fallbackPublishedCount = useMemo(
     () => inventory.filter((item) => item.visibility === 'public').length,
@@ -136,6 +154,13 @@ export default function StorefrontManagementWorkspace() {
         caption: `${couponMeta?.total ?? coupons.length} total • ${couponMeta?.expiringSoon ?? 0} starting soon`
       },
       {
+        id: 'business-front-assets',
+        icon: BoltIcon,
+        label: 'Business front assets',
+        value: businessFrontStats.totalAssets,
+        caption: `${businessFrontStats.galleryCount} media • ${businessFrontStats.experienceCount} experiences • ${businessFrontStats.skillsCount} skills`
+      },
+      {
         id: 'conversion-focus',
         icon: ChartBarIcon,
         label: 'Performance focus',
@@ -143,7 +168,18 @@ export default function StorefrontManagementWorkspace() {
         caption: 'Optimise hero listings, incentives, and publishing cadence to grow storefront conversions.'
       }
     ],
-    [couponMeta, coupons, inventory, inventoryMeta, fallbackLowStockCount, fallbackPublishedCount]
+    [
+      businessFrontStats.experienceCount,
+      businessFrontStats.galleryCount,
+      businessFrontStats.skillsCount,
+      businessFrontStats.totalAssets,
+      couponMeta,
+      coupons,
+      inventory,
+      inventoryMeta,
+      fallbackLowStockCount,
+      fallbackPublishedCount
+    ]
   );
 
   const handleRefresh = async () => {
@@ -181,6 +217,18 @@ export default function StorefrontManagementWorkspace() {
           >
             View public storefront
           </Button>
+          {metadata?.seo?.canonicalUrl ? (
+            <Button
+              type="button"
+              href={metadata.seo.canonicalUrl}
+              icon={ArrowTopRightOnSquareIcon}
+              iconPosition="start"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open business front
+            </Button>
+          ) : null}
         </div>
       }
       navigation={navigation}
@@ -232,6 +280,16 @@ export default function StorefrontManagementWorkspace() {
             onRefresh={handleRefresh}
           />
         )}
+      </section>
+
+      <section id="storefront-business-front" className="space-y-4">
+        <header>
+          <h2 className="text-lg font-semibold text-primary">Business front content</h2>
+          <p className="text-sm text-slate-600">
+            Curate the public-facing business page with showcase media, case studies, skills, categories, and SEO metadata.
+          </p>
+        </header>
+        {isInitialLoading ? <Skeleton className="h-[680px] rounded-3xl" /> : <BusinessFrontComposer />}
       </section>
 
       <InventorySection

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import sequelize from '../config/database.js';
@@ -65,6 +66,276 @@ function parseDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function sanitiseStringList(input, { limit = 20, maxLength = 80 } = {}) {
+  if (input == null) {
+    return [];
+  }
+
+  const source = Array.isArray(input) ? input : String(input).split(',');
+  const seen = new Set();
+  const result = [];
+
+  for (const raw of source) {
+    if (typeof raw !== 'string') {
+      continue;
+    }
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      continue;
+    }
+    const shortened = trimmed.slice(0, maxLength);
+    const fingerprint = shortened.toLowerCase();
+    if (seen.has(fingerprint)) {
+      continue;
+    }
+    seen.add(fingerprint);
+    result.push(shortened);
+    if (result.length >= limit) {
+      break;
+    }
+  }
+
+  return result;
+}
+
+function sanitiseKeywords(input) {
+  return sanitiseStringList(input, { limit: 48, maxLength: 60 });
+}
+
+function sanitiseGalleryEntries(entries = []) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+
+  return entries
+    .map((entry, index) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const url = sanitiseString(entry.url, null);
+      if (!url) {
+        return null;
+      }
+      const idCandidate = sanitiseString(entry.id, null);
+      const label = sanitiseString(entry.label, null);
+      const altText = sanitiseString(entry.altText, null);
+      const description = sanitiseString(entry.description, null);
+      return {
+        id: idCandidate || randomUUID(),
+        position: Number.isFinite(entry.position) ? entry.position : index,
+        url,
+        label,
+        altText,
+        description
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aPos = Number.isFinite(a.position) ? a.position : 0;
+      const bPos = Number.isFinite(b.position) ? b.position : 0;
+      return aPos - bPos;
+    })
+    .slice(0, 12);
+}
+
+function sanitiseExperienceEntries(entries = []) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+
+  return entries
+    .map((entry, index) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const title = sanitiseString(entry.title, null);
+      const organisation = sanitiseString(entry.organisation, null);
+      const summary = sanitiseString(entry.summary, null);
+      const proofUrl = sanitiseString(entry.proofUrl, null);
+      const years = sanitiseString(entry.years, null);
+      const location = sanitiseString(entry.location, null);
+      const startYear = sanitiseString(entry.startYear, null);
+      const endYear = sanitiseString(entry.endYear, null);
+      const idCandidate = sanitiseString(entry.id, null);
+
+      if (!title && !organisation && !summary && !proofUrl && !years && !location && !startYear && !endYear) {
+        return null;
+      }
+
+      return {
+        id: idCandidate || randomUUID(),
+        position: Number.isFinite(entry.position) ? entry.position : index,
+        title,
+        organisation,
+        location,
+        years,
+        startYear,
+        endYear,
+        summary,
+        proofUrl
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aPos = Number.isFinite(a.position) ? a.position : 0;
+      const bPos = Number.isFinite(b.position) ? b.position : 0;
+      return aPos - bPos;
+    })
+    .slice(0, 12);
+}
+
+function sanitiseShowcaseVideo(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const url = sanitiseString(entry.url, null);
+  const caption = sanitiseString(entry.caption, null);
+  const thumbnailUrl = sanitiseString(entry.thumbnailUrl, null);
+
+  if (!url) {
+    return null;
+  }
+
+  return {
+    url,
+    caption,
+    thumbnailUrl
+  };
+}
+
+function sanitiseSeoMetadata(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return {
+      pageTitle: null,
+      metaDescription: null,
+      canonicalUrl: null,
+      socialImageUrl: null,
+      keywords: []
+    };
+  }
+
+  const pageTitle = sanitiseString(entry.pageTitle, null);
+  const metaDescription = sanitiseString(entry.metaDescription, null);
+  const canonicalUrl = sanitiseString(entry.canonicalUrl, null);
+  const socialImageUrl = sanitiseString(entry.socialImageUrl, null);
+
+  return {
+    pageTitle: pageTitle ? pageTitle.slice(0, 160) : null,
+    metaDescription: metaDescription ? metaDescription.slice(0, 320) : null,
+    canonicalUrl,
+    socialImageUrl,
+    keywords: sanitiseKeywords(entry.keywords)
+  };
+}
+
+function sanitiseBusinessMetadata(input, existing = {}) {
+  const current = existing && typeof existing === 'object' ? { ...existing } : {};
+  const payload = input && typeof input === 'object' ? input : {};
+
+  if ('showcaseVideo' in payload) {
+    const video = sanitiseShowcaseVideo(payload.showcaseVideo);
+    if (video) {
+      current.showcaseVideo = video;
+    } else {
+      delete current.showcaseVideo;
+    }
+  }
+
+  if ('gallery' in payload) {
+    current.gallery = sanitiseGalleryEntries(payload.gallery);
+  } else if (!Array.isArray(current.gallery)) {
+    current.gallery = [];
+  }
+
+  if ('experiences' in payload) {
+    current.experiences = sanitiseExperienceEntries(payload.experiences);
+  } else if (!Array.isArray(current.experiences)) {
+    current.experiences = [];
+  }
+
+  if ('skills' in payload) {
+    current.skills = sanitiseStringList(payload.skills, { limit: 40, maxLength: 80 });
+  } else if (!Array.isArray(current.skills)) {
+    current.skills = [];
+  }
+
+  if ('categories' in payload) {
+    current.categories = sanitiseStringList(payload.categories, { limit: 20, maxLength: 80 });
+  } else if (!Array.isArray(current.categories)) {
+    current.categories = [];
+  }
+
+  if ('wordTags' in payload) {
+    current.wordTags = sanitiseStringList(payload.wordTags, { limit: 60, maxLength: 60 });
+  } else if (!Array.isArray(current.wordTags)) {
+    current.wordTags = [];
+  }
+
+  if ('seo' in payload) {
+    current.seo = sanitiseSeoMetadata(payload.seo);
+  } else if (!current.seo || typeof current.seo !== 'object') {
+    current.seo = sanitiseSeoMetadata();
+  }
+
+  return current;
+}
+
+function normaliseStringArray(value, options) {
+  return sanitiseStringList(value, options);
+}
+
+function normaliseGalleryEntries(entries) {
+  const sanitised = sanitiseGalleryEntries(entries);
+  return sanitised.map((entry, index) => ({
+    id: entry.id || `gallery-${index}`,
+    position: Number.isFinite(entry.position) ? entry.position : index,
+    url: entry.url,
+    label: entry.label || null,
+    altText: entry.altText || null,
+    description: entry.description || null
+  }));
+}
+
+function normaliseExperienceEntries(entries) {
+  const sanitised = sanitiseExperienceEntries(entries);
+  return sanitised.map((entry, index) => ({
+    id: entry.id || `experience-${index}`,
+    position: Number.isFinite(entry.position) ? entry.position : index,
+    title: entry.title || null,
+    organisation: entry.organisation || null,
+    location: entry.location || null,
+    years: entry.years || null,
+    startYear: entry.startYear || null,
+    endYear: entry.endYear || null,
+    summary: entry.summary || null,
+    proofUrl: entry.proofUrl || null
+  }));
+}
+
+function normaliseShowcaseVideo(entry) {
+  const video = sanitiseShowcaseVideo(entry);
+  if (!video) {
+    return { url: '', caption: '', thumbnailUrl: '' };
+  }
+  return {
+    url: video.url,
+    caption: video.caption || '',
+    thumbnailUrl: video.thumbnailUrl || ''
+  };
+}
+
+function normaliseSeo(entry) {
+  const seo = sanitiseSeoMetadata(entry);
+  return {
+    pageTitle: seo.pageTitle || '',
+    metaDescription: seo.metaDescription || '',
+    canonicalUrl: seo.canonicalUrl || '',
+    socialImageUrl: seo.socialImageUrl || '',
+    keywords: Array.isArray(seo.keywords) ? seo.keywords : []
+  };
+}
+
 async function resolveCompanyContext({ companyId, actor }) {
   if (!actor?.id) {
     throw buildHttpError(403, 'forbidden');
@@ -128,6 +399,18 @@ async function ensureStorefront({ companyId, company, transaction }) {
 }
 
 function formatStorefront(storefront) {
+  const rawMetadata = storefront.metadata && typeof storefront.metadata === 'object' ? storefront.metadata : {};
+  const metadata = {
+    ...rawMetadata,
+    showcaseVideo: normaliseShowcaseVideo(rawMetadata.showcaseVideo),
+    gallery: normaliseGalleryEntries(rawMetadata.gallery),
+    experiences: normaliseExperienceEntries(rawMetadata.experiences),
+    skills: normaliseStringArray(rawMetadata.skills, { limit: 40, maxLength: 80 }),
+    categories: normaliseStringArray(rawMetadata.categories, { limit: 20, maxLength: 80 }),
+    wordTags: normaliseStringArray(rawMetadata.wordTags, { limit: 60, maxLength: 60 }),
+    seo: normaliseSeo(rawMetadata.seo)
+  };
+
   return {
     id: storefront.id,
     companyId: storefront.companyId,
@@ -144,7 +427,7 @@ function formatStorefront(storefront) {
     isPublished: Boolean(storefront.isPublished),
     publishedAt: storefront.publishedAt ? new Date(storefront.publishedAt).toISOString() : null,
     reviewRequired: Boolean(storefront.reviewRequired),
-    metadata: storefront.metadata || {},
+    metadata,
     updatedAt: storefront.updatedAt ? new Date(storefront.updatedAt).toISOString() : null
   };
 }
@@ -307,6 +590,9 @@ export async function upsertProviderStorefrontSettings({ companyId, actor, paylo
     } else if (!updates.isPublished) {
       updates.publishedAt = null;
     }
+
+    const metadata = sanitiseBusinessMetadata(payload.metadata, storefront.metadata);
+    updates.metadata = metadata;
 
     await storefront.update(updates, { transaction });
 

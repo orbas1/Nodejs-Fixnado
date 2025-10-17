@@ -1,6 +1,8 @@
-import TextArea from './TextArea.jsx';
+import { forwardRef, useId } from 'react';
+import PropTypes from 'prop-types';
+import clsx from 'clsx';
+import './ui.css';
 
-export default TextArea;
 const Textarea = forwardRef(function Textarea(
   { id, label, optionalLabel, hint, error, className, textareaClassName, rows = 4, ...rest },
   ref
@@ -29,7 +31,7 @@ const Textarea = forwardRef(function Textarea(
         ref={ref}
         id={fieldId}
         rows={rows}
-        className={clsx('fx-text-input fx-textarea', error && 'fx-text-input--error', textareaClassName)}
+        className={clsx('fx-text-input', 'fx-textarea', error && 'fx-text-input--error', textareaClassName)}
         aria-describedby={describedBy.join(' ') || undefined}
         aria-invalid={Boolean(error)}
         {...rest}
@@ -52,14 +54,13 @@ Textarea.displayName = 'Textarea';
 
 Textarea.propTypes = {
   id: PropTypes.string,
-  label: PropTypes.string,
-  optionalLabel: PropTypes.string,
-  hint: PropTypes.string,
-  error: PropTypes.string,
+  label: PropTypes.node,
+  optionalLabel: PropTypes.node,
+  hint: PropTypes.node,
+  error: PropTypes.node,
   className: PropTypes.string,
   textareaClassName: PropTypes.string,
   rows: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-  rows: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 Textarea.defaultProps = {

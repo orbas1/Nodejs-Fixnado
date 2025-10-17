@@ -51,7 +51,55 @@ export const validateStorefrontSettings = [
   body('accentColor').optional().isString().isLength({ max: 16 }),
   body('status').optional().isIn(['draft', 'live', 'archived']),
   body('isPublished').optional().isBoolean(),
-  body('reviewRequired').optional().isBoolean()
+  body('reviewRequired').optional().isBoolean(),
+  body('metadata').optional().isObject(),
+  body('metadata.showcaseVideo').optional().isObject(),
+  body('metadata.showcaseVideo.url')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.showcaseVideo.thumbnailUrl')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.showcaseVideo.caption').optional({ nullable: true }).isString().isLength({ max: 240 }),
+  body('metadata.gallery').optional().isArray({ max: 12 }),
+  body('metadata.gallery.*.id').optional().isString().isLength({ min: 4, max: 120 }),
+  body('metadata.gallery.*.url')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.gallery.*.label').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.gallery.*.altText').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.gallery.*.description').optional({ nullable: true }).isString().isLength({ max: 2000 }),
+  body('metadata.experiences').optional().isArray({ max: 12 }),
+  body('metadata.experiences.*.id').optional().isString().isLength({ min: 4, max: 120 }),
+  body('metadata.experiences.*.title').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.experiences.*.organisation').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.experiences.*.location').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.experiences.*.startYear').optional({ nullable: true }).isString().isLength({ max: 9 }),
+  body('metadata.experiences.*.endYear').optional({ nullable: true }).isString().isLength({ max: 9 }),
+  body('metadata.experiences.*.years').optional({ nullable: true }).isString().isLength({ max: 32 }),
+  body('metadata.experiences.*.summary').optional({ nullable: true }).isString().isLength({ max: 2000 }),
+  body('metadata.experiences.*.proofUrl')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.skills').optional().isArray({ max: 40 }),
+  body('metadata.categories').optional().isArray({ max: 20 }),
+  body('metadata.wordTags').optional().isArray({ max: 60 }),
+  body('metadata.seo').optional().isObject(),
+  body('metadata.seo.pageTitle').optional({ nullable: true }).isString().isLength({ max: 160 }),
+  body('metadata.seo.metaDescription').optional({ nullable: true }).isString().isLength({ max: 320 }),
+  body('metadata.seo.canonicalUrl')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.seo.socialImageUrl')
+    .optional({ nullable: true })
+    .isURL({ require_protocol: true })
+    .isLength({ max: 512 }),
+  body('metadata.seo.keywords').optional().isArray({ max: 48 })
 ];
 
 export async function updateStorefrontSettingsHandler(req, res, next) {

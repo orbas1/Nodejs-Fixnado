@@ -450,6 +450,7 @@ function normaliseWebsitePreferences(raw = {}, provider = {}) {
       createdBy: trimToNull(raw.metadata?.createdBy) || null
     }
   };
+}
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -1148,12 +1149,12 @@ function normaliseProviderDashboard(payload = {}) {
         coverage: ensureArray(service.coverage)
       }))
     },
-    websitePreferences: normaliseWebsitePreferences(root.websitePreferences || root.website || {}, providerDetails)
-    enterpriseUpgrade: upgrade
+    websitePreferences: normaliseWebsitePreferences(root.websitePreferences || root.website || {}, providerDetails),
+    enterpriseUpgrade: upgrade,
     servicemanFinance: normaliseServicemanFinance(
       root.servicemanFinance || root.servicemanFinanceSnapshot || {}
-    )
-    ads
+    ),
+    ads,
     calendar: normaliseCalendarSnapshot(root.calendar)
   };
 }
@@ -1286,6 +1287,9 @@ function normaliseToolSales(payload = {}) {
       activeCoupons: root.summary?.activeCoupons ?? 0
     },
     listings: ensureArray(root.listings).map(normaliseToolSaleListing)
+  };
+}
+
 function normaliseStorefrontSettings(storefront = {}) {
   return {
     id: storefront.id || 'storefront',
@@ -3771,6 +3775,13 @@ const fallbackCalendarRangeStart = new Date(
 const fallbackCalendarRangeEnd = new Date(
   Date.UTC(fallbackCalendarNow.getUTCFullYear(), fallbackCalendarNow.getUTCMonth() + 1, 0, 23, 59, 59, 999)
 ).toISOString();
+const fallbackCalendarLegend = [
+  { id: 'booking-confirmed', label: 'Confirmed booking', status: 'confirmed' },
+  { id: 'booking-pending', label: 'Pending booking', status: 'pending' },
+  { id: 'booking-risk', label: 'Escalation / hold', status: 'risk' },
+  { id: 'event-standby', label: 'Standby window', status: 'standby' },
+  { id: 'event-travel', label: 'Travel', status: 'travel' }
+];
 const fallbackCalendarWeeks = (() => {
   const start = new Date(fallbackCalendarRangeStart);
   const weeks = [];
@@ -3792,6 +3803,34 @@ const fallbackCalendarWeeks = (() => {
   }
   return weeks;
 })();
+const fallbackCalendarBookings = [
+  {
+    id: 'fallback-booking-1',
+    title: 'Lift maintenance — Riverside Campus',
+    status: 'scheduled',
+    type: 'scheduled',
+    start: new Date(Date.now() + 86400000).toISOString(),
+    end: new Date(Date.now() + 97200000).toISOString(),
+    zoneId: 'zone-central',
+    zoneName: 'Central London',
+    customerName: 'Finova HQ',
+    value: 6800,
+    currency: 'GBP'
+  },
+  {
+    id: 'fallback-booking-2',
+    title: 'Generator retrofit — Northbank',
+    status: 'pending',
+    type: 'scheduled',
+    start: new Date(Date.now() + 2 * 86400000).toISOString(),
+    end: new Date(Date.now() + 2 * 86400000 + 3 * 3600000).toISOString(),
+    zoneId: 'zone-east',
+    zoneName: 'East Borough',
+    customerName: 'Northbank Serviced Offices',
+    value: 4200,
+    currency: 'GBP'
+  }
+];
 
 const providerFallback = normaliseProviderDashboard({
   provider: {
@@ -3817,6 +3856,7 @@ const providerFallback = normaliseProviderDashboard({
   },
   alerts: [
     {
+      id: 'alert-riverside',
       severity: 'high',
       message: 'Lift modernisation at Riverside Campus requires compliance evidence upload.',
       actionLabel: 'Upload documents',
@@ -3826,6 +3866,7 @@ const providerFallback = normaliseProviderDashboard({
   pipeline: {
     upcomingBookings: [
       {
+        id: 'booking-finova',
         client: 'Finova HQ',
         service: 'Critical power maintenance',
         eta: new Date(Date.now() + 86400000).toISOString(),
@@ -3833,6 +3874,7 @@ const providerFallback = normaliseProviderDashboard({
         zone: 'City of London'
       },
       {
+        id: 'booking-northbank',
         client: 'Northbank Serviced Offices',
         service: 'HVAC emergency call-out',
         eta: new Date(Date.now() + 172800000).toISOString(),
@@ -3842,12 +3884,29 @@ const providerFallback = normaliseProviderDashboard({
     ],
     expiringCompliance: [
       {
+        id: 'compliance-fgas',
         name: 'F-Gas certification',
         expiresOn: new Date(Date.now() + 1209600000).toISOString(),
         owner: 'Compliance team'
       }
     ]
   },
+  servicemen: [
+    {
+      id: 'crew-alex',
+      name: 'Alex Morgan',
+      role: 'Lead engineer',
+      availability: 0.78,
+      rating: 4.9
+    },
+    {
+      id: 'crew-samara',
+      name: 'Samara Lee',
+      role: 'HVAC specialist',
+      availability: 0.72,
+      rating: 4.7
+    }
+  ],
   toolSales: {
     summary: {
       totalListings: 1,
@@ -3859,793 +3918,66 @@ const providerFallback = normaliseProviderDashboard({
     },
     listings: [
       {
+        id: 'tool-thermal',
         name: 'Thermal imaging kit',
-        tagline: 'Featured diagnostics kit',
-        description: 'Handheld 640x480 thermal imaging kit with live telemetry integration and concierge logistics.',
-        heroImageUrl: 'https://cdn.fixnado.test/tools/thermal.jpg',
-        showcaseVideoUrl: 'https://cdn.fixnado.test/tools/thermal.mp4',
-        galleryImages: [
-          'https://cdn.fixnado.test/tools/thermal-1.jpg',
-          'https://cdn.fixnado.test/tools/thermal-2.jpg'
-        ],
+        description: 'Handheld thermal imaging kit with concierge logistics support.',
+        category: 'Diagnostics',
+        type: 'rental',
+        price: 140,
+        currency: 'GBP',
+        availability: {
+          status: 'open',
+          label: 'Available',
+          detail: 'Same-day courier in London zones 1-4.'
+        },
         tags: ['thermal', 'diagnostics'],
-        keywordTags: ['infrared', 'inspection'],
-        listing: {
-          status: 'approved',
-          availability: 'both',
-          pricePerDay: 140,
-          purchasePrice: 1850,
-          insuredOnly: true,
-          location: 'London Docklands'
-        },
-        inventory: {
-          quantityOnHand: 6,
-          quantityReserved: 1,
-          safetyStock: 1,
-          conditionRating: 'excellent'
-        },
-        coupons: [
-          {
-            name: 'Spring diagnostics',
-            code: 'THERM10',
-            status: 'active',
-            discountType: 'percentage',
-            discountValue: 10,
-            currency: 'GBP'
-          }
-        ],
-        metrics: {
-          quantityAvailable: 5,
-          activeCoupons: 1
-        }
+        coverage: ['London', 'South East']
       }
     ]
   },
-  servicemen: [
-    { name: 'Amina Khan', role: 'Lead Electrical Engineer', availability: 0.68, rating: 0.99 },
-    { name: 'Owen Davies', role: 'HVAC Specialist', availability: 0.54, rating: 0.94 },
-    { name: 'Sophie Chen', role: 'Compliance Coordinator', availability: 0.87, rating: 0.92 }
-  ],
-  servicemanFinance: {
-    companyId: 'provider-metro-power',
-    summary: {
-      outstandingTotal: 4200,
-      paidLast30Days: 22600,
-      avgCommissionRate: 0.18,
-      upcomingCount: 3,
-      commissionPaid: 12600,
-      commissionOutstanding: 4200
-    },
-    upcoming: [
-      {
-        id: 'payment-upcoming-1',
-        serviceman: { id: 'crew-1', name: 'Amina Khan', role: 'Lead Electrical Engineer' },
-        amount: 2400,
-        currency: 'GBP',
-        status: 'scheduled',
-        dueDate: new Date(Date.now() + 86400000).toISOString(),
-        paidAt: null,
-        commissionRate: 0.15,
-        commissionAmount: 360,
-        booking: {
-          id: 'booking-4801',
-          reference: 'BK-4801',
-          service: 'Critical power maintenance',
-          status: 'scheduled'
-        },
-        notes: 'Release once compliance evidence uploaded.',
-        metadata: { milestone: 'Stage 2' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        commissionRule: {
-          id: 'commission-default',
-          name: 'Default performance',
-          rateType: 'percentage',
-          rateValue: 0.15,
-          approvalStatus: 'approved',
-          autoApply: true,
-          isDefault: true
-        }
-      },
-      {
-        id: 'payment-upcoming-2',
-        serviceman: { id: 'crew-2', name: 'Owen Davies', role: 'HVAC Specialist' },
-        amount: 1800,
-        currency: 'GBP',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 172800000).toISOString(),
-        paidAt: null,
-        commissionRate: 0.2,
-        commissionAmount: 360,
-        booking: {
-          id: 'booking-4820',
-          reference: 'BK-4820',
-          service: 'HVAC emergency call-out',
-          status: 'in_progress'
-        },
-        notes: 'Hold until photographic evidence reviewed.',
-        metadata: { milestone: 'Completion' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        commissionRule: {
-          id: 'commission-hvac',
-          name: 'HVAC emergency uplift',
-          rateType: 'percentage',
-          rateValue: 0.2,
-          approvalStatus: 'approved',
-          autoApply: false,
-          isDefault: false
-        }
-      },
-      {
-        id: 'payment-upcoming-3',
-        serviceman: { id: 'crew-3', name: 'Sophie Chen', role: 'Compliance Coordinator' },
-        amount: 1000,
-        currency: 'GBP',
-        status: 'approved',
-        dueDate: new Date(Date.now() + 259200000).toISOString(),
-        paidAt: null,
-        commissionRate: 0.12,
-        commissionAmount: 120,
-        booking: {
-          id: 'booking-4825',
-          reference: 'BK-4825',
-          service: 'Compliance audit closeout',
-          status: 'awaiting_assignment'
-        },
-        notes: 'Auto-approve when documentation uploaded.',
-        metadata: { stage: 'Audit' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        commissionRule: {
-          id: 'commission-admin',
-          name: 'Coordinator baseline',
-          rateType: 'percentage',
-          rateValue: 0.12,
-          approvalStatus: 'approved',
-          autoApply: false,
-          isDefault: false
-        }
-      }
-    ],
-    history: {
-      items: [
-        {
-          id: 'payment-history-1',
-          serviceman: { id: 'crew-4', name: 'Ibrahim Adeyemi', role: 'Field Engineer' },
-          amount: 3600,
-          currency: 'GBP',
-          status: 'paid',
-          dueDate: new Date(Date.now() - 1209600000).toISOString(),
-          paidAt: new Date(Date.now() - 777600000).toISOString(),
-          commissionRate: 0.18,
-          commissionAmount: 648,
-          booking: {
-            id: 'booking-4701',
-            reference: 'BK-4701',
-            service: 'Generator upgrade',
-            status: 'completed'
-          },
-          notes: 'Paid after QA sign-off.',
-          metadata: { invoice: 'INV-3384' },
-          createdAt: new Date(Date.now() - 1296000000).toISOString(),
-          updatedAt: new Date(Date.now() - 777600000).toISOString(),
-          commissionRule: {
-            id: 'commission-default',
-            name: 'Default performance',
-            rateType: 'percentage',
-            rateValue: 0.15,
-            approvalStatus: 'approved',
-            autoApply: true,
-            isDefault: true
-          }
-        }
-      ],
-      total: 4,
-      limit: 6,
-      offset: 0
-    },
-    commissions: {
-      rules: [
-        {
-          id: 'commission-default',
-          name: 'Default performance',
-          description: 'Applies to scheduled jobs under £10k where QA checks are green.',
-          rateType: 'percentage',
-          rateValue: 0.15,
-          autoApply: true,
-          isDefault: true,
-          approvalStatus: 'approved',
-          appliesToRole: 'Lead engineer',
-          serviceCategory: 'Critical power',
-          minimumBookingValue: 500,
-          maximumCommissionValue: null,
-          effectiveFrom: new Date(Date.now() - 864000000).toISOString(),
-          effectiveTo: null,
-          metadata: { window: 'standard' },
-          companyId: 'provider-metro-power',
-          createdAt: new Date(Date.now() - 864000000).toISOString(),
-          updatedAt: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-          id: 'commission-hvac',
-          name: 'HVAC emergency uplift',
-          description: 'Applies 20% commission to emergency HVAC call-outs completed within SLA.',
-          rateType: 'percentage',
-          rateValue: 0.2,
-          autoApply: false,
-          isDefault: false,
-          approvalStatus: 'approved',
-          appliesToRole: 'HVAC Specialist',
-          serviceCategory: 'HVAC emergency response',
-          minimumBookingValue: 0,
-          maximumCommissionValue: 2200,
-          effectiveFrom: new Date(Date.now() - 432000000).toISOString(),
-          effectiveTo: null,
-          metadata: { slaMinutes: 60 },
-          companyId: 'provider-metro-power',
-          createdAt: new Date(Date.now() - 432000000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString()
-        }
-      ],
-      activeRules: 2,
-      defaultRuleId: 'commission-default'
-    }
-  },
-  serviceDelivery: {
+  serviceManagement: {
     health: [
-      { id: 'sla', label: 'SLA adherence', value: 0.97, format: 'percent', caption: 'Trailing 30 days' },
-      { id: 'utilisation', label: 'Crew utilisation', value: 0.82, format: 'percent', caption: 'Live schedule coverage' },
-      { id: 'incidents', label: 'Open incidents', value: 2, format: 'number', caption: 'Requires triage review' }
-    ],
-    board: [
       {
-        id: 'intake',
-        title: 'Intake & triage',
+        id: 'service-health-sla',
+        label: 'SLA compliance',
+        value: 0.97,
+        format: 'percent',
+        caption: 'Rolling 30 day'
+      }
+    ],
+    deliveryBoard: [
+      {
+        id: 'pipeline-prep',
+        title: 'Preparation',
+        description: 'Mobilising teams and equipment.',
         items: [
           {
-            id: 'triage-1',
-            name: 'Riverside Campus UPS review',
+            id: 'prep-riverside',
+            name: 'Riverside UPS mobilisation',
             client: 'Finova HQ',
-            zone: 'City of London',
-            eta: new Date(Date.now() + 5400000).toISOString(),
-            owner: 'Service desk',
-            risk: 'on-track',
-            services: ['Electrical'],
-            value: 3200
-          }
-        ]
-      },
-      {
-        id: 'scheduled',
-        title: 'Scheduled',
-        items: [
-          {
-            id: 'scheduled-1',
-            name: 'Smart IoT retrofit pilot',
-            client: 'Northbank Serviced Offices',
-            zone: 'Westminster',
             eta: new Date(Date.now() + 86400000).toISOString(),
-            owner: 'Programme PMO',
+            owner: 'Operations desk',
             risk: 'on-track',
-            services: ['IoT', 'Electrical'],
-            value: 14800
-          },
-          {
-            id: 'scheduled-2',
-            name: 'Emergency HVAC replacement',
-            client: 'Thames Court',
-            zone: 'City of London',
-            eta: new Date(Date.now() + 172800000).toISOString(),
-            owner: 'HVAC crew',
-            risk: 'warning',
-            services: ['HVAC'],
-            value: 9200
-          }
-        ]
-      },
-      {
-        id: 'in-flight',
-        title: 'In delivery',
-        items: [
-          {
-            id: 'delivery-1',
-            name: 'Battery string modernisation',
-            client: 'Albion Workspace Group',
-            zone: 'Docklands',
-            eta: new Date(Date.now() + 21600000).toISOString(),
-            owner: 'Critical power crew',
-            risk: 'on-track',
-            services: ['Electrical'],
-            value: 18600
-          }
-        ]
-      },
-      {
-        id: 'qa',
-        title: 'Verification',
-        items: [
-          {
-            id: 'qa-1',
-            name: 'Sustainable retrofit programme',
-            client: 'Canary Wharf Holdings',
-            zone: 'Canary Wharf',
-            eta: new Date(Date.now() + 259200000).toISOString(),
-            owner: 'Quality & compliance',
-            risk: 'on-track',
-            services: ['Electrical', 'HVAC'],
-            value: 24800
+            stage: 'Preparation',
+            value: 8600,
+            currency: 'GBP',
+            services: ['Critical power maintenance']
           }
         ]
       }
-    ]
+    ],
+    packages: [],
+    categories: [],
+    catalogue: []
   },
-  enterpriseUpgrade: {
-    id: 'upgrade-request-fallback',
-    status: 'in_review',
-    summary:
-      'Preparing to scale Metro Power Services to enterprise tier with multi-site rollout, enhanced automation, and compliance tooling.',
-    requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-    targetGoLive: new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString(),
-    seats: 45,
-    contractValue: 185000,
-    currency: 'GBP',
-    automationScope: 'Rollout playbooks across seven strategic sites, integrate SSO, and enable automated compliance attestations.',
-    enterpriseFeatures: ['dedicated_success', 'advanced_analytics', 'sso', 'compliance_reporting'],
-    onboardingManager: 'Priya Patel',
-    notes: 'Awaiting signed SOW from enterprise procurement. Security review scheduled for next week.',
-    lastDecisionAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-    contacts: [
-      {
-        id: 'upgrade-contact-1',
-        name: 'Lena Howard',
-        role: 'Operations Director',
-        email: 'lena.howard@metropower.example',
-        phone: '+44 20 7946 1122',
-        influenceLevel: 'Decision maker',
-        primaryContact: true
-      },
-      {
-        id: 'upgrade-contact-2',
-        name: 'Jacob Miller',
-        role: 'Head of Facilities',
-        email: 'jacob.miller@metropower.example',
-        phone: '+44 20 7946 1135',
-        influenceLevel: 'Sponsor',
-        primaryContact: false
-      }
-    ],
-    sites: [
-      {
-        id: 'upgrade-site-hq',
-        siteName: 'Finova HQ',
-        region: 'City of London',
-        headcount: 12,
-        goLiveDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
-        imageUrl: null,
-        notes: 'Requires redundant UPS upgrades and remote monitoring telemetry.'
-      },
-      {
-        id: 'upgrade-site-glasgow',
-        siteName: 'Northbank Data Centre',
-        region: 'Glasgow',
-        headcount: 8,
-        goLiveDate: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
-        imageUrl: null,
-        notes: 'Needs carbon reporting integration and safety briefing refresh.'
-      }
-    ],
-    checklist: [
-      {
-        id: 'upgrade-checklist-discovery',
-        label: 'Enterprise discovery workshop',
-        status: 'complete',
-        owner: 'Priya Patel',
-        dueDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
-        notes: 'Captured all compliance prerequisites and data residency requirements.',
-        sortOrder: 0
-      },
-      {
-        id: 'upgrade-checklist-security',
-        label: 'Security architecture review',
-        status: 'in_progress',
-        owner: 'Marcus Lee',
-        dueDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
-        notes: 'SSO integration staged; awaiting pen-test sign-off.',
-        sortOrder: 1
-      },
-      {
-        id: 'upgrade-checklist-training',
-        label: 'Enterprise operator training plan',
-        status: 'not_started',
-        owner: 'Lena Howard',
-        dueDate: new Date(Date.now() + 18 * 24 * 3600 * 1000).toISOString(),
-        notes: null,
-        sortOrder: 2
-      }
-    ],
-    documents: [
-      {
-        id: 'upgrade-document-sow',
-        title: 'Enterprise SOW draft',
-        type: 'contract',
-        url: 'https://cdn.fixnado.com/docs/metro-power-sow.pdf',
-        thumbnailUrl: null,
-        description: 'Statement of work covering rollout scope, milestones, and commercial terms.'
-      },
-      {
-        id: 'upgrade-document-journey',
-        title: 'Customer journey blueprint',
-        type: 'playbook',
-        url: 'https://cdn.fixnado.com/docs/metro-power-journey.png',
-        thumbnailUrl: 'https://cdn.fixnado.com/docs/thumbnails/metro-power-journey.png',
-        description: 'High-level flow for procurement to live operations, including telemetry checkpoints.'
-      }
-    ]
-  calendar: {
-    calendar: {
-      monthLabel: fallbackCalendarMonthLabel,
-      rangeStart: fallbackCalendarRangeStart,
-      rangeEnd: fallbackCalendarRangeEnd,
-      legend: [
-        { id: 'booking-confirmed', label: 'Confirmed booking', status: 'confirmed' },
-        { id: 'booking-pending', label: 'Pending booking', status: 'pending' },
-        { id: 'booking-risk', label: 'Escalation / hold', status: 'risk' },
-        { id: 'event-standby', label: 'Standby window', status: 'standby' },
-        { id: 'event-travel', label: 'Travel', status: 'travel' }
-      ],
-      weeks: fallbackCalendarWeeks
-    },
-    summary: {
-      totals: {
-        total: 6,
-        active: 3,
-        byStatus: {
-          scheduled: 3,
-          completed: 2,
-          pending: 1
-        }
-      },
-      utilisation: 0.58,
-      holds: 1,
-      travel: 2,
-      upcoming: 4
-    },
-    bookings: [
-      {
-        id: 'fallback-booking-1',
-        title: 'Lift maintenance — Riverside Campus',
-        status: 'scheduled',
-        type: 'scheduled',
-        start: new Date(Date.now() + 86400000).toISOString(),
-        end: new Date(Date.now() + 97200000).toISOString(),
-        zoneId: 'zone-central',
-        zoneName: 'Central London',
-        customerName: 'Finova HQ',
-        value: 6800,
-        currency: 'GBP'
-      },
-      {
-        id: 'fallback-booking-2',
-        title: 'Generator inspection — Northbank',
-        status: 'pending',
-        type: 'scheduled',
-        start: new Date(Date.now() + 259200000).toISOString(),
-        end: new Date(Date.now() + 273600000).toISOString(),
-        zoneId: 'zone-central',
-        zoneName: 'Central London',
-        customerName: 'Northbank Serviced Offices',
-        value: 2400,
-        currency: 'GBP'
-      }
-    ],
-    events: [
-      {
-        id: 'fallback-event-standby',
-        title: 'Crew standby window',
-        status: 'planned',
-        type: 'hold',
-        visibility: 'crew',
-        start: new Date(Date.now() + 172800000).toISOString(),
-        end: new Date(Date.now() + 190800000).toISOString()
-      },
-      {
-        id: 'fallback-event-travel',
-        title: 'Travel to Riverside Campus',
-        status: 'travel',
-        type: 'travel',
-        visibility: 'internal',
-        start: new Date(Date.now() + 86400000).toISOString(),
-        end: new Date(Date.now() + 90000000).toISOString()
-      }
-    ],
-    settings: {
-      timezone: 'Europe/London',
-      weekStartsOn: 'monday',
-      defaultView: 'month',
-      workdayStart: '08:00',
-      workdayEnd: '18:00',
-      allowOverlapping: true,
-      autoAcceptAssignments: false,
-      notificationRecipients: ['ops@metropower.example']
-    },
-    options: {
-      zones: [
-        { id: 'zone-central', label: 'Central London' },
-        { id: 'zone-east', label: 'East Borough' }
-      ],
-      eventTypes: [
-        { value: 'internal', label: 'Internal activity' },
-        { value: 'hold', label: 'Scheduling hold' },
-        { value: 'travel', label: 'Travel window' }
-      ],
-      eventStatuses: [
-        { value: 'planned', label: 'Planned' },
-        { value: 'confirmed', label: 'Confirmed' },
-        { value: 'travel', label: 'Travel' }
-      ],
-      bookingStatuses: [
-        { value: 'pending', label: 'Pending' },
-        { value: 'scheduled', label: 'Scheduled' },
-        { value: 'completed', label: 'Completed' }
-      ]
-    },
-    permissions: {
-      canManageBookings: true,
-      canManageEvents: true,
-      canEditSettings: true
-    },
-    links: {
-      fetch: '/api/providers/calendar?companyId=provider-metro-power',
-      events: '/api/providers/calendar/events',
-      settings: '/api/providers/calendar/settings',
-      bookings: '/api/providers/calendar/bookings'
-    },
-    meta: {
-      companyId: 'provider-metro-power',
-      timezone: 'Europe/London',
-      generatedAt: new Date().toISOString()
-    }
-  },
-  servicePackages: [
-    {
-      id: 'critical-response',
-      name: 'Critical response retainer',
-      description: '24/7 dispatch with under-45 minute arrival SLA, telemetry reporting, and quarterly compliance reviews.',
-      price: 5400,
-      currency: 'GBP',
-      highlights: ['45-minute urban SLA', 'Escrow-backed milestone billing', 'Telemetry dashboard access'],
-      serviceId: 'critical-power-maintenance',
-      serviceName: 'Critical power maintenance'
-    },
-    {
-      id: 'retrofit',
-      name: 'Sustainable retrofit programme',
-      description: 'Energy optimisation with IoT sensor network, HVAC upgrades, and capital project governance.',
-      price: 12400,
-      currency: 'GBP',
-      highlights: ['IoT monitoring stack', 'Dedicated programme manager', 'Regulatory submission support'],
-      serviceId: 'iot-retrofit',
-      serviceName: 'IoT retrofit & analytics'
-    }
-  ],
-  serviceCategories: [
-    {
-      slug: 'critical-power',
-      label: 'Critical power',
-      type: 'trade-services',
-      description: 'High-availability electrical services for trading floors and data centres.',
-      activeServices: 4,
-      performance: 0.98
-    },
-    {
-      slug: 'hvac-emergency',
-      label: 'HVAC emergency response',
-      type: 'trade-services',
-      description: 'Rapid deployment HVAC crews with telemetry-backed reporting.',
-      activeServices: 3,
-      performance: 0.95
-    },
-    {
-      slug: 'smart-retrofit',
-      label: 'Smart retrofit',
-      type: 'professional-services',
-      description: 'IoT, analytics, and sustainability programmes for enterprise estates.',
-      activeServices: 5,
-      performance: 0.92
-    }
-  ],
-  serviceCatalogue: [
-    {
-      id: 'critical-power-maintenance',
-      name: 'Critical power maintenance',
-      description: 'Preventative UPS servicing, battery refresh programmes, and load testing.',
-      category: 'Critical power',
-      type: 'Trade services',
-      price: 4200,
-      currency: 'GBP',
-      availability: { status: 'open', label: 'Available now', detail: '' },
-      tags: ['UPS', 'Battery testing', '24/7 dispatch'],
-      coverage: ['London', 'Essex', 'Kent']
-    },
-    {
-      id: 'hvac-emergency',
-      name: 'HVAC emergency call-out',
-      description: 'Rapid-response HVAC crew with telemetry logging and compliance reporting.',
-      category: 'HVAC emergency response',
-      type: 'Trade services',
-      price: 1850,
-      currency: 'GBP',
-      availability: { status: 'scheduled', label: 'Scheduled', detail: new Date(Date.now() + 86400000).toISOString() },
-      tags: ['Emergency', '24/7'],
-      coverage: ['City of London', 'Westminster']
-    },
-    {
-      id: 'iot-retrofit',
-      name: 'IoT retrofit & analytics',
-      description: 'End-to-end smart building retrofit programme with analytics and governance.',
-      category: 'Smart retrofit',
-      type: 'Professional services',
-      price: 14800,
-      currency: 'GBP',
-      availability: { status: 'open', label: 'Availability on request', detail: '' },
-      tags: ['IoT', 'Analytics', 'Sustainability'],
-      coverage: ['Docklands', 'Canary Wharf']
-    }
-  ],
   websitePreferences: {
-    slug: 'metro-power-services',
-    customDomain: 'metro-power.services',
     hero: {
-      heading: 'Telemetry-first field engineering',
-      subheading:
-        'Showcase Metro Power programme strength, concierge support, and telemetry-backed reporting to enterprise buyers.',
-      tagline: 'Escrow-backed • Telemetry visible • Enterprise ready',
-      highlights: [
-        'London & South East coverage',
-        'Critical power + HVAC specialists',
-        'Escrow protected engagements'
-      ],
-      mediaAlignment: 'left',
-      primaryCta: {
-        label: 'View storefront',
-        url: '/providers/metro-power-services',
-        behaviour: 'link'
-      },
-      secondaryCta: {
-        label: 'Book discovery call',
-        url: 'https://metro-power.services/discovery',
-        behaviour: 'link'
-      }
-    },
-    branding: {
-      theme: 'light',
-      brandColor: '#0b1d3a',
-      accentColor: '#38bdf8',
-      backgroundColor: '#f1f5f9',
-      textTone: 'dark',
-      layout: 'modular',
-      typography: 'Inter'
-    },
-    media: {
-      logoUrl: 'https://cdn.fixnado.com/providers/metro-power/logo.svg',
-      heroImageUrl: 'https://cdn.fixnado.com/providers/metro-power/hero.jpg',
-      brandImageUrl: 'https://cdn.fixnado.com/providers/metro-power/team.jpg',
-      brandVideoUrl: 'https://cdn.fixnado.com/providers/metro-power/showreel.mp4',
-      gallery: [
-        {
-          id: 'gallery-1',
-          title: 'Riverside Campus UPS overhaul',
-          caption: 'Telemetry-backed upgrade completed within a live estate.',
-          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-1.jpg',
-          altText: 'Metro Power team installing UPS cabinets'
-        },
-        {
-          id: 'gallery-2',
-          title: 'Northbank chilled water retrofit',
-          caption: 'HVAC retrofit with zero downtime for occupiers.',
-          imageUrl: 'https://cdn.fixnado.com/providers/metro-power/gallery-2.jpg',
-          altText: 'Engineer calibrating chilled water plant'
-        }
-      ]
-    },
-    support: {
-      email: 'concierge@metropower.example',
-      phone: '+44 20 7946 0010',
-      hours: '24/7 concierge for enterprise programmes',
-      responseTime: 'Under 45 minutes',
-      conciergeName: 'Amina Khan',
-      channels: [
-        {
-          id: 'channel-email',
-          type: 'email',
-          label: 'Email',
-          destination: 'concierge@metropower.example',
-          notes: 'Direct to programme concierge'
-        },
-        {
-          id: 'channel-phone',
-          type: 'phone',
-          label: 'Ops hotline',
-          destination: '+44 20 7946 0010',
-          notes: 'Escalations within 15 minutes'
-        },
-        {
-          id: 'channel-slack',
-          type: 'slack',
-          label: 'Slack Connect',
-          destination: 'slack://channel?team=T12345&id=C67890',
-          notes: 'Available for enterprise workstreams'
-        }
-      ]
-    },
-    seo: {
-      title: 'Metro Power Services • Fixnado enterprise provider',
-      description:
-        'Certified critical power and HVAC specialists delivering telemetry-backed programmes across London & South East.',
-      keywords: ['critical power', 'hvac', 'telemetry', 'enterprise facilities'],
-      ogImageUrl: 'https://cdn.fixnado.com/providers/metro-power/og-image.jpg'
-    },
-    socialLinks: [
-      {
-        id: 'social-linkedin',
-        label: 'LinkedIn',
-        url: 'https://www.linkedin.com/company/metro-power-services/',
-        icon: 'linkedin'
-      },
-      {
-        id: 'social-youtube',
-        label: 'YouTube',
-        url: 'https://www.youtube.com/@metropower-services',
-        icon: 'youtube'
-      }
-    ],
-    trust: {
-      showTrustScore: true,
-      showResponseTime: true,
-      testimonialsEnabled: true,
-      testimonials: [
-        {
-          id: 'testimonial-finova',
-          quote: 'Metro Power orchestrated a complex UPS modernisation with zero downtime.',
-          author: 'Sophie Turner',
-          role: 'Operations Director, Finova HQ'
-        },
-        {
-          id: 'testimonial-northbank',
-          quote: 'Telemetry insights and concierge support kept our refurbishment on track.',
-          author: 'James Holloway',
-          role: 'Facilities Lead, Northbank Campus'
-        }
-      ],
-      badges: [
-        {
-          id: 'badge-iso',
-          label: 'ISO 9001',
-          description: 'Certified quality management for field operations.',
-          iconUrl: 'https://cdn.fixnado.com/badges/iso9001.svg',
-          evidenceUrl: 'https://metro-power.services/certificates/iso9001.pdf'
-        },
-        {
-          id: 'badge-escrow',
-          label: 'Fixnado Escrow+',
-          description: 'Enhanced escrow safeguards for enterprise engagements.',
-          iconUrl: 'https://cdn.fixnado.com/badges/escrow-plus.svg',
-          evidenceUrl: 'https://metro-power.services/policies/escrow-plus'
-        }
-      ],
-      metrics: [
-        { id: 'metric-sla', label: 'SLA compliance', value: '98%', format: 'percent' },
-        { id: 'metric-response', label: 'Median response time', value: '42m', format: 'duration' }
-      ],
-      reviewWidget: {
-        enabled: true,
-        display: 'inline',
-        providerId: 'trustpilot-metro-power',
-        url: 'https://trustpilot.com/review/metro-power.services'
-      }
+      headline: 'Telemetry-backed critical power specialists',
+      subHeadline: 'Enterprise crews and concierge logistics keeping mission critical estates online.',
+      primaryCtaLabel: 'Request consultation',
+      primaryCtaHref: '/contact',
+      secondaryCtaLabel: 'View credentials',
+      secondaryCtaHref: '/credentials'
     },
     modules: {
       showProjects: true,
@@ -4655,29 +3987,20 @@ const providerFallback = normaliseProviderDashboard({
       enableLiveChat: false,
       allowDownloads: true,
       highlightGeoCoverage: true
-    },
-    featuredProjects: [
-      {
-        id: 'project-riverside',
-        title: 'Riverside Campus UPS upgrade',
-        summary: 'Critical power refresh with IoT telemetry across three towers.',
-        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/riverside.jpg',
-        ctaLabel: 'Read case study',
-        ctaUrl: 'https://metro-power.services/case-studies/riverside-ups'
-      },
-      {
-        id: 'project-northbank',
-        title: 'Northbank HVAC modernisation',
-        summary: 'Telemetry-enabled HVAC retrofit delivering 18% energy savings.',
-        imageUrl: 'https://cdn.fixnado.com/providers/metro-power/projects/northbank.jpg',
-        ctaLabel: 'Download programme pack',
-        ctaUrl: 'https://metro-power.services/resources/northbank-pack.pdf'
-      }
-    ],
-    metadata: {
-      notes: 'Last published after Q1 sustainability refresh.',
-      lastPublishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString()
     }
+  },
+  enterpriseUpgrade: {
+    status: 'active',
+    tier: 'enterprise',
+    renewalAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 90).toISOString(),
+    successManager: 'Priya Rao'
+  },
+  servicemanFinance: {
+    netPayout: 24800,
+    pendingDisputes: 1,
+    escrowHold: 9600,
+    nextPayoutDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
+  },
   ads: {
     company: {
       id: 'gigvora-company-001',
@@ -4701,185 +4024,52 @@ const providerFallback = normaliseProviderDashboard({
         status: 'active',
         objective: 'Lead generation',
         campaignType: 'ppc',
-        pacingStrategy: 'even',
-        bidStrategy: 'cpc',
         currency: 'GBP',
         totalBudget: 35000,
-        dailySpendCap: 1800,
         spend: 18400,
-        revenue: 46800,
         impressions: 128000,
         clicks: 6400,
         conversions: 420,
         ctr: 0.05,
         cvr: 0.0656,
-        roas: 2.5435,
-        pacing: 0.525,
+        roas: 2.54,
         startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
         endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
-        metadata: { goal: 'Grow enterprise bookings' },
-        flights: [
-          {
-            id: 'gigvora-flight-enterprise',
-            name: 'Enterprise facilities',
-            status: 'active',
-            startAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-            endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
-            budget: 20000,
-            dailySpendCap: 1000
-          }
-        ],
-        creatives: [
-          {
-            id: 'gigvora-creative-hero',
-            name: 'Hero marketplace display',
-            format: 'image',
-            status: 'active',
-            assetUrl: '/media/campaigns/gigvora-hero.jpg',
-            thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
-            headline: 'Telemetry-secured facility response',
-            description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
-            callToAction: 'Book a walkthrough',
-            metadata: { variant: 'A' }
-          }
-        ],
-        audienceSegments: [
-          {
-            id: 'gigvora-segment-enterprise',
-            name: 'Enterprise FM leads',
-            segmentType: 'lookalike',
-            status: 'active',
-            sizeEstimate: 5400,
-            engagementRate: 0.082,
-            syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            metadata: { source: 'CRM sync' }
-          }
-        ],
-        placements: [
-          {
-            id: 'gigvora-placement-marketplace',
-            channel: 'marketplace',
-            format: 'native',
-            status: 'active',
-            bidAmount: 4.5,
-            bidCurrency: 'GBP',
-            cpm: 36.2,
-            inventorySource: 'Gigvora marketplace hero',
-            metadata: { position: 'homepage-top' }
-          }
-        ],
-        invoices: [
-          {
-            id: 'gigvora-invoice-ads-001',
-            invoiceNumber: 'ADS-001',
-            status: 'issued',
-            currency: 'GBP',
-            amountDue: 7200,
-            amountPaid: 3600,
-            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
-            issuedAt: new Date().toISOString(),
-            metadata: { period: '2025-04' }
-          }
-        ],
-        fraudSignals: [
-          {
-            id: 'gigvora-signal-overspend',
-            signalType: 'overspend',
-            severity: 'medium',
-            detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            metadata: { variance: 0.18 }
-          }
-        ],
-        targetingRules: [
-          {
-            id: 'gigvora-target-zone',
-            ruleType: 'zone',
-            operator: 'include',
-            payload: { zones: ['City of London', 'Docklands'] }
-          },
-          {
-            id: 'gigvora-target-role',
-            ruleType: 'audience',
-            operator: 'include',
-            payload: { roles: ['Facilities director', 'Operations lead'] }
-          }
-        ]
+        metadata: { goal: 'Grow enterprise bookings' }
       }
     ],
-    creatives: [
-      {
-        id: 'gigvora-creative-hero',
-        campaignId: 'gigvora-q2-surge',
-        campaignName: 'Gigvora Q2 surge',
-        name: 'Hero marketplace display',
-        format: 'image',
-        status: 'active',
-        assetUrl: '/media/campaigns/gigvora-hero.jpg',
-        thumbnailUrl: '/media/campaigns/gigvora-hero-thumb.jpg',
-        headline: 'Telemetry-secured facility response',
-        description: 'Gigvora placements guarantee 45-minute SLA coverage across London campuses.',
-        callToAction: 'Book a walkthrough',
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    audienceSegments: [
-      {
-        id: 'gigvora-segment-enterprise',
-        campaignId: 'gigvora-q2-surge',
-        campaignName: 'Gigvora Q2 surge',
-        name: 'Enterprise FM leads',
-        segmentType: 'lookalike',
-        status: 'active',
-        sizeEstimate: 5400,
-        engagementRate: 0.082,
-        syncedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-        metadata: { source: 'CRM sync' }
-      }
-    ],
-    placements: [
-      {
-        id: 'gigvora-placement-marketplace',
-        campaignId: 'gigvora-q2-surge',
-        campaignName: 'Gigvora Q2 surge',
-        channel: 'marketplace',
-        format: 'native',
-        status: 'active',
-        bidAmount: 4.5,
-        bidCurrency: 'GBP',
-        cpm: 36.2,
-        inventorySource: 'Gigvora marketplace hero',
-        updatedAt: new Date().toISOString(),
-        metadata: { position: 'homepage-top' }
-      }
-    ],
-    invoices: [
-      {
-        id: 'gigvora-invoice-ads-001',
-        campaignId: 'gigvora-q2-surge',
-        campaignName: 'Gigvora Q2 surge',
-        invoiceNumber: 'ADS-001',
-        status: 'issued',
-        currency: 'GBP',
-        amountDue: 7200,
-        amountPaid: 3600,
-        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
-        issuedAt: new Date().toISOString(),
-        metadata: { period: '2025-04' }
-      }
-    ],
-    fraudSignals: [
-      {
-        id: 'gigvora-signal-overspend',
-        campaignId: 'gigvora-q2-surge',
-        signalType: 'overspend',
-        severity: 'medium',
-        detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-        metadata: { variance: 0.18 }
-      }
-    ]
+    creatives: [],
+    audienceSegments: [],
+    placements: [],
+    invoices: [],
+    fraudSignals: []
+  },
+  calendar: {
+    calendar: {
+      monthLabel: fallbackCalendarMonthLabel,
+      rangeStart: fallbackCalendarRangeStart,
+      rangeEnd: fallbackCalendarRangeEnd,
+      legend: fallbackCalendarLegend,
+      weeks: fallbackCalendarWeeks
+    },
+    summary: {
+      totals: {
+        total: 6,
+        active: 3,
+        byStatus: {
+          scheduled: 3,
+          completed: 2,
+          pending: 1
+        }
+      },
+      utilisation: 0.58,
+      holds: 1,
+      travel: 2,
+      upcoming: 4
+    },
+    bookings: fallbackCalendarBookings
   }
 });
-
 const providerWebsitePreferencesFallback = providerFallback.websitePreferences;
 
 const storefrontFallback = normaliseProviderStorefront({
@@ -5068,7 +4258,73 @@ const storefrontWorkspaceFallback = normaliseProviderStorefrontWorkspace({
     isPublished: true,
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
     reviewRequired: false,
-    metadata: {}
+    metadata: {
+      showcaseVideo: {
+        url: 'https://stream.fixnado.com/metro-power-showcase.mp4',
+        caption: 'Escrow-backed deployments, telemetry upgrades, and 24/7 rapid response.',
+        thumbnailUrl: '/media/storefront/showcase-thumbnail.jpg'
+      },
+      gallery: [
+        {
+          id: 'gallery-crew',
+          url: '/media/storefront/gallery/crew-mobilisation.jpg',
+          position: 0,
+          label: 'Crew mobilisation',
+          altText: 'Metro Power crew mobilising a generator delivery',
+          description: '24-hour mobilisation for a tier-3 data centre power resilience retrofit.'
+        },
+        {
+          id: 'gallery-switchgear',
+          url: '/media/storefront/gallery/switchgear.jpg',
+          position: 1,
+          label: 'Switchgear upgrades',
+          altText: 'Switchgear commissioning with telemetry overlay',
+          description: 'Telemetry-enabled switchgear commissioning with live analytics feed into the Fixnado console.'
+        }
+      ],
+      experiences: [
+        {
+          id: 'experience-northgrid',
+          title: 'NorthGrid data centre retrofit',
+          organisation: 'NorthGrid Data Centres',
+          position: 0,
+          location: 'London Docklands',
+          years: '2023',
+          startYear: '2023',
+          endYear: '2023',
+          summary: 'Delivered UPS and generator resilience upgrades with zero unplanned downtime across migration windows.',
+          proofUrl: 'https://cdn.fixnado.com/case-studies/northgrid.pdf'
+        },
+        {
+          id: 'experience-nhs',
+          title: 'NHS critical estates telemetry rollout',
+          organisation: 'NHS Estates South',
+          position: 1,
+          location: 'Bristol & Bath',
+          years: '2022-2024',
+          startYear: '2022',
+          endYear: '2024',
+          summary: 'Telemetry and predictive maintenance programme spanning nine acute hospital sites.',
+          proofUrl: 'https://cdn.fixnado.com/case-studies/nhs-telemetry.pdf'
+        }
+      ],
+      skills: [
+        'Critical power commissioning',
+        'Generator maintenance',
+        'Telemetry integration',
+        '24/7 rapid response'
+      ],
+      categories: ['Critical power', 'Telemetry'],
+      wordTags: ['resilience', 'escrow-backed', 'UK-wide coverage', 'same-day deployment'],
+      seo: {
+        pageTitle: 'Metro Power Services | Critical power resilience partners',
+        metaDescription:
+          'Escrow-backed critical power programmes, telemetry upgrades, and rapid response crews covering the UK for enterprise facilities.',
+        canonicalUrl: 'https://fixnado.com/providers/metro-power-services',
+        socialImageUrl: '/media/storefront/social/metro-power.jpg',
+        keywords: ['critical power', 'telemetry', 'generator maintenance']
+      }
+    }
   },
   inventory: [
     {
@@ -6084,6 +5340,8 @@ export async function updateProviderWebsitePreferences(payload, options = {}) {
   );
 
   return normalised;
+}
+
 export async function createProviderEnterpriseUpgrade(payload) {
   const { data } = await request('/panel/provider/enterprise-upgrade', {
     method: 'POST',
@@ -6104,6 +5362,8 @@ export async function updateProviderEnterpriseUpgrade(requestId, payload) {
   });
   clearPanelCache(['provider-dashboard']);
   return normaliseEnterpriseUpgrade(data?.data ?? data);
+}
+
 function buildStorefrontHeaders(options = {}, includeContentType = false) {
   const headers = {
     'X-Fixnado-Role': options?.role ?? 'company',
@@ -6343,6 +5603,8 @@ function normaliseProviderServicemanEnums(enums = {}) {
 function invalidateProviderServicemenCache(companyId) {
   const cacheKey = companyId ? `provider-servicemen:${companyId}` : 'provider-servicemen';
   clearPanelCache([cacheKey, 'provider-dashboard']);
+}
+
 export async function getProviderToolSales(options = {}) {
   const response = await request('/panel/provider/tools', {
     cacheKey: 'provider-tool-sales',
