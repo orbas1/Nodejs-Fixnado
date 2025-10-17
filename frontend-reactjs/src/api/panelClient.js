@@ -924,6 +924,9 @@ function normaliseEnterpriseUpgrade(upgrade = null) {
       thumbnailUrl: doc.thumbnailUrl || null,
       description: doc.description || null
     }))
+  };
+}
+
 function normaliseCalendarSnapshot(snapshot) {
   if (!snapshot) {
     return null;
@@ -942,6 +945,9 @@ function normaliseCalendarSnapshot(snapshot) {
     permissions: root.permissions ?? {},
     links: root.links ?? {},
     meta
+  };
+}
+
 function normaliseToolSaleCoupon(coupon, index) {
   if (!coupon) {
     return { id: `tool-sale-coupon-${index}`, name: 'Coupon', status: 'draft' };
@@ -6432,6 +6438,297 @@ export async function deleteProviderToolSaleCoupon(profileId, couponId, options 
     }
   );
   return normaliseToolSaleListing(response.data ?? response, 0);
+}
+
+function normaliseServiceZoneAssignment(entry) {
+  if (!entry) {
+    return null;
+  }
+  const zone = entry.zone || null;
+  const zoneId = entry.zoneId || zone?.id || null;
+  const priority = Number.isFinite(Number(entry.priority)) ? Number(entry.priority) : 1;
+
+  return {
+    id: entry.id ?? null,
+    zoneId,
+    coverageType: entry.coverageType || 'primary',
+    priority,
+    effectiveFrom: entry.effectiveFrom ?? null,
+    effectiveTo: entry.effectiveTo ?? null,
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {},
+    zone: zone
+      ? {
+          id: zone.id ?? zoneId,
+          name: zone.name ?? '',
+          demandLevel: zone.demandLevel ?? null,
+          metadata: zone.metadata && typeof zone.metadata === 'object' ? zone.metadata : {}
+        }
+      : null
+  };
+}
+
+function normaliseServiceAvailabilityWindow(entry) {
+  if (!entry) {
+    return null;
+  }
+  const day = Number.parseInt(entry.dayOfWeek, 10);
+  const maxBookings =
+    entry.maxBookings === null || entry.maxBookings === undefined || entry.maxBookings === ''
+      ? null
+      : Number.parseInt(entry.maxBookings, 10);
+
+  return {
+    id: entry.id ?? null,
+    dayOfWeek: Number.isFinite(day) ? day : 0,
+    startTime: entry.startTime ?? '00:00',
+    endTime: entry.endTime ?? '23:59',
+    maxBookings: Number.isFinite(maxBookings) ? maxBookings : null,
+    label: entry.label ?? '',
+    isActive: entry.isActive !== false,
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {}
+  };
+}
+
+function normaliseServiceMediaAsset(entry) {
+  if (!entry) {
+    return null;
+  }
+  return {
+    id: entry.id ?? null,
+    mediaType: entry.mediaType ?? 'image',
+    url: entry.url ?? '',
+    title: entry.title ?? '',
+    altText: entry.altText ?? '',
+    thumbnailUrl: entry.thumbnailUrl ?? '',
+    sortOrder: Number.isFinite(Number(entry.sortOrder)) ? Number(entry.sortOrder) : 0,
+    isPrimary: Boolean(entry.isPrimary),
+    metadata: entry.metadata && typeof entry.metadata === 'object' ? entry.metadata : {}
+  };
+}
+
+function normaliseServiceGalleryEntry(entry) {
+  if (!entry) {
+    return null;
+  }
+  if (typeof entry === 'string') {
+    const url = entry.trim();
+    return url ? { url, altText: '' } : null;
+  }
+  if (typeof entry === 'object') {
+    const url = typeof entry.url === 'string' ? entry.url.trim() : '';
+    if (!url) {
+      return null;
+    }
+    const altText =
+      typeof entry.altText === 'string'
+        ? entry.altText
+        : typeof entry.alt === 'string'
+          ? entry.alt
+          : '';
+    return { url, altText };
+  }
+  return null;
+}
+
+function normaliseProviderServiceRecord(service) {
+  if (!service) {
+    return null;
+  }
+
+  const gallery = Array.isArray(service.gallery)
+    ? service.gallery.map(normaliseServiceGalleryEntry).filter(Boolean)
+    : [];
+  const tags = Array.isArray(service.tags)
+    ? service.tags
+    : typeof service.tags === 'string' && service.tags.trim()
+      ? service.tags
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+  const keywordTags = Array.isArray(service.keywordTags) ? service.keywordTags : [];
+  const seo = service.seo && typeof service.seo === 'object' ? service.seo : {};
+  const seoKeywords = Array.isArray(seo.keywords)
+    ? seo.keywords
+    : Array.isArray(service.seoKeywords)
+      ? service.seoKeywords
+      : [];
+
+  return {
+    id: service.id ?? null,
+    slug: service.slug ?? null,
+    companyId: service.companyId ?? null,
+    title: service.title ?? '',
+    status: service.status ?? 'draft',
+    visibility: service.visibility ?? 'restricted',
+    kind: service.kind ?? 'standard',
+    price:
+      typeof service.price === 'number'
+        ? service.price
+        : service.price != null && !Number.isNaN(Number(service.price))
+          ? Number(service.price)
+          : null,
+    currency: service.currency ?? 'USD',
+    tagline: service.tagline ?? '',
+    shortDescription: service.shortDescription ?? '',
+    description: service.description ?? '',
+    displayUrl: service.displayUrl ?? '',
+    heroImageUrl: service.heroImageUrl ?? '',
+    showcaseVideoUrl: service.showcaseVideoUrl ?? '',
+    gallery,
+    tags,
+    keywordTags,
+    seo: {
+      title: seo.title ?? service.seoTitle ?? '',
+      description: seo.description ?? service.seoDescription ?? '',
+      keywords: seoKeywords
+    },
+    crewSize: Number.isFinite(Number(service.crewSize)) ? Number(service.crewSize) : 1,
+    pricingModel: service.pricingModel ?? '',
+    pricingUnit: service.pricingUnit ?? '',
+    categoryId: service.categoryId ?? null,
+    category: service.category ?? null,
+    categoryRef: service.categoryRef ?? null,
+    availabilitySummary: service.availabilitySummary ?? service.availability ?? null,
+    availabilityWindows: Array.isArray(service.availabilityWindows)
+      ? service.availabilityWindows.map(normaliseServiceAvailabilityWindow).filter(Boolean)
+      : [],
+    zoneAssignments: Array.isArray(service.zoneAssignments)
+      ? service.zoneAssignments.map(normaliseServiceZoneAssignment).filter(Boolean)
+      : [],
+    mediaLibrary: Array.isArray(service.mediaLibrary)
+      ? service.mediaLibrary.map(normaliseServiceMediaAsset).filter(Boolean)
+      : [],
+    metrics: service.metrics && typeof service.metrics === 'object' ? service.metrics : {},
+    createdAt: service.createdAt ?? null,
+    updatedAt: service.updatedAt ?? null
+  };
+}
+
+function normaliseProviderServicesWorkspace(response) {
+  const payload = response?.data ?? response ?? {};
+  const summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
+
+  return {
+    companyId: payload.companyId ?? null,
+    summary: {
+      total: summary.total ?? 0,
+      draft: summary.draft ?? 0,
+      published: summary.published ?? 0,
+      paused: summary.paused ?? 0,
+      archived: summary.archived ?? 0,
+      active:
+        summary.active ?? (summary.total != null && summary.archived != null
+          ? summary.total - summary.archived
+          : 0)
+    },
+    services: Array.isArray(payload.services)
+      ? payload.services.map(normaliseProviderServiceRecord).filter(Boolean)
+      : [],
+    categories: Array.isArray(payload.categories)
+      ? payload.categories.map((category) => ({
+          id: category?.id ?? null,
+          name: category?.name ?? '',
+          slug: category?.slug ?? '',
+          description: category?.description ?? ''
+        }))
+      : [],
+    zones: Array.isArray(payload.zones)
+      ? payload.zones.map((zone) => ({
+          id: zone?.id ?? null,
+          name: zone?.name ?? '',
+          demandLevel: zone?.demandLevel ?? null,
+          metadata: zone?.metadata && typeof zone.metadata === 'object' ? zone.metadata : {}
+        }))
+      : []
+  };
+}
+
+function buildProviderServicesPath(options = {}) {
+  const params = new URLSearchParams();
+  if (options.companyId) {
+    params.set('companyId', options.companyId);
+  }
+  if (options.search) {
+    params.set('search', options.search);
+  }
+  if (options.status) {
+    params.set('status', options.status);
+  }
+  if (options.visibility) {
+    params.set('visibility', options.visibility);
+  }
+  const query = params.toString();
+  return query ? `/panel/provider/services?${query}` : '/panel/provider/services';
+}
+
+export async function getProviderServicesWorkspace(options = {}) {
+  const path = buildProviderServicesPath(options);
+  const response = await request(path, {
+    cacheKey: 'provider-services-workspace',
+    ttl: 15000,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return {
+    data: normaliseProviderServicesWorkspace(response.data ?? response),
+    meta: response.meta ?? {}
+  };
+}
+
+export async function getProviderServiceDetail(serviceId, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  const params = new URLSearchParams();
+  if (options.companyId) {
+    params.set('companyId', options.companyId);
+  }
+  const query = params.toString();
+  const path = `/panel/provider/services/${encodeURIComponent(serviceId)}${query ? `?${query}` : ''}`;
+  const response = await request(path, {
+    cacheKey: null,
+    forceRefresh: options?.forceRefresh,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function createProviderService(payload, options = {}) {
+  const response = await request('/panel/provider/services', {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true,
+    cacheKey: null,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function updateProviderService(serviceId, payload, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  const response = await request(`/panel/provider/services/${encodeURIComponent(serviceId)}`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true,
+    cacheKey: null,
+    signal: options?.signal
+  });
+  return normaliseProviderServiceRecord(response.data ?? response);
+}
+
+export async function deleteProviderService(serviceId, options = {}) {
+  if (!serviceId) {
+    throw new PanelApiError('Service identifier required', 400);
+  }
+  await request(`/panel/provider/services/${encodeURIComponent(serviceId)}`, {
+    method: 'DELETE',
+    cacheKey: null,
+    forceRefresh: true,
+    signal: options?.signal
+  });
 }
 
 export async function createAdminProvider(payload) {

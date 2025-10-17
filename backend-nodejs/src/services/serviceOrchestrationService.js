@@ -236,6 +236,9 @@ export function normaliseServiceRecord(service) {
     companyId: plain.companyId,
     title: plain.title,
     description: plain.description,
+    shortDescription: plain.shortDescription || null,
+    tagline: plain.tagline || null,
+    displayUrl: plain.displayUrl || null,
     category: plain.category,
     categoryId: plain.categoryId,
     status: plain.status,
@@ -243,10 +246,22 @@ export function normaliseServiceRecord(service) {
     kind: plain.kind,
     price: plain.price ? Number.parseFloat(plain.price) : null,
     currency: plain.currency,
+    pricingModel: plain.pricingModel || null,
+    pricingUnit: plain.pricingUnit || null,
+    crewSize: Number.isFinite(Number.parseInt(plain.crewSize, 10))
+      ? Number.parseInt(plain.crewSize, 10)
+      : null,
     heroImageUrl: plain.heroImageUrl || null,
+    showcaseVideoUrl: plain.showcaseVideoUrl || null,
     gallery: sanitiseGalleryItems(plain.gallery),
     coverage: sanitiseStringCollection(plain.coverage),
     tags: sanitiseStringCollection(plain.tags),
+    keywordTags: sanitiseStringCollection(plain.keywordTags),
+    seo: {
+      title: plain.seoTitle || null,
+      description: plain.seoDescription || null,
+      keywords: sanitiseStringCollection(plain.seoKeywords)
+    },
     metadata: sanitiseMetadata(plain.metadata),
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
