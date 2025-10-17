@@ -122,16 +122,21 @@ export const DASHBOARD_ROLES = [
       { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
       { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
       { id: 'financial-management', label: 'Financial management', icon: 'finance' },
-      { id: 'training', label: 'Training & Compliance', icon: 'compliance' }
+      {
+        id: 'tax-management',
+        label: 'Tax management',
+        icon: 'finance',
+        href: '/dashboards/serviceman/tax'
+      },
       { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
       {
         id: 'byok-management',
         label: 'BYOK management',
         icon: 'compliance',
         href: '/dashboards/serviceman/byok'
-      }
-      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' }
-      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' }
+      },
+      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
+      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
       { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' }
     ]
   },

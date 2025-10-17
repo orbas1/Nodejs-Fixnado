@@ -41,6 +41,7 @@ import { getWebsiteManagementSnapshot } from './websiteManagementService.js';
 import { getWalletOverview } from './walletService.js';
 import { getServicemanFinanceWorkspace } from './servicemanFinanceService.js';
 import { getServicemanWebsitePreferences } from './servicemanWebsitePreferencesService.js';
+import { getServicemanTaxWorkspace } from './servicemanTaxService.js';
 
 const DEFAULT_TIMEZONE = config.dashboards?.defaultTimezone || 'Europe/London';
 const DEFAULT_WINDOW_DAYS = Math.max(config.dashboards?.defaultWindowDays ?? 28, 7);
@@ -67,6 +68,18 @@ const ORDER_HISTORY_TIMELINE_LIMIT = Math.max(config.dashboards?.historyTimeline
 const ORDER_HISTORY_ACCESS = Object.freeze({
   level: 'manage',
   features: ['order-history:write', 'history:write']
+});
+
+const FALLBACK_TAX_METADATA = Object.freeze({
+  filingStatuses: ['draft', 'pending', 'submitted', 'accepted', 'overdue', 'rejected', 'cancelled'],
+  filingTypes: ['self_assessment', 'vat_return', 'cis', 'payroll', 'other'],
+  submissionMethods: ['online', 'paper', 'agent', 'api', 'other'],
+  remittanceCycles: ['monthly', 'quarterly', 'annually', 'ad_hoc'],
+  profileFilingStatuses: ['sole_trader', 'limited_company', 'partnership', 'umbrella', 'other'],
+  taskStatuses: ['planned', 'in_progress', 'blocked', 'completed'],
+  taskPriorities: ['low', 'normal', 'high', 'urgent'],
+  documentStatuses: ['active', 'archived', 'superseded'],
+  documentTypes: ['evidence', 'receipt', 'correspondence', 'certificate', 'other']
 });
 
 const toIsoString = (value) => {
@@ -3048,8 +3061,15 @@ async function loadServicemanData(context) {
 
   const providerFilter = providerId ? { providerId } : {};
 
-  const [assignments, previousAssignments, bids, services, financeWorkspace] = await Promise.all([
-  const [assignments, previousAssignments, bids, services, websitePreferences] = await Promise.all([
+  const [
+    assignments,
+    previousAssignments,
+    bids,
+    services,
+    financeWorkspace,
+    websitePreferences,
+    taxWorkspace
+  ] = await Promise.all([
     BookingAssignment.findAll({
       where: {
         ...providerFilter,
@@ -3082,8 +3102,14 @@ async function loadServicemanData(context) {
           console.warn('Failed to load serviceman finance workspace', error);
           return null;
         })
+      : Promise.resolve(null),
+    getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null })),
+    providerId
+      ? getServicemanTaxWorkspace({ servicemanId: providerId, limit: 6 }).catch((error) => {
+          console.warn('Failed to load serviceman tax workspace', error);
+          return null;
+        })
       : Promise.resolve(null)
-    getServicemanWebsitePreferences().catch(() => ({ preferences: null, meta: null }))
   ]);
 
   const providerIds = Array.from(
@@ -3673,12 +3699,44 @@ async function loadServicemanData(context) {
         data:
           financeWorkspace ?? {
             context: { servicemanId: providerId ?? null },
-            summary: { earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 }, expenses: { total: 0, reimbursed: 0 } },
+            summary: {
+              earnings: { total: 0, outstanding: 0, payable: 0, paid: 0 },
+              expenses: { total: 0, reimbursed: 0 }
+            },
             permissions: { canManagePayments: false, canSubmitExpenses: false, canManageAllowances: false },
             earnings: { items: [], meta: { total: 0 } },
             expenses: { items: [], meta: { total: 0 } },
             allowances: { items: [] }
           }
+      },
+      {
+        id: 'tax-management',
+        icon: 'finance',
+        label: 'Tax Management',
+        description: 'Manage tax profile, filings, deadlines, and compliance artefacts.',
+        type: 'serviceman-tax',
+        data:
+          taxWorkspace ?? {
+            context: { servicemanId: providerId ?? null, serviceman: null },
+            profile: null,
+            summary: {
+              filings: { total: 0, overdue: 0, amountDueTotal: 0, amountPaidTotal: 0, byStatus: {} },
+              tasks: { total: 0, open: 0, overdue: 0, byStatus: {} },
+              documents: { total: 0, byType: {} }
+            },
+            filings: { items: [], meta: { total: 0, overdue: 0 } },
+            tasks: { items: [], meta: { total: 0, open: 0, overdue: 0 } },
+            documents: { items: [], meta: { total: 0 } },
+            metadata: FALLBACK_TAX_METADATA,
+            permissions: {
+              canManageProfile: false,
+              canManageFilings: false,
+              canManageTasks: false,
+              canManageDocuments: false
+            }
+          }
+      },
+      {
         id: 'website-preferences',
         icon: 'builder',
         label: 'Website Preferences',
@@ -3688,17 +3746,25 @@ async function loadServicemanData(context) {
           initialPreferences: websitePreferences?.preferences ?? null,
           meta: websitePreferences?.meta ?? null
         }
+      },
+      {
         id: 'profile-settings',
+        icon: 'settings',
         label: 'Profile Settings',
         description: 'Update crew identity, emergency contacts, certifications, and issued equipment.',
         type: 'serviceman-profile-settings',
         data: {
           helper: 'All changes sync across dispatch, safety, and provider leadership dashboards.'
         }
+      },
+      {
         id: 'serviceman-disputes',
+        icon: 'compliance',
         label: 'Dispute Management',
         description: 'Open and track dispute cases, assignments, and supporting evidence.',
         type: 'component'
+      },
+      {
         id: 'fixnado-ads',
         label: 'Fixnado Ads',
         description: 'Spin up rapid response placements and manage Fixnado campaigns.',
