@@ -1,7 +1,5 @@
 const PROFILE_ENDPOINT = '/api/admin/profile';
-
-async function handleResponse(response) {
-const PROFILE_ENDPOINT = '/api/admin/profile-settings';
+const PROFILE_SETTINGS_ENDPOINT = '/api/admin/profile-settings';
 
 const DEFAULT_NOTIFICATIONS = {
   email: true,
@@ -21,27 +19,13 @@ async function handleResponse(response, fallbackMessage) {
   try {
     errorBody = await response.json();
   } catch {
-    // ignore
+    // ignore JSON parse errors
   }
 
-  const error = new Error(errorBody?.message || 'Unable to process admin profile request');
-  error.status = response.status;
-  error.details = errorBody?.details;
-  throw error;
-}
-
-export async function fetchAdminProfile({ signal } = {}) {
-  let errorPayload = null;
-  try {
-    errorPayload = await response.json();
-  } catch {
-    // ignore JSON parsing issues
-  }
-
-  const message = errorPayload?.message || fallbackMessage;
+  const message = errorBody?.message || fallbackMessage || 'Unable to process admin profile request';
   const error = new Error(message);
   error.status = response.status;
-  error.details = errorPayload?.details;
+  error.details = errorBody?.details;
   throw error;
 }
 
@@ -107,7 +91,7 @@ function normaliseProfilePayload(payload = {}) {
   };
 }
 
-export async function getAdminProfileSettings({ signal } = {}) {
+export async function fetchAdminProfile({ signal } = {}) {
   const response = await fetch(PROFILE_ENDPOINT, {
     method: 'GET',
     headers: { Accept: 'application/json' },
@@ -115,16 +99,11 @@ export async function getAdminProfileSettings({ signal } = {}) {
     signal
   });
 
-  const payload = await handleResponse(response);
+  const payload = await handleResponse(response, 'Failed to load admin profile');
   return payload?.profile ?? payload;
 }
 
 export async function saveAdminProfile(profile, { signal } = {}) {
-  const payload = await handleResponse(response, 'Failed to load profile settings');
-  return normaliseProfilePayload(payload);
-}
-
-export async function updateAdminProfileSettings(body) {
   const response = await fetch(PROFILE_ENDPOINT, {
     method: 'PUT',
     headers: {
@@ -136,55 +115,84 @@ export async function updateAdminProfileSettings(body) {
     signal
   });
 
-  const payload = await handleResponse(response);
+  const payload = await handleResponse(response, 'Failed to save admin profile');
   return payload?.profile ?? payload;
-    body: JSON.stringify(body)
+}
+
+export async function getAdminProfileSettings({ signal } = {}) {
+  const response = await fetch(PROFILE_SETTINGS_ENDPOINT, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    credentials: 'include',
+    signal
+  });
+
+  const payload = await handleResponse(response, 'Failed to load profile settings');
+  return normaliseProfilePayload(payload);
+}
+
+export async function updateAdminProfileSettings(body, { signal } = {}) {
+  const response = await fetch(PROFILE_SETTINGS_ENDPOINT, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+    signal
   });
 
   const payload = await handleResponse(response, 'Failed to save profile settings');
   return normaliseProfilePayload(payload);
 }
 
-export async function createAdminDelegate(payload) {
-  const response = await fetch(`${PROFILE_ENDPOINT}/delegates`, {
+export async function createAdminDelegate(payload, { signal } = {}) {
+  const response = await fetch(`${PROFILE_SETTINGS_ENDPOINT}/delegates`, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     },
     credentials: 'include',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal
   });
 
   const body = await handleResponse(response, 'Failed to add delegate');
   return normaliseDelegate(body.data ?? body);
 }
 
-export async function updateAdminDelegate(delegateId, payload) {
-  const response = await fetch(`${PROFILE_ENDPOINT}/delegates/${delegateId}`, {
+export async function updateAdminDelegate(delegateId, payload, { signal } = {}) {
+  const response = await fetch(`${PROFILE_SETTINGS_ENDPOINT}/delegates/${delegateId}`, {
     method: 'PATCH',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     },
     credentials: 'include',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal
   });
 
   const body = await handleResponse(response, 'Failed to update delegate');
   return normaliseDelegate(body.data ?? body);
 }
 
-export async function deleteAdminDelegate(delegateId) {
-  const response = await fetch(`${PROFILE_ENDPOINT}/delegates/${delegateId}`, {
+export async function deleteAdminDelegate(delegateId, { signal } = {}) {
+  const response = await fetch(`${PROFILE_SETTINGS_ENDPOINT}/delegates/${delegateId}`, {
     method: 'DELETE',
     headers: { Accept: 'application/json' },
-    credentials: 'include'
+    credentials: 'include',
+    signal
   });
 
   if (response.status === 204) {
-    return;
+    return true;
   }
 
   await handleResponse(response, 'Failed to remove delegate');
+  return true;
 }
+
+export { normaliseProfilePayload };

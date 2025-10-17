@@ -266,8 +266,8 @@ function normalizeSettings(settings) {
       app: normalizeSection(integrations.app),
       database: normalizeSection(integrations.database)
     },
-    bookings: normalizeBookings(settings.bookings)
-    system: normalizeSystem(settings.system)
+    bookings: normalizeBookings(settings.bookings),
+    system: normalizeSystem(settings.system),
     seo: normalizeSeo(settings.seo)
   };
 }
@@ -323,7 +323,16 @@ function normalizeBookings(bookings) {
     documents: {
       requireRiskAssessment: documents.requireRiskAssessment !== false,
       requireInsuranceProof: documents.requireInsuranceProof !== false,
-      requirePermit: documents.requirePermit === true
+      requirePermit: documents.requirePermit === true,
+      requiredDocuments: Array.isArray(documents.requiredDocuments)
+        ? documents.requiredDocuments
+            .map((entry) => (typeof entry === 'string' ? entry.trim() : entry))
+            .filter(Boolean)
+        : []
+    }
+  };
+}
+
 function normalizeSeo(seo) {
   const input = seo && typeof seo === 'object' ? seo : {};
   const social = input.social && typeof input.social === 'object' ? input.social : {};

@@ -955,7 +955,6 @@ function complianceStatusLabel(tone) {
   return 'On track';
 }
 
-function buildAdminNavigation(payload) {
 function automationStatusLabel(tone) {
   if (tone === 'warning') return 'Monitor delivery';
   if (tone === 'success') return 'Operational';
@@ -976,7 +975,6 @@ function formatJobTimestamp(isoString) {
   return dateTimeFormatter.format(date);
 }
 
-function buildAdminNavigation(payload) {
 function formatRelativeTime(timestamp) {
   if (!timestamp) return null;
   const last = new Date(timestamp);
@@ -997,8 +995,6 @@ function formatRelativeTime(timestamp) {
   return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
 }
 
-function buildAdminNavigation(payload, options = {}) {
-function buildAdminNavigation(payload, helpers) {
 function buildAdminNavigation(payload, complianceContext = null) {
   if (!payload) {
     return { sections: [], sidebarLinks: [] };
@@ -1265,26 +1261,6 @@ function buildAdminNavigation(payload, complianceContext = null) {
     }
   };
 
-  const securitySection = securitySignals.length
-    ? {
-        id: 'security-posture',
-        label: 'Security & telemetry posture',
-        description: 'Adoption, alerting, and ingestion health signals from the last 24 hours.',
-        type: 'grid',
-        data: {
-          cards: securitySignals.map((signal) => ({
-            title: `${signal.label} — ${signal.valueLabel}`,
-            accent: resolveAccent(signal.tone),
-            details: [
-              signal.caption,
-              signal.tone === 'danger'
-                ? 'Immediate investigation required.'
-                : signal.tone === 'warning'
-                  ? 'Monitor closely and prepare contingency.'
-                  : 'Tracking to plan.'
-            ]
-          }))
-        }
   const securitySection = {
     id: 'security-posture',
     label: 'Security & telemetry posture',
@@ -1504,32 +1480,6 @@ function buildAdminNavigation(payload, complianceContext = null) {
       }
     : null;
 
-  const auditSection = auditTimeline.length
-    ? {
-        id: 'audit-log',
-        label: 'Audit timeline',
-        description: 'Latest pipeline runs, compliance reviews, and dispute checkpoints.',
-        type: 'table',
-        data: {
-          headers: ['Time', 'Event', 'Owner', 'Status'],
-          rows: auditTimeline.map((entry) => [entry.time, entry.event, entry.owner, entry.status])
-        }
-      }
-    : null;
-
-  const sections = [
-  const escrowConsoleLink = {
-    id: 'escrow-console-link',
-    label: 'Escrow management',
-    description: 'Manual overrides, release approvals, and dispute controls.',
-    type: 'link',
-    href: '/admin/escrows',
-    icon: 'finance'
-  };
-  const navigation = [
-    overview,
-    commandMetrics,
-    customJobsSection,
   const inboxSection = inboxSummary
     ? {
         id: 'inbox',
@@ -1644,8 +1594,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
         }
       }
     : null;
-  const navigation = [
-  const sections = [
+
   const upcomingManualEntries = manualUpcoming.slice(0, 4).map((entry) => ({
     title: entry.title,
     when: entry.when,
@@ -1656,7 +1605,7 @@ function buildAdminNavigation(payload, complianceContext = null) {
     overview.analytics.upcoming = [...overview.analytics.upcoming, ...upcomingManualEntries];
   }
 
-  return [
+  const sections = [
     overview,
     commandMetrics,
     commandMetricsAdmin,
@@ -1667,12 +1616,9 @@ function buildAdminNavigation(payload, complianceContext = null) {
     inboxSection,
     legalSection,
     automationSection,
-    auditSection,
-    escrowConsoleLink
     zoneGovernanceSection,
+    monetisationSection,
     auditSection
-    auditSection,
-    monetisationSection
   ].filter(Boolean);
 
   sections.push({
@@ -1700,44 +1646,55 @@ function buildAdminNavigation(payload, complianceContext = null) {
         }
       ]
     }
-  navigation.push({
-    id: 'settings-preferences-link',
-    label: 'Settings & preferences',
-    description: 'Configure admin workspace defaults and escalation controls.',
-    type: 'link',
-    icon: 'settings',
-    href: '/admin/preferences'
   });
 
-  return navigation;
-    id: 'appearance-management',
-    label: 'Appearance management',
-    description: 'Govern admin look & feel, brand assets, and marketing variants.',
-    icon: 'assets',
-    href: '/admin/appearance'
-  });
+  const extraSidebarLinks = [
+    {
+      id: 'escrow-console-link',
+      label: 'Escrow management',
+      description: 'Manual overrides, release approvals, and dispute controls.',
+      type: 'link',
+      icon: 'finance',
+      href: '/admin/escrows'
+    },
+    {
+      id: 'settings-preferences-link',
+      label: 'Settings & preferences',
+      description: 'Configure admin workspace defaults and escalation controls.',
+      type: 'link',
+      icon: 'settings',
+      href: '/admin/preferences'
+    },
+    {
+      id: 'appearance-management-link',
+      label: 'Appearance management',
+      description: 'Govern admin look & feel, brand assets, and marketing variants.',
+      type: 'link',
+      icon: 'assets',
+      href: '/admin/appearance'
+    },
+    {
+      id: 'admin-rentals-link',
+      label: 'Rental management',
+      description: 'Open the dedicated rental operations workspace.',
+      type: 'link',
+      icon: 'assets',
+      href: '/admin/rentals'
+    },
+    {
+      id: 'system-settings-link',
+      label: 'System settings',
+      description: 'Configure email, storage, and integration credentials.',
+      type: 'link',
+      icon: 'settings',
+      href: '/admin/system-settings'
+    }
+  ];
 
-  return navigation;
-    id: 'admin-rentals-link',
-    label: 'Rental management',
-    description: 'Open the dedicated rental operations workspace.',
-    type: 'route',
-    icon: 'assets',
-    href: '/admin/rentals'
-  });
-
-  return navigation;
-  return { sections, sidebarLinks };
-  sections.push({
-    id: 'system-settings-link',
-    label: 'System settings',
-    description: 'Configure email, storage, and integration credentials.',
-    type: 'link',
-    icon: 'settings',
-    routeTo: '/admin/system-settings'
-  });
-
-  return sections;
+  return {
+    sections,
+    sidebarLinks: [...sidebarLinks, ...extraSidebarLinks]
+  };
 }
 
 export default function AdminDashboard() {
@@ -1935,30 +1892,6 @@ export default function AdminDashboard() {
                 cause: error
               });
 
-  const commandMetricsHrefBuilder = useCallback(
-    (view) => {
-      const params = new URLSearchParams();
-      if (timeframe !== DEFAULT_TIMEFRAME) {
-        params.set('timeframe', timeframe);
-      }
-      params.set('panel', 'command-metrics');
-      if (view) {
-        params.set('view', view);
-      }
-      return `/admin/dashboard?${params.toString()}`;
-    },
-    [timeframe]
-  );
-
-  const navigation = useMemo(() => {
-    const sections = state.data
-      ? buildAdminNavigation(state.data, { commandMetricsLink: commandMetricsHrefBuilder })
-      : [];
-    if (affiliateSection) {
-      sections.push(affiliateSection);
-    }
-    return sections;
-  }, [state.data, affiliateSection, commandMetricsHrefBuilder]);
         setServiceState((current) => ({ ...current, loading: false, error: panelError }));
         throw panelError;
       }
@@ -2279,6 +2212,7 @@ export default function AdminDashboard() {
       handleDelegateUpdate,
       handleDelegateDelete
     ]
+  );
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -2298,9 +2232,13 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
     loadComplianceControls({ signal: controller.signal });
     return () => controller.abort();
   }, [loadComplianceControls]);
+
+  useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
     (async () => {
@@ -2312,8 +2250,7 @@ export default function AdminDashboard() {
         setOverviewSettings(settings);
       } catch (error) {
         if (controller.signal.aborted || !isMounted) return;
-        const message =
-          error instanceof Error ? error.message : 'Failed to load overview settings';
+        const message = error instanceof Error ? error.message : 'Failed to load overview settings';
         setOverviewSettingsLoadError(message);
       } finally {
         if (!isMounted) return;
@@ -2330,23 +2267,8 @@ export default function AdminDashboard() {
     if (!overviewSettings || settingsModalOpen) {
       return;
     }
-    sections.push({
-      id: 'wallet-management-link',
-      label: 'Wallet management',
-      description: 'Configure balances, guardrails, and ledger activity for Fixnado wallets.',
-      icon: 'finance',
-      href: '/admin/wallets'
-    });
-    return sections;
-  }, [state.data, affiliateSection]);
-  const dashboardPayload = state.data ? { navigation } : null;
-  const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
-  const isFallback = Boolean(state.meta?.fallback);
-  const servedFromCache = Boolean(state.meta?.fromCache && !state.meta?.fallback);
     setOverviewSettingsForm(buildFormState(overviewSettings));
   }, [overviewSettings, settingsModalOpen]);
-
-  const affiliateSection = useMemo(() => buildAffiliateGovernanceSection(affiliateState), [affiliateState]);
   const userManagementSection = useMemo(
     () => ({
       id: 'user-management',
@@ -2555,6 +2477,18 @@ export default function AdminDashboard() {
         const result = await updateAdminProviderTaxProfile(companyId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update tax profile', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
   const handleFetchComplianceSummary = useCallback(
     async (companyId, options = {}) => {
       try {
@@ -2563,13 +2497,12 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
-            : new PanelApiError('Unable to update tax profile', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to load compliance summary', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
-    [loadProviderDetail, handleProviderAuthError]
+    [handleProviderAuthError]
   );
 
   const handleCreateProviderTaxFiling = useCallback(
@@ -2578,7 +2511,16 @@ export default function AdminDashboard() {
         const result = await createAdminProviderTaxFiling(companyId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
-    [handleProviderAuthError]
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to create tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
   );
 
   const handleSubmitComplianceDocument = useCallback(
@@ -2615,13 +2557,12 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
-            : new PanelApiError('Unable to create tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to review document', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
-    [loadProviderDetail, handleProviderAuthError]
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
   const handleUpdateProviderTaxFiling = useCallback(
@@ -2630,7 +2571,16 @@ export default function AdminDashboard() {
         const result = await updateAdminProviderTaxFiling(companyId, filingId, payload);
         await loadProviderDetail(companyId, { forceRefresh: true });
         return result;
-    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
   );
 
   const handleEvaluateCompliance = useCallback(
@@ -2646,13 +2596,12 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
-            : new PanelApiError('Unable to update tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to evaluate compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
-    [loadProviderDetail, handleProviderAuthError]
+    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
   const handleDeleteProviderTaxFiling = useCallback(
@@ -2660,7 +2609,16 @@ export default function AdminDashboard() {
       try {
         await deleteAdminProviderTaxFiling(companyId, filingId);
         await loadProviderDetail(companyId, { forceRefresh: true });
-    [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to delete tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
   );
 
   const handleToggleBadgeVisibility = useCallback(
@@ -2697,13 +2655,11 @@ export default function AdminDashboard() {
         const panelError =
           error instanceof PanelApiError
             ? error
-            : new PanelApiError('Unable to delete tax filing', error?.status ?? 500, { cause: error });
             : new PanelApiError('Unable to suspend provider compliance', error?.status ?? 500, { cause: error });
         await handleProviderAuthError(panelError);
         throw panelError;
       }
     },
-    [loadProviderDetail, handleProviderAuthError]
     [loadProviderDetail, loadProviderDirectory, handleProviderAuthError]
   );
 
@@ -2721,7 +2677,7 @@ export default function AdminDashboard() {
       onUpdateTaxProfile: handleUpdateProviderTaxProfile,
       onCreateTaxFiling: handleCreateProviderTaxFiling,
       onUpdateTaxFiling: handleUpdateProviderTaxFiling,
-      onDeleteTaxFiling: handleDeleteProviderTaxFiling
+      onDeleteTaxFiling: handleDeleteProviderTaxFiling,
       onFetchComplianceSummary: handleFetchComplianceSummary,
       onSubmitComplianceDocument: handleSubmitComplianceDocument,
       onReviewComplianceDocument: handleReviewComplianceDocument,
@@ -2742,7 +2698,7 @@ export default function AdminDashboard() {
       handleUpdateProviderTaxProfile,
       handleCreateProviderTaxFiling,
       handleUpdateProviderTaxFiling,
-      handleDeleteProviderTaxFiling
+      handleDeleteProviderTaxFiling,
       handleFetchComplianceSummary,
       handleSubmitComplianceDocument,
       handleReviewComplianceDocument,
@@ -2790,27 +2746,6 @@ export default function AdminDashboard() {
     };
   }, [providerState, providerHandlers]);
 
-  const navigation = useMemo(() => {
-    const sections = state.data ? [...buildAdminNavigation(state.data)] : [];
-    if (affiliateSection) {
-      sections.push(affiliateSection);
-    }
-    sections.push(userManagementSection);
-    return sections;
-  }, [state.data, affiliateSection, userManagementSection]);
-  const dashboardPayload = useMemo(() => {
-    if (!navigation.length) {
-      return state.data ? { ...state.data, navigation: [] } : null;
-    }
-    if (state.data) {
-      return { ...state.data, navigation };
-    }
-    return {
-      navigation,
-      persona: roleMeta?.id ?? 'admin',
-      metadata: {}
-    };
-  }, [navigation, state.data, roleMeta]);
   const enterpriseSection = useMemo(() => buildEnterpriseLaunchpad(enterpriseSnapshot), [enterpriseSnapshot]);
 
   const handleServiceRefresh = useCallback(() => {
@@ -2989,15 +2924,8 @@ export default function AdminDashboard() {
     handleUpdateListing,
     handleUpdateListingStatus,
     handleArchiveListing
-  const navigationModel = useMemo(() => {
-    if (!state.data) {
-      return { sections: [], sidebarLinks: [] };
-    }
-    return buildAdminNavigation(state.data, { formatDateLabel, formatRelativeMoment });
-  }, [state.data]);
+  ]);
 
-  const navigation = useMemo(() => {
-    const sections = [...navigationModel.sections];
   const complianceSectionContext = useMemo(() => {
     const payload =
       complianceState.payload ?? {
@@ -3031,69 +2959,77 @@ export default function AdminDashboard() {
     handleUpdateAutomation
   ]);
 
-  const navigation = useMemo(() => {
-    const sections = state.data
-      ? buildAdminNavigation(state.data, { defaultDisputeBucketId: disputeBucketIdParam || undefined })
-      : [];
-    const sections = state.data ? buildAdminNavigation(state.data) : [];
-    if (providerSection) {
-      sections.push(providerSection);
+  const navigationModel = useMemo(() => {
+    if (!state.data) {
+      return { sections: [], sidebarLinks: [] };
     }
-    if (enterpriseSection) {
-      sections.push(enterpriseSection);
-    }
-    if (serviceSection) {
-      sections.push(serviceSection);
-    }
-    sections.push({
-      id: 'zone-management-link',
-      label: 'Zone management workspace',
-      description: 'Launch the geo-zonal governance tools in a dedicated workspace.',
-      href: '/admin/zones'
-    });
-    const sections = state.data ? buildAdminNavigation(state.data, complianceSectionContext) : [];
-    if (affiliateSection) {
-      sections.push(affiliateSection);
-    }
-    sections.push({
-      id: 'role-management-link',
-      label: 'Role management',
-      description: 'Manage roles, permissions, and member assignments.',
-      type: 'link',
-      href: '/admin/roles'
-    });
-    sections.push(profileSettingsSection);
-    return sections;
-  }, [state.data, providerSection, affiliateSection]);
-  const dashboardPayload = navigation.length ? { navigation } : null;
-  }, [state.data, affiliateSection, profileSettingsSection]);
-    sections.push({
-      id: 'purchases-link',
-      label: 'Purchase management',
-      description: 'Create purchase orders, manage suppliers, and align budgets.',
-      type: 'link',
-      icon: 'documents',
-      href: '/admin/purchases'
-      id: 'admin-monetisation-link',
-      label: 'Monetisation workspace',
-      description: 'Open the revenue and affiliate control centre.',
-      type: 'link',
-      icon: 'finance',
-      to: '/admin/monetisation'
-    });
-    return sections;
-  }, [state.data, affiliateSection, disputeBucketIdParam]);
-  }, [state.data, affiliateSection, enterpriseSection]);
-  }, [state.data, affiliateSection]);
-  const dashboardPayload = state.data ? { ...state.data, navigation } : null;
-  }, [state.data, serviceSection, affiliateSection]);
-  }, [navigationModel.sections, affiliateSection]);
+    return buildAdminNavigation(state.data, complianceSectionContext);
+  }, [state.data, complianceSectionContext]);
 
-  const dashboardPayload = state.data
-    ? { navigation, sidebarLinks: navigationModel.sidebarLinks }
-    : null;
-  }, [state.data, affiliateSection, complianceSectionContext]);
-  const dashboardPayload = state.data ? { navigation } : null;
+  const navigation = useMemo(() => {
+    if (!navigationModel.sections.length) {
+      return [];
+    }
+
+    const extendedSections = [
+      ...navigationModel.sections,
+      providerSection,
+      enterpriseSection,
+      serviceSection,
+      affiliateSection,
+      profileSettingsSection,
+      {
+        id: 'zone-management-link',
+        label: 'Zone management workspace',
+        description: 'Launch the geo-zonal governance tools in a dedicated workspace.',
+        type: 'link',
+        href: '/admin/zones'
+      },
+      {
+        id: 'role-management-link',
+        label: 'Role management',
+        description: 'Manage roles, permissions, and member assignments.',
+        type: 'link',
+        href: '/admin/roles'
+      },
+      {
+        id: 'purchases-link',
+        label: 'Purchase management',
+        description: 'Create purchase orders, manage suppliers, and align budgets.',
+        type: 'link',
+        icon: 'documents',
+        href: '/admin/purchases'
+      },
+      {
+        id: 'admin-monetisation-link',
+        label: 'Monetisation workspace',
+        description: 'Open the revenue and affiliate control centre.',
+        type: 'link',
+        icon: 'finance',
+        href: '/admin/monetisation'
+      }
+    ].filter(Boolean);
+
+    return extendedSections;
+  }, [
+    navigationModel.sections,
+    providerSection,
+    enterpriseSection,
+    serviceSection,
+    affiliateSection,
+    profileSettingsSection
+  ]);
+
+  const dashboardPayload = useMemo(() => {
+    if (!state.data) {
+      return null;
+    }
+    return {
+      navigation,
+      sidebarLinks: navigationModel.sidebarLinks
+    };
+  }, [navigation, navigationModel.sidebarLinks, state.data]);
+
   const timeframeOptions = state.data?.timeframeOptions ?? FALLBACK_TIMEFRAME_OPTIONS;
   const isFallback = Boolean(state.meta?.fallback);
   const servedFromCache = Boolean(state.meta?.fromCache && !state.meta?.fallback);
@@ -3168,6 +3104,8 @@ export default function AdminDashboard() {
       });
     },
     [setSearchParams, timeframe]
+  );
+
   const handleSectionChange = useCallback(
     (sectionId) => {
       setSearchParams((current) => {
@@ -3687,146 +3625,44 @@ export default function AdminDashboard() {
     ? `${roleMeta.persona} • Window: ${state.data.timeframeLabel}`
     : roleMeta.persona;
 
+  const adminShortcutLinks = useMemo(
+    () => [
+      { id: 'home-builder', to: '/admin/home-builder', label: 'Home builder', icon: Squares2X2Icon },
+      { id: 'monetisation', to: '/admin/monetisation', label: 'Monetisation controls', icon: BanknotesIcon },
+      { id: 'bookings', to: '/admin/bookings', label: 'Booking management', icon: ClipboardDocumentListIcon },
+      { id: 'custom-jobs', to: '/admin/custom-jobs', label: 'Custom job management', icon: ClipboardDocumentListIcon },
+      { id: 'roles', to: '/admin/roles', label: 'Role management', icon: ShieldCheckIcon },
+      { id: 'preferences', to: '/admin/preferences', label: 'Settings preferences', icon: Cog8ToothIcon },
+      { id: 'appearance', to: '/admin/appearance', label: 'Appearance management', icon: SwatchIcon },
+      { id: 'zones', to: '/admin/zones', label: 'Geo-zonal builder', icon: MapIcon },
+      { id: 'escrows', to: '/admin/escrows', label: 'Escrow management', icon: ShieldCheckIcon },
+      { id: 'wallets', to: '/admin/wallets', label: 'Wallet management', icon: WalletIcon },
+      { id: 'enterprise', to: '/admin/enterprise', label: 'Enterprise management', icon: BuildingOfficeIcon },
+      { id: 'marketplace', to: '/admin/marketplace', label: 'Marketplace workspace', icon: WrenchScrewdriverIcon },
+      { id: 'website-management', to: '/admin/website-management', label: 'Website management', icon: GlobeAltIcon },
+      { id: 'system-settings', to: '/admin/system-settings', label: 'System settings', icon: Cog8ToothIcon }
+    ],
+    []
+  );
+
   const filters = (
     <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-      <Button
-        to="/admin/home-builder"
-        size="sm"
-        variant="secondary"
-        icon={Squares2X2Icon}
-        iconPosition="start"
-      >
-        Home builder
-      </Button>
-      <Button
-        to="/admin/monetisation"
-        size="sm"
-        variant="secondary"
-        icon={BanknotesIcon}
-        iconPosition="start"
-      >
-        Monetisation controls
-      </Button>
-      <Button
-        to="/admin/bookings"
-        to="/admin/custom-jobs"
-        size="sm"
-        variant="secondary"
-        icon={ClipboardDocumentListIcon}
-        iconPosition="start"
-      >
-        Booking management
-        Custom job management
-        to="/admin/roles"
-        size="sm"
-        variant="secondary"
-        icon={ShieldCheckIcon}
-        iconPosition="start"
-      >
-        Role management
-        to="/admin/preferences"
-        size="sm"
-        variant="secondary"
-        icon={Cog8ToothIcon}
-        iconPosition="start"
-      >
-        Settings preferences
-        to="/admin/appearance"
-        size="sm"
-        variant="secondary"
-        icon={SwatchIcon}
-        iconPosition="start"
-      >
-        Appearance management
-        to="/admin/rentals"
-        size="sm"
-        variant="secondary"
-        icon={CubeIcon}
-        iconPosition="start"
-      >
-        Rental management
-        to="/admin/live-feed/auditing"
-        size="sm"
-        variant="secondary"
-        icon={EyeIcon}
-        iconPosition="start"
-      >
-        Live feed auditing
-        to="/admin/taxonomy"
-        size="sm"
-        variant="secondary"
-        icon={Squares2X2Icon}
-        iconPosition="start"
-      >
-        Taxonomy manager
-        to="/admin/seo"
-        size="sm"
-        variant="secondary"
-        icon={TagIcon}
-        iconPosition="start"
-      >
-        Tags &amp; SEO
-      </Button>
-      <Button
-        to="/admin/zones"
-        size="sm"
-        variant="secondary"
-        icon={MapIcon}
-        iconPosition="start"
-      >
-        Geo-zonal builder
-      </Button>
-      <Button
-        to="/admin/escrows"
-        size="sm"
-        variant="secondary"
-        icon={ShieldCheckIcon}
-        iconPosition="start"
-      >
-        Escrow management
-        to="/admin/wallets"
-        size="sm"
-        variant="secondary"
-        icon={WalletIcon}
-        iconPosition="start"
-      >
-        Wallet management
-        type="button"
-        size="sm"
-        variant="primary"
-        icon={Cog8ToothIcon}
-        iconPosition="start"
-        onClick={() => openConfigurator()}
-      >
+      {adminShortcutLinks.map((shortcut) => (
+        <Button
+          key={shortcut.id}
+          to={shortcut.to}
+          size="sm"
+          variant="secondary"
+          icon={shortcut.icon}
+          iconPosition="start"
+        >
+          {shortcut.label}
+        </Button>
+      ))}
+      <Button type="button" size="sm" variant="primary" icon={Cog8ToothIcon} iconPosition="start" onClick={openConfigurator}>
         Configure metrics
-        to="/admin/enterprise"
-        size="sm"
-        variant="secondary"
-        icon={BuildingOfficeIcon}
-        iconPosition="start"
-      >
-        Enterprise management
-        to="/admin/marketplace"
-        size="sm"
-        variant="secondary"
-        icon={WrenchScrewdriverIcon}
-        iconPosition="start"
-      >
-        Marketplace workspace
-        to="/admin/website-management"
-        size="sm"
-        variant="secondary"
-        icon={GlobeAltIcon}
-        iconPosition="start"
-      >
-        Website management
-        to="/admin/system-settings"
-        size="sm"
-        variant="secondary"
-        icon={Cog8ToothIcon}
-        iconPosition="start"
-      >
-        System settings
+      </Button>
+      <Button
         type="button"
         size="sm"
         variant="secondary"
@@ -3857,20 +3693,6 @@ export default function AdminDashboard() {
   );
 
   return (
-    <DashboardLayout
-      roleMeta={{ ...roleMeta, persona: personaLabel }}
-      registeredRoles={registeredRoles}
-      dashboard={dashboardPayload}
-      loading={state.loading}
-      error={state.error?.message ?? null}
-      onRefresh={handleRefresh}
-      lastRefreshed={lastRefreshed}
-      filters={filters}
-      initialSectionId={focusParam}
-      onSectionChange={handleSectionChange}
-      onLogout={handleLogout}
-      initialSectionId={focusSectionId || undefined}
-    />
     <>
       <DashboardLayout
         roleMeta={{ ...roleMeta, persona: personaLabel }}
@@ -3881,6 +3703,8 @@ export default function AdminDashboard() {
         onRefresh={handleRefresh}
         lastRefreshed={lastRefreshed}
         filters={filters}
+        initialSectionId={focusSectionId || undefined}
+        onSectionChange={handleSectionChange}
         onLogout={handleLogout}
       />
       <CommandMetricsConfigurator
@@ -3890,7 +3714,6 @@ export default function AdminDashboard() {
         onUpdated={() => loadDashboard({ timeframe, forceRefresh: true })}
         onViewChange={handleConfiguratorViewChange}
       />
-    </>
       <OverviewSettingsModal
         open={settingsModalOpen}
         loading={overviewSettingsLoading}

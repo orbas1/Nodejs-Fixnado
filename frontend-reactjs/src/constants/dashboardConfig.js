@@ -1,3 +1,7 @@
+import { userNavigation } from './dashboard/navigation/userNavigation.js';
+import { providerNavigation } from './dashboard/navigation/providerNavigation.js';
+import { servicemanNavigation } from './dashboard/navigation/servicemanNavigation.js';
+
 export const DASHBOARD_ROLES = [
   {
     id: 'user',
@@ -5,22 +9,7 @@ export const DASHBOARD_ROLES = [
     persona: 'Homeowners & Facilities Teams',
     headline: 'Coordinate service orders, equipment rentals, and support in one workspace.',
     registered: true,
-    navigation: [
-      { id: 'overview', label: 'Control Centre Overview', icon: 'profile' },
-      { id: 'customer-control', label: 'Customer Control Centre', icon: 'control' },
-      { id: 'calendar', label: 'Service Calendar', icon: 'calendar' },
-      { id: 'orders', label: 'Service Orders', icon: 'pipeline' },
-      { id: 'orders', label: 'Work Orders', icon: 'pipeline' },
-      { id: 'services-management', label: 'Services Management', icon: 'automation' },
-      { id: 'history', label: 'Order History', icon: 'documents' },
-      { id: 'availability', label: 'Availability Planner', icon: 'availability' },
-      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
-      { id: 'rentals', label: 'Asset Management', icon: 'assets' },
-      { id: 'support', label: 'Support & Communications', icon: 'support', href: '/communications' },
-      { id: 'wallet', label: 'Wallet & Payments', icon: 'finance' },
-      { id: 'support', label: 'Support & Communications', icon: 'support' },
-      { id: 'settings', label: 'Account Settings', icon: 'settings' }
-    ]
+    navigation: userNavigation
   },
   {
     id: 'admin',
@@ -66,76 +55,7 @@ export const DASHBOARD_ROLES = [
     persona: 'Service Provider Leadership Teams',
     headline: 'Monitor revenue, crew utilisation, and asset readiness for every contract.',
     registered: true,
-    navigation: [
-      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
-      {
-        id: 'profile-settings',
-        label: 'Provider profile',
-        icon: 'settings',
-        description: 'Edit identity, branding, support hours, and coverage.',
-        href: '/dashboards/provider/profile'
-      },
-      { id: 'calendar', label: 'Operations Calendar', icon: 'calendar' },
-      { id: 'crew-availability', label: 'Crew Availability', icon: 'availability' },
-      {
-        id: 'crew-control-centre',
-        label: 'Crew Control Centre',
-        description: 'Manage deployments, rota coverage, and delegations.',
-        icon: 'crew',
-        type: 'route',
-        href: '/dashboards/provider/crew-control'
-      },
-      { id: 'workboard', label: 'Service Pipeline', icon: 'pipeline' },
-      {
-        id: 'custom-jobs',
-        label: 'Custom Jobs',
-        icon: 'documents',
-        type: 'route',
-        href: '/provider/custom-jobs'
-      },
-      { id: 'rentals', label: 'Hire & Rental Management', icon: 'assets' },
-      { id: 'servicemen', label: 'Serviceman Directory', icon: 'crew' },
-      {
-        id: 'inventory-management',
-        label: 'Inventory Management',
-        icon: 'assets',
-        type: 'route',
-        href: '/provider/inventory'
-      },
-      {
-        id: 'services-control',
-        label: 'Services Control Centre',
-        description: 'Manage service creation, availability, media, and SEO from one workspace.',
-        icon: 'automation',
-        type: 'route',
-        href: '/provider/services'
-      },
-      { id: 'escrow-management', label: 'Escrow Management', icon: 'finance' },
-      {
-        id: 'serviceman-payments',
-        label: 'Crew Payments & Commissions',
-        icon: 'finance'
-      },
-      {
-        id: 'onboarding-management',
-        label: 'Onboarding Management',
-        icon: 'documents',
-        type: 'route',
-        href: '/dashboards/provider/onboarding'
-      },
-      {
-        id: 'storefront-control',
-        label: 'Storefront Control Centre',
-        description: 'Manage storefront branding, catalogue, and incentives.',
-        icon: 'storefront',
-        type: 'route',
-        href: '/dashboards/provider/storefront'
-      },
-      { id: 'finance', label: 'Revenue & Billing', icon: 'finance' },
-      { id: 'byok-management', label: 'Key Management', icon: 'byok' },
-      { id: 'documents', label: 'Document Management', icon: 'documents' },
-      { id: 'settings', label: 'Automation Settings', icon: 'automation' }
-    ]
+    navigation: providerNavigation
   },
   {
     id: 'finance',
@@ -157,37 +77,7 @@ export const DASHBOARD_ROLES = [
     persona: 'Technician & Crew Operations',
     headline: 'Stay ahead of assignments, travel buffers, and completion quality markers.',
     registered: true,
-    navigation: [
-      { id: 'overview', label: 'Profile Overview', icon: 'profile' },
-      { id: 'metrics', label: 'Metrics', icon: 'analytics' },
-      { id: 'escrows', label: 'Escrow Management', icon: 'finance' },
-      { id: 'calendar', label: 'Crew Calendar', icon: 'calendar' },
-      { id: 'availability', label: 'Shift Availability', icon: 'availability' },
-      { id: 'schedule', label: 'Job Pipeline', icon: 'pipeline' },
-      { id: 'custom-jobs', label: 'Custom Jobs & Bids', icon: 'pipeline' },
-      { id: 'wallet', label: 'Wallet & Earnings', icon: 'finance' },
-      { id: 'inbox', label: 'Crew Inbox', icon: 'support' },
-      { id: 'toolkit', label: 'Asset Kit', icon: 'assets' },
-      { id: 'training', label: 'Training & Compliance', icon: 'compliance' },
-      { id: 'id-verification', label: 'ID Verification', icon: 'compliance' },
-      { id: 'financial-management', label: 'Financial management', icon: 'finance' },
-      {
-        id: 'tax-management',
-        label: 'Tax management',
-        icon: 'finance',
-        href: '/dashboards/serviceman/tax'
-      },
-      { id: 'website-preferences', label: 'Website Preferences', icon: 'builder' },
-      { id: 'profile-settings', label: 'Profile Settings', icon: 'settings' },
-      { id: 'serviceman-disputes', label: 'Dispute Management', icon: 'compliance' },
-      { id: 'fixnado-ads', label: 'Fixnado Ads', icon: 'analytics' },
-      {
-        id: 'byok-management',
-        label: 'BYOK management',
-        icon: 'compliance',
-        href: '/dashboards/serviceman/byok'
-      }
-    ]
+    navigation: servicemanNavigation
   },
   {
     id: 'enterprise',

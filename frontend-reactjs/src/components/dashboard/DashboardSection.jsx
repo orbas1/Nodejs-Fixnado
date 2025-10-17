@@ -42,6 +42,7 @@ import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index
 import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
 import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
 import FixnadoAdsWorkspace from '../../modules/fixnadoAds/FixnadoAdsWorkspace.jsx';
+import { useDashboardOverlay } from './DashboardOverlayContext.jsx';
 
 const softenGradient = (accent) => {
   if (!accent) {
@@ -70,8 +71,10 @@ const softenGradient = (accent) => {
 
 const SectionHeader = ({ section }) => (
   <div className="mb-6 space-y-2">
-    <h2 className="text-2xl font-semibold text-primary">{section.label}</h2>
-    <p className="text-sm text-slate-600 max-w-2xl">{section.description}</p>
+    <h2 className="text-2xl font-semibold text-primary" title={section.description ?? section.label}>
+      {section.label}
+    </h2>
+    {section.description ? <p className="sr-only">{section.description}</p> : null}
   </div>
 );
 
@@ -92,11 +95,12 @@ const ComponentSection = ({ section }) => {
     section.Component ??
     section.component ??
     (section.componentKey ? componentRegistry[section.componentKey] ?? null : null);
+  const componentProps = { ...(section.data ?? {}), ...(section.props ?? {}) };
   return (
     <div className="space-y-4">
       <SectionHeader section={section} />
       {Component ? (
-        <Component {...(section.props ?? {})} />
+        <Component {...componentProps} />
       ) : (
         <div className="rounded-2xl border border-accent/10 bg-white p-6 text-sm text-slate-600">
           This dashboard module has not been configured yet.
@@ -111,61 +115,108 @@ ComponentSection.propTypes = {
     Component: PropTypes.elementType,
     component: PropTypes.elementType,
     props: PropTypes.object,
+    data: PropTypes.object,
     label: PropTypes.string,
     description: PropTypes.string
   }).isRequired
 };
 
 const GridSection = ({ section }) => {
+  const { openPanel } = useDashboardOverlay();
   const cards = section.data?.cards ?? [];
   return (
     <div>
       <SectionHeader section={section} />
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {cards.map((card) => (
-          <div
-            key={card.title}
-            className={`rounded-2xl border border-accent/10 bg-gradient-to-br ${softenGradient(card.accent)} p-6 shadow-md`}
-          >
-            {card.mediaUrl ? (
-              <img
-                src={card.mediaUrl}
-                alt={card.mediaAlt || card.title}
-                className="mb-4 h-12 w-12 rounded-full object-cover shadow-sm"
-              />
-            ) : null}
-            <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
-            <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              {(card.details ?? []).map((detail) => (
-                <li key={detail} className="flex items-start gap-2">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-accent/70" />
-                  <span>{detail}</span>
-                </li>
-              ))}
-            </ul>
-            {card.cta && card.cta.href ? (
-              card.cta.href.startsWith('http') && card.cta.external ? (
-                <a
-                  href={card.cta.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
-                >
-                  {card.cta.label}
-                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
-                </a>
-              ) : (
-                <Link
-                  to={card.cta.href}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
-                >
-                  {card.cta.label}
-                  <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
-                </Link>
-              )
-            ) : null}
-          </div>
-        ))}
+        {cards.map((card) => {
+          const previewDetails = (card.details ?? []).slice(0, 3);
+          const remainingDetails = Math.max(0, (card.details?.length ?? 0) - previewDetails.length);
+          const meta = [];
+          if (card.owner) meta.push({ label: 'Owner', value: card.owner });
+          if (card.updatedAt) meta.push({ label: 'Updated', value: card.updatedAt });
+
+          return (
+            <button
+              type="button"
+              key={card.title}
+              onClick={() =>
+                openPanel({
+                  title: card.title,
+                  subtitle: section.label,
+                  meta,
+                  actions: card.cta && card.cta.href
+                    ? [
+                        {
+                          label: card.cta.label ?? 'Open',
+                          href: card.cta.href,
+                          external: card.cta.external,
+                          target: card.cta.target,
+                          variant: 'primary'
+                        }
+                      ]
+                    : [],
+                  body: (
+                    <div className="space-y-5">
+                      {card.details?.length ? (
+                        <ul className="space-y-3 text-sm text-primary/80">
+                          {card.details.map((detail) => (
+                            <li key={detail} className="flex items-start gap-2">
+                              <span className="mt-1 h-2 w-2 rounded-full bg-primary/40" />
+                              <span>{detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {Array.isArray(card.metrics) && card.metrics.length ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {card.metrics.map((metric) => (
+                            <div
+                              key={metric.label}
+                              className="rounded-2xl border border-accent/10 bg-secondary px-4 py-3 text-left"
+                            >
+                              <p className="text-xs uppercase tracking-[0.3em] text-primary/50">{metric.label}</p>
+                              <p className="mt-2 text-lg font-semibold text-primary">{metric.value}</p>
+                              {metric.helper ? (
+                                <p className="mt-1 text-xs text-primary/60">{metric.helper}</p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })
+              }
+              className={`group flex h-full flex-col rounded-2xl border border-accent/10 bg-gradient-to-br ${softenGradient(
+                card.accent
+              )} p-6 text-left shadow-md transition hover:-translate-y-1 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`}
+            >
+              {card.mediaUrl ? (
+                <img
+                  src={card.mediaUrl}
+                  alt={card.mediaAlt || card.title}
+                  className="mb-4 h-12 w-12 rounded-full object-cover shadow-sm"
+                />
+              ) : null}
+              <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
+              <ul className="mt-4 space-y-2 text-sm text-primary/80">
+                {previewDetails.map((detail) => (
+                  <li key={detail} className="flex items-start gap-2">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-primary/30" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+                {remainingDetails > 0 ? (
+                  <li className="text-xs uppercase tracking-[0.3em] text-primary/60">+{remainingDetails} more</li>
+                ) : null}
+              </ul>
+              <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-primary/70">
+                View
+                <ArrowTopRightOnSquareIcon aria-hidden="true" className="h-4 w-4" />
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -179,14 +230,24 @@ GridSection.propTypes = {
       cards: PropTypes.arrayOf(
         PropTypes.shape({
           title: PropTypes.string.isRequired,
-          details: PropTypes.arrayOf(PropTypes.string).isRequired,
+          details: PropTypes.arrayOf(PropTypes.string),
           accent: PropTypes.string,
           mediaUrl: PropTypes.string,
           mediaAlt: PropTypes.string,
+          owner: PropTypes.string,
+          updatedAt: PropTypes.string,
+          metrics: PropTypes.arrayOf(
+            PropTypes.shape({
+              label: PropTypes.string.isRequired,
+              value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+              helper: PropTypes.string
+            })
+          ),
           cta: PropTypes.shape({
             label: PropTypes.string,
             href: PropTypes.string,
-            external: PropTypes.bool
+            external: PropTypes.bool,
+            target: PropTypes.string
           })
         })
       ).isRequired
@@ -196,6 +257,7 @@ GridSection.propTypes = {
 
 
 const BoardSection = ({ section }) => {
+  const { openPanel } = useDashboardOverlay();
   const columns = section.data?.columns ?? [];
   return (
     <div>
@@ -208,14 +270,47 @@ const BoardSection = ({ section }) => {
               <span className="text-xs text-slate-500">{column.items?.length ?? 0} items</span>
             </div>
             <div className="space-y-4">
-              {(column.items ?? []).map((item) => (
-                <div key={item.title} className="rounded-xl border border-accent/10 bg-secondary p-4 space-y-2">
-                  <p className="font-medium text-primary">{item.title}</p>
-                  {item.owner && <p className="text-sm text-slate-600">{item.owner}</p>}
-                  {item.value && <p className="text-sm text-accent font-semibold">{item.value}</p>}
-                  {item.eta && <p className="text-xs text-slate-500">{item.eta}</p>}
-                </div>
-              ))}
+              {(column.items ?? []).map((item) => {
+                const meta = [];
+                if (item.owner) meta.push({ label: 'Owner', value: item.owner });
+                if (item.value) meta.push({ label: 'Value', value: item.value });
+                if (item.eta) meta.push({ label: 'Timeline', value: item.eta });
+
+                return (
+                  <button
+                    type="button"
+                    key={item.title}
+                    onClick={() =>
+                      openPanel({
+                        title: item.title,
+                        subtitle: `${column.title} • ${section.label}`,
+                        meta,
+                        body: (
+                          <div className="space-y-4 text-sm text-primary/80">
+                            {item.notes ? <p>{item.notes}</p> : null}
+                            {Array.isArray(item.details) && item.details.length ? (
+                              <ul className="space-y-2">
+                                {item.details.map((detail) => (
+                                  <li key={detail} className="flex items-start gap-2">
+                                    <span className="mt-1 h-2 w-2 rounded-full bg-primary/40" />
+                                    <span>{detail}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </div>
+                        )
+                      })
+                    }
+                    className="w-full rounded-xl border border-accent/20 bg-secondary p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    <p className="font-medium text-primary">{item.title}</p>
+                    {item.owner && <p className="text-sm text-primary/70">{item.owner}</p>}
+                    {item.value && <p className="text-sm font-semibold text-accent">{item.value}</p>}
+                    {item.eta && <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{item.eta}</p>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -237,7 +332,9 @@ BoardSection.propTypes = {
               title: PropTypes.string.isRequired,
               owner: PropTypes.string,
               value: PropTypes.string,
-              eta: PropTypes.string
+              eta: PropTypes.string,
+              details: PropTypes.arrayOf(PropTypes.string),
+              notes: PropTypes.string
             })
           ).isRequired
         })
@@ -1744,11 +1841,6 @@ const DashboardSection = ({ section, features = {}, persona, context = {} }) => 
       return <ServicemanMetricsSection section={section} />;
     case 'serviceman-escrows':
       return <ServicemanEscrowWorkspace section={section} />;
-    case 'component': {
-      const Component = section.component;
-      if (!Component) return null;
-      return <Component {...(section.data ?? {})} />;
-    }
     case 'serviceman-website-preferences':
       return (
         <div className="space-y-6">
