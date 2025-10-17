@@ -169,9 +169,12 @@ export async function createWalletAccount({
     displayName: displayName.trim(),
     ownerType: resolvedOwnerType,
     ownerId,
+    alias: displayName.trim(),
     currency: normaliseCurrency(currency),
     status: normaliseStatus(status),
     metadata: metadata && typeof metadata === 'object' ? metadata : {},
+    createdBy: actorId || null,
+    updatedBy: actorId || null,
     lastReconciledAt: new Date()
   });
 
@@ -183,8 +186,13 @@ export async function createWalletAccount({
       currency: account.currency,
       description: 'Wallet created',
       actorId,
+      actorRole: 'system',
       occurredAt: new Date(),
       runningBalance: 0,
+      balanceBefore: 0,
+      balanceAfter: 0,
+      pendingBefore: 0,
+      pendingAfter: 0,
       metadata: { systemEvent: true }
     });
   }
@@ -320,6 +328,10 @@ export async function recordWalletTransaction({
         actorId: actorId || null,
         occurredAt: new Date(),
         runningBalance: nextBalance,
+        balanceBefore: currentBalance,
+        balanceAfter: nextBalance,
+        pendingBefore: currentHold,
+        pendingAfter: nextHold,
         metadata: metadata && typeof metadata === 'object' ? metadata : {}
       },
       { transaction: t }

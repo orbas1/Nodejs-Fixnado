@@ -2,7 +2,16 @@ import PropTypes from 'prop-types';
 import { useMemo } from 'react';
 import { Button, FormField, Spinner, StatusPill, TextInput } from '../../ui/index.js';
 
-const MethodCard = ({ method, onSetDefault, onToggleStatus, isDefault = false }) => {
+const MethodCard = ({
+  method,
+  onSetDefault,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+  isDefault,
+  isEditing,
+  disabled
+}) => {
   const statusTone =
     method.status === 'active'
       ? 'success'
@@ -13,9 +22,12 @@ const MethodCard = ({ method, onSetDefault, onToggleStatus, isDefault = false })
       : 'neutral';
 
   const summary = method.details || {};
+  const cardTone = isEditing
+    ? 'border-primary/40 ring-2 ring-primary/20 bg-primary/5'
+    : 'border-slate-200 bg-white/90';
 
   return (
-    <article className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+    <article className={`flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition ${cardTone}`}>
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-primary">{method.label}</h4>
@@ -39,8 +51,20 @@ const MethodCard = ({ method, onSetDefault, onToggleStatus, isDefault = false })
         ) : null}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={() => onEdit(method)} disabled={disabled}>
+          {isEditing ? 'Editing…' : 'Edit details'}
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onDelete(method)} disabled={disabled}>
+          Remove
+        </Button>
         {!isDefault ? (
-          <Button type="button" variant="secondary" size="sm" onClick={() => onSetDefault(method)}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => onSetDefault(method)}
+            disabled={disabled}
+          >
             Set as default payout
           </Button>
         ) : (
@@ -48,7 +72,13 @@ const MethodCard = ({ method, onSetDefault, onToggleStatus, isDefault = false })
             Default payout
           </span>
         )}
-        <Button type="button" variant="ghost" size="sm" onClick={() => onToggleStatus(method)}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onToggleStatus(method)}
+          disabled={disabled}
+        >
           {method.status === 'active' ? 'Disable' : 'Activate'}
         </Button>
       </div>
@@ -68,22 +98,37 @@ MethodCard.propTypes = {
   }).isRequired,
   onSetDefault: PropTypes.func.isRequired,
   onToggleStatus: PropTypes.func.isRequired,
-  isDefault: PropTypes.bool
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  isDefault: PropTypes.bool,
+  isEditing: PropTypes.bool,
+  disabled: PropTypes.bool
+};
+
+MethodCard.defaultProps = {
+  isDefault: false,
+  isEditing: false,
+  disabled: false
 };
 
 const WalletPaymentMethods = ({
   form,
+  mode,
+  editingMethodId,
   onFieldChange,
   onSubmit,
-  saving = false,
-  message = null,
-  canEditMethods = true,
-  methods = [],
-  methodsLoading = false,
+  onCancelEdit,
+  onEdit,
+  onDelete,
+  saving,
+  message,
+  canEditMethods,
+  methods,
+  methodsLoading,
   onRefresh,
   onSetDefault,
   onToggleStatus,
-  autopayoutMethodId = null
+  autopayoutMethodId
 }) => {
   const methodType = form.type;
   const bankFieldsVisible = methodType === 'bank_account';
@@ -102,12 +147,28 @@ const WalletPaymentMethods = ({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
       <form onSubmit={onSubmit} className="space-y-4 rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm">
-        <div>
-          <h3 className="text-lg font-semibold text-primary">Add payout destination</h3>
-          <p className="text-sm text-slate-600">
-            Register a bank account, card, or external wallet to receive surplus funds and dispute releases.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-primary">
+              {mode === 'edit' ? 'Update payout destination' : 'Add payout destination'}
+            </h3>
+            <p className="text-sm text-slate-600">
+              Register a bank account, card, or external wallet to receive surplus funds and dispute releases.
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={onRefresh} disabled={methodsLoading}>
+            Refresh
+          </Button>
         </div>
+
+        {mode === 'edit' ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            Editing <span className="font-semibold">{form.label || 'selected payout method'}</span>. Changes update automation instantly.
+            <Button type="button" variant="link" size="xs" className="ml-2" onClick={onCancelEdit}>
+              Cancel edit
+            </Button>
+          </div>
+        ) : null}
 
         <FormField id="wallet-method-label" label="Display name">
           <TextInput
@@ -266,7 +327,7 @@ const WalletPaymentMethods = ({
 
         <div className="flex justify-end">
           <Button type="submit" disabled={!canEditMethods || saving}>
-            {saving ? 'Saving…' : 'Add method'}
+            {saving ? 'Saving…' : mode === 'edit' ? 'Update method' : 'Add method'}
           </Button>
         </div>
       </form>
@@ -294,7 +355,11 @@ const WalletPaymentMethods = ({
                 method={method}
                 onSetDefault={onSetDefault}
                 onToggleStatus={onToggleStatus}
+                onEdit={onEdit}
+                onDelete={onDelete}
                 isDefault={autopayoutMethodId === method.id}
+                isEditing={mode === 'edit' && editingMethodId === method.id}
+                disabled={!canEditMethods || saving}
               />
             ))}
           </div>
@@ -306,8 +371,13 @@ const WalletPaymentMethods = ({
 
 WalletPaymentMethods.propTypes = {
   form: PropTypes.object.isRequired,
+  mode: PropTypes.oneOf(['create', 'edit']),
+  editingMethodId: PropTypes.string,
   onFieldChange: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  onCancelEdit: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
   saving: PropTypes.bool,
   message: PropTypes.string,
   canEditMethods: PropTypes.bool,
@@ -317,6 +387,17 @@ WalletPaymentMethods.propTypes = {
   onSetDefault: PropTypes.func.isRequired,
   onToggleStatus: PropTypes.func.isRequired,
   autopayoutMethodId: PropTypes.string
+};
+
+WalletPaymentMethods.defaultProps = {
+  mode: 'create',
+  editingMethodId: null,
+  saving: false,
+  message: null,
+  canEditMethods: true,
+  methods: [],
+  methodsLoading: false,
+  autopayoutMethodId: null
 };
 
 export default WalletPaymentMethods;
