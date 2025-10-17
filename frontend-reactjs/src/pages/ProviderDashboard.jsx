@@ -33,6 +33,7 @@ import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
 import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
 import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
 import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
+import { ProviderBookingManagementWorkspace } from '../modules/providerBookingManagement/index.js';
 
 function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
   return (
@@ -569,6 +570,8 @@ export default function ProviderDashboard() {
             id: 'provider-dashboard-serviceman-payments',
             label: t('providerPayments.headline'),
             description: t('providerPayments.navDescription')
+          }
+        : null,
       walletSection
         ? {
             id: walletSection.id || 'provider-dashboard-wallet',
@@ -592,6 +595,11 @@ export default function ProviderDashboard() {
         id: 'provider-dashboard-pipeline',
         label: t('providerDashboard.pipelineHeadline'),
         description: t('providerDashboard.nav.pipeline')
+      },
+      {
+        id: 'provider-dashboard-booking-management',
+        label: 'Booking management',
+        description: 'Dispatch, scheduling, and SLA guardrails'
       },
       serviceHealth.length
         ? {
@@ -928,6 +936,25 @@ export default function ProviderDashboard() {
           <ToolRentalProvider companyId={companyId}>
             <ToolRentalWorkspace />
           </ToolRentalProvider>
+        ) : null}
+
+        {companyId ? (
+          <section
+            id="provider-dashboard-booking-management"
+            aria-labelledby="provider-dashboard-booking-management"
+            className="space-y-4"
+          >
+            <header className="flex items-center gap-3">
+              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+              <div>
+                <h2 className="text-lg font-semibold text-primary">Booking management</h2>
+                <p className="text-xs text-slate-500">
+                  Dispatch crews, update schedules, and manage SLA guardrails from the provider command centre.
+                </p>
+              </div>
+            </header>
+            <ProviderBookingManagementWorkspace companyId={companyId} />
+          </section>
         ) : null}
 
         <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">

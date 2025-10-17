@@ -36,6 +36,7 @@ import ServicemanFinanceWorkspace from '../../modules/servicemanFinance/Servicem
 import { ServicemanWebsitePreferencesSection } from '../../features/servicemanWebsitePreferences/index.js';
 import { ServicemanProfileSettingsSection } from '../../features/servicemanProfile/index.js';
 import ServicemanBookingManagementWorkspace from '../../modules/servicemanControl/ServicemanBookingManagementWorkspace.jsx';
+import ProviderBookingManagementWorkspace from '../../modules/providerBookingManagement/ProviderBookingManagementWorkspace.jsx';
 import { ServicemanEscrowWorkspace } from '../../features/servicemanEscrow/index.js';
 import ServicemanInboxWorkspace from './serviceman/ServicemanInboxWorkspace.jsx';
 import FixnadoAdsProvider from '../../modules/fixnadoAds/FixnadoAdsProvider.jsx';
@@ -81,7 +82,8 @@ SectionHeader.propTypes = {
 };
 
 const componentRegistry = {
-  'serviceman-booking-management': ServicemanBookingManagementWorkspace
+  'serviceman-booking-management': ServicemanBookingManagementWorkspace,
+  'provider-booking-management': ProviderBookingManagementWorkspace
 };
 
 const ComponentSection = ({ section }) => {

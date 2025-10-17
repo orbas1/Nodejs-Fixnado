@@ -49,6 +49,7 @@ import ProviderStorefront from './providerStorefront.js';
 import ProviderStorefrontInventory from './providerStorefrontInventory.js';
 import ProviderStorefrontCoupon from './providerStorefrontCoupon.js';
 import ProviderEscrowPolicy from './providerEscrowPolicy.js';
+import ProviderBookingSetting from './providerBookingSetting.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -279,6 +280,9 @@ ProviderProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasOne(ProviderWebsitePreference, { foreignKey: 'companyId', as: 'websitePreferences' });
 ProviderWebsitePreference.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderBookingSetting, { foreignKey: 'companyId', as: 'providerBookingSetting' });
+ProviderBookingSetting.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderContact, { foreignKey: 'companyId', as: 'contacts' });
 ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
@@ -1265,6 +1269,7 @@ export {
   BookingHistoryEntry,
   ProviderCalendarSetting,
   ProviderCalendarEvent,
+  ProviderBookingSetting,
   ServicemanBookingSetting,
   CustomJobBid,
   CustomJobBidMessage,
