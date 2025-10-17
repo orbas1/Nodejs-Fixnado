@@ -83,7 +83,7 @@ Booking.init(
     meta: {
       type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: {}
+      defaultValue: () => ({})
     },
     instructions: {
       type: DataTypes.TEXT,

@@ -429,22 +429,24 @@ const CustomerDisputesSection = ({
   onCloseEvidenceModal,
   onSubmitEvidence,
   onDeleteEvidence,
-  evidenceSaving
+  evidenceSaving,
+  title,
+  description,
+  openCaseLabel,
+  emptyStateMessage
 }) => (
   <section className="space-y-6">
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h3 className="text-lg font-semibold text-primary">Disputes management</h3>
-        <p className="text-sm text-slate-600">
-          Track active disputes, assign owners, log updates, and attach evidence so finance and support teams stay in lockstep.
-        </p>
+        <h3 className="text-lg font-semibold text-primary">{title}</h3>
+        <p className="text-sm text-slate-600">{description}</p>
       </div>
       <button
         type="button"
         onClick={onCreateCase}
         className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-primary/90"
       >
-        <PlusIcon className="h-4 w-4" /> Open dispute case
+        <PlusIcon className="h-4 w-4" /> {openCaseLabel}
       </button>
     </header>
 
@@ -454,7 +456,7 @@ const CustomerDisputesSection = ({
 
     {disputes.length === 0 ? (
       <div className="rounded-3xl border border-dashed border-accent/20 bg-secondary/60 p-6 text-sm text-slate-600">
-        No dispute cases yet. Create your first case to coordinate escalation notes, tasks, and supporting evidence in one place.
+        {emptyStateMessage}
       </div>
     ) : (
       <div className="space-y-4">
@@ -561,7 +563,11 @@ CustomerDisputesSection.propTypes = {
   onCloseEvidenceModal: PropTypes.func.isRequired,
   onSubmitEvidence: PropTypes.func.isRequired,
   onDeleteEvidence: PropTypes.func.isRequired,
-  evidenceSaving: PropTypes.bool
+  evidenceSaving: PropTypes.bool,
+  title: PropTypes.string,
+  description: PropTypes.string,
+  openCaseLabel: PropTypes.string,
+  emptyStateMessage: PropTypes.string
 };
 
 CustomerDisputesSection.defaultProps = {
@@ -576,7 +582,13 @@ CustomerDisputesSection.defaultProps = {
   noteSaving: false,
   evidenceStatus: null,
   activeEvidence: null,
-  evidenceSaving: false
+  evidenceSaving: false,
+  title: 'Disputes management',
+  description:
+    'Track active disputes, assign owners, log updates, and attach evidence so finance and support teams stay in lockstep.',
+  openCaseLabel: 'Open dispute case',
+  emptyStateMessage:
+    'No dispute cases yet. Create your first case to coordinate escalation notes, tasks, and supporting evidence in one place.'
 };
 
 export default CustomerDisputesSection;

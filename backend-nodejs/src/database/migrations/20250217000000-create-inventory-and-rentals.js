@@ -1,4 +1,166 @@
 export async function up({ context: queryInterface, Sequelize }) {
+  await queryInterface.createTable('InventoryCategory', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    company_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'Company', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    name: {
+      type: Sequelize.STRING(120),
+      allowNull: false
+    },
+    slug: {
+      type: Sequelize.STRING(160),
+      allowNull: true
+    },
+    description: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    status: {
+      type: Sequelize.ENUM('active', 'inactive', 'archived'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    sort_order: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      defaultValue: {}
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addIndex('InventoryCategory', ['company_id', 'name'], {
+    unique: true,
+    name: 'inventory_category_company_name'
+  });
+
+  await queryInterface.createTable('InventoryTag', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    company_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'Company', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    name: {
+      type: Sequelize.STRING(80),
+      allowNull: false
+    },
+    slug: {
+      type: Sequelize.STRING(120),
+      allowNull: true
+    },
+    color: {
+      type: Sequelize.STRING(12),
+      allowNull: true
+    },
+    description: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    status: {
+      type: Sequelize.ENUM('active', 'inactive'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      defaultValue: {}
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addIndex('InventoryTag', ['company_id', 'name'], {
+    unique: true,
+    name: 'inventory_tag_company_name'
+  });
+
+  await queryInterface.createTable('InventoryLocationZone', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    company_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'Company', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    name: {
+      type: Sequelize.STRING(120),
+      allowNull: false
+    },
+    code: {
+      type: Sequelize.STRING(32),
+      allowNull: true
+    },
+    description: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    status: {
+      type: Sequelize.ENUM('active', 'inactive'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      defaultValue: {}
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addIndex('InventoryLocationZone', ['company_id', 'name'], {
+    unique: true,
+    name: 'inventory_zone_company_name'
+  });
+
   await queryInterface.createTable('InventoryItem', {
     id: {
       type: Sequelize.UUID,
@@ -26,8 +188,8 @@ export async function up({ context: queryInterface, Sequelize }) {
       allowNull: false
     },
     category: {
-      type: Sequelize.STRING(64),
-      allowNull: false
+      type: Sequelize.STRING(120),
+      allowNull: true
     },
     unit_type: {
       type: Sequelize.STRING(32),
@@ -52,8 +214,37 @@ export async function up({ context: queryInterface, Sequelize }) {
     location_zone_id: {
       type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'ServiceZone', key: 'id' },
+      references: { model: 'InventoryLocationZone', key: 'id' },
       onDelete: 'SET NULL'
+    },
+    category_id: {
+      type: Sequelize.UUID,
+      allowNull: true,
+      references: { model: 'InventoryCategory', key: 'id' },
+      onDelete: 'SET NULL'
+    },
+    item_type: {
+      type: Sequelize.ENUM('tool', 'material'),
+      allowNull: false,
+      defaultValue: 'tool'
+    },
+    fulfilment_type: {
+      type: Sequelize.ENUM('purchase', 'rental', 'hybrid'),
+      allowNull: false,
+      defaultValue: 'purchase'
+    },
+    status: {
+      type: Sequelize.ENUM('draft', 'active', 'inactive', 'retired'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    tagline: {
+      type: Sequelize.STRING(160),
+      allowNull: true
+    },
+    description: {
+      type: Sequelize.TEXT,
+      allowNull: true
     },
     rental_rate: {
       type: Sequelize.DECIMAL(12, 2),
@@ -71,6 +262,14 @@ export async function up({ context: queryInterface, Sequelize }) {
       type: Sequelize.STRING(3),
       allowNull: true
     },
+    purchase_price: {
+      type: Sequelize.DECIMAL(12, 2),
+      allowNull: true
+    },
+    purchase_price_currency: {
+      type: Sequelize.STRING(3),
+      allowNull: true
+    },
     replacement_cost: {
       type: Sequelize.DECIMAL(12, 2),
       allowNull: true
@@ -85,8 +284,14 @@ export async function up({ context: queryInterface, Sequelize }) {
       allowNull: false,
       defaultValue: 'good'
     },
+    primary_supplier_id: {
+      type: Sequelize.UUID,
+      allowNull: true,
+      references: { model: 'Supplier', key: 'id' },
+      onDelete: 'SET NULL'
+    },
     metadata: {
-      type: Sequelize.JSON,
+      type: Sequelize.JSONB,
       allowNull: false,
       defaultValue: {}
     },
@@ -107,8 +312,188 @@ export async function up({ context: queryInterface, Sequelize }) {
     name: 'inventory_item_company_sku'
   });
 
-  await queryInterface.addIndex('InventoryItem', ['company_id', 'category'], {
+  await queryInterface.addIndex('InventoryItem', ['company_id', 'status'], {
+    name: 'inventory_item_company_status'
+  });
+
+  await queryInterface.addIndex('InventoryItem', ['company_id', 'category_id'], {
     name: 'inventory_item_company_category'
+  });
+
+  await queryInterface.createTable('InventoryItemTag', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    item_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'InventoryItem', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    tag_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'InventoryTag', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    sort_order: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addConstraint('InventoryItemTag', {
+    type: 'unique',
+    fields: ['item_id', 'tag_id'],
+    name: 'inventory_item_tag_unique'
+  });
+
+  await queryInterface.addIndex('InventoryItemTag', ['item_id'], {
+    name: 'inventory_item_tag_item'
+  });
+
+  await queryInterface.createTable('InventoryItemMedia', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    item_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'InventoryItem', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    url: {
+      type: Sequelize.TEXT,
+      allowNull: false
+    },
+    alt_text: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    caption: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    sort_order: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      defaultValue: {}
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addIndex('InventoryItemMedia', ['item_id', 'sort_order'], {
+    name: 'inventory_item_media_item'
+  });
+
+  await queryInterface.createTable('InventoryItemSupplier', {
+    id: {
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+    },
+    item_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'InventoryItem', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    supplier_id: {
+      type: Sequelize.UUID,
+      allowNull: false,
+      references: { model: 'Supplier', key: 'id' },
+      onDelete: 'CASCADE'
+    },
+    unit_price: {
+      type: Sequelize.DECIMAL(12, 2),
+      allowNull: false
+    },
+    currency: {
+      type: Sequelize.STRING(3),
+      allowNull: false,
+      defaultValue: 'GBP'
+    },
+    minimum_order_quantity: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 1
+    },
+    lead_time_days: {
+      type: Sequelize.INTEGER,
+      allowNull: true
+    },
+    is_primary: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    status: {
+      type: Sequelize.ENUM('active', 'inactive'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    last_quoted_at: {
+      type: Sequelize.DATE,
+      allowNull: true
+    },
+    notes: {
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      defaultValue: {}
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    },
+    updated_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW
+    }
+  });
+
+  await queryInterface.addConstraint('InventoryItemSupplier', {
+    type: 'unique',
+    fields: ['item_id', 'supplier_id'],
+    name: 'inventory_item_supplier_unique'
+  });
+
+  await queryInterface.addIndex('InventoryItemSupplier', ['item_id'], {
+    name: 'inventory_item_supplier_item'
   });
 
   await queryInterface.createTable('InventoryLedgerEntry', {
@@ -453,15 +838,28 @@ export async function down({ context: queryInterface }) {
   await queryInterface.dropTable('RentalAgreement');
   await queryInterface.dropTable('InventoryAlert');
   await queryInterface.dropTable('InventoryLedgerEntry');
+  await queryInterface.dropTable('InventoryItemSupplier');
+  await queryInterface.dropTable('InventoryItemMedia');
+  await queryInterface.dropTable('InventoryItemTag');
   await queryInterface.dropTable('InventoryItem');
+  await queryInterface.dropTable('InventoryLocationZone');
+  await queryInterface.dropTable('InventoryTag');
+  await queryInterface.dropTable('InventoryCategory');
 
   const enumNames = [
+    'enum_InventoryCategory_status',
+    'enum_InventoryTag_status',
+    'enum_InventoryLocationZone_status',
+    'enum_InventoryItem_item_type',
+    'enum_InventoryItem_fulfilment_type',
+    'enum_InventoryItem_status',
     'enum_InventoryItem_condition_rating',
     'enum_InventoryLedgerEntry_type',
     'enum_InventoryLedgerEntry_source',
     'enum_InventoryAlert_type',
     'enum_InventoryAlert_severity',
     'enum_InventoryAlert_status',
+    'enum_InventoryItemSupplier_status',
     'enum_RentalAgreement_status',
     'enum_RentalAgreement_deposit_status',
     'enum_RentalCheckpoint_type',
