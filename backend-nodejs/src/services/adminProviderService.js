@@ -7,6 +7,8 @@ import {
   ProviderProfile,
   ProviderContact,
   ProviderCoverage,
+  ProviderTaxProfile,
+  ProviderTaxFiling,
   Company,
   Service,
   ServiceZone,
@@ -61,12 +63,53 @@ const INSURED_STATUSES = [
   { value: 'suspended', label: 'Suspended' }
 ];
 
+const TAX_REGISTRATION_STATUSES = [
+  { value: 'not_registered', label: 'Not registered' },
+  { value: 'pending', label: 'Registration pending' },
+  { value: 'registered', label: 'Registered' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'deregistered', label: 'Deregistered' }
+];
+
+const TAX_ACCOUNTING_METHODS = [
+  { value: 'accrual', label: 'Accrual' },
+  { value: 'cash', label: 'Cash' }
+];
+
+const TAX_FILING_FREQUENCIES = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'semi_annual', label: 'Semi-annual' },
+  { value: 'annual', label: 'Annual' }
+];
+
+const TAX_FILING_STATUSES = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'filed', label: 'Filed' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'cancelled', label: 'Cancelled' }
+];
+
 const STATUS_LABELS = new Map(PROVIDER_STATUSES.map((option) => [option.value, option.label]));
 const STAGE_LABELS = new Map(ONBOARDING_STAGES.map((option) => [option.value, option.label]));
 const TIER_LABELS = new Map(PROVIDER_TIERS.map((option) => [option.value, option.label]));
 const RISK_LABELS = new Map(RISK_LEVELS.map((option) => [option.value, option.label]));
 const COVERAGE_LABELS = new Map(COVERAGE_TYPES.map((option) => [option.value, option.label]));
 const INSURED_LABELS = new Map(INSURED_STATUSES.map((option) => [option.value, option.label]));
+const TAX_REGISTRATION_LABELS = new Map(
+  TAX_REGISTRATION_STATUSES.map((option) => [option.value, option.label])
+);
+const TAX_ACCOUNTING_LABELS = new Map(
+  TAX_ACCOUNTING_METHODS.map((option) => [option.value, option.label])
+);
+const TAX_FREQUENCY_LABELS = new Map(
+  TAX_FILING_FREQUENCIES.map((option) => [option.value, option.label])
+);
+const TAX_FILING_STATUS_LABELS = new Map(
+  TAX_FILING_STATUSES.map((option) => [option.value, option.label])
+);
 
 function toPlain(instance) {
   if (!instance) return null;
@@ -208,6 +251,195 @@ function serialiseProvider(profile, aggregates) {
           code: region.code
         }
       : null
+  };
+}
+
+function coerceDate(value) {
+  if (!value) {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date;
+}
+
+function coerceNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  return parsed;
+}
+
+function asStringOrNull(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function asCurrencyCode(value) {
+  const code = asStringOrNull(value);
+  return code ? code.slice(0, 3).toUpperCase() : null;
+}
+
+function asMetadata(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value;
+  }
+  return {};
+}
+
+function mapTaxProfile(record) {
+  if (!record) {
+    return {
+      registrationNumber: null,
+      registrationCountry: null,
+      registrationRegion: null,
+      registrationStatus: 'not_registered',
+      registrationStatusLabel: TAX_REGISTRATION_LABELS.get('not_registered'),
+      vatRegistered: false,
+      registrationEffectiveFrom: null,
+      defaultRate: 0,
+      thresholdAmount: null,
+      thresholdCurrency: null,
+      filingFrequency: 'annual',
+      filingFrequencyLabel: TAX_FREQUENCY_LABELS.get('annual'),
+      nextFilingDueAt: null,
+      lastFiledAt: null,
+      accountingMethod: 'accrual',
+      accountingMethodLabel: TAX_ACCOUNTING_LABELS.get('accrual'),
+      certificateUrl: null,
+      exemptionReason: null,
+      taxAdvisor: null,
+      notes: null,
+      metadata: {},
+      defaultCurrency: 'GBP'
+    };
+  }
+
+  const payload = toPlain(record);
+  const registrationStatus = payload.registrationStatus ?? 'not_registered';
+  const filingFrequency = payload.filingFrequency ?? 'annual';
+  const accountingMethod = payload.accountingMethod ?? 'accrual';
+
+  return {
+    id: payload.id,
+    registrationNumber: payload.registrationNumber ?? null,
+    registrationCountry: payload.registrationCountry ?? null,
+    registrationRegion: payload.registrationRegion ?? null,
+    registrationStatus,
+    registrationStatusLabel: TAX_REGISTRATION_LABELS.get(registrationStatus) ?? registrationStatus,
+    vatRegistered: Boolean(payload.vatRegistered),
+    registrationEffectiveFrom: payload.registrationEffectiveFrom
+      ? new Date(payload.registrationEffectiveFrom).toISOString()
+      : null,
+    defaultRate: payload.defaultRate !== undefined ? Number(payload.defaultRate) : 0,
+    thresholdAmount:
+      payload.thresholdAmount !== undefined && payload.thresholdAmount !== null
+        ? Number(payload.thresholdAmount)
+        : null,
+    thresholdCurrency: payload.thresholdCurrency ?? null,
+    filingFrequency,
+    filingFrequencyLabel: TAX_FREQUENCY_LABELS.get(filingFrequency) ?? filingFrequency,
+    nextFilingDueAt: payload.nextFilingDueAt ? new Date(payload.nextFilingDueAt).toISOString() : null,
+    lastFiledAt: payload.lastFiledAt ? new Date(payload.lastFiledAt).toISOString() : null,
+    accountingMethod,
+    accountingMethodLabel: TAX_ACCOUNTING_LABELS.get(accountingMethod) ?? accountingMethod,
+    certificateUrl: payload.certificateUrl ?? null,
+    exemptionReason: payload.exemptionReason ?? null,
+    taxAdvisor: payload.taxAdvisor ?? null,
+    notes: payload.notes ?? null,
+    metadata: payload.metadata ?? {},
+    defaultCurrency: payload.thresholdCurrency ?? 'GBP'
+  };
+}
+
+function mapTaxFiling(filing) {
+  const payload = toPlain(filing);
+  const status = payload.status ?? 'scheduled';
+  return {
+    id: payload.id,
+    companyId: payload.companyId,
+    periodStart: payload.periodStart ? new Date(payload.periodStart).toISOString() : null,
+    periodEnd: payload.periodEnd ? new Date(payload.periodEnd).toISOString() : null,
+    dueAt: payload.dueAt ? new Date(payload.dueAt).toISOString() : null,
+    filedAt: payload.filedAt ? new Date(payload.filedAt).toISOString() : null,
+    status,
+    statusLabel: TAX_FILING_STATUS_LABELS.get(status) ?? status,
+    taxableSalesAmount:
+      payload.taxableSalesAmount !== undefined && payload.taxableSalesAmount !== null
+        ? Number(payload.taxableSalesAmount)
+        : null,
+    taxCollectedAmount:
+      payload.taxCollectedAmount !== undefined && payload.taxCollectedAmount !== null
+        ? Number(payload.taxCollectedAmount)
+        : null,
+    taxDueAmount:
+      payload.taxDueAmount !== undefined && payload.taxDueAmount !== null
+        ? Number(payload.taxDueAmount)
+        : null,
+    currency: payload.currency ?? 'GBP',
+    referenceNumber: payload.referenceNumber ?? null,
+    submittedBy: payload.submittedBy ?? null,
+    supportingDocumentUrl: payload.supportingDocumentUrl ?? null,
+    notes: payload.notes ?? null,
+    metadata: payload.metadata ?? {}
+  };
+}
+
+function calculateTaxStats(filings, profile) {
+  const now = Date.now();
+  let overdueCount = 0;
+  let nextDueAt = null;
+  let lastFiledAt = profile?.lastFiledAt ? new Date(profile.lastFiledAt).getTime() : null;
+  let collected12m = 0;
+  let due12m = 0;
+  const cutoff = DateTime.now().minus({ months: 12 }).toJSDate().getTime();
+
+  filings.forEach((filing) => {
+    const dueAt = filing.dueAt ? new Date(filing.dueAt).getTime() : null;
+    const filedAt = filing.filedAt ? new Date(filing.filedAt).getTime() : null;
+    const status = filing.status ?? 'scheduled';
+    if (dueAt && dueAt < now && !['paid', 'filed', 'cancelled'].includes(status)) {
+      overdueCount += 1;
+    }
+    if (dueAt && dueAt >= now) {
+      if (!nextDueAt || dueAt < nextDueAt) {
+        nextDueAt = dueAt;
+      }
+    }
+    if (filedAt && (!lastFiledAt || filedAt > lastFiledAt)) {
+      lastFiledAt = filedAt;
+    }
+    const periodEnd = filing.periodEnd ? new Date(filing.periodEnd).getTime() : null;
+    if (periodEnd && periodEnd >= cutoff) {
+      if (filing.taxCollectedAmount !== null && filing.taxCollectedAmount !== undefined) {
+        collected12m += Number(filing.taxCollectedAmount) || 0;
+      }
+      if (filing.taxDueAmount !== null && filing.taxDueAmount !== undefined) {
+        due12m += Number(filing.taxDueAmount) || 0;
+      }
+    }
+  });
+
+  return {
+    overdueCount,
+    nextDueAt: nextDueAt ? new Date(nextDueAt).toISOString() : null,
+    lastFiledAt: lastFiledAt ? new Date(lastFiledAt).toISOString() : null,
+    rolling12mCollected: Number.parseFloat(collected12m.toFixed(2)),
+    rolling12mDue: Number.parseFloat(due12m.toFixed(2)),
+    vatRegistered: Boolean(profile?.vatRegistered),
+    defaultRate: normaliseNumber(profile?.defaultRate, 0)
   };
 }
 
@@ -540,7 +772,18 @@ export async function getProvider(companyId, { transaction } = {}) {
 
   const company = profile.company;
 
-  const [contacts, coverageEntries, documents, services, activeBookings, completed30d, openDisputes, zones] = await Promise.all([
+  const [
+    contacts,
+    coverageEntries,
+    documents,
+    services,
+    activeBookings,
+    completed30d,
+    openDisputes,
+    zones,
+    taxProfileRecord,
+    taxFilingsRecords
+  ] = await Promise.all([
     ProviderContact.findAll({
       where: { companyId },
       order: [
@@ -623,6 +866,19 @@ export async function getProvider(companyId, { transaction } = {}) {
       order: [['name', 'ASC']],
       limit: 200,
       transaction
+    }),
+    ProviderTaxProfile.findOne({
+      where: { companyId },
+      transaction
+    }),
+    ProviderTaxFiling.findAll({
+      where: { companyId },
+      order: [
+        ['periodStart', 'DESC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: 50,
+      transaction
     })
   ]);
 
@@ -635,6 +891,9 @@ export async function getProvider(companyId, { transaction } = {}) {
   const provider = toPlain(profile);
   const companyPlain = toPlain(company);
   const region = companyPlain.region ? toPlain(companyPlain.region) : null;
+  const mappedTaxProfile = mapTaxProfile(taxProfileRecord);
+  const mappedTaxFilings = taxFilingsRecords.map(mapTaxFiling);
+  const taxStats = calculateTaxStats(mappedTaxFilings, mappedTaxProfile);
 
   return {
     company: {
@@ -682,6 +941,9 @@ export async function getProvider(companyId, { transaction } = {}) {
     coverage: coverageEntries.map(mapCoverage),
     documents: documents.map(mapDocument),
     services: services.map(mapService),
+    taxProfile: mappedTaxProfile,
+    taxFilings: mappedTaxFilings,
+    taxStats,
     stats: {
       activeBookings: aggregates.activeBookings,
       completedBookings30d: aggregates.completedBookings30d,
@@ -701,6 +963,10 @@ export async function getProvider(companyId, { transaction } = {}) {
       riskLevels: RISK_LEVELS,
       coverageTypes: COVERAGE_TYPES,
       insuredStatuses: INSURED_STATUSES,
+      taxRegistrationStatuses: TAX_REGISTRATION_STATUSES,
+      taxAccountingMethods: TAX_ACCOUNTING_METHODS,
+      taxFilingFrequencies: TAX_FILING_FREQUENCIES,
+      taxFilingStatuses: TAX_FILING_STATUSES,
       zones: zones.map((zone) => ({
         id: zone.id,
         name: zone.name,
@@ -823,6 +1089,240 @@ export async function archiveProvider(companyId, options = {}) {
     }
 
     return getProvider(companyId, { transaction });
+  });
+}
+
+export async function upsertProviderTaxProfile(companyId, payload = {}) {
+  return sequelize.transaction(async (transaction) => {
+    const provider = await ProviderProfile.findOne({
+      where: { companyId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!provider) {
+      throw new Error('Provider not found');
+    }
+
+    let record = await ProviderTaxProfile.findOne({
+      where: { companyId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!record) {
+      record = ProviderTaxProfile.build({ companyId });
+    }
+
+    if (payload.registrationNumber !== undefined) {
+      record.registrationNumber = asStringOrNull(payload.registrationNumber);
+    }
+
+    if (payload.registrationCountry !== undefined) {
+      const code = asStringOrNull(payload.registrationCountry);
+      record.registrationCountry = code ? code.slice(0, 2).toUpperCase() : null;
+    }
+
+    if (payload.registrationRegion !== undefined) {
+      record.registrationRegion = asStringOrNull(payload.registrationRegion);
+    }
+
+    if (payload.registrationStatus !== undefined) {
+      record.registrationStatus = TAX_REGISTRATION_LABELS.has(payload.registrationStatus)
+        ? payload.registrationStatus
+        : record.registrationStatus ?? 'not_registered';
+    }
+
+    if (payload.vatRegistered !== undefined) {
+      record.vatRegistered = Boolean(payload.vatRegistered);
+    }
+
+    if (payload.registrationEffectiveFrom !== undefined) {
+      record.registrationEffectiveFrom = coerceDate(payload.registrationEffectiveFrom);
+    }
+
+    if (payload.defaultRate !== undefined) {
+      const rate = coerceNumber(payload.defaultRate);
+      record.defaultRate = rate !== null ? rate : 0;
+    }
+
+    if (payload.thresholdAmount !== undefined) {
+      record.thresholdAmount = coerceNumber(payload.thresholdAmount);
+    }
+
+    if (payload.thresholdCurrency !== undefined) {
+      record.thresholdCurrency = asCurrencyCode(payload.thresholdCurrency);
+    }
+
+    if (payload.filingFrequency !== undefined) {
+      record.filingFrequency = TAX_FREQUENCY_LABELS.has(payload.filingFrequency)
+        ? payload.filingFrequency
+        : record.filingFrequency ?? 'annual';
+    }
+
+    if (payload.nextFilingDueAt !== undefined) {
+      record.nextFilingDueAt = coerceDate(payload.nextFilingDueAt);
+    }
+
+    if (payload.lastFiledAt !== undefined) {
+      record.lastFiledAt = coerceDate(payload.lastFiledAt);
+    }
+
+    if (payload.accountingMethod !== undefined) {
+      record.accountingMethod = TAX_ACCOUNTING_LABELS.has(payload.accountingMethod)
+        ? payload.accountingMethod
+        : record.accountingMethod ?? 'accrual';
+    }
+
+    if (payload.certificateUrl !== undefined) {
+      record.certificateUrl = asStringOrNull(payload.certificateUrl);
+    }
+
+    if (payload.exemptionReason !== undefined) {
+      record.exemptionReason = asStringOrNull(payload.exemptionReason);
+    }
+
+    if (payload.taxAdvisor !== undefined) {
+      record.taxAdvisor = asStringOrNull(payload.taxAdvisor);
+    }
+
+    if (payload.notes !== undefined) {
+      record.notes = payload.notes === null ? null : asStringOrNull(payload.notes) ?? payload.notes;
+    }
+
+    if (payload.metadata !== undefined) {
+      record.metadata = asMetadata(payload.metadata);
+    }
+
+    await record.save({ transaction });
+    await record.reload({ transaction });
+
+    return mapTaxProfile(record);
+  });
+}
+
+export async function createProviderTaxFiling(companyId, payload = {}) {
+  return sequelize.transaction(async (transaction) => {
+    const provider = await ProviderProfile.findOne({ where: { companyId }, transaction, lock: transaction.LOCK.UPDATE });
+
+    if (!provider) {
+      throw new Error('Provider not found');
+    }
+
+    const periodStart = coerceDate(payload.periodStart) ?? new Date();
+    const periodEnd = coerceDate(payload.periodEnd) ?? periodStart;
+    const dueAt = coerceDate(payload.dueAt) ?? DateTime.fromJSDate(periodEnd).plus({ days: 30 }).toJSDate();
+
+    const filing = await ProviderTaxFiling.create(
+      {
+        companyId,
+        periodStart,
+        periodEnd,
+        dueAt,
+        filedAt: payload.filedAt !== undefined ? coerceDate(payload.filedAt) : null,
+        status: TAX_FILING_STATUS_LABELS.has(payload.status) ? payload.status : 'scheduled',
+        taxableSalesAmount: coerceNumber(payload.taxableSalesAmount),
+        taxCollectedAmount: coerceNumber(payload.taxCollectedAmount),
+        taxDueAmount: coerceNumber(payload.taxDueAmount),
+        currency: asCurrencyCode(payload.currency) ?? 'GBP',
+        referenceNumber: asStringOrNull(payload.referenceNumber),
+        submittedBy: asStringOrNull(payload.submittedBy),
+        supportingDocumentUrl: asStringOrNull(payload.supportingDocumentUrl),
+        notes: payload.notes === undefined ? null : asStringOrNull(payload.notes),
+        metadata: asMetadata(payload.metadata)
+      },
+      { transaction }
+    );
+
+    await filing.reload({ transaction });
+    return mapTaxFiling(filing);
+  });
+}
+
+export async function updateProviderTaxFiling(companyId, filingId, payload = {}) {
+  return sequelize.transaction(async (transaction) => {
+    const filing = await ProviderTaxFiling.findOne({
+      where: { id: filingId, companyId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!filing) {
+      throw new Error('Tax filing not found');
+    }
+
+    if (payload.periodStart !== undefined) {
+      filing.periodStart = coerceDate(payload.periodStart) ?? filing.periodStart;
+    }
+
+    if (payload.periodEnd !== undefined) {
+      filing.periodEnd = coerceDate(payload.periodEnd) ?? filing.periodEnd;
+    }
+
+    if (payload.dueAt !== undefined) {
+      filing.dueAt = coerceDate(payload.dueAt) ?? filing.dueAt;
+    }
+
+    if (payload.filedAt !== undefined) {
+      filing.filedAt = coerceDate(payload.filedAt);
+    }
+
+    if (payload.status !== undefined && TAX_FILING_STATUS_LABELS.has(payload.status)) {
+      filing.status = payload.status;
+    }
+
+    if (payload.taxableSalesAmount !== undefined) {
+      filing.taxableSalesAmount = coerceNumber(payload.taxableSalesAmount);
+    }
+
+    if (payload.taxCollectedAmount !== undefined) {
+      filing.taxCollectedAmount = coerceNumber(payload.taxCollectedAmount);
+    }
+
+    if (payload.taxDueAmount !== undefined) {
+      filing.taxDueAmount = coerceNumber(payload.taxDueAmount);
+    }
+
+    if (payload.currency !== undefined) {
+      filing.currency = asCurrencyCode(payload.currency) ?? filing.currency;
+    }
+
+    if (payload.referenceNumber !== undefined) {
+      filing.referenceNumber = asStringOrNull(payload.referenceNumber);
+    }
+
+    if (payload.submittedBy !== undefined) {
+      filing.submittedBy = asStringOrNull(payload.submittedBy);
+    }
+
+    if (payload.supportingDocumentUrl !== undefined) {
+      filing.supportingDocumentUrl = asStringOrNull(payload.supportingDocumentUrl);
+    }
+
+    if (payload.notes !== undefined) {
+      filing.notes = payload.notes === null ? null : asStringOrNull(payload.notes) ?? payload.notes;
+    }
+
+    if (payload.metadata !== undefined) {
+      filing.metadata = asMetadata(payload.metadata);
+    }
+
+    await filing.save({ transaction });
+    await filing.reload({ transaction });
+    return mapTaxFiling(filing);
+  });
+}
+
+export async function deleteProviderTaxFiling(companyId, filingId) {
+  return sequelize.transaction(async (transaction) => {
+    const deleted = await ProviderTaxFiling.destroy({
+      where: { id: filingId, companyId },
+      transaction
+    });
+
+    if (!deleted) {
+      throw new Error('Tax filing not found');
+    }
   });
 }
 
@@ -966,6 +1466,10 @@ export const PROVIDER_TIER_OPTIONS = PROVIDER_TIERS.map((option) => option.value
 export const PROVIDER_RISK_OPTIONS = RISK_LEVELS.map((option) => option.value);
 export const PROVIDER_COVERAGE_OPTIONS = COVERAGE_TYPES.map((option) => option.value);
 export const PROVIDER_INSURED_OPTIONS = INSURED_STATUSES.map((option) => option.value);
+export const TAX_REGISTRATION_OPTIONS = TAX_REGISTRATION_STATUSES.map((option) => option.value);
+export const TAX_ACCOUNTING_OPTIONS = TAX_ACCOUNTING_METHODS.map((option) => option.value);
+export const TAX_FILING_FREQUENCY_OPTIONS = TAX_FILING_FREQUENCIES.map((option) => option.value);
+export const TAX_FILING_STATUS_OPTIONS = TAX_FILING_STATUSES.map((option) => option.value);
 
 export default {
   listProviders,
@@ -973,6 +1477,10 @@ export default {
   getProvider,
   updateProvider,
   archiveProvider,
+  upsertProviderTaxProfile,
+  createProviderTaxFiling,
+  updateProviderTaxFiling,
+  deleteProviderTaxFiling,
   upsertProviderContact,
   deleteProviderContact,
   upsertProviderCoverage,

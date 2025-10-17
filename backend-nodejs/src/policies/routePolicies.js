@@ -276,6 +276,21 @@ const ROUTE_POLICIES = {
       actor: req.user?.id || null
     })
   },
+  'admin.providers.tax.write': {
+    id: 'admin.providers.tax.write',
+    version: '1.0.0',
+    resource: 'admin.providers',
+    action: 'admin.providers:tax:write',
+    description: 'Allow platform administrators to manage SME/provider tax profiles, registrations, and filings.',
+    requirements: [Permissions.ADMIN_PROVIDER_TAX_WRITE],
+    tags: ['admin', 'providers', 'tax'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.params?.companyId || null,
+      filingId: req.params?.filingId || null,
+      method: req.method ?? 'UNKNOWN'
+    })
+  },
   'admin.customJobs.read': {
     id: 'admin.customJobs.read',
     version: '1.0.0',

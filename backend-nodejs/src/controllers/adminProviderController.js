@@ -14,7 +14,15 @@ import {
   PROVIDER_TIER_OPTIONS,
   PROVIDER_RISK_OPTIONS,
   PROVIDER_COVERAGE_OPTIONS,
-  PROVIDER_INSURED_OPTIONS
+  PROVIDER_INSURED_OPTIONS,
+  upsertProviderTaxProfile,
+  createProviderTaxFiling,
+  updateProviderTaxFiling,
+  deleteProviderTaxFiling,
+  TAX_REGISTRATION_OPTIONS,
+  TAX_ACCOUNTING_OPTIONS,
+  TAX_FILING_FREQUENCY_OPTIONS,
+  TAX_FILING_STATUS_OPTIONS
 } from '../services/adminProviderService.js';
 
 function handleValidation(req, res) {
@@ -91,6 +99,44 @@ const companyValidators = [
   body('company.regionId').optional().isUUID(4)
 ];
 
+const taxProfileValidators = [
+  body('registrationNumber').optional().isString().trim().isLength({ min: 2, max: 80 }),
+  body('registrationCountry').optional().isString().trim().isLength({ min: 2, max: 2 }),
+  body('registrationRegion').optional().isString().trim().isLength({ min: 2, max: 120 }),
+  body('registrationStatus').optional().isIn(TAX_REGISTRATION_OPTIONS),
+  body('vatRegistered').optional().isBoolean(),
+  body('registrationEffectiveFrom').optional().isISO8601(),
+  body('defaultRate').optional().isFloat({ min: 0, max: 1 }),
+  body('thresholdAmount').optional().isFloat({ min: 0 }),
+  body('thresholdCurrency').optional().isString().trim().isLength({ min: 2, max: 3 }),
+  body('filingFrequency').optional().isIn(TAX_FILING_FREQUENCY_OPTIONS),
+  body('nextFilingDueAt').optional().isISO8601(),
+  body('lastFiledAt').optional().isISO8601(),
+  body('accountingMethod').optional().isIn(TAX_ACCOUNTING_OPTIONS),
+  body('certificateUrl').optional().isURL({ require_tld: false }),
+  body('exemptionReason').optional().isString().trim().isLength({ min: 2, max: 500 }),
+  body('taxAdvisor').optional().isString().trim().isLength({ min: 2, max: 160 }),
+  body('notes').optional().isString(),
+  body('metadata').optional().isObject()
+];
+
+const baseTaxFilingValidators = [
+  body('periodStart').optional().isISO8601(),
+  body('periodEnd').optional().isISO8601(),
+  body('dueAt').optional().isISO8601(),
+  body('filedAt').optional().isISO8601(),
+  body('status').optional().isIn(TAX_FILING_STATUS_OPTIONS),
+  body('taxableSalesAmount').optional().isFloat({ min: 0 }),
+  body('taxCollectedAmount').optional().isFloat({ min: 0 }),
+  body('taxDueAmount').optional().isFloat({ min: 0 }),
+  body('currency').optional().isString().trim().isLength({ min: 2, max: 3 }),
+  body('referenceNumber').optional().isString().trim().isLength({ min: 2, max: 160 }),
+  body('submittedBy').optional().isString().trim().isLength({ min: 2, max: 160 }),
+  body('supportingDocumentUrl').optional().isURL({ require_tld: false }),
+  body('notes').optional().isString(),
+  body('metadata').optional().isObject()
+];
+
 export const createProviderValidators = [
   body('owner.firstName').isString().trim().isLength({ min: 2, max: 120 }),
   body('owner.lastName').isString().trim().isLength({ min: 2, max: 120 }),
@@ -148,6 +194,90 @@ export async function archiveProviderHandler(req, res, next) {
   } catch (error) {
     if (error.message === 'Provider not found') {
       res.status(404).json({ message: 'Provider not found' });
+      return;
+    }
+    next(error);
+  }
+}
+
+export const upsertTaxProfileValidators = [param('companyId').isUUID(4), ...taxProfileValidators];
+
+export async function upsertProviderTaxProfileHandler(req, res, next) {
+  try {
+    if (!handleValidation(req, res)) return;
+    const payload = await upsertProviderTaxProfile(req.params.companyId, req.body ?? {});
+    res.json(payload);
+  } catch (error) {
+    if (error.message === 'Provider not found') {
+      res.status(404).json({ message: error.message });
+      return;
+    }
+    next(error);
+  }
+}
+
+export const createTaxFilingValidators = [
+  param('companyId').isUUID(4),
+  body('periodStart').isISO8601(),
+  body('periodEnd').optional().isISO8601(),
+  body('dueAt').optional().isISO8601(),
+  body('filedAt').optional().isISO8601(),
+  body('status').optional().isIn(TAX_FILING_STATUS_OPTIONS),
+  body('taxableSalesAmount').optional().isFloat({ min: 0 }),
+  body('taxCollectedAmount').optional().isFloat({ min: 0 }),
+  body('taxDueAmount').optional().isFloat({ min: 0 }),
+  body('currency').optional().isString().trim().isLength({ min: 2, max: 3 }),
+  body('referenceNumber').optional().isString().trim().isLength({ min: 2, max: 160 }),
+  body('submittedBy').optional().isString().trim().isLength({ min: 2, max: 160 }),
+  body('supportingDocumentUrl').optional().isURL({ require_tld: false }),
+  body('notes').optional().isString(),
+  body('metadata').optional().isObject()
+];
+
+export async function createProviderTaxFilingHandler(req, res, next) {
+  try {
+    if (!handleValidation(req, res)) return;
+    const payload = await createProviderTaxFiling(req.params.companyId, req.body ?? {});
+    res.status(201).json(payload);
+  } catch (error) {
+    if (error.message === 'Provider not found') {
+      res.status(404).json({ message: error.message });
+      return;
+    }
+    next(error);
+  }
+}
+
+export const updateTaxFilingValidators = [
+  param('companyId').isUUID(4),
+  param('filingId').isUUID(4),
+  ...baseTaxFilingValidators
+];
+
+export async function updateProviderTaxFilingHandler(req, res, next) {
+  try {
+    if (!handleValidation(req, res)) return;
+    const payload = await updateProviderTaxFiling(req.params.companyId, req.params.filingId, req.body ?? {});
+    res.json(payload);
+  } catch (error) {
+    if (error.message === 'Tax filing not found' || error.message === 'Provider not found') {
+      res.status(404).json({ message: error.message });
+      return;
+    }
+    next(error);
+  }
+}
+
+export const deleteTaxFilingValidators = [param('companyId').isUUID(4), param('filingId').isUUID(4)];
+
+export async function deleteProviderTaxFilingHandler(req, res, next) {
+  try {
+    if (!handleValidation(req, res)) return;
+    await deleteProviderTaxFiling(req.params.companyId, req.params.filingId);
+    res.status(204).end();
+  } catch (error) {
+    if (error.message === 'Tax filing not found') {
+      res.status(404).json({ message: error.message });
       return;
     }
     next(error);

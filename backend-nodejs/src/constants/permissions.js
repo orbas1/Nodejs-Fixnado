@@ -28,6 +28,7 @@ export const Permissions = Object.freeze({
   ADMIN_PROVIDER_READ: 'admin:provider:read',
   ADMIN_PROVIDER_WRITE: 'admin:provider:write',
   ADMIN_PROVIDER_ARCHIVE: 'admin:provider:archive',
+  ADMIN_PROVIDER_TAX_WRITE: 'admin:provider:tax:write',
   ADMIN_COMMAND_METRICS_READ: 'admin:command-metrics:read',
   ADMIN_COMMAND_METRICS_WRITE: 'admin:command-metrics:write',
   ADMIN_OPERATIONS_QUEUE_READ: 'admin:operations-queue:read',

@@ -17,6 +17,10 @@ import {
   createAdminProvider,
   updateAdminProvider,
   archiveAdminProvider,
+  updateAdminProviderTaxProfile,
+  createAdminProviderTaxFiling,
+  updateAdminProviderTaxFiling,
+  deleteAdminProviderTaxFiling,
   upsertAdminProviderContact,
   deleteAdminProviderContact,
   upsertAdminProviderCoverage,
@@ -2540,6 +2544,77 @@ export default function AdminDashboard() {
     [loadProviderDirectory, handleProviderAuthError]
   );
 
+  const handleUpdateProviderTaxProfile = useCallback(
+    async (companyId, payload) => {
+      try {
+        const result = await updateAdminProviderTaxProfile(companyId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update tax profile', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleCreateProviderTaxFiling = useCallback(
+    async (companyId, payload) => {
+      try {
+        const result = await createAdminProviderTaxFiling(companyId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to create tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleUpdateProviderTaxFiling = useCallback(
+    async (companyId, filingId, payload) => {
+      try {
+        const result = await updateAdminProviderTaxFiling(companyId, filingId, payload);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+        return result;
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to update tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
+  const handleDeleteProviderTaxFiling = useCallback(
+    async (companyId, filingId) => {
+      try {
+        await deleteAdminProviderTaxFiling(companyId, filingId);
+        await loadProviderDetail(companyId, { forceRefresh: true });
+      } catch (error) {
+        const panelError =
+          error instanceof PanelApiError
+            ? error
+            : new PanelApiError('Unable to delete tax filing', error?.status ?? 500, { cause: error });
+        await handleProviderAuthError(panelError);
+        throw panelError;
+      }
+    },
+    [loadProviderDetail, handleProviderAuthError]
+  );
+
   const providerHandlers = useMemo(
     () => ({
       onRefreshDirectory: handleRefreshProviderDirectory,
@@ -2550,7 +2625,11 @@ export default function AdminDashboard() {
       onDeleteContact: handleDeleteProviderContact,
       onUpsertCoverage: handleUpsertProviderCoverage,
       onDeleteCoverage: handleDeleteProviderCoverage,
-      onArchiveProvider: handleArchiveProvider
+      onArchiveProvider: handleArchiveProvider,
+      onUpdateTaxProfile: handleUpdateProviderTaxProfile,
+      onCreateTaxFiling: handleCreateProviderTaxFiling,
+      onUpdateTaxFiling: handleUpdateProviderTaxFiling,
+      onDeleteTaxFiling: handleDeleteProviderTaxFiling
     }),
     [
       handleRefreshProviderDirectory,
@@ -2561,7 +2640,11 @@ export default function AdminDashboard() {
       handleDeleteProviderContact,
       handleUpsertProviderCoverage,
       handleDeleteProviderCoverage,
-      handleArchiveProvider
+      handleArchiveProvider,
+      handleUpdateProviderTaxProfile,
+      handleCreateProviderTaxFiling,
+      handleUpdateProviderTaxFiling,
+      handleDeleteProviderTaxFiling
     ]
   );
 

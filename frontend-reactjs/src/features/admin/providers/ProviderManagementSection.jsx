@@ -103,7 +103,11 @@ ProviderManagementSection.propTypes = {
         onDeleteContact: PropTypes.func,
         onUpsertCoverage: PropTypes.func,
         onDeleteCoverage: PropTypes.func,
-        onArchiveProvider: PropTypes.func
+        onArchiveProvider: PropTypes.func,
+        onUpdateTaxProfile: PropTypes.func,
+        onCreateTaxFiling: PropTypes.func,
+        onUpdateTaxFiling: PropTypes.func,
+        onDeleteTaxFiling: PropTypes.func
       })
     })
   }).isRequired

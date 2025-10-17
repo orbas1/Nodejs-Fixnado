@@ -21,6 +21,8 @@ import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderTaxProfile from './providerTaxProfile.js';
+import ProviderTaxFiling from './providerTaxFiling.js';
 import Booking from './booking.js';
 import BookingAssignment from './bookingAssignment.js';
 import BookingBid from './bookingBid.js';
@@ -184,6 +186,12 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasOne(ProviderTaxProfile, { foreignKey: 'companyId', as: 'taxProfile' });
+ProviderTaxProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderTaxFiling, { foreignKey: 'companyId', as: 'taxFilings' });
+ProviderTaxFiling.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
@@ -889,49 +897,48 @@ export {
   WarehouseExportRun,
   WalletConfiguration,
   WalletAccount,
-  WalletTransaction
+  WalletTransaction,
+  WalletPaymentMethod,
   ProviderProfile,
   ProviderContact,
-  ProviderCoverage
+  ProviderCoverage,
+  ProviderTaxProfile,
+  ProviderTaxFiling,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
-  RbacRoleAssignment
-  AdminProfile,
-  AdminDelegate
+  RbacRoleAssignment,
+  AdminDelegate,
   DisputeHealthBucket,
-  DisputeHealthEntry
+  DisputeHealthEntry,
   CommandMetricSetting,
-  CommandMetricCard
+  CommandMetricCard,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AutomationInitiative
-  AdminUserProfile
+  OperationsQueueUpdate,
+  AutomationInitiative,
+  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
-  EnterprisePlaybook
+  EnterprisePlaybook,
   AppearanceProfile,
   AppearanceAsset,
-  AppearanceVariant
+  AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseAttachment,
-  PurchaseBudget
+  PurchaseBudget,
   HomePage,
   HomePageSection,
-  HomePageComponent
+  HomePageComponent,
   LegalDocument,
-  LegalDocumentVersion
+  LegalDocumentVersion,
   LiveFeedAuditEvent,
-  LiveFeedAuditNote
-  SystemSettingAudit
+  LiveFeedAuditNote,
+  SystemSettingAudit,
   ServiceTaxonomyType,
-  ServiceTaxonomyCategory
-  WalletAccount,
-  WalletTransaction,
-  WalletPaymentMethod
+  ServiceTaxonomyCategory,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -940,10 +947,8 @@ export {
   CustomerDisputeCase,
   CustomerDisputeTask,
   CustomerDisputeNote,
-  CustomerDisputeEvidence
+  CustomerDisputeEvidence,
   CustomerCoupon,
-  CustomerAccountSetting,
-  CustomerNotificationRecipient,
   InboxQueue,
   InboxConfiguration,
   InboxTemplate

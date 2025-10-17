@@ -232,6 +232,10 @@ function ensureArray(value) {
   return [value].filter(Boolean);
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function normaliseQueueAttachments(rawAttachments) {
   if (!Array.isArray(rawAttachments)) {
     return [];
@@ -2380,6 +2384,59 @@ function normaliseProviderService(service = {}) {
   };
 }
 
+function normaliseProviderTaxProfile(profile = {}) {
+  return {
+    id: profile.id ?? null,
+    registrationNumber: profile.registrationNumber ?? null,
+    registrationCountry: profile.registrationCountry ?? null,
+    registrationRegion: profile.registrationRegion ?? null,
+    registrationStatus: profile.registrationStatus ?? 'not_registered',
+    registrationStatusLabel: profile.registrationStatusLabel ?? 'Not registered',
+    vatRegistered: Boolean(profile.vatRegistered),
+    registrationEffectiveFrom: toDate(profile.registrationEffectiveFrom),
+    defaultRate: toNumber(profile.defaultRate, 0),
+    thresholdAmount:
+      profile.thresholdAmount !== undefined ? toNumber(profile.thresholdAmount, null) : null,
+    thresholdCurrency: profile.thresholdCurrency ?? 'GBP',
+    filingFrequency: profile.filingFrequency ?? 'annual',
+    filingFrequencyLabel: profile.filingFrequencyLabel ?? 'Annual',
+    nextFilingDueAt: toDate(profile.nextFilingDueAt),
+    lastFiledAt: toDate(profile.lastFiledAt),
+    accountingMethod: profile.accountingMethod ?? 'accrual',
+    accountingMethodLabel: profile.accountingMethodLabel ?? 'Accrual',
+    certificateUrl: profile.certificateUrl ?? null,
+    exemptionReason: profile.exemptionReason ?? null,
+    taxAdvisor: profile.taxAdvisor ?? null,
+    notes: profile.notes ?? null,
+    metadata: isPlainObject(profile.metadata) ? profile.metadata : {},
+    defaultCurrency: profile.defaultCurrency ?? profile.thresholdCurrency ?? 'GBP'
+  };
+}
+
+function normaliseProviderTaxFiling(filing = {}) {
+  return {
+    id: filing.id ?? `tax-filing-${Math.random().toString(36).slice(2, 8)}`,
+    companyId: filing.companyId ?? null,
+    periodStart: toDate(filing.periodStart),
+    periodEnd: toDate(filing.periodEnd),
+    dueAt: toDate(filing.dueAt),
+    filedAt: toDate(filing.filedAt),
+    status: filing.status ?? 'scheduled',
+    statusLabel: filing.statusLabel ?? (filing.status ? filing.status.replace(/_/g, ' ') : 'Scheduled'),
+    taxableSalesAmount:
+      filing.taxableSalesAmount !== undefined ? toNumber(filing.taxableSalesAmount, null) : null,
+    taxCollectedAmount:
+      filing.taxCollectedAmount !== undefined ? toNumber(filing.taxCollectedAmount, null) : null,
+    taxDueAmount: filing.taxDueAmount !== undefined ? toNumber(filing.taxDueAmount, null) : null,
+    currency: filing.currency ?? 'GBP',
+    referenceNumber: filing.referenceNumber ?? null,
+    submittedBy: filing.submittedBy ?? null,
+    supportingDocumentUrl: filing.supportingDocumentUrl ?? null,
+    notes: filing.notes ?? null,
+    metadata: isPlainObject(filing.metadata) ? filing.metadata : {}
+  };
+}
+
 function normaliseAdminProviderDirectory(payload = {}) {
   const summary = payload.summary ?? {};
   const providers = ensureArray(payload.providers).map((provider) => ({
@@ -2471,6 +2528,17 @@ function normaliseAdminProviderDirectory(payload = {}) {
 function normaliseAdminProviderDetail(payload = {}) {
   const company = payload.company ?? {};
   const profile = payload.profile ?? {};
+  const taxProfile = normaliseProviderTaxProfile(payload.taxProfile);
+  const taxFilings = ensureArray(payload.taxFilings).map(normaliseProviderTaxFiling);
+  const taxStats = {
+    overdueCount: toNumber(payload.taxStats?.overdueCount, 0),
+    nextDueAt: toDate(payload.taxStats?.nextDueAt),
+    lastFiledAt: toDate(payload.taxStats?.lastFiledAt),
+    rolling12mCollected: toNumber(payload.taxStats?.rolling12mCollected, 0),
+    rolling12mDue: toNumber(payload.taxStats?.rolling12mDue, 0),
+    vatRegistered: Boolean(payload.taxStats?.vatRegistered ?? taxProfile.vatRegistered),
+    defaultRate: toNumber(payload.taxStats?.defaultRate, taxProfile.defaultRate)
+  };
 
   return {
     company: {
@@ -2518,6 +2586,9 @@ function normaliseAdminProviderDetail(payload = {}) {
     coverage: ensureArray(payload.coverage).map(normaliseProviderCoverage),
     documents: ensureArray(payload.documents).map(normaliseProviderDocument),
     services: ensureArray(payload.services).map(normaliseProviderService),
+    taxProfile,
+    taxFilings,
+    taxStats,
     stats: {
       activeBookings: toNumber(payload.stats?.activeBookings, 0),
       completedBookings30d: toNumber(payload.stats?.completedBookings30d, 0),
@@ -2535,6 +2606,18 @@ function normaliseAdminProviderDetail(payload = {}) {
       riskLevels: ensureArray(payload.enums?.riskLevels).map((option) => normaliseOption(option, 'medium', 'Medium')),
       coverageTypes: ensureArray(payload.enums?.coverageTypes).map((option) => normaliseOption(option, 'primary', 'Primary')),
       insuredStatuses: ensureArray(payload.enums?.insuredStatuses).map((option) => normaliseOption(option, 'not_started', 'Not started')),
+      taxRegistrationStatuses: ensureArray(payload.enums?.taxRegistrationStatuses).map((option) =>
+        normaliseOption(option, 'not_registered', 'Not registered')
+      ),
+      taxAccountingMethods: ensureArray(payload.enums?.taxAccountingMethods).map((option) =>
+        normaliseOption(option, 'accrual', 'Accrual')
+      ),
+      taxFilingFrequencies: ensureArray(payload.enums?.taxFilingFrequencies).map((option) =>
+        normaliseOption(option, 'annual', 'Annual')
+      ),
+      taxFilingStatuses: ensureArray(payload.enums?.taxFilingStatuses).map((option) =>
+        normaliseOption(option, 'scheduled', 'Scheduled')
+      ),
       zones: ensureArray(payload.enums?.zones).map((zone) => ({
         id: zone.id ?? `zone-${Math.random().toString(36).slice(2, 8)}`,
         name: zone.name ?? 'Coverage zone',
@@ -2726,6 +2809,80 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
       downloadUrl: '/api/v1/compliance/documents/doc-insurance/download'
     }
   ],
+  taxProfile: {
+    id: 'tax-profile-metro-power',
+    registrationNumber: 'GB123456789',
+    registrationCountry: 'GB',
+    registrationRegion: 'London',
+    registrationStatus: 'registered',
+    registrationStatusLabel: 'Registered',
+    vatRegistered: true,
+    registrationEffectiveFrom: new Date(Date.now() - 86400000 * 400).toISOString(),
+    defaultRate: 0.2,
+    thresholdAmount: 85000,
+    thresholdCurrency: 'GBP',
+    filingFrequency: 'quarterly',
+    filingFrequencyLabel: 'Quarterly',
+    nextFilingDueAt: new Date(Date.now() + 86400000 * 45).toISOString(),
+    lastFiledAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+    accountingMethod: 'accrual',
+    accountingMethodLabel: 'Accrual',
+    certificateUrl: 'https://cdn.fixnado.example/providers/metro-power/vat-certificate.pdf',
+    exemptionReason: null,
+    taxAdvisor: 'Finsight Advisory LLP',
+    notes: 'VAT returns submitted via HMRC API. Review reverse charge compliance for energy installations.',
+    metadata: { hmrcReference: 'VAT-2025-04' },
+    defaultCurrency: 'GBP'
+  },
+  taxFilings: [
+    {
+      id: 'filing-q1',
+      companyId: 'provider-metro-power',
+      periodStart: new Date('2025-01-01').toISOString(),
+      periodEnd: new Date('2025-03-31').toISOString(),
+      dueAt: new Date('2025-05-07').toISOString(),
+      filedAt: new Date('2025-04-20').toISOString(),
+      status: 'filed',
+      statusLabel: 'Filed',
+      taxableSalesAmount: 215000,
+      taxCollectedAmount: 43000,
+      taxDueAmount: 43000,
+      currency: 'GBP',
+      referenceNumber: 'VAT-Q1-2025',
+      submittedBy: 'Amelia Roberts',
+      supportingDocumentUrl: 'https://cdn.fixnado.example/providers/metro-power/vat-q1-2025.pdf',
+      notes: 'Included emergency generator rentals during red weather alert.',
+      metadata: { hmrcSubmissionId: 'HMRC-12345' }
+    },
+    {
+      id: 'filing-q2',
+      companyId: 'provider-metro-power',
+      periodStart: new Date('2025-04-01').toISOString(),
+      periodEnd: new Date('2025-06-30').toISOString(),
+      dueAt: new Date('2025-08-07').toISOString(),
+      filedAt: null,
+      status: 'scheduled',
+      statusLabel: 'Scheduled',
+      taxableSalesAmount: null,
+      taxCollectedAmount: null,
+      taxDueAmount: null,
+      currency: 'GBP',
+      referenceNumber: null,
+      submittedBy: null,
+      supportingDocumentUrl: null,
+      notes: 'Awaiting bank feed reconciliation before submission.',
+      metadata: {}
+    }
+  ],
+  taxStats: {
+    overdueCount: 0,
+    nextDueAt: new Date('2025-08-07').toISOString(),
+    lastFiledAt: new Date('2025-04-20').toISOString(),
+    rolling12mCollected: 168000,
+    rolling12mDue: 168000,
+    vatRegistered: true,
+    defaultRate: 0.2
+  },
   services: [
     {
       id: 'service-critical',
@@ -2786,6 +2943,31 @@ const adminProviderDetailFallback = normaliseAdminProviderDetail({
       { value: 'in_review', label: 'In review' },
       { value: 'approved', label: 'Approved' },
       { value: 'suspended', label: 'Suspended' }
+    ],
+    taxRegistrationStatuses: [
+      { value: 'not_registered', label: 'Not registered' },
+      { value: 'pending', label: 'Registration pending' },
+      { value: 'registered', label: 'Registered' },
+      { value: 'suspended', label: 'Suspended' },
+      { value: 'deregistered', label: 'Deregistered' }
+    ],
+    taxAccountingMethods: [
+      { value: 'accrual', label: 'Accrual' },
+      { value: 'cash', label: 'Cash' }
+    ],
+    taxFilingFrequencies: [
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'quarterly', label: 'Quarterly' },
+      { value: 'semi_annual', label: 'Semi-annual' },
+      { value: 'annual', label: 'Annual' }
+    ],
+    taxFilingStatuses: [
+      { value: 'draft', label: 'Draft' },
+      { value: 'scheduled', label: 'Scheduled' },
+      { value: 'filed', label: 'Filed' },
+      { value: 'paid', label: 'Paid' },
+      { value: 'overdue', label: 'Overdue' },
+      { value: 'cancelled', label: 'Cancelled' }
     ],
     zones: [
       { id: 'zone-central', name: 'Central District', companyId: 'provider-metro-power' },
@@ -3980,6 +4162,59 @@ export async function archiveAdminProvider(companyId, payload = {}) {
   const normalised = normaliseAdminProviderDetail(response.data ?? response);
   invalidateProviderCache(companyId);
   return normalised;
+}
+
+export async function updateAdminProviderTaxProfile(companyId, payload = {}) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/profile`, {
+    method: 'PUT',
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxProfile(response.data ?? response);
+}
+
+export async function createAdminProviderTaxFiling(companyId, payload = {}) {
+  if (!companyId) {
+    throw new PanelApiError('Provider identifier required', 400);
+  }
+  const response = await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/filings`, {
+    method: 'POST',
+    body: payload,
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxFiling(response.data ?? response);
+}
+
+export async function updateAdminProviderTaxFiling(companyId, filingId, payload = {}) {
+  if (!companyId || !filingId) {
+    throw new PanelApiError('Provider tax filing identifier required', 400);
+  }
+  const response = await request(
+    `/admin/providers/${encodeURIComponent(companyId)}/tax/filings/${encodeURIComponent(filingId)}`,
+    {
+      method: 'PUT',
+      body: payload,
+      forceRefresh: true
+    }
+  );
+  invalidateProviderCache(companyId);
+  return normaliseProviderTaxFiling(response.data ?? response);
+}
+
+export async function deleteAdminProviderTaxFiling(companyId, filingId) {
+  if (!companyId || !filingId) {
+    throw new PanelApiError('Provider tax filing identifier required', 400);
+  }
+  await request(`/admin/providers/${encodeURIComponent(companyId)}/tax/filings/${encodeURIComponent(filingId)}`, {
+    method: 'DELETE',
+    forceRefresh: true
+  });
+  invalidateProviderCache(companyId);
 }
 
 export async function upsertAdminProviderContact(companyId, contactId, payload) {
