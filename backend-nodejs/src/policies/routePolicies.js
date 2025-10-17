@@ -1598,6 +1598,16 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.settings': {
+    id: 'panel.provider.settings',
+    version: '1.0.0',
+    resource: 'panel.provider',
+    action: 'panel.provider:manage',
+    description: 'Allow provider managers to update profile, branding, contacts, and coverage settings.',
+    requirements: [Permissions.PANEL_PROVIDER_MANAGE],
+    tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
   'panel.provider.enterpriseUpgrade.view': {
     id: 'panel.provider.enterpriseUpgrade.view',
     version: '1.0.0',
