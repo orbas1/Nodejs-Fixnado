@@ -23,6 +23,11 @@ import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
+import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
+import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
+import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
+import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
+import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
 import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
 import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
 import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
@@ -561,6 +566,7 @@ export default function ProviderDashboard() {
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
   const servicemen = state.data?.servicemen ?? [];
+  const servicemanFinance = state.data?.servicemanFinance ?? null;
   const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
   const serviceHealth = serviceManagement.health ?? [];
@@ -568,6 +574,11 @@ export default function ProviderDashboard() {
   const servicePackages = serviceManagement.packages ?? [];
   const serviceCategories = serviceManagement.categories ?? [];
   const serviceCatalogue = serviceManagement.catalogue ?? [];
+  const enterpriseUpgrade = state.data?.enterpriseUpgrade ?? null;
+  const adsWorkspace = state.data?.ads || null;
+  const adsCompanyId = state.meta?.companyId || adsWorkspace?.company?.id || null;
+  const hasAdsWorkspace = Boolean(adsWorkspace);
+  const companyId = state.meta?.companyId || provider?.id || null;
 
   const heroStatusTone = useMemo(() => {
     if (!metrics) return 'neutral';
@@ -590,6 +601,11 @@ export default function ProviderDashboard() {
         label: t('providerDashboard.revenueHeadline'),
         description: t('providerDashboard.nav.revenue')
       },
+      servicemanFinance
+        ? {
+            id: 'provider-dashboard-serviceman-payments',
+            label: t('providerPayments.headline'),
+            description: t('providerPayments.navDescription')
       walletSection
         ? {
             id: walletSection.id || 'provider-dashboard-wallet',
@@ -604,6 +620,11 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.alerts')
           }
         : null,
+      {
+        id: 'provider-dashboard-tool-rentals',
+        label: 'Tool hire & rentals',
+        description: 'Manage hire catalogue, pricing, and deposits'
+      },
       {
         id: 'provider-dashboard-pipeline',
         label: t('providerDashboard.pipelineHeadline'),
@@ -656,6 +677,18 @@ export default function ProviderDashboard() {
             description: t('providerDashboard.nav.serviceCatalogue')
           }
         : null,
+      hasAdsWorkspace
+        ? {
+            id: 'provider-dashboard-ads',
+            label: 'Gigvora ads',
+            description: 'Campaigns, creatives, and targeting'
+          }
+        : null,
+      {
+        id: 'provider-dashboard-enterprise-upgrade',
+        label: t('providerDashboard.enterpriseUpgradeHeadline'),
+        description: t('providerDashboard.nav.enterpriseUpgrade')
+      },
       {
         id: 'provider-dashboard-servicemen',
         label: t('providerDashboard.servicemenHeadline'),
@@ -664,9 +697,11 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
+  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
   }, [
     alerts.length,
     deliveryBoard.length,
+    hasAdsWorkspace,
     hasCalendarAccess,
     serviceCatalogue.length,
     serviceCategories.length,
@@ -883,6 +918,13 @@ export default function ProviderDashboard() {
           </div>
         </section>
 
+        {servicemanFinance ? (
+          <ServicemanPaymentsSection
+            initialWorkspace={servicemanFinance}
+            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
+            onRefresh={() => loadDashboard({ forceRefresh: true })}
+          />
+        ) : null}
         {walletSection ? <WalletSection section={walletSection} /> : null}
 
         {alerts.length > 0 ? (
@@ -897,6 +939,12 @@ export default function ProviderDashboard() {
               ))}
             </div>
           </section>
+        ) : null}
+
+        {companyId ? (
+          <ToolRentalProvider companyId={companyId}>
+            <ToolRentalWorkspace />
+          </ToolRentalProvider>
         ) : null}
 
         <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
@@ -1036,6 +1084,26 @@ export default function ProviderDashboard() {
                 <ServiceCatalogueCard key={service.id} service={service} />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        <EnterpriseUpgradeSection
+          upgrade={enterpriseUpgrade}
+          onRefresh={() => loadDashboard({ forceRefresh: true })}
+        />
+        {hasAdsWorkspace ? (
+          <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 id="provider-dashboard-ads-heading" className="text-lg font-semibold text-primary">
+                  Gigvora ads & campaigns
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Build campaigns, curate creatives, and manage placement strategy without leaving the provider workspace.
+                </p>
+              </div>
+            </header>
+            <ProviderAdsWorkspace companyId={adsCompanyId} initialData={adsWorkspace} />
           </section>
         ) : null}
 

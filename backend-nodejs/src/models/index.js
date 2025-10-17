@@ -17,12 +17,27 @@ import EscrowMilestone from './escrowMilestone.js';
 import EscrowNote from './escrowNote.js';
 import EscrowWorkLog from './escrowWorkLog.js';
 import Dispute from './dispute.js';
+import ServicemanProfile from './servicemanProfile.js';
+import ServicemanShiftRule from './servicemanShiftRule.js';
+import ServicemanCertification from './servicemanCertification.js';
+import ServicemanEquipmentItem from './servicemanEquipmentItem.js';
 import UiPreferenceTelemetry from './uiPreferenceTelemetry.js';
 import UiPreferenceTelemetrySnapshot from './uiPreferenceTelemetrySnapshot.js';
 import ZoneAnalyticsSnapshot from './zoneAnalyticsSnapshot.js';
 import ProviderProfile from './providerProfile.js';
 import ProviderContact from './providerContact.js';
 import ProviderCoverage from './providerCoverage.js';
+import ProviderTaxProfile from './providerTaxProfile.js';
+import ProviderTaxFiling from './providerTaxFiling.js';
+import ProviderByokIntegration from './providerByokIntegration.js';
+import ProviderByokAuditLog from './providerByokAuditLog.js';
+import ProviderCrewMember from './providerCrewMember.js';
+import ProviderCrewAvailability from './providerCrewAvailability.js';
+import ProviderCrewDeployment from './providerCrewDeployment.js';
+import ProviderCrewDelegation from './providerCrewDelegation.js';
+import ProviderOnboardingTask from './providerOnboardingTask.js';
+import ProviderOnboardingRequirement from './providerOnboardingRequirement.js';
+import ProviderOnboardingNote from './providerOnboardingNote.js';
 import ProviderStorefront from './providerStorefront.js';
 import ProviderStorefrontInventory from './providerStorefrontInventory.js';
 import ProviderStorefrontCoupon from './providerStorefrontCoupon.js';
@@ -60,6 +75,9 @@ import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
+import CampaignCreative from './campaignCreative.js';
+import CampaignAudienceSegment from './campaignAudienceSegment.js';
+import CampaignPlacement from './campaignPlacement.js';
 import AnalyticsEvent from './analyticsEvent.js';
 import AnalyticsPipelineRun from './analyticsPipelineRun.js';
 import Conversation from './conversation.js';
@@ -124,6 +142,8 @@ import DisputeHealthBucket from './disputeHealthBucket.js';
 import DisputeHealthEntry from './disputeHealthEntry.js';
 import CommandMetricSetting from './commandMetricSetting.js';
 import CommandMetricCard from './commandMetricCard.js';
+import ServicemanMetricSetting from './servicemanMetricSetting.js';
+import ServicemanMetricCard from './servicemanMetricCard.js';
 import OperationsQueueBoard from './operationsQueueBoard.js';
 import OperationsQueueUpdate from './operationsQueueUpdate.js';
 import AutomationInitiative from './automationInitiative.js';
@@ -131,12 +151,22 @@ import EnterpriseAccount from './enterpriseAccount.js';
 import EnterpriseSite from './enterpriseSite.js';
 import EnterpriseStakeholder from './enterpriseStakeholder.js';
 import EnterprisePlaybook from './enterprisePlaybook.js';
+import EnterpriseUpgradeRequest from './enterpriseUpgradeRequest.js';
+import EnterpriseUpgradeContact from './enterpriseUpgradeContact.js';
+import EnterpriseUpgradeSite from './enterpriseUpgradeSite.js';
+import EnterpriseUpgradeChecklistItem from './enterpriseUpgradeChecklistItem.js';
+import EnterpriseUpgradeDocument from './enterpriseUpgradeDocument.js';
 import AppearanceProfile from './appearanceProfile.js';
 import AppearanceAsset from './appearanceAsset.js';
 import AppearanceVariant from './appearanceVariant.js';
 import Supplier from './supplier.js';
 import PurchaseOrder from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
+import ServicemanIdentity from './servicemanIdentity.js';
+import ServicemanIdentityDocument from './servicemanIdentityDocument.js';
+import ServicemanIdentityCheck from './servicemanIdentityCheck.js';
+import ServicemanIdentityWatcher from './servicemanIdentityWatcher.js';
+import ServicemanIdentityEvent from './servicemanIdentityEvent.js';
 import PurchaseAttachment from './purchaseAttachment.js';
 import PurchaseBudget from './purchaseBudget.js';
 import ServicemanFinancialProfile from './servicemanFinancialProfile.js';
@@ -191,6 +221,31 @@ ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasOne(ServicemanProfile, { foreignKey: 'userId', as: 'servicemanProfile' });
+ServicemanProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+ServicemanProfile.hasMany(ServicemanShiftRule, { foreignKey: 'profileId', as: 'shiftRules' });
+ServicemanShiftRule.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanCertification, { foreignKey: 'profileId', as: 'certifications' });
+ServicemanCertification.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+ServicemanProfile.hasMany(ServicemanEquipmentItem, { foreignKey: 'profileId', as: 'equipment' });
+ServicemanEquipmentItem.belongsTo(ServicemanProfile, { foreignKey: 'profileId', as: 'profile' });
+User.hasOne(ServicemanIdentity, { foreignKey: 'servicemanId', as: 'identityProfile' });
+ServicemanIdentity.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
+ServicemanIdentity.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityDocument, { foreignKey: 'identityId', as: 'documents' });
+ServicemanIdentityDocument.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityCheck, { foreignKey: 'identityId', as: 'checks' });
+ServicemanIdentityCheck.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityWatcher, { foreignKey: 'identityId', as: 'watchers' });
+ServicemanIdentityWatcher.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+
+ServicemanIdentity.hasMany(ServicemanIdentityEvent, { foreignKey: 'identityId', as: 'events' });
+ServicemanIdentityEvent.belongsTo(ServicemanIdentity, { foreignKey: 'identityId', as: 'identity' });
+ServicemanIdentityEvent.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+User.hasMany(ServicemanIdentityEvent, { foreignKey: 'actorId', as: 'identityEvents' });
 User.hasOne(ServicemanBookingSetting, { foreignKey: 'servicemanId', as: 'servicemanBookingSetting' });
 ServicemanBookingSetting.belongsTo(User, { foreignKey: 'servicemanId', as: 'serviceman' });
 
@@ -221,6 +276,68 @@ ProviderContact.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 Company.hasMany(ProviderCoverage, { foreignKey: 'companyId', as: 'coverage' });
 ProviderCoverage.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
+Company.hasOne(ProviderTaxProfile, { foreignKey: 'companyId', as: 'taxProfile' });
+ProviderTaxProfile.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+Company.hasMany(ProviderTaxFiling, { foreignKey: 'companyId', as: 'taxFilings' });
+ProviderTaxFiling.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+Company.hasMany(ProviderByokIntegration, { foreignKey: 'companyId', as: 'byokIntegrations' });
+ProviderByokIntegration.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderByokIntegration.hasMany(ProviderByokAuditLog, { foreignKey: 'integrationId', as: 'auditLogs' });
+ProviderByokAuditLog.belongsTo(ProviderByokIntegration, { foreignKey: 'integrationId', as: 'integration' });
+ProviderByokAuditLog.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+Company.hasMany(EnterpriseUpgradeRequest, {
+  foreignKey: 'companyId',
+  as: 'enterpriseUpgrades',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeRequest.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeContact, {
+  foreignKey: 'upgradeRequestId',
+  as: 'contacts',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeContact.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeSite, {
+  foreignKey: 'upgradeRequestId',
+  as: 'sites',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeSite.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeChecklistItem, {
+  foreignKey: 'upgradeRequestId',
+  as: 'checklistItems',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeChecklistItem.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
+
+EnterpriseUpgradeRequest.hasMany(EnterpriseUpgradeDocument, {
+  foreignKey: 'upgradeRequestId',
+  as: 'documents',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+EnterpriseUpgradeDocument.belongsTo(EnterpriseUpgradeRequest, {
+  foreignKey: 'upgradeRequestId',
+  as: 'upgradeRequest'
+});
 Company.hasOne(ProviderCalendarSetting, { foreignKey: 'companyId', as: 'calendarSetting' });
 ProviderCalendarSetting.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
@@ -241,6 +358,62 @@ ProviderStorefrontCoupon.belongsTo(ProviderStorefront, { foreignKey: 'storefront
 
 ServiceZone.hasMany(ProviderCoverage, { foreignKey: 'zoneId', as: 'providerCoverage' });
 ProviderCoverage.belongsTo(ServiceZone, { foreignKey: 'zoneId', as: 'zone' });
+
+Company.hasMany(ProviderCrewMember, { foreignKey: 'companyId', as: 'crewMembers' });
+ProviderCrewMember.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewAvailability, {
+  foreignKey: 'crewMemberId',
+  as: 'availability',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ProviderCrewAvailability.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'CASCADE'
+});
+Company.hasMany(ProviderCrewAvailability, { foreignKey: 'companyId', as: 'crewAvailability' });
+ProviderCrewAvailability.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewDeployment, {
+  foreignKey: 'crewMemberId',
+  as: 'deployments',
+  onDelete: 'CASCADE',
+  hooks: true
+});
+ProviderCrewDeployment.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'CASCADE'
+});
+Company.hasMany(ProviderCrewDeployment, { foreignKey: 'companyId', as: 'crewDeployments' });
+ProviderCrewDeployment.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+ProviderCrewMember.hasMany(ProviderCrewDelegation, {
+  foreignKey: 'crewMemberId',
+  as: 'delegations',
+  onDelete: 'SET NULL',
+  hooks: true
+});
+ProviderCrewDelegation.belongsTo(ProviderCrewMember, {
+  foreignKey: 'crewMemberId',
+  as: 'crewMember',
+  onDelete: 'SET NULL'
+});
+Company.hasMany(ProviderCrewDelegation, { foreignKey: 'companyId', as: 'delegations' });
+ProviderCrewDelegation.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+Company.hasMany(ProviderOnboardingTask, { foreignKey: 'companyId', as: 'onboardingTasks' });
+ProviderOnboardingTask.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingTask.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+
+Company.hasMany(ProviderOnboardingRequirement, { foreignKey: 'companyId', as: 'onboardingRequirements' });
+ProviderOnboardingRequirement.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingRequirement.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' });
+
+Company.hasMany(ProviderOnboardingNote, { foreignKey: 'companyId', as: 'onboardingNotes' });
+ProviderOnboardingNote.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+ProviderOnboardingNote.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 User.hasMany(Post, { foreignKey: 'userId' });
 Post.belongsTo(User, { foreignKey: 'userId' });
@@ -615,6 +788,17 @@ Dispute.hasMany(FinanceTransactionHistory, { foreignKey: 'disputeId', as: 'finan
 AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSignals' });
 CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
+
+AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
+CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignCreative.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
+
+AdCampaign.hasMany(CampaignAudienceSegment, { foreignKey: 'campaignId', as: 'audienceSegments' });
+CampaignAudienceSegment.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+AdCampaign.hasMany(CampaignPlacement, { foreignKey: 'campaignId', as: 'placements' });
+CampaignPlacement.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+CampaignPlacement.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
 
 Conversation.hasMany(ConversationParticipant, { foreignKey: 'conversationId', as: 'participants' });
 ConversationParticipant.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
@@ -1002,9 +1186,16 @@ export {
     EscrowNote,
     EscrowWorkLog,
   Dispute,
+  ServicemanProfile,
+  ServicemanShiftRule,
+  ServicemanCertification,
+  ServicemanEquipmentItem,
   UiPreferenceTelemetry,
   UiPreferenceTelemetrySnapshot,
   ZoneAnalyticsSnapshot,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
   Booking,
   BookingAssignment,
   BookingBid,
@@ -1044,6 +1235,9 @@ export {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
+  CampaignCreative,
+  CampaignAudienceSegment,
+  CampaignPlacement,
   AnalyticsEvent,
   AnalyticsPipelineRun,
   Conversation,
@@ -1052,11 +1246,14 @@ export {
   MessageDelivery,
   AccountSupportTask,
   AccountSupportTaskUpdate,
+  AdminUserProfile,
+  CustomJobBid,
+  CustomJobBidMessage,
+  PlatformSetting,
   CommunicationsInboxConfiguration,
   CommunicationsEntryPoint,
   CommunicationsQuickReply,
   CommunicationsEscalationRule,
-  PlatformSetting,
   BlogPost,
   BlogCategory,
   BlogTag,
@@ -1093,6 +1290,19 @@ export {
   WalletConfiguration,
   WalletAccount,
   WalletTransaction,
+  WalletPaymentMethod,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
+  ProviderTaxProfile,
+  ProviderTaxFiling,
+  ProviderProfile,
+  ProviderContact,
+  ProviderCoverage,
+  ProviderCrewMember,
+  ProviderCrewAvailability,
+  ProviderCrewDeployment,
+  ProviderCrewDelegation,
   ProviderEscrowPolicy,
   ProviderProfile,
   ProviderContact,
@@ -1110,17 +1320,32 @@ export {
   OperationsQueueBoard,
   OperationsQueueUpdate,
   AutomationInitiative,
+  ServicemanMetricSetting,
+  ServicemanMetricCard,
+  OperationsQueueBoard,
+  OperationsQueueUpdate,
+  AutomationInitiative,
   AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
   EnterprisePlaybook,
+  EnterpriseUpgradeRequest,
+  EnterpriseUpgradeContact,
+  EnterpriseUpgradeSite,
+  EnterpriseUpgradeChecklistItem,
+  EnterpriseUpgradeDocument,
   AppearanceProfile,
   AppearanceAsset,
   AppearanceVariant,
   Supplier,
   PurchaseOrder,
   PurchaseOrderItem,
+  ServicemanIdentity,
+  ServicemanIdentityDocument,
+  ServicemanIdentityCheck,
+  ServicemanIdentityWatcher,
+  ServicemanIdentityEvent,
   PurchaseAttachment,
   PurchaseBudget,
   ServicemanFinancialProfile,
@@ -1143,6 +1368,7 @@ export {
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
+  CustomerCoupon,
   CustomerAccountSetting,
   CustomerNotificationRecipient,
   CustomerDisputeCase,
@@ -1158,4 +1384,8 @@ export {
   ServicemanByokAuditEvent
 };
 
+export default sequelize;
+
+export { default as ServicemanPayment, SERVICEMAN_PAYMENT_STATUSES } from './servicemanPayment.js';
+export { default as ServicemanCommissionRule, SERVICEMAN_COMMISSION_RATE_TYPES, SERVICEMAN_COMMISSION_APPROVAL_STATUSES } from './servicemanCommissionRule.js';
 export { ProviderStorefront, ProviderStorefrontInventory, ProviderStorefrontCoupon };

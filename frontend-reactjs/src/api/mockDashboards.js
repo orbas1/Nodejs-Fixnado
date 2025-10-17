@@ -1786,8 +1786,8 @@ const mockDashboards = {
       {
         id: 'overview',
         icon: 'profile',
-        label: 'Profile Overview',
-        description: 'Assignments, travel, and quality trends for Jordan’s crew.',
+        label: 'Control Centre Overview',
+        description: 'Launchpad for assignments, availability, and asset controls.',
         type: 'overview',
         analytics: {
           metrics: [
@@ -2085,6 +2085,197 @@ const mockDashboards = {
         }
       },
       {
+        id: 'training',
+        icon: 'compliance',
+        label: 'Training & Compliance',
+        description: 'Mandatory certifications, toolbox talks, and crew learning.',
+        type: 'list',
+        data: {
+          items: [
+            {
+              title: 'Confined space certification',
+              description: 'Renewal module assigned · Expires 02 Apr 2025.',
+              status: 'Due soon'
+            },
+            {
+              title: 'Hospital infection control refresher',
+              description: 'Video briefing + quiz assigned to Jordan and apprentice.',
+              status: 'In progress'
+            },
+            {
+              title: 'Toolbox talk – travel safety',
+              description: 'Record attendance with crew before 22 Mar.',
+              status: 'Action required'
+            }
+          ]
+        }
+      },
+      {
+        id: 'id-verification',
+        icon: 'compliance',
+        label: 'ID Verification',
+        description: 'Identity records, document governance, and reviewer notes.',
+        type: 'serviceman-identity',
+        data: {
+          verification: {
+            servicemanId: 'SRV-2210',
+            status: 'in_review',
+            riskRating: 'medium',
+            verificationLevel: 'enhanced',
+            requestedAt: '2025-02-10T09:12:00Z',
+            submittedAt: '2025-02-11T16:45:00Z',
+            approvedAt: null,
+            expiresAt: '2026-02-10T00:00:00Z',
+            reviewer: {
+              id: 'USR-8890',
+              name: 'Clara Benton',
+              email: 'clara.benton@fixnado.example'
+            },
+            notes: 'Awaiting utility clearance confirmation before final approval.'
+          },
+          documents: [
+            {
+              id: 'doc-passport',
+              documentType: 'passport',
+              status: 'approved',
+              documentNumber: '502993741',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2021-04-14',
+              expiresAt: '2031-04-13',
+              fileUrl: 'https://cdn.fixnado.example/documents/passport-jordan-miles.pdf',
+              notes: 'Verified against original by compliance on 12 Feb 2025.'
+            },
+            {
+              id: 'doc-driving-licence',
+              documentType: 'driving_license',
+              status: 'in_review',
+              documentNumber: 'MILEJ8021985A99',
+              issuingCountry: 'United Kingdom',
+              issuedAt: '2022-08-01',
+              expiresAt: '2032-07-31',
+              fileUrl: 'https://cdn.fixnado.example/documents/licence-jordan-miles.pdf',
+              notes: 'DVLA status refresh scheduled for 18 Feb 2025.'
+            },
+            {
+              id: 'doc-work-permit',
+              documentType: 'work_permit',
+              status: 'pending',
+              documentNumber: 'UK-WP-77421',
+              issuingCountry: 'United Kingdom',
+              issuedAt: null,
+              expiresAt: null,
+              fileUrl: '',
+              notes: 'Awaiting upload from crew coordinator.'
+            }
+          ],
+          checks: [
+            {
+              id: 'check-reference',
+              label: 'Professional reference validation',
+              owner: 'Operations Pod Beta',
+              status: 'in_progress',
+              dueAt: '2025-02-18',
+              completedAt: null
+            },
+            {
+              id: 'check-criminal',
+              label: 'Enhanced background screening',
+              owner: 'Compliance',
+              status: 'completed',
+              dueAt: '2025-02-12',
+              completedAt: '2025-02-12'
+            },
+            {
+              id: 'check-mvr',
+              label: 'Motor vehicle record pull',
+              owner: 'Fleet Safety',
+              status: 'not_started',
+              dueAt: '2025-02-20',
+              completedAt: null
+            }
+          ],
+          watchers: [
+            {
+              id: 'watcher-clara',
+              role: 'compliance_lead',
+              user: {
+                id: 'USR-8890',
+                name: 'Clara Benton',
+                email: 'clara.benton@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-samir',
+              role: 'operations_lead',
+              user: {
+                id: 'USR-7721',
+                name: 'Samir Patel',
+                email: 'samir.patel@fixnado.example'
+              }
+            },
+            {
+              id: 'watcher-lina',
+              role: 'safety_officer',
+              user: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez',
+                email: 'lina.alvarez@fixnado.example'
+              }
+            }
+          ],
+          events: [
+            {
+              id: 'event-1',
+              summary: 'Reviewer assigned to enhanced check',
+              eventType: 'assignment',
+              occurredAt: '2025-02-10T10:05:00Z',
+              actor: {
+                id: 'USR-7721',
+                name: 'Samir Patel'
+              }
+            },
+            {
+              id: 'event-2',
+              summary: 'Submitted passport document',
+              eventType: 'document_update',
+              occurredAt: '2025-02-11T16:40:00Z',
+              actor: {
+                id: 'SRV-2210',
+                name: 'Jordan Miles'
+              }
+            },
+            {
+              id: 'event-3',
+              summary: 'Background screening cleared',
+              eventType: 'compliance_check',
+              occurredAt: '2025-02-12T09:30:00Z',
+              actor: {
+                id: 'USR-8890',
+                name: 'Clara Benton'
+              }
+            },
+            {
+              id: 'event-4',
+              summary: 'Requested updated vehicle documents',
+              eventType: 'note',
+              occurredAt: '2025-02-13T14:15:00Z',
+              actor: {
+                id: 'USR-7810',
+                name: 'Lina Alvarez'
+              }
+            }
+          ],
+          referenceData: {
+            statuses: ['pending', 'in_review', 'approved', 'rejected', 'suspended'],
+            riskRatings: ['low', 'medium', 'high', 'critical'],
+            verificationLevels: ['standard', 'enhanced', 'expedited'],
+            documentTypes: ['passport', 'driving_license', 'id_card', 'work_permit', 'insurance_certificate'],
+            documentStatuses: ['pending', 'in_review', 'approved', 'rejected', 'expired'],
+            checkStatuses: ['not_started', 'in_progress', 'completed', 'blocked'],
+            watcherRoles: ['operations_lead', 'compliance_lead', 'safety_officer', 'account_manager'],
+            eventTypes: ['note', 'document_update', 'assignment', 'compliance_check', 'system_alert']
+          }
+        }
         id: 'website-preferences',
         icon: 'builder',
         label: 'Website Preferences',
@@ -2584,7 +2775,143 @@ const mockDashboards = {
         }
       },
       {
+        id: 'full-inbox',
+        icon: 'support',
+        label: 'Full inbox',
+        description: 'Configure routing, quick replies, and escalation guardrails.',
+        type: 'provider-inbox',
+        data: {
+          tenantId: 'provider-demo',
+          summary: {
+            entryPoints: 3,
+            quickReplies: 5,
+            escalationRules: 2,
+            liveRoutingEnabled: true,
+            timezone: 'Europe/London',
+            updatedAt: '2024-01-15T10:00:00.000Z'
+          },
+          capabilities: { allowManage: true },
+          snapshot: {
+            configuration: {
+              liveRoutingEnabled: true,
+              defaultGreeting: 'Welcome to Fixnado support – let us know how we can help.',
+              aiAssistDisplayName: 'Fixnado Assist',
+              aiAssistDescription: 'Drafts replies, triages intent, and surfaces account context.',
+              timezone: 'Europe/London',
+              quietHoursStart: '20:00',
+              quietHoursEnd: '06:00',
+              updatedAt: '2024-01-15T10:00:00.000Z'
+            },
+            entryPoints: [
+              {
+                id: 'ep-web',
+                key: 'web_widget',
+                label: 'Web widget',
+                description: 'Appears on provider storefronts and pricing pages.',
+                icon: '💬',
+                defaultMessage:
+                  'Need help finalising a quote? Message us and we will respond in under 2 minutes.',
+                enabled: true,
+                displayOrder: 0,
+                imageUrl: '',
+                ctaLabel: 'Open chat',
+                ctaUrl: '/contact'
+              },
+              {
+                id: 'ep-checkout',
+                key: 'checkout',
+                label: 'Checkout reassurance',
+                description: 'Guides customers through SME checkout flows.',
+                icon: '💳',
+                defaultMessage:
+                  'Have a question about billing or deposits? Our concierge will resolve it immediately.',
+                enabled: true,
+                displayOrder: 1,
+                imageUrl: '',
+                ctaLabel: 'Secure booking',
+                ctaUrl: '/checkout'
+              },
+              {
+                id: 'ep-mobile',
+                key: 'mobile_app',
+                label: 'Mobile app inbox',
+                description: 'Native widget for the field app.',
+                icon: '📱',
+                defaultMessage: 'Share on-site photos or handover updates directly with HQ.',
+                enabled: true,
+                displayOrder: 2,
+                imageUrl: '',
+                ctaLabel: 'Open app',
+                ctaUrl: 'fixnado://inbox'
+              }
+            ],
+            quickReplies: [
+              {
+                id: 'qr-ack',
+                title: 'Acknowledgement',
+                body:
+                  'Thanks for contacting Fixnado. A coordinator is reviewing this now and will reply within 10 minutes.',
+                category: 'general',
+                sortOrder: 1,
+                allowedRoles: ['provider_admin', 'provider_manager']
+              },
+              {
+                id: 'qr-sla',
+                title: 'SLA reminder',
+                body:
+                  'Our service crew is on the way and will arrive within the agreed SLA window. We will keep you updated.',
+                category: 'operations',
+                sortOrder: 2,
+                allowedRoles: ['provider_manager', 'crew_lead']
+              },
+              {
+                id: 'qr-escalation',
+                title: 'Escalation notice',
+                body:
+                  'We have escalated this conversation to the operations lead and will respond with an action plan shortly.',
+                category: 'operations',
+                sortOrder: 3,
+                allowedRoles: ['provider_admin']
+              }
+            ],
+            escalationRules: [
+              {
+                id: 'er-keyword',
+                name: 'Safety keywords',
+                description: 'Escalate when safety incidents are reported.',
+                triggerType: 'keyword',
+                triggerMetadata: { keywords: ['injury', 'gas leak', 'fire'] },
+                targetType: 'team',
+                targetReference: 'ops-safety',
+                targetLabel: 'Operations safety desk',
+                allowedRoles: ['provider_admin'],
+                slaMinutes: 5,
+                responseTemplate:
+                  'Thanks for flagging this. The safety team has been alerted and will call you immediately.',
+                active: true
+              },
+              {
+                id: 'er-inactivity',
+                name: 'Inactivity >15m',
+                description: 'Ensure urgent threads are never left unattended.',
+                triggerType: 'inactivity',
+                triggerMetadata: { minutesWithoutReply: 15 },
+                targetType: 'user',
+                targetReference: 'operations.lead@fixnado.com',
+                targetLabel: 'Operations lead',
+                allowedRoles: ['provider_manager', 'provider_admin'],
+                slaMinutes: 15,
+                responseTemplate: 'We are looping in our operations lead to assist and will reply with an update shortly.',
+                active: true
+              }
+            ]
+          }
+        }
+      },
+      {
         id: 'servicemen',
+        icon: 'crew',
+        label: 'Serviceman Directory',
         icon: 'crew',
         label: 'Serviceman Directory',
         description: 'Manage roster, certifications, and contact details.',
@@ -2921,6 +3248,16 @@ const mockDashboards = {
               ]
             }
           ]
+        }
+      },
+      {
+        id: 'profile-settings',
+        icon: 'settings',
+        label: 'Profile settings',
+        description: 'Manage identity, branding, support hours, key contacts, and coverage.',
+        type: 'provider-settings',
+        data: {
+          companyId: 'PRV-1108'
         }
       }
     ]

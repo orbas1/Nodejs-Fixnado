@@ -5,6 +5,31 @@ import {
   getProviderStorefrontHandler
 } from '../controllers/panelController.js';
 import {
+  getProviderEnterpriseUpgrade,
+  createProviderEnterpriseUpgrade,
+  updateProviderEnterpriseUpgrade
+} from '../controllers/providerUpgradeController.js';
+  getProviderOnboardingWorkspaceHandler,
+  createProviderOnboardingTaskHandler,
+  updateProviderOnboardingTaskHandler,
+  updateProviderOnboardingTaskStatusHandler,
+  deleteProviderOnboardingTaskHandler,
+  createProviderOnboardingRequirementHandler,
+  updateProviderOnboardingRequirementHandler,
+  updateProviderOnboardingRequirementStatusHandler,
+  deleteProviderOnboardingRequirementHandler,
+  createProviderOnboardingNoteHandler,
+  getWorkspaceValidators,
+  createTaskValidators,
+  updateTaskValidators,
+  updateTaskStatusValidators,
+  deleteTaskValidators,
+  createRequirementValidators,
+  updateRequirementValidators,
+  updateRequirementStatusValidators,
+  deleteRequirementValidators,
+  createNoteValidators
+} from '../controllers/providerOnboardingController.js';
   listToolSalesHandler,
   createToolSaleHandler,
   updateToolSaleHandler,
@@ -15,6 +40,8 @@ import {
 } from '../controllers/toolSalesController.js';
 import { authenticate, maybeAuthenticate, requireStorefrontRole } from '../middleware/auth.js';
 import { enforcePolicy } from '../middleware/policyMiddleware.js';
+import providerServicemanFinanceRoutes from './providerServicemanFinanceRoutes.js';
+import providerCampaignRoutes from './providerCampaignRoutes.js';
 import {
   validateStorefrontWorkspace,
   getStorefrontWorkspaceHandler,
@@ -43,6 +70,149 @@ router.get(
   getProviderDashboardHandler
 );
 router.get(
+  '/provider/enterprise-upgrade',
+  authenticate,
+  enforcePolicy('panel.provider.enterpriseUpgrade.view', {
+    metadata: (req) => ({ companyId: req.query?.companyId ?? null })
+  }),
+  getProviderEnterpriseUpgrade
+);
+router.post(
+  '/provider/enterprise-upgrade',
+  authenticate,
+  enforcePolicy('panel.provider.enterpriseUpgrade.manage', {
+    metadata: (req) => ({ companyId: req.body?.companyId ?? req.query?.companyId ?? null })
+  }),
+  createProviderEnterpriseUpgrade
+);
+router.put(
+  '/provider/enterprise-upgrade/:requestId',
+  authenticate,
+  enforcePolicy('panel.provider.enterpriseUpgrade.manage', {
+    metadata: (req) => ({
+      companyId: req.body?.companyId ?? req.query?.companyId ?? null,
+      requestId: req.params.requestId
+    })
+  }),
+  updateProviderEnterpriseUpgrade
+  '/provider/onboarding',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.read', { metadata: () => ({ section: 'provider-onboarding' }) }),
+  ...getWorkspaceValidators,
+  getProviderOnboardingWorkspaceHandler
+);
+router.post(
+  '/provider/onboarding/tasks',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: () => ({ section: 'provider-onboarding', entity: 'tasks', action: 'create' })
+  }),
+  ...createTaskValidators,
+  createProviderOnboardingTaskHandler
+);
+router.put(
+  '/provider/onboarding/tasks/:taskId',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'tasks',
+      action: 'update',
+      taskId: req.params.taskId
+    })
+  }),
+  ...updateTaskValidators,
+  updateProviderOnboardingTaskHandler
+);
+router.patch(
+  '/provider/onboarding/tasks/:taskId/status',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'tasks',
+      action: 'status',
+      taskId: req.params.taskId,
+      status: req.body?.status
+    })
+  }),
+  ...updateTaskStatusValidators,
+  updateProviderOnboardingTaskStatusHandler
+);
+router.delete(
+  '/provider/onboarding/tasks/:taskId',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'tasks',
+      action: 'delete',
+      taskId: req.params.taskId
+    })
+  }),
+  ...deleteTaskValidators,
+  deleteProviderOnboardingTaskHandler
+);
+router.post(
+  '/provider/onboarding/requirements',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: () => ({ section: 'provider-onboarding', entity: 'requirements', action: 'create' })
+  }),
+  ...createRequirementValidators,
+  createProviderOnboardingRequirementHandler
+);
+router.put(
+  '/provider/onboarding/requirements/:requirementId',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'requirements',
+      action: 'update',
+      requirementId: req.params.requirementId
+    })
+  }),
+  ...updateRequirementValidators,
+  updateProviderOnboardingRequirementHandler
+);
+router.patch(
+  '/provider/onboarding/requirements/:requirementId/status',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'requirements',
+      action: 'status',
+      requirementId: req.params.requirementId,
+      status: req.body?.status
+    })
+  }),
+  ...updateRequirementStatusValidators,
+  updateProviderOnboardingRequirementStatusHandler
+);
+router.delete(
+  '/provider/onboarding/requirements/:requirementId',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: (req) => ({
+      section: 'provider-onboarding',
+      entity: 'requirements',
+      action: 'delete',
+      requirementId: req.params.requirementId
+    })
+  }),
+  ...deleteRequirementValidators,
+  deleteProviderOnboardingRequirementHandler
+);
+router.post(
+  '/provider/onboarding/notes',
+  authenticate,
+  enforcePolicy('panel.provider.onboarding.write', {
+    metadata: () => ({ section: 'provider-onboarding', entity: 'notes', action: 'create' })
+  }),
+  ...createNoteValidators,
+  createProviderOnboardingNoteHandler
   '/provider/tools',
   authenticate,
   enforcePolicy('panel.provider.tools.read', { metadata: () => ({ section: 'provider-tools' }) }),
@@ -111,6 +281,8 @@ router.get(
   getEnterprisePanelHandler
 );
 router.get('/provider/storefront', maybeAuthenticate, requireStorefrontRole, getProviderStorefrontHandler);
+router.use('/provider/servicemen', providerServicemanFinanceRoutes);
+router.use('/provider/campaigns', providerCampaignRoutes);
 
 router.get(
   '/provider/storefront/workspace',

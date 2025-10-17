@@ -1,7 +1,9 @@
 import { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, TextInput, FormField, Checkbox, StatusPill, Spinner } from '../../../../components/ui/index.js';
+import ProviderTaxManagementPanel from './ProviderTaxManagementPanel.jsx';
 import { resolveStatusTone } from './ProviderSummaryGrid.jsx';
+import ProviderDocumentsSection from './documents/ProviderDocumentsSection.jsx';
 
 function TextArea({ id, value, onChange, rows = 4 }) {
   return (
@@ -899,6 +901,26 @@ function ProviderDetailWorkspace({ selected, enums, detailLoading, detailError, 
             </div>
           </div>
 
+          <ProviderTaxManagementPanel
+            companyId={selected.company?.id ?? null}
+            taxProfile={selected.taxProfile}
+            taxFilings={selected.taxFilings ?? []}
+            taxStats={selected.taxStats}
+            enums={{
+              taxRegistrationStatuses: enums.taxRegistrationStatuses,
+              taxAccountingMethods: enums.taxAccountingMethods,
+              taxFilingFrequencies: enums.taxFilingFrequencies,
+              taxFilingStatuses: enums.taxFilingStatuses
+            }}
+            handlers={{
+              onUpdateTaxProfile: handlers.onUpdateTaxProfile,
+              onCreateTaxFiling: handlers.onCreateTaxFiling,
+              onUpdateTaxFiling: handlers.onUpdateTaxFiling,
+              onDeleteTaxFiling: handlers.onDeleteTaxFiling
+            }}
+            disabled={!selected?.company?.id}
+          />
+
           <div className="rounded-2xl border border-accent/10 bg-white p-6 shadow-sm">
             <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">Compliance documents</h4>
             <div className="mt-4 overflow-x-auto">
@@ -952,6 +974,13 @@ function ProviderDetailWorkspace({ selected, enums, detailLoading, detailError, 
               </table>
             </div>
           </div>
+          <ProviderDocumentsSection
+            companyId={selected?.company?.id}
+            company={selected?.company}
+            documents={selectedDocuments}
+            handlers={handlers}
+            links={selected?.links}
+          />
 
           <div className="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -1034,7 +1063,10 @@ ProviderDetailWorkspace.propTypes = {
     links: PropTypes.object,
     contacts: PropTypes.array,
     coverage: PropTypes.array,
-    documents: PropTypes.array
+    documents: PropTypes.array,
+    taxProfile: PropTypes.object,
+    taxFilings: PropTypes.array,
+    taxStats: PropTypes.object
   }),
   enums: PropTypes.shape({
     statuses: PropTypes.array,
@@ -1043,6 +1075,10 @@ ProviderDetailWorkspace.propTypes = {
     riskLevels: PropTypes.array,
     coverageTypes: PropTypes.array,
     insuredStatuses: PropTypes.array,
+    taxRegistrationStatuses: PropTypes.array,
+    taxAccountingMethods: PropTypes.array,
+    taxFilingFrequencies: PropTypes.array,
+    taxFilingStatuses: PropTypes.array,
     regions: PropTypes.array,
     zones: PropTypes.array
   }),
@@ -1054,7 +1090,17 @@ ProviderDetailWorkspace.propTypes = {
     onDeleteContact: PropTypes.func,
     onUpsertCoverage: PropTypes.func,
     onDeleteCoverage: PropTypes.func,
-    onArchiveProvider: PropTypes.func
+    onArchiveProvider: PropTypes.func,
+    onUpdateTaxProfile: PropTypes.func,
+    onCreateTaxFiling: PropTypes.func,
+    onUpdateTaxFiling: PropTypes.func,
+    onDeleteTaxFiling: PropTypes.func
+    onFetchComplianceSummary: PropTypes.func,
+    onSubmitComplianceDocument: PropTypes.func,
+    onReviewComplianceDocument: PropTypes.func,
+    onEvaluateCompliance: PropTypes.func,
+    onToggleComplianceBadge: PropTypes.func,
+    onSuspendCompliance: PropTypes.func
   })
 };
 

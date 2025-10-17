@@ -21,6 +21,8 @@ const Feed = lazy(() => import('./pages/Feed.jsx'));
 const BusinessFront = lazy(() => import('./pages/BusinessFront.jsx'));
 const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderStorefront = lazy(() => import('./pages/ProviderStorefront.jsx'));
+const ProviderDeploymentManagement = lazy(() => import('./pages/ProviderDeploymentManagement.jsx'));
+const ProviderOnboardingManagement = lazy(() => import('./pages/ProviderOnboardingManagement.jsx'));
 const ProviderInventory = lazy(() => import('./pages/ProviderInventory.jsx'));
 const ProviderStorefrontControl = lazy(() => import('./pages/ProviderStorefrontControl.jsx'));
 const ProviderCustomJobs = lazy(() => import('./pages/ProviderCustomJobs.jsx'));
@@ -71,6 +73,9 @@ const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CustomerSettingsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
+  : null;
+const ProviderAdsDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
   : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
@@ -411,7 +416,23 @@ function App() {
               <Route path="/communications" element={<Communications />} />
               <Route path="/creation-studio" element={<CreationStudio />} />
               <Route path="/operations/geo-matching" element={<GeoMatching />} />
+              <Route
+                path="/dashboards/provider/crew-control"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderDeploymentManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards" element={<DashboardHub />} />
+              <Route
+                path="/dashboards/provider/onboarding"
+                element={
+                  <ProviderProtectedRoute>
+                    <ProviderOnboardingManagement />
+                  </ProviderProtectedRoute>
+                }
+              />
               <Route path="/dashboards/finance" element={<FinanceOverview />} />
               <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
               <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
@@ -433,6 +454,9 @@ function App() {
               <Route path="/legal/:slug" element={<Terms />} />
               {import.meta.env.DEV && CustomerSettingsDevPreview ? (
                 <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
+              ) : null}
+              {import.meta.env.DEV && ProviderAdsDevPreview ? (
+                <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
               ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>

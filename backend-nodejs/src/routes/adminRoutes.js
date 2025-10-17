@@ -60,6 +60,14 @@ import {
   updateProviderHandler,
   archiveProviderValidators,
   archiveProviderHandler,
+  upsertTaxProfileValidators,
+  upsertProviderTaxProfileHandler,
+  createTaxFilingValidators,
+  createProviderTaxFilingHandler,
+  updateTaxFilingValidators,
+  updateProviderTaxFilingHandler,
+  deleteTaxFilingValidators,
+  deleteProviderTaxFilingHandler,
   upsertContactValidators,
   upsertProviderContactHandler,
   deleteContactValidators,
@@ -996,6 +1004,50 @@ router.post(
   }),
   archiveProviderValidators,
   archiveProviderHandler
+);
+router.put(
+  '/providers/:companyId/tax/profile',
+  authenticate,
+  enforcePolicy('admin.providers.tax.write', {
+    metadata: (req) => ({ action: 'tax:profile:update', companyId: req.params.companyId })
+  }),
+  upsertTaxProfileValidators,
+  upsertProviderTaxProfileHandler
+);
+router.post(
+  '/providers/:companyId/tax/filings',
+  authenticate,
+  enforcePolicy('admin.providers.tax.write', {
+    metadata: (req) => ({ action: 'tax:filing:create', companyId: req.params.companyId })
+  }),
+  createTaxFilingValidators,
+  createProviderTaxFilingHandler
+);
+router.put(
+  '/providers/:companyId/tax/filings/:filingId',
+  authenticate,
+  enforcePolicy('admin.providers.tax.write', {
+    metadata: (req) => ({
+      action: 'tax:filing:update',
+      companyId: req.params.companyId,
+      filingId: req.params.filingId
+    })
+  }),
+  updateTaxFilingValidators,
+  updateProviderTaxFilingHandler
+);
+router.delete(
+  '/providers/:companyId/tax/filings/:filingId',
+  authenticate,
+  enforcePolicy('admin.providers.tax.write', {
+    metadata: (req) => ({
+      action: 'tax:filing:delete',
+      companyId: req.params.companyId,
+      filingId: req.params.filingId
+    })
+  }),
+  deleteTaxFilingValidators,
+  deleteProviderTaxFilingHandler
 );
 router.post(
   '/providers/:companyId/contacts',

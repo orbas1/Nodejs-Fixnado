@@ -32,6 +32,22 @@ const ROUTE_POLICIES = {
     })
   },
   'account.settings.manage': {
+  'provider.control.crew': {
+    id: 'provider.control.crew',
+    version: '1.0.0',
+    resource: 'provider.control',
+    action: 'provider.control:crew',
+    description:
+      'Allow provider and operations personas to manage crew deployment, availability, delegations, and rota configurations.',
+    requirements: [Permissions.PROVIDER_CREW_MANAGE],
+    tags: ['provider', 'operations', 'crew'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.headers['x-fixnado-persona'] || null,
+      companyId: req.query?.companyId || req.body?.companyId || null
+    })
+  },
+  'account.settings.manage': {
     id: 'account.settings.manage',
     version: '1.0.0',
     resource: 'account.settings',
@@ -195,6 +211,20 @@ const ROUTE_POLICIES = {
       persona: req.headers['x-fixnado-persona'] || null
     })
   },
+  'servicemen.identity.manage': {
+    id: 'servicemen.identity.manage',
+    version: '1.0.0',
+    resource: 'servicemen.identity',
+    action: 'servicemen.identity:manage',
+    description:
+      'Allow authorised crew members and operations controllers to manage serviceman identity verification workflows and artefacts.',
+    requirements: [Permissions.SERVICEMAN_IDENTITY_MANAGE],
+    tags: ['servicemen', 'identity', 'compliance'],
+    severity: 'high',
+    metadata: (req) => ({
+      servicemanId: req.params?.servicemanId || null,
+      persona: req.headers['x-fixnado-persona'] || null,
+      method: req.method
   'provider.calendar.read': {
     id: 'provider.calendar.read',
     version: '1.0.0',
@@ -490,6 +520,21 @@ const ROUTE_POLICIES = {
       actor: req.user?.id || null
     })
   },
+  'admin.providers.tax.write': {
+    id: 'admin.providers.tax.write',
+    version: '1.0.0',
+    resource: 'admin.providers',
+    action: 'admin.providers:tax:write',
+    description: 'Allow platform administrators to manage SME/provider tax profiles, registrations, and filings.',
+    requirements: [Permissions.ADMIN_PROVIDER_TAX_WRITE],
+    tags: ['admin', 'providers', 'tax'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.params?.companyId || null,
+      filingId: req.params?.filingId || null,
+      method: req.method ?? 'UNKNOWN'
+    })
+  },
   'admin.customJobs.read': {
     id: 'admin.customJobs.read',
     version: '1.0.0',
@@ -519,6 +564,47 @@ const ROUTE_POLICIES = {
       bidId: req.params?.bidId ?? null,
       method: req.method ?? 'UNKNOWN'
     })
+  },
+  'serviceman.customJobs.read': {
+    id: 'serviceman.customJobs.read',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:read',
+    description: 'Allow crew members to review custom job opportunities and their bid activity.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_READ],
+    tags: ['serviceman', 'custom-jobs'],
+    severity: 'medium',
+    metadata: (req) => ({
+      jobId: req.params?.id ?? null,
+      status: req.query?.status ?? 'open',
+      zoneId: req.query?.zoneId ?? null
+    })
+  },
+  'serviceman.customJobs.write': {
+    id: 'serviceman.customJobs.write',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:write',
+    description: 'Allow crew members to submit, update, and collaborate on custom job bids.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_WRITE],
+    tags: ['serviceman', 'custom-jobs'],
+    severity: 'high',
+    metadata: (req) => ({
+      jobId: req.params?.id ?? null,
+      bidId: req.params?.bidId ?? null,
+      method: req.method ?? 'UNKNOWN'
+    })
+  },
+  'serviceman.customJobs.reports': {
+    id: 'serviceman.customJobs.reports',
+    version: '1.0.0',
+    resource: 'serviceman.custom-jobs',
+    action: 'serviceman.custom-jobs:reports',
+    description: 'Allow crew members to generate performance analytics for their custom job bids.',
+    requirements: [Permissions.SERVICEMAN_CUSTOM_JOBS_REPORTS],
+    tags: ['serviceman', 'custom-jobs', 'analytics'],
+    severity: 'medium'
+  },
   'admin.rbac.read': {
     id: 'admin.rbac.read',
     version: '1.0.0',
@@ -887,6 +973,29 @@ const ROUTE_POLICIES = {
     requirements: [Permissions.ADMIN_COMMAND_METRICS_WRITE],
     tags: ['admin', 'analytics'],
     severity: 'critical'
+  },
+  'serviceman.metrics.read': {
+    id: 'serviceman.metrics.read',
+    version: '1.0.0',
+    resource: 'serviceman.metrics',
+    action: 'serviceman.metrics:read',
+    description: 'Allow crew leads to review productivity, quality, and readiness guardrails.',
+    requirements: [Permissions.SERVICEMAN_METRICS_READ],
+    tags: ['serviceman', 'analytics'],
+    severity: 'medium',
+    metadata: () => ({ section: 'metrics', scope: 'serviceman-control-centre' })
+  },
+  'serviceman.metrics.write': {
+    id: 'serviceman.metrics.write',
+    version: '1.0.0',
+    resource: 'serviceman.metrics',
+    action: 'serviceman.metrics:write',
+    description: 'Allow authorised crew leads to update crew KPI targets, checklists, and dashboard cards.',
+    requirements: [Permissions.SERVICEMAN_METRICS_WRITE],
+    tags: ['serviceman', 'analytics'],
+    severity: 'high',
+    metadata: (req) => ({ section: 'metrics', method: req.method, cardId: req.params?.id ?? null })
+  },
   'admin.operations.queues.read': {
     id: 'admin.operations.queues.read',
     version: '1.0.0',
@@ -1504,6 +1613,77 @@ const ROUTE_POLICIES = {
     tags: ['panel', 'provider'],
     severity: 'medium'
   },
+  'panel.provider.settings': {
+    id: 'panel.provider.settings',
+    version: '1.0.0',
+    resource: 'panel.provider',
+    action: 'panel.provider:manage',
+    description: 'Allow provider managers to update profile, branding, contacts, and coverage settings.',
+    requirements: [Permissions.PANEL_PROVIDER_MANAGE],
+    tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
+  'panel.provider.enterpriseUpgrade.view': {
+    id: 'panel.provider.enterpriseUpgrade.view',
+    version: '1.0.0',
+    resource: 'panel.provider.enterpriseUpgrade',
+    action: 'panel.provider.enterpriseUpgrade:view',
+    description: 'Allow provider managers to inspect enterprise upgrade readiness data.',
+    requirements: [Permissions.PANEL_PROVIDER],
+    tags: ['panel', 'provider'],
+    severity: 'medium'
+  },
+  'panel.provider.enterpriseUpgrade.manage': {
+    id: 'panel.provider.enterpriseUpgrade.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.enterpriseUpgrade',
+    action: 'panel.provider.enterpriseUpgrade:manage',
+    description: 'Allow provider managers to plan enterprise upgrades and manage rollout inputs.',
+    requirements: [Permissions.PANEL_PROVIDER_UPGRADE],
+    tags: ['panel', 'provider'],
+    severity: 'high'
+  },
+  'panel.provider.servicemen.finance.read': {
+    id: 'panel.provider.servicemen.finance.read',
+    version: '1.0.0',
+    resource: 'panel.provider.servicemen.finance',
+    action: 'panel.provider.servicemen.finance:read',
+    description: 'Allow provider finance leads to view serviceman payment and commission workspaces.',
+    requirements: [Permissions.PANEL_PROVIDER_SERVICEMAN_FINANCE_VIEW],
+    tags: ['panel', 'provider', 'finance'],
+    severity: 'medium',
+    metadata: (req) => ({
+      companyId: req.query?.companyId || req.body?.companyId || null,
+      status: req.query?.status || 'all'
+    })
+  },
+  'panel.provider.servicemen.finance.manage': {
+    id: 'panel.provider.servicemen.finance.manage',
+    version: '1.0.0',
+    resource: 'panel.provider.servicemen.finance',
+    action: 'panel.provider.servicemen.finance:manage',
+    description: 'Allow provider finance leads to create, update, and archive serviceman payments and commission rules.',
+    requirements: [Permissions.PANEL_PROVIDER_SERVICEMAN_FINANCE_MANAGE],
+    tags: ['panel', 'provider', 'finance'],
+    severity: 'high',
+    metadata: (req) => ({
+      companyId: req.body?.companyId || req.query?.companyId || null,
+      method: req.method,
+      resourceId: req.params?.paymentId || req.params?.ruleId || null
+    })
+  'panel.provider.ads': {
+    id: 'panel.provider.ads',
+    version: '1.0.0',
+    resource: 'panel.provider.ads',
+    action: 'panel.provider:ads:manage',
+    description: 'Allow provider administrators to create and manage Gigvora ads campaigns.',
+    requirements: [Permissions.CAMPAIGN_MANAGE],
+    tags: ['panel', 'provider', 'campaigns'],
+    severity: 'high',
+    metadata: (req) => ({
+      campaignId: req.params?.campaignId || null,
+      companyId: req.query?.companyId || req.body?.companyId || null
+    })
   'panel.provider.tools.read': {
     id: 'panel.provider.tools.read',
     version: '1.0.0',

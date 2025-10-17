@@ -22,6 +22,9 @@ import {
   User
 } from '../models/index.js';
 import { getCachedPlatformSettings } from './platformSettingsService.js';
+import { getEnterpriseUpgradeByCompany } from './providerUpgradeService.js';
+import { getServicemanPaymentsWorkspace } from './servicemanFinanceService.js';
+import { buildProviderCampaignWorkspace } from './providerCampaignService.js';
 import { getProviderCalendar } from './providerCalendarService.js';
 import {
   getWalletOverview as getCompanyWalletOverview,
@@ -484,6 +487,28 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     serviceZones,
     marketplaceItems,
     rentals,
+    adsWorkspace
+  ] = await Promise.all([
+    Booking.findAll({ where: { companyId }, order: [['scheduledStart', 'ASC']] }),
+    InventoryItem.findAll({ where: { companyId }, raw: true }),
+    InventoryAlert.findAll({
+      include: [
+        {
+          model: InventoryItem,
+          attributes: ['id', 'name', 'companyId'],
+          required: true,
+          where: { companyId }
+        }
+      ],
+      order: [['triggeredAt', 'DESC']],
+      limit: 10
+    }),
+    ComplianceDocument.findAll({ where: { companyId } }),
+    ServiceZone.findAll({ where: { companyId }, attributes: ['id', 'name', 'demandLevel'], raw: true }),
+    MarketplaceItem.findAll({ where: { companyId }, limit: 10, order: [['updatedAt', 'DESC']] }),
+    RentalAgreement.findAll({ where: { companyId } }),
+    buildProviderCampaignWorkspace({ company, actor })
+  ]);
     toolSaleProfiles
   ] =
     await Promise.all([
@@ -557,6 +582,80 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     sentimentScore: reviewAverage / 5
   });
 
+  const enterpriseUpgradeRecord = await getEnterpriseUpgradeByCompany(companyId);
+  const enterpriseUpgrade = enterpriseUpgradeRecord
+    ? {
+        id: enterpriseUpgradeRecord.id,
+        status: enterpriseUpgradeRecord.status,
+        summary: enterpriseUpgradeRecord.summary,
+        requestedAt: enterpriseUpgradeRecord.requestedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.requestedAt)).toISO()
+          : null,
+        targetGoLive: enterpriseUpgradeRecord.targetGoLive
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.targetGoLive)).toISO()
+          : null,
+        seats: enterpriseUpgradeRecord.seats ?? null,
+        contractValue:
+          enterpriseUpgradeRecord.contractValue != null
+            ? Number(enterpriseUpgradeRecord.contractValue)
+            : null,
+        currency: enterpriseUpgradeRecord.currency ?? 'GBP',
+        automationScope: enterpriseUpgradeRecord.automationScope ?? null,
+        enterpriseFeatures: Array.isArray(enterpriseUpgradeRecord.enterpriseFeatures)
+          ? enterpriseUpgradeRecord.enterpriseFeatures
+          : [],
+        onboardingManager: enterpriseUpgradeRecord.onboardingManager ?? null,
+        notes: enterpriseUpgradeRecord.notes ?? null,
+        lastDecisionAt: enterpriseUpgradeRecord.lastDecisionAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.lastDecisionAt)).toISO()
+          : null,
+        createdAt: enterpriseUpgradeRecord.createdAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.createdAt)).toISO()
+          : null,
+        updatedAt: enterpriseUpgradeRecord.updatedAt
+          ? DateTime.fromJSDate(new Date(enterpriseUpgradeRecord.updatedAt)).toISO()
+          : null,
+        contacts: (enterpriseUpgradeRecord.contacts ?? []).map((contact) => ({
+          id: contact.id,
+          name: contact.name,
+          role: contact.role ?? null,
+          email: contact.email ?? null,
+          phone: contact.phone ?? null,
+          influenceLevel: contact.influenceLevel ?? null,
+          primaryContact: Boolean(contact.primaryContact)
+        })),
+        sites: (enterpriseUpgradeRecord.sites ?? []).map((site) => ({
+          id: site.id,
+          siteName: site.siteName,
+          region: site.region ?? null,
+          headcount: site.headcount ?? null,
+          goLiveDate: site.goLiveDate
+            ? DateTime.fromJSDate(new Date(site.goLiveDate)).toISODate()
+            : null,
+          imageUrl: site.imageUrl ?? null,
+          notes: site.notes ?? null
+        })),
+        checklist: (enterpriseUpgradeRecord.checklist ?? []).map((item) => ({
+          id: item.id,
+          label: item.label,
+          status: item.status,
+          owner: item.owner ?? null,
+          dueDate: item.dueDate
+            ? DateTime.fromJSDate(new Date(item.dueDate)).toISODate()
+            : null,
+          notes: item.notes ?? null,
+          sortOrder: item.sortOrder ?? 0
+        })),
+        documents: (enterpriseUpgradeRecord.documents ?? []).map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type ?? null,
+          url: doc.url,
+          thumbnailUrl: doc.thumbnailUrl ?? null,
+          description: doc.description ?? null
+        }))
+      }
+    : null;
   const walletPolicy = {
     canManage: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
     canTransact: resolvedActor?.type === 'company' || resolvedActor?.type === 'admin',
@@ -686,6 +785,7 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
       })),
       deals: buildDeals(marketplaceItems, now)
     },
+    ads: adsWorkspace,
     toolSales: buildToolSalesOverview(toolSaleProfiles),
     crews,
     rentals: {
@@ -708,11 +808,24 @@ export async function buildProviderDashboard({ companyId: inputCompanyId, actor 
     },
     trust: trustScore,
     alerts,
+    enterpriseUpgrade
     calendar: null
     wallet: walletSection
   };
 
   try {
+    const servicemanFinance = await getServicemanPaymentsWorkspace({
+      companyId,
+      actor,
+      limit: 10,
+      offset: 0
+    });
+    data.servicemanFinance = servicemanFinance;
+  } catch (error) {
+    console.warn('[panel] Unable to load serviceman finance workspace', {
+      companyId,
+      message: error?.message || error
+    });
     const calendarSnapshot = await getProviderCalendar({ companyId });
     data.calendar = {
       ...calendarSnapshot.data,

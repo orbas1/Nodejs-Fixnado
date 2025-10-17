@@ -13,6 +13,18 @@ import {
   BuildingOfficeIcon,
   CalendarDaysIcon,
   ChartPieIcon,
+  BuildingOfficeIcon,
+  ShieldCheckIcon,
+  MapIcon,
+  BoltIcon,
+  BanknotesIcon,
+    ClipboardDocumentCheckIcon,
+    CubeIcon,
+    QueueListIcon,
+    PaintBrushIcon,
+    TagIcon,
+    KeyIcon
+  } from '@heroicons/react/24/outline';
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
   Cog8ToothIcon,
@@ -39,6 +51,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import DashboardOverview from './DashboardOverview.jsx';
+import { ServicemanOverviewModule } from '../../features/servicemanControlCentre/index.js';
 import DashboardSection from './DashboardSection.jsx';
 import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
@@ -283,6 +296,12 @@ const resultBadge = {
   record: 'Record',
   configuration: 'Setting',
   panel: 'Setting',
+  bucket: 'Bucket',
+  route: 'Workspace',
+  board: 'Board',
+  listing: 'Listing',
+  category: 'Category',
+  package: 'Package'
   panel: 'Panel',
   bucket: 'Bucket',
   route: 'Workspace'
@@ -312,11 +331,12 @@ const navIconMap = {
   operations: QueueListIcon,
   marketplace: WrenchScrewdriverIcon,
   seo: TagIcon,
+  byok: KeyIcon
+  builder: PaintBrushIcon,
+  seo: TagIcon,
   storefront: BuildingStorefrontIcon
   seo: TagIcon
 };
-
-navIconMap.builder = PaintBrushIcon;
 
 const getNavIcon = (item) => {
   if (!item?.icon) {
@@ -325,6 +345,40 @@ const getNavIcon = (item) => {
   return navIconMap[item.icon] ?? Squares2X2Icon;
 };
 
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp) return null;
+  const last = new Date(timestamp);
+  if (Number.isNaN(last.getTime())) return null;
+  const diffMs = Date.now() - last.getTime();
+  const diffMinutes = Math.round(diffMs / 60000);
+  if (diffMinutes < 1) return 'moments ago';
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+};
+
+const buildSearchIndex = (navigation = []) =>
+  navigation.flatMap((section) => {
+    if (!section) {
+      return [];
+    }
+
+    if (section.type === 'route' && (section.href || section.route)) {
+      return [
+        {
+          id: section.id,
+          type: 'route',
+          label: section.label,
+          description: section.description ?? '',
+          href: section.route || section.href
+        }
+      ];
+    }
+
+    if (section.type === 'link' && section.href) {
+      return [
 const buildSearchIndex = (navigation) =>
   navigation
     .filter((section) => !section.href)
@@ -338,6 +392,45 @@ const buildSearchIndex = (navigation) =>
           targetSection: section.id
         }
       ];
+    }
+
+    if (section.href) {
+      return [];
+    }
+
+    const entries = [
+      {
+        id: section.id,
+        type: 'section',
+        label: section.label,
+        description: section.description ?? '',
+        targetSection: section.id
+      }
+    ];
+
+    if (Array.isArray(section.searchable)) {
+      entries.push(
+        ...section.searchable.map((item) => ({
+          id: `${section.id}-${item.id ?? item.label}`,
+          type: item.type ?? 'configuration',
+          label: item.label,
+          description: item.description ?? '',
+          targetSection: item.targetSection ?? section.id
+        }))
+      );
+    }
+
+    if (section.type === 'grid' && Array.isArray(section.data?.cards)) {
+      entries.push(
+        ...section.data.cards.map((card) => ({
+          id: `${section.id}-${card.title}`,
+          type: 'card',
+          label: card.title,
+          description: Array.isArray(card.details) ? card.details.join(' • ') : '',
+          targetSection: section.id
+        }))
+      );
+    }
 
       if (Array.isArray(section.items)) {
         section.items.forEach((item) => {
@@ -349,6 +442,58 @@ const buildSearchIndex = (navigation) =>
             targetSection: section.id
           });
         });
+      });
+    }
+
+    if (section.type === 'dispute-workspace' && Array.isArray(section.data?.snapshot)) {
+      section.data.snapshot.forEach((bucket) => {
+        entries.push({
+          id: `${section.id}-${bucket.id ?? bucket.label}`,
+          type: 'bucket',
+          label: `${bucket.label} • Disputes`,
+          description: bucket.commentary ?? '',
+          targetSection: section.id
+        });
+      });
+    }
+
+    if (section.type === 'compliance-controls' && Array.isArray(section.data?.controls)) {
+      entries.push(
+        ...section.data.controls.map((control) => ({
+          id: `${section.id}-${control.id ?? control.title}`,
+          type: 'record',
+          label: control.title,
+          description: [control.ownerTeam || control.owner?.name || '', control.reviewFrequency || '']
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
+    if (section.type === 'table' && Array.isArray(section.data?.rows)) {
+      entries.push(
+        ...section.data.rows.map((row, index) => ({
+          id: `${section.id}-row-${index}`,
+          type: 'record',
+          label: row[1] ?? row[0],
+          description: Array.isArray(row) ? row.join(' • ') : '',
+          targetSection: section.id
+        }))
+      );
+    }
+
+    if (section.type === 'list' && Array.isArray(section.data?.items)) {
+      entries.push(
+        ...section.data.items.map((item) => ({
+          id: `${section.id}-${item.title}`,
+          type: 'configuration',
+          label: item.title,
+          description: item.description ?? '',
+          targetSection: section.id
+        }))
+      );
+    }
       }
 
       if (Array.isArray(section.groups)) {
@@ -373,6 +518,143 @@ const buildSearchIndex = (navigation) =>
             targetSection: section.id
           });
         });
+      });
+    }
+
+    if (section.type === 'services-management' && Array.isArray(section.data?.orders)) {
+      entries.push(
+        ...section.data.orders.map((order) => ({
+          id: `${section.id}-${order.id}`,
+          type: 'record',
+          label: order.service?.title ?? `Order ${order.id?.slice?.(0, 6) ?? ''}`,
+          description: [order.status, order.escrow?.status, order.booking?.zoneId]
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        }))
+      );
+    }
+
+    if (section.type === 'service-management') {
+      const categories = Array.isArray(section.data?.categories) ? section.data.categories : [];
+      const listings = Array.isArray(section.data?.catalogue) ? section.data.catalogue : [];
+      const packages = Array.isArray(section.data?.packages) ? section.data.packages : [];
+
+      categories.forEach((category) => {
+        entries.push({
+          id: `${section.id}-category-${category.id}`,
+          type: 'category',
+          label: `${category.name} • Category`,
+          description: category.description ?? '',
+          targetSection: section.id
+        });
+      });
+
+      listings.forEach((listing) => {
+        entries.push({
+          id: `${section.id}-listing-${listing.id}`,
+          type: 'listing',
+          label: listing.title,
+          description: [listing.category ?? 'Uncategorised', listing.status ?? 'draft']
+            .filter(Boolean)
+            .join(' • '),
+          targetSection: section.id
+        });
+      });
+
+      packages.forEach((pkg) => {
+        entries.push({
+          id: `${section.id}-package-${pkg.id}`,
+          type: 'package',
+          label: `${pkg.name ?? pkg.title} • Package`,
+          description: pkg.description ?? '',
+          targetSection: section.id
+        });
+      });
+    }
+
+    if (section.type === 'marketplace-workspace' && section.data?.summary) {
+      const { tools = {}, materials = {}, moderationQueue = 0 } = section.data.summary;
+      entries.push(
+        {
+          id: `${section.id}-tools-summary`,
+          type: 'record',
+          label: `${tools.count ?? 0} tools catalogued`,
+          description: `${tools.available ?? 0} available • ${tools.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-materials-summary`,
+          type: 'record',
+          label: `${materials.count ?? 0} materials tracked`,
+          description: `${materials.available ?? 0} ready • ${materials.alerts ?? 0} alerts`,
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-moderation-summary`,
+          type: 'record',
+          label: `${moderationQueue} listings pending review`,
+          description: moderationQueue > 0 ? 'Moderation queue active' : 'Queue clear',
+          targetSection: section.id
+        }
+      );
+    }
+
+    if (section.type === 'wallet') {
+      entries.push(
+        {
+          id: `${section.id}-summary`,
+          type: 'panel',
+          label: 'Wallet summary',
+          description: 'Balance, holds, and autopayout status',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-transactions`,
+          type: 'record',
+          label: 'Wallet transactions',
+          description: 'Recent manual adjustments and automation events',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-methods`,
+          type: 'record',
+          label: 'Wallet payment methods',
+          description: 'Configured payout destinations',
+          targetSection: section.id
+        }
+      );
+    }
+
+    if (section.type === 'provider-inbox') {
+      entries.push(
+        {
+          id: `${section.id}-routing`,
+          type: 'configuration',
+          label: 'Routing controls',
+          description: 'Live routing, quiet hours, and timezone',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-entry-points`,
+          type: 'record',
+          label: 'Entry points',
+          description: 'Channels and widgets connected to the inbox',
+          targetSection: section.id
+        },
+        {
+          id: `${section.id}-escalations`,
+          type: 'record',
+          label: 'Escalation guardrails',
+          description: 'Automation rules that notify specialists',
+          targetSection: section.id
+        }
+      );
+    }
+
+    return entries;
+  });
+
       }
 
       return entries;
@@ -432,6 +714,9 @@ ErrorState.propTypes = {
 
 const DashboardLayout = ({
   roleMeta,
+  dashboard = null,
+  loading = false,
+  error = null,
   registeredRoles,
   dashboard,
   loading,
@@ -473,6 +758,19 @@ const DashboardLayout = ({
   onSectionChange = null
 }) => {
   const navigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
+  const sidebarLinks = useMemo(() => dashboard?.sidebarLinks ?? [], [dashboard]);
+  const contentSections = useMemo(
+    () => navigation.filter((item) => !item?.href && item?.type !== 'route'),
+    [navigation]
+  );
+  const resolvedInitialSection = useMemo(() => {
+    if (initialSectionId && contentSections.some((item) => item.id === initialSectionId)) {
+      return initialSectionId;
+    }
+    return contentSections[0]?.id ?? navigation.find((item) => !item?.href)?.id ?? navigation[0]?.id ?? 'overview';
+  }, [initialSectionId, contentSections, navigation]);
+
+  const [selectedSection, setSelectedSection] = useState(resolvedInitialSection);
   const [selectedSection, setSelectedSection] = useState(() => resolveInitialSection(navigation, initialSectionId));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -482,6 +780,10 @@ const DashboardLayout = ({
   const location = useLocation();
 
   useEffect(() => {
+    setSelectedSection(resolvedInitialSection);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [resolvedInitialSection]);
     setSelectedSection((current) => resolveInitialSection(navigation, current));
   }, [navigation]);
 
@@ -502,12 +804,25 @@ const DashboardLayout = ({
       (entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)
     setSearchResults(
       searchIndex
+        .filter(
+          (entry) =>
+            entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered)
+        )
         .filter((entry) => entry.label.toLowerCase().includes(lowered) || entry.description.toLowerCase().includes(lowered))
         .slice(0, 8)
     );
     setSearchResults(matches.slice(0, 12));
   }, [searchQuery, searchIndex]);
 
+  const activeSection = contentSections.find((item) => item.id === selectedSection) ?? contentSections[0] ?? null;
+  const persona = dashboard?.persona ?? roleMeta.id;
+  const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
+  const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
+
+  const handleSectionSelect = useCallback(
+    (sectionId) => {
+      setSelectedSection(sectionId);
+      setMobileNavOpen(false);
   const handleSectionSelect = useCallback(
     (sectionId) => {
       setSelectedSection(sectionId);
@@ -524,6 +839,47 @@ const DashboardLayout = ({
     [onSectionChange]
   );
 
+  const handleNavActivate = useCallback(
+    (item) => {
+      if (!item) return;
+      const destination = item.route || item.href;
+      if ((item.type === 'route' || item.type === 'link' || destination) && destination) {
+        navigate(destination);
+        setMobileNavOpen(false);
+        return;
+      }
+      handleSectionSelect(item.id);
+    },
+    [handleSectionSelect, navigate]
+  );
+
+  const handleSearchActivate = useCallback(
+    (result) => {
+      if (!result) return;
+      if (result.href) {
+        navigate(result.href);
+        setSearchQuery('');
+        setSearchResults([]);
+        return;
+      }
+      if (result.targetSection) {
+        handleSectionSelect(result.targetSection);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    },
+    [handleSectionSelect, navigate]
+  );
+
+  const renderSection = () => {
+    if (!activeSection) return null;
+    if (activeSection.type === 'overview') {
+      return (
+        <div className="space-y-10">
+          <DashboardOverview analytics={activeSection.analytics} />
+          {persona === 'user' ? <CustomerOverviewControl /> : null}
+        </div>
+      );
   const handleSearchSubmit = useCallback(
     (event) => {
       event.preventDefault();
@@ -562,6 +918,11 @@ const DashboardLayout = ({
             <DashboardOverview analytics={activeSection.analytics} />
             <CustomerOverviewControl />
           </div>
+        );
+      }
+      if (persona === 'serviceman') {
+        return (
+          <ServicemanOverviewModule analytics={activeSection.analytics} metadata={dashboard?.metadata} />
         );
       }
       return <DashboardOverview analytics={activeSection.analytics} />;
@@ -759,6 +1120,85 @@ const DashboardLayout = ({
                 <nav className="mt-6 space-y-1">
                   {navigation.map((item) => {
                     const Icon = getNavIcon(item);
+                    const destination = item.route || item.href;
+                    const isLink = Boolean(destination);
+                    const isLinkActive = isLink && location.pathname === destination;
+                    const isSectionActive = !isLink && item.id === activeSection?.id;
+                    const active = isLink ? isLinkActive : isSectionActive;
+                    const baseClasses = `group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      active
+                        ? 'border-accent bg-accent text-white shadow-glow'
+                        : 'border-transparent bg-white/90 text-primary/80 hover:border-accent/40 hover:text-primary'
+                    }`;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleNavActivate(item)}
+                        className={baseClasses}
+                        aria-pressed={active || undefined}
+                      >
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                            active
+                              ? 'bg-white/20 text-white'
+                              : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div className="flex-1">
+                          <p className="flex items-center gap-2 text-sm font-semibold">
+                            {item.label}
+                            {isLink ? (
+                              <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                            ) : null}
+                          </p>
+                          {item.description ? (
+                            <p className="text-xs text-slate-500">{item.description}</p>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {sidebarLinks.length ? (
+                    <div className="mt-6 space-y-2">
+                      <p className="px-1 text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
+                      {sidebarLinks.map((link) => (
+                        <Link
+                          key={link.id}
+                          to={link.href}
+                          onClick={() => setMobileNavOpen(false)}
+                          className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
+                        >
+                          <span>{link.label}</span>
+                          <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+                </nav>
+                <div className="mt-6 space-y-3">
+                  <Link
+                    to="/"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
+                  </Link>
+                  {onLogout ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileNavOpen(false);
+                        onLogout();
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+                    >
+                      <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+                    </button>
+                  ) : null}
                     const isActive = item.id === activeSection?.id;
                     if (item.href) {
                       return (
@@ -844,6 +1284,17 @@ const DashboardLayout = ({
         <nav className="mt-8 flex-1 space-y-1">
           {navigation.map((item) => {
             const Icon = getNavIcon(item);
+            const destination = item.route || item.href;
+            const isLink = Boolean(destination);
+            const isLinkActive = isLink && location.pathname === destination;
+            const isSectionActive = !isLink && item.id === activeSection?.id;
+            const active = isLink ? isLinkActive : isSectionActive;
+            const baseClass = `group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+              active
+                ? 'border-accent bg-accent text-white shadow-glow'
+                : 'border-transparent bg-white/80 text-primary/80 hover:border-accent/40 hover:text-primary'
+            } ${navCollapsed ? 'justify-center px-2' : ''}`;
+
             const isActive = item.id === activeSection?.id;
             if (item.href) {
               return (
@@ -862,6 +1313,33 @@ const DashboardLayout = ({
               <button
                 key={item.id}
                 type="button"
+                onClick={() => handleNavActivate(item)}
+                className={baseClass}
+                title={navCollapsed ? item.label : undefined}
+                aria-pressed={active || undefined}
+              >
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    active
+                      ? 'bg-white/20 text-white'
+                      : 'bg-secondary text-primary group-hover:bg-accent/10 group-hover:text-accent'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                {!navCollapsed && (
+                  <div className="flex-1">
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      {item.label}
+                      {isLink ? (
+                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                      ) : null}
+                    </p>
+                    {item.description ? (
+                      <p className="text-xs text-slate-500">{item.description}</p>
+                    ) : null}
+                  </div>
+                )}
                 onClick={() => handleSectionSelect(item.id)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
                   isActive ? 'bg-primary text-white shadow-glow' : 'text-primary/80 hover:bg-white'
@@ -873,6 +1351,19 @@ const DashboardLayout = ({
             );
           })}
         </nav>
+        {!navCollapsed && sidebarLinks.length ? (
+          <div className="border-t border-accent/10 px-6 py-5 space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace shortcuts</p>
+            {sidebarLinks.map((link) => (
+              <Link
+                key={link.id}
+                to={link.href}
+                className="flex w-full items-center justify-between rounded-xl border border-accent/20 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-accent hover:text-accent"
+              >
+                <span>{link.label}</span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-slate-400" />
+              </Link>
+            ))}
 
         {registeredOptions.length > 1 ? (
           <div className="mt-8 space-y-2">
@@ -921,7 +1412,63 @@ const DashboardLayout = ({
             <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Log out
           </button>
         ) : null}
+        <div className="border-t border-accent/10 px-6 py-5 space-y-3">
+          <Link
+            to="/"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 hover:border-accent hover:text-primary"
+          >
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" /> Public site
+          </Link>
+          {onLogout ? (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:text-rose-800"
+            >
+              <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
+            </button>
+          ) : null}
+        </div>
       </aside>
+      <main className="flex-1 overflow-y-auto">
+        <div className="border-b border-accent/10 bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{roleMeta.headline ?? 'Control centre'}</p>
+                <h1 className="text-3xl font-semibold text-primary">{dashboard?.title ?? `${roleMeta.name} dashboard`}</h1>
+                {dashboard?.description ? (
+                  <p className="mt-1 max-w-2xl text-sm text-slate-600">{dashboard.description}</p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                {dashboard?.window?.label ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-secondary px-3 py-1 font-semibold text-primary/70">
+                    <CalendarDaysIcon className="h-4 w-4 text-accent" /> {dashboard.window.label}
+                  </span>
+                ) : null}
+                {lastRefreshed ? <span>Updated {formatRelativeTime(lastRefreshed)}</span> : null}
+                {toggleMeta ? <ToggleSummary toggle={toggleMeta} reason={toggleReason} /> : null}
+              </div>
+            </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end sm:gap-6">
+              <div className="relative max-w-md flex-1">
+                <label htmlFor="dashboard-search" className="sr-only">
+                  Search dashboard
+                </label>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="dashboard-search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search sections, cards, and records"
+                    className="w-full rounded-full border border-accent/20 bg-white py-2 pl-10 pr-4 text-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-10 mt-2 rounded-2xl border border-accent/10 bg-white/95 p-2 shadow-xl">
+                    <ul className="max-h-72 space-y-1 overflow-y-auto">
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
@@ -1043,6 +1590,7 @@ const DashboardLayout = ({
                         <li key={result.id}>
                           <button
                             type="button"
+                            onClick={() => handleSearchActivate(result)}
                             onClick={() => handleSectionSelect(result.sectionId)}
                             className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-secondary"
                           >
@@ -1153,15 +1701,14 @@ DashboardLayout.propTypes = {
     persona: PropTypes.string,
     headline: PropTypes.string
   }).isRequired,
-  registeredRoles: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      registered: PropTypes.bool
-    })
-  ).isRequired,
   dashboard: PropTypes.shape({
     navigation: PropTypes.array,
+    sidebarLinks: PropTypes.array,
+    window: PropTypes.object,
+    metadata: PropTypes.object,
+    persona: PropTypes.string,
+    title: PropTypes.string,
+    description: PropTypes.string
     metadata: PropTypes.object,
     window: PropTypes.object
     persona: PropTypes.string,

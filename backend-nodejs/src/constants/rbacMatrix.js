@@ -64,6 +64,12 @@ export const RBAC_MATRIX = {
       Permissions.INVENTORY_READ,
       Permissions.SERVICES_MANAGE,
       Permissions.MESSAGING_ESCALATE,
+      Permissions.SERVICEMAN_CUSTOM_JOBS_READ,
+      Permissions.SERVICEMAN_CUSTOM_JOBS_WRITE,
+      Permissions.SERVICEMAN_CUSTOM_JOBS_REPORTS
+      Permissions.SERVICEMAN_IDENTITY_MANAGE
+      Permissions.SERVICEMAN_METRICS_READ,
+      Permissions.SERVICEMAN_METRICS_WRITE
       Permissions.SERVICEMAN_WEBSITE_READ,
       Permissions.SERVICEMAN_WEBSITE_WRITE
       Permissions.SERVICEMAN_PROFILE_MANAGE
@@ -95,6 +101,8 @@ export const RBAC_MATRIX = {
     permissions: [
       Permissions.INVENTORY_WRITE,
       Permissions.PANEL_PROVIDER,
+      Permissions.PANEL_PROVIDER_MANAGE,
+      Permissions.PANEL_PROVIDER_UPGRADE,
       Permissions.PANEL_PROVIDER_TOOLS,
       Permissions.PANEL_ENTERPRISE,
       Permissions.PANEL_STOREFRONT,
@@ -103,6 +111,10 @@ export const RBAC_MATRIX = {
       Permissions.PROVIDER_ESCROW_READ,
       Permissions.FINANCE_PAYOUT_VIEW,
       Permissions.FINANCE_WALLET_VIEW,
+      Permissions.REPORTING_DOWNLOAD,
+      Permissions.PROVIDER_CREW_VIEW,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
       Permissions.PROVIDER_CALENDAR_VIEW,
       Permissions.PROVIDER_CALENDAR_MANAGE,
       Permissions.REPORTING_DOWNLOAD
@@ -172,7 +184,9 @@ export const RBAC_MATRIX = {
       Permissions.CAMPAIGN_MANAGE,
       Permissions.CAMPAIGN_REVIEW,
       Permissions.PROVIDER_ONBOARD,
-      Permissions.MESSAGING_ESCALATE
+      Permissions.MESSAGING_ESCALATE,
+      Permissions.PROVIDER_CREW_MANAGE,
+      Permissions.PROVIDER_CREW_SCHEDULE
     ],
     navigation: {
       landing: '/app/provider/admin',
