@@ -2,6 +2,7 @@ export const enterpriseCalendarSection = {
   id: 'calendar',
   icon: 'calendar',
   label: 'Portfolio Calendar',
+  menuLabel: 'Calendar',
   description: 'Cross-facility calendar spanning campaigns, maintenance, and governance.',
   type: 'calendar',
   data: {

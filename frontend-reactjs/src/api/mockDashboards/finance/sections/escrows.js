@@ -2,6 +2,7 @@ export const financeEscrowsSection = {
   id: 'escrows',
   icon: 'pipeline',
   label: 'Escrow Pipeline',
+  menuLabel: 'Escrows',
   description: 'Track escrow balances and release readiness per contract.',
   type: 'table',
   data: {

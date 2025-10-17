@@ -2,6 +2,7 @@ export const enterprisePortfolioSection = {
   id: 'portfolio',
   icon: 'enterprise',
   label: 'Program Portfolio',
+  menuLabel: 'Portfolio',
   description: 'High-level snapshot of major initiatives across regions.',
   type: 'grid',
   data: {

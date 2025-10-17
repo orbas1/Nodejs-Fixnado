@@ -2,6 +2,7 @@ export const financeDisputesSection = {
   id: 'disputes',
   icon: 'compliance',
   label: 'Dispute Resolution',
+  menuLabel: 'Disputes',
   description: 'Prioritise disputes and monitor recovery actions.',
   type: 'board',
   data: {

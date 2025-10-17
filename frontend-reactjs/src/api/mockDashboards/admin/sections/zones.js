@@ -2,6 +2,7 @@ export const adminZonesSection = {
   id: 'zones',
   icon: 'map',
   label: 'Zone Design Studio',
+  menuLabel: 'Zones',
   description: 'Draw, manage, and simulate multi-tenant service zones.',
   type: 'zones',
   data: {

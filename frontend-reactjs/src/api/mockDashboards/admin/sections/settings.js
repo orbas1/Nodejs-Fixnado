@@ -2,6 +2,7 @@ export const adminSettingsSection = {
   id: 'settings',
   icon: 'settings',
   label: 'Platform Settings',
+  menuLabel: 'Settings',
   description: 'Control tenants, feature flags, governance, and notifications.',
   type: 'settings',
   data: {

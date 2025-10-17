@@ -2,6 +2,7 @@ export const adminAvailabilitySection = {
   id: 'availability',
   icon: 'crew',
   label: 'Serviceman Management',
+  menuLabel: 'Crew',
   description: 'Crew availability, standby coverage, and certification gaps.',
   type: 'availability',
   data: {

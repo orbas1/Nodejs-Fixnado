@@ -2,6 +2,7 @@ export const enterpriseComplianceSection = {
   id: 'compliance',
   icon: 'compliance',
   label: 'Compliance & Risk',
+  menuLabel: 'Risk',
   description: 'Manage audits, risk registers, and remediation tasks.',
   type: 'list',
   data: {

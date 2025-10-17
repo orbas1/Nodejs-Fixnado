@@ -2,6 +2,7 @@ export const adminCalendarSection = {
   id: 'calendar',
   icon: 'calendar',
   label: 'Network Calendar',
+  menuLabel: 'Calendar',
   description: 'Central schedule for maintenance windows, releases, and audits.',
   type: 'calendar',
   data: {

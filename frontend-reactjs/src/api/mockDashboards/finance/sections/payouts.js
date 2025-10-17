@@ -2,6 +2,7 @@ export const financePayoutsSection = {
   id: 'payouts',
   icon: 'assets',
   label: 'Payout Approvals',
+  menuLabel: 'Payouts',
   description: 'Review and release provider payouts with audit-ready notes.',
   type: 'board',
   data: {

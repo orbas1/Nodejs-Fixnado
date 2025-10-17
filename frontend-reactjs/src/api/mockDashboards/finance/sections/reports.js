@@ -2,6 +2,7 @@ export const financeReportsSection = {
   id: 'reports',
   icon: 'automation',
   label: 'Exports & Reports',
+  menuLabel: 'Reports',
   description: 'Deliver finance exports to downstream systems.',
   type: 'list',
   data: {

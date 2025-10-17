@@ -2,6 +2,7 @@ export const enterpriseCampaignsSection = {
   id: 'campaigns',
   icon: 'pipeline',
   label: 'Campaign Delivery',
+  menuLabel: 'Campaigns',
   description: 'Coordinate enterprise-wide campaigns from launch to ROI.',
   type: 'board',
   data: {

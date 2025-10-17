@@ -2,6 +2,7 @@ export const adminOperationsSection = {
   id: 'operations',
   icon: 'pipeline',
   label: 'Operations Pipeline',
+  menuLabel: 'Ops',
   description: 'Monitor multi-tenant workflows, escalations, and readiness.',
   type: 'board',
   data: {

@@ -2,6 +2,7 @@ export const enterpriseOverviewSection = {
   id: 'overview',
   icon: 'profile',
   label: 'Profile Overview',
+  menuLabel: 'Home',
   description: 'Enterprise-level spend, automation savings, and risk.',
   type: 'overview',
   analytics: {

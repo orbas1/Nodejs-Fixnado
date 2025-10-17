@@ -2,6 +2,7 @@ export const adminOverviewSection = {
   id: 'overview',
   icon: 'profile',
   label: 'Profile Overview',
+  menuLabel: 'Home',
   description: 'Network-wide bookings, SLA health, and platform status.',
   type: 'overview',
   analytics: {

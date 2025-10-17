@@ -2,6 +2,7 @@ export const adminAssetsSection = {
   id: 'assets',
   icon: 'assets',
   label: 'Asset & Rental Control',
+  menuLabel: 'Assets',
   description: 'Fleet health, inspection cadence, and utilisation by zone.',
   type: 'table',
   data: {

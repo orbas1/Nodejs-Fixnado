@@ -2,6 +2,7 @@ export const financeOverviewSection = {
   id: 'overview',
   icon: 'finance',
   label: 'Revenue Overview',
+  menuLabel: 'Home',
   description: 'Monitor captured revenue, escrow exposure, and payout readiness.',
   type: 'overview',
   analytics: {

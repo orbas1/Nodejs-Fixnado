@@ -2,6 +2,7 @@ export const enterpriseFinanceSection = {
   id: 'finance',
   icon: 'finance',
   label: 'Financial Controls',
+  menuLabel: 'Finance',
   description: 'Budget adherence, spend governance, and automation ROI.',
   type: 'table',
   data: {

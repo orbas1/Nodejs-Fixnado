@@ -2,6 +2,7 @@ export const enterpriseVendorsSection = {
   id: 'vendors',
   icon: 'crew',
   label: 'Vendor Network',
+  menuLabel: 'Vendors',
   description: 'Performance, compliance and capacity across providers.',
   type: 'table',
   data: {
