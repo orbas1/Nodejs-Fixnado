@@ -3048,7 +3048,143 @@ const mockDashboards = {
         }
       },
       {
+        id: 'full-inbox',
+        icon: 'support',
+        label: 'Full inbox',
+        description: 'Configure routing, quick replies, and escalation guardrails.',
+        type: 'provider-inbox',
+        data: {
+          tenantId: 'provider-demo',
+          summary: {
+            entryPoints: 3,
+            quickReplies: 5,
+            escalationRules: 2,
+            liveRoutingEnabled: true,
+            timezone: 'Europe/London',
+            updatedAt: '2024-01-15T10:00:00.000Z'
+          },
+          capabilities: { allowManage: true },
+          snapshot: {
+            configuration: {
+              liveRoutingEnabled: true,
+              defaultGreeting: 'Welcome to Fixnado support – let us know how we can help.',
+              aiAssistDisplayName: 'Fixnado Assist',
+              aiAssistDescription: 'Drafts replies, triages intent, and surfaces account context.',
+              timezone: 'Europe/London',
+              quietHoursStart: '20:00',
+              quietHoursEnd: '06:00',
+              updatedAt: '2024-01-15T10:00:00.000Z'
+            },
+            entryPoints: [
+              {
+                id: 'ep-web',
+                key: 'web_widget',
+                label: 'Web widget',
+                description: 'Appears on provider storefronts and pricing pages.',
+                icon: '💬',
+                defaultMessage:
+                  'Need help finalising a quote? Message us and we will respond in under 2 minutes.',
+                enabled: true,
+                displayOrder: 0,
+                imageUrl: '',
+                ctaLabel: 'Open chat',
+                ctaUrl: '/contact'
+              },
+              {
+                id: 'ep-checkout',
+                key: 'checkout',
+                label: 'Checkout reassurance',
+                description: 'Guides customers through SME checkout flows.',
+                icon: '💳',
+                defaultMessage:
+                  'Have a question about billing or deposits? Our concierge will resolve it immediately.',
+                enabled: true,
+                displayOrder: 1,
+                imageUrl: '',
+                ctaLabel: 'Secure booking',
+                ctaUrl: '/checkout'
+              },
+              {
+                id: 'ep-mobile',
+                key: 'mobile_app',
+                label: 'Mobile app inbox',
+                description: 'Native widget for the field app.',
+                icon: '📱',
+                defaultMessage: 'Share on-site photos or handover updates directly with HQ.',
+                enabled: true,
+                displayOrder: 2,
+                imageUrl: '',
+                ctaLabel: 'Open app',
+                ctaUrl: 'fixnado://inbox'
+              }
+            ],
+            quickReplies: [
+              {
+                id: 'qr-ack',
+                title: 'Acknowledgement',
+                body:
+                  'Thanks for contacting Fixnado. A coordinator is reviewing this now and will reply within 10 minutes.',
+                category: 'general',
+                sortOrder: 1,
+                allowedRoles: ['provider_admin', 'provider_manager']
+              },
+              {
+                id: 'qr-sla',
+                title: 'SLA reminder',
+                body:
+                  'Our service crew is on the way and will arrive within the agreed SLA window. We will keep you updated.',
+                category: 'operations',
+                sortOrder: 2,
+                allowedRoles: ['provider_manager', 'crew_lead']
+              },
+              {
+                id: 'qr-escalation',
+                title: 'Escalation notice',
+                body:
+                  'We have escalated this conversation to the operations lead and will respond with an action plan shortly.',
+                category: 'operations',
+                sortOrder: 3,
+                allowedRoles: ['provider_admin']
+              }
+            ],
+            escalationRules: [
+              {
+                id: 'er-keyword',
+                name: 'Safety keywords',
+                description: 'Escalate when safety incidents are reported.',
+                triggerType: 'keyword',
+                triggerMetadata: { keywords: ['injury', 'gas leak', 'fire'] },
+                targetType: 'team',
+                targetReference: 'ops-safety',
+                targetLabel: 'Operations safety desk',
+                allowedRoles: ['provider_admin'],
+                slaMinutes: 5,
+                responseTemplate:
+                  'Thanks for flagging this. The safety team has been alerted and will call you immediately.',
+                active: true
+              },
+              {
+                id: 'er-inactivity',
+                name: 'Inactivity >15m',
+                description: 'Ensure urgent threads are never left unattended.',
+                triggerType: 'inactivity',
+                triggerMetadata: { minutesWithoutReply: 15 },
+                targetType: 'user',
+                targetReference: 'operations.lead@fixnado.com',
+                targetLabel: 'Operations lead',
+                allowedRoles: ['provider_manager', 'provider_admin'],
+                slaMinutes: 15,
+                responseTemplate: 'We are looping in our operations lead to assist and will reply with an update shortly.',
+                active: true
+              }
+            ]
+          }
+        }
+      },
+      {
         id: 'servicemen',
+        icon: 'crew',
+        label: 'Serviceman Directory',
         icon: 'crew',
         label: 'Serviceman Directory',
         description: 'Manage roster, certifications, and contact details.',
