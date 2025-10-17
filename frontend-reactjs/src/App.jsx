@@ -77,8 +77,12 @@ const CustomerSettingsDevPreview = import.meta.env.DEV
   : null;
 const ServicemanTaxDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ServicemanTaxDevPreview.jsx'))
+  : null;
 const ProviderAdsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/ProviderAdsDevPreview.jsx'))
+  : null;
+const BusinessFrontDevPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/BusinessFrontDevPreview.jsx'))
   : null;
 const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
@@ -492,8 +496,12 @@ function App() {
               ) : null}
               {import.meta.env.DEV && ServicemanTaxDevPreview ? (
                 <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
+              ) : null}
               {import.meta.env.DEV && ProviderAdsDevPreview ? (
                 <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
+              ) : null}
+              {import.meta.env.DEV && BusinessFrontDevPreview ? (
+                <Route path="/dev/storefront-business-front" element={<BusinessFrontDevPreview />} />
               ) : null}
               <Route path="*" element={<NotFound />} />
             </Routes>

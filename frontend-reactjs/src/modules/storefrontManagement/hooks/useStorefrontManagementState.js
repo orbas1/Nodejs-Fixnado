@@ -28,7 +28,21 @@ const EMPTY_WORKSPACE = Object.freeze({
     isPublished: false,
     publishedAt: null,
     reviewRequired: false,
-    metadata: {}
+    metadata: {
+      showcaseVideo: { url: '', caption: '', thumbnailUrl: '' },
+      gallery: [],
+      experiences: [],
+      skills: [],
+      categories: [],
+      wordTags: [],
+      seo: {
+        pageTitle: '',
+        metaDescription: '',
+        canonicalUrl: '',
+        socialImageUrl: '',
+        keywords: []
+      }
+    }
   },
   inventory: [],
   coupons: [],
