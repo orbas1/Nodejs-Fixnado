@@ -601,17 +601,11 @@ WalletSection.propTypes = {
         canTransact: PropTypes.bool,
         canEditMethods: PropTypes.bool
       }),
-      transactions: PropTypes.shape({
-        total: PropTypes.number,
-        limit: PropTypes.number,
-        offset: PropTypes.number,
-        items: PropTypes.arrayOf(PropTypes.object)
-      }),
       currency: PropTypes.string,
       user: PropTypes.object,
       company: PropTypes.object,
       transactions: PropTypes.shape({
-        items: PropTypes.array,
+        items: PropTypes.arrayOf(PropTypes.object),
         total: PropTypes.number,
         limit: PropTypes.number,
         offset: PropTypes.number,

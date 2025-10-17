@@ -248,8 +248,8 @@ export default function Header() {
               <Bars3Icon className="h-5 w-5" />
             </button>
           ) : null}
-          <Link to="/" className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto" />
+          <Link to="/" className="flex items-center gap-3 shrink-0" aria-label="Fixnado home">
+            <img src={LOGO_URL} alt="Fixnado" className="h-10 w-auto shrink-0" />
           </Link>
         </div>
 

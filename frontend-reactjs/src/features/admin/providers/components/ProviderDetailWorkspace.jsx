@@ -1094,7 +1094,7 @@ ProviderDetailWorkspace.propTypes = {
     onUpdateTaxProfile: PropTypes.func,
     onCreateTaxFiling: PropTypes.func,
     onUpdateTaxFiling: PropTypes.func,
-    onDeleteTaxFiling: PropTypes.func
+    onDeleteTaxFiling: PropTypes.func,
     onFetchComplianceSummary: PropTypes.func,
     onSubmitComplianceDocument: PropTypes.func,
     onReviewComplianceDocument: PropTypes.func,

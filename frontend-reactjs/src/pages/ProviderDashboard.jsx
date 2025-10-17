@@ -673,7 +673,6 @@ export default function ProviderDashboard() {
     ];
 
     return items.filter(Boolean);
-  }, [alerts.length, deliveryBoard.length, serviceCatalogue.length, serviceCategories.length, serviceHealth.length, servicePackages.length, servicemanFinance, t]);
   }, [
     alerts.length,
     deliveryBoard.length,
@@ -683,10 +682,9 @@ export default function ProviderDashboard() {
     serviceCategories.length,
     serviceHealth.length,
     servicePackages.length,
-    t
+    servicemanFinance,
     t,
-    walletSection?.id,
-    walletSection
+    walletSection?.id
   ]);
 
   const heroBadges = useMemo(
