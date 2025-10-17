@@ -21,8 +21,7 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  if (!isAuthenticated && !bypassAdminAuth) {
-  if (!bypassAuth && !isAuthenticated) {
+  if (!isAuthenticated && !bypassAdminAuth && !bypassAuth) {
     return <Navigate to="/admin" replace state={{ from: location }} />;
   }
 
