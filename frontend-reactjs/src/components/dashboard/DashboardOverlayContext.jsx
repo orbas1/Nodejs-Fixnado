@@ -20,7 +20,9 @@ export function DashboardOverlayProvider({ children }) {
           subtitle: nextPanel.subtitle ?? null,
           meta: Array.isArray(nextPanel.meta) ? nextPanel.meta : [],
           actions: Array.isArray(nextPanel.actions) ? nextPanel.actions : [],
-          body: nextPanel.body ?? null
+          body: nextPanel.body ?? null,
+          variant: nextPanel.variant ?? 'drawer',
+          size: nextPanel.size ?? (nextPanel.variant === 'workspace' ? 'xl' : 'md')
         });
       },
       closePanel: () => setPanel(null)

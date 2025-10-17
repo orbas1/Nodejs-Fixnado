@@ -6,7 +6,8 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/react/24/outline';
 import DashboardToggleSummary from './DashboardToggleSummary.jsx';
 
@@ -37,7 +38,8 @@ const DashboardHeaderBar = ({
   loading,
   exportHref,
   onLogout,
-  onOpenMobileNav
+  onOpenMobileNav,
+  onOpenWorkspace
 }) => {
   const handleSearchChange = (event) => {
     onSearchChange(event.target.value);
@@ -140,6 +142,15 @@ const DashboardHeaderBar = ({
                 <ArrowLeftOnRectangleIcon className="h-4 w-4" /> Sign out
               </button>
             ) : null}
+            {onOpenWorkspace ? (
+              <button
+                type="button"
+                onClick={onOpenWorkspace}
+                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-semibold text-primary/80 transition hover:border-accent hover:text-primary"
+              >
+                <ArrowsPointingOutIcon className="h-4 w-4" /> Expand
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onRefresh}
@@ -204,7 +215,8 @@ DashboardHeaderBar.propTypes = {
   loading: PropTypes.bool,
   exportHref: PropTypes.string,
   onLogout: PropTypes.func,
-  onOpenMobileNav: PropTypes.func.isRequired
+  onOpenMobileNav: PropTypes.func.isRequired,
+  onOpenWorkspace: PropTypes.func
 };
 
 DashboardHeaderBar.defaultProps = {
@@ -215,7 +227,8 @@ DashboardHeaderBar.defaultProps = {
   toggleReason: null,
   loading: false,
   exportHref: null,
-  onLogout: null
+  onLogout: null,
+  onOpenWorkspace: null
 };
 
 export default DashboardHeaderBar;

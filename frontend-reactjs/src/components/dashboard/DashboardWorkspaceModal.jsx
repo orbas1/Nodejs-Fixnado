@@ -4,19 +4,27 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const actionVariants = {
-  primary: 'bg-accent text-white hover:bg-accent/90 border-transparent',
+  primary: 'bg-primary text-white hover:bg-primary/90 border-transparent',
   secondary: 'bg-white text-primary border border-accent/20 hover:border-accent/40',
   subtle: 'bg-secondary text-primary border border-transparent hover:border-accent/30'
 };
 
 const resolveActionVariant = (variant) => actionVariants[variant] ?? actionVariants.primary;
 
-export default function DashboardDetailDrawer({ panel, onClose }) {
-  const open = panel?.variant === 'drawer';
+const sizeClassMap = {
+  lg: 'max-w-4xl',
+  xl: 'max-w-6xl',
+  full: 'max-w-7xl'
+};
+
+const resolveSizeClass = (size) => sizeClassMap[size] ?? sizeClassMap.xl;
+
+export default function DashboardWorkspaceModal({ panel, onClose }) {
+  const open = panel?.variant === 'workspace';
 
   return (
     <Transition.Root show={open} as={Fragment} appear>
-      <Dialog as="div" className="relative z-[60]" onClose={onClose}>
+      <Dialog as="div" className="relative z-[70]" onClose={onClose} static>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -26,40 +34,44 @@ export default function DashboardDetailDrawer({ panel, onClose }) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-slate-950/40" aria-hidden="true" />
+          <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm" aria-hidden="true" />
         </Transition.Child>
 
-        <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-          <Transition.Child
-            as={Fragment}
-            enter="transform transition ease-out duration-200"
-            enterFrom="translate-x-full"
-            enterTo="translate-x-0"
-            leave="transform transition ease-in duration-150"
-            leaveFrom="translate-x-0"
-            leaveTo="translate-x-full"
-          >
-            <Dialog.Panel className="pointer-events-auto w-screen max-w-2xl bg-white shadow-2xl">
-              <div className="flex h-full flex-col">
-                <header className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-stretch justify-center p-4 sm:p-6">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-150"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel
+                className={`relative flex w-full ${resolveSizeClass(panel?.size)} flex-col overflow-hidden rounded-3xl bg-white shadow-2xl`}
+              >
+                <header className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <Dialog.Title className="text-lg font-semibold text-primary">{panel?.title ?? 'Details'}</Dialog.Title>
+                    <Dialog.Title className="text-2xl font-semibold text-primary">
+                      {panel?.title ?? 'Workspace'}
+                    </Dialog.Title>
                     {panel?.subtitle ? (
-                      <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{panel.subtitle}</p>
+                      <p className="text-xs uppercase tracking-[0.35em] text-primary/60">{panel.subtitle}</p>
                     ) : null}
                   </div>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
-                    aria-label="Close details"
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-accent hover:text-accent"
+                    aria-label="Close workspace"
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
                 </header>
 
                 {panel?.meta?.length ? (
-                  <dl className="grid grid-cols-1 gap-3 border-b border-slate-200 px-6 py-4 text-sm text-primary/80 sm:grid-cols-2">
+                  <dl className="grid grid-cols-1 gap-3 border-b border-slate-200 px-6 py-4 text-sm text-primary/80 sm:grid-cols-3">
                     {panel.meta.map((item) => (
                       <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-100 bg-secondary px-4 py-3">
                         <dt className="text-[0.65rem] uppercase tracking-[0.3em] text-primary/50">{item.label}</dt>
@@ -69,8 +81,8 @@ export default function DashboardDetailDrawer({ panel, onClose }) {
                   </dl>
                 ) : null}
 
-                <div className="flex-1 overflow-y-auto px-6 py-6 text-sm text-primary">
-                  {panel?.body ?? null}
+                <div className="flex-1 overflow-y-auto bg-secondary/60 px-4 py-6 sm:px-8 sm:py-8">
+                  <div className="mx-auto w-full max-w-5xl space-y-6">{panel?.body ?? null}</div>
                 </div>
 
                 {panel?.actions?.length ? (
@@ -105,16 +117,16 @@ export default function DashboardDetailDrawer({ panel, onClose }) {
                     </div>
                   </div>
                 ) : null}
-              </div>
-            </Dialog.Panel>
-          </Transition.Child>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
         </div>
       </Dialog>
     </Transition.Root>
   );
 }
 
-DashboardDetailDrawer.propTypes = {
+DashboardWorkspaceModal.propTypes = {
   panel: PropTypes.shape({
     variant: PropTypes.string,
     title: PropTypes.string,
@@ -140,7 +152,7 @@ DashboardDetailDrawer.propTypes = {
   onClose: PropTypes.func.isRequired
 };
 
-DashboardDetailDrawer.defaultProps = {
+DashboardWorkspaceModal.defaultProps = {
   panel: null
 };
 

@@ -8,6 +8,7 @@ import ServicemanSummary from './ServicemanSummary.jsx';
 import DashboardPersonaSummary from './DashboardPersonaSummary.jsx';
 import DashboardBlogRail from './DashboardBlogRail.jsx';
 import DashboardDetailDrawer from './DashboardDetailDrawer.jsx';
+import DashboardWorkspaceModal from './DashboardWorkspaceModal.jsx';
 import { DashboardOverlayProvider, useDashboardOverlay } from './DashboardOverlayContext.jsx';
 import DashboardHeaderBar from './DashboardHeaderBar.jsx';
 import DashboardNavigationDrawer from './navigation/DashboardNavigationDrawer.jsx';
@@ -181,6 +182,82 @@ const buildSearchIndex = (navigation) =>
     return entries;
 });
 
+const deriveSectionMeta = (section) => {
+  if (!section) return [];
+  const data = section.data ?? {};
+  const meta = [];
+
+  switch (section.type) {
+    case 'grid':
+      if (Array.isArray(data.cards)) {
+        meta.push({ label: 'Cards', value: data.cards.length });
+      }
+      break;
+    case 'board':
+      if (Array.isArray(data.columns)) {
+        meta.push({ label: 'Columns', value: data.columns.length });
+        const totalItems = data.columns.reduce((total, column) => total + (column.items?.length ?? 0), 0);
+        meta.push({ label: 'Items', value: totalItems });
+      }
+      break;
+    case 'table':
+      if (Array.isArray(data.rows)) {
+        meta.push({ label: 'Rows', value: data.rows.length });
+      }
+      if (Array.isArray(data.headers)) {
+        meta.push({ label: 'Columns', value: data.headers.length });
+      }
+      break;
+    case 'list':
+      if (Array.isArray(data.items)) {
+        meta.push({ label: 'Items', value: data.items.length });
+      }
+      break;
+    case 'availability':
+      if (Array.isArray(data.resources)) {
+        meta.push({ label: 'Resources', value: data.resources.length });
+      }
+      break;
+    case 'calendar':
+      if (Array.isArray(data.events)) {
+        meta.push({ label: 'Events', value: data.events.length });
+      }
+      break;
+    case 'inventory':
+      if (Array.isArray(data.summary)) {
+        meta.push({ label: 'Highlights', value: data.summary.length });
+      }
+      if (Array.isArray(data.groups)) {
+        meta.push({ label: 'Groups', value: data.groups.length });
+      }
+      break;
+    case 'ads':
+      if (Array.isArray(data.summaryCards)) {
+        meta.push({ label: 'Highlights', value: data.summaryCards.length });
+      }
+      if (Array.isArray(data.campaigns)) {
+        meta.push({ label: 'Campaigns', value: data.campaigns.length });
+      }
+      break;
+    case 'settings':
+      if (Array.isArray(data.panels)) {
+        meta.push({ label: 'Panels', value: data.panels.length });
+      }
+      break;
+    default:
+      break;
+  }
+
+  if (section.updatedAt) {
+    meta.push({ label: 'Updated', value: section.updatedAt });
+  }
+  if (section.windowLabel) {
+    meta.push({ label: 'Window', value: section.windowLabel });
+  }
+
+  return meta;
+};
+
 const combineNavigation = (persona, rawNavigation, fallbackNavigation) => {
   const overrides = DASHBOARD_MENU_OVERRIDES[persona] ?? {};
   const merged = [];
@@ -277,7 +354,9 @@ const DashboardLayoutInner = ({
   initialSectionId = null,
   onSectionChange = null
 }) => {
-  const { panel, closePanel } = useDashboardOverlay();
+  const { panel, closePanel, openPanel } = useDashboardOverlay();
+  const drawerPanel = panel?.variant === 'drawer' ? panel : null;
+  const workspacePanel = panel?.variant === 'workspace' ? panel : null;
   const persona = dashboard?.persona ?? roleMeta.id;
   const fallbackNavigation = useMemo(() => roleMeta?.navigation ?? [], [roleMeta]);
   const rawNavigation = useMemo(() => dashboard?.navigation ?? [], [dashboard]);
@@ -358,7 +437,7 @@ const DashboardLayoutInner = ({
   const shouldShowPersonaSummary = dashboard?.persona === 'user' && activeSection?.id === 'overview';
   const shouldShowServicemanSummary = persona === 'serviceman' && activeSection?.id === 'overview';
 
-  const renderSection = () => {
+  const renderSection = useCallback(() => {
     if (!activeSection) return null;
     if (activeSection.type === 'overview') {
       return <DashboardOverview analytics={activeSection.analytics} />;
@@ -370,7 +449,24 @@ const DashboardLayoutInner = ({
         features={dashboard?.metadata?.features ?? {}}
       />
     );
-  };
+  }, [activeSection, dashboard?.metadata?.features, persona]);
+
+  const sectionMeta = useMemo(() => deriveSectionMeta(activeSection), [activeSection]);
+
+  const handleOpenWorkspace = useCallback(() => {
+    if (!activeSection) {
+      return;
+    }
+
+    openPanel({
+      variant: 'workspace',
+      size: 'full',
+      title: activeSection.label ?? roleMeta.name,
+      subtitle: roleMeta.name,
+      meta: sectionMeta,
+      body: <div className="space-y-6">{renderSection()}</div>
+    });
+  }, [activeSection, openPanel, renderSection, roleMeta.name, sectionMeta]);
 
   const registeredOptions = registeredRoles.filter((role) => role.registered);
   const relativeLastRefreshed = formatRelativeTime(lastRefreshed);
@@ -422,6 +518,7 @@ const DashboardLayoutInner = ({
           exportHref={exportHref}
           onLogout={onLogout}
           onOpenMobileNav={() => setMobileNavOpen(true)}
+          onOpenWorkspace={activeSection ? handleOpenWorkspace : null}
         />
 
         {loading && !dashboard ? (
@@ -437,7 +534,8 @@ const DashboardLayoutInner = ({
           </div>
         )}
       </main>
-      <DashboardDetailDrawer panel={panel} onClose={closePanel} />
+      <DashboardDetailDrawer panel={drawerPanel} onClose={closePanel} />
+      <DashboardWorkspaceModal panel={workspacePanel} onClose={closePanel} />
     </div>
   );
 };
