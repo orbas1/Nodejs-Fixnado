@@ -8,49 +8,55 @@ import { enterpriseNavigation } from './dashboard/navigation/enterpriseNavigatio
 export const DASHBOARD_ROLES = [
   {
     id: 'user',
-    name: 'User Command Center',
-    persona: 'Homeowners & Facilities Teams',
-    headline: 'Coordinate service orders, equipment rentals, and support in one workspace.',
+    name: 'Home Hub',
+    shortName: 'Home',
+    persona: 'Home Teams',
+    headline: 'Orders • Schedule • Support',
     registered: true,
     navigation: userNavigation
   },
   {
     id: 'admin',
-    name: 'Admin Control Tower',
-    persona: 'Operations & Compliance Leaders',
-    headline: 'Command multi-tenant operations, compliance, and SLA performance in real time.',
+    name: 'Admin Desk',
+    shortName: 'Admin',
+    persona: 'Ops Leads',
+    headline: 'Compliance • SLAs • Alerts',
     registered: true,
     navigation: adminNavigation
   },
   {
     id: 'provider',
-    name: 'Provider Operations Studio',
-    persona: 'Service Provider Leadership Teams',
-    headline: 'Monitor revenue, crew utilisation, and asset readiness for every contract.',
+    name: 'Provider Hub',
+    shortName: 'Provider',
+    persona: 'Service Leads',
+    headline: 'Revenue • Crews • Assets',
     registered: true,
     navigation: providerNavigation
   },
   {
     id: 'finance',
-    name: 'Finance Control Center',
-    persona: 'Finance & Revenue Operations',
-    headline: 'Track captured revenue, escrow status, payout readiness, and disputes in one control tower.',
+    name: 'Finance Hub',
+    shortName: 'Finance',
+    persona: 'Revenue Ops',
+    headline: 'Intake • Escrow • Payouts',
     registered: true,
     navigation: financeNavigation
   },
   {
     id: 'serviceman',
-    name: 'Crew Performance Cockpit',
-    persona: 'Technician & Crew Operations',
-    headline: 'Stay ahead of assignments, travel buffers, and completion quality markers.',
+    name: 'Crew Hub',
+    shortName: 'Crew',
+    persona: 'Field Teams',
+    headline: 'Jobs • Routes • Score',
     registered: true,
     navigation: servicemanNavigation
   },
   {
     id: 'enterprise',
-    name: 'Enterprise Performance Suite',
-    persona: 'Multi-site Operators & Enterprise Clients',
-    headline: 'Track spend, campaign pacing, and risk signals across every facility.',
+    name: 'Enterprise Hub',
+    shortName: 'Enterprise',
+    persona: 'Enterprise Ops',
+    headline: 'Spend • Pacing • Risk',
     registered: true,
     navigation: enterpriseNavigation
   }
