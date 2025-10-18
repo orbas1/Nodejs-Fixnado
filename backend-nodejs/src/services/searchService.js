@@ -1,5 +1,12 @@
 import { Op } from 'sequelize';
-import { Service, MarketplaceItem, User, Company, ServiceZone } from '../models/index.js';
+import {
+  Service,
+  MarketplaceItem,
+  Company,
+  ServiceZone,
+  ProviderProfile,
+  ProviderServiceman
+} from '../models/index.js';
 import { categoriesForType, describeCategory, enrichServiceMetadata } from '../constants/serviceCatalog.js';
 
 async function buildServiceWhereClause(query) {
@@ -52,7 +59,11 @@ export async function searchNetwork(query) {
   const services = await Service.findAll({
     where: serviceWhere,
     include: [
-      { model: Company, attributes: ['id', 'contactName'] },
+      {
+        model: Company,
+        attributes: ['id', 'contactName'],
+        include: [{ model: ProviderProfile, as: 'profile', attributes: ['storefrontSlug', 'displayName', 'tier'] }]
+      },
       { association: Service.associations.provider, attributes: ['firstName', 'lastName'] }
     ],
     limit: query.limit || 20
@@ -102,16 +113,68 @@ export async function searchNetwork(query) {
   return { services: hydratedServices, items: hydratedItems };
 }
 
-export async function searchProviders(term) {
-  const users = await User.findAll({
-    where: {
-      type: 'servicemen',
-      [Op.or]: [
-        { firstName: { [Op.like]: `%${term}%` } },
-        { lastName: { [Op.like]: `%${term}%` } }
-      ]
-    },
+function buildFuzzyTerm(term) {
+  if (!term) {
+    return '%';
+  }
+
+  const escaped = term.replace(/[\\%_]/g, (match) => `\\${match}`);
+  return `%${escaped}%`;
+}
+
+export async function searchProviders(term = '') {
+  const trimmed = term.trim();
+  const whereClause = { status: 'active' };
+
+  if (trimmed) {
+    const likeTerm = buildFuzzyTerm(trimmed);
+    whereClause[Op.or] = [
+      { name: { [Op.iLike]: likeTerm } },
+      { role: { [Op.iLike]: likeTerm } },
+      { email: { [Op.iLike]: likeTerm } },
+      { phone: { [Op.iLike]: likeTerm } }
+    ];
+  }
+
+  const servicemen = await ProviderServiceman.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: Company,
+        as: 'company',
+        attributes: ['id', 'contactName'],
+        include: [
+          { model: ProviderProfile, as: 'profile', attributes: ['storefrontSlug', 'displayName'] }
+        ]
+      }
+    ],
+    order: [
+      ['availabilityStatus', 'ASC'],
+      ['name', 'ASC']
+    ],
     limit: 20
   });
-  return users;
+
+  return servicemen.map((member) => {
+    const payload = member.get({ plain: true });
+    const companyProfile = payload.company?.profile ?? null;
+
+    return {
+      id: payload.id,
+      name: payload.name,
+      role: payload.role,
+      email: payload.email,
+      phone: payload.phone,
+      availabilityStatus: payload.availabilityStatus,
+      availabilityPercentage: payload.availabilityPercentage,
+      skills: Array.isArray(payload.skills) ? payload.skills : [],
+      company: payload.company
+        ? {
+            id: payload.company.id,
+            name: companyProfile?.displayName || payload.company.contactName || null,
+            slug: companyProfile?.storefrontSlug || null
+          }
+        : null
+    };
+  });
 }
