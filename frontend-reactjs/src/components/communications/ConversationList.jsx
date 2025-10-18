@@ -35,14 +35,12 @@ function formatRelativeTime(timestamp) {
 function ConversationList({ conversations, activeConversationId, onSelect }) {
   if (!conversations.length) {
     return (
-      <div className="px-5 py-10 text-center text-sm text-slate-500">
-        No conversations yet. Start chatting to see threads here.
-      </div>
+      <div className="px-5 py-10 text-center text-sm text-slate-500">No chats yet.</div>
     );
   }
 
   return (
-    <ul className="space-y-2 p-3">
+    <ul className="flex flex-col gap-2 p-3">
       {conversations.map((conversation) => {
         const participantSummary = conversation.participants
           .filter((participant) => participant.role !== 'ai_assistant')
@@ -56,36 +54,34 @@ function ConversationList({ conversations, activeConversationId, onSelect }) {
               type="button"
               onClick={() => onSelect(conversation.id)}
               className={clsx(
-                'w-full rounded-2xl border px-4 py-3 text-left transition',
+                'group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-[1px] hover:shadow-md',
                 activeConversationId === conversation.id
-                  ? 'border-sky-200 bg-sky-50 text-slate-900 shadow-sm shadow-sky-100'
+                  ? 'border-sky-300 bg-white text-slate-900 shadow-sky-100'
                   : 'border-transparent bg-white/60 text-slate-700 hover:border-slate-200 hover:bg-white'
               )}
             >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
-                  {initials}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold" title={conversation.subject}>
-                      {conversation.subject}
-                    </p>
-                    <span className="text-[11px] text-slate-400">{formatRelativeTime(latestMessage?.createdAt)}</span>
-                  </div>
-                  <p className="mt-1 truncate text-xs text-slate-500" title={participantSummary}>
-                    {participantSummary || 'No participants yet'}
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+                {initials}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold" title={conversation.subject}>
+                    {conversation.subject}
                   </p>
-                  <p className="mt-1 truncate text-xs text-slate-400" title={latestMessage?.body}>
-                    {latestMessage
-                      ? `${latestMessage.messageType === 'assistant' ? 'Assistant • ' : ''}${latestMessage.body}`
-                      : 'No messages yet'}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                    {conversation.aiAssistDefault ? <span>AI</span> : null}
-                    {conversation.metadata?.priority ? <span>{conversation.metadata.priority}</span> : null}
-                    {conversation.metadata?.bookingId ? <span>#{conversation.metadata.bookingId}</span> : null}
-                  </div>
+                  <span className="text-[11px] text-slate-400">{formatRelativeTime(latestMessage?.createdAt)}</span>
+                </div>
+                <p className="mt-1 truncate text-xs text-slate-500" title={participantSummary}>
+                  {participantSummary || 'No participants yet'}
+                </p>
+                <p className="mt-1 truncate text-xs text-slate-400" title={latestMessage?.body}>
+                  {latestMessage
+                    ? `${latestMessage.messageType === 'assistant' ? 'Assistant • ' : ''}${latestMessage.body}`
+                    : 'No messages yet'}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                  {conversation.aiAssistDefault ? <span className="text-sky-500">AI</span> : null}
+                  {conversation.metadata?.priority ? <span>{conversation.metadata.priority}</span> : null}
+                  {conversation.metadata?.bookingId ? <span>#{conversation.metadata.bookingId}</span> : null}
                 </div>
               </div>
             </button>
