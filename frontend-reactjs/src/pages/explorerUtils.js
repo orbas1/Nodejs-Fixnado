@@ -1,5 +1,9 @@
-import turfBbox from '@turf/bbox';
-import { featureCollection, feature } from '@turf/helpers';
+import {
+  computeBoundingBox,
+  createFeature,
+  createFeatureCollection,
+  ensurePolygonWinding
+} from '../lib/geojson.js';
 
 export const EXPLORER_DEFAULT_FILTERS = {
   term: '',
@@ -210,26 +214,36 @@ export function summariseZoneAnalytics(zone) {
 export function buildZoneFeatureCollection(zones, matchIndex) {
   const features = zones
     .filter((zone) => zone.boundary)
-    .map((zone) =>
-      feature(zone.boundary, {
-        id: zone.id,
-        name: zone.name,
-        demand: zone.demandLevel,
-        companyId: zone.companyId,
-        matches: matchIndex.get(zone.id) ?? { services: 0, items: 0 }
-      })
-    );
+    .map((zone) => {
+      const geometry = ensurePolygonWinding(zone.boundary);
+      return createFeature(
+        geometry,
+        {
+          id: zone.id,
+          name: zone.name,
+          demand: zone.demandLevel,
+          companyId: zone.companyId,
+          matches: matchIndex.get(zone.id) ?? { services: 0, items: 0 }
+        },
+        { id: zone.id }
+      );
+    })
+    .filter(Boolean);
 
-  return featureCollection(features);
+  return createFeatureCollection(features);
 }
 
 export function determineExplorerBounds(zones) {
-  const features = zones.filter((zone) => zone.boundary).map((zone) => feature(zone.boundary));
-  if (features.length === 0) {
+  const geometries = zones
+    .filter((zone) => zone.boundary)
+    .map((zone) => ensurePolygonWinding(zone.boundary))
+    .filter(Boolean);
+
+  if (geometries.length === 0) {
     return null;
   }
 
-  return turfBbox(featureCollection(features));
+  return computeBoundingBox(geometries);
 }
 
 export function extractServiceCategories(services) {

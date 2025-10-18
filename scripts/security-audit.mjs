@@ -6,7 +6,24 @@ import process from 'node:process';
 
 const execFileAsync = promisify(execFile);
 
+const argv = process.argv.slice(2);
+const flagSet = new Set(argv.filter((arg) => arg.startsWith("--") && !arg.includes("=")));
+
 const SEVERITY_ORDER = ["critical", "high", "moderate", "low", "info"];
+
+const failOnFlag = argv.find((arg) => arg.startsWith("--fail-on="));
+let failOnSeverity = "high";
+if (failOnFlag) {
+  failOnSeverity = failOnFlag.split("=")[1]?.toLowerCase?.() ?? "high";
+} else if (flagSet.has("--ci")) {
+  failOnSeverity = "moderate";
+}
+
+if (!SEVERITY_ORDER.includes(failOnSeverity)) {
+  throw new Error(`Unsupported --fail-on value "${failOnSeverity}". Expected one of ${SEVERITY_ORDER.join(", ")}.`);
+}
+
+const isCI = flagSet.has("--ci");
 
 async function runCommand(command, args, options) {
   try {
@@ -160,7 +177,11 @@ function reportFlutterFindings(summary) {
 async function runFlutterAudit(directory) {
   const flutterAvailable = await commandExists("flutter");
   if (!flutterAvailable) {
-    console.warn("Flutter SDK not available — skipping Flutter security scan. CI runners supply Flutter; local skips are expected.");
+    const message = "Flutter SDK not available — install Flutter before running dependency audits.";
+    if (isCI) {
+      throw new Error(message);
+    }
+    console.warn(message);
     return { skipped: true };
   }
 
@@ -181,9 +202,19 @@ async function runFlutterAudit(directory) {
   return summary;
 }
 
-function hasBlockingVulnerabilities(results) {
-  const severityFail = (summary) => (summary ? (summary.bySeverity.critical ?? 0) + (summary.bySeverity.high ?? 0) > 0 : false);
-  return results.some((result) => severityFail(result));
+function hasBlockingVulnerabilities(results, threshold) {
+  const thresholdIndex = SEVERITY_ORDER.indexOf(threshold);
+  return results.some((summary) => {
+    if (!summary || !summary.bySeverity) {
+      return false;
+    }
+    return SEVERITY_ORDER.some((level, index) => {
+      if (index > thresholdIndex) {
+        return false;
+      }
+      return (summary.bySeverity[level] ?? 0) > 0;
+    });
+  });
 }
 
 async function main() {
@@ -198,15 +229,15 @@ async function main() {
 
   const flutterSummary = await runFlutterAudit(flutterDir);
 
-  const hasFailingSeverity = hasBlockingVulnerabilities(npmSummaries);
+  const hasFailingSeverity = hasBlockingVulnerabilities(npmSummaries, failOnSeverity);
   const hasFlutterIssues = flutterSummary.skipped ? false : (flutterSummary.vulnerablePackages?.length ?? 0) > 0 || (flutterSummary.reportVulnerabilities?.length ?? 0) > 0;
 
   if (hasFailingSeverity || hasFlutterIssues) {
-    console.error("\nSecurity audit detected blocking vulnerabilities. See details above.");
+    console.error(`\nSecurity audit detected vulnerabilities at or above the ${failOnSeverity.toUpperCase()} threshold. See details above.`);
     process.exit(1);
   }
 
-  console.log("\nSecurity audit completed with no high or critical issues detected.");
+  console.log(`\nSecurity audit completed with no ${failOnSeverity.toUpperCase()} (or higher) issues detected.`);
 }
 
 main().catch((error) => {

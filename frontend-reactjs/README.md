@@ -2,15 +2,30 @@
 
 A Vite-powered React application styled with Tailwind CSS and the Inter font. The UI provides the foundation for the Fixnado on-demand services marketplace including live feeds, marketplace listings, escrow messaging, and admin controls.
 
+## Prerequisites
+
+- Node.js 20.11.x (LTS) with npm 11.4.x activated via Corepack.
+- Modern browser with ES2022 support for local testing (Chromium, Firefox, or Safari latest).
+
+Activate the workspace npm toolchain:
+
+```bash
+corepack prepare npm@11.4.2 --activate
+```
+
 ## Getting started
 
 ```bash
 cd frontend-reactjs
-npm install
+npm ci
 npm run dev
 ```
 
-The dev server runs on http://localhost:5173
+The dev server runs on http://localhost:5173. Use the shared toolchain verifier to confirm your environment stays inside the supported Node/npm ranges before pushing changes:
+
+```bash
+node ../scripts/verify-toolchains.mjs
+```
 
 ## Available routes
 

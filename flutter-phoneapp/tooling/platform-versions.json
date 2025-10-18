@@ -1,0 +1,12 @@
+{
+  "android": {
+    "minSdk": 23,
+    "targetSdk": 34,
+    "compileSdk": 34,
+    "ndk": "26.1.10909125"
+  },
+  "ios": {
+    "deploymentTarget": "15.0",
+    "xcode": "15.4"
+  }
+}

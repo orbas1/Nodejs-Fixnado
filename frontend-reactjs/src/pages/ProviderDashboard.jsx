@@ -521,6 +521,21 @@ export default function ProviderDashboard() {
     return () => controller.abort();
   }, [allowProviderDashboard, loadDashboard]);
 
+  const handleWebsitePreferencesUpdated = useCallback((nextPreferences) => {
+    setState((current) => {
+      if (!current.data) {
+        return current;
+      }
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          websitePreferences: nextPreferences
+        }
+      };
+    });
+  }, []);
+
   const provider = state.data?.provider;
   const metrics = state.data?.metrics;
   const revenue = state.data?.revenue;
@@ -528,7 +543,6 @@ export default function ProviderDashboard() {
   const walletSection = state.data?.wallet ?? null;
   const bookings = state.data?.pipeline?.upcomingBookings ?? [];
   const compliance = state.data?.pipeline?.expiringCompliance ?? [];
-  const servicemen = state.data?.servicemen ?? [];
   const servicemanFinance = state.data?.servicemanFinance ?? null;
   const toolSales = state.data?.toolSales ?? null;
   const serviceManagement = state.data?.serviceManagement ?? {};
@@ -684,7 +698,7 @@ export default function ProviderDashboard() {
     servicePackages.length,
     servicemanFinance,
     t,
-    walletSection?.id
+    walletSection
   ]);
 
   const heroBadges = useMemo(
@@ -781,21 +795,6 @@ export default function ProviderDashboard() {
   if (!hasProviderAccess) {
     return <DashboardRoleGuard roleMeta={providerRoleMeta} sessionRole={session.role} />;
   }
-
-  const handleWebsitePreferencesUpdated = useCallback((nextPreferences) => {
-    setState((current) => {
-      if (!current.data) {
-        return current;
-      }
-      return {
-        ...current,
-        data: {
-          ...current.data,
-          websitePreferences: nextPreferences
-        }
-      };
-    });
-  }, []);
 
   return (
     <div data-qa="provider-dashboard">

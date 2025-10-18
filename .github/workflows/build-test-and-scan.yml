@@ -21,9 +21,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend-nodejs/package-lock.json
 
+      - name: Activate npm 11 toolchain
+        run: corepack prepare npm@11.4.2 --activate
+
       - name: Install dependencies
         working-directory: backend-nodejs
         run: npm ci
+
+      - name: Verify backend lockfile
+        run: node scripts/verify-lockfiles.mjs --workspace=backend
 
       - name: Lint backend
         working-directory: backend-nodejs
@@ -47,9 +53,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend-reactjs/package-lock.json
 
+      - name: Activate npm 11 toolchain
+        run: corepack prepare npm@11.4.2 --activate
+
       - name: Install dependencies
         working-directory: frontend-reactjs
         run: npm ci
+
+      - name: Verify frontend lockfile
+        run: node scripts/verify-lockfiles.mjs --workspace=frontend
 
       - name: Lint frontend
         working-directory: frontend-reactjs
@@ -59,9 +71,8 @@ jobs:
         working-directory: frontend-reactjs
         run: npm test
 
-      - name: Build production bundle
-        working-directory: frontend-reactjs
-        run: npm run build
+      - name: Analyze production bundle
+        run: node scripts/analyze-frontend-bundle.mjs
 
   flutter:
     name: Flutter quality gates
@@ -78,6 +89,9 @@ jobs:
       - name: Resolve Flutter packages
         working-directory: flutter-phoneapp
         run: flutter pub get
+
+      - name: Verify Flutter lockfile
+        run: node scripts/verify-lockfiles.mjs --workspace=flutter
 
       - name: Flutter static analysis
         working-directory: flutter-phoneapp
@@ -100,10 +114,19 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Activate npm 11 toolchain
+        run: corepack prepare npm@11.4.2 --activate
+
       - name: Install Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
+      - name: Verify toolchain baselines
+        run: node scripts/verify-toolchains.mjs --ci
+
+      - name: Verify repository lockfiles
+        run: node scripts/verify-lockfiles.mjs
 
       - name: Secret scanning with Gitleaks
         uses: gitleaks/gitleaks-action@v2
@@ -112,4 +135,4 @@ jobs:
           args: detect --redact
 
       - name: Dependency security audit
-        run: node scripts/security-audit.mjs
+        run: node scripts/security-audit.mjs --ci --fail-on=moderate

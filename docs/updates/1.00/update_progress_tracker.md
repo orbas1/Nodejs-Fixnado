@@ -16,10 +16,10 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 2.3 Transactional migrations & audit metadata | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.4 Retention/encryption guidelines & retry history | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.5 Deterministic QA seed scripts | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 3.1 Manifest/lockfile repair & ORM roadmap | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 3.2 Runtime/SDK enforcement & CI audits | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 3.3 Geospatial/bundle rationalisation | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 60 | 60 | 60 | 60 | 60 | 60 | 60 |
+| 3.1 Manifest/lockfile repair & ORM roadmap | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 3.2 Runtime/SDK enforcement & CI audits | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 3.3 Geospatial/bundle rationalisation | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.4 Flutter lockfiles & mobile CI smoke | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 3.5 License/load-test automation & governance docs | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -46,3 +46,4 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 - Populate the tracker after each subtask demo or code merge; update overall score by averaging the six preceding columns.
 - Attach links to telemetry dashboards, CI runs, QA evidence, and documentation approvals as they materialise.
 - Use the tracker to feed the end-of-update report and Version 1.50 planning brief.
+- Add Terra Draw/map loader unit tests to cover offline failures and repeated focus updates before closing QA sign-off for the geospatial work.【F:frontend-reactjs/src/components/zones/ZoneDrawingMap.jsx†L1-L200】【F:frontend-reactjs/src/components/explorer/ExplorerMap.jsx†L1-L200】
