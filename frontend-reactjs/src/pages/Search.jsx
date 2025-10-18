@@ -1,4 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { useSearchParams } from 'react-router-dom';
 import {
   EXPLORER_DEFAULT_FILTERS,
@@ -52,6 +53,7 @@ export default function Search() {
   const [zonesLoading, setZonesLoading] = useState(true);
   const [zonesError, setZonesError] = useState(null);
   const [results, setResults] = useState({ services: [], items: [], isLoading: true, error: null });
+  const [activePanel, setActivePanel] = useState('list');
   const fetchAbortRef = useRef();
 
   const deferredTerm = useDeferredValue(filters.term);
@@ -136,6 +138,7 @@ export default function Search() {
       const rest = { ...nextFilters };
       delete rest.refreshToken;
       setFilters(normaliseFilters(rest));
+      setActivePanel('list');
     } else {
       setFilters(normaliseFilters(nextFilters));
     }
@@ -144,7 +147,16 @@ export default function Search() {
   const handleReset = useCallback(() => {
     setFilters({ ...EXPLORER_DEFAULT_FILTERS });
     setManualRefreshToken(Date.now());
+    setActivePanel('filters');
   }, []);
+
+  const handleZoneSelect = useCallback(
+    (zoneId) => {
+      handleFiltersChange({ ...filters, zoneId });
+      setActivePanel('zone');
+    },
+    [filters, handleFiltersChange]
+  );
 
   const approvedItems = useMemo(
     () =>
@@ -245,60 +257,103 @@ export default function Search() {
     return filtered.length > 0 ? filtered : SERVICE_TYPES;
   }, [results.services]);
 
+  const panelVisibility = (panel) => (activePanel === panel ? 'block' : 'hidden lg:block');
+
+  const panelTabs = [
+    { value: 'filters', label: 'Filter' },
+    { value: 'map', label: 'Map' },
+    { value: 'zone', label: 'Zone' },
+    { value: 'list', label: 'List' }
+  ];
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-12">
-      <header className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Explorer</p>
-        <h1 className="text-3xl font-semibold text-primary">Find the right Fixnado coverage</h1>
-        <p className="max-w-3xl text-sm text-slate-600">
-          Search live service programmes, marketplace inventory, and insured zones. Filters tie directly into backend SLAs,
-          ensuring results reflect live compliance and availability data before you commit a booking.
-        </p>
+    <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col gap-6 px-6 py-10 lg:gap-10">
+      <header className="flex flex-col gap-1">
+        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Services</p>
+        <h1 className="text-4xl font-semibold text-primary">Search</h1>
       </header>
 
-      <ExplorerFilters
-        filters={filters}
-        onChange={handleFiltersChange}
-        onReset={handleReset}
-        zones={zoneOptions}
-        categories={categories}
-        serviceTypes={serviceTypes}
-        isBusy={results.isLoading || zonesLoading}
-      />
+      <nav className="grid grid-cols-4 gap-2 lg:hidden" aria-label="Search panels">
+        {panelTabs.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            className={clsx(
+              'rounded-full border px-3 py-2 text-sm font-medium transition',
+              activePanel === tab.value
+                ? 'border-primary bg-primary text-white shadow-sm'
+                : 'border-slate-200 bg-white/80 text-slate-600'
+            )}
+            onClick={() => setActivePanel(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        <ExplorerMap
-          data={featureCollection}
-          selectedZoneId={selectedZone?.id}
-          onSelectZone={(zoneId) => handleFiltersChange({ ...filters, zoneId })}
-          bounds={mapBounds}
-        />
-        {zonesLoading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white/80 p-8 text-sm text-slate-500">
-            Loading zone intelligence…
-          </div>
-        ) : (
-          <ZoneInsightPanel
-            zone={selectedZone}
-            matches={matchIndex.get(selectedZone?.id ?? '')}
-            analytics={analyticsSummary}
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr] lg:grid-rows-[auto_1fr] lg:gap-8">
+        <aside
+          className={clsx(
+            panelVisibility('filters'),
+            'lg:sticky lg:top-10 lg:h-fit'
+          )}
+        >
+          <ExplorerFilters
+            filters={filters}
+            onChange={handleFiltersChange}
+            onReset={handleReset}
+            zones={zoneOptions}
+            categories={categories}
+            serviceTypes={serviceTypes}
+            isBusy={results.isLoading || zonesLoading}
           />
-        )}
+        </aside>
+
+        <section
+          className={clsx(
+            panelVisibility('map'),
+            'lg:row-span-2'
+          )}
+        >
+          <div className="h-full min-h-[26rem] overflow-hidden rounded-3xl bg-white shadow-sm lg:min-h-[32rem]">
+            <ExplorerMap
+              data={featureCollection}
+              selectedZoneId={selectedZone?.id}
+              onSelectZone={handleZoneSelect}
+              bounds={mapBounds}
+            />
+          </div>
+        </section>
+
+        <aside className={clsx(panelVisibility('zone'), 'lg:row-start-2')}>
+          {zonesLoading ? (
+            <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-sm text-slate-500">Loading zones…</div>
+          ) : (
+            <ZoneInsightPanel
+              zone={selectedZone}
+              matches={matchIndex.get(selectedZone?.id ?? '')}
+              analytics={analyticsSummary}
+            />
+          )}
+        </aside>
       </div>
 
       {zonesError ? (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-600">
-          {zonesError}
-        </div>
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-600 lg:w-1/2">{zonesError}</div>
       ) : null}
 
-      <ExplorerResultList
-        services={filteredResults.services}
-        items={filteredResults.items}
-        isLoading={results.isLoading}
-        error={results.error}
-        onRetry={() => setManualRefreshToken(Date.now())}
-      />
+      <section className={panelVisibility('list')}>
+        <ExplorerResultList
+          services={filteredResults.services}
+          items={filteredResults.items}
+          isLoading={results.isLoading}
+          error={results.error}
+          onRetry={() => {
+            setManualRefreshToken(Date.now());
+            setActivePanel('list');
+          }}
+        />
+      </section>
     </div>
   );
 }

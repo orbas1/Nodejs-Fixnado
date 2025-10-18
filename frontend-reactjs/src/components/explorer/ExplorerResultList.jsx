@@ -33,24 +33,24 @@ function ServiceCard({ service }) {
       <dl className="fx-explorer-card__meta">
         {providerName ? (
           <div>
-            <dt>Lead provider</dt>
+            <dt>Lead</dt>
             <dd>{providerName}</dd>
           </div>
         ) : null}
         {service.Company?.contactName ? (
           <div>
-            <dt>Organisation</dt>
+            <dt>Org</dt>
             <dd>{service.Company.contactName}</dd>
           </div>
         ) : null}
         <div>
-          <dt>Base price</dt>
+          <dt>Price</dt>
           <dd>{formatCurrency(service.price, service.currency)}</dd>
         </div>
       </dl>
       <footer>
         <Button as={Link} to={`/services?highlight=${service.id}`} variant="primary">
-          View programme
+          Open
         </Button>
       </footer>
     </article>
@@ -79,14 +79,14 @@ function MarketplaceCard({ item }) {
   return (
     <article className="fx-explorer-card" data-qa="explorer-marketplace">
       <header>
-        <StatusPill tone="success">Marketplace</StatusPill>
+        <StatusPill tone="success">Inventory</StatusPill>
         <h3>{item.title}</h3>
         <p className="fx-explorer-card__category">{item.availability === 'buy' ? 'For purchase' : 'Rental ready'}</p>
       </header>
       <p className="fx-explorer-card__description">{item.description}</p>
       <dl className="fx-explorer-card__meta">
         <div>
-          <dt>Provider</dt>
+          <dt>Partner</dt>
           <dd>{item.Company?.contactName ?? 'Fixnado network partner'}</dd>
         </div>
         {item.pricePerDay ? (
@@ -104,7 +104,7 @@ function MarketplaceCard({ item }) {
       </dl>
       <footer>
         <Button as={Link} to={`/services?inventory=${item.id}`} variant="secondary">
-          Request booking support
+          Request
         </Button>
       </footer>
     </article>
@@ -134,7 +134,7 @@ export default function ExplorerResultList({ services, items, isLoading, error, 
       <div className="fx-explorer-error" role="alert">
         <p>{error}</p>
         <Button type="button" onClick={onRetry} variant="secondary">
-          Retry search
+          Retry
         </Button>
       </div>
     );
@@ -143,8 +143,8 @@ export default function ExplorerResultList({ services, items, isLoading, error, 
   if (services.length === 0 && items.length === 0) {
     return (
       <div className="fx-explorer-empty" role="status">
-        <h3>No matches just yet</h3>
-        <p>Adjust your filters or expand to additional zones to surface providers and marketplace inventory.</p>
+        <h3>No matches</h3>
+        <p>Adjust the filters or pick another zone.</p>
       </div>
     );
   }
@@ -154,8 +154,8 @@ export default function ExplorerResultList({ services, items, isLoading, error, 
       {services.length > 0 ? (
         <section aria-label="Service matches">
           <header className="fx-explorer-results__header">
-            <h2>Service programmes</h2>
-            <p>{services.length} programmes available</p>
+            <h2>Services</h2>
+            <p>{services.length} matches</p>
           </header>
           <div className="fx-explorer-results__grid">
             {services.map((service) => (
@@ -168,8 +168,8 @@ export default function ExplorerResultList({ services, items, isLoading, error, 
       {items.length > 0 ? (
         <section aria-label="Marketplace inventory">
           <header className="fx-explorer-results__header">
-            <h2>Marketplace inventory</h2>
-            <p>{items.length} items ready to attach to bookings</p>
+            <h2>Inventory</h2>
+            <p>{items.length} items</p>
           </header>
           <div className="fx-explorer-results__grid">
             {items.map((item) => (

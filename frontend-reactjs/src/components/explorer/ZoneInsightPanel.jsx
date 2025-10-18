@@ -13,11 +13,26 @@ export default function ZoneInsightPanel({ zone, matches, analytics }) {
   if (!zone) {
     return (
       <aside className="fx-zone-panel" aria-live="polite">
-        <h2>No zone selected</h2>
-        <p>Select a territory on the map to review demand, SLA performance, and matching inventory.</p>
+        <h2>Select a zone</h2>
+        <p className="fx-zone-panel__hint">Choose a region on the map to load insight.</p>
       </aside>
     );
   }
+
+  const demandLabel =
+    zone.demandLevel === 'high' ? 'High' : zone.demandLevel === 'medium' ? 'Balanced' : 'Emerging';
+
+  const acceptanceText = analytics.averageAcceptanceMinutes
+    ? `${Math.round(analytics.averageAcceptanceMinutes)} min`
+    : 'No data';
+
+  const signalText = zone.metadata?.signals?.length
+    ? zone.metadata.signals.join(', ')
+    : 'Standard monitoring';
+
+  const boundsText = zone.boundingBox
+    ? `${zone.boundingBox.west.toFixed(2)}°W → ${zone.boundingBox.east.toFixed(2)}°E`
+    : 'Sync pending';
 
   return (
     <aside className="fx-zone-panel" aria-live="polite">
@@ -26,11 +41,7 @@ export default function ZoneInsightPanel({ zone, matches, analytics }) {
           <h2>{zone.name}</h2>
           <p className="fx-zone-panel__meta">Company ID {zone.companyId}</p>
         </div>
-        <StatusPill tone={demandTone[zone.demandLevel] ?? 'info'}>
-          {zone.demandLevel === 'high' && 'High demand'}
-          {zone.demandLevel === 'medium' && 'Balanced demand'}
-          {zone.demandLevel === 'low' && 'Emerging demand'}
-        </StatusPill>
+        <StatusPill tone={demandTone[zone.demandLevel] ?? 'info'}>{demandLabel}</StatusPill>
       </header>
 
       <dl className="fx-zone-panel__stats">
@@ -52,39 +63,26 @@ export default function ZoneInsightPanel({ zone, matches, analytics }) {
         </div>
       </dl>
 
-      <ul className="fx-zone-panel__insights">
-        <li>
-          <ClockIcon aria-hidden="true" />
-          <div>
-            <p>Average acceptance time</p>
-            <p className="fx-zone-panel__insight-value">
-              {analytics.averageAcceptanceMinutes ? `${Math.round(analytics.averageAcceptanceMinutes)} minutes` : 'No samples yet'}
-            </p>
-          </div>
-        </li>
-        <li>
-          <BoltIcon aria-hidden="true" />
-          <div>
-            <p>Demand signals</p>
-            <p className="fx-zone-panel__insight-value">
-              {zone.metadata?.signals?.length
-                ? zone.metadata.signals.join(', ')
-                : 'Monitoring default utilisation and SLA adherence'}
-            </p>
-          </div>
-        </li>
-        <li>
-          <MapPinIcon aria-hidden="true" />
-          <div>
-            <p>Coverage bounds</p>
-            <p className="fx-zone-panel__insight-value">
-              {zone.boundingBox
-                ? `${zone.boundingBox.west.toFixed(2)}°W → ${zone.boundingBox.east.toFixed(2)}°E`
-                : 'Awaiting boundary sync'}
-            </p>
-          </div>
-        </li>
-      </ul>
+      <dl className="fx-zone-panel__insights">
+        <div>
+          <dt>
+            <ClockIcon aria-hidden="true" /> Accept
+          </dt>
+          <dd>{acceptanceText}</dd>
+        </div>
+        <div>
+          <dt>
+            <BoltIcon aria-hidden="true" /> Signals
+          </dt>
+          <dd>{signalText}</dd>
+        </div>
+        <div>
+          <dt>
+            <MapPinIcon aria-hidden="true" /> Bounds
+          </dt>
+          <dd>{boundsText}</dd>
+        </div>
+      </dl>
     </aside>
   );
 }
