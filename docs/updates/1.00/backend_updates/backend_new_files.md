@@ -1,0 +1,7 @@
+# Backend New Files
+
+- `backend-nodejs/src/middleware/featureToggleMiddleware.js` — Express middleware that evaluates feature toggles with cohort hashing, structured denial responses, and audit logging so rollout gates can be enforced without duplicating logic across routes.【F:backend-nodejs/src/middleware/featureToggleMiddleware.js†L1-L147】
+- `backend-nodejs/src/services/storefrontOverrideService.js` — Hardened storefront override evaluator that validates signed override tokens, persona allowlists, and expiry headers before letting test harnesses impersonate provider personas.【F:backend-nodejs/src/services/storefrontOverrideService.js†L1-L165】
+- `backend-nodejs/src/models/clientErrorEvent.js` — Sequelize model capturing browser telemetry with hashed session identifiers, structured metadata, and retention policies aligned with compliance baselines.【F:backend-nodejs/src/models/clientErrorEvent.js†L1-L126】
+- `backend-nodejs/src/models/mobileCrashReport.js` — Sequelize model storing mobile crash payloads, trimmed stack traces, and alert thresholds for sustained failure spikes.【F:backend-nodejs/src/models/mobileCrashReport.js†L1-L143】
+- `backend-nodejs/src/database/migrations/20250525000000-create-telemetry-ingestion.js` — Migration provisioning telemetry tables with partitioning-ready indexes, retention pruning, and correlation columns that tie back to tenant-scoped incidents.【F:backend-nodejs/src/database/migrations/20250525000000-create-telemetry-ingestion.js†L1-L247】

@@ -3,10 +3,98 @@ import { body, query } from 'express-validator';
 import {
   getUiPreferenceTelemetrySummary,
   recordUiPreferenceTelemetry,
-  getUiPreferenceTelemetrySnapshots
+  getUiPreferenceTelemetrySnapshots,
+  recordClientErrorEvent,
+  recordMobileCrashReport
 } from '../controllers/telemetryController.js';
 
 const router = Router();
+
+router.post(
+  '/client-errors',
+  [
+    body('reference').optional().isString().isLength({ min: 3, max: 64 }),
+    body('correlationId').optional().isString().isLength({ max: 64 }),
+    body('requestId').optional().isString().isLength({ max: 64 }),
+    body('sessionId').optional().isString().isLength({ max: 64 }),
+    body('userId').optional().isString().isLength({ max: 64 }),
+    body('tenantId').optional().isString().isLength({ max: 64 }),
+    body('boundaryId').optional().isString().isLength({ min: 1, max: 128 }),
+    body('environment').optional().isString().isLength({ max: 32 }),
+    body('releaseChannel').optional().isString().isLength({ max: 32 }),
+    body('appVersion').optional().isString().isLength({ max: 32 }),
+    body('buildNumber').optional().isString().isLength({ max: 32 }),
+    body('location').optional().isString().isLength({ max: 512 }),
+    body('userAgent').optional().isString().isLength({ max: 512 }),
+    body('occurredAt').optional().isISO8601(),
+    body('severity').optional().isIn(['debug', 'info', 'warning', 'error', 'fatal']),
+    body('error').optional().custom((value) => value === undefined || (value && typeof value === 'object')), 
+    body('info').optional().custom((value) => value === undefined || (value && typeof value === 'object')),
+    body('metadata')
+      .optional()
+      .custom((value) => value && typeof value === 'object' && !Array.isArray(value))
+      .withMessage('metadata must be an object'),
+    body('breadcrumbs')
+      .optional()
+      .isArray({ max: 100 })
+      .custom((entries) => entries.every((entry) => entry && typeof entry === 'object'))
+      .withMessage('breadcrumbs entries must be objects'),
+    body('tags')
+      .optional()
+      .isArray({ max: 32 })
+      .custom((entries) => entries.every((tag) => typeof tag === 'string'))
+      .withMessage('tags must be an array of strings')
+  ],
+  recordClientErrorEvent
+);
+
+router.post(
+  '/mobile-crashes',
+  [
+    body('reference').isString().isLength({ min: 3, max: 64 }),
+    body('correlationId').optional().isString().isLength({ max: 64 }),
+    body('requestId').optional().isString().isLength({ max: 64 }),
+    body('sessionId').optional().isString().isLength({ max: 64 }),
+    body('userId').optional().isString().isLength({ max: 64 }),
+    body('tenantId').optional().isString().isLength({ max: 64 }),
+    body('environment').optional().isString().isLength({ max: 32 }),
+    body('releaseChannel').optional().isString().isLength({ max: 32 }),
+    body('appVersion').optional().isString().isLength({ max: 32 }),
+    body('buildNumber').optional().isString().isLength({ max: 32 }),
+    body('platform').isString().isLength({ min: 2, max: 32 }),
+    body('platformVersion').optional().isString().isLength({ max: 64 }),
+    body('deviceModel').optional().isString().isLength({ max: 96 }),
+    body('deviceManufacturer').optional().isString().isLength({ max: 96 }),
+    body('deviceIdentifier').optional().isString().isLength({ max: 128 }),
+    body('device')
+      .optional()
+      .custom((value) => value && typeof value === 'object' && !Array.isArray(value))
+      .withMessage('device must be an object when provided'),
+    body('locale').optional().isString().isLength({ max: 32 }),
+    body('isEmulator').optional().isBoolean().toBoolean(),
+    body('isReleaseBuild').optional().isBoolean().toBoolean(),
+    body('occurredAt').optional().isISO8601(),
+    body('severity').optional().isIn(['debug', 'info', 'warning', 'error', 'fatal']),
+    body('error')
+      .optional()
+      .custom((value) => value && typeof value === 'object' && !Array.isArray(value))
+      .withMessage('error must be an object when provided'),
+    body('metadata')
+      .optional()
+      .custom((value) => value && typeof value === 'object' && !Array.isArray(value))
+      .withMessage('metadata must be an object'),
+    body('breadcrumbs')
+      .optional()
+      .isArray({ max: 120 })
+      .custom((entries) => entries.every((entry) => entry && typeof entry === 'object')),
+    body('threads').optional().isArray({ max: 20 }),
+    body('tags')
+      .optional()
+      .isArray({ max: 32 })
+      .custom((entries) => entries.every((tag) => typeof tag === 'string'))
+  ],
+  recordMobileCrashReport
+);
 
 router.post(
   '/ui-preferences',

@@ -7,6 +7,18 @@ import { resolveActorContext } from './accessControlService.js';
 
 const ACCESS_TTL_SECONDS = config.auth.session.accessTokenTtlSeconds;
 const REFRESH_TTL_DAYS = config.auth.session.refreshTokenTtlDays;
+const JWT_SIGN_ALGORITHM = Array.isArray(config.jwt.algorithms) && config.jwt.algorithms.length > 0
+  ? config.jwt.algorithms[0]
+  : 'HS256';
+const JWT_VERIFY_ALGORITHMS = Array.isArray(config.jwt.algorithms) && config.jwt.algorithms.length > 0
+  ? config.jwt.algorithms
+  : undefined;
+const JWT_MAX_AGE_SECONDS = Number.isFinite(config.jwt.maxTokenAgeSeconds)
+  ? config.jwt.maxTokenAgeSeconds
+  : ACCESS_TTL_SECONDS;
+const JWT_CLOCK_TOLERANCE_SECONDS = Number.isFinite(config.jwt.clockToleranceSeconds)
+  ? config.jwt.clockToleranceSeconds
+  : 0;
 
 function generateRefreshToken() {
   return crypto.randomBytes(48).toString('base64url');
@@ -47,6 +59,15 @@ function sanitiseMetadata(metadata) {
   }
 }
 
+function signAccessToken(payload) {
+  return jwt.sign(payload, config.jwt.secret, {
+    expiresIn: ACCESS_TTL_SECONDS,
+    audience: config.jwt.audience,
+    issuer: config.jwt.issuer,
+    algorithm: JWT_SIGN_ALGORITHM
+  });
+}
+
 export async function issueSession({
   user,
   headers = {},
@@ -81,21 +102,13 @@ export async function issueSession({
     lastUsedAt: new Date()
   });
 
-  const accessToken = jwt.sign(
-    {
-      sub: user.id,
-      sid: session.id,
-      role: actorContext.role,
-      persona: actorContext.persona,
-      tenantId: actorContext.tenantId
-    },
-    config.jwt.secret,
-    {
-      expiresIn: ACCESS_TTL_SECONDS,
-      audience: 'fixnado:web',
-      issuer: 'fixnado-api'
-    }
-  );
+  const accessToken = signAccessToken({
+    sub: user.id,
+    sid: session.id,
+    role: actorContext.role,
+    persona: actorContext.persona,
+    tenantId: actorContext.tenantId
+  });
 
   return {
     session,
@@ -137,21 +150,13 @@ export async function rotateSession(refreshToken, { headers = {}, ipAddress, use
   session.metadata = sanitiseMetadata({ ...session.metadata, rotatedAt: new Date().toISOString() }) ?? session.metadata;
   await session.save();
 
-  const accessToken = jwt.sign(
-    {
-      sub: user.id,
-      sid: session.id,
-      role: actorContext.role,
-      persona: actorContext.persona,
-      tenantId: actorContext.tenantId
-    },
-    config.jwt.secret,
-    {
-      expiresIn: ACCESS_TTL_SECONDS,
-      audience: 'fixnado:web',
-      issuer: 'fixnado-api'
-    }
-  );
+  const accessToken = signAccessToken({
+    sub: user.id,
+    sid: session.id,
+    role: actorContext.role,
+    persona: actorContext.persona,
+    tenantId: actorContext.tenantId
+  });
 
   return {
     session,
@@ -242,36 +247,36 @@ export function extractTokens(req) {
   };
 }
 
-export function verifyAccessToken(token) {
+export function verifyAccessToken(token, { detailed = false } = {}) {
   if (!token) {
-    return null;
+    return detailed ? { valid: false, code: 'token_missing', payload: null, error: null } : null;
   }
 
   try {
-    return jwt.verify(token, config.jwt.secret, {
-      audience: 'fixnado:web',
-      issuer: 'fixnado-api'
+    const payload = jwt.verify(token, config.jwt.secret, {
+      audience: config.jwt.audience,
+      issuer: config.jwt.issuer,
+      algorithms: JWT_VERIFY_ALGORITHMS,
+      clockTolerance: JWT_CLOCK_TOLERANCE_SECONDS,
+      maxAge: `${JWT_MAX_AGE_SECONDS}s`
     });
-  } catch (error) {
-    // Backwards compatibility: older automation and tests mint tokens without
-    // the stricter audience/issuer claims. Fall back to a relaxed verification
-    // so existing clients continue to function while we roll out the new
-    // session issuance pipeline.
-    try {
-      return jwt.verify(token, config.jwt.secret);
-    } catch (_fallbackError) {
-      return null;
-    }
-    if (process.env.NODE_ENV === 'test') {
-      try {
-        return jwt.verify(token, config.jwt.secret);
-      } catch {
-        return null;
-      }
-    }
 
+    return detailed ? { valid: true, code: null, payload } : payload;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return detailed
+        ? { valid: false, code: 'token_expired', payload: null, error }
+        : null;
+    }
+    if (error instanceof jwt.NotBeforeError) {
+      return detailed
+        ? { valid: false, code: 'token_not_yet_valid', payload: null, error }
+        : null;
+    }
     if (error instanceof jwt.JsonWebTokenError) {
-      return null;
+      return detailed
+        ? { valid: false, code: 'token_invalid', payload: null, error }
+        : null;
     }
 
     throw error;
