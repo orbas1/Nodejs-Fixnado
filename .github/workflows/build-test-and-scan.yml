@@ -71,9 +71,8 @@ jobs:
         working-directory: frontend-reactjs
         run: npm test
 
-      - name: Build production bundle
-        working-directory: frontend-reactjs
-        run: npm run build
+      - name: Analyze production bundle
+        run: node scripts/analyze-frontend-bundle.mjs
 
   flutter:
     name: Flutter quality gates

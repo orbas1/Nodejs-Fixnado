@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import maplibregl from 'maplibre-gl';
+import { loadMapLibre, preloadMapLibre } from '../../lib/mapLibreLoader.js';
 import './explorer.css';
 
 const DEFAULT_CENTER = [-0.118092, 51.509865]; // London fallback
@@ -24,104 +24,141 @@ function zoneFillColorExpression() {
 }
 
 export default function ExplorerMap({ data, selectedZoneId, onSelectZone, bounds }) {
-  const mapRef = useRef(null);
   const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const mapReadyRef = useRef(false);
   const hasFitInitialBoundsRef = useRef(false);
+  const dataRef = useRef(data);
+  const selectedZoneRef = useRef(selectedZoneId);
+  const onSelectZoneRef = useRef(onSelectZone);
 
   useEffect(() => {
-    if (!containerRef.current) {
-      return () => {};
-    }
+    dataRef.current = data;
+  }, [data]);
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-      attributionControl: true
-    });
+  useEffect(() => {
+    selectedZoneRef.current = selectedZoneId;
+  }, [selectedZoneId]);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+  useEffect(() => {
+    onSelectZoneRef.current = onSelectZone;
+  }, [onSelectZone]);
 
-    const handleLoad = () => {
-      map.addSource('explorer-zones', {
-        type: 'geojson',
-        data
-      });
+  useEffect(() => {
+    preloadMapLibre();
+  }, []);
 
-      map.addLayer({
-        id: 'explorer-zones-fill',
-        type: 'fill',
-        source: 'explorer-zones',
-        paint: {
-          'fill-color': zoneFillColorExpression(),
-          'fill-opacity': [
-            'case',
-            ['==', ['get', 'id'], selectedZoneId ?? ''],
-            0.55,
-            0.32
-          ]
-        }
-      });
+  useEffect(() => {
+    let disposed = false;
+    let mapInstance;
 
-      map.addLayer({
-        id: 'explorer-zones-outline',
-        type: 'line',
-        source: 'explorer-zones',
-        paint: {
-          'line-color': '#1e293b',
-          'line-width': 1.5,
-          'line-opacity': 0.6
-        }
-      });
-
-      map.addLayer({
-        id: 'explorer-zones-outline-selected',
-        type: 'line',
-        source: 'explorer-zones',
-        paint: {
-          'line-color': '#0f172a',
-          'line-width': 3,
-          'line-opacity': 0.8
-        },
-        filter: ['==', ['get', 'id'], selectedZoneId ?? '']
-      });
-
-      map.on('click', 'explorer-zones-fill', (event) => {
-        const feature = event.features?.[0];
-        if (!feature) {
+    const initialise = async () => {
+      try {
+        const maplibregl = await loadMapLibre();
+        if (disposed || !containerRef.current) {
           return;
         }
 
-        const zoneId = feature.properties?.id;
-        if (zoneId) {
-          onSelectZone(zoneId);
-        }
-      });
+        mapInstance = new maplibregl.Map({
+          container: containerRef.current,
+          style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+          center: DEFAULT_CENTER,
+          zoom: DEFAULT_ZOOM,
+          attributionControl: true
+        });
+        mapRef.current = mapInstance;
 
-      map.on('mouseenter', 'explorer-zones-fill', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
+        mapInstance.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
 
-      map.on('mouseleave', 'explorer-zones-fill', () => {
-        map.getCanvas().style.cursor = '';
-      });
+        const handleLoad = () => {
+          mapReadyRef.current = true;
+
+          mapInstance.addSource('explorer-zones', {
+            type: 'geojson',
+            data: dataRef.current
+          });
+
+          mapInstance.addLayer({
+            id: 'explorer-zones-fill',
+            type: 'fill',
+            source: 'explorer-zones',
+            paint: {
+              'fill-color': zoneFillColorExpression(),
+              'fill-opacity': [
+                'case',
+                ['==', ['get', 'id'], selectedZoneRef.current ?? ''],
+                0.55,
+                0.32
+              ]
+            }
+          });
+
+          mapInstance.addLayer({
+            id: 'explorer-zones-outline',
+            type: 'line',
+            source: 'explorer-zones',
+            paint: {
+              'line-color': '#1e293b',
+              'line-width': 1.5,
+              'line-opacity': 0.6
+            }
+          });
+
+          mapInstance.addLayer({
+            id: 'explorer-zones-outline-selected',
+            type: 'line',
+            source: 'explorer-zones',
+            paint: {
+              'line-color': '#0f172a',
+              'line-width': 3,
+              'line-opacity': 0.8
+            },
+            filter: ['==', ['get', 'id'], selectedZoneRef.current ?? '']
+          });
+
+          mapInstance.on('click', 'explorer-zones-fill', (event) => {
+            const feature = event.features?.[0];
+            if (!feature) {
+              return;
+            }
+
+            const zoneId = feature.properties?.id;
+            if (zoneId && typeof onSelectZoneRef.current === 'function') {
+              onSelectZoneRef.current(zoneId);
+            }
+          });
+
+          mapInstance.on('mouseenter', 'explorer-zones-fill', () => {
+            mapInstance.getCanvas().style.cursor = 'pointer';
+          });
+
+          mapInstance.on('mouseleave', 'explorer-zones-fill', () => {
+            mapInstance.getCanvas().style.cursor = '';
+          });
+        };
+
+        mapInstance.on('load', handleLoad);
+      } catch (error) {
+        console.error('Failed to initialise explorer map', error);
+      }
     };
 
-    map.on('load', handleLoad);
-
-    mapRef.current = map;
+    initialise();
 
     return () => {
-      map.off('load', handleLoad);
-      map.remove();
+      disposed = true;
+      mapReadyRef.current = false;
+      if (mapInstance) {
+        mapInstance.remove();
+      }
       mapRef.current = null;
+      hasFitInitialBoundsRef.current = false;
     };
-  }, [onSelectZone, selectedZoneId, data]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) {
+    if (!map || !mapReadyRef.current) {
       return;
     }
 
@@ -150,7 +187,7 @@ export default function ExplorerMap({ data, selectedZoneId, onSelectZone, bounds
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !bounds || bounds.length !== 4) {
+    if (!map || !mapReadyRef.current || !bounds || bounds.length !== 4) {
       return;
     }
 
