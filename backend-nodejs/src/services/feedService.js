@@ -1,11 +1,25 @@
 import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
-import { Company, CustomJobBid, CustomJobBidMessage, Post, ServiceZone, User } from '../models/index.js';
+import {
+  Booking,
+  BookingAssignment,
+  Company,
+  CustomJobBid,
+  CustomJobBidMessage,
+  MarketplaceItem,
+  Post,
+  RentalAgreement,
+  Service,
+  ServiceZone,
+  User
+} from '../models/index.js';
 import { listApprovedMarketplaceItems } from './marketplaceService.js';
 import { broadcastLiveFeedEvent } from './liveFeedStreamService.js';
 import { recordLiveFeedAuditEvent } from './liveFeedAuditService.js';
 
 const DEFAULT_FEED_LIMIT = 25;
+
+const SUGGESTION_LIMIT = 3;
 
 export const POST_INCLUDE_GRAPH = [
   { model: User, attributes: ['id', 'firstName', 'lastName', 'type', 'email'] },
@@ -207,6 +221,470 @@ function sanitiseAttachments(attachments) {
       return label ? { url, label } : { url };
     })
     .filter(Boolean);
+}
+
+function toTitleCase(value) {
+  if (!value) {
+    return null;
+  }
+
+  return value
+    .toString()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^(\w)|\s(\w)/g, (match) => match.toUpperCase());
+}
+
+function safeNumber(value) {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+const currencyFormatterCache = new Map();
+
+function formatCurrencyLabel(value, currency = 'USD') {
+  const numeric = safeNumber(value);
+  if (numeric == null) {
+    return null;
+  }
+
+  const code = typeof currency === 'string' && currency.length === 3 ? currency.toUpperCase() : 'USD';
+  const cacheKey = `${code}:0`;
+  if (!currencyFormatterCache.has(cacheKey)) {
+    currencyFormatterCache.set(
+      cacheKey,
+      new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: code,
+        maximumFractionDigits: 0
+      })
+    );
+  }
+
+  return currencyFormatterCache.get(cacheKey).format(numeric);
+}
+
+function summariseCompany(company) {
+  if (!company) {
+    return null;
+  }
+
+  return company.contactName || company.name || null;
+}
+
+function summariseProviderName(provider) {
+  if (!provider) {
+    return null;
+  }
+
+  const parts = [];
+  if (provider.firstName) {
+    parts.push(provider.firstName);
+  }
+  if (provider.lastName) {
+    parts.push(provider.lastName);
+  }
+
+  if (parts.length === 0 && provider.email) {
+    return provider.email.split('@')[0];
+  }
+
+  return parts.length > 0 ? parts.join(' ') : 'Provider';
+}
+
+function buildServiceSuggestions(bookings, serviceLookup, limit) {
+  const buckets = new Map();
+
+  bookings.forEach((booking) => {
+    const meta = booking.meta ?? {};
+    const serviceId = typeof meta.serviceId === 'string' ? meta.serviceId : null;
+    const category = typeof meta.serviceCategory === 'string' ? meta.serviceCategory : null;
+    const key = serviceId || (category ? `category:${category}` : null);
+    if (!key) {
+      return;
+    }
+
+    const bucket = buckets.get(key) ?? {
+      serviceId,
+      category,
+      occurrences: 0,
+      totalValue: 0,
+      totalValueSamples: 0,
+      companies: new Set(),
+      fallbackTitle: typeof meta.title === 'string' && meta.title.trim().length > 0 ? meta.title.trim() : booking.title || null,
+      currency: booking.currency || meta.currency || 'USD',
+      lastSeen: 0
+    };
+
+    bucket.occurrences += 1;
+    const totalAmount = safeNumber(booking.totalAmount) ?? safeNumber(booking.baseAmount);
+    if (totalAmount != null) {
+      bucket.totalValue += totalAmount;
+      bucket.totalValueSamples += 1;
+    }
+
+    const seenAt = new Date(booking.updatedAt || booking.createdAt || Date.now()).getTime();
+    if (Number.isFinite(seenAt) && seenAt > bucket.lastSeen) {
+      bucket.lastSeen = seenAt;
+    }
+
+    const companyLabel = summariseCompany(booking.Company);
+    if (companyLabel) {
+      bucket.companies.add(companyLabel);
+    }
+
+    buckets.set(key, bucket);
+  });
+
+  return Array.from(buckets.values())
+    .map((bucket) => {
+      const service = bucket.serviceId ? serviceLookup.get(bucket.serviceId) : null;
+      const companyLabel = summariseCompany(service?.Company) || [...bucket.companies][0] || null;
+      const priceLabel = bucket.totalValueSamples > 0
+        ? formatCurrencyLabel(bucket.totalValue / bucket.totalValueSamples, service?.currency || bucket.currency)
+        : formatCurrencyLabel(service?.price, service?.currency || bucket.currency);
+      const href = service?.slug
+        ? `/services/${service.slug}`
+        : service?.id
+          ? `/services?highlight=${service.id}`
+          : '/services';
+
+      const id = service?.id || bucket.serviceId || (bucket.category ? `category:${bucket.category}` : bucket.fallbackTitle || href);
+      const title = service?.title || bucket.fallbackTitle || (bucket.category ? toTitleCase(bucket.category) : 'Service');
+
+      return {
+        id,
+        title,
+        company: companyLabel,
+        priceLabel,
+        href,
+        occurrences: bucket.occurrences,
+        lastSeen: bucket.lastSeen
+      };
+    })
+    .sort((a, b) => {
+      if (b.occurrences !== a.occurrences) {
+        return b.occurrences - a.occurrences;
+      }
+
+      return b.lastSeen - a.lastSeen;
+    })
+    .slice(0, limit)
+    .map(({ occurrences, lastSeen, ...rest }) => rest);
+}
+
+function buildProviderSuggestions(bookings, limit) {
+  const buckets = new Map();
+
+  bookings.forEach((booking) => {
+    const assignments = Array.isArray(booking.BookingAssignments) ? booking.BookingAssignments : [];
+    assignments.forEach((assignment) => {
+      const provider = assignment.provider;
+      if (!provider || !provider.id) {
+        return;
+      }
+
+      if (assignment.status && ['withdrawn', 'declined'].includes(assignment.status)) {
+        return;
+      }
+
+      const bucket = buckets.get(provider.id) ?? {
+        id: provider.id,
+        provider,
+        programmes: 0,
+        zones: new Set(),
+        companies: new Set(),
+        lastSeen: 0
+      };
+
+      bucket.programmes += 1;
+      const zoneName = typeof booking.meta?.zoneName === 'string' ? booking.meta.zoneName : null;
+      if (zoneName) {
+        bucket.zones.add(zoneName);
+      }
+
+      const companyLabel = summariseCompany(booking.Company);
+      if (companyLabel) {
+        bucket.companies.add(companyLabel);
+      }
+
+      const seenAt = new Date(assignment.assignedAt || booking.updatedAt || booking.createdAt || Date.now()).getTime();
+      if (Number.isFinite(seenAt) && seenAt > bucket.lastSeen) {
+        bucket.lastSeen = seenAt;
+      }
+
+      buckets.set(provider.id, bucket);
+    });
+  });
+
+  return Array.from(buckets.values())
+    .map((bucket) => ({
+      id: bucket.id,
+      name: summariseProviderName(bucket.provider),
+      programmes: bucket.programmes,
+      zones: Array.from(bucket.zones),
+      company: [...bucket.companies][0] || null,
+      href: `/providers?highlight=${bucket.id}`,
+      lastSeen: bucket.lastSeen
+    }))
+    .sort((a, b) => {
+      if (b.programmes !== a.programmes) {
+        return b.programmes - a.programmes;
+      }
+
+      return b.lastSeen - a.lastSeen;
+    })
+    .slice(0, limit)
+    .map(({ lastSeen, ...rest }) => rest);
+}
+
+function buildStoreSuggestions(rentals, limit) {
+  const buckets = new Map();
+
+  rentals.forEach((rental) => {
+    const item = rental.MarketplaceItem;
+    if (!item || !item.id) {
+      return;
+    }
+
+    const bucket = buckets.get(item.id) ?? {
+      item,
+      rentals: 0,
+      totalDailyRate: 0,
+      dailyRateSamples: 0,
+      purchaseTotals: 0,
+      purchaseSamples: 0,
+      currency: item.currency || rental.rateCurrency || 'USD',
+      lastSeen: 0
+    };
+
+    bucket.rentals += 1;
+
+    const dailyRate = safeNumber(rental.dailyRate);
+    if (dailyRate != null) {
+      bucket.totalDailyRate += dailyRate;
+      bucket.dailyRateSamples += 1;
+    }
+
+    const purchase = safeNumber(rental.meta?.purchasePrice) ?? safeNumber(item.purchasePrice);
+    if (purchase != null) {
+      bucket.purchaseTotals += purchase;
+      bucket.purchaseSamples += 1;
+    }
+
+    const seenAt = new Date(rental.rentalStartAt || rental.createdAt || Date.now()).getTime();
+    if (Number.isFinite(seenAt) && seenAt > bucket.lastSeen) {
+      bucket.lastSeen = seenAt;
+    }
+
+    buckets.set(item.id, bucket);
+  });
+
+  return Array.from(buckets.values())
+    .map((bucket) => {
+      const item = bucket.item;
+      const rentLabel = bucket.dailyRateSamples > 0
+        ? `${formatCurrencyLabel(bucket.totalDailyRate / bucket.dailyRateSamples, bucket.currency || item.currency)}/day`
+        : item.pricePerDay != null
+          ? `${formatCurrencyLabel(item.pricePerDay, item.currency || bucket.currency)}/day`
+          : null;
+      const buyLabel = bucket.purchaseSamples > 0
+        ? formatCurrencyLabel(bucket.purchaseTotals / bucket.purchaseSamples, item.currency || bucket.currency)
+        : formatCurrencyLabel(item.purchasePrice, item.currency || bucket.currency);
+      const priceLabel = rentLabel && buyLabel ? `${rentLabel} • ${buyLabel}` : rentLabel ?? buyLabel ?? null;
+
+      return {
+        id: item.id,
+        title: item.title || 'Inventory',
+        partner: summariseCompany(item.Company) || 'Partner',
+        priceLabel,
+        href: item.slug ? `/marketplace/${item.slug}` : `/marketplace?highlight=${item.id}`,
+        lastSeen: bucket.lastSeen
+      };
+    })
+    .sort((a, b) => b.lastSeen - a.lastSeen)
+    .slice(0, limit)
+    .map(({ lastSeen, ...rest }) => rest);
+}
+
+async function fetchTrendingServices(excludeIds, limit) {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const where = { status: 'published' };
+  if (Array.isArray(excludeIds) && excludeIds.length > 0) {
+    where.id = { [Op.notIn]: excludeIds };
+  }
+
+  const services = await Service.findAll({
+    where,
+    include: [{ model: Company, attributes: ['id', 'contactName', 'name'] }],
+    order: [['updatedAt', 'DESC']],
+    limit
+  });
+
+  return services.map((service) => ({
+    id: service.id,
+    title: service.title,
+    company: summariseCompany(service.Company) || 'Provider',
+    priceLabel: formatCurrencyLabel(service.price, service.currency),
+    href: service.slug ? `/services/${service.slug}` : `/services?highlight=${service.id}`
+  }));
+}
+
+async function fetchTrendingProviders(excludeIds, limit) {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const where = { status: 'published', providerId: { [Op.not]: null } };
+  const services = await Service.findAll({
+    where,
+    include: [
+      { model: User, as: 'provider', attributes: ['id', 'firstName', 'lastName', 'email'] },
+      { model: Company, attributes: ['id', 'contactName', 'name'] }
+    ],
+    order: [['updatedAt', 'DESC']],
+    limit: limit * 3
+  });
+
+  const seen = new Set(excludeIds);
+  const suggestions = [];
+
+  services.forEach((service) => {
+    const provider = service.provider;
+    if (!provider || !provider.id || seen.has(provider.id)) {
+      return;
+    }
+
+    suggestions.push({
+      id: provider.id,
+      name: summariseProviderName(provider),
+      programmes: 0,
+      zones: [],
+      company: summariseCompany(service.Company) || null,
+      href: `/providers?highlight=${provider.id}`
+    });
+    seen.add(provider.id);
+  });
+
+  return suggestions.slice(0, limit);
+}
+
+async function fetchTrendingStores(excludeIds, limit) {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const where = { status: 'approved' };
+  if (Array.isArray(excludeIds) && excludeIds.length > 0) {
+    where.id = { [Op.notIn]: excludeIds };
+  }
+
+  const items = await MarketplaceItem.findAll({
+    where,
+    include: [{ model: Company, attributes: ['id', 'contactName', 'name'] }],
+    order: [['updatedAt', 'DESC']],
+    limit
+  });
+
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title || 'Inventory',
+    partner: summariseCompany(item.Company) || 'Partner',
+    priceLabel: (() => {
+      const rent = item.pricePerDay != null ? `${formatCurrencyLabel(item.pricePerDay, item.currency)}/day` : null;
+      const buy = formatCurrencyLabel(item.purchasePrice, item.currency);
+      return rent && buy ? `${rent} • ${buy}` : rent ?? buy ?? null;
+    })(),
+    href: item.slug ? `/marketplace/${item.slug}` : `/marketplace?highlight=${item.id}`
+  }));
+}
+
+export async function buildSidebarSuggestions({ userId, limit = SUGGESTION_LIMIT } = {}) {
+  if (!userId) {
+    return { services: [], providers: [], stores: [] };
+  }
+
+  const resolvedLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.trunc(limit), 6) : SUGGESTION_LIMIT;
+
+  const [bookings, rentals] = await Promise.all([
+    Booking.findAll({
+      where: { customerId: userId },
+      include: [
+        { model: Company, attributes: ['id', 'contactName', 'name'] },
+        {
+          model: BookingAssignment,
+          include: [{ model: User, as: 'provider', attributes: ['id', 'firstName', 'lastName', 'email'] }]
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 100
+    }),
+    RentalAgreement.findAll({
+      where: { renterId: userId },
+      include: [
+        {
+          model: MarketplaceItem,
+          include: [{ model: Company, attributes: ['id', 'contactName', 'name'] }]
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 60
+    })
+  ]);
+
+  const serviceIds = bookings
+    .map((booking) => (typeof booking.meta?.serviceId === 'string' ? booking.meta.serviceId : null))
+    .filter(Boolean);
+  const uniqueServiceIds = Array.from(new Set(serviceIds));
+
+  const services = uniqueServiceIds.length
+    ? await Service.findAll({
+        where: { id: { [Op.in]: uniqueServiceIds } },
+        include: [{ model: Company, attributes: ['id', 'contactName', 'name'] }]
+      })
+    : [];
+
+  const serviceLookup = new Map(services.map((service) => [service.id, service]));
+
+  let serviceSuggestions = buildServiceSuggestions(bookings, serviceLookup, resolvedLimit);
+  const serviceExclusions = serviceSuggestions
+    .map((suggestion) => suggestion.id)
+    .filter((id) => typeof id === 'string' && !id.startsWith('category:'));
+
+  if (serviceSuggestions.length < resolvedLimit) {
+    const fallback = await fetchTrendingServices(serviceExclusions, resolvedLimit - serviceSuggestions.length);
+    serviceSuggestions = [...serviceSuggestions, ...fallback].slice(0, resolvedLimit);
+  }
+
+  let providerSuggestions = buildProviderSuggestions(bookings, resolvedLimit);
+  const providerExclusions = providerSuggestions.map((provider) => provider.id);
+
+  if (providerSuggestions.length < resolvedLimit) {
+    const fallback = await fetchTrendingProviders(providerExclusions, resolvedLimit - providerSuggestions.length);
+    providerSuggestions = [...providerSuggestions, ...fallback].slice(0, resolvedLimit);
+  }
+
+  let storeSuggestions = buildStoreSuggestions(rentals, resolvedLimit);
+  const storeExclusions = storeSuggestions.map((item) => item.id);
+
+  if (storeSuggestions.length < resolvedLimit) {
+    const fallback = await fetchTrendingStores(storeExclusions, resolvedLimit - storeSuggestions.length);
+    storeSuggestions = [...storeSuggestions, ...fallback].slice(0, resolvedLimit);
+  }
+
+  return {
+    services: serviceSuggestions,
+    providers: providerSuggestions,
+    stores: storeSuggestions
+  };
 }
 
 function requireCompanyForUser(userId) {

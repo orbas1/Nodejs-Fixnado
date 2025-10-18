@@ -4,7 +4,8 @@ import {
   listMarketplaceFeed,
   createLiveFeedPost,
   submitCustomJobBid,
-  addCustomJobBidMessage
+  addCustomJobBidMessage,
+  buildSidebarSuggestions
 } from '../services/feedService.js';
 import {
   registerLiveFeedClient,
@@ -177,6 +178,23 @@ export async function createLiveFeedPostHandler(req, res, next) {
     res.status(201).json(post);
   } catch (error) {
     handleServiceError(res, next, error);
+  }
+}
+
+export async function getFeedSuggestions(req, res, next) {
+  try {
+    const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+    const limit = rawLimit != null ? Number.parseInt(rawLimit, 10) : undefined;
+    const userId = req.user?.id ?? null;
+
+    const suggestions = await buildSidebarSuggestions({
+      userId,
+      limit: Number.isFinite(limit) ? limit : undefined
+    });
+
+    res.json(suggestions);
+  } catch (error) {
+    next(error);
   }
 }
 

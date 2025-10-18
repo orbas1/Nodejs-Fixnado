@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -68,6 +68,8 @@ describe('Terms page', () => {
   });
 
   it('renders dynamic policy details for the requested slug', async () => {
+    const user = userEvent.setup();
+
     render(
       <MemoryRouter initialEntries={['/legal/privacy']}>
         <Routes>
@@ -79,19 +81,56 @@ describe('Terms page', () => {
     expect(await screen.findByRole('heading', { name: 'Privacy Policy' })).toBeInTheDocument();
     expect(screen.getByText(policy.version.hero.summary)).toBeInTheDocument();
 
-    policy.version.sections.forEach((section) => {
-      expect(screen.getByRole('heading', { name: section.title })).toBeInTheDocument();
-      if (section.summary) {
-        expect(screen.getByText(section.summary, { exact: false })).toBeInTheDocument();
-      }
-      section.body.forEach((paragraph) => {
+    const firstSection = policy.version.sections[0];
+    expect(await screen.findByRole('heading', { name: firstSection.title })).toBeInTheDocument();
+    if (firstSection.summary) {
+      expect(screen.getByText(firstSection.summary, { exact: false })).toBeInTheDocument();
+    }
+    firstSection.body.forEach((paragraph) => {
+      expect(screen.queryByText(paragraph)).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Read' }));
+
+    const secondSection = policy.version.sections[1];
+    secondSection.body.forEach((paragraph) => {
+      expect(screen.queryByText(paragraph)).not.toBeInTheDocument();
+    });
+
+    const sectionNavButton = screen.getByRole('button', { name: secondSection.title });
+    await user.click(sectionNavButton);
+
+    expect(await screen.findByRole('heading', { name: secondSection.title })).toBeInTheDocument();
+    if (secondSection.summary) {
+      expect(screen.getByText(secondSection.summary, { exact: false })).toBeInTheDocument();
+    }
+    secondSection.body.forEach((paragraph) => {
+      expect(screen.queryByText(paragraph)).not.toBeInTheDocument();
+    });
+
+    const openButton = screen.getByRole('button', { name: 'Open' });
+    await user.click(openButton);
+
+    await waitFor(() => {
+      secondSection.body.forEach((paragraph) => {
         expect(screen.getByText(paragraph)).toBeInTheDocument();
       });
     });
 
+    const doneButton = screen.getByRole('button', { name: 'Done' });
+    await user.click(doneButton);
+
+    await user.click(screen.getByRole('button', { name: 'Info' }));
     expect(screen.getByText('Supervisory authority letter')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: policy.contactEmail })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: policy.contactUrl })).toHaveAttribute('href', policy.contactUrl);
+
+    await user.click(screen.getByRole('button', { name: 'Help' }));
+    const supportPanel = screen.getByRole('heading', { name: 'Talk with us' }).closest('article');
+    const helpers = within(supportPanel);
+    expect(helpers.getByRole('link', { name: /Email/ })).toHaveAttribute(
+      'href',
+      `mailto:${policy.version.contact.email}`
+    );
+    expect(helpers.getByRole('link', { name: /Site/ })).toHaveAttribute('href', policy.version.contact.url);
   });
 
   it('prints the policy when download button is activated', async () => {
@@ -105,8 +144,8 @@ describe('Terms page', () => {
       </MemoryRouter>
     );
 
-    const downloadButton = await screen.findByRole('button', { name: /download pdf/i });
-    await user.click(downloadButton);
+    const exportButton = await screen.findByRole('button', { name: /export/i });
+    await user.click(exportButton);
 
     await waitFor(() => {
       expect(window.print).toHaveBeenCalledTimes(1);

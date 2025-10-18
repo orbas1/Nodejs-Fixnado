@@ -294,7 +294,7 @@ function App() {
           </RouteErrorBoundary>
         </Suspense>
       </main>
-      {!isDashboardExperience && <Footer />}
+      {!isDashboardExperience && !isAuthenticated && <Footer />}
       <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       <ConsentBanner />
     </div>

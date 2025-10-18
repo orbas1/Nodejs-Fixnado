@@ -3,6 +3,7 @@ import { body, param } from 'express-validator';
 import {
   getLiveFeed,
   getMarketplaceFeed,
+  getFeedSuggestions,
   createLiveFeedPostHandler,
   submitCustomJobBidHandler,
   addCustomJobBidMessageHandler,
@@ -15,6 +16,7 @@ const router = Router();
 
 router.get('/live/stream', authenticate, enforcePolicy('feed.live.read'), streamLiveFeed);
 router.get('/live', authenticate, enforcePolicy('feed.live.read'), getLiveFeed);
+router.get('/suggestions', authenticate, enforcePolicy('feed.live.read'), getFeedSuggestions);
 
 router.post(
   '/live',
