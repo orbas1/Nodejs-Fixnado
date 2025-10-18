@@ -28,7 +28,7 @@
 ## Learning, Commerce & Content
 - **Creation Studio & Classroom Evolution**: Enhanced course, e-book, live classroom, and assessment authoring with upload checkers, multimedia handling, and enterprise styling.
 - **Commerce-Ready Learning Suite**: Purchase, booking, subscription, refund, and pricing management across courses, e-books, tutors, and communities with financial reconciliation tests.
-- **Taxonomy & Recommendation Intelligence**: Comprehensive categories, skill/qualification tags, SEO tags, hashtags, pricing matrices, and AI-driven matching powering search, explorer, and recommendations.
+- **Taxonomy & Recommendation Intelligence**: Comprehensive categories, skill/qualification tags, SEO tags, hashtags, pricing matrices, and lightweight algorithmic matching powering search, explorer, and recommendations without requiring heavy-model infrastructure.
 
 ### Expanded Coverage
 - Tutor booking/payment, community subscription, course/e-book purchase flows with pricing matching and compliance checkpoints.
@@ -84,14 +84,14 @@
 - Mobile security controls covering secure storage, biometric login, jailbreak/root detection, and GDPR data requests.
 
 ## Backend & Integration Enhancements
-- **Modularized Services**: Domain-driven controllers, routes, middleware, utilities for timeline, communities, messaging, commerce, analytics, admin, media, and AI.
-- **Integration Adapters**: Hubspot, Salesforce, Google APIs, OpenAI, Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, Apple/Google/Facebook/LinkedIn logins, payment gateways.
+- **Modularized Services**: Domain-driven controllers, routes, middleware, utilities for timeline, communities, messaging, commerce, analytics, admin, media, and lightweight intelligence layers.
+- **Integration Adapters**: Hubspot, Salesforce, Google APIs, optional managed AI APIs (pay-per-use) to complement in-house algorithms, Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, Apple/Google/Facebook/LinkedIn logins, payment gateways.
 - **Real-Time Infrastructure**: Socket.io/WebRTC for timeline updates, community chats, live classrooms, voice/video sessions, and event broadcasting.
 
 ### Expanded Coverage
 - Failure handling patterns (retries, circuit breakers), observability hooks, and incident response automation.
 - `.env` scaffolding, environment bootstrap scripts, and configuration documentation for every integration.
-- AI-driven recommendation services with moderation safeguards and analytics feedback loops.
+- Lightweight recommendation services with moderation safeguards and analytics feedback loops, emphasizing deterministic logic and compact models that fit existing infrastructure.
 - Event-driven architecture for critical workflows (timeline notifications, commerce events, support escalations) enabling scalable real-time reactions.
 - Data privacy controls for integrations, ensuring least privilege, encryption, and audit logging for every external connection.
 - Database migration governance with versioning, rollback scripts, and seeded starter data verification.
@@ -99,8 +99,8 @@
 - Performance budgets for APIs (latency, throughput, error rate) with automated alerting and SLO tracking.
 
 ## Testing & Quality Engineering
-- **Comprehensive Automated Suites**: Unit, integration, functional, error handling, access control, CRUD, AI, integration, login/registration, dashboard, timeline, community, chat, media, payments, and mobile UI tests.
-- **Non-Functional Validation**: Load, stress, usage, financial, security, GDPR, migration, uptime, live feed (“Timeline”), community, AI, dashboard, mobile device, and RAM/server stress tests with documented results.
+- **Comprehensive Automated Suites**: Unit, integration, functional, error handling, access control, CRUD, intelligence/automation behavior, integration, login/registration, dashboard, timeline, community, chat, media, payments, and mobile UI tests.
+- **Non-Functional Validation**: Load, stress, usage, financial, security, GDPR, migration, uptime, live feed (“Timeline”), community, intelligence, dashboard, mobile device, and RAM/server stress tests with documented results.
 - **Post-Launch Monitoring**: Analytics dashboards, SLA tracking, incident playbooks, and feedback loops feeding Version 1.01 roadmap.
 
 ### Expanded Coverage
@@ -121,7 +121,83 @@
 
 ### Expanded Coverage
 - Data governance policies defining ownership, update cadence, retention, and access controls for each dataset.
-- Metadata catalog with lineage tracking for analytics pipelines and recommendation models.
+- Metadata catalog with lineage tracking for analytics pipelines and recommendation/intelligence models.
 - Real-time dashboards for RAM/server usage, conversion funnels, community engagement, and support SLAs with alert thresholds.
 - Upgrade readiness kit including GitHub automation scripts, release notes template, and stakeholder communication plan.
 - Training curriculum for internal teams covering new features, analytics interpretation, and compliance responsibilities.
+- Sustainability metrics tracking infrastructure efficiency, carbon footprint, and media encoding optimizations.
+
+## Lightweight Intelligence & Automation Enhancements
+- **Contextual Assistants & Moderation**: Deploy deterministic helpers for communities, timeline, and dashboards that summarize activity, flag risks, and aid moderation using retrieval-augmented knowledge bases and compact internal models. Offer optional managed AI API hooks that can be toggled off without disrupting service.
+- **Recommendation Evolution**: Enhance matching algorithms with explainability overlays, fairness monitoring, and human override controls while keeping inference CPU-friendly. Feed data from skill/qualification/pricing taxonomies into near-real-time personalization services across web and mobile.
+- **Workflow Automation Studio**: Introduce configurable automations (e.g., trigger alerts when a community event is published or when learner progress stalls) with approval gates, rollback history, and analytics on automation efficacy.
+- **Insightful Analytics**: Surface predictive and trend insights for churn, upsell opportunities, and content quality within admin dashboards by combining statistical forecasting, lightweight ML, and heuristic scoring.
+- **Safety & Compliance Guardrails**: Establish bias testing, incident escalation runbooks, and privacy-preserving data pipelines for intelligence workloads; ensure retention and deletion policies align with GDPR mandates and document resource ceilings for each service.
+
+### Expanded Coverage
+- Intelligence registry with versioning, deployment promotion workflows, and rollback procedures tailored to lightweight rules/models.
+- Shadow mode deployments for new algorithms feeding evaluation dashboards before production cutover.
+- Dedicated moderation review center with queue prioritization, case history, and SLA tracking backed by confidence scores from compact classifiers.
+- Automation analytics showing time saved, tasks executed, user satisfaction with assistant recommendations, and fallback rates when external AI APIs are disabled.
+- Security reviews for intelligence integrations covering prompt injection protection, rate limiting, auditing, and cost governance across both internal and optional external services.
+
+## Financial, Monetization & Operational Excellence
+- **Revenue Management Suite**: Unified ledgers for purchases, refunds, commissions, advertising, and subscriptions with finance
+  dashboards, exportable statements, and automated reconciliation scripts.
+- **Dynamic Pricing Toolkit**: Campaign management, coupons, bundles, and localized tax handling for courses, e-books, tutors,
+  and communities with preview capabilities on web and mobile.
+- **Advertising & Sponsorship Platform**: Placement manager controlling ads across timeline, search, post-live sessions, community
+  feeds, course/e-book/tutor views, profiles, and dashboards; includes pacing controls, policy enforcement, and performance analytics.
+- **Operational Cost Governance**: Real-time monitoring of infrastructure spend, RAM/server usage, intelligence inference costs (internal algorithms and optional external APIs), and media storage with optimization recommendations and sustainability scorecards.
+- **Compliance Automation**: SOC-ready audit logs, financial policy acknowledgements, refund eligibility timers, fraud detection
+  integration, and dispute resolution workflows.
+
+### Expanded Coverage
+- Financial stress testing scenarios simulating peak enrollment, ad surges, and refund waves with automated alerting.
+- Billing sandbox parity tests with record/replay validation for payment gateways and subscription providers.
+- Budget dashboards for community managers and instructors tracking revenue share, payouts, and outstanding balances.
+- Governance workflow requiring finance/legal approval before large-scale promotions or pricing changes go live.
+- Documentation kits for finance operations covering reconciliation checklists, chargeback procedures, and escalation contacts.
+
+## Operational Tooling & Governance Enhancements
+- **War Room Automation**: Incident command dashboard aggregating alerts, runbooks, and communication templates with integrated on-call escalation.
+- **Runbook Knowledge Graph**: Searchable repository linking requirements, services, and troubleshooting steps with version-controlled updates and audit history.
+- **Evidence Vault**: Immutable storage pipeline ingesting CI reports, load test metrics, penetration findings, financial reconciliations, and GDPR request logs mapped to requirement IDs.
+- **Change Approval Workflow**: PMO-managed gating system requiring risk assessment, dependency mapping, and communication plans before high-impact deployments.
+- **Sustainability Scorecard**: Dashboard tracking infrastructure efficiency, carbon impact, storage utilization, and optimization initiatives with quarterly reporting.
+
+## Data Governance & Analytics Expansion
+- **Data Classification Engine**: Tag datasets by sensitivity, automate encryption policies, and enforce retention schedules with verification reports.
+- **Privacy Request Portal**: Self-service GDPR interface handling access/delete requests, parental consent workflows, and SLA tracking.
+- **Metadata Catalog & Lineage**: Centralized catalog for schemas, ETL jobs, intelligence training corpora, and analytics dashboards with impact analysis for schema changes.
+- **Anomaly & Bias Detection**: Automated checks for data drift, missing taxonomy entries, skewed recommendations, and fairness indicators across intelligence services.
+- **Executive KPI Hub**: Aggregated metrics for engagement, learning outcomes, monetization, support, and sustainability with drill-down filters and anomaly alerts.
+
+## Training, Enablement & Adoption Programs
+- **Edulure Academy**: Role-based certification covering new dashboards, community tooling, lightweight intelligence workflows, and compliance requirements.
+- **Partner Launch Kits**: Sandbox environments, monetization calculators, marketing assets, and timeline rename explainer decks tailored for instructors and community owners.
+- **Interactive Product Tours**: In-app walkthroughs for timeline, community chat, and commerce enhancements with analytics on completion rates.
+- **Feedback Intelligence**: NPS surveys, sentiment analysis of support tickets, and community polls feeding directly into product analytics dashboards.
+- **Change Communication Hub**: Central repository for release notes, FAQs, stakeholder briefings, and localization-ready announcement templates.
+
+## Observability & Reliability Upgrades
+- **Unified Telemetry Stack**: Shared logging/metrics/tracing framework spanning backend, frontend, mobile, and integrations with SLO dashboards.
+- **Synthetic Monitoring Fleet**: Global probes validating login, timeline, chat, checkout, and mobile APIs with automated incident creation on failures.
+- **Chaos Engineering Toolkit**: Scheduled experiments simulating integration outages, latency spikes, and socket disruptions with resilience reporting.
+- **Capacity Planning Simulator**: Tooling to model load scenarios, autoscaling triggers, and infrastructure cost forecasts using historical telemetry.
+- **Mobile Reliability Lab**: Device farm automation capturing performance metrics, crash analytics, and accessibility compliance evidence.
+
+## Sustainability & Cost Optimization Features
+- **Green Deployment Policies**: Autoscaling down during off-peak hours, workload placement in energy-efficient regions, and carbon-aware scheduling.
+- **Media Lifecycle Automation**: Auto-archival of inactive streams, adaptive encoding, and CDN cache tuning to minimize bandwidth waste.
+- **Intelligence Cost Guardrails**: Budget alerts, adaptive throttling, prompt optimization recommendations, and reporting on inference spend per feature with emphasis on internal algorithm efficiency.
+- **Waste Cleanup Jobs**: Automated removal of stale environments, unused feature flags, orphaned assets, and outdated starter data snapshots.
+- **Sustainability Insights Portal**: Visualize efficiency gains, carbon impact reductions, and reinvestment plans for leadership transparency.
+
+## Innovation & Continuous Improvement
+- **Experimentation Platform**: Governance for A/B/n tests across recommendations, pricing, and UI experiments with ethical review checkpoints.
+- **Automation Studio**: No-code workflows that trigger alerts, assignments, or optional assistant summaries based on learner progress, community activity, or support cues while defaulting to deterministic actions.
+- **Predictive Analytics**: Lightweight forecasting models and statistical signals predicting churn, upsell opportunities, and content quality risks with dashboard surfacing and clear resource budgets.
+- **Community Health Radar**: Composite score tracking engagement, moderation load, sentiment, and monetization per community to guide interventions.
+- **Post-Launch Feedback Loop**: Integrated backlog pipeline pulling from analytics anomalies, support themes, and partner feedback into Version 1.01 planning.
+

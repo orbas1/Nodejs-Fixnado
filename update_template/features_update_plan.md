@@ -33,8 +33,8 @@
 4. **Observability & Reliability**
    - Instrument uptime helper dashboards, load balancing, health checks, telemetry pipelines, RAM profiling hooks, and stress alert thresholds.
 5. **Integration Enablement**
-   - Build adapters and sandbox credentials for Hubspot, Salesforce, Google, OpenAI, Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, Apple/Google/Facebook/LinkedIn OAuth.
-   - Document failure handling, retry logic, and contract tests for each integration.
+   - Build adapters and sandbox credentials for Hubspot, Salesforce, Google, managed AI API providers (optional, pay-per-use), Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, Apple/Google/Facebook/LinkedIn OAuth while prioritizing internal algorithms for core intelligence.
+   - Document failure handling, retry logic, and contract tests for each integration, including fallbacks that keep features operational when external AI APIs are disabled.
 
 **Phase 1 Exit Criteria**
 - Codebase passes modularization reviews with architecture board approval and linting in CI.
@@ -61,7 +61,7 @@
 ## Phase 3 – Core Backend Services
 1. **Timeline Service Upgrade**
    - Rename all models, routes, services, analytics events, and UI copy from “Live Feed” to “Timeline”.
-   - Implement ad/recommendation placement engine, spam/bad word scanner, report handling, follow/unfollow APIs, and monetization analytics.
+   - Implement ad/recommendation placement engine, spam/bad word scanner, report handling, follow/unfollow APIs, and monetization analytics powered by deterministic rules and lightweight in-house models so timelines remain performant without GPU infrastructure.
 2. **Community & Chat Services**
    - Build modular community service covering feeds, classrooms, calendars, livestreams, podcasts, events, scoreboards, maps, members, about, subscriptions, and leaderboards.
    - Develop Discord-like chat service (rooms, broadcast channels, voice/video/WebRTC, moderation, media, role permissions) leveraging socket.io and scalable signaling infrastructure.
@@ -73,6 +73,9 @@
    - Provide API endpoints for dashboard inbox previews, notifications, and moderation.
 5. **Media & File Handling**
    - Implement secure upload pipelines with virus scanning, transcoding, CDN links, and storage provider abstraction (Cloudflare R2/Wasabi/local).
+6. **Lightweight Intelligence Services**
+   - Stand up internal recommendation, moderation, and insight services using rule engines, retrieval layers, and compact models deployable on shared compute while documenting resource ceilings and fallbacks when optional external AI APIs are disabled.
+   - Create evaluation harnesses that benchmark accuracy, bias, and latency targets for these lightweight services without introducing GPU dependencies.
 
 **Phase 3 Exit Criteria**
 - Timeline, community, commerce, support, and media services deployed to staging with contract tests passing.
@@ -140,7 +143,7 @@
 
 ## Phase 7 – Quality Engineering & Testing Execution
 1. **Automated Test Development**
-   - Build suites covering unit, integration, functional, regression, error handling, access control, CRUD, AI behavior, integration, login/registration, dashboard, timeline, community, chat, media handling, payments, and mobile UI tests.
+   - Build suites covering unit, integration, functional, regression, error handling, access control, CRUD, lightweight intelligence behavior, integration, login/registration, dashboard, timeline, community, chat, media handling, payments, and mobile UI tests.
 2. **Non-Functional & Specialized Testing**
    - Execute load, stress, high-usage, RAM profiling, failover, database migration, live service simulations, uptime helper drills, and financial reconciliation tests.
    - Perform security (penetration, vulnerability, GDPR) and privacy assessments; validate file submission protection and spam filtering.
@@ -184,6 +187,26 @@
 - Financial reconciliation and compliance reports completed with sign-off from finance/security leads.
 - Backlog for Version 1.01 populated with prioritized improvements informed by feedback loop.
 
+## Phase 10 – Intelligence, Monetization & Continuous Optimization
+1. **Lightweight Intelligence Governance**
+   - Stand up rule/model registry, evaluation pipelines, and promotion workflows for recommendation, moderation, and assistant services with explicit constraints that favor lightweight, CPU-friendly models.
+   - Execute fairness/bias audits, privacy reviews, and safety drills before promoting new or updated intelligence logic to production, including validation that optional external AI APIs can be toggled off without service disruption.
+2. **Financial Optimization Sprint**
+   - Analyze ad inventory performance, pricing elasticity, and refund trends; implement automation to improve margin without sacrificing UX.
+   - Validate reconciliation scripts, ledger exports, and finance dashboards after live traffic settles; update SOPs based on findings.
+3. **Automation & Workflow Enhancements**
+   - Launch no-code automation templates (e.g., alerts for stalled learners, community engagement nudges) with monitoring for success and rollback controls.
+   - Instrument telemetry for automation usage, satisfaction, and incident response integration.
+4. **Sustainability & Cost Management**
+   - Review infrastructure spend, RAM/server utilization, intelligence inference costs; implement optimizations (autoscaling thresholds, media encoding adjustments, CDN tuning).
+   - Publish sustainability scorecard and align with corporate ESG targets.
+
+**Phase 10 Exit Criteria**
+- Rule/model registry populated with versioned entries, evaluation scorecards, and rollback documentation signed by intelligence governance board.
+- Finance operations confirm variance <0.01% between ledgers and provider statements; ad revenue pacing meets projections.
+- Automation catalog launched with at least three production templates, adoption metrics captured, and incident escalation tested.
+- Cost optimization roadmap delivering agreed savings and sustainability KPI improvements, reviewed by engineering leadership.
+
 ## Requirement-Aligned Workstreams
 The following workstreams decompose the requirement lists into actionable backlogs that can be tracked in Jira/Linear with direct traceability to the Version 1.00 mandate.
 
@@ -191,7 +214,7 @@ The following workstreams decompose the requirement lists into actionable backlo
 - **DevOps** – Items 1, 4, 5, 21, 22, 42, 43; deliver automation scripts, live service rehearsal tooling, database rehearsal logs, capacity plans, and RAM optimization reports.
 - **Product & Architecture** – Items 2, 3, 39; own logic flow approvals, release readiness scorecards, and acceptance criteria traceability.
 - **Engineering** – Items 6, 8, 13, 35, 40, 41; provide unit/usage/CRUD suites, removal of legacy modules, performance optimizations, and verification that no placeholders remain.
-- **QA** – Items 7, 8, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20; manage load, error handling, access control, timeline, community, AI, integrations, login, dashboard, and mobile testing.
+- **QA** – Items 7, 8, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20; manage load, error handling, access control, timeline, community, intelligence/automation, integrations, login, dashboard, and mobile testing.
 - **Content & Marketing** – Items 24–34; publish starter data, taxonomies, README/full guide, SEO tags, hashtags, and learning catalogs.
 - **Security & Compliance** – Items 23, 25, 26; execute penetration tests, security reviews, and documentation compliance checks.
 
@@ -230,7 +253,7 @@ The following workstreams decompose the requirement lists into actionable backlo
 ### Testing Playbook
 - Maintain a matrix mapping requirement IDs to automated/manual test cases in the QA management tool; include acceptance evidence attachments.
 - Schedule recurring load/stress tests, penetration assessments, migration rehearsals, and mobile device sweeps aligned with release checkpoints.
-- Archive financial reconciliation, GDPR handling, integration contract, and AI behavior validation artifacts in the compliance repository.
+- Archive financial reconciliation, GDPR handling, integration contract, and intelligence behavior validation artifacts in the compliance repository.
 
 #### Testing Calendar Highlights
 - **Sprint N+1:** Focus on unit/integration automation for newly modularized services; run nightly CI with coverage enforcement.
@@ -326,6 +349,8 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 - **Taxonomy Data:** Phase 2 outputs feed into Phase 3 services and Phase 4/5 UI/UX.
 - **Legal Approvals:** Phase 6 documents required for onboarding flows to pass QA in Phase 7.
 - **Monitoring Stack:** Phase 1 observability is prerequisite for Phase 7 load/stress tests and Phase 8 live monitoring.
+- **Model Governance Framework:** Established in Phase 0/1 and required for Phase 3 intelligent features and Phase 10 continuous optimization.
+- **Financial Playbooks:** Drafted during Phase 2 documentation and finalized in Phase 10 to support reconciliation and audits.
 
 ## Deliverables by Role
 - **Engineering:** Modularized services, APIs, Flutter parity, deployment tooling, automated tests, performance optimizations.
@@ -352,6 +377,21 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 - **Daily Standups per Squad:** Execution detail on stories, blockers, and test status for each module.
 - **Launch War Room Schedule:** Detailed timeline for Phase 8/9 including runbooks, on-call rotations, and communication plans.
 
+## Quality Gate Summary
+- **Gate 1 – Architecture Readiness (End of Phase 1):** Requires signed architecture review, security baseline approval, and deployment rehearsal logs.
+- **Gate 2 – Data & Content Preparedness (End of Phase 2):** Demands taxonomy catalog approval, seeder validation reports, and documentation outlines.
+- **Gate 3 – Service Completeness (Mid-Phase 3):** Blocks progress until timeline, community, commerce, and support services pass contract and load tests.
+- **Gate 4 – Experience Validation (End of Phase 5):** Ensures web/mobile parity demos, UX sign-off, accessibility audits, and Chatwoot integration evidence.
+- **Gate 5 – Compliance & Testing (End of Phase 7):** Confirms execution of all release readiness tests (1–43), intelligence safety audits, and evidence repository completion.
+- **Gate 6 – Launch Authorization (Phase 8 Go/No-Go):** Requires quality scorecard green status, finance reconciliation, incident response readiness, and stakeholder sign-off.
+- **Gate 7 – Optimization Kickoff (Start of Phase 10):** Checks post-launch analytics stabilization, backlog prioritization, and governance board approval to commence optimization work.
+
+## Evidence & Audit Trail Governance
+- Centralize artifacts in a compliance workspace structured by requirement ID, phase, and responsible squad; enforce access controls and retention rules.
+- Automate evidence collection from CI/CD (test reports, coverage metrics), observability (dashboards, alerts), and financial systems (ledger exports) into immutable storage.
+- Schedule monthly audit drills sampling random requirements to ensure traceability integrity and update the risk register with findings.
+- Provide executive dashboards summarizing evidence completion, outstanding actions, and upcoming audit deadlines to maintain release readiness visibility.
+
 ## Success Metrics
 - 100% of enumerated test categories executed with passing status before launch.
 - Page load TTI under 3 seconds on target devices; real-time features maintain sub-250ms latency under load.
@@ -359,3 +399,74 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 - Support response times within SLA and positive CSAT from beta cohorts.
 - Zero unresolved P0 defects at release and documented rollback plan validated.
 - Complete documentation (README, guide, policies, upgrade notes) published and versioned.
+
+## Phase 11 – Training, Enablement & Change Management
+1. **Internal Enablement Tracks**
+   - Launch Edulure Academy curriculum with modules for support, engineering, product, marketing, and finance teams covering new workflows, dashboards, and governance requirements.
+    - Require certification assessments before granting production access for sensitive modules (finance dashboards, intelligence moderation console, deployment tooling).
+2. **External Partner Ramp-Up**
+   - Provide instructors, tutors, and community managers with sandbox environments, documentation kits, and live workshops. Capture attendance and follow-up adoption metrics in CRM.
+   - Publish go-live timelines, pricing updates, and monetization guidance tailored to each partner segment.
+3. **Customer Communication & Adoption Campaigns**
+   - Coordinate release notes, blog posts, email campaigns, and in-app tours introducing timeline rename, community chat, and new commerce options.
+   - Configure support.edulure.com with updated guides, FAQs, video walkthroughs, and search optimization for Version 1.00 features.
+4. **Feedback & Measurement**
+   - Instrument feedback widgets, NPS surveys, and user interviews segmented by learner/instructor/admin roles. Route insights into analytics dashboards and backlog grooming cadence.
+
+**Phase 11 Exit Criteria**
+- Internal teams achieve ≥90% certification completion for relevant curricula with tracked assessment scores.
+- Partner enablement sessions delivered with attendance logs and follow-up task lists; adoption KPIs trending upward.
+- Customer-facing communication plan executed with engagement metrics (open/click rates, tour completion, support article views).
+- Feedback loops integrated into analytics with actionable insights prioritized for Version 1.01 backlog.
+
+## Phase 12 – Sustainability, Cost Optimization & Continuous Improvement
+1. **Operational Efficiency Review**
+   - Analyze infrastructure utilization, intelligence inference spend, media storage, and CDN costs post-launch. Implement optimization stories (autoscaling tuning, media compression, job scheduling).
+   - Update sustainability scorecard with carbon footprint estimates, efficiency initiatives, and offset strategies.
+2. **Process Maturity Enhancements**
+   - Conduct retrospectives on deployment automation, incident response, and evidence collection. Roll improvements into updated runbooks and governance artifacts.
+   - Automate stale environment cleanup, feature flag pruning, and data retention enforcement.
+3. **Compliance & Audit Readiness**
+   - Schedule mock audits for GDPR, security, and financial controls. Validate that policy acknowledgements, access reviews, and retention logs meet regulatory expectations.
+   - Refresh DPIAs and vendor assessments in light of production telemetry and new integrations.
+4. **Innovation Pipeline**
+   - Prioritize intelligence, personalization, and monetization experiments based on KPI performance. Establish proposal template requiring ethical, financial, and technical review before backlog inclusion.
+
+**Phase 12 Exit Criteria**
+- Sustainability scorecard published with quantified savings and roadmap of future optimizations.
+- Process improvements ratified by governance board with updated documentation and training assets.
+- Compliance gap analysis shows zero critical findings; remediation tasks tracked in risk register.
+- Innovation backlog curated with approved experiment briefs and resource estimates.
+
+## Communication & Stakeholder Engagement Plan
+- **Executive Steering Committee** – Monthly deep-dives reviewing phase progress, risk register, financial burn, and compliance posture.
+- **Customer Advisory Board** – Quarterly briefings showcasing roadmap milestones, soliciting feedback on community, learning, and monetization features.
+- **Public Status Updates** – Coordinate status.edulure.com messaging, release notes, and community announcements to maintain transparency during rollout and stabilization.
+- **Internal Comms Toolkit** – Provide slide decks, FAQs, and talking points enabling leaders to brief their teams and partners consistently.
+
+## Expanded Success Metrics & KPIs
+- Launch readiness score ≥95% across gating checklist with zero outstanding P0/P1 defects.
+- Timeline rename adoption: ≥85% of active users interacting with renamed modules within first month.
+- Community chat engagement: ≥60% of active communities hosting at least one live event or voice session in first quarter.
+- Commerce uplift: ≥20% increase in bundled purchases driven by recommendations and pricing matching.
+- Support efficiency: Chatwoot first-response time <3 minutes during launch window; CSAT ≥4.5/5.
+- Sustainability impact: ≥15% reduction in per-user infrastructure cost compared to pre-launch baseline.
+
+## Continuous Monitoring Dashboard Requirements
+- Create unified executive dashboard aggregating SLO adherence, engagement KPIs, financial performance, and sustainability metrics.
+- Ensure dashboards support drill-down by role, geography, community, and content type with exportable snapshots for board reporting.
+- Automate anomaly detection alerts for sharp deviations (e.g., spike in refund requests, drop in chat engagement, latency increases) with runbook links.
+- Implement quarterly data quality reviews verifying metric definitions, lineage, and reconciliation with source systems.
+
+## Documentation & Knowledge Management Expansion
+- Version control all playbooks, diagrams, and guides with changelog referencing release plan phases and requirement IDs.
+- Publish 360° onboarding kit including setup scripts, architecture overviews, taxonomy catalogs, legal templates, and troubleshooting matrices.
+- Introduce documentation SLAs ensuring updates occur within 48 hours of feature changes, supported by doc-review workflow in the PMO backlog.
+- Add interactive decision trees in knowledge base covering support triage, monetization configuration, and community moderation scenarios.
+
+## Risk Management Enhancements
+- Update risk register with probability/impact scoring, mitigation owners, and contingency playbooks; review weekly during program sync.
+- Establish early warning indicators (EWIs) for critical risks (integration failure, policy delays, performance regression) tied to telemetry or milestone slippage.
+- Implement dependency heat map evaluating external vendors, internal teams, and infrastructure components with mitigation strategies for high-risk nodes.
+- Incorporate game days simulating high-risk scenarios (payment outage, intelligence drift, community abuse spike) with post-mortem action plans.
+
