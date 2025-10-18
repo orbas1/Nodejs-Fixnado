@@ -123,6 +123,12 @@
   gap: var(--fx-space-4);
 }
 
+.fx-zone-panel__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--fx-color-text-secondary);
+}
+
 .fx-zone-panel__header {
   display: flex;
   justify-content: space-between;
@@ -169,30 +175,37 @@
 }
 
 .fx-zone-panel__insights {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: grid;
   gap: var(--fx-space-3);
+  margin: 0;
 }
 
-.fx-zone-panel__insights li {
-  display: flex;
-  gap: var(--fx-space-3);
-  align-items: center;
+.fx-zone-panel__insights div {
+  display: grid;
+  gap: var(--fx-space-2);
   background: var(--fx-color-surface-base);
   border-radius: var(--fx-radius-lg);
   border: 1px solid var(--fx-color-border-subtle);
   padding: var(--fx-space-4);
 }
 
-.fx-zone-panel__insights svg {
-  width: 20px;
-  height: 20px;
+.fx-zone-panel__insights dt {
+  display: flex;
+  align-items: center;
+  gap: var(--fx-space-2);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fx-color-text-tertiary);
+}
+
+.fx-zone-panel__insights dt svg {
+  width: 18px;
+  height: 18px;
   color: var(--fx-color-brand-primary);
 }
 
-.fx-zone-panel__insight-value {
+.fx-zone-panel__insights dd {
   margin: 0;
   font-weight: 600;
   color: var(--fx-color-text-primary);
@@ -259,6 +272,10 @@
 .fx-explorer-card__description {
   font-size: 0.95rem;
   color: var(--fx-color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .fx-explorer-card__meta {

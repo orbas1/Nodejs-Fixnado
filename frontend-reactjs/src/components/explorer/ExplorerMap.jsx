@@ -169,7 +169,7 @@ export default function ExplorerMap({ data, selectedZoneId, onSelectZone, bounds
     <div className="fx-explorer-map" aria-label="Zone map">
       <div ref={containerRef} className="fx-explorer-map__canvas" role="presentation" />
       <div className="fx-explorer-map__legend" aria-hidden="true">
-        <strong>Zone demand</strong>
+        <strong>Demand</strong>
         <ul>
           <li><span style={{ backgroundColor: demandColors.high }} /> High</li>
           <li><span style={{ backgroundColor: demandColors.medium }} /> Balanced</li>

@@ -8,16 +8,16 @@ import Button from '../ui/Button.jsx';
 import './explorer.css';
 
 const demandOptions = [
-  { value: 'high', label: 'High demand', description: 'Priority staffing required, high job volume' },
-  { value: 'medium', label: 'Balanced', description: 'Stable workload with standard SLA adherence' },
-  { value: 'low', label: 'Emerging', description: 'Lower utilisation, growth opportunity' }
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Balanced' },
+  { value: 'low', label: 'Low' }
 ];
 
 const availabilityOptions = [
-  { value: 'any', label: 'Any availability' },
-  { value: 'rent', label: 'Rental inventory' },
-  { value: 'buy', label: 'For purchase' },
-  { value: 'both', label: 'Rental & sale' }
+  { value: 'any', label: 'Any' },
+  { value: 'rent', label: 'Rent' },
+  { value: 'buy', label: 'Buy' },
+  { value: 'both', label: 'Both' }
 ];
 
 export default function ExplorerFilters({ filters, onChange, onReset, zones, categories, serviceTypes, isBusy }) {
@@ -45,8 +45,8 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
     <section className="fx-explorer-filters" aria-label="Explorer filters">
       <div className="fx-explorer-filters__row">
         <TextInput
-          label="Search Fixnado network"
-          placeholder="Keywords, skills, company or marketplace item"
+          label="Search"
+          placeholder="Skills, teams, gear"
           value={filters.term}
           onChange={(event) => handleUpdate({ term: event.target.value })}
           prefix={<MagnifyingGlassIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />}
@@ -54,20 +54,20 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           data-qa="explorer-filter.search"
         />
         <SegmentedControl
-          name="Result type"
+          name="Mode"
           value={filters.type}
           onChange={(value) => handleUpdate({ type: value })}
           options={[
-            { value: 'all', label: 'All results' },
+            { value: 'all', label: 'All' },
             { value: 'services', label: 'Services' },
-            { value: 'marketplace', label: 'Marketplace' }
+            { value: 'marketplace', label: 'Store' }
           ]}
           qa={{ group: 'explorer-filter.type', option: 'explorer-filter.type.option' }}
         />
       </div>
 
       <div className="fx-explorer-filters__row fx-explorer-filters__row--secondary">
-        <FormField id="explorer-zone" label="Service zone">
+        <FormField id="explorer-zone" label="Zone">
           <select
             id="explorer-zone"
             className="fx-select"
@@ -84,7 +84,7 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           </select>
         </FormField>
 
-        <FormField id="explorer-availability" label="Inventory availability">
+        <FormField id="explorer-availability" label="Availability">
           <select
             id="explorer-availability"
             className="fx-select"
@@ -100,7 +100,7 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           </select>
         </FormField>
 
-        <FormField id="explorer-service-type" label="Service type" optionalLabel="Optional">
+        <FormField id="explorer-service-type" label="Type" optionalLabel="Optional">
           <select
             id="explorer-service-type"
             className="fx-select"
@@ -119,7 +119,7 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
           </select>
         </FormField>
 
-        <FormField id="explorer-category" label="Service category" optionalLabel="Optional">
+        <FormField id="explorer-category" label="Category" optionalLabel="Optional">
           <select
             id="explorer-category"
             className="fx-select"
@@ -138,13 +138,12 @@ export default function ExplorerFilters({ filters, onChange, onReset, zones, cat
       </div>
 
       <fieldset className="fx-explorer-filters__demand" data-qa="explorer-filter.demand">
-        <legend>Zone demand focus</legend>
+        <legend>Demand</legend>
         <div className="fx-explorer-filters__demand-grid">
           {demandOptions.map((option) => (
             <Checkbox
               key={option.value}
               label={option.label}
-              description={option.description}
               checked={filters.demand.includes(option.value)}
               onChange={() => handleDemandToggle(option.value)}
             />
