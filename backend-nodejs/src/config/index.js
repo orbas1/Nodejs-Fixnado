@@ -4,8 +4,6 @@ import { readFileSync } from 'node:fs';
 
 import { getSecretSyncMetadata, loadSecretsIntoEnv } from './secretManager.js';
 
-await loadSecretsIntoEnv({ stage: 'config-bootstrap', logger: console });
-
 const env = process.env.NODE_ENV || 'development';
 const requestedDialect = (process.env.DB_DIALECT || '').toLowerCase();
 const hasConnectionString = typeof process.env.DB_URL === 'string' && process.env.DB_URL.trim() !== '';
@@ -869,7 +867,31 @@ const config = {
         service: process.env.OPSGENIE_SERVICE || 'Fixnado Analytics'
       }
     }
+  },
+  logging: {
+    level: process.env.LOG_LEVEL || (env === 'production' ? 'info' : 'debug'),
+    format: (process.env.LOG_FORMAT || '').toLowerCase() || (env === 'production' ? 'json' : 'pretty'),
+    serviceName: process.env.LOG_SERVICE_NAME || 'fixnado-api',
+    redactKeys: listFromEnv('LOG_REDACT_KEYS')
+  },
+  runtime: {
+    backgroundJobs: {
+      enabled: boolFromEnv('BACKGROUND_JOBS_ENABLED', env === 'production'),
+      allowlist: listFromEnv('BACKGROUND_JOBS_ALLOWLIST'),
+      blocklist: listFromEnv('BACKGROUND_JOBS_BLOCKLIST'),
+      startupDelaySeconds: Math.max(intFromEnv('BACKGROUND_JOBS_STARTUP_DELAY_SECONDS', 5), 0)
+    },
+    readiness: {
+      snapshotFile: process.env.READINESS_SNAPSHOT_FILE || null,
+      persistIntervalSeconds: Math.max(intFromEnv('READINESS_PERSIST_INTERVAL_SECONDS', 5), 1)
+    }
   }
 };
 
 export default config;
+
+export async function bootstrapConfig(options = {}) {
+  const { stage = 'runtime-bootstrap', logger = console, forceRefresh = false } = options;
+  await loadSecretsIntoEnv({ stage, logger, forceRefresh });
+  return config;
+}

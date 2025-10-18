@@ -10,12 +10,12 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 1.3 CORS/Helmet/rate limiting hardening | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 1.4 Telemetry endpoints & retention | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 1.5 RBAC & feature flag governance doc | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **2. Stabilise Platform Lifecycle & Database Safety**【F:docs/updates/1.00/update_task_list.md†L36-L86】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 2.1 Controlled boot sequence & readiness export | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 2.2 Structured readiness metrics & rate limiting | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 2.3 Transactional migrations & audit metadata | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 2.4 Retention/encryption guidelines & retry history | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 2.5 Deterministic QA seed scripts | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **2. Stabilise Platform Lifecycle & Database Safety**【F:docs/updates/1.00/update_task_list.md†L36-L86】 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 2.1 Controlled boot sequence & readiness export | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 2.2 Structured readiness metrics & rate limiting | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 2.3 Transactional migrations & audit metadata | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 2.4 Retention/encryption guidelines & retry history | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 2.5 Deterministic QA seed scripts | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 3.1 Manifest/lockfile repair & ORM roadmap | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 3.2 Runtime/SDK enforcement & CI audits | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
