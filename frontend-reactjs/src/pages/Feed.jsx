@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUturnLeftIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import PropTypes from 'prop-types';
+import {
+  ArrowTopRightOnSquareIcon,
+  ArrowUturnLeftIcon,
+  UserCircleIcon
+} from '@heroicons/react/24/outline';
 import LiveFeed from '../components/LiveFeed.jsx';
-import Spinner from '../components/ui/Spinner.jsx';
-import { fetchMarketplaceFeed } from '../api/feedClient.js';
 import { setCurrentRole, useCurrentRole } from '../hooks/useCurrentRole.js';
 import { useSession } from '../hooks/useSession.js';
-import { useMarketplaceInventory } from '../hooks/useMarketplaceInventory.js';
+import { fetchFeedSuggestions } from '../api/feedClient.js';
+import Spinner from '../components/ui/Spinner.jsx';
 
 const ROLE_STATUS_LABELS = {
   admin: 'Admin',
@@ -20,16 +22,7 @@ const ROLE_STATUS_LABELS = {
   user: 'User'
 };
 
-const ROLE_PREVIEW_DESCRIPTIONS = {
-  admin: 'Full command of compliance, analytics, and workforce orchestration.',
-  company: 'Coordinate enterprise dispatch, capital assets, and cross-site coverage.',
-  enterprise: 'Coordinate enterprise dispatch, capital assets, and cross-site coverage.',
-  provider: 'Manage crews, accept assignments, and review billing cadence.',
-  serviceman: 'Confirm shifts, log work, and review dispatch readiness.',
-  servicemen: 'Confirm shifts, log work, and review dispatch readiness.',
-  user: 'Post jobs, review bids, and manage upcoming work orders.',
-  guest: 'Browse public listings and explore capabilities before registering.'
-};
+const SUGGESTION_LIMIT = 3;
 
 const formatUserName = (userId, role) => {
   if (typeof userId === 'string' && userId.trim().length > 0) {
@@ -42,209 +35,63 @@ const formatUserName = (userId, role) => {
   return 'Fixnado member';
 };
 
-const FEED_TABS = [
-  {
-    id: 'timeline',
-    label: 'Timeline',
-    description: 'Welcome back — share updates, celebrate wins, and stay close to your Fixnado network.'
-  },
-  { id: 'marketplace', label: 'Marketplace', description: 'Track saved inventory and manage procurement.' },
-  { id: 'insights', label: 'Operations digest', description: 'Monitor account usage and recent activity.' }
-];
-
-function MarketplaceSection({ marketplaceState, saved, purchases, onSave, onRemove, onPurchase }) {
+function SuggestionSection({ title, actionHref, actionLabel, loading, error, emptyLabel, items, renderItem }) {
   return (
-    <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-blue-50/90 to-sky-50/90 p-6 shadow-glow">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-primary">Marketplace live feed</h2>
-          <p className="text-sm text-slate-500">Curated equipment and tooling available to insured partners.</p>
-        </div>
-        <a href="/services#marketplace" className="text-sm font-semibold text-sky-700 hover:text-primary">
-          Go to marketplace
+    <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-glow">
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-primary">{title}</h2>
+        <a
+          href={actionHref}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-primary transition hover:border-primary hover:bg-primary hover:text-white"
+        >
+          {actionLabel}
+          <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
         </a>
-      </div>
-      <div className="mt-6 space-y-4">
-        {marketplaceState.loading ? (
-          <div className="flex justify-center py-12">
+      </header>
+      <div className="mt-4">
+        {loading ? (
+          <div className="flex justify-center py-6">
             <Spinner className="h-6 w-6 text-primary" />
           </div>
-        ) : marketplaceState.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-600">
-            {marketplaceState.error}
+        ) : error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-xs font-semibold text-rose-600">
+            {error}
           </div>
-        ) : marketplaceState.items.length === 0 ? (
-          <div className="rounded-2xl border border-sky-100 bg-sky-50/80 p-6 text-sm text-slate-600">
-            No marketplace listings found. Check back shortly as verified sellers publish new inventory.
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+            {emptyLabel}
           </div>
         ) : (
-          marketplaceState.items.map((item) => {
-            const savedItem = saved.find((entry) => entry.id === item.id);
-            return (
-              <article key={item.id} className="rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-sm">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary">{item.title}</h3>
-                    <p className="text-sm text-slate-500">{item.location ?? 'Location on request'}</p>
-                    <p className="mt-2 text-xs text-slate-400">
-                      {item.availability ?? 'Availability confirmed'} ·
-                      {item.insuredOnly ? ' Insured partners only' : ' Open to all providers'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {item.pricePerDay ? (
-                      <p className="text-sm font-semibold text-primary">{item.pricePerDay} / day</p>
-                    ) : null}
-                    {item.purchasePrice ? (
-                      <p className="text-xs text-slate-500">Buy outright {item.purchasePrice}</p>
-                    ) : null}
-                    <div className="mt-3 flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => (savedItem ? onRemove(item.id) : onSave(item))}
-                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                          savedItem
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            : 'border-sky-300 bg-white text-sky-700 hover:bg-sky-100'
-                        }`}
-                      >
-                        {savedItem ? 'Remove from inventory' : 'Save to inventory'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onPurchase(item)}
-                        className="rounded-full bg-primary/90 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary"
-                      >
-                        Mark as purchased
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })
+          <ul className="space-y-3">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3 shadow-sm transition hover:border-primary hover:bg-primary/5"
+              >
+                {renderItem(item)}
+              </li>
+            ))}
+          </ul>
         )}
       </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-primary">Saved inventory</h3>
-          {saved.length === 0 ? (
-            <p className="mt-3 text-xs text-slate-500">Save listings to build your procurement shortlist.</p>
-          ) : (
-            <ul className="mt-3 space-y-3 text-sm text-slate-600">
-              {saved.map((item) => (
-                <li key={item.id} className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-slate-800">{item.title}</p>
-                    <p className="text-xs text-slate-500">
-                      Saved {new Date(item.savedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(item.id)}
-                    className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:border-rose-200 hover:text-rose-600"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-primary">Purchase log</h3>
-          {purchases.length === 0 ? (
-            <p className="mt-3 text-xs text-slate-500">Log purchases as you secure stock from the live feed.</p>
-          ) : (
-            <ul className="mt-3 space-y-3 text-sm text-slate-600">
-              {purchases.map((purchase) => (
-                <li key={`${purchase.id}-${purchase.purchasedAt}`} className="rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm">
-                  <p className="font-semibold text-slate-800">{purchase.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {purchase.purchasePrice || purchase.pricePerDay || 'Custom pricing'} · Qty {purchase.quantity ?? 1}
-                  </p>
-                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                    Purchased {new Date(purchase.purchasedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
     </section>
   );
 }
 
-MarketplaceSection.propTypes = {
-  marketplaceState: PropTypes.shape({
-    loading: PropTypes.bool,
-    error: PropTypes.string,
-    items: PropTypes.arrayOf(PropTypes.object)
-  }).isRequired,
-  saved: PropTypes.arrayOf(PropTypes.object).isRequired,
-  purchases: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onSave: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onPurchase: PropTypes.func.isRequired
+SuggestionSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  actionHref: PropTypes.string.isRequired,
+  actionLabel: PropTypes.string.isRequired,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+  emptyLabel: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(PropTypes.object).isRequired,
+  renderItem: PropTypes.func.isRequired
 };
 
-function InsightsSection({ saved, purchases }) {
-  const totalSaved = saved.length;
-  const totalPurchased = purchases.length;
-  const recentPurchase = purchases[0]?.title ?? 'Awaiting first purchase';
-  return (
-    <section className="rounded-3xl border border-indigo-100 bg-white/95 p-6 shadow-glow">
-      <h2 className="text-xl font-semibold text-primary">Operations digest</h2>
-      <p className="mt-2 text-sm text-slate-500">Snapshot of your recent marketplace and feed activity.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Saved listings</p>
-          <p className="mt-2 text-3xl font-semibold text-primary">{totalSaved}</p>
-          <p className="mt-1 text-xs text-slate-500">Shortlisted for procurement</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Purchases logged</p>
-          <p className="mt-2 text-3xl font-semibold text-primary">{totalPurchased}</p>
-          <p className="mt-1 text-xs text-slate-500">Confirmed marketplace buys</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Latest addition</p>
-          <p className="mt-2 text-base font-semibold text-primary">{recentPurchase}</p>
-          <p className="mt-1 text-xs text-slate-500">Keep your inventory in sync with bookings</p>
-        </div>
-      </div>
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5">
-          <h3 className="text-sm font-semibold text-indigo-900">Action suggestions</h3>
-          <ul className="mt-3 space-y-2 text-xs text-indigo-900/80">
-            <li>• Publish a custom job to keep crews active during quiet periods.</li>
-            <li>• Review saved marketplace listings and mark procurement priorities.</li>
-            <li>• Invite finance teammates to monitor escrow releases.</li>
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-indigo-100 bg-white p-5">
-          <h3 className="text-sm font-semibold text-slate-800">Need deeper analytics?</h3>
-          <p className="mt-2 text-sm text-slate-500">
-            Switch to the finance or provider dashboards to analyse utilisation and spend across every zone.
-          </p>
-          <Link
-            to="/dashboards"
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 px-4 py-2 text-xs font-semibold text-indigo-700 hover:border-indigo-300"
-          >
-            View dashboards
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-InsightsSection.propTypes = {
-  saved: PropTypes.arrayOf(PropTypes.object).isRequired,
-  purchases: PropTypes.arrayOf(PropTypes.object).isRequired
+SuggestionSection.defaultProps = {
+  loading: false,
+  error: null
 };
 
 function UserPersonaCard() {
@@ -253,56 +100,58 @@ function UserPersonaCard() {
 
   const statusLabel = ROLE_STATUS_LABELS[role] ?? ROLE_STATUS_LABELS.guest;
   const personaLabel = ROLE_STATUS_LABELS[personaRole] ?? ROLE_STATUS_LABELS.guest;
-  const description = ROLE_PREVIEW_DESCRIPTIONS[personaRole] ?? ROLE_PREVIEW_DESCRIPTIONS.guest;
-
-  const onboardingHint = useMemo(() => {
+  const accessLabel = useMemo(() => {
     if (!isAuthenticated) {
-      return 'Log in to unlock real-time dispatch, analytics, and crew coordination.';
+      return 'Sign in';
     }
     if (personaRole === 'user') {
-      return 'Need provider or enterprise access? Submit an upgrade request after registering your organisation.';
+      return 'Client';
     }
-    return 'Previewing elevated access. Switch back to the customer view at any time.';
+    return 'Preview';
   }, [isAuthenticated, personaRole]);
 
   return (
-    <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-glow">
+    <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-glow">
       <header className="flex items-center gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           <UserCircleIcon className="h-9 w-9" aria-hidden="true" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Welcome back</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">You</p>
           <h1 className="text-xl font-semibold text-primary">{formatUserName(userId, role)}</h1>
         </div>
       </header>
-      <div className="mt-6 space-y-5">
-        <div className="rounded-2xl border border-primary/20 bg-white/95 p-4 shadow-inner">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Platform status</p>
-          <p className="mt-2 text-lg font-semibold text-primary">{statusLabel}</p>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Previewing feed as</p>
-          <p className="mt-1 text-sm text-slate-500">{personaLabel}</p>
-          <p className="mt-3 text-sm text-slate-500">{description}</p>
-        </div>
-        <div className="rounded-2xl border border-dashed border-sky-100 bg-sky-50/70 p-4 text-sm text-slate-600">
-          {onboardingHint}
+      <div className="mt-5 space-y-4 text-sm text-slate-600">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Status</p>
+            <p className="mt-1 font-semibold text-primary">{statusLabel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">View</p>
+            <p className="mt-1 font-semibold text-primary">{personaLabel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Access</p>
+            <p className="mt-1 font-semibold text-primary">{accessLabel}</p>
+          </div>
         </div>
         {personaRole !== 'user' ? (
           <button
             type="button"
             onClick={() => setCurrentRole('user')}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-transform hover:-translate-y-0.5 hover:from-primary/90 hover:to-sky-500/90"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
           >
             <ArrowUturnLeftIcon className="h-4 w-4" aria-hidden="true" />
-            Switch back to user view
+            Client view
           </button>
         ) : (
-          <Link
-            to="/register?upgrade=provider"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-300 bg-white px-4 py-3 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+          <a
+            href="/register?upgrade=provider"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:bg-slate-100"
           >
-            Register to unlock provider tools
-          </Link>
+            Provider access
+          </a>
         )}
       </div>
     </section>
@@ -310,74 +159,147 @@ function UserPersonaCard() {
 }
 
 export default function Feed() {
-  const [marketplaceState, setMarketplaceState] = useState({ loading: true, items: [], error: null });
-  const [activeTab, setActiveTab] = useState('timeline');
-  const { saved, purchases, saveListing, removeSavedListing, recordPurchase } = useMarketplaceInventory();
+  const { isAuthenticated } = useSession();
+  const [suggestions, setSuggestions] = useState({
+    loading: true,
+    error: null,
+    services: [],
+    providers: [],
+    stores: []
+  });
 
   useEffect(() => {
-    let cancelled = false;
-    setMarketplaceState((current) => ({ ...current, loading: true, error: null }));
+    if (!isAuthenticated) {
+      setSuggestions({ loading: false, error: null, services: [], providers: [], stores: [] });
+      return () => {};
+    }
 
-    fetchMarketplaceFeed({ limit: 8 })
-      .then((items) => {
-        if (!cancelled) {
-          setMarketplaceState({ loading: false, items: Array.isArray(items) ? items : [], error: null });
+    const controller = new AbortController();
+    setSuggestions((current) => ({ ...current, loading: true, error: null }));
+
+    fetchFeedSuggestions({ limit: SUGGESTION_LIMIT }, { signal: controller.signal })
+      .then((payload) => {
+        if (controller.signal.aborted) {
+          return;
         }
+
+        setSuggestions({
+          loading: false,
+          error: null,
+          services: payload.services,
+          providers: payload.providers,
+          stores: payload.stores
+        });
       })
       .catch((error) => {
-        if (!cancelled) {
-          setMarketplaceState({
-            loading: false,
-            items: [],
-            error: error.message || 'Unable to load marketplace activity'
-          });
+        if (controller.signal.aborted) {
+          return;
         }
+        const message = error instanceof Error ? error.message : 'Unable to load suggestions';
+        setSuggestions({ loading: false, error: message, services: [], providers: [], stores: [] });
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => controller.abort();
+  }, [isAuthenticated]);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="grid gap-8 lg:grid-cols-12">
-        <div className="space-y-10 lg:col-span-8">
-          <nav className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3 text-sm font-semibold text-slate-500">
-            {FEED_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full px-4 py-2 transition ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-white shadow-glow'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <p className="text-sm text-slate-500">{FEED_TABS.find((tab) => tab.id === activeTab)?.description}</p>
-
-          {activeTab === 'timeline' ? (
-            <LiveFeed />
-          ) : null}
-          {activeTab === 'marketplace' ? (
-            <MarketplaceSection
-              marketplaceState={marketplaceState}
-              saved={saved}
-              purchases={purchases}
-              onSave={saveListing}
-              onRemove={removeSavedListing}
-              onPurchase={recordPurchase}
-            />
-          ) : null}
-          {activeTab === 'insights' ? <InsightsSection saved={saved} purchases={purchases} /> : null}
-        </div>
-        <aside className="space-y-6 lg:col-span-4">
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-10 lg:flex-row">
+        <section className="flex-1 space-y-8">
+          <header className="flex items-end justify-between border-b border-slate-200 pb-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Workspace</p>
+              <h1 className="text-2xl font-semibold text-primary">Feed</h1>
+            </div>
+          </header>
+          <LiveFeed />
+        </section>
+        <aside className="w-full max-w-xs space-y-6 lg:sticky lg:top-10 lg:self-start">
           <UserPersonaCard />
+          <SuggestionSection
+            title="Services"
+            actionHref="/services"
+            actionLabel="Browse"
+            loading={suggestions.loading}
+            error={suggestions.error}
+            emptyLabel="No entries"
+            items={suggestions.services}
+            renderItem={(service) => (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-primary">{service.title}</p>
+                  <p className="truncate text-xs text-slate-500">{service.company}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-right">
+                  {service.priceLabel ? (
+                    <p className="text-xs font-semibold text-slate-600">{service.priceLabel}</p>
+                  ) : null}
+                  <a
+                    href={service.href}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-primary transition group-hover:border-primary group-hover:bg-primary group-hover:text-white"
+                  >
+                    View
+                  </a>
+                </div>
+              </>
+            )}
+          />
+          <SuggestionSection
+            title="Providers"
+            actionHref="/providers"
+            actionLabel="Network"
+            loading={suggestions.loading}
+            error={suggestions.error}
+            emptyLabel="No entries"
+            items={suggestions.providers}
+            renderItem={(provider) => (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-primary">{provider.name}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    {provider.zones.length > 0 ? provider.zones[0] : 'Zones pending'}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-right">
+                  <p className="text-xs font-semibold text-slate-600">{provider.programmes} programmes</p>
+                  <a
+                    href={provider.href}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-primary transition group-hover:border-primary group-hover:bg-primary group-hover:text-white"
+                  >
+                    Open
+                  </a>
+                </div>
+              </>
+            )}
+          />
+          <SuggestionSection
+            title="Stores"
+            actionHref="/marketplace"
+            actionLabel="Shop"
+            loading={suggestions.loading}
+            error={suggestions.error}
+            emptyLabel="No entries"
+            items={suggestions.stores}
+            renderItem={(item) => (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-primary">{item.title}</p>
+                  <p className="truncate text-xs text-slate-500">{item.partner}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-right">
+                  {item.priceLabel ? (
+                    <p className="text-xs font-semibold text-slate-600">{item.priceLabel}</p>
+                  ) : null}
+                  <a
+                    href={item.href}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-primary transition group-hover:border-primary group-hover:bg-primary group-hover:text-white"
+                  >
+                    Go
+                  </a>
+                </div>
+              </>
+            )}
+          />
         </aside>
       </div>
     </div>

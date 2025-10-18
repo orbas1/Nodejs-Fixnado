@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {
@@ -6,15 +7,17 @@ import {
   HandThumbUpIcon,
   HeartIcon,
   MegaphoneIcon,
-  PhotoIcon,
-  SparklesIcon
+  PaperAirplaneIcon,
+  SparklesIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import Spinner from './ui/Spinner.jsx';
 import {
   fetchLiveFeed,
   createLiveFeedPost,
   submitCustomJobBid,
-  sendCustomJobBidMessage
+  sendCustomJobBidMessage,
+  fetchMarketplaceFeed
 } from '../api/feedClient.js';
 import { fetchZones } from '../api/explorerClient.js';
 import { useCurrentRole } from '../hooks/useCurrentRole.js';
@@ -40,18 +43,18 @@ const currencyFormatters = new Map();
 const FEED_TABS = [
   {
     id: 'timeline',
-    label: 'Timeline',
-    description: 'Celebrate wins, share learnings, and stay close to your Fixnado network.'
+    label: 'Live',
+    description: 'Updates now'
   },
   {
     id: 'custom',
-    label: 'Custom jobs',
-    description: 'Broadcast bespoke work requests and manage provider responses in real time.'
+    label: 'Jobs',
+    description: 'Active briefs'
   },
   {
     id: 'marketplace',
-    label: 'Marketplace',
-    description: 'Browse curated marketplace packages, bundles, and on-demand availability.'
+    label: 'Market',
+    description: 'Verified gear'
   }
 ];
 
@@ -173,38 +176,6 @@ const INITIAL_TIMELINE_POSTS = [
   }
 ];
 
-const MARKETPLACE_SPOTLIGHTS = [
-  {
-    id: 'marketplace-1',
-    title: 'Rapid response drone inspection',
-    description: '48-hour turnaround with FAA-certified pilots, annotated reports, and thermal overlays.',
-    price: 'From $1,850',
-    rating: 4.9,
-    reviews: 128,
-    tags: ['Inspection', 'Aerial', 'Thermal'],
-    image: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: 'marketplace-2',
-    title: 'HVAC preventative maintenance bundle',
-    description: 'Quarterly servicing across multi-site portfolios with energy efficiency reporting.',
-    price: 'From $2,400',
-    rating: 4.8,
-    reviews: 96,
-    tags: ['Facilities', 'Maintenance'],
-    image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: 'marketplace-3',
-    title: 'After-hours emergency coverage team',
-    description: 'Certified technicians on rotating rosters covering critical incidents in under 90 minutes.',
-    price: 'Subscription',
-    rating: 5,
-    reviews: 64,
-    tags: ['Emergency', 'Staffing'],
-    image: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80'
-  }
-];
 
 function formatCurrency(value, currency = 'USD') {
   if (value == null || value === '') {
@@ -286,7 +257,8 @@ function TimelineFeed({
   onCommentDraftChange,
   onCommentSubmit,
   condensed,
-  canPost
+  canPost,
+  onMediaPreview
 }) {
   const displayedPosts = useMemo(() => {
     if (!Array.isArray(posts) || posts.length === 0) {
@@ -321,10 +293,7 @@ function TimelineFeed({
           onSubmit={onComposerSubmit}
           className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-inner"
         >
-          <h3 className="text-lg font-semibold text-primary">Share an update</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Spotlight wins, shout-out teammates, or rally support for upcoming projects.
-          </p>
+          <h3 className="text-lg font-semibold text-primary">New update</h3>
           <div className="mt-4 space-y-4">
             <div>
               <label htmlFor="timeline-headline" className="sr-only">
@@ -335,7 +304,7 @@ function TimelineFeed({
                 type="text"
                 value={composer.headline}
                 onChange={(event) => onComposerChange({ headline: event.target.value })}
-                placeholder="Add a headline (optional)"
+                placeholder="Headline"
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
               />
             </div>
@@ -347,7 +316,7 @@ function TimelineFeed({
                 id="timeline-body"
                 value={composer.content}
                 onChange={(event) => onComposerChange({ content: event.target.value })}
-                placeholder="Tell your network what happened, what you learned, or who deserves the credit"
+                placeholder="Share the update"
                 rows={4}
                 className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
               />
@@ -361,25 +330,15 @@ function TimelineFeed({
                 type="text"
                 value={composer.media}
                 onChange={(event) => onComposerChange({ media: event.target.value })}
-                placeholder="Paste image or video URLs to include (separate with commas)"
+                placeholder="Media URLs (comma separated)"
                 className="w-full rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-accent focus:outline-none"
               />
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                <PhotoIcon className="h-4 w-4" aria-hidden="true" />
-                Media ready
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                <SparklesIcon className="h-4 w-4" aria-hidden="true" />
-                Celebrate wins
-              </span>
-            </div>
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-accent disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-slate-300"
               disabled={!composer.content.trim()}
             >
               Post to timeline
@@ -390,7 +349,7 @@ function TimelineFeed({
 
       {feedItems.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
-          Be the first to post — share highlights, photos, or lessons learned with the wider team.
+          Nothing yet. Drop the first update for the team.
         </div>
       ) : (
         <div className="space-y-6">
@@ -405,6 +364,7 @@ function TimelineFeed({
                 onCommentDraftChange={onCommentDraftChange}
                 onCommentSubmit={onCommentSubmit}
                 canPost={canPost}
+                onMediaPreview={onMediaPreview}
               />
             ) : (
               <TimelineAdCard key={item.value.id} ad={item.value} />
@@ -430,18 +390,58 @@ TimelineFeed.propTypes = {
   onCommentDraftChange: PropTypes.func.isRequired,
   onCommentSubmit: PropTypes.func.isRequired,
   condensed: PropTypes.bool,
-  canPost: PropTypes.bool
+  canPost: PropTypes.bool,
+  onMediaPreview: PropTypes.func
 };
 
 TimelineFeed.defaultProps = {
   posts: [],
   condensed: false,
-  canPost: true
+  canPost: true,
+  onMediaPreview: undefined
 };
 
-function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentDraftChange, onCommentSubmit, canPost }) {
+function TimelinePost({
+  post,
+  reactionOptions,
+  onReact,
+  commentDraft,
+  onCommentDraftChange,
+  onCommentSubmit,
+  canPost,
+  onMediaPreview
+}) {
   const hasMedia = Array.isArray(post.media) && post.media.length > 0;
   const totalComments = post.comments?.length ?? 0;
+  const [shareMessage, setShareMessage] = useState('idle');
+
+  const handleShare = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const sharePayload = {
+        title: post.headline || 'Fixnado update',
+        text: post.content,
+        url: window.location.href
+      };
+      if (navigator.share) {
+        await navigator.share(sharePayload);
+        setShareMessage('shared');
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(sharePayload.url);
+        setShareMessage('copied');
+      } else {
+        setShareMessage('unavailable');
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        setShareMessage('error');
+      }
+    } finally {
+      setTimeout(() => setShareMessage('idle'), 2500);
+    }
+  };
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg">
@@ -469,15 +469,14 @@ function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentD
       {hasMedia ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {post.media.slice(0, 4).map((media) => (
-            <a
+            <button
               key={media}
-              href={media}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative block overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+              type="button"
+              onClick={() => onMediaPreview?.({ src: media, author: post.author?.name })}
+              className="group relative block overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 focus:outline-none"
             >
               <img src={media} alt="Timeline media" className="h-48 w-full object-cover transition duration-200 group-hover:scale-105" loading="lazy" />
-            </a>
+            </button>
           ))}
         </div>
       ) : null}
@@ -514,6 +513,25 @@ function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentD
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-accent hover:text-accent"
+        >
+          <PaperAirplaneIcon className="h-4 w-4" aria-hidden="true" />
+          Share
+        </button>
+        {shareMessage !== 'idle' ? (
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">
+            {shareMessage === 'shared'
+              ? 'Shared'
+              : shareMessage === 'copied'
+                ? 'Link copied'
+                : shareMessage === 'unavailable'
+                  ? 'Share unavailable'
+                  : 'Share error'}
+          </span>
+        ) : null}
       </div>
 
       <div className="mt-6 space-y-4">
@@ -559,7 +577,7 @@ function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentD
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
             <span className="inline-flex items-center gap-2">
               <FaceSmileIcon className="h-4 w-4" aria-hidden="true" />
-              Be encouraging and constructive.
+              Add reaction
             </span>
             <button
               type="submit"
@@ -582,11 +600,13 @@ TimelinePost.propTypes = {
   commentDraft: PropTypes.string.isRequired,
   onCommentDraftChange: PropTypes.func.isRequired,
   onCommentSubmit: PropTypes.func.isRequired,
-  canPost: PropTypes.bool
+  canPost: PropTypes.bool,
+  onMediaPreview: PropTypes.func
 };
 
 TimelinePost.defaultProps = {
-  canPost: true
+  canPost: true,
+  onMediaPreview: undefined
 };
 
 function TimelineAdCard({ ad }) {
@@ -626,74 +646,130 @@ TimelineAdCard.propTypes = {
   }).isRequired
 };
 
-function MarketplaceFeed({ condensed }) {
-  if (MARKETPLACE_SPOTLIGHTS.length === 0) {
+function MarketplaceFeed({ condensed, loading, error, items, onRetry, onMediaPreview }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-white/80 p-10">
+        <Spinner className="h-8 w-8 text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4 rounded-3xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
+        <p>{error}</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex items-center justify-center rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-rose-600 transition hover:bg-rose-100"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!items || items.length === 0) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
-        Marketplace listings will appear here as soon as teams publish new bundles.
+        No marketplace listings yet. Check back soon.
       </div>
     );
   }
 
   return (
     <div className="space-y-5">
-      {MARKETPLACE_SPOTLIGHTS.map((listing) => (
-        <article
-          key={listing.id}
-          className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg"
-        >
-          <div className="grid gap-4 sm:grid-cols-3 sm:items-center">
-            <div className="relative h-44 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-              <img src={listing.image} alt="Marketplace spotlight" className="h-full w-full object-cover" loading="lazy" />
-            </div>
-            <div className="sm:col-span-2 space-y-3">
-              <header>
+      {items.map((listing) => {
+        const tags = Array.isArray(listing.tags) ? listing.tags.slice(0, 4) : [];
+        const preview = Array.isArray(listing.media) ? listing.media[0] : listing.image;
+        return (
+          <article
+            key={listing.id ?? listing.title}
+            className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-primary">{listing.title}</h3>
-                <p className="mt-1 text-sm text-slate-500">{listing.description}</p>
-              </header>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                  {listing.price}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                  {listing.rating}★ ({listing.reviews} reviews)
-                </span>
-                {listing.tags.map((tag) => (
-                  <span
-                    key={`${listing.id}-${tag}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {listing.location ? <p className="text-sm text-slate-500">{listing.location}</p> : null}
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                  {listing.pricePerDay ? (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">
+                      {listing.pricePerDay} / day
+                    </span>
+                  ) : null}
+                  {listing.purchasePrice ? (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">
+                      Buy {listing.purchasePrice}
+                    </span>
+                  ) : null}
+                  {listing.availability ? (
+                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500">
+                      {listing.availability}
+                    </span>
+                  ) : null}
+                  {listing.insuredOnly ? (
+                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500">Insured</span>
+                  ) : null}
+                </div>
+                {tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                    {tags.map((tag) => (
+                      <span key={`${listing.id ?? listing.title}-${tag}`} className="rounded-full border border-slate-200 px-3 py-1">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-slate-500">
-                  Ideal for teams needing predictable coverage and rich service analytics.
-                </p>
-                {!condensed ? (
+              {preview ? (
+                <button
+                  type="button"
+                  onClick={() => onMediaPreview?.({ src: preview, author: listing.title })}
+                  className="relative h-32 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 focus:outline-none sm:h-36 sm:w-48"
+                >
+                  <img src={preview} alt="Listing preview" className="h-full w-full object-cover" loading="lazy" />
+                </button>
+              ) : null}
+            </div>
+            {!condensed ? (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                <span className="font-semibold text-primary">
+                  {listing.vendor?.name ?? listing.seller ?? 'Verified partner'}
+                </span>
+                {listing.href ? (
                   <a
-                    href="/services#marketplace"
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent"
+                    href={listing.href}
+                    className="inline-flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
                   >
-                    Request details
+                    View offer
                   </a>
                 ) : null}
               </div>
-            </div>
-          </div>
-        </article>
-      ))}
+            ) : null}
+          </article>
+        );
+      })}
     </div>
   );
 }
 
 MarketplaceFeed.propTypes = {
-  condensed: PropTypes.bool
+  condensed: PropTypes.bool,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+  items: PropTypes.arrayOf(PropTypes.object),
+  onRetry: PropTypes.func,
+  onMediaPreview: PropTypes.func
 };
 
 MarketplaceFeed.defaultProps = {
-  condensed: false
+  condensed: false,
+  loading: false,
+  error: null,
+  items: undefined,
+  onRetry: undefined,
+  onMediaPreview: undefined
 };
 
 function useZones(shouldLoad) {
@@ -1465,6 +1541,8 @@ export default function LiveFeed({ condensed = false }) {
   const [formError, setFormError] = useState(null);
   const [bidStatus, setBidStatus] = useState({});
   const [messageStatus, setMessageStatus] = useState({});
+  const [marketplaceState, setMarketplaceState] = useState({ loading: false, items: [], error: null });
+  const [mediaPreview, setMediaPreview] = useState(null);
 
   const activeTabConfig = useMemo(
     () => FEED_TABS.find((tab) => tab.id === activeTab) ?? FEED_TABS[0],
@@ -1486,6 +1564,35 @@ export default function LiveFeed({ condensed = false }) {
   const shouldLoadZones = activeTab === 'custom' && (canCreate || (!condensed && canView));
   const { zones, loading: zoneLoading } = useZones(shouldLoadZones);
   const maxStreamPosts = useMemo(() => (condensed ? 6 : undefined), [condensed]);
+
+  const loadMarketplace = useCallback(() => {
+    let cancelled = false;
+    setMarketplaceState((current) => ({ ...current, loading: true, error: null }));
+
+    fetchMarketplaceFeed({ limit: condensed ? 4 : 8 })
+      .then((items) => {
+        if (!cancelled) {
+          setMarketplaceState({
+            loading: false,
+            items: Array.isArray(items) ? items : [],
+            error: null
+          });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setMarketplaceState({
+            loading: false,
+            items: [],
+            error: error.message || 'Unable to load marketplace'
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [condensed]);
 
   useEffect(() => {
     if (!canView) {
@@ -1538,6 +1645,18 @@ export default function LiveFeed({ condensed = false }) {
       controller.abort();
     };
   }, [canView, activeTab, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, condensed]);
+
+  useEffect(() => {
+    if (activeTab !== 'marketplace') {
+      return undefined;
+    }
+
+    if (marketplaceState.loading || marketplaceState.items.length > 0) {
+      return undefined;
+    }
+
+    return loadMarketplace();
+  }, [activeTab, loadMarketplace, marketplaceState.items.length, marketplaceState.loading]);
 
   useEffect(() => {
     if (!canView || activeTab !== 'custom') {
@@ -1841,17 +1960,14 @@ export default function LiveFeed({ condensed = false }) {
   const timelineLastUpdateLabel = timelinePosts.length > 0 ? formatRelativeTime(timelinePosts[0].createdAt) : null;
 
   return (
-    <section className="bg-white/80 backdrop-blur border border-slate-200 rounded-3xl shadow-glow">
-      <div className="px-6 py-6 space-y-6">
+    <Fragment>
+      <section className="bg-white/80 backdrop-blur border border-slate-200 rounded-3xl shadow-glow">
+        <div className="px-6 py-6 space-y-6">
         <header className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <h2 className="text-xl font-semibold text-primary">
-                {activeTab === 'timeline'
-                  ? 'Network timeline'
-                  : activeTab === 'custom'
-                    ? 'Custom job feed'
-                    : 'Marketplace feed'}
+                {activeTab === 'timeline' ? 'Live' : activeTab === 'custom' ? 'Jobs' : 'Market'}
               </h2>
               <p className="text-sm text-slate-500">{activeTabConfig.description}</p>
               {activeTab === 'timeline' && timelineLastUpdateLabel ? (
@@ -1926,10 +2042,7 @@ export default function LiveFeed({ condensed = false }) {
           <Fragment>
             {!canView ? (
               <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
-                <p className="text-sm font-semibold text-primary">Sign in to publish updates and join the conversation.</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  You can still explore highlights from across the Fixnado network timeline.
-                </p>
+                <p className="text-sm font-semibold text-primary">Sign in to post updates.</p>
               </div>
             ) : null}
             <TimelineFeed
@@ -1943,11 +2056,21 @@ export default function LiveFeed({ condensed = false }) {
               onCommentSubmit={handleTimelineCommentSubmit}
               condensed={condensed || !canView}
               canPost={canView}
+              onMediaPreview={setMediaPreview}
             />
           </Fragment>
         ) : null}
 
-        {activeTab === 'marketplace' ? <MarketplaceFeed condensed={condensed} /> : null}
+        {activeTab === 'marketplace' ? (
+          <MarketplaceFeed
+            condensed={condensed}
+            loading={marketplaceState.loading}
+            error={marketplaceState.error}
+            items={marketplaceState.items}
+            onRetry={() => loadMarketplace()}
+            onMediaPreview={setMediaPreview}
+          />
+        ) : null}
 
         {activeTab === 'custom' ? (
           <Fragment>
@@ -2006,12 +2129,7 @@ export default function LiveFeed({ condensed = false }) {
 
             {!canView ? (
               <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
-                <p className="text-sm font-semibold text-primary">
-                  Sign in with a Fixnado account to unlock live feed intelligence.
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  Providers see high-signal job requests, can bid instantly, and manage negotiations in one place.
-                </p>
+                <p className="text-sm font-semibold text-primary">Sign in to view active jobs.</p>
               </div>
             ) : (
               <Fragment>
@@ -2064,8 +2182,72 @@ export default function LiveFeed({ condensed = false }) {
             )}
           </Fragment>
         ) : null}
-      </div>
-    </section>
+        </div>
+      </section>
+
+      <Transition show={Boolean(mediaPreview)} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setMediaPreview(null)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-900/70" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 flex items-center justify-center p-6">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-150"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => setMediaPreview(null)}
+                  className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-primary"
+                >
+                  <span className="sr-only">Close preview</span>
+                  <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                </button>
+                <div className="bg-slate-100">
+                  {mediaPreview?.src ? (
+                    <img
+                      src={mediaPreview.src}
+                      alt={mediaPreview?.author ? `${mediaPreview.author} media` : 'Preview'}
+                      className="h-full max-h-[70vh] w-full object-contain"
+                    />
+                  ) : null}
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 text-sm text-slate-600">
+                  <Dialog.Title className="text-base font-semibold text-primary">
+                    {mediaPreview?.author ?? 'Preview'}
+                  </Dialog.Title>
+                  {mediaPreview?.src ? (
+                    <a
+                      href={mediaPreview.src}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
+                    >
+                      Open original
+                    </a>
+                  ) : null}
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition>
+    </Fragment>
   );
 }
 
