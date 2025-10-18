@@ -64,4 +64,10 @@ Key environment variables surfaced through the monetisation settings surface:
 
 ## Database tooling
 
-Use Sequelize CLI or your preferred migration runner to execute files in `src/database/migrations` and `src/database/seeders`. The provided `sql/install.sql` bootstraps the MySQL database and service accounts.
+Use Sequelize CLI or your preferred migration runner to execute files in `src/database/migrations` and `src/database/seeders`. Preload the CommonJS environment shim so legacy tooling mirrors the application boot sequence:
+
+```bash
+node -r ./scripts/register-env.cjs ./node_modules/.bin/sequelize db:migrate
+```
+
+The provided `sql/install.sql` bootstraps the MySQL database and service accounts.
