@@ -75,7 +75,9 @@ function MegaMenuSection({ section }) {
     <div className="grid gap-4">
       <div>
         <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{section.label}</p>
-        <p className="mt-1 text-sm text-slate-500">{section.description}</p>
+        {section.description ? (
+          <p className="mt-1 text-sm text-slate-500">{section.description}</p>
+        ) : null}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {section.items.map((item) => (
@@ -93,7 +95,9 @@ function MegaMenuSection({ section }) {
           >
             <div>
               <p className="text-sm font-semibold text-slate-900 group-hover:text-accent">{item.title}</p>
-              <p className="mt-2 text-xs text-slate-500 group-hover:text-slate-600">{item.description}</p>
+              {item.description ? (
+                <p className="mt-2 text-xs text-slate-500 group-hover:text-slate-600">{item.description}</p>
+              ) : null}
             </div>
             <span className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent/70 group-hover:text-accent">
               Explore

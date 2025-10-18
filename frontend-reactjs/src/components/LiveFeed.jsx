@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {
@@ -38,21 +38,9 @@ const CATEGORY_SUGGESTIONS = ['Emergency response', 'Facilities', 'Renovation', 
 const currencyFormatters = new Map();
 
 const FEED_TABS = [
-  {
-    id: 'timeline',
-    label: 'Timeline',
-    description: 'Celebrate wins, share learnings, and stay close to your Fixnado network.'
-  },
-  {
-    id: 'custom',
-    label: 'Custom jobs',
-    description: 'Broadcast bespoke work requests and manage provider responses in real time.'
-  },
-  {
-    id: 'marketplace',
-    label: 'Marketplace',
-    description: 'Browse curated marketplace packages, bundles, and on-demand availability.'
-  }
+  { id: 'timeline', label: 'Timeline', description: 'Live activity from your network.' },
+  { id: 'custom', label: 'Jobs', description: 'Direct briefs open for bidding.' },
+  { id: 'marketplace', label: 'Market', description: 'Inventory and partner offers.' }
 ];
 
 const TIMELINE_REACTIONS = [
@@ -262,6 +250,19 @@ function formatRelativeTime(dateValue) {
   return relativeTimeFormatter.format(diffYears, 'year');
 }
 
+function truncateText(value, maxLength = 140) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
 function budgetDisplay(post) {
   if (post.budget && post.budget.trim().length > 0) {
     return post.budget.trim();
@@ -286,7 +287,9 @@ function TimelineFeed({
   onCommentDraftChange,
   onCommentSubmit,
   condensed,
-  canPost
+  canPost,
+  compact,
+  onSelectItem
 }) {
   const displayedPosts = useMemo(() => {
     if (!Array.isArray(posts) || posts.length === 0) {
@@ -298,6 +301,10 @@ function TimelineFeed({
   const feedItems = useMemo(() => {
     if (displayedPosts.length === 0) {
       return [];
+    }
+
+    if (compact) {
+      return displayedPosts.map((post) => ({ type: 'post', value: post }));
     }
 
     const items = [];
@@ -312,11 +319,11 @@ function TimelineFeed({
     });
 
     return items;
-  }, [displayedPosts, condensed]);
+  }, [compact, condensed, displayedPosts]);
 
   return (
     <div className="space-y-6">
-      {canPost && !condensed ? (
+      {canPost && !condensed && !compact ? (
         <form
           onSubmit={onComposerSubmit}
           className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-inner"
@@ -396,16 +403,24 @@ function TimelineFeed({
         <div className="space-y-6">
           {feedItems.map((item) =>
             item.type === 'post' ? (
-              <TimelinePost
-                key={item.value.id}
-                post={item.value}
-                reactionOptions={TIMELINE_REACTIONS}
-                onReact={onReact}
-                commentDraft={commentDrafts[item.value.id] ?? ''}
-                onCommentDraftChange={onCommentDraftChange}
-                onCommentSubmit={onCommentSubmit}
-                canPost={canPost}
-              />
+              compact ? (
+                <TimelinePreview
+                  key={item.value.id}
+                  post={item.value}
+                  onSelect={onSelectItem}
+                />
+              ) : (
+                <TimelinePost
+                  key={item.value.id}
+                  post={item.value}
+                  reactionOptions={TIMELINE_REACTIONS}
+                  onReact={onReact}
+                  commentDraft={commentDrafts[item.value.id] ?? ''}
+                  onCommentDraftChange={onCommentDraftChange}
+                  onCommentSubmit={onCommentSubmit}
+                  canPost={canPost}
+                />
+              )
             ) : (
               <TimelineAdCard key={item.value.id} ad={item.value} />
             )
@@ -430,13 +445,90 @@ TimelineFeed.propTypes = {
   onCommentDraftChange: PropTypes.func.isRequired,
   onCommentSubmit: PropTypes.func.isRequired,
   condensed: PropTypes.bool,
-  canPost: PropTypes.bool
+  canPost: PropTypes.bool,
+  compact: PropTypes.bool,
+  onSelectItem: PropTypes.func
 };
 
 TimelineFeed.defaultProps = {
   posts: [],
   condensed: false,
-  canPost: true
+  canPost: true,
+  compact: false,
+  onSelectItem: undefined
+};
+
+function TimelinePreview({ post, onSelect }) {
+  const headline = useMemo(() => {
+    if (typeof post.headline === 'string' && post.headline.trim()) {
+      return post.headline.trim();
+    }
+    if (typeof post.content === 'string' && post.content.trim()) {
+      return truncateText(post.content, 48);
+    }
+    return 'Update';
+  }, [post.content, post.headline]);
+
+  const snippet = useMemo(() => truncateText(post.content ?? '', 160), [post.content]);
+  const reactionTotal = useMemo(() => {
+    if (!post.reactions) {
+      return 0;
+    }
+    return Object.values(post.reactions).reduce((total, value) => total + (Number(value) || 0), 0);
+  }, [post.reactions]);
+
+  const openDetail = () => {
+    if (typeof onSelect === 'function') {
+      onSelect({ type: 'timeline', item: post });
+    }
+  };
+
+  return (
+    <article className="group flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm transition hover:shadow-lg">
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+            {post.author?.avatar ? (
+              <img src={post.author.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
+            ) : null}
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-primary">{post.author?.name ?? 'Fixnado member'}</p>
+            <p className="text-xs text-slate-500">{[post.author?.role, post.author?.company].filter(Boolean).join(' • ')}</p>
+          </div>
+        </div>
+        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          {formatRelativeTime(post.createdAt)}
+        </span>
+      </header>
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold text-primary">{headline}</h3>
+        {snippet ? <p className="text-sm text-slate-600">{snippet}</p> : null}
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+          <span>{reactionTotal} reacts</span>
+          <span>{post.comments?.length ?? 0} replies</span>
+        </div>
+        <button
+          type="button"
+          onClick={openDetail}
+          className="rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary transition hover:bg-primary/10"
+        >
+          Open
+        </button>
+      </div>
+    </article>
+  );
+}
+
+TimelinePreview.propTypes = {
+  post: PropTypes.object.isRequired,
+  onSelect: PropTypes.func
+};
+
+TimelinePreview.defaultProps = {
+  onSelect: undefined
 };
 
 function TimelinePost({ post, reactionOptions, onReact, commentDraft, onCommentDraftChange, onCommentSubmit, canPost }) {
@@ -626,7 +718,7 @@ TimelineAdCard.propTypes = {
   }).isRequired
 };
 
-function MarketplaceFeed({ condensed }) {
+function MarketplaceFeed({ condensed, compact, onSelectItem }) {
   if (MARKETPLACE_SPOTLIGHTS.length === 0) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
@@ -640,44 +732,52 @@ function MarketplaceFeed({ condensed }) {
       {MARKETPLACE_SPOTLIGHTS.map((listing) => (
         <article
           key={listing.id}
-          className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg"
+          className="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm transition hover:shadow-lg"
         >
-          <div className="grid gap-4 sm:grid-cols-3 sm:items-center">
-            <div className="relative h-44 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+          <div className={clsx('flex flex-col gap-4 sm:flex-row sm:items-center', compact ? 'sm:justify-between' : '')}>
+            <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:h-32 sm:w-32">
               <img src={listing.image} alt="Marketplace spotlight" className="h-full w-full object-cover" loading="lazy" />
             </div>
-            <div className="sm:col-span-2 space-y-3">
-              <header>
+            <div className="flex-1 space-y-3">
+              <header className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-lg font-semibold text-primary">{listing.title}</h3>
-                <p className="mt-1 text-sm text-slate-500">{listing.description}</p>
+                <span className="text-sm font-semibold text-accent">{listing.price}</span>
               </header>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                  {listing.price}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                  {listing.rating}★ ({listing.reviews} reviews)
-                </span>
+              {compact ? null : <p className="text-sm text-slate-600">{listing.description}</p>}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{listing.rating}★</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{listing.reviews} reviews</span>
                 {listing.tags.map((tag) => (
                   <span
                     key={`${listing.id}-${tag}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-slate-500">
-                  Ideal for teams needing predictable coverage and rich service analytics.
-                </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {compact ? (
+                <p className="text-xs text-slate-500">{truncateText(listing.description, 90)}</p>
+              ) : null}
+              <div className="flex items-center gap-2">
                 {!condensed ? (
                   <a
                     href="/services#marketplace"
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent"
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary transition hover:bg-primary/10"
                   >
-                    Request details
+                    View
                   </a>
+                ) : null}
+                {typeof onSelectItem === 'function' ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectItem({ type: 'marketplace', item: listing })}
+                    className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-primary/90"
+                  >
+                    Open
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -689,11 +789,15 @@ function MarketplaceFeed({ condensed }) {
 }
 
 MarketplaceFeed.propTypes = {
-  condensed: PropTypes.bool
+  condensed: PropTypes.bool,
+  compact: PropTypes.bool,
+  onSelectItem: PropTypes.func
 };
 
 MarketplaceFeed.defaultProps = {
-  condensed: false
+  condensed: false,
+  compact: false,
+  onSelectItem: undefined
 };
 
 function useZones(shouldLoad) {
@@ -1331,7 +1435,17 @@ BidList.defaultProps = {
   messageStatus: undefined
 };
 
-function PostCard({ post, canBid, canMessage, onBidSubmit, onMessageSubmit, bidStatus, messageStatus }) {
+function PostCard({
+  post,
+  canBid,
+  canMessage,
+  onBidSubmit,
+  onMessageSubmit,
+  bidStatus,
+  messageStatus,
+  compact,
+  onSelectItem
+}) {
   const chips = useMemo(() => {
     const list = [];
     if (post.category) {
@@ -1348,6 +1462,56 @@ function PostCard({ post, canBid, canMessage, onBidSubmit, onMessageSubmit, bidS
     }
     return list;
   }, [post]);
+
+  if (compact) {
+    const handleOpen = () => {
+      if (typeof onSelectItem === 'function') {
+        onSelectItem({ type: 'custom', item: post });
+      }
+    };
+
+    return (
+      <article className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm transition hover:shadow-lg">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold text-primary">{post.title}</h3>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              {post.zone?.name ? <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold uppercase tracking-[0.3em] text-primary">{post.zone.name}</span> : null}
+              {post.location ? <span>{post.location}</span> : null}
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-accent">{budgetDisplay(post)}</p>
+            {post.bidDeadline ? (
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{formatRelativeTime(post.bidDeadline)}</p>
+            ) : null}
+          </div>
+        </header>
+        {post.description ? <p className="text-sm text-slate-600">{truncateText(post.description, 160)}</p> : null}
+        {chips.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <span key={chip} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {post.bids?.length ?? 0} bids
+          </span>
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-primary/90"
+          >
+            Open
+          </button>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg">
@@ -1430,7 +1594,9 @@ PostCard.propTypes = {
     state: PropTypes.oneOf(['idle', 'loading', 'success', 'error']),
     message: PropTypes.string
   }),
-  messageStatus: PropTypes.object
+  messageStatus: PropTypes.object,
+  compact: PropTypes.bool,
+  onSelectItem: PropTypes.func
 };
 
 PostCard.defaultProps = {
@@ -1438,17 +1604,29 @@ PostCard.defaultProps = {
   canMessage: false,
   onMessageSubmit: undefined,
   bidStatus: { state: 'idle' },
-  messageStatus: undefined
+  messageStatus: undefined,
+  compact: false,
+  onSelectItem: undefined
 };
 
-export default function LiveFeed({ condensed = false }) {
+export default function LiveFeed({
+  condensed = false,
+  activeView,
+  onViewChange,
+  hideNavigation = false,
+  layout = 'full',
+  onSelectItem
+}) {
   const role = useCurrentRole();
   const canView = role !== 'guest';
   const canCreate = role === 'user' || role === 'company';
   const canBid = role === 'servicemen' || role === 'company';
   const canMessage = role === 'user' || role === 'company';
 
-  const [activeTab, setActiveTab] = useState('timeline');
+  const [activeTab, setActiveTab] = useState(activeView && FEED_TABS.some((tab) => tab.id === activeView)
+    ? activeView
+    : 'timeline');
+  const compact = layout === 'compact';
   const [timelinePosts, setTimelinePosts] = useState(() => INITIAL_TIMELINE_POSTS);
   const [timelineComposer, setTimelineComposer] = useState({ headline: '', content: '', media: '' });
   const [timelineCommentDrafts, setTimelineCommentDrafts] = useState({});
@@ -1466,9 +1644,36 @@ export default function LiveFeed({ condensed = false }) {
   const [bidStatus, setBidStatus] = useState({});
   const [messageStatus, setMessageStatus] = useState({});
 
+  useEffect(() => {
+    if (!activeView) {
+      return;
+    }
+
+    if (FEED_TABS.some((tab) => tab.id === activeView) && activeView !== activeTab) {
+      setActiveTab(activeView);
+    }
+  }, [activeView, activeTab]);
+
   const activeTabConfig = useMemo(
     () => FEED_TABS.find((tab) => tab.id === activeTab) ?? FEED_TABS[0],
     [activeTab]
+  );
+
+  const handleTabChange = useCallback(
+    (next) => {
+      if (!FEED_TABS.some((tab) => tab.id === next)) {
+        return;
+      }
+
+      if (!activeView) {
+        setActiveTab(next);
+      }
+
+      if (onViewChange) {
+        onViewChange(next);
+      }
+    },
+    [activeView, onViewChange]
   );
   const memberRoleLabel = useMemo(() => {
     switch (role) {
@@ -1483,9 +1688,9 @@ export default function LiveFeed({ condensed = false }) {
     }
   }, [role]);
 
-  const shouldLoadZones = activeTab === 'custom' && (canCreate || (!condensed && canView));
+  const shouldLoadZones = activeTab === 'custom' && (canCreate || (!condensed && !compact && canView));
   const { zones, loading: zoneLoading } = useZones(shouldLoadZones);
-  const maxStreamPosts = useMemo(() => (condensed ? 6 : undefined), [condensed]);
+  const maxStreamPosts = useMemo(() => (condensed || compact ? 6 : undefined), [compact, condensed]);
 
   useEffect(() => {
     if (!canView) {
@@ -1511,7 +1716,7 @@ export default function LiveFeed({ condensed = false }) {
       zoneId: filters.zoneId || undefined,
       includeOutOfZone: filters.includeOutOfZone,
       outOfZoneOnly: filters.outOfZoneOnly,
-      limit: condensed ? 6 : undefined
+      limit: condensed || compact ? 6 : undefined
     }, { signal: controller.signal })
       .then((payload) => {
         if (!cancelled) {
@@ -1537,7 +1742,7 @@ export default function LiveFeed({ condensed = false }) {
       cancelled = true;
       controller.abort();
     };
-  }, [canView, activeTab, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, condensed]);
+  }, [canView, activeTab, filters.zoneId, filters.includeOutOfZone, filters.outOfZoneOnly, compact, condensed]);
 
   useEffect(() => {
     if (!canView || activeTab !== 'custom') {
@@ -1898,28 +2103,30 @@ export default function LiveFeed({ condensed = false }) {
               </div>
             ) : null}
           </div>
-          <nav className={clsx('flex flex-wrap gap-2', condensed ? 'pt-1' : 'pt-2')}>
-            {FEED_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={clsx(
-                  'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
-                  activeTab === tab.id
-                    ? 'border-primary bg-primary text-white shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary'
-                )}
-              >
-                {tab.label}
-                {tab.id === 'timeline' && tab.id === activeTab ? (
-                  <span className="hidden rounded-full bg-white/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.3em] sm:inline-block">
-                    Default
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </nav>
+          {hideNavigation ? null : (
+            <nav className={clsx('flex flex-wrap gap-2', condensed ? 'pt-1' : 'pt-2')}>
+              {FEED_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={clsx(
+                    'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
+                    activeTab === tab.id
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary'
+                  )}
+                >
+                  {tab.label}
+                  {tab.id === 'timeline' && tab.id === activeTab ? (
+                    <span className="hidden rounded-full bg-white/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.3em] sm:inline-block">
+                      Default
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </nav>
+          )}
         </header>
 
         {activeTab === 'timeline' ? (
@@ -1941,13 +2148,17 @@ export default function LiveFeed({ condensed = false }) {
               commentDrafts={timelineCommentDrafts}
               onCommentDraftChange={handleTimelineCommentDraftChange}
               onCommentSubmit={handleTimelineCommentSubmit}
-              condensed={condensed || !canView}
+              condensed={condensed || !canView || compact}
               canPost={canView}
+              compact={compact}
+              onSelectItem={onSelectItem}
             />
           </Fragment>
         ) : null}
 
-        {activeTab === 'marketplace' ? <MarketplaceFeed condensed={condensed} /> : null}
+        {activeTab === 'marketplace' ? (
+          <MarketplaceFeed condensed={condensed || compact} compact={compact} onSelectItem={onSelectItem} />
+        ) : null}
 
         {activeTab === 'custom' ? (
           <Fragment>
@@ -2046,16 +2257,18 @@ export default function LiveFeed({ condensed = false }) {
                       <PostCard
                         key={post.id}
                         post={post}
-                        canBid={canBid && !condensed}
-                        canMessage={canMessage && !condensed}
+                        canBid={canBid && !condensed && !compact}
+                        canMessage={canMessage && !condensed && !compact}
                         onBidSubmit={handleBidSubmit}
-                        onMessageSubmit={canMessage && !condensed ? handleBidMessageSubmit : undefined}
+                        onMessageSubmit={canMessage && !condensed && !compact ? handleBidMessageSubmit : undefined}
                         bidStatus={bidStatus[post.id] ?? { state: 'idle' }}
                         messageStatus={Object.fromEntries(
                           Object.entries(messageStatus)
                             .filter(([key]) => key.startsWith(`${post.id}:`))
                             .map(([key, value]) => [key.split(':')[1], value])
                         )}
+                        compact={compact}
+                        onSelectItem={onSelectItem}
                       />
                     ))}
                   </div>
@@ -2070,9 +2283,19 @@ export default function LiveFeed({ condensed = false }) {
 }
 
 LiveFeed.propTypes = {
-  condensed: PropTypes.bool
+  condensed: PropTypes.bool,
+  activeView: PropTypes.oneOf(FEED_TABS.map((tab) => tab.id)),
+  onViewChange: PropTypes.func,
+  hideNavigation: PropTypes.bool,
+  layout: PropTypes.oneOf(['full', 'compact']),
+  onSelectItem: PropTypes.func
 };
 
 LiveFeed.defaultProps = {
-  condensed: false
+  condensed: false,
+  activeView: undefined,
+  onViewChange: undefined,
+  hideNavigation: false,
+  layout: 'full',
+  onSelectItem: undefined
 };
