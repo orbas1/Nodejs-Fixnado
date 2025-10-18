@@ -49,6 +49,21 @@ function createJobDescriptor(handle, description) {
   };
 }
 
+function shouldRunJob(name, gating) {
+  const allowlist = gating.allowlist;
+  const blocklist = gating.blocklist;
+
+  if (blocklist.has(name)) {
+    return false;
+  }
+
+  if (allowlist.size > 0 && !allowlist.has(name)) {
+    return false;
+  }
+
+  return true;
+}
+
 function registerJob(jobs, handle, description, logger) {
   const descriptor = createJobDescriptor(handle, description);
   if (!descriptor) {
@@ -60,18 +75,41 @@ function registerJob(jobs, handle, description, logger) {
   logger?.info?.(`Background job '${descriptor.description}' started.`);
 }
 
-export function startBackgroundJobs(logger = console) {
+function normaliseNames(values = []) {
+  if (!Array.isArray(values)) {
+    return new Set();
+  }
+
+  return new Set(values.map((value) => value?.toString?.().trim()).filter(Boolean));
+}
+
+export function startBackgroundJobs(logger = console, options = {}) {
+  const gating = {
+    allowlist: normaliseNames(options.allowlist),
+    blocklist: normaliseNames(options.blocklist)
+  };
+
   const jobs = [];
 
-  registerJob(jobs, startTelemetryAlertingJob(logger), 'telemetry-alerting', logger);
-  registerJob(jobs, startZoneAnalyticsJob(logger), 'zone-analytics', logger);
-  registerJob(jobs, startCampaignAnalyticsJob(logger), 'campaign-analytics', logger);
-  registerJob(jobs, startAnalyticsIngestionJob(logger), 'analytics-ingestion', logger);
-  registerJob(jobs, startWarehouseFreshnessJob(logger), 'warehouse-freshness', logger);
-  registerJob(jobs, startDataGovernanceRetentionJob(logger), 'data-governance-retention', logger);
-  registerJob(jobs, startDataWarehouseExportJob(logger), 'data-warehouse-export', logger);
-  registerJob(jobs, startDatabaseCredentialRotationJob(logger), 'database-credential-rotation', logger);
-  registerJob(jobs, startFinanceWebhookJob(logger), 'finance-webhook', logger);
+  const scheduleJob = (name, factory) => {
+    if (!shouldRunJob(name, gating)) {
+      logger?.info?.(`Background job '${name}' disabled via configuration.`);
+      return;
+    }
+
+    const handle = factory();
+    registerJob(jobs, handle, name, logger);
+  };
+
+  scheduleJob('telemetry-alerting', () => startTelemetryAlertingJob(logger));
+  scheduleJob('zone-analytics', () => startZoneAnalyticsJob(logger));
+  scheduleJob('campaign-analytics', () => startCampaignAnalyticsJob(logger));
+  scheduleJob('analytics-ingestion', () => startAnalyticsIngestionJob(logger));
+  scheduleJob('warehouse-freshness', () => startWarehouseFreshnessJob(logger));
+  scheduleJob('data-governance-retention', () => startDataGovernanceRetentionJob(logger));
+  scheduleJob('data-warehouse-export', () => startDataWarehouseExportJob(logger));
+  scheduleJob('database-credential-rotation', () => startDatabaseCredentialRotationJob(logger));
+  scheduleJob('finance-webhook', () => startFinanceWebhookJob(logger));
 
   return jobs;
 }

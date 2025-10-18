@@ -1,141 +1,249 @@
-import app, { getReadinessSnapshot, initDatabase, updateReadiness } from './app.js';
-import config from './config/index.js';
-import { startBackgroundJobs, stopBackgroundJobs } from './jobs/index.js';
-import { sequelize } from './models/index.js';
+import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 
-let serverInstance = null;
-let backgroundJobs = [];
-let shuttingDown = false;
+import { loadSecretsIntoEnv } from './config/secretManager.js';
+import { createLogger, serialiseError } from './utils/logger.js';
 
-function logSecretsSyncMetadata() {
-  const secretSources = config.secrets?.sources ?? [];
-  if (secretSources.length === 0) {
-    return;
-  }
-
-  const appliedKeys = secretSources.reduce((acc, source) => acc + (source.appliedKeys ?? 0), 0);
-  console.info(`Secrets manager synchronised ${appliedKeys} key(s) across ${secretSources.length} source(s).`);
+function isDirectExecution() {
+  return process.argv[1] === fileURLToPath(import.meta.url);
 }
 
-function closeServer() {
-  if (!serverInstance) {
-    return Promise.resolve();
-  }
+export function createServer(options = {}) {
+  const logger = options.logger ??
+    createLogger({ level: options.logLevel, format: options.logFormat, serviceName: 'fixnado-api' });
 
-  return new Promise((resolve) => {
-    serverInstance.close((error) => {
-      if (error) {
-        console.error('Error while closing HTTP server', error);
-      }
-      resolve();
-    });
-  });
-}
+  const state = {
+    app: null,
+    config: null,
+    serverInstance: null,
+    backgroundJobs: [],
+    shuttingDown: false,
+    started: false,
+    modules: {
+      app: null,
+      jobs: null
+    }
+  };
 
-async function shutdown(signal, { exit = true, exitCode = 0 } = {}) {
-  if (shuttingDown) {
-    return;
-  }
+  async function bootstrap() {
+    if (state.modules.app) {
+      return;
+    }
 
-  shuttingDown = true;
-
-  const shutdownLabel = signal ?? 'unknown-signal';
-  console.info(`Received ${shutdownLabel}. Beginning graceful shutdown.`);
-
-  updateReadiness('httpServer', { status: 'stopping', metadata: { signal: shutdownLabel } });
-  updateReadiness('backgroundJobs', { status: 'stopping', metadata: { signal: shutdownLabel } });
-
-  const forceExitTimeout = setTimeout(() => {
-    const snapshot = getReadinessSnapshot();
-    console.error('Graceful shutdown timed out. Forcing exit.', { snapshot });
-    process.exit(exitCode || 1);
-  }, config.security?.shutdown?.timeoutMs ?? 15000);
-  forceExitTimeout.unref?.();
-
-  try {
-    stopBackgroundJobs(backgroundJobs, console);
-    updateReadiness('backgroundJobs', {
-      status: 'stopped',
-      metadata: { signal: shutdownLabel, stoppedJobs: backgroundJobs.length }
-    });
-  } catch (error) {
-    console.error('Failed to stop background jobs gracefully', error);
-    updateReadiness('backgroundJobs', { status: 'error', error });
-  }
-
-  await closeServer();
-  updateReadiness('httpServer', { status: 'stopped', metadata: { signal: shutdownLabel } });
-
-  try {
-    await sequelize.close();
-  } catch (error) {
-    console.error('Failed to close database connections gracefully', error);
-  }
-
-  clearTimeout(forceExitTimeout);
-
-  if (exit) {
-    process.exit(exitCode);
-  }
-}
-
-async function start() {
-  try {
-    logSecretsSyncMetadata();
-    updateReadiness('httpServer', { status: 'initialising', metadata: { port: config.port } });
-    updateReadiness('backgroundJobs', { status: 'initialising' });
-
-    await initDatabase(console);
-
-    backgroundJobs = startBackgroundJobs(console);
-    updateReadiness('backgroundJobs', {
-      status: 'ready',
-      metadata: { runningJobs: backgroundJobs.length }
+    await loadSecretsIntoEnv({
+      stage: 'server-bootstrap',
+      logger,
+      forceRefresh: options.forceSecretsReload ?? false
     });
 
-    serverInstance = app.listen(config.port, () => {
-      console.info(`Fixnado API listening on port ${config.port}`);
-      updateReadiness('httpServer', {
+    const configModule = await import('./config/index.js');
+    state.config = configModule.default;
+
+    const appModule = await import('./app.js');
+    const jobsModule = await import('./jobs/index.js');
+
+    state.modules.app = appModule;
+    state.modules.jobs = jobsModule;
+
+    const { configureAppRuntime, default: app, updateReadiness } = appModule;
+
+    configureAppRuntime({
+      logger,
+      readinessSnapshotFile: state.config.runtime?.readiness?.snapshotFile,
+      readinessPersistIntervalSeconds: state.config.runtime?.readiness?.persistIntervalSeconds ?? 5
+    });
+
+    state.app = app;
+
+    updateReadiness('httpServer', {
+      status: 'initialising',
+      metadata: { port: state.config.port }
+    });
+
+    if (state.config.runtime?.backgroundJobs?.enabled) {
+      updateReadiness('backgroundJobs', { status: 'initialising' });
+    } else {
+      updateReadiness('backgroundJobs', {
         status: 'ready',
-        metadata: { port: config.port }
+        metadata: { enabled: false, reason: 'disabled_via_configuration' }
       });
-    });
-
-    serverInstance.on('error', (error) => {
-      console.error('HTTP server error', error);
-      updateReadiness('httpServer', { status: 'error', error });
-    });
-  } catch (error) {
-    updateReadiness('httpServer', { status: 'error', error });
-    console.error('Failed to start server', error);
-    await shutdown('startup-error', { exit: false, exitCode: 1 });
-    process.exit(1);
+    }
   }
+
+  async function start() {
+    if (state.started) {
+      return state.serverInstance;
+    }
+
+    await bootstrap();
+
+    const { initDatabase, updateReadiness } = state.modules.app;
+
+    try {
+      await initDatabase(logger);
+
+      if (state.config.runtime?.backgroundJobs?.enabled) {
+        const { allowlist = [], blocklist = [], startupDelaySeconds = 0 } = state.config.runtime.backgroundJobs;
+        if (startupDelaySeconds > 0) {
+          await delay(startupDelaySeconds * 1000);
+        }
+        state.backgroundJobs = state.modules.jobs.startBackgroundJobs(logger, {
+          allowlist,
+          blocklist
+        });
+        updateReadiness('backgroundJobs', {
+          status: 'ready',
+          metadata: { runningJobs: state.backgroundJobs.length }
+        });
+      }
+
+      state.serverInstance = state.app.listen(state.config.port, () => {
+        logger.info({ event: 'server.listen', port: state.config.port }, 'Fixnado API listening');
+        updateReadiness('httpServer', {
+          status: 'ready',
+          metadata: { port: state.config.port }
+        });
+      });
+
+      state.serverInstance.on('error', (error) => {
+        logger.error({ event: 'server.error', error: serialiseError(error) }, 'HTTP server error');
+        updateReadiness('httpServer', { status: 'error', error });
+      });
+
+      state.started = true;
+      return state.serverInstance;
+    } catch (error) {
+      logger.error({ event: 'server.start.failed', error: serialiseError(error) }, 'Failed to start server');
+      state.modules.app.updateReadiness('httpServer', { status: 'error', error });
+      await stop({ signal: 'startup-error', exit: false, exitCode: 1 });
+      throw error;
+    }
+  }
+
+  async function stop({ signal = 'manual', exit = false, exitCode = 0 } = {}) {
+    if (state.shuttingDown) {
+      return;
+    }
+
+    state.shuttingDown = true;
+
+    const { updateReadiness, getReadinessSnapshot } = state.modules.app || {};
+
+    if (updateReadiness) {
+      updateReadiness('httpServer', { status: 'stopping', metadata: { signal } });
+    }
+
+    if (state.backgroundJobs.length > 0 && state.modules.jobs) {
+      updateReadiness?.('backgroundJobs', { status: 'stopping', metadata: { signal } });
+      try {
+        state.modules.jobs.stopBackgroundJobs(state.backgroundJobs, logger);
+        updateReadiness?.('backgroundJobs', {
+          status: 'stopped',
+          metadata: { signal, stoppedJobs: state.backgroundJobs.length }
+        });
+      } catch (error) {
+        logger.error({ event: 'jobs.stop.failed', error: serialiseError(error) }, 'Failed to stop background jobs');
+        updateReadiness?.('backgroundJobs', { status: 'error', error });
+      }
+    }
+
+    if (state.serverInstance) {
+      await new Promise((resolve) => {
+        state.serverInstance.close((error) => {
+          if (error) {
+            logger.error({ event: 'server.close.failed', error: serialiseError(error) }, 'Error closing HTTP server');
+          }
+          resolve();
+        });
+      });
+    }
+
+    if (updateReadiness) {
+      updateReadiness('httpServer', { status: 'stopped', metadata: { signal } });
+    }
+
+    try {
+      const { sequelize } = await import('./models/index.js');
+      await sequelize.close();
+    } catch (error) {
+      logger.error({ event: 'database.close.failed', error: serialiseError(error) }, 'Failed to close database connections');
+    }
+
+    state.serverInstance = null;
+    state.backgroundJobs = [];
+    state.started = false;
+    state.shuttingDown = false;
+
+    if (exit) {
+      logger.info({ event: 'process.exit', exitCode, readiness: getReadinessSnapshot?.() }, 'Process exiting after shutdown');
+      process.exit(exitCode);
+    }
+  }
+
+  function getReadinessSnapshot() {
+    return state.modules.app?.getReadinessSnapshot?.() ?? {};
+  }
+
+  return {
+    start,
+    stop,
+    getApp: () => state.app,
+    getConfig: () => state.config,
+    getLogger: () => logger,
+    getReadinessSnapshot,
+    isStarted: () => state.started
+  };
 }
 
-start();
-
-['SIGINT', 'SIGTERM'].forEach((signal) => {
-  process.on(signal, () => {
-    shutdown(signal, { exit: true, exitCode: 0 }).catch((error) => {
-      console.error(`Failed to shutdown gracefully on ${signal}`, error);
+if (isDirectExecution()) {
+  const runtime = createServer();
+  runtime
+    .start()
+    .catch((error) => {
+      runtime
+        .getLogger()
+        .fatal({ event: 'server.start.fatal', error: serialiseError(error) }, 'Server startup failed');
       process.exit(1);
     });
-  });
-});
 
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Promise rejection detected', reason);
-  shutdown('unhandledRejection', { exit: true, exitCode: 1 }).catch((error) => {
-    console.error('Forced exit after unhandled rejection', error);
-    process.exit(1);
+  ['SIGINT', 'SIGTERM'].forEach((signal) => {
+    process.on(signal, () => {
+      runtime
+        .stop({ signal, exit: true, exitCode: 0 })
+        .catch((error) => {
+          runtime
+            .getLogger()
+            .fatal({ event: 'shutdown.error', error: serialiseError(error) }, 'Forced exit after failed shutdown');
+          process.exit(1);
+        });
+    });
   });
-});
 
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception detected', error);
-  shutdown('uncaughtException', { exit: true, exitCode: 1 }).catch((shutdownError) => {
-    console.error('Forced exit after uncaught exception', shutdownError);
-    process.exit(1);
+  process.on('unhandledRejection', (reason) => {
+    runtime
+      .getLogger()
+      .error({ event: 'unhandledRejection', error: serialiseError(reason) }, 'Unhandled promise rejection detected');
+    runtime
+      .stop({ signal: 'unhandledRejection', exit: true, exitCode: 1 })
+      .catch((error) => {
+        runtime
+          .getLogger()
+          .fatal({ event: 'shutdown.error', error: serialiseError(error) }, 'Forced exit after unhandled rejection');
+        process.exit(1);
+      });
   });
-});
+
+  process.on('uncaughtException', (error) => {
+    runtime
+      .getLogger()
+      .error({ event: 'uncaughtException', error: serialiseError(error) }, 'Uncaught exception detected');
+    runtime
+      .stop({ signal: 'uncaughtException', exit: true, exitCode: 1 })
+      .catch((shutdownError) => {
+        runtime
+          .getLogger()
+          .fatal({ event: 'shutdown.error', error: serialiseError(shutdownError) }, 'Forced exit after uncaught exception');
+        process.exit(1);
+      });
+  });
+}

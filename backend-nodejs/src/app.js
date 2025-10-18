@@ -1,3 +1,7 @@
+import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -7,6 +11,13 @@ import routes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { sequelize } from './models/index.js';
 import config from './config/index.js';
+import { createChildLogger } from './utils/logger.js';
+import {
+  markReadinessStatus,
+  observeDatabaseHealth,
+  recordRateLimitRejection,
+  serialiseMetrics
+} from './observability/metrics.js';
 
 function createComponentState(status = 'initialising') {
   return {
@@ -45,6 +56,54 @@ const readinessState = {
     backgroundJobs: createComponentState()
   }
 };
+
+const readinessPersistence = {
+  file: null,
+  intervalMs: 5000,
+  lastPersistedAt: 0
+};
+
+let runtimeLogger = console;
+
+for (const [component, value] of Object.entries(readinessState.components)) {
+  markReadinessStatus(component, value.status);
+}
+
+function scheduleReadinessPersistence(snapshot) {
+  if (!readinessPersistence.file) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - readinessPersistence.lastPersistedAt < readinessPersistence.intervalMs) {
+    return;
+  }
+
+  readinessPersistence.lastPersistedAt = now;
+
+  (async () => {
+    try {
+      await mkdir(dirname(readinessPersistence.file), { recursive: true });
+      await writeFile(readinessPersistence.file, JSON.stringify(snapshot, null, 2));
+    } catch (error) {
+      runtimeLogger.error('Failed to persist readiness snapshot', {
+        file: readinessPersistence.file,
+        message: error.message
+      });
+    }
+  })();
+}
+
+export function configureAppRuntime({
+  logger = console,
+  readinessSnapshotFile = null,
+  readinessPersistIntervalSeconds = 5
+} = {}) {
+  runtimeLogger = logger;
+  readinessPersistence.file = readinessSnapshotFile || null;
+  readinessPersistence.intervalMs = Math.max(readinessPersistIntervalSeconds, 1) * 1000;
+  readinessPersistence.lastPersistedAt = 0;
+}
 
 function computeOverallReadinessStatus() {
   const componentStates = Object.values(readinessState.components);
@@ -92,6 +151,9 @@ export function updateReadiness(component, { status, error, metadata } = {}) {
   readinessState.components[component] = nextState;
   readinessState.status = computeOverallReadinessStatus();
   readinessState.lastUpdatedAt = nextState.lastUpdatedAt;
+
+  markReadinessStatus(component, nextState.status);
+  scheduleReadinessPersistence(getReadinessSnapshot());
 
   return readinessState.components[component];
 }
@@ -160,13 +222,16 @@ function buildCorsOriginMatchers(origins) {
       if (trimmed.startsWith('regex:')) {
         const expression = trimmed.slice(6).trim();
         if (!expression) {
-          console.warn('[cors] Ignoring empty regex allowlist entry');
+          runtimeLogger.warn('[cors] Ignoring empty regex allowlist entry');
           return null;
         }
         try {
           return { type: 'regex', pattern: trimmed, regex: new RegExp(expression, 'i') };
         } catch (error) {
-          console.warn('[cors] Failed to compile allowlist regex', { pattern: trimmed, message: error.message });
+          runtimeLogger.warn('[cors] Failed to compile allowlist regex', {
+            pattern: trimmed,
+            message: error.message
+          });
           return null;
         }
       }
@@ -174,7 +239,7 @@ function buildCorsOriginMatchers(origins) {
       if (trimmed.includes('*')) {
         const schemeIndex = trimmed.indexOf('://');
         if (schemeIndex === -1) {
-          console.warn('[cors] Ignoring wildcard origin without scheme', { origin: trimmed });
+          runtimeLogger.warn('[cors] Ignoring wildcard origin without scheme', { origin: trimmed });
           return null;
         }
 
@@ -182,7 +247,7 @@ function buildCorsOriginMatchers(origins) {
         const hostPort = trimmed.slice(schemeIndex + 3);
         const [hostPart, portPart] = hostPort.split(':');
         if (!hostPart?.startsWith('*.') || hostPart.length < 3) {
-          console.warn('[cors] Ignoring invalid wildcard origin', { origin: trimmed });
+          runtimeLogger.warn('[cors] Ignoring invalid wildcard origin', { origin: trimmed });
           return null;
         }
 
@@ -193,7 +258,7 @@ function buildCorsOriginMatchers(origins) {
 
       const parsed = parseOriginString(trimmed);
       if (!parsed) {
-        console.warn('[cors] Ignoring malformed origin', { origin: trimmed });
+        runtimeLogger.warn('[cors] Ignoring malformed origin', { origin: trimmed });
         return null;
       }
 
@@ -357,7 +422,7 @@ const corsMiddleware = cors((req, callback) => {
   const error = new Error('Origin not allowed by CORS policy');
   error.status = 403;
   error.cause = evaluation;
-  console.warn('[cors] Blocked request due to origin policy', {
+  runtimeLogger.warn('[cors] Blocked request due to origin policy', {
     origin: requestOrigin ?? 'none',
     path: req.originalUrl,
     reason: evaluation.reason
@@ -368,6 +433,8 @@ const corsMiddleware = cors((req, callback) => {
 const app = express();
 
 app.disable('x-powered-by');
+app.set('logger', runtimeLogger);
+app.locals.logger = runtimeLogger;
 
 const trustProxyValue = config.security?.trustProxy;
 if (trustProxyValue !== false && trustProxyValue?.toLowerCase?.() !== 'false') {
@@ -390,6 +457,18 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  const correlationId = deriveRequestCorrelationId(req) || randomUUID();
+  req.correlationId = correlationId;
+  res.setHeader('X-Correlation-Id', correlationId);
+  req.log = createChildLogger(runtimeLogger, {
+    correlationId,
+    method: req.method,
+    path: req.originalUrl
+  });
+  next();
+});
+
 const rateLimiter = rateLimit({
   windowMs: (config.security?.rateLimiting?.windowMinutes ?? 1) * 60 * 1000,
   max: config.security?.rateLimiting?.maxRequests ?? 120,
@@ -410,17 +489,25 @@ const rateLimiter = rateLimit({
   handler: (req, res, next, options) => {
     const retryAfterSeconds = Math.ceil(options.windowMs / 1000);
     const limit = options.limit ?? options.max ?? config.security?.rateLimiting?.maxRequests ?? 120;
-    const correlationId = deriveRequestCorrelationId(req);
+    const correlationId = req.correlationId || deriveRequestCorrelationId(req) || randomUUID();
+
+    res.setHeader('X-Correlation-Id', correlationId);
 
     res.setHeader('Retry-After', String(retryAfterSeconds));
     res.setHeader('RateLimit-Policy', `${limit};w=${retryAfterSeconds}`);
 
-    console.warn('[rate-limit] Request rejected', {
-      path: req.originalUrl,
-      ip: req.ip,
-      limit,
-      windowMs: options.windowMs
-    });
+    recordRateLimitRejection({ path: req.originalUrl, method: req.method });
+    runtimeLogger.warn(
+      {
+        event: 'rate_limit',
+        path: req.originalUrl,
+        ip: req.ip,
+        limit,
+        windowMs: options.windowMs,
+        correlationId
+      },
+      'Request rejected by rate limiter'
+    );
 
     res.status(429).json({
       message: 'Too many requests, please slow down.',
@@ -432,7 +519,18 @@ const rateLimiter = rateLimit({
 
 app.use(rateLimiter);
 
-app.use(morgan('tiny'));
+const httpLoggerStream = {
+  write: (message) => {
+    runtimeLogger.info({ event: 'http.access', message: message.trim() });
+  }
+};
+
+app.use(
+  morgan('combined', {
+    stream: httpLoggerStream,
+    skip: (req, res) => req.path === '/healthz' && res.statusCode === 200
+  })
+);
 
 app.set('dashboards:exportRowLimit', config.dashboards?.exportRowLimit ?? 5000);
 app.set('dashboards:defaultTimezone', config.dashboards?.defaultTimezone ?? 'Europe/London');
@@ -444,6 +542,8 @@ app.get('/', (req, res) => {
 async function measureDatabaseHealth(timeoutMs) {
   const startedAt = process.hrtime.bigint();
   let timeoutId;
+  let status = 'pass';
+  let durationMs = 0;
 
   try {
     await Promise.race([
@@ -456,14 +556,19 @@ async function measureDatabaseHealth(timeoutMs) {
         }, timeoutMs);
       })
     ]);
-
-    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+    durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
 
     return {
       status: 'pass',
       latencyMs: Number(durationMs.toFixed(2))
     };
   } catch (error) {
+    status = 'fail';
+    runtimeLogger.error('Database readiness check failed', {
+      message: error.message,
+      name: error.name
+    });
+
     return {
       status: 'fail',
       message: error.message
@@ -472,6 +577,10 @@ async function measureDatabaseHealth(timeoutMs) {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
+    if (!durationMs) {
+      durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+    }
+    observeDatabaseHealth(durationMs, status);
   }
 }
 
@@ -501,12 +610,22 @@ app.get('/readyz', (req, res) => {
   res.status(readiness.status === 'pass' ? 200 : 503).json(readiness);
 });
 
+app.get('/metrics', async (req, res, next) => {
+  try {
+    const metricsPayload = await serialiseMetrics();
+    res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(metricsPayload);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use('/api', routes);
 
 app.use(notFound);
 app.use(errorHandler);
 
-export async function initDatabase(logger = console) {
+export async function initDatabase(logger = runtimeLogger) {
   updateReadiness('database', { status: 'initialising' });
 
   try {
@@ -516,48 +635,54 @@ export async function initDatabase(logger = console) {
     throw error;
   }
 
-  if (sequelize.getDialect() === 'postgres') {
-    try {
-      await sequelize.query('CREATE EXTENSION IF NOT EXISTS postgis');
-      await sequelize.query('CREATE EXTENSION IF NOT EXISTS postgis_topology');
-      await sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+  const dialect = sequelize.getDialect();
 
-      const [rows] = await sequelize.query(
-        "SELECT installed_version FROM pg_available_extensions WHERE name = 'postgis' AND installed_version IS NOT NULL"
+  if (dialect === 'postgres') {
+    try {
+      const [extensionRows] = await sequelize.query(
+        "SELECT extname, installed_version FROM pg_extension WHERE extname IN ('postgis','postgis_topology','uuid-ossp')"
       );
 
-      if (!Array.isArray(rows) || rows.length === 0) {
-        throw new Error('PostGIS extension not installed for the current database user');
+      const extensions = Array.isArray(extensionRows)
+        ? Object.fromEntries(extensionRows.map((row) => [row.extname, row.installed_version || null]))
+        : {};
+
+      if (!extensions.postgis) {
+        throw new Error('PostGIS extension is not installed or cannot be accessed by the Fixnado role.');
       }
 
-      const postgisVersion = rows[0].installed_version;
+      const [versionRows] = await sequelize.query('SELECT postgis_version() as version');
+      const postgisVersion = versionRows?.[0]?.version || extensions.postgis || null;
 
-      logger?.info?.('PostGIS extension verified', {
-        postgisVersion
+      logger?.info?.('Postgres extensions verified', {
+        postgisVersion,
+        extensions
       });
 
       updateReadiness('database', {
         status: 'ready',
         metadata: {
-          dialect: sequelize.getDialect(),
+          dialect,
+          extensions,
           postgisVersion
         }
       });
     } catch (error) {
-      logger?.error?.('PostGIS verification failed', {
+      logger?.error?.('Postgres extension verification failed', {
         message: error.message
       });
       updateReadiness('database', { status: 'error', error });
       throw error;
     }
-  } else {
-    updateReadiness('database', {
-      status: 'ready',
-      metadata: {
-        dialect: sequelize.getDialect()
-      }
-    });
+    return;
   }
+
+  updateReadiness('database', {
+    status: 'ready',
+    metadata: {
+      dialect
+    }
+  });
 }
 
 export default app;
