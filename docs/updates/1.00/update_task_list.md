@@ -1,10 +1,10 @@
 # Version 1.00 Task List
 
-## 1. Secure Identity, Routing, and Telemetry Foundations — 0%
+## 1. Secure Identity, Routing, and Telemetry Foundations — 20%
 **Goal:** Close authentication/routing exploits, enforce least-privilege access, and restore telemetry ingestion so other workstreams can validate safely.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L4-L85】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L4-L52】
 
 ### Subtasks (0% each)
-1. Replace permissive JWT fallback with strict issuer/audience validation and clock tolerance enforcement; add structured remediation messaging in auth middleware.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L4-L32】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L4-L24】
+1. ✅ Replaced the permissive JWT fallback with strict issuer/audience validation, enforced bounded clock tolerance, and delivered structured remediation messaging in the auth middleware.【F:backend-nodejs/src/services/sessionService.js†L8-L168】【F:backend-nodejs/src/middleware/auth.js†L1-L305】【F:docs/updates/1.00/update_progress_tracker.md†L8-L9】
 2. Rebuild router composition to remove duplicate mounts, keep `/v1` isolated, and wrap finance/serviceman surfaces behind feature flags with launch toggles.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L6-L21】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L6-L18】
 3. Harden CORS, Helmet (CSP/COEP), rate limiter headers, and storefront override controls while eliminating secrets stack-trace logging.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L8-L33】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L8-L28】
 4. Implement `/telemetry/client-errors` and `/telemetry/mobile-crashes` handlers with retention, alerting, and correlation IDs; align client reporters to the contracts.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L13-L80】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L66-L109】

@@ -1,11 +1,11 @@
 # Version 1.00 Progress Tracker
 
-_All percentages currently reflect pre-execution status (0%). Overall level is the mean of security, completion, integration, functionality, error-free, and production readiness scores per row._
+_Percentages reflect the latest merged work. Overall level is the mean of security, completion, integration, functionality, error-free, and production readiness scores per row._
 
 | Task / Subtask | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **1. Secure Identity, Routing, and Telemetry Foundations**【F:docs/updates/1.00/update_task_list.md†L4-L34】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 1.1 Strict JWT validation & auth messaging | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **1. Secure Identity, Routing, and Telemetry Foundations**【F:docs/updates/1.00/update_task_list.md†L4-L34】 | 20 | 20 | 20 | 20 | 20 | 20 | 20 |
+| 1.1 Strict JWT validation & auth messaging | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 1.2 Router deduplication & feature flags | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 1.3 CORS/Helmet/rate limiting hardening | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 1.4 Telemetry endpoints & retention | 0 | 0 | 0 | 0 | 0 | 0 | 0 |

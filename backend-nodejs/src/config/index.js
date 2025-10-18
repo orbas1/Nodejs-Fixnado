@@ -92,6 +92,17 @@ function listFromEnv(key) {
     .filter(Boolean);
 }
 
+const ACCESS_TOKEN_TTL_SECONDS = Math.max(intFromEnv('AUTH_ACCESS_TOKEN_TTL_SECONDS', 900), 300);
+const REFRESH_TOKEN_TTL_DAYS = Math.max(intFromEnv('AUTH_REFRESH_TOKEN_TTL_DAYS', 14), 1);
+const JWT_ALLOWED_ALGORITHMS = listFromEnv('JWT_ALLOWED_ALGORITHMS');
+const JWT_AUDIENCE = process.env.JWT_AUDIENCE || 'fixnado:web';
+const JWT_ISSUER = process.env.JWT_ISSUER || 'fixnado-api';
+const JWT_CLOCK_TOLERANCE_SECONDS = Math.max(intFromEnv('JWT_CLOCK_TOLERANCE_SECONDS', 30), 0);
+const JWT_MAX_TOKEN_AGE_SECONDS = Math.max(
+  intFromEnv('JWT_MAX_TOKEN_AGE_SECONDS', ACCESS_TOKEN_TTL_SECONDS + JWT_CLOCK_TOLERANCE_SECONDS),
+  ACCESS_TOKEN_TTL_SECONDS
+);
+
 function readDatabaseCaCertificate() {
   if (typeof process.env.DB_SSL_CA_BASE64 === 'string' && process.env.DB_SSL_CA_BASE64.trim() !== '') {
     try {
@@ -341,7 +352,11 @@ const config = {
   },
   jwt: {
     secret: requireEnv('JWT_SECRET'),
-    expiresIn: '12h'
+    audience: JWT_AUDIENCE,
+    issuer: JWT_ISSUER,
+    algorithms: JWT_ALLOWED_ALGORITHMS.length > 0 ? JWT_ALLOWED_ALGORITHMS : ['HS256'],
+    clockToleranceSeconds: JWT_CLOCK_TOLERANCE_SECONDS,
+    maxTokenAgeSeconds: JWT_MAX_TOKEN_AGE_SECONDS
   },
   auth: {
     admin: {
@@ -360,8 +375,8 @@ const config = {
         typeof process.env.AUTH_COOKIE_SECURE === 'string'
           ? process.env.AUTH_COOKIE_SECURE.trim().toLowerCase() !== 'false'
           : env === 'production',
-      accessTokenTtlSeconds: Math.max(intFromEnv('AUTH_ACCESS_TOKEN_TTL_SECONDS', 900), 300),
-      refreshTokenTtlDays: Math.max(intFromEnv('AUTH_REFRESH_TOKEN_TTL_DAYS', 14), 1),
+      accessTokenTtlSeconds: ACCESS_TOKEN_TTL_SECONDS,
+      refreshTokenTtlDays: REFRESH_TOKEN_TTL_DAYS,
       rollingSessions: boolFromEnv('AUTH_ROLLING_SESSIONS', true)
     }
   },

@@ -8,10 +8,93 @@ import {
 } from '../services/sessionService.js';
 import { enforcePolicy } from './policyMiddleware.js';
 
+const AUTH_DOCUMENTATION_URL =
+  'https://support.fixnado.com/hc/en-us/articles/101-secure-session-troubleshooting';
+const STOREFRONT_DOCUMENTATION_URL =
+  'https://support.fixnado.com/hc/en-us/articles/102-provider-storefront-access';
+const SUPPORT_CONTACT = 'support@fixnado.com';
+
+function deriveCorrelationId(req) {
+  return (
+    req.headers['x-request-id'] ||
+    req.headers['x-correlation-id'] ||
+    req.headers['x-amzn-trace-id'] ||
+    req.headers['x-cloud-trace-context'] ||
+    null
+  );
+}
+
+function respondWithAuthError(req, res, { status = 401, code, message, remediation, hint, documentationUrl, details }) {
+  const correlationId = deriveCorrelationId(req);
+  const errorBody = {
+    code,
+    message,
+    remediation,
+    supportContact: SUPPORT_CONTACT,
+    correlationId
+  };
+
+  if (hint) {
+    errorBody.hint = hint;
+  }
+
+  if (documentationUrl) {
+    errorBody.documentationUrl = documentationUrl;
+  }
+
+  if (details && Object.keys(details).length > 0) {
+    errorBody.details = details;
+  }
+
+  return res.status(status).json({ error: errorBody });
+}
+
+function buildVerificationErrorResponse(code) {
+  switch (code) {
+    case 'token_expired':
+      return {
+        status: 401,
+        code: 'auth.token.expired',
+        message: 'Your Fixnado session expired.',
+        remediation: 'Sign in again to refresh your credentials or exchange a valid refresh token.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      };
+    case 'token_not_yet_valid':
+      return {
+        status: 401,
+        code: 'auth.token.not_ready',
+        message: 'This access token is not valid yet.',
+        remediation: 'Check that your device clock matches an NTP source and wait until the token activation time.',
+        hint: 'Ensure the token\'s `nbf` claim is in the past and that server and client clocks are synchronised.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      };
+    case 'token_missing':
+      return {
+        status: 401,
+        code: 'auth.token.missing',
+        message: 'Authentication token is required.',
+        remediation: 'Sign in to Fixnado and include the Bearer token or session cookies in subsequent requests.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      };
+    default:
+      return {
+        status: 401,
+        code: 'auth.token.invalid',
+        message: 'The supplied access token failed validation.',
+        remediation: 'Request a new login or rotate your API credentials before retrying.',
+        hint: 'Verify that the Authorization header contains a Fixnado-issued Bearer token for the expected audience and issuer.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      };
+  }
+}
+
 export async function authenticate(req, res, next) {
   try {
     const { bearerToken, accessToken, refreshToken } = extractTokens(req);
     const token = bearerToken || accessToken;
+    const tokenSource = bearerToken ? 'authorization' : accessToken ? 'cookie' : null;
+    const correlationId = deriveCorrelationId(req);
+
     if (!token) {
       const roleHeader = process.env.NODE_ENV === 'test' ? `${req.headers['x-fixnado-role'] ?? ''}`.trim() : '';
       if (roleHeader) {
@@ -44,9 +127,11 @@ export async function authenticate(req, res, next) {
         return next();
       }
 
-      const missingMessage = req.originalUrl?.includes('/api/panel/provider/storefront')
-        ? 'Storefront access restricted to providers'
-        : 'Missing authorization header';
+      const storefrontRequest = req.originalUrl?.includes('/api/panel/provider/storefront');
+      const missingResponse = buildVerificationErrorResponse('token_missing');
+      const remediation = storefrontRequest
+        ? 'Sign in with a provider account that has storefront privileges, then retry with the issued Bearer token.'
+        : missingResponse.remediation;
 
       await recordSecurityEvent({
         userId: null,
@@ -58,14 +143,25 @@ export async function authenticate(req, res, next) {
         reason: 'missing_token',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-        metadata: { path: req.originalUrl }
+        correlationId,
+        metadata: { path: req.originalUrl ?? null, tokenSource: 'absent' }
       });
-      return res.status(401).json({ message: 'Missing authorization header' });
-      return res.status(401).json({ message: missingMessage });
+
+      return respondWithAuthError(req, res, {
+        ...missingResponse,
+        message: storefrontRequest
+          ? 'Provider storefront access requires an authenticated provider session.'
+          : missingResponse.message,
+        remediation,
+        documentationUrl: storefrontRequest ? STOREFRONT_DOCUMENTATION_URL : missingResponse.documentationUrl,
+        details: { path: req.originalUrl ?? undefined }
+      });
     }
 
-    const payload = verifyAccessToken(token);
-    if (!payload) {
+    const verification = verifyAccessToken(token, { detailed: true });
+    if (!verification.valid) {
+      const errorResponse = buildVerificationErrorResponse(verification.code);
+
       await recordSecurityEvent({
         userId: null,
         actorRole: 'guest',
@@ -73,14 +169,22 @@ export async function authenticate(req, res, next) {
         resource: 'auth:authenticate',
         action: req.originalUrl ?? 'unknown',
         decision: 'deny',
-        reason: 'invalid_token',
+        reason: `jwt_${verification.code ?? 'invalid'}`,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-        metadata: { tokenSource: bearerToken ? 'authorization' : 'cookie' }
+        correlationId,
+        metadata: {
+          tokenSource: tokenSource ?? 'unknown',
+          jwtError: verification.error?.name ?? null
+        }
       });
-      return res.status(401).json({ message: 'Invalid token' });
+
+      clearSessionCookies(res);
+
+      return respondWithAuthError(req, res, errorResponse);
     }
 
+    const payload = verification.payload;
     const user = await User.findByPk(payload.sub);
     if (!user) {
       await recordSecurityEvent({
@@ -92,10 +196,18 @@ export async function authenticate(req, res, next) {
         decision: 'deny',
         reason: 'user_not_found',
         ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
+        userAgent: req.headers['user-agent'],
+        correlationId,
+        metadata: { tokenSource: tokenSource ?? 'unknown' }
       });
       clearSessionCookies(res);
-      return res.status(401).json({ message: 'Session is no longer valid' });
+      return respondWithAuthError(req, res, {
+        status: 401,
+        code: 'auth.session.unknown_user',
+        message: 'We could not find the account associated with this session.',
+        remediation: 'Sign in again to issue a new session or ask an administrator to confirm the account is still active.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      });
     }
 
     let session = null;
@@ -112,10 +224,17 @@ export async function authenticate(req, res, next) {
           reason: 'session_expired',
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
+          correlationId,
           metadata: { sessionId: payload.sid ?? null }
         });
         clearSessionCookies(res);
-        return res.status(401).json({ message: 'Session expired' });
+        return respondWithAuthError(req, res, {
+          status: 401,
+          code: 'auth.session.expired',
+          message: 'Your Fixnado session has expired.',
+          remediation: 'Sign in again to refresh your credentials. Any drafts will re-sync after authentication.',
+          documentationUrl: AUTH_DOCUMENTATION_URL
+        });
       }
     } else if (process.env.NODE_ENV !== 'test') {
       await recordSecurityEvent({
@@ -127,10 +246,17 @@ export async function authenticate(req, res, next) {
         decision: 'deny',
         reason: 'session_missing',
         ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
+        userAgent: req.headers['user-agent'],
+        correlationId
       });
       clearSessionCookies(res);
-      return res.status(401).json({ message: 'Session expired' });
+      return respondWithAuthError(req, res, {
+        status: 401,
+        code: 'auth.session.missing',
+        message: 'This token is missing a session reference and cannot be trusted.',
+        remediation: 'Request a fresh login so we can bind the token to an active session before retrying.',
+        documentationUrl: AUTH_DOCUMENTATION_URL
+      });
     }
 
     req.user = {
@@ -164,18 +290,18 @@ export async function authenticate(req, res, next) {
       decision: 'allow',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
+      correlationId,
       metadata: {
         sessionId: session?.id ?? null,
-        tokenSource: bearerToken ? 'authorization' : 'cookie',
+        tokenSource: tokenSource ?? 'unknown',
         sidPresent: Boolean(payload.sid)
       }
-      metadata: { sessionId: session?.id ?? null }
     });
 
-    next();
+    return next();
   } catch (error) {
     console.warn('Authentication middleware failure', { message: error.message });
-    next(error);
+    return next(error);
   }
 }
 
