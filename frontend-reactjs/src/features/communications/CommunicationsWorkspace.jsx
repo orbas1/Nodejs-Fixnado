@@ -40,38 +40,38 @@ import {
 
 const VARIANT_COPY = {
   default: {
-    eyebrow: 'Inbox',
-    title: 'Messaging & AI assist',
-    description: 'A clean, social-style space for every conversation.',
-    badgeActive: 'Live routing enabled',
-    badgePaused: 'Live routing paused',
-    accessTitle: 'Communications workspace is limited',
-    accessDescription:
-      'Messaging is reserved for Fixnado provider, enterprise, and operations cohorts. Switch to an authorised workspace role or request access so conversations remain governed.',
+    eyebrow: 'Workspace',
+    title: 'Communications',
+    badgeActive: 'Live',
+    badgePaused: 'Paused',
+    accessTitle: 'Workspace locked',
+    accessDescription: 'Switch to an allowed role or request access.',
     creatorName: 'Team member',
-    createTitle: 'Start a new conversation',
-    createDescription: 'Invite participants and spin up a fresh inbox thread with AI assist on standby.',
-    createButton: 'Start conversation',
-    createSuccess: 'Conversation created and ready to chat.'
+    createTitle: 'New chat',
+    createButton: 'Create chat',
+    createSuccess: 'Chat ready'
   },
   serviceman: {
-    eyebrow: 'Crew inbox',
-    title: 'Job communications',
-    description:
-      'Coordinate dispatch updates, upload job evidence, and escalate blockers without leaving the cockpit.',
-    badgeActive: 'Crew routing live',
-    badgePaused: 'Crew routing paused',
-    accessTitle: 'Crew messaging is limited',
-    accessDescription:
-      'Switch to an authorised crew or operations persona to manage inbox conversations, or request access from operations enablement.',
+    eyebrow: 'Crew',
+    title: 'Job comms',
+    badgeActive: 'Live',
+    badgePaused: 'Paused',
+    accessTitle: 'Crew chat locked',
+    accessDescription: 'Use an allowed crew profile or request access.',
     creatorName: 'Crew lead',
-    createTitle: 'Raise a new job chat',
-    createDescription:
-      'Loop in building contacts, drop job context, and let AI suggestions draft the first response.',
-    createButton: 'Open conversation',
-    createSuccess: 'Chat ready — you have been added to the thread.'
+    createTitle: 'New job chat',
+    createButton: 'Open chat',
+    createSuccess: 'Chat ready'
   }
 };
+
+const SECTION_TABS = [
+  { id: 'inbox', label: 'Inbox' },
+  { id: 'setup', label: 'Setup' },
+  { id: 'channels', label: 'Channels' },
+  { id: 'replies', label: 'Replies' },
+  { id: 'escalate', label: 'Escalate' }
+];
 
 const DEFAULT_CREATE_DRAFT = {
   subject: '',
@@ -187,6 +187,8 @@ function Communications({
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [createConversationError, setCreateConversationError] = useState(null);
   const [createConversationSuccess, setCreateConversationSuccess] = useState(null);
+  const [activeSection, setActiveSection] = useState('inbox');
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const messagesViewportRef = useRef(null);
   const messagesEndRef = useRef(null);
   const createSuccessTimeoutRef = useRef(null);
@@ -782,6 +784,7 @@ function Communications({
         }
 
         setCreateDraft({ ...DEFAULT_CREATE_DRAFT });
+        setShowCreateWizard(false);
         setCreateConversationSuccess(copy.createSuccess);
         if (createSuccessTimeoutRef.current) {
           clearTimeout(createSuccessTimeoutRef.current);
@@ -820,7 +823,8 @@ function Communications({
       setParticipantInput,
       setCreatingConversation,
       sessionRole,
-      telemetryContext
+      telemetryContext,
+      setShowCreateWizard
     ]
   );
 
@@ -1255,28 +1259,30 @@ function Communications({
       });
   }, [editingEscalationId]);
 
-  const outerClassName = embedded
-    ? 'w-full space-y-6'
-    : 'relative mx-auto w-full max-w-6xl px-4 py-12';
-  const shellClassName = embedded
-    ? 'relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-200/60'
-    : 'relative overflow-hidden rounded-3xl border border-slate-200 bg-white/95 px-6 py-10 shadow-xl shadow-slate-200/80';
   const creatorDisplayName = currentParticipant?.displayName || copy.creatorName;
   const creatorRoleLabel = formatRoleLabel(currentParticipant?.role || sessionRole || 'serviceman');
+  const wrapperClassName = embedded
+    ? 'w-full space-y-6'
+    : 'min-h-screen w-full bg-slate-100 px-4 py-8 sm:px-8 lg:px-12';
+  const panelClassName = embedded
+    ? 'flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60'
+    : 'mx-auto flex w-full max-w-[1400px] flex-col gap-6 rounded-4xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/80';
 
   if (!hasAccess) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-4xl flex-col items-center justify-center px-4 py-12 text-center">
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-10 shadow-lg shadow-amber-100">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-600">Access restricted</p>
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">{copy.accessTitle}</h1>
-          <p className="mt-3 text-sm text-slate-600">{copy.accessDescription}</p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <div className={clsx('flex min-h-screen w-full items-center justify-center bg-slate-50 px-4 py-12', {
+        'bg-transparent px-0 py-0': embedded
+      })}>
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-3xl border border-amber-200 bg-white/95 p-8 text-center shadow-xl shadow-amber-100">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-600">Locked</p>
+          <h1 className="text-2xl font-semibold text-slate-900">{copy.accessTitle}</h1>
+          <p className="text-sm text-slate-600">{copy.accessDescription}</p>
+          <div className="mt-2 flex flex-wrap justify-center gap-3 text-sm font-semibold">
             <a
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:text-amber-600"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-600 shadow-sm transition hover:border-amber-300 hover:text-amber-600"
               href="mailto:enablement@fixnado.com?subject=Communications%20workspace%20access"
             >
-              Request enablement review
+              Request
             </a>
             <button
               type="button"
@@ -1284,21 +1290,19 @@ function Communications({
                 const resolvedRole = normaliseRole(resolveSessionTelemetryContext().role);
                 setSessionRole(resolvedRole);
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-5 py-2 text-sm font-semibold text-amber-950 shadow hover:bg-amber-400"
+              className="inline-flex items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-amber-950 shadow hover:bg-amber-400"
             >
-              Retry role detection
+              Refresh
             </button>
           </div>
-          <dl className="mt-8 grid gap-4 text-left text-xs text-slate-600 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-              <dt className="font-semibold uppercase tracking-[0.25em] text-slate-500">Current role</dt>
-              <dd className="mt-2 text-sm font-semibold text-slate-900">{formatRoleLabel(sessionRole)}</dd>
+          <dl className="mt-4 grid w-full gap-3 text-left text-xs text-slate-500">
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
+              <dt className="font-semibold uppercase tracking-[0.3em] text-amber-700">Role</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-900">{formatRoleLabel(sessionRole)}</dd>
             </div>
-            <div className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-              <dt className="font-semibold uppercase tracking-[0.25em] text-slate-500">Authorised cohorts</dt>
-              <dd className="mt-2 text-sm font-semibold text-slate-900">
-                {allowedRoleLabels.join(', ')}
-              </dd>
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              <dt className="font-semibold uppercase tracking-[0.3em] text-slate-500">Allowed</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-900">{allowedRoleLabels.join(', ')}</dd>
             </div>
           </dl>
         </div>
@@ -1307,393 +1311,448 @@ function Communications({
   }
 
   return (
-    <div className={outerClassName}>
-      <div className={shellClassName}>
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <header className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{copy.eyebrow}</p>
-            <h1 className="text-3xl font-semibold text-slate-900">{copy.title}</h1>
-            <p className="text-sm text-slate-500">{copy.description}</p>
-          </header>
-          <div className="flex flex-col items-end gap-3">
+    <div className={wrapperClassName}>
+      <div className={panelClassName}>
+      <header className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 rounded-3xl bg-slate-900 px-6 py-6 text-white lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-white/60">{copy.eyebrow}</p>
+            <h1 className="text-3xl font-semibold">{copy.title}</h1>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-3">
             {heroActions ? <div className="flex flex-wrap justify-end gap-2">{heroActions}</div> : null}
-            <div
+            <span
               className={clsx(
-                'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/20',
-                inboxConfiguration.liveRoutingEnabled
-                  ? 'bg-slate-900/90 text-white'
-                  : 'bg-slate-200 text-slate-600'
+                'inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold shadow-lg shadow-black/20',
+                inboxConfiguration.liveRoutingEnabled ? 'bg-white/10 text-white' : 'bg-white/5 text-white/70'
               )}
             >
               <span
                 className={clsx(
                   'inline-flex h-2 w-2 rounded-full',
-                  inboxConfiguration.liveRoutingEnabled ? 'animate-pulse bg-emerald-400' : 'bg-slate-400'
+                  inboxConfiguration.liveRoutingEnabled ? 'animate-pulse bg-emerald-300' : 'bg-white/60'
                 )}
                 aria-hidden="true"
               />
               {inboxConfiguration.liveRoutingEnabled ? copy.badgeActive : copy.badgePaused}
-            </div>
+            </span>
           </div>
         </div>
+      </header>
 
-        <div className="mt-6 space-y-6">
-          <form
-            onSubmit={handleCreateConversation}
-            className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm"
-          >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-700">{copy.createTitle}</h2>
-                <p className="mt-1 text-xs text-slate-500">{copy.createDescription}</p>
-              </div>
-              <div className="flex flex-col items-end gap-2 text-xs">
-                {createConversationError ? (
-                  <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-600">
-                    {createConversationError}
-                  </span>
-                ) : null}
-                {createConversationSuccess ? (
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-600">
-                    {createConversationSuccess}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <p className="mt-3 text-[11px] uppercase tracking-[0.3em] text-slate-400">
-              You will appear as {creatorDisplayName} · {creatorRoleLabel}
-            </p>
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Subject
-                <input
-                  type="text"
-                  value={createDraft.subject}
-                  onChange={(event) => handleCreateFieldChange('subject', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                  placeholder="Leak investigation for unit 12"
-                  minLength={3}
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Customer name
-                <input
-                  type="text"
-                  value={createDraft.customerName}
-                  onChange={(event) => handleCreateFieldChange('customerName', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                  placeholder="Jordan (Facilities Lead)"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Customer reference
-                <input
-                  type="text"
-                  value={createDraft.customerReference}
-                  onChange={(event) => handleCreateFieldChange('customerReference', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                  placeholder="FAC-1029"
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Participant type
-                <select
-                  value={createDraft.customerType}
-                  onChange={(event) => handleCreateFieldChange('customerType', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                >
-                  <option value="user">Client contact</option>
-                  <option value="company">Company stakeholder</option>
-                  <option value="enterprise">Enterprise team</option>
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Job / order ID
-                <input
-                  type="text"
-                  value={createDraft.jobId}
-                  onChange={(event) => handleCreateFieldChange('jobId', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                  placeholder="JOB-4732"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-                Location or asset
-                <input
-                  type="text"
-                  value={createDraft.location}
-                  onChange={(event) => handleCreateFieldChange('location', event.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                  placeholder="Tower B · Pump room"
-                />
-              </label>
-            </div>
-            <label className="mt-4 flex flex-col gap-1 text-xs font-medium text-slate-600">
-              Initial message
-              <textarea
-                rows={3}
-                value={createDraft.initialMessage}
-                onChange={(event) => handleCreateFieldChange('initialMessage', event.target.value)}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                placeholder="Hi team — sharing a quick update before arrival."
-              />
-            </label>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-sky-500"
-                  checked={createDraft.aiAssistEnabled}
-                  onChange={(event) => handleCreateFieldChange('aiAssistEnabled', event.target.checked)}
-                />
-                <span>Keep AI suggestions enabled</span>
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-sky-500 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:opacity-60"
-                  disabled={creatingConversation}
-                >
-                  {creatingConversation ? 'Creating…' : copy.createButton}
-                </button>
+        <nav className="flex flex-wrap gap-3" role="tablist" aria-label="Communications sections">
+          {SECTION_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveSection(tab.id)}
+              className={clsx(
+                'inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition',
+                activeSection === tab.id
+                  ? 'bg-slate-900 text-white shadow-sm shadow-slate-900/20'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              )}
+              role="tab"
+              aria-selected={activeSection === tab.id}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {createConversationSuccess ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 shadow-sm">
+            {createConversationSuccess}
+          </div>
+        ) : null}
+
+        {activeSection === 'inbox' ? (
+          <section className="flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const trimmed = participantInput.trim();
+                  setParticipantId(trimmed);
+                  setSearchParams(trimmed ? { participantId: trimmed } : {});
+                }}
+                className="flex w-full flex-col gap-2 lg:max-w-lg"
+              >
+                <label className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">Viewer</label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={participantInput}
+                    onChange={(event) => setParticipantInput(event.target.value)}
+                    placeholder="Participant ID"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400"
+                  >
+                    Load
+                  </button>
+                </div>
+              </form>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">{creatorDisplayName}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">{creatorRoleLabel}</span>
                 <button
                   type="button"
-                  onClick={() => setCreateDraft({ ...DEFAULT_CREATE_DRAFT })}
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
-                  disabled={creatingConversation}
+                  onClick={() => setShowCreateWizard(true)}
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-slate-900/20 transition hover:bg-slate-800"
                 >
-                  Reset
+                  {copy.createTitle}
                 </button>
               </div>
             </div>
-          </form>
 
-          <InboxSettingsForm
-            configuration={inboxConfiguration}
-            loading={settingsLoading}
-            saving={settingsSaving}
-            error={settingsError}
-            onFieldChange={handleConfigurationChange}
-            onSubmit={handleSettingsSubmit}
-            onRefresh={handleSettingsRefresh}
-          />
-          <EntryPointsManager
-            entryPoints={sortedEntryPoints}
-            dirtyMap={entryPointDirtyMap}
-            savingMap={entryPointSavingMap}
-            deletingMap={entryPointDeletingMap}
-            onFieldChange={handleEntryPointFieldChange}
-            onToggle={handleEntryPointToggle}
-            onSave={handleEntryPointSave}
-            onReset={handleEntryPointReset}
-            onDelete={handleEntryPointDelete}
-            onTemplateSelect={handleEntryPointMessage}
-            newEntryPoint={newEntryPoint}
-            onNewEntryPointChange={handleNewEntryPointChange}
-            onNewEntryPointSubmit={handleNewEntryPointSubmit}
-            onNewEntryPointReset={resetNewEntryPointForm}
-            creatingEntryPoint={creatingEntryPoint}
-          />
-        </div>
-
-        
-        <section className="mt-6 grid gap-6 lg:grid-cols-2">
-          <QuickRepliesManager
-            quickReplies={quickReplies}
-            newQuickReply={newQuickReply}
-            onNewQuickReplyChange={handleNewQuickReplyChange}
-            onNewQuickReplySubmit={handleNewQuickReplySubmit}
-            onRoleToggle={handleNewQuickReplyRoleToggle}
-            saving={settingsSaving}
-            onTemplateSelect={handleEntryPointMessage}
-            onEditStart={handleQuickReplyEditStart}
-            editingQuickReplyId={editingQuickReplyId}
-            editingQuickReplyDraft={editingQuickReplyDraft}
-            onEditingChange={handleEditingQuickReplyChange}
-            onEditingRoleToggle={handleEditingQuickReplyRoleToggle}
-            onEditSave={handleQuickReplyEditSave}
-            onEditCancel={handleQuickReplyEditCancel}
-            onDelete={handleQuickReplyDelete}
-          />
-          <EscalationRulesManager
-            escalationRules={escalationRules}
-            newEscalationRule={newEscalationRule}
-            onNewEscalationChange={handleNewEscalationChange}
-            onRoleToggle={handleNewEscalationRoleToggle}
-            onNewEscalationSubmit={handleNewEscalationSubmit}
-            saving={settingsSaving}
-            onEditStart={handleEscalationEditStart}
-            editingEscalationId={editingEscalationId}
-            editingEscalationDraft={editingEscalationDraft}
-            onEditingChange={handleEditingEscalationChange}
-            onEditingRoleToggle={handleEditingEscalationRoleToggle}
-            onEditSave={handleEscalationEditSave}
-            onEditCancel={handleEscalationEditCancel}
-            onDelete={handleEscalationDelete}
-          />
-        </section>
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const trimmed = participantInput.trim();
-            setParticipantId(trimmed);
-            setSearchParams(trimmed ? { participantId: trimmed } : {});
-          }}
-          className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
-        >
-          <label
-            htmlFor="communications-participant"
-            className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500"
-          >
-            Participant
-          </label>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              id="communications-participant"
-              type="text"
-              value={participantInput}
-              onChange={(event) => setParticipantInput(event.target.value)}
-              placeholder="Participant ID"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200"
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400"
-            >
-              Load
-            </button>
-          </div>
-        </form>
-
-        {!hasParticipant ? (
-          <p className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600 shadow-sm">
-            Add a participant ID to open the inbox.
-          </p>
-        ) : null}
-        {error ? (
-          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">{error}</p>
-        ) : null}
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <h2 className="text-sm font-semibold text-slate-600">Inbox</h2>
-              {listLoading ? <span className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Loading…</span> : null}
-            </div>
-            <ConversationList
-              conversations={conversations}
-              activeConversationId={activeConversationId}
-              onSelect={(conversationId) => setActiveConversationId(conversationId)}
-            />
-          </aside>
-
-          <section className="flex min-h-[520px] flex-col rounded-3xl border border-slate-200 bg-slate-50/80">
-            {!activeConversation ? (
-              <div className="m-auto max-w-sm px-6 text-center text-sm text-slate-500">
-                {hasParticipant
-                  ? 'Pick a thread from the inbox to jump into the chat.'
-                  : 'Load a participant to see their messages here.'}
+            {error ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 shadow-sm">
+                {error}
               </div>
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 py-5">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{activeConversation.subject}</h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {activeConversation.participants
-                        .filter((participant) => participant.role !== 'ai_assistant')
-                        .map((participant) => `${participant.displayName} (${participant.role})`)
-                        .join(' • ')}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-                    <span className="rounded-full bg-slate-100 px-3 py-1">
-                      AI {activeConversation.aiAssistDefault ? 'On' : 'Off'}
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1">{activeConversation.retentionDays}d retention</span>
-                    {activeConversation.metadata?.bookingId ? (
-                      <span className="rounded-full bg-slate-100 px-3 py-1">Booking #{activeConversation.metadata.bookingId}</span>
-                    ) : null}
-                  </div>
+            ) : null}
+            {!hasParticipant ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 shadow-sm">
+                Enter a participant ID to load chats.
+              </div>
+            ) : null}
+
+            <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px] xl:grid-cols-[320px_minmax(0,1fr)_320px] lg:items-start">
+              <aside className="flex h-[620px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-950/5">
+                <div className="flex items-center justify-between border-b border-slate-200 bg-white/70 px-5 py-4">
+                  <h2 className="text-sm font-semibold text-slate-900">Inbox</h2>
+                  {listLoading ? (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">Loading</span>
+                  ) : null}
                 </div>
-
-                <div
-                  ref={messagesViewportRef}
-                  className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
-                >
-                  {messagesLoading ? (
-                    <p className="text-sm text-slate-500">Loading conversation…</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {conversationMessages.map((message) => (
-                        <MessageBubble
-                          key={message.id}
-                          message={message}
-                          isSelf={message.senderParticipantId === participantId}
-                          viewerParticipantId={participantId}
-                        />
-                      ))}
-                      {conversationMessages.length === 0 ? (
-                        <p className="text-sm text-slate-500">No messages yet. Be the first to say hello.</p>
-                      ) : null}
-                      <span ref={messagesEndRef} aria-hidden="true" />
-                    </div>
-                  )}
-
-                  <ParticipantControls
-                    participant={viewerParticipant}
-                    onPreferencesChange={handlePreferencesChange}
-                    disabled={preferencesSaving}
+                <div className="flex-1 overflow-y-auto">
+                  <ConversationList
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelect={(conversationId) => setActiveConversationId(conversationId)}
                   />
+                </div>
+              </aside>
 
-                  <div className="rounded-2xl bg-white/90 p-4 text-sm text-slate-600 shadow-sm">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">Need a live walkthrough?</p>
-                        <p className="text-xs text-slate-500">Spin up an Agora video session without leaving the chat.</p>
+              <div className="flex min-h-[620px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                {!activeConversation ? (
+                  <div className="m-auto px-6 text-center text-sm text-slate-500">
+                    {hasParticipant ? 'Select a chat.' : 'Load a participant.'}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-6 py-4">
+                      <div className="min-w-[200px]">
+                        <h2 className="text-lg font-semibold text-slate-900">{activeConversation.subject}</h2>
+                        <p className="text-xs text-slate-500">
+                          {activeConversation.participants
+                            .filter((participant) => participant.role !== 'ai_assistant')
+                            .map((participant) => participant.displayName)
+                            .join(' • ')}
+                        </p>
                       </div>
+                      <div className="flex flex-wrap justify-end gap-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                        {activeConversation.aiAssistDefault ? (
+                          <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-600">AI</span>
+                        ) : null}
+                        <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-600">{activeConversation.retentionDays}d</span>
+                        {activeConversation.metadata?.bookingId ? (
+                          <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-600">#{activeConversation.metadata.bookingId}</span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div ref={messagesViewportRef} className="flex flex-1 flex-col gap-4 overflow-y-auto bg-white px-6 py-5">
+                      {messagesLoading ? (
+                        <p className="text-sm text-slate-500">Loading…</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {conversationMessages.map((message) => (
+                            <MessageBubble
+                              key={message.id}
+                              message={message}
+                              isSelf={message.senderParticipantId === participantId}
+                              viewerParticipantId={participantId}
+                            />
+                          ))}
+                          {conversationMessages.length === 0 ? (
+                            <p className="text-sm text-slate-500">No messages yet.</p>
+                          ) : null}
+                          <span ref={messagesEndRef} aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+                      <MessageComposer
+                        onSend={handleSendMessage}
+                        disabled={!viewerParticipant}
+                        aiAssistAvailable={Boolean(
+                          viewerParticipant?.aiAssistEnabled && activeConversation?.aiAssistDefault
+                        )}
+                        defaultAiAssist={viewerParticipant?.aiAssistEnabled}
+                        prefill={composerPrefill}
+                        onPrefillConsumed={() => setComposerPrefill('')}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <aside className="flex min-h-[620px] flex-col gap-4 rounded-3xl border border-slate-200 bg-white/80 p-4">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Viewer</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900">
+                    {viewerParticipant?.displayName || creatorDisplayName}
+                  </p>
+                  <p className="text-xs text-slate-500">{creatorRoleLabel}</p>
+                </div>
+                <ParticipantControls
+                  participant={viewerParticipant}
+                  onPreferencesChange={handlePreferencesChange}
+                  disabled={preferencesSaving}
+                />
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-slate-900">Video link</span>
+                    <button
+                      type="button"
+                      onClick={handleVideoSession}
+                      className="inline-flex items-center justify-center rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-400"
+                    >
+                      {videoSession ? 'Refresh' : 'Launch'}
+                    </button>
+                  </div>
+                  {videoSession ? (
+                    <dl className="mt-3 space-y-2 text-xs text-slate-500">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="uppercase tracking-[0.3em] text-slate-400">Room</dt>
+                        <dd className="font-mono text-sm text-slate-900">{videoSession.channelName}</dd>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="uppercase tracking-[0.3em] text-slate-400">Expires</dt>
+                        <dd>{new Date(videoSession.expiresAt).toLocaleString()}</dd>
+                      </div>
+                      <div>
+                        <dt className="uppercase tracking-[0.3em] text-slate-400">Token</dt>
+                        <dd className="mt-1 break-all font-mono text-[10px] text-slate-900">{videoSession.token}</dd>
+                      </div>
+                    </dl>
+                  ) : null}
+                </div>
+              </aside>
+            </div>
+
+            {showCreateWizard ? (
+              <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 px-4 py-8">
+                <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-slate-900">{copy.createTitle}</h2>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateWizard(false);
+                        setCreateConversationError(null);
+                      }}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  {createConversationError ? (
+                    <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
+                      {createConversationError}
+                    </div>
+                  ) : null}
+                  <form onSubmit={handleCreateConversation} className="mt-4 grid gap-3 lg:grid-cols-2">
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Subject
+                      <input
+                        type="text"
+                        value={createDraft.subject}
+                        onChange={(event) => handleCreateFieldChange('subject', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="Job chat"
+                        minLength={3}
+                        required
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Contact
+                      <input
+                        type="text"
+                        value={createDraft.customerName}
+                        onChange={(event) => handleCreateFieldChange('customerName', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="Client name"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Reference
+                      <input
+                        type="text"
+                        value={createDraft.customerReference}
+                        onChange={(event) => handleCreateFieldChange('customerReference', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="FAC-1029"
+                        required
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Type
+                      <select
+                        value={createDraft.customerType}
+                        onChange={(event) => handleCreateFieldChange('customerType', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                      >
+                        <option value="user">Client</option>
+                        <option value="company">Company</option>
+                        <option value="enterprise">Enterprise</option>
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Job
+                      <input
+                        type="text"
+                        value={createDraft.jobId}
+                        onChange={(event) => handleCreateFieldChange('jobId', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="JOB-4732"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                      Location
+                      <input
+                        type="text"
+                        value={createDraft.location}
+                        onChange={(event) => handleCreateFieldChange('location', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="Site"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600 lg:col-span-2">
+                      Message
+                      <textarea
+                        rows={3}
+                        value={createDraft.initialMessage}
+                        onChange={(event) => handleCreateFieldChange('initialMessage', event.target.value)}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900"
+                        placeholder="Kick-off note"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 lg:col-span-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-sky-500"
+                        checked={createDraft.aiAssistEnabled}
+                        onChange={(event) => handleCreateFieldChange('aiAssistEnabled', event.target.checked)}
+                      />
+                      <span>AI assist</span>
+                    </label>
+                    <div className="flex flex-wrap items-center justify-end gap-2 lg:col-span-2">
                       <button
                         type="button"
-                        onClick={handleVideoSession}
-                        className="inline-flex items-center justify-center rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-400"
+                        onClick={() => setCreateDraft({ ...DEFAULT_CREATE_DRAFT })}
+                        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                        disabled={creatingConversation}
                       >
-                        Create video session
+                        Reset
+                      </button>
+                      <button
+                        type="submit"
+                        className="inline-flex items-center justify-center rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-400 disabled:opacity-60"
+                        disabled={creatingConversation}
+                      >
+                        {creatingConversation ? 'Saving…' : copy.createButton}
                       </button>
                     </div>
-                    {videoSession ? (
-                      <dl className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
-                        <div>
-                          <dt className="uppercase tracking-[0.3em] text-slate-400">Channel</dt>
-                          <dd className="font-mono text-sm text-slate-900">{videoSession.channelName}</dd>
-                        </div>
-                        <div>
-                          <dt className="uppercase tracking-[0.3em] text-slate-400">Expires</dt>
-                          <dd>{new Date(videoSession.expiresAt).toLocaleString()}</dd>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <dt className="uppercase tracking-[0.3em] text-slate-400">Token</dt>
-                          <dd className="break-all font-mono text-[10px] text-slate-900">{videoSession.token}</dd>
-                        </div>
-                      </dl>
-                    ) : null}
-                  </div>
-
-                  <MessageComposer
-                    onSend={handleSendMessage}
-                    disabled={!viewerParticipant}
-                    aiAssistAvailable={Boolean(viewerParticipant?.aiAssistEnabled && activeConversation?.aiAssistDefault)}
-                    defaultAiAssist={viewerParticipant?.aiAssistEnabled}
-                    prefill={composerPrefill}
-                    onPrefillConsumed={() => setComposerPrefill('')}
-                  />
+                  </form>
                 </div>
-              </>
-            )}
+              </div>
+            ) : null}
           </section>
-        </div>
+        ) : null}
+
+        {activeSection === 'setup' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+            <InboxSettingsForm
+              configuration={inboxConfiguration}
+              loading={settingsLoading}
+              saving={settingsSaving}
+              error={settingsError}
+              onFieldChange={handleConfigurationChange}
+              onSubmit={handleSettingsSubmit}
+              onRefresh={handleSettingsRefresh}
+            />
+          </section>
+        ) : null}
+
+        {activeSection === 'channels' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+            <EntryPointsManager
+              entryPoints={sortedEntryPoints}
+              dirtyMap={entryPointDirtyMap}
+              savingMap={entryPointSavingMap}
+              deletingMap={entryPointDeletingMap}
+              onFieldChange={handleEntryPointFieldChange}
+              onToggle={handleEntryPointToggle}
+              onSave={handleEntryPointSave}
+              onReset={handleEntryPointReset}
+              onDelete={handleEntryPointDelete}
+              onTemplateSelect={handleEntryPointMessage}
+              newEntryPoint={newEntryPoint}
+              onNewEntryPointChange={handleNewEntryPointChange}
+              onNewEntryPointSubmit={handleNewEntryPointSubmit}
+              onNewEntryPointReset={resetNewEntryPointForm}
+              creatingEntryPoint={creatingEntryPoint}
+            />
+          </section>
+        ) : null}
+
+        {activeSection === 'replies' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+            <QuickRepliesManager
+              quickReplies={quickReplies}
+              newQuickReply={newQuickReply}
+              onNewQuickReplyChange={handleNewQuickReplyChange}
+              onNewQuickReplySubmit={handleNewQuickReplySubmit}
+              onRoleToggle={handleNewQuickReplyRoleToggle}
+              saving={settingsSaving}
+              onTemplateSelect={handleEntryPointMessage}
+              onEditStart={handleQuickReplyEditStart}
+              editingQuickReplyId={editingQuickReplyId}
+              editingQuickReplyDraft={editingQuickReplyDraft}
+              onEditingChange={handleEditingQuickReplyChange}
+              onEditingRoleToggle={handleEditingQuickReplyRoleToggle}
+              onEditSave={handleQuickReplyEditSave}
+              onEditCancel={handleQuickReplyEditCancel}
+              onDelete={handleQuickReplyDelete}
+            />
+          </section>
+        ) : null}
+
+        {activeSection === 'escalate' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+            <EscalationRulesManager
+              escalationRules={escalationRules}
+              newEscalationRule={newEscalationRule}
+              onNewEscalationChange={handleNewEscalationChange}
+              onRoleToggle={handleNewEscalationRoleToggle}
+              onNewEscalationSubmit={handleNewEscalationSubmit}
+              saving={settingsSaving}
+              onEditStart={handleEscalationEditStart}
+              editingEscalationId={editingEscalationId}
+              editingEscalationDraft={editingEscalationDraft}
+              onEditingChange={handleEditingEscalationChange}
+              onEditingRoleToggle={handleEditingEscalationRoleToggle}
+              onEditSave={handleEscalationEditSave}
+              onEditCancel={handleEscalationEditCancel}
+              onDelete={handleEscalationDelete}
+            />
+          </section>
+        ) : null}
       </div>
     </div>
   );
