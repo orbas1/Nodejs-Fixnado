@@ -2,16 +2,32 @@
 
 Node.js (Express) REST API with Sequelize (MySQL) powering the Fixnado service marketplace, escrow, and marketplace experiences.
 
+## Prerequisites
+
+- Node.js 20.11.x (LTS) with npm 11.4.x activated via Corepack.
+- PostgreSQL 15+ with PostGIS available when running geospatial migrations.
+- Redis (optional) for rate limiter state if deploying beyond the in-memory dev profile.
+
+Enable the pinned npm toolchain once per machine:
+
+```bash
+corepack prepare npm@11.4.2 --activate
+```
+
 ## Getting started
 
 ```bash
 cd backend-nodejs
-npm install
+npm ci
 cp .env.example .env
 npm run dev
 ```
 
-The API runs on http://localhost:4000
+The API runs on http://localhost:4000. Run the shared tooling guard before committing to confirm your environment matches the enforced baselines:
+
+```bash
+node ../scripts/verify-toolchains.mjs
+```
 
 ## Project structure
 

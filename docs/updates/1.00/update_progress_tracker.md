@@ -16,9 +16,9 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 2.3 Transactional migrations & audit metadata | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.4 Retention/encryption guidelines & retry history | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.5 Deterministic QA seed scripts | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 20 | 20 | 20 | 20 | 20 | 20 | 20 |
+| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 40 | 40 | 40 | 40 | 40 | 40 | 40 |
 | 3.1 Manifest/lockfile repair & ORM roadmap | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| 3.2 Runtime/SDK enforcement & CI audits | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 3.2 Runtime/SDK enforcement & CI audits | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.3 Geospatial/bundle rationalisation | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 3.4 Flutter lockfiles & mobile CI smoke | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 3.5 License/load-test automation & governance docs | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
