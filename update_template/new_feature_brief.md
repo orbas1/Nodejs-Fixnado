@@ -56,7 +56,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 
 ### Community Ecosystem Flow
 1. **Community Discovery → Join**
-   - Explorer search surfaces communities using category/skill/qualification/price matching → detail view showcases profile, map, leaderboard, membership stats → join action respects subscription/free tier logic and handles payment tiers.
+   - Explorer search surfaces communities using category/skill/qualification/price/zone matching → detail view showcases profile, map, leaderboard, membership stats → join action respects subscription/free tier logic and handles payment tiers.
 2. **Engagement & Collaboration**
    - Community feed, chat, classrooms, events, podcasts, live streams, scoreboards, and maps operate on real-time updates with CRUD operations, moderation, and media handling.
 3. **Management**
@@ -64,7 +64,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 
 ### Learning & Commerce Flow
 1. **Course/E-book/Tutor Discovery**
-   - Explorer search merges tags, SEO, skill, qualification, pricing, and trending signals to rank results across web and mobile.
+   - Explorer search merges tags, SEO, skill, qualification, pricing, zone availability, and trending signals to rank results across web and mobile.
 2. **Evaluation & Purchase**
    - Product detail pages deliver high-quality media, structured sections, breadcrumbs with concise labeling, and CTA flows → payment services orchestrate checkout, handle taxes, and trigger receipts/refund eligibility.
 3. **Fulfillment & Progress**
@@ -76,7 +76,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 2. **Deployment & Maintenance**
    - DevOps scripts/UI provision infrastructure, apply database migrations/seeders, configure integrations (Hubspot, Google, Salesforce, optional managed AI APIs such as OpenAI, SMTP, Firebase, Cloudflare R2/Wasabi/local storage) → monitoring ensures uptime, load balancing, and failover.
 3. **Testing & Compliance**
-   - Execute exhaustive test suites (unit to mobile parity) before release → document outcomes in release checklist → update README, guides, starter data snapshots, and GitHub upgrade notes.
+   - Execute exhaustive test suites (unit to mobile parity) before release → document outcomes in release checklist (including zone, service purchase, rentals, and material purchase validations) → update README, guides, starter data snapshots, and GitHub upgrade notes.
 
 ## Release Readiness Commitments
 1. Production deployment with rollback plans.
@@ -122,6 +122,10 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 41. Removal of stubs/placeholders with real data and interactions.
 42. Capacity planning for high usage and scaling (autoscaling thresholds, queue sizing).
 43. RAM and server stress reduction via profiling and optimization stories.
+44. Zone coverage validation ensuring full country/region/area zoning with dedicated zone test suites.
+45. Service purchase test scenarios covering end-to-end checkout, escrow, and fulfillment monitoring.
+46. Rentals workflow validation including availability calendars, contracts, and payment settlements.
+47. Material purchase verification with inventory adjustments, logistics handoffs, and refund coverage.
 
 ## Detailed Feature Scope
 ### Front-End Experience
@@ -135,6 +139,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Embed uptime helper widgets, load balancing indicators, and high-availability awareness within admin views.
 - Integrate advertisement and recommendation slots on all prescribed surfaces with frequency capping and analytics.
 - Implement tagging, SEO, skill, qualification, category, and pricing matching widgets across search and detail screens.
+- Surface zone selectors and geographic filters across explorer, dashboards, and storefronts with full international coverage and localization.
 - Add bad word/spam scanning feedback loops, report buttons, and moderation workflows.
 - Complete styling/CSS overhaul for cohesive design language and intuitive UX.
 - Ensure long-form text is limited to purposeful contexts (breadcrumbs, descriptions) while labels remain concise (1–2 words).
@@ -169,9 +174,9 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Ensure each community submodule (switcher, profile, feed, classroom, calendar, livestream, podcasts, scoreboards, events, chats, members, map, about, subscription tiers) is interactive and supports moderation.
 
 ### Dashboard Upgrades
-- Learner dashboard: profile overview, communities, inbox, chats, study management (courses, assessments, live, calendar), support (bookings, field support, e-books, finance), growth (affiliate, ads, instructor applications), financial (overview, payment methods), settings (system, finance, general).
-- Instructor dashboard: profile overview, community chat, creation suites (studio, course, library, e-books, writer), teaching management (manage, assess, schedule, live), client management (inbox, bookings, roster), community operations (launch, ops, plan, revenue, broadcast, safety, subscriptions, member management, webinars, podcasts, chat), growth (ads, affiliate, subscriptions & pricing, calendar).
-- Admin dashboard: profile overview, control center (command, integration, governance, GDPR, user/community/course/tutor/e-book/live stream/podcast management, ID verification, reports), network (communities, inbox/support, timeline management, requests), catalogue (courses, e-books, calendar, bookings), growth (revenue, ads), settings (appearance, preferences, system, integration, third-party APIs, profiles, payments, email, 2FA, finance/commissions, subscriptions).
+- Learner dashboard: profile overview, communities, inbox, chats, study management (courses, assessments, live, calendar), support (bookings, field support, e-books, finance), growth (affiliate, ads, instructor applications), financial (overview, payment methods), settings (system, finance, general) with embedded finance control widgets so no standalone finance dashboard is required.
+- Instructor dashboard: profile overview, community chat, creation suites (studio, course, library, e-books, writer), teaching management (manage, assess, schedule, live), client management (inbox, bookings, roster), community operations (launch, ops, plan, revenue, broadcast, safety, subscriptions, member management, webinars, podcasts, chat), growth (ads, affiliate, subscriptions & pricing, calendar) including finance/escrow/tax panes integrated directly into the dashboard shell.
+- Admin dashboard: profile overview, control center (command, integration, governance, GDPR, user/community/course/tutor/e-book/live stream/podcast management, ID verification, reports), network (communities, inbox/support, timeline management, requests), catalogue (courses, e-books, calendar, bookings), growth (revenue, ads), settings (appearance, preferences, system, integration, third-party APIs, profiles, payments, email, 2FA, finance/commissions, subscriptions) with consolidated finance, escrow, and dispute tooling replacing the legacy finance-only dashboard.
 
 ### Backend Platform
 - Cover all controllers, routes, services, middleware, utilities, configs, and matching/recommendation algorithms with modular architecture.
@@ -190,7 +195,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Implement navigation (role changer, bottom tabs, contextual menus) and every listed screen (timeline, explorer, communities with submodules, course/e-book/tutor viewers, live sessions, inbox, support, about, policy, management screens, splash, purchases, ads, registration/login, settings).
 
 ### Data, Taxonomy, and Knowledge Base
-- Seed all categories, tags, and taxonomies with representative production-ready data.
+- Seed all categories, tags, and taxonomies with representative production-ready data, including full global zone libraries (countries, regions, metro areas) for geo-targeted discovery and compliance.
 - Provide migration scripts, seeder verification, and rollback automation.
 - Build a searchable knowledge base with onboarding checklists, guided tours, and upgrade playbooks.
 
@@ -199,6 +204,12 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Optimize RAM utilization via profiling, streaming, and media transcoding pipelines.
 - Embed uptime helper dashboards, incident response playbooks, and SLA monitoring.
 - Run security scanners, penetration tests, bad-word/spam detection, file scanning, and GDPR data management processes.
+
+### Lightweight Intelligence Architecture
+- Deliver internal scoring engines for recommendations, spam detection, and matching that rely on deterministic rules, heuristic weights, and optionally compact internal models deployable on existing infrastructure.
+- Design data pipelines that collect feedback loops (clicks, conversions, moderation decisions) to recalibrate weights without requiring GPU-heavy training runs; schedule recalibration as cron/batch jobs that fit current capacity.
+- Provide transparency dashboards that explain why a recommendation, moderation flag, or insight surfaced, emphasizing maintainability and auditability over opaque black-box AI.
+- Establish fallbacks so that if an internal model is offline the rule-based system continues to serve acceptable results, ensuring resilience without scaling external AI dependencies.
 
 ## Dependencies & Integrations
 - Third-party services: Hubspot, Salesforce, Google APIs, managed AI APIs (optional, pay-per-use) to augment internal algorithms without self-hosted foundation models, Chatwoot, Firebase, SMTP, Cloudflare R2/Wasabi, OAuth providers (Google, Apple, LinkedIn, Facebook).
@@ -263,6 +274,10 @@ To guarantee that every enumerated requirement in the Edulure Version 1.00 manda
 | 41 | No stubs or placeholders | QA | Content verification checklist |
 | 42 | High-usage management | DevOps | Capacity plan |
 | 43 | RAM/server stress reduction | Performance | Stress test summary |
+| 44 | Zone coverage validation | Data Engineering | Zone QA report |
+| 45 | Service purchase tests | Commerce QA | Service checkout E2E logs |
+| 46 | Rentals workflow tests | Rentals Squad | Rental booking regression pack |
+| 47 | Material purchase tests | Marketplace QA | Material purchase validation report |
 
 #### Release Readiness Execution Playbook
 Each readiness mandate carries explicit action steps, tooling, and quantitative success metrics. The following playbook expands the checklist so squads can translate the mandate into sprint-ready stories and reporting dashboards.
@@ -312,6 +327,10 @@ Each readiness mandate carries explicit action steps, tooling, and quantitative 
 | 41 | Verify no stubs/placeholders via content audit and automated detectors. | Content audit sign-off; placeholder scanner returns none. | Content verification checklist. |
 | 42 | Build capacity plan covering scaling triggers, queue sizing, and autoscaling policies. | Capacity document published; autoscaling tested. | Capacity plan repository. |
 | 43 | Run RAM/server stress tests with instrumentation to capture peak usage behavior. | RAM usage within budget; tuning backlog closed. | Stress test summary. |
+| 44 | Execute global zone data validation cycles across explorer, dashboards, and inventory. | 100% zones load with accurate localization; zone tests pass in CI. | Zone QA report. |
+| 45 | Simulate service purchase lifecycles including escrow, fulfillment, and refunds. | Service order success rate >99%; reconciliation variances <0.01%. | Service checkout E2E logs. |
+| 46 | Run rentals workflows (availability, contracts, payments) under load and failure scenarios. | Rental bookings confirmed without over-allocation; contract storage verified. | Rental booking regression pack. |
+| 47 | Validate material purchases (inventory deduction, logistics triggers, refunds). | Inventory deltas balanced; logistics integrations fire webhooks. | Material purchase validation report. |
 
 ### Front-End Requirements (Items 1–38)
 Each requirement is expanded below with explicit design/engineering expectations to maintain enterprise polish and usability.

@@ -44,10 +44,10 @@
 
 ## Phase 2 – Data, Taxonomy & Content Preparation
 1. **Taxonomy Authoring**
-   - Compile exhaustive lists for course categories, e-book categories, community categories, tutor types, skill tags, qualification tags, SEO tags, and hashtags.
+   - Compile exhaustive lists for course categories, e-book categories, community categories, tutor types, skill tags, qualification tags, SEO tags, hashtags, and full global zone hierarchies (countries, regions, metro areas).
    - Define pricing matrices, matching algorithms, and tag synonym tables for recommendation accuracy.
 2. **Seed Data Engineering**
-   - Create database seeders and fixtures for starter data across courses, e-books, communities, tutors, timelines, ads, and recommendations.
+   - Create database seeders and fixtures for starter data across courses, e-books, communities, tutors, timelines, ads, recommendations, rentals, services, materials, and zone catalogs.
    - Build validation scripts to confirm referential integrity and CRUD readiness; support demo/live data toggles.
 3. **Documentation & Knowledge Base**
    - Draft README overhaul, full platform guide, onboarding tutorials, GitHub upgrade instructions, and internal SOPs.
@@ -66,8 +66,8 @@
    - Build modular community service covering feeds, classrooms, calendars, livestreams, podcasts, events, scoreboards, maps, members, about, subscriptions, and leaderboards.
    - Develop Discord-like chat service (rooms, broadcast channels, voice/video/WebRTC, moderation, media, role permissions) leveraging socket.io and scalable signaling infrastructure.
 3. **Learning & Commerce Services**
-   - Expand course, e-book, tutor, and live classroom services to support full CRUD, purchase/booking flows, refund logic, and pricing/qualification matching.
-   - Integrate payment gateways with financial reconciliation tests and reporting APIs for finance dashboards.
+   - Expand course, e-book, tutor, rental, material, and live classroom services to support full CRUD, purchase/booking flows, refund logic, inventory and availability tracking, and pricing/qualification/zone matching.
+   - Integrate payment gateways with financial reconciliation tests and reporting APIs for finance dashboards covering services, rentals, materials, and subscriptions.
 4. **Support & Inbox Services**
    - Connect Chatwoot APIs for support tickets, peer chat discovery, attachments, emojis, GIFs, and analytics.
    - Provide API endpoints for dashboard inbox previews, notifications, and moderation.
@@ -83,6 +83,25 @@
 - Payment sandbox transactions reconcile successfully with finance dashboards.
 - API documentation generated (e.g., OpenAPI/GraphQL schema) and linked to developer portal.
 
+## Phase 3A – Internal Intelligence Services Enablement
+1. **Heuristic & Lightweight Model Design**
+   - Define rule-based and compact-model strategies for recommendations, spam detection, qualification matching, and insight generation that operate within existing infrastructure constraints.
+   - Document scoring matrices, fallback rules, and configuration knobs so product teams can tune behavior without redeploying code.
+2. **Data Pipeline Instrumentation**
+   - Establish telemetry capture for clicks, conversions, moderation outcomes, and false-positive reports with anonymization and retention policies.
+   - Build batch recalibration jobs that adjust heuristic weights based on captured data, ensuring execution fits current compute budgets.
+3. **Service Implementation**
+   - Expose internal intelligence APIs consumable by web/mobile with clear SLAs, health checks, and circuit breakers when models are offline.
+   - Provide transparency endpoints returning explanation metadata for recommendations, moderation decisions, and insight cards.
+4. **Governance & Monitoring**
+   - Implement score drift dashboards, alerting thresholds, and human-in-the-loop review queues for edge cases.
+   - Maintain documentation on how to expand models in the future should infrastructure capacity improve, including migration playbooks.
+
+**Phase 3A Exit Criteria**
+- Internal intelligence services deployed to staging with documented scoring logic and explanation endpoints.
+- Batch recalibration workflow executed successfully with resource utilization reports confirming compliance with infrastructure constraints.
+- Monitoring dashboards and alerting for intelligence accuracy, drift, and uptime reviewed and approved by product and compliance teams.
+
 ## Phase 4 – Front-End (Web) Implementation
 1. **Design System & Layout Overhaul**
    - Create enterprise-grade component library covering typography, spacing, color, elevations, cards, tables, and form controls.
@@ -93,10 +112,11 @@
 3. **Module Implementations**
    - Timeline: real-time CRUD feed with moderation, reporting, spam filter feedback, follow/unfollow, multimedia, analytics overlays.
    - Communities: implement all submodules (switcher, profile, feed, classroom, calendar, livestream, podcasts, scoreboards, events, chats, members, map, about, subscriptions, side profile with stats/leaderboard).
-   - Explorer/Search: unify search across courses, tutors, communities, e-books, live classrooms with tagging, SEO, skill, qualification, category, pricing, and recommendation filters.
-   - Learning & Commerce: polish course/e-book/tutor pages, purchase flows, classroom/reader experiences, assessments, creation studio wizard.
-   - Dashboards: deliver learner, instructor, and admin dashboards with all enumerated sections/tabs and CRUD operations.
+   - Explorer/Search: unify search across courses, tutors, communities, e-books, live classrooms with tagging, SEO, skill, qualification, category, pricing, zone, and recommendation filters.
+   - Learning & Commerce: polish course/e-book/tutor/rental/material pages, purchase flows, classroom/reader experiences, assessments, creation studio wizard, and embed service/rental/material checkout optimizations.
+   - Dashboards: deliver learner, instructor, provider, enterprise, crew, and admin dashboards with all enumerated sections/tabs and CRUD operations, consolidating finance/escrow/tax controls inside each dashboard to retire the standalone finance surface.
    - Support: embed Chatwoot bubble post-login only, add header inbox preview, and design social-style conversation UIs.
+   - Zone Management: implement zone pickers, geographic browsing, and zone-aware dashboards with analytics, ensuring consistency between web and mobile experiences.
 4. **Policies & Legal Pages**
    - Build page templates for Terms, Privacy, Refund, Community Guidelines, About Us, FAQ with CMS-friendly layout.
 5. **Testing & Accessibility**
@@ -113,11 +133,11 @@
    - Update navigation architecture with role changer onboarding, splash screen, bottom tabs, and contextual menus.
    - Synchronize design tokens with web for brand consistency.
 2. **Feature Porting**
-   - Implement CRUD-complete screens for timeline, explorer, communities (all submodules), course/e-book/tutor viewers, live sessions, classroom interactions, inbox/support, support chat, settings, ads/recommendations, purchases, bookings, and management tools.
+   - Implement CRUD-complete screens for timeline, explorer, communities (all submodules), course/e-book/tutor/rental/material viewers, live sessions, classroom interactions, inbox/support, support chat, settings, ads/recommendations, purchases, bookings, and management tools.
    - Ensure media playback, uploads, voice/video chat, and notifications leverage Firebase and backend services.
 3. **Compliance & Optimization**
    - Implement in-app purchase flows or deep links per Apple/Google policy, privacy disclosures, and analytics instrumentation.
-   - Conduct device matrix testing for performance, RAM utilization, and UI polish.
+   - Conduct device matrix testing for performance, RAM utilization, UI polish, and zone-aware localization accuracy.
 
 **Phase 5 Exit Criteria**
 - Feature parity checklist signed by mobile and product leads, confirming CRUD coverage for all modules.
@@ -146,8 +166,8 @@
    - Build suites covering unit, integration, functional, regression, error handling, access control, CRUD, lightweight intelligence behavior, integration, login/registration, dashboard, timeline, community, chat, media handling, payments, and mobile UI tests.
 2. **Non-Functional & Specialized Testing**
    - Execute load, stress, high-usage, RAM profiling, failover, database migration, live service simulations, uptime helper drills, and financial reconciliation tests.
-   - Perform security (penetration, vulnerability, GDPR) and privacy assessments; validate file submission protection and spam filtering.
-   - Conduct usage tests for each dashboard role, community module, and mobile parity scenarios.
+   - Perform security (penetration, vulnerability, GDPR) and privacy assessments; validate file submission protection and spam filtering alongside zone data privacy enforcement.
+   - Conduct usage tests for each dashboard role, community module, and mobile parity scenarios, including service purchase, rentals, material purchase, and zone navigation journeys.
 3. **Manual Validation & UAT**
    - Host role-based UAT sessions (learner, instructor, admin) covering every page/module; capture sign-offs and issue backlogs.
    - Validate styling polish, accessibility, and absence of placeholders/stubs.
@@ -165,7 +185,7 @@
    - Freeze codebase post-approval; tag release candidate in GitHub with upgrade notes.
 2. **Production Deployment**
    - Execute automated scripts/UI to deploy backend, web, and mobile (App Store/TestFlight + Play Console), run migrations/seeders, and smoke tests.
-   - Validate removal of “Projects/Services” artifacts and rename to “Timeline” in live environment.
+   - Validate removal of “Projects/Services” artifacts and rename to “Timeline” in live environment while confirming zone coverage, service purchase, rentals, and material purchase smoke tests.
 3. **Live Monitoring & Support**
    - Monitor telemetry, Chatwoot queues, incident response, and uptime helper dashboards; triage issues with war room protocols.
 
@@ -292,7 +312,7 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 |-----------|-------|--------------|--------|
 | Timeline service rename + monetization features | Social Squad | Phase 1 modularization | Updated APIs, analytics events |
 | Community and chat services with WebRTC | Community Squad | Socket infrastructure | Microservices deployed, load test report |
-| Commerce services (courses/e-books/tutors/community payments) | Commerce Squad | Payment gateway contracts | Purchase APIs, financial reconciliation logs |
+| Commerce services (courses/e-books/tutors/services/rentals/materials/community payments) | Commerce Squad | Payment gateway contracts | Purchase APIs, financial reconciliation logs |
 | Support/inbox integration with Chatwoot | Support Squad | Chatwoot credentials | API connectors, dashboard endpoints |
 | Media service hardening | Media Squad | Storage provider access | Upload pipeline, CDN configuration |
 
@@ -304,12 +324,14 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 | Community suite (all submodules) | Community Frontend Squad | Community services, design assets | CRUD-complete community modules |
 | Dashboard implementations per role | Dashboard Squads | Domain APIs, design system | Learner, instructor, admin dashboards |
 | Policy page templates & CMS integration | Content Platform Squad | Phase 6 legal drafts | CMS-managed legal pages |
+| Zone management UI & analytics | Search/Localization Squad | Zone catalogs, design system | Zone pickers, explorer filters, dashboards |
 
 ### Phase 5 Task Grid
 | Work Item | Squad | Dependencies | Output |
 |-----------|-------|--------------|--------|
 | Navigation architecture & role changer | Mobile Platform Squad | Phase 0 logic flows | Flutter navigation modules |
 | Feature parity implementation (timeline, explorer, communities, commerce, support) | Mobile Feature Squads | Phase 3 APIs | Flutter screens with CRUD parity |
+| Mobile zone localization & filters | Mobile Localization Squad | Zone catalogs, design tokens | Zone-aware navigation & filters |
 | Firebase integration & instrumentation | Mobile Infra Squad | Firebase project setup | Analytics, messaging, crash reporting live |
 | In-app purchase compliance & QA | Mobile Commerce Squad | Platform agreements | IAP flows validated, compliance checklist |
 
@@ -326,7 +348,7 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 |-----------|-------|--------------|--------|
 | Automated test suites (unit/integration/UI/mobile) | QA Automation | Code branches ready | CI pipelines with passing suites |
 | Load/stress/security testing | Performance & Security | Observability stack | Test reports, remediation backlog |
-| UAT cycles per role | Product QA | Feature complete dashboards | Signed UAT reports |
+| UAT cycles per role (including service/rental/material/zone journeys) | Product QA | Feature complete dashboards | Signed UAT reports |
 | Evidence repository compilation | QA Enablement | All squads providing artifacts | Centralized compliance workspace |
 
 ### Phase 8 Task Grid
@@ -346,7 +368,7 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 ### Cross-Phase Dependency Map
 - **Integration Credentials:** Needed before Phase 3/4/5; tracked via security checklist.
 - **Design System Assets:** Must be finalized in Phase 4 prior to major frontend/mobile delivery.
-- **Taxonomy Data:** Phase 2 outputs feed into Phase 3 services and Phase 4/5 UI/UX.
+- **Taxonomy & Zone Data:** Phase 2 outputs feed into Phase 3 services and Phase 4/5 UI/UX.
 - **Legal Approvals:** Phase 6 documents required for onboarding flows to pass QA in Phase 7.
 - **Monitoring Stack:** Phase 1 observability is prerequisite for Phase 7 load/stress tests and Phase 8 live monitoring.
 - **Model Governance Framework:** Established in Phase 0/1 and required for Phase 3 intelligent features and Phase 10 continuous optimization.
@@ -355,7 +377,7 @@ To operationalize the phase plan, the following tables enumerate key deliverable
 ## Deliverables by Role
 - **Engineering:** Modularized services, APIs, Flutter parity, deployment tooling, automated tests, performance optimizations.
 - **Design:** Enterprise design system, responsive layouts, navigation architecture, high-fidelity dashboards, visual QA assets.
-- **Product/Content:** User stories with acceptance criteria, taxonomy catalogs, documentation, legal content coordination, onboarding flows.
+- **Product/Content:** User stories with acceptance criteria, taxonomy catalogs, zone hierarchies, documentation, legal content coordination, onboarding flows.
 - **QA:** Automated suites, manual test charters, release readiness matrix, compliance evidence, mobile device reports.
 - **DevOps:** Infrastructure automation, monitoring, load balancing, security hardening, incident response playbooks.
 - **Legal/Compliance:** Policy drafting, GDPR processes, access control reviews, audit sign-offs.
