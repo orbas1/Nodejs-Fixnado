@@ -125,6 +125,8 @@ import AdminAuditEvent from './adminAuditEvent.js';
 import SecuritySignalConfig from './securitySignalConfig.js';
 import SecurityAutomationTask from './securityAutomationTask.js';
 import TelemetryConnector from './telemetryConnector.js';
+import ClientErrorEvent from './clientErrorEvent.js';
+import MobileCrashReport from './mobileCrashReport.js';
 import UserSession from './userSession.js';
 import ConsentEvent from './consentEvent.js';
 import Region from './region.js';
@@ -1379,6 +1381,8 @@ export {
   SecuritySignalConfig,
   SecurityAutomationTask,
   TelemetryConnector,
+  ClientErrorEvent,
+  MobileCrashReport,
   UserSession,
   ConsentEvent,
   Region,

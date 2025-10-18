@@ -11,3 +11,7 @@
 ## CORS, Helmet, and storefront override configuration
 - Introduced environment-specific CORS allowlists, CSP directives, and helmet toggles so deployments automatically adopt safe defaults while still permitting explicit overrides via environment variables.【F:backend-nodejs/src/config/index.js†L58-L166】【F:backend-nodejs/src/config/index.js†L337-L399】
 - Added signed storefront override secrets, environment allowlists, persona/role constraints, and token header configuration so test harnesses can be enabled deliberately without leaving staging or production open to header impersonation.【F:backend-nodejs/src/config/index.js†L104-L166】【F:backend-nodejs/src/config/index.js†L353-L399】
+
+## Telemetry retention and alerting configuration
+- Added telemetry-specific retention windows, metadata caps, alert thresholds, and cooldowns for client error and mobile crash ingestors so operators can tune sensitivity per environment without code changes.【F:backend-nodejs/src/config/index.js†L637-L681】
+- Captured Slack webhook configuration and alert cadence controls with safe defaults that disable alert delivery when secrets are absent, keeping non-production environments quiet while surfacing incidents in production.【F:backend-nodejs/src/config/index.js†L637-L651】

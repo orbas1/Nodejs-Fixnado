@@ -3,7 +3,9 @@ import { validationResult } from 'express-validator';
 import {
   ingestUiPreferenceEvent,
   summariseUiPreferenceEvents,
-  listUiPreferenceTelemetrySnapshots
+  listUiPreferenceTelemetrySnapshots,
+  ingestClientErrorEvent,
+  ingestMobileCrashReport
 } from '../services/telemetryService.js';
 
 const RANGE_TO_DAYS = {
@@ -283,6 +285,156 @@ export async function getUiPreferenceTelemetrySnapshots(req, res, next) {
         freshnessWindowMinutes: options.freshnessWindowMinutes
       },
       stats: stats || undefined
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+function normaliseObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function ensureStringArray(values, limit = 50) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return undefined;
+  }
+
+  const sanitized = [];
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      continue;
+    }
+    sanitized.push(trimmed);
+    if (sanitized.length >= limit) {
+      break;
+    }
+  }
+
+  return sanitized.length > 0 ? sanitized : undefined;
+}
+
+export async function recordClientErrorEvent(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const metadata = normaliseObject(req.body.metadata) ?? {};
+    const breadcrumbs = Array.isArray(req.body.breadcrumbs)
+      ? req.body.breadcrumbs
+      : Array.isArray(metadata.breadcrumbs)
+      ? metadata.breadcrumbs
+      : undefined;
+    const tags = ensureStringArray(req.body.tags ?? metadata.tags, 32);
+    const requestId = req.headers['x-request-id'] || req.body.requestId || null;
+    const clientIp = resolveClientIp(req);
+
+    const payload = {
+      reference: req.body.reference,
+      correlationId: req.body.correlationId,
+      requestId,
+      sessionId: req.body.sessionId,
+      userId: req.body.userId,
+      tenantId: req.body.tenantId,
+      boundaryId: req.body.boundaryId,
+      environment: req.body.environment,
+      releaseChannel: req.body.releaseChannel,
+      appVersion: req.body.appVersion,
+      buildNumber: req.body.buildNumber,
+      location: req.body.location,
+      userAgent: req.body.userAgent || req.get('user-agent'),
+      occurredAt: req.body.occurredAt,
+      severity: req.body.severity,
+      errorName: req.body.error?.name,
+      errorMessage: req.body.error?.message,
+      errorStack: req.body.error?.stack,
+      componentStack: req.body.info?.componentStack,
+      error: req.body.error,
+      info: req.body.info,
+      metadata,
+      breadcrumbs,
+      tags,
+      headers: req.headers,
+      ipAddress: req.ip,
+      clientIp
+    };
+
+    const event = await ingestClientErrorEvent(payload);
+
+    res.status(202).json({
+      id: event.id,
+      reference: event.reference,
+      correlationId: event.correlationId,
+      receivedAt:
+        event.receivedAt?.toISOString?.() ?? event.createdAt?.toISOString?.() ?? new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function recordMobileCrashReport(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const requestId = req.headers['x-request-id'] || req.body.requestId || null;
+    const device = normaliseObject(req.body.device) ?? {};
+
+    const payload = {
+      reference: req.body.reference,
+      correlationId: req.body.correlationId,
+      requestId,
+      sessionId: req.body.sessionId,
+      userId: req.body.userId,
+      tenantId: req.body.tenantId,
+      environment: req.body.environment,
+      releaseChannel: req.body.releaseChannel,
+      appVersion: req.body.appVersion,
+      buildNumber: req.body.buildNumber,
+      platform: req.body.platform,
+      platformVersion: req.body.platformVersion,
+      deviceModel: req.body.deviceModel || device.model,
+      deviceManufacturer: req.body.deviceManufacturer || device.manufacturer,
+      deviceIdentifier: req.body.deviceIdentifier || device.identifier,
+      locale: req.body.locale,
+      isEmulator: req.body.isEmulator,
+      isReleaseBuild: req.body.isReleaseBuild,
+      occurredAt: req.body.occurredAt,
+      severity: req.body.severity,
+      error: req.body.error,
+      errorType: req.body.error?.type,
+      errorMessage: req.body.error?.message,
+      errorStack: req.body.error?.stackTrace || req.body.error?.stack,
+      metadata: normaliseObject(req.body.metadata) ?? {},
+      breadcrumbs: req.body.breadcrumbs,
+      tags: ensureStringArray(req.body.tags, 32),
+      threads: Array.isArray(req.body.threads) ? req.body.threads : undefined,
+      headers: req.headers,
+      ipAddress: req.ip,
+      clientIp: resolveClientIp(req)
+    };
+
+    const report = await ingestMobileCrashReport(payload);
+
+    res.status(202).json({
+      id: report.id,
+      reference: report.reference,
+      correlationId: report.correlationId,
+      receivedAt:
+        report.receivedAt?.toISOString?.() ?? report.createdAt?.toISOString?.() ?? new Date().toISOString()
     });
   } catch (error) {
     next(error);

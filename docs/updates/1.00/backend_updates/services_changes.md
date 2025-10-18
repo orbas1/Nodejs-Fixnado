@@ -7,3 +7,7 @@
 
 ## Storefront override service
 - Added a dedicated storefront override evaluation service that validates override tokens (including hashed secrets), persona/role allowlists, and expiry headers before granting temporary provider contexts for test harnesses.【F:backend-nodejs/src/services/storefrontOverrideService.js†L1-L165】
+
+## Telemetry service
+- Created ingestion helpers for client errors and mobile crashes that normalise payloads, hash sensitive identifiers, and return correlation IDs to downstream controllers so dashboards can tie events back to user sessions securely.【F:backend-nodejs/src/services/telemetryService.js†L530-L952】
+- Implemented retention trimming and severity aggregation that purge stale records while calculating alert thresholds for Slack notifications, keeping telemetry tables within agreed limits without manual jobs.【F:backend-nodejs/src/services/telemetryService.js†L678-L1045】

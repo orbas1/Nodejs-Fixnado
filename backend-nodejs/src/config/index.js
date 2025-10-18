@@ -92,6 +92,30 @@ function listFromEnv(key) {
     .filter(Boolean);
 }
 
+const TELEMETRY_SEVERITIES = ['debug', 'info', 'warning', 'error', 'fatal'];
+
+function normaliseSeverityToken(value, fallback = 'error') {
+  if (typeof value !== 'string') {
+    return TELEMETRY_SEVERITIES.includes(fallback) ? fallback : 'error';
+  }
+
+  const lowered = value.trim().toLowerCase();
+
+  if (lowered === 'critical' || lowered === 'panic') {
+    return 'fatal';
+  }
+
+  if (TELEMETRY_SEVERITIES.includes(lowered)) {
+    return lowered;
+  }
+
+  return TELEMETRY_SEVERITIES.includes(fallback) ? fallback : 'error';
+}
+
+function severityFromEnv(key, fallback = 'error') {
+  return normaliseSeverityToken(process.env[key], normaliseSeverityToken(fallback));
+}
+
 function parseKeyedListFromEnv(key, { separator = '=', fallback = [] } = {}) {
   const values = listFromEnv(key);
   if (values.length === 0) {
@@ -473,6 +497,7 @@ function normaliseConsentPolicies(source) {
 
 const config = {
   env,
+  environment: env,
   port: intFromEnv('PORT', 4000),
   secrets: getSecretSyncMetadata(),
   security: {
@@ -616,7 +641,27 @@ const config = {
     emoShareThreshold: Math.min(Math.max(floatFromEnv('TELEMETRY_EMO_SHARE_MINIMUM', 0.1), 0), 1),
     pollIntervalMinutes: Math.max(intFromEnv('TELEMETRY_ALERT_INTERVAL_MINUTES', 15), 5),
     repeatAlertMinutes: Math.max(intFromEnv('TELEMETRY_ALERT_REPEAT_MINUTES', 60), 15),
-    minimumEventsForShare: Math.max(intFromEnv('TELEMETRY_MIN_EVENTS_FOR_SHARE', 50), 1)
+    minimumEventsForShare: Math.max(intFromEnv('TELEMETRY_MIN_EVENTS_FOR_SHARE', 50), 1),
+    clientErrors: {
+      retentionDays: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_RETENTION_DAYS', 30), 7),
+      retentionSweepMinutes: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_SWEEP_MINUTES', 60), 5),
+      alertMinSeverity: severityFromEnv('TELEMETRY_CLIENT_ERROR_ALERT_MIN_SEVERITY', 'fatal'),
+      alertRateThreshold: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_ALERT_THRESHOLD', 5), 1),
+      alertWindowMinutes: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_ALERT_WINDOW_MINUTES', 10), 1),
+      alertCooldownMinutes: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_ALERT_COOLDOWN_MINUTES', 30), 5),
+      maxMetadataBytes: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_METADATA_LIMIT_BYTES', 8192), 1024),
+      maxBreadcrumbs: Math.max(intFromEnv('TELEMETRY_CLIENT_ERROR_MAX_BREADCRUMBS', 50), 0)
+    },
+    mobileCrashes: {
+      retentionDays: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_RETENTION_DAYS', 60), 14),
+      retentionSweepMinutes: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_SWEEP_MINUTES', 60), 5),
+      alertMinSeverity: severityFromEnv('TELEMETRY_MOBILE_CRASH_ALERT_MIN_SEVERITY', 'fatal'),
+      alertRateThreshold: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_ALERT_THRESHOLD', 1), 1),
+      alertWindowMinutes: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_ALERT_WINDOW_MINUTES', 10), 1),
+      alertCooldownMinutes: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_ALERT_COOLDOWN_MINUTES', 60), 5),
+      maxMetadataBytes: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_METADATA_LIMIT_BYTES', 16384), 2048),
+      maxBreadcrumbs: Math.max(intFromEnv('TELEMETRY_MOBILE_CRASH_MAX_BREADCRUMBS', 100), 0)
+    }
   },
   finance: {
     defaultCurrency: (process.env.FINANCE_DEFAULT_CURRENCY || 'GBP').toUpperCase(),
