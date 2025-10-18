@@ -4,10 +4,10 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 
 | Task / Subtask | Security Level % | Completion Level % | Integration Level % | Functionality Level % | Error Free Level % | Production Level % | Overall Level % |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **1. Secure Identity, Routing, and Telemetry Foundations**【F:docs/updates/1.00/update_task_list.md†L4-L34】 | 40 | 40 | 40 | 40 | 40 | 40 | 40 |
+| **1. Secure Identity, Routing, and Telemetry Foundations**【F:docs/updates/1.00/update_task_list.md†L4-L34】 | 60 | 60 | 60 | 60 | 60 | 60 | 60 |
 | 1.1 Strict JWT validation & auth messaging | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 1.2 Router deduplication & feature flags | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| 1.3 CORS/Helmet/rate limiting hardening | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 1.3 CORS/Helmet/rate limiting hardening | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 1.4 Telemetry endpoints & retention | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 1.5 RBAC & feature flag governance doc | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | **2. Stabilise Platform Lifecycle & Database Safety**【F:docs/updates/1.00/update_task_list.md†L36-L86】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |

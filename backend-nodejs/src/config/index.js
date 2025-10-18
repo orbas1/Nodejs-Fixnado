@@ -92,6 +92,111 @@ function listFromEnv(key) {
     .filter(Boolean);
 }
 
+function parseKeyedListFromEnv(key, { separator = '=', fallback = [] } = {}) {
+  const values = listFromEnv(key);
+  if (values.length === 0) {
+    return fallback;
+  }
+
+  return values
+    .map((entry) => {
+      const trimmed = entry.trim();
+      if (!trimmed) {
+        return null;
+      }
+
+      const separatorIndex = trimmed.indexOf(separator);
+      if (separatorIndex === -1) {
+        return { id: null, value: trimmed };
+      }
+
+      const id = trimmed.slice(0, separatorIndex).trim();
+      const value = trimmed.slice(separatorIndex + 1).trim();
+
+      if (!value) {
+        return null;
+      }
+
+      return {
+        id: id || null,
+        value
+      };
+    })
+    .filter(Boolean);
+}
+
+const DEFAULT_CORS_ALLOWLIST = {
+  production: [
+    'https://app.fixnado.com',
+    'https://admin.fixnado.com',
+    'https://provider.fixnado.com'
+  ],
+  staging: [
+    'https://staging.fixnado.com',
+    'https://admin.staging.fixnado.com',
+    'https://provider.staging.fixnado.com'
+  ],
+  development: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173'
+  ],
+  test: ['http://localhost', 'http://127.0.0.1']
+};
+
+const DEFAULT_CSP_DIRECTIVES = {
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  frameAncestors: ["'self'"],
+  formAction: ["'self'"],
+  objectSrc: ["'none'"],
+  scriptSrc: ["'self'", 'https://static.fixnado.com'],
+  scriptSrcAttr: ["'none'"],
+  connectSrc: ["'self'", 'https://api.fixnado.com', 'https://telemetry.fixnado.com'],
+  imgSrc: ["'self'", 'data:', 'blob:'],
+  styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
+  fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+  mediaSrc: ["'self'", 'blob:'],
+  manifestSrc: ["'self'"],
+  workerSrc: ["'self'", 'blob:']
+};
+
+function mergeCspDirectives(baseDirectives, overrideDirectives) {
+  const result = Object.entries(baseDirectives || {}).reduce((acc, [directive, values]) => {
+    acc[directive] = Array.isArray(values) ? [...values] : values;
+    return acc;
+  }, {});
+
+  if (!overrideDirectives || typeof overrideDirectives !== 'object') {
+    return result;
+  }
+
+  for (const [directive, value] of Object.entries(overrideDirectives)) {
+    if (value === null || value === false) {
+      delete result[directive];
+      continue;
+    }
+
+    const values = Array.isArray(value) ? value : [value];
+    const tokens = values
+      .map((token) => (typeof token === 'string' ? token.trim() : null))
+      .filter(Boolean);
+
+    if (!result[directive]) {
+      result[directive] = [];
+    }
+
+    const existing = new Set(Array.isArray(result[directive]) ? result[directive] : []);
+    for (const token of tokens) {
+      existing.add(token);
+    }
+    result[directive] = Array.from(existing);
+  }
+
+  return result;
+}
+
 const ACCESS_TOKEN_TTL_SECONDS = Math.max(intFromEnv('AUTH_ACCESS_TOKEN_TTL_SECONDS', 900), 300);
 const REFRESH_TOKEN_TTL_DAYS = Math.max(intFromEnv('AUTH_REFRESH_TOKEN_TTL_DAYS', 14), 1);
 const JWT_ALLOWED_ALGORITHMS = listFromEnv('JWT_ALLOWED_ALGORITHMS');
@@ -102,6 +207,35 @@ const JWT_MAX_TOKEN_AGE_SECONDS = Math.max(
   intFromEnv('JWT_MAX_TOKEN_AGE_SECONDS', ACCESS_TOKEN_TTL_SECONDS + JWT_CLOCK_TOLERANCE_SECONDS),
   ACCESS_TOKEN_TTL_SECONDS
 );
+
+const explicitCorsAllowOrigins = listFromEnv('CORS_ALLOWLIST');
+const resolvedCorsAllowOrigins =
+  explicitCorsAllowOrigins.length > 0
+    ? explicitCorsAllowOrigins
+    : DEFAULT_CORS_ALLOWLIST[env] ?? DEFAULT_CORS_ALLOWLIST.development;
+const corsMaxAgeSeconds = Math.max(intFromEnv('CORS_MAX_AGE_SECONDS', 600), 60);
+
+const cspOverrides = jsonFromEnv('SECURITY_CSP_DIRECTIVES', {});
+const helmetContentSecurityPolicy = mergeCspDirectives(DEFAULT_CSP_DIRECTIVES, cspOverrides);
+const referrerPolicy = process.env.SECURITY_REFERRER_POLICY || 'no-referrer';
+const frameguardAction = process.env.SECURITY_FRAMEGUARD_ACTION || 'deny';
+const crossOriginResourcePolicy = process.env.SECURITY_CORP_POLICY || 'same-origin';
+const crossOriginEmbedderPolicyEnabled = boolFromEnv(
+  'SECURITY_ENABLE_COEP',
+  env !== 'development' && env !== 'test'
+);
+const hstsEnabled = boolFromEnv('SECURITY_ENABLE_HSTS', env === 'production');
+
+const storefrontOverrideSecrets = parseKeyedListFromEnv('STOREFRONT_OVERRIDE_SECRETS', {
+  fallback: env === 'test' ? [{ id: 'test', value: 'test-storefront-override-token' }] : []
+});
+const storefrontOverrideEnvAllowlist = listFromEnv('STOREFRONT_OVERRIDE_ENV_ALLOWLIST');
+const storefrontOverrideEnabled =
+  boolFromEnv('STOREFRONT_OVERRIDE_ENABLED', env === 'test') &&
+  storefrontOverrideSecrets.length > 0 &&
+  (storefrontOverrideEnvAllowlist.length === 0 || storefrontOverrideEnvAllowlist.includes(env));
+const storefrontAllowedRoles = listFromEnv('STOREFRONT_OVERRIDE_ALLOWED_ROLES');
+const storefrontAllowedPersonas = listFromEnv('STOREFRONT_OVERRIDE_ALLOWED_PERSONAS');
 
 function readDatabaseCaCertificate() {
   if (typeof process.env.DB_SSL_CA_BASE64 === 'string' && process.env.DB_SSL_CA_BASE64.trim() !== '') {
@@ -348,11 +482,13 @@ const config = {
         : 'loopback',
     clientIpHeader: (process.env.SECURITY_CLIENT_IP_HEADER || 'x-forwarded-for').toLowerCase(),
     cors: {
-      allowOrigins: listFromEnv('CORS_ALLOWLIST'),
+      allowOrigins: resolvedCorsAllowOrigins,
       allowMethods: listFromEnv('CORS_ALLOW_METHODS'),
       allowHeaders: listFromEnv('CORS_ALLOW_HEADERS'),
       exposedHeaders: listFromEnv('CORS_EXPOSE_HEADERS'),
-      allowCredentials: boolFromEnv('CORS_ALLOW_CREDENTIALS', true)
+      allowCredentials: boolFromEnv('CORS_ALLOW_CREDENTIALS', true),
+      maxAgeSeconds: corsMaxAgeSeconds,
+      strict: boolFromEnv('CORS_STRICT_MODE', true)
     },
     bodyParser: {
       jsonLimit: process.env.REQUEST_JSON_LIMIT || '1mb',
@@ -384,6 +520,25 @@ const config = {
       httpTimeoutMs: Math.max(intFromEnv('SECURITY_AUDIT_HTTP_TIMEOUT_MS', 2000), 250),
       sampleRate: Math.min(Math.max(floatFromEnv('SECURITY_AUDIT_SAMPLE_RATE', 1), 0), 1),
       dropMetadataKeys: listFromEnv('SECURITY_AUDIT_DROP_METADATA_KEYS')
+    },
+    helmet: {
+      contentSecurityPolicy: helmetContentSecurityPolicy,
+      referrerPolicy,
+      frameguardAction,
+      crossOriginResourcePolicy,
+      crossOriginEmbedderPolicyEnabled,
+      hstsEnabled,
+      permittedCrossDomainPolicies: process.env.SECURITY_PERMITTED_CROSS_DOMAIN || 'none'
+    },
+    storefrontOverride: {
+      enabled: storefrontOverrideEnabled,
+      secrets: storefrontOverrideSecrets,
+      envAllowlist: storefrontOverrideEnvAllowlist,
+      allowlistedRoles: storefrontAllowedRoles,
+      allowlistedPersonas: storefrontAllowedPersonas,
+      tokenHeader: (process.env.STOREFRONT_OVERRIDE_TOKEN_HEADER || 'x-fixnado-storefront-override-token').toLowerCase(),
+      expiresHeader: (process.env.STOREFRONT_OVERRIDE_EXPIRES_HEADER || 'x-fixnado-storefront-override-expires').toLowerCase(),
+      requiresPersona: boolFromEnv('STOREFRONT_OVERRIDE_REQUIRE_PERSONA', true)
     }
   },
   database: {

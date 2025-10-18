@@ -46,7 +46,10 @@ function parseSecretString(secretString) {
       console.warn('Secrets manager payload was JSON but not an object. Ignoring.');
       return {};
     } catch (error) {
-      console.error('Failed to parse secrets manager JSON payload:', error);
+      console.error('Failed to parse secrets manager JSON payload', {
+        message: error.message,
+        name: error.name
+      });
       throw new Error('Secrets manager payload is not valid JSON.');
     }
   }
@@ -164,7 +167,11 @@ export async function loadSecretsIntoEnv(options = {}) {
       SECRET_CACHE.versionMap.set(secretId, secretValue.VersionId || 'unknown');
       sources.push({ id: secretId, appliedKeys: justApplied.length });
     } catch (error) {
-      logger?.error?.(`Failed to load secret ${secretId} during ${stage}`, error);
+      logger?.error?.(`Failed to load secret ${secretId} during ${stage}`, {
+        message: error.message,
+        name: error.name,
+        statusCode: error.$metadata?.httpStatusCode ?? null
+      });
       if (failFast) {
         throw error;
       }

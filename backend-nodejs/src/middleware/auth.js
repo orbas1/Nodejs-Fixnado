@@ -6,6 +6,7 @@ import {
   verifyAccessToken,
   clearSessionCookies
 } from '../services/sessionService.js';
+import { evaluateStorefrontOverride } from '../services/storefrontOverrideService.js';
 import { enforcePolicy } from './policyMiddleware.js';
 
 const AUTH_DOCUMENTATION_URL =
@@ -96,17 +97,29 @@ export async function authenticate(req, res, next) {
     const correlationId = deriveCorrelationId(req);
 
     if (!token) {
-      const roleHeader = process.env.NODE_ENV === 'test' ? `${req.headers['x-fixnado-role'] ?? ''}`.trim() : '';
-      if (roleHeader) {
+      const overrideEvaluation = evaluateStorefrontOverride({
+        headers: req.headers,
+        ipAddress: req.ip
+      });
+
+      if (overrideEvaluation.allowed) {
+        const overrideRole = overrideEvaluation.requestedRole || 'provider';
+        const overridePersona = overrideEvaluation.requestedPersona ?? null;
         const stubUser = {
           id: null,
-          type: roleHeader
+          type: overrideRole,
+          persona: overridePersona
         };
+
+        if (overridePersona && !req.headers['x-fixnado-persona']) {
+          req.headers['x-fixnado-persona'] = overridePersona;
+        }
+
         req.user = {
           id: null,
-          type: roleHeader,
-          role: roleHeader,
-          persona: req.headers['x-fixnado-persona'] ?? null
+          type: overrideRole,
+          role: overrideRole,
+          persona: overridePersona
         };
 
         const actorContext = resolveActorContext({
@@ -120,11 +133,65 @@ export async function authenticate(req, res, next) {
           ...(req.auth ?? {}),
           sessionId: null,
           refreshToken: null,
-          tokenPayload: { sub: null, role: roleHeader, persona: req.headers['x-fixnado-persona'] ?? null },
-          actor: actorContext
+          tokenPayload: { sub: null, role: overrideRole, persona: overridePersona },
+          actor: actorContext,
+          override: {
+            type: 'storefront',
+            tokenHeader: overrideEvaluation.tokenHeader,
+            secretId: overrideEvaluation.matchedSecretId ?? null
+          }
         };
 
+        await recordSecurityEvent({
+          userId: null,
+          actorRole: actorContext.role,
+          actorPersona: actorContext.persona ?? overridePersona,
+          resource: 'auth:storefront_override',
+          action: req.originalUrl ?? 'unknown',
+          decision: 'allow',
+          reason: 'storefront_override_approved',
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          correlationId,
+          metadata: {
+            tokenHeader: overrideEvaluation.tokenHeader,
+            matchedSecretId: overrideEvaluation.matchedSecretId ?? null
+          }
+        });
+
         return next();
+      }
+
+      if (overrideEvaluation.requestedRole) {
+        await recordSecurityEvent({
+          userId: null,
+          actorRole: overrideEvaluation.requestedRole,
+          actorPersona: overrideEvaluation.requestedPersona ?? null,
+          resource: 'auth:storefront_override',
+          action: req.originalUrl ?? 'unknown',
+          decision: 'deny',
+          reason: `storefront_override_${overrideEvaluation.reason}`,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          correlationId,
+          metadata: {
+            tokenHeader: overrideEvaluation.tokenHeader,
+            matchedSecretId: overrideEvaluation.matchedSecretId ?? null
+          }
+        });
+
+        return respondWithAuthError(req, res, {
+          status: 403,
+          code: 'auth.storefront.override_denied',
+          message: 'Storefront override headers were rejected for this environment.',
+          remediation:
+            'Authenticate with a provider account or supply an approved storefront override token before retrying.',
+          documentationUrl: STOREFRONT_DOCUMENTATION_URL,
+          details: {
+            path: req.originalUrl ?? undefined,
+            reason: overrideEvaluation.reason
+          }
+        });
       }
 
       const storefrontRequest = req.originalUrl?.includes('/api/panel/provider/storefront');
@@ -144,7 +211,11 @@ export async function authenticate(req, res, next) {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         correlationId,
-        metadata: { path: req.originalUrl ?? null, tokenSource: 'absent' }
+        metadata: {
+          path: req.originalUrl ?? null,
+          tokenSource: 'absent',
+          storefrontOverride: overrideEvaluation.reason
+        }
       });
 
       return respondWithAuthError(req, res, {
@@ -341,12 +412,53 @@ export function authorize(requirements = [], options = {}) {
 }
 
 export function requireStorefrontRole(req, res, next) {
-  const personaHeader = `${req.headers['x-fixnado-persona'] ?? ''}`.toLowerCase();
-  const roleHeader = `${req.headers['x-fixnado-role'] ?? ''}`.toLowerCase();
-  const context = personaHeader || roleHeader;
+  let effectiveRole = `${req.user?.role ?? req.user?.type ?? ''}`.toLowerCase();
+  let effectivePersona = `${req.user?.persona ?? ''}`.toLowerCase();
+
+  if (!effectiveRole && !effectivePersona) {
+    const overrideEvaluation = evaluateStorefrontOverride({
+      headers: req.headers,
+      ipAddress: req.ip
+    });
+
+    if (!overrideEvaluation.allowed) {
+      const status = overrideEvaluation.requestedRole ? 403 : 401;
+      const message = overrideEvaluation.requestedRole
+        ? 'Storefront override headers are not permitted for this environment.'
+        : 'Storefront access restricted to providers.';
+      return res.status(status).json({ message });
+    }
+
+    effectiveRole = overrideEvaluation.requestedRole || 'provider';
+    effectivePersona = overrideEvaluation.requestedPersona ?? effectiveRole;
+
+    req.user = {
+      id: null,
+      type: effectiveRole,
+      role: effectiveRole,
+      persona: effectivePersona
+    };
+
+    if (!req.headers['x-fixnado-persona'] && effectivePersona) {
+      req.headers['x-fixnado-persona'] = effectivePersona;
+    }
+
+    req.auth = {
+      ...(req.auth ?? {}),
+      override: {
+        type: 'storefront',
+        tokenHeader: overrideEvaluation.tokenHeader,
+        secretId: overrideEvaluation.matchedSecretId ?? null
+      }
+    };
+  }
+
+  const personaContext = `${effectivePersona || req.headers['x-fixnado-persona'] || ''}`.toLowerCase();
+  const roleContext = `${effectiveRole || req.headers['x-fixnado-role'] || ''}`.toLowerCase();
+  const context = personaContext || roleContext;
 
   if (!context) {
-    return res.status(401).json({ message: 'Storefront access restricted to providers' });
+    return res.status(401).json({ message: 'Storefront access restricted to providers.' });
   }
 
   const canonicalContext = context === 'company' ? 'provider' : context;
@@ -357,7 +469,7 @@ export function requireStorefrontRole(req, res, next) {
 
   return enforcePolicy('panel.storefront.manage', {
     metadata: (request) => ({
-      persona: request.headers['x-fixnado-persona'] || null,
+      persona: request.user?.persona ?? request.headers['x-fixnado-persona'] ?? null,
       policy: 'panel.storefront.manage'
     })
   })(req, res, next);

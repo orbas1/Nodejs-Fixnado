@@ -129,6 +129,242 @@ function assertPiiConfiguration() {
 
 assertPiiConfiguration();
 
+function parseOriginString(origin) {
+  try {
+    return new URL(origin);
+  } catch {
+    return null;
+  }
+}
+
+function buildCorsOriginMatchers(origins) {
+  if (!Array.isArray(origins)) {
+    return [];
+  }
+
+  return origins
+    .map((origin) => {
+      if (typeof origin !== 'string') {
+        return null;
+      }
+
+      const trimmed = origin.trim();
+      if (!trimmed) {
+        return null;
+      }
+
+      if (trimmed.toLowerCase() === 'null') {
+        return { type: 'null', pattern: 'null' };
+      }
+
+      if (trimmed.startsWith('regex:')) {
+        const expression = trimmed.slice(6).trim();
+        if (!expression) {
+          console.warn('[cors] Ignoring empty regex allowlist entry');
+          return null;
+        }
+        try {
+          return { type: 'regex', pattern: trimmed, regex: new RegExp(expression, 'i') };
+        } catch (error) {
+          console.warn('[cors] Failed to compile allowlist regex', { pattern: trimmed, message: error.message });
+          return null;
+        }
+      }
+
+      if (trimmed.includes('*')) {
+        const schemeIndex = trimmed.indexOf('://');
+        if (schemeIndex === -1) {
+          console.warn('[cors] Ignoring wildcard origin without scheme', { origin: trimmed });
+          return null;
+        }
+
+        const protocol = `${trimmed.slice(0, schemeIndex).toLowerCase()}:`;
+        const hostPort = trimmed.slice(schemeIndex + 3);
+        const [hostPart, portPart] = hostPort.split(':');
+        if (!hostPart?.startsWith('*.') || hostPart.length < 3) {
+          console.warn('[cors] Ignoring invalid wildcard origin', { origin: trimmed });
+          return null;
+        }
+
+        const domain = hostPart.slice(2).toLowerCase();
+        const port = portPart ? portPart : '';
+        return { type: 'wildcard', pattern: trimmed, protocol, domain, port };
+      }
+
+      const parsed = parseOriginString(trimmed);
+      if (!parsed) {
+        console.warn('[cors] Ignoring malformed origin', { origin: trimmed });
+        return null;
+      }
+
+      return {
+        type: 'exact',
+        pattern: trimmed,
+        protocol: parsed.protocol,
+        hostname: parsed.hostname.toLowerCase(),
+        port: parsed.port
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalisePort(protocol, port) {
+  if (port && `${port}`.trim() !== '') {
+    return `${port}`;
+  }
+
+  if (protocol === 'https:') {
+    return '443';
+  }
+
+  if (protocol === 'http:') {
+    return '80';
+  }
+
+  return '';
+}
+
+function evaluateCorsOrigin(origin, matchers, { strict }) {
+  if (!origin) {
+    return { allowed: !strict, reason: 'missing_origin' };
+  }
+
+  if (origin === 'null') {
+    const allowsNull = matchers.some((matcher) => matcher.type === 'null');
+    return allowsNull
+      ? { allowed: true, matched: 'null' }
+      : { allowed: false, reason: 'null_origin_not_allowlisted' };
+  }
+
+  const parsed = parseOriginString(origin);
+  if (!parsed) {
+    return { allowed: false, reason: 'invalid_origin' };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const protocol = parsed.protocol;
+  const port = normalisePort(protocol, parsed.port);
+
+  for (const matcher of matchers) {
+    if (matcher.type === 'exact') {
+      const matcherPort = normalisePort(matcher.protocol, matcher.port);
+      const portsMatch = matcher.port ? matcherPort === port : matcherPort === port;
+      if (matcher.protocol === protocol && matcher.hostname === hostname && portsMatch) {
+        return { allowed: true, matched: matcher.pattern };
+      }
+    } else if (matcher.type === 'wildcard') {
+      if (matcher.protocol !== protocol) {
+        continue;
+      }
+      const matchesDomain =
+        hostname === matcher.domain || hostname.endsWith(`.${matcher.domain}`);
+      if (!matchesDomain) {
+        continue;
+      }
+      if (matcher.port && matcher.port !== port) {
+        continue;
+      }
+      return { allowed: true, matched: matcher.pattern };
+    } else if (matcher.type === 'regex' && matcher.regex.test(origin)) {
+      return { allowed: true, matched: matcher.pattern };
+    }
+  }
+
+  if (strict === false && matchers.length === 0) {
+    return { allowed: true, matched: 'permissive' };
+  }
+
+  return { allowed: false, reason: 'origin_not_allowlisted' };
+}
+
+const corsConfig = config.security?.cors ?? {};
+const corsOriginMatchers = buildCorsOriginMatchers(corsConfig.allowOrigins ?? []);
+const strictCorsMode = corsConfig.strict !== false;
+
+function deriveRequestCorrelationId(req) {
+  return (
+    req.headers['x-request-id'] ||
+    req.headers['x-correlation-id'] ||
+    req.headers['x-amzn-trace-id'] ||
+    req.headers['x-cloud-trace-context'] ||
+    null
+  );
+}
+
+const helmetConfig = config.security?.helmet ?? {};
+const helmetDirectives = helmetConfig.contentSecurityPolicy ?? {};
+
+const helmetOptions = {
+  hidePoweredBy: true,
+  crossOriginEmbedderPolicy: helmetConfig.crossOriginEmbedderPolicyEnabled ? { policy: 'require-corp' } : false,
+  crossOriginResourcePolicy: { policy: helmetConfig.crossOriginResourcePolicy || 'same-origin' },
+  referrerPolicy: { policy: helmetConfig.referrerPolicy || 'no-referrer' },
+  frameguard: { action: helmetConfig.frameguardAction || 'deny' },
+  hsts: helmetConfig.hstsEnabled
+    ? {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+      }
+    : false,
+  permittedCrossDomainPolicies: {
+    permittedPolicies: helmetConfig.permittedCrossDomainPolicies || 'none'
+  }
+};
+
+if (helmetDirectives && Object.keys(helmetDirectives).length > 0) {
+  helmetOptions.contentSecurityPolicy = {
+    useDefaults: false,
+    directives: helmetDirectives
+  };
+} else {
+  helmetOptions.contentSecurityPolicy = false;
+}
+
+const baseCorsOptions = {
+  methods: corsConfig.allowMethods?.length ? corsConfig.allowMethods : undefined,
+  allowedHeaders: corsConfig.allowHeaders?.length ? corsConfig.allowHeaders : undefined,
+  exposedHeaders: corsConfig.exposedHeaders?.length ? corsConfig.exposedHeaders : undefined,
+  credentials: corsConfig.allowCredentials ?? false,
+  maxAge: corsConfig.maxAgeSeconds ?? 600,
+  optionsSuccessStatus: 204,
+  preflightContinue: false
+};
+
+const corsMiddleware = cors((req, callback) => {
+  const requestOrigin = req.header('Origin');
+  const evaluation = evaluateCorsOrigin(requestOrigin, corsOriginMatchers, { strict: strictCorsMode });
+
+  if (evaluation.allowed) {
+    const responseOptions = {
+      ...baseCorsOptions,
+      origin: requestOrigin || true
+    };
+
+    if (evaluation.matched === 'null') {
+      responseOptions.credentials = false;
+    }
+
+    callback(null, responseOptions);
+    return;
+  }
+
+  if (!requestOrigin && strictCorsMode === false) {
+    callback(null, { ...baseCorsOptions, origin: false });
+    return;
+  }
+
+  const error = new Error('Origin not allowed by CORS policy');
+  error.status = 403;
+  error.cause = evaluation;
+  console.warn('[cors] Blocked request due to origin policy', {
+    origin: requestOrigin ?? 'none',
+    path: req.originalUrl,
+    reason: evaluation.reason
+  });
+  callback(error, { ...baseCorsOptions, origin: false });
+});
+
 const app = express();
 
 app.disable('x-powered-by');
@@ -138,63 +374,7 @@ if (trustProxyValue !== false && trustProxyValue?.toLowerCase?.() !== 'false') {
   app.set('trust proxy', trustProxyValue);
 }
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
-    hidePoweredBy: true
-  })
-);
-
-const allowedOrigins = config.security?.cors?.allowOrigins ?? [];
-const allowAllOrigins =
-  allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes('all');
-
-function isOriginAllowed(origin) {
-  if (!origin || allowAllOrigins) {
-    return true;
-  }
-
-  const normalisedOrigin = origin.toLowerCase();
-
-  return allowedOrigins.some((allowed) => {
-    const normalisedAllowed = allowed.toLowerCase();
-
-    if (normalisedAllowed === normalisedOrigin) {
-      return true;
-    }
-
-    if (normalisedAllowed.startsWith('*.')) {
-      const domain = normalisedAllowed.slice(2);
-      return normalisedOrigin.endsWith(domain);
-    }
-
-    return false;
-  });
-}
-
-const baseCorsOptions = {
-  methods: config.security?.cors?.allowMethods?.length ? config.security.cors.allowMethods : undefined,
-  allowedHeaders: config.security?.cors?.allowHeaders?.length ? config.security.cors.allowHeaders : undefined,
-  exposedHeaders: config.security?.cors?.exposedHeaders?.length ? config.security.cors.exposedHeaders : undefined,
-  credentials: config.security?.cors?.allowCredentials ?? true,
-  maxAge: 600
-};
-
-const corsMiddleware = cors((req, callback) => {
-  const requestOrigin = req.header('Origin');
-
-  if (isOriginAllowed(requestOrigin)) {
-    callback(null, { ...baseCorsOptions, origin: true });
-    return;
-  }
-
-  const error = new Error('Origin not allowed by CORS policy');
-  error.status = 403;
-  callback(error, { ...baseCorsOptions, origin: false });
-});
-
+app.use(helmet(helmetOptions));
 app.use(corsMiddleware);
 app.options(/.*/, corsMiddleware);
 
@@ -228,9 +408,24 @@ const rateLimiter = rateLimit({
     return req.ip;
   },
   handler: (req, res, next, options) => {
+    const retryAfterSeconds = Math.ceil(options.windowMs / 1000);
+    const limit = options.limit ?? options.max ?? config.security?.rateLimiting?.maxRequests ?? 120;
+    const correlationId = deriveRequestCorrelationId(req);
+
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    res.setHeader('RateLimit-Policy', `${limit};w=${retryAfterSeconds}`);
+
+    console.warn('[rate-limit] Request rejected', {
+      path: req.originalUrl,
+      ip: req.ip,
+      limit,
+      windowMs: options.windowMs
+    });
+
     res.status(429).json({
       message: 'Too many requests, please slow down.',
-      retryAfterSeconds: Math.ceil(options.windowMs / 1000)
+      retryAfterSeconds,
+      correlationId
     });
   }
 });
