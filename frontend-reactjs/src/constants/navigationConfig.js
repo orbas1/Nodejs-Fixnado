@@ -1,5 +1,16 @@
 import { DASHBOARD_ROLES } from './dashboardConfig.js';
 
+const feedSection = () => ({
+  id: 'feed',
+  label: 'Feed',
+  description: null,
+  items: [
+    { id: 'feed-timeline', title: 'Timeline', description: null, href: '/feed?view=timeline' },
+    { id: 'feed-jobs', title: 'Jobs', description: null, href: '/feed?view=custom' },
+    { id: 'feed-market', title: 'Market', description: null, href: '/feed?view=marketplace' }
+  ]
+});
+
 const explorerSection = (t) => ({
   id: 'explorer',
   label: t('nav.explorer'),
@@ -118,6 +129,7 @@ const resourcesSection = (t) => ({
 });
 
 export const buildPrimaryNavigation = ({ t, dashboards }) => [
+  feedSection(),
   explorerSection(t),
   workspaceSection(t, dashboards),
   solutionsSection(t),
