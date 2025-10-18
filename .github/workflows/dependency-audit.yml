@@ -20,10 +20,16 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Activate npm 11 toolchain
+        run: corepack prepare npm@11.4.2 --activate
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
+      - name: Verify toolchain baselines
+        run: node scripts/verify-toolchains.mjs --ci
 
       - name: Install backend dependencies
         working-directory: backend-nodejs
@@ -36,6 +42,9 @@ jobs:
       - name: Resolve Flutter packages
         working-directory: flutter-phoneapp
         run: flutter pub get
+
+      - name: Verify repository lockfiles
+        run: node scripts/verify-lockfiles.mjs
 
       - name: Run dependency audit
         run: node scripts/audit-dependencies.mjs --ci
