@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
-import { authenticate } from '../middleware/auth.js';
 import serviceRoutes from './serviceRoutes.js';
 import feedRoutes from './feedRoutes.js';
 import searchRoutes from './searchRoutes.js';
@@ -21,20 +20,16 @@ import campaignRoutes from './campaignRoutes.js';
 import communicationsRoutes from './communicationsRoutes.js';
 import analyticsPipelineRoutes from './analyticsPipelineRoutes.js';
 import panelRoutes from './panelRoutes.js';
+import providerSettingsRoutes from './providerSettingsRoutes.js';
 import businessFrontRoutes from './businessFrontRoutes.js';
 import blogRoutes from './blogRoutes.js';
 import adminBlogRoutes from './adminBlogRoutes.js';
-import adminBookingRoutes from './adminBookingRoutes.js';
 import adminHomeBuilderRoutes from './adminHomeBuilderRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import financeRoutes from './financeRoutes.js';
-import walletRoutes from './walletRoutes.js';
 import customerServiceManagementRoutes from './customerServiceManagementRoutes.js';
 import accountSupportRoutes from './accountSupportRoutes.js';
-import { adminWalletRouter, walletRouter } from './walletRoutes.js';
-import adminWalletRoutes from './adminWalletRoutes.js';
-import walletRoutes from './walletRoutes.js';
 import adminEnterpriseRoutes from './adminEnterpriseRoutes.js';
 import adminMarketplaceRoutes from './adminMarketplaceRoutes.js';
 import legalRoutes from './legalRoutes.js';
@@ -42,92 +37,125 @@ import userSettingsRoutes from './userSettingsRoutes.js';
 import serviceOrderRoutes from './serviceOrderRoutes.js';
 import customerControlRoutes from './customerControlRoutes.js';
 import accountRoutes from './accountRoutes.js';
-import providerSettingsRoutes from './providerSettingsRoutes.js';
-import servicemanControlRoutes from './servicemanControlRoutes.js';
-import servicemanCustomJobRoutes from './servicemanCustomJobRoutes.js';
 import providerControlRoutes from './providerControlRoutes.js';
 import servicemenRoutes from './servicemenRoutes.js';
-import servicemanMetricsRoutes from './servicemanMetricsRoutes.js';
 import servicemanFinanceRoutes from './servicemanFinanceRoutes.js';
 import servicemanTaxRoutes from './servicemanTaxRoutes.js';
-import servicemanRoutes from './servicemanRoutes.js';
 import servicemanSettingsRoutes from './servicemanSettingsRoutes.js';
 import providerCalendarRoutes from './providerCalendarRoutes.js';
 import servicemanBookingRoutes from './servicemanBookingRoutes.js';
-import providerEscrowRoutes from './providerEscrowRoutes.js';
 import providerBookingRoutes from './providerBookingRoutes.js';
+import providerEscrowRoutes from './providerEscrowRoutes.js';
 import servicemanEscrowRoutes from './servicemanEscrowRoutes.js';
-import servicemanControlRoutes from './servicemanControlRoutes.js';
 import fixnadoAdsRoutes from './fixnadoAdsRoutes.js';
 import providerRoutes from './providerRoutes.js';
-
-const v1Router = Router();
-
-v1Router.use('/auth', authRoutes);
-v1Router.use('/services', serviceRoutes);
-v1Router.use('/feed', feedRoutes);
-v1Router.use('/search', searchRoutes);
-v1Router.use('/admin/bookings', adminBookingRoutes);
-v1Router.use('/admin/rentals', adminRentalRoutes);
-v1Router.use('/admin/services', adminServiceManagementRoutes);
-v1Router.use('/admin/live-feed', adminLiveFeedAuditRoutes);
-v1Router.use('/admin', adminRoutes);
-v1Router.use('/admin/enterprise', adminEnterpriseRoutes);
-v1Router.use('/telemetry', telemetryRoutes);
-v1Router.use('/zones', zoneRoutes);
-v1Router.use('/bookings', bookingRoutes);
-v1Router.use('/inventory', inventoryRoutes);
-v1Router.use('/rentals', rentalRoutes);
-v1Router.use('/tool-rentals', toolRentalRoutes);
-v1Router.use('/compliance', complianceRoutes);
-v1Router.use('/marketplace', marketplaceRoutes);
-v1Router.use('/materials', materialsRoutes);
-v1Router.use('/admin/marketplace', adminMarketplaceRoutes);
-v1Router.use('/campaigns', campaignRoutes);
-v1Router.use('/communications', communicationsRoutes);
-v1Router.use('/analytics', analyticsPipelineRoutes);
-v1Router.use('/panel/provider/settings', providerSettingsRoutes);
-v1Router.use('/panel', panelRoutes);
-v1Router.use('/business-fronts', businessFrontRoutes);
-v1Router.use('/blog', blogRoutes);
-v1Router.use('/admin/blog', adminBlogRoutes);
-v1Router.use('/admin/home-builder', adminHomeBuilderRoutes);
-v1Router.use('/affiliate', affiliateRoutes);
-v1Router.use('/consent', consentRoutes);
-v1Router.use('/finance', financeRoutes);
-v1Router.use('/customer/services', customerServiceManagementRoutes);
-v1Router.use('/account-support', accountSupportRoutes);
-v1Router.use('/admin/wallets', adminWalletRouter);
-v1Router.use('/admin/wallets', adminWalletRoutes);
-v1Router.use('/legal', legalRoutes);
-v1Router.use('/settings', userSettingsRoutes);
-v1Router.use('/wallet', walletRouter);
-v1Router.use('/service-orders', serviceOrderRoutes);
-v1Router.use('/customer-control', customerControlRoutes);
-v1Router.use('/serviceman/control-centre', authenticate, servicemanControlRoutes);
-v1Router.use('/serviceman-control', servicemanControlRoutes);
-v1Router.use('/account', accountRoutes);
-v1Router.use('/serviceman/custom-jobs', servicemanCustomJobRoutes);
-v1Router.use('/provider-control', providerControlRoutes);
-v1Router.use('/servicemen', servicemenRoutes);
-v1Router.use('/serviceman/metrics', servicemanMetricsRoutes);
-v1Router.use('/servicemen/finance', servicemanFinanceRoutes);
-v1Router.use('/servicemen/tax', servicemanTaxRoutes);
-v1Router.use('/servicemen', servicemanRoutes);
-v1Router.use('/serviceman', servicemanRoutes);
-v1Router.use('/servicemen/settings', servicemanSettingsRoutes);
-v1Router.use('/providers', providerCalendarRoutes);
-v1Router.use('/serviceman/bookings', servicemanBookingRoutes);
-v1Router.use('/provider/bookings', providerBookingRoutes);
-v1Router.use('/provider/escrows', providerEscrowRoutes);
-v1Router.use('/serviceman', servicemanEscrowRoutes);
-v1Router.use('/fixnado/ads', fixnadoAdsRoutes);
-v1Router.use('/provider', providerRoutes);
+import adminBookingRoutes from './adminBookingRoutes.js';
+import servicemanRoutes from './servicemanRoutes.js';
+import servicemanMetricsRoutes from './servicemanMetricsRoutes.js';
+import servicemanCustomJobRoutes from './servicemanCustomJobRoutes.js';
+import servicemanControlRoutes from './servicemanControlRoutes.js';
+import walletRoutes, { adminWalletRouter } from './walletRoutes.js';
+import { authenticate } from '../middleware/auth.js';
+import { requireFeatureToggle } from '../middleware/featureToggleMiddleware.js';
 
 const router = Router();
+const v1Router = Router();
+
+const financeGate = requireFeatureToggle('finance.platform', {
+  message: 'Finance and payout tooling is currently restricted to launch partners.',
+  remediation:
+    'Contact the Fixnado finance operations team and reference feature toggle "finance.platform" to request rollout approval.',
+  auditResource: 'routes:finance'
+});
+
+const servicemanGate = requireFeatureToggle('serviceman.core', {
+  message: 'Serviceman tooling is rolling out gradually and is not enabled for this account yet.',
+  remediation: 'Coordinate with Field Operations and reference feature toggle "serviceman.core" to be included in the rollout.',
+  auditResource: 'routes:serviceman'
+});
+
+const servicemanSurfaceRouter = Router();
+servicemanSurfaceRouter.use('/', servicemanRoutes);
+servicemanSurfaceRouter.use('/', servicemanEscrowRoutes);
+servicemanSurfaceRouter.use('/custom-jobs', servicemanCustomJobRoutes);
+servicemanSurfaceRouter.use('/bookings', servicemanBookingRoutes);
+servicemanSurfaceRouter.use('/metrics', servicemanMetricsRoutes);
+servicemanSurfaceRouter.use('/control-centre', authenticate, servicemanControlRoutes);
+
+const routeDefinitions = [
+  { path: '/auth', router: authRoutes },
+  { path: '/services', router: serviceRoutes },
+  { path: '/feed', router: feedRoutes },
+  { path: '/search', router: searchRoutes },
+  { path: '/admin/bookings', router: adminBookingRoutes },
+  { path: '/admin/rentals', router: adminRentalRoutes },
+  { path: '/admin/services', router: adminServiceManagementRoutes },
+  { path: '/admin/live-feed', router: adminLiveFeedAuditRoutes },
+  { path: '/admin', router: adminRoutes },
+  { path: '/admin/enterprise', router: adminEnterpriseRoutes },
+  { path: '/admin/marketplace', router: adminMarketplaceRoutes },
+  { path: '/telemetry', router: telemetryRoutes },
+  { path: '/zones', router: zoneRoutes },
+  { path: '/bookings', router: bookingRoutes },
+  { path: '/inventory', router: inventoryRoutes },
+  { path: '/rentals', router: rentalRoutes },
+  { path: '/tool-rentals', router: toolRentalRoutes },
+  { path: '/compliance', router: complianceRoutes },
+  { path: '/marketplace', router: marketplaceRoutes },
+  { path: '/materials', router: materialsRoutes },
+  { path: '/campaigns', router: campaignRoutes },
+  { path: '/communications', router: communicationsRoutes },
+  { path: '/analytics', router: analyticsPipelineRoutes },
+  { path: '/panel/provider/settings', router: providerSettingsRoutes },
+  { path: '/panel', router: panelRoutes },
+  { path: '/business-fronts', router: businessFrontRoutes },
+  { path: '/blog', router: blogRoutes },
+  { path: '/admin/blog', router: adminBlogRoutes },
+  { path: '/admin/home-builder', router: adminHomeBuilderRoutes },
+  { path: '/affiliate', router: affiliateRoutes },
+  { path: '/consent', router: consentRoutes },
+  { path: '/customer/services', router: customerServiceManagementRoutes },
+  { path: '/account-support', router: accountSupportRoutes },
+  { path: '/admin/wallets', router: adminWalletRouter, middleware: [financeGate] },
+  { path: '/legal', router: legalRoutes },
+  { path: '/settings', router: userSettingsRoutes },
+  { path: '/wallet', router: walletRoutes, middleware: [financeGate] },
+  { path: '/service-orders', router: serviceOrderRoutes },
+  { path: '/customer-control', router: customerControlRoutes },
+  { path: '/account', router: accountRoutes },
+  { path: '/provider-control', router: providerControlRoutes },
+  { path: '/providers', router: providerCalendarRoutes },
+  { path: '/provider/bookings', router: providerBookingRoutes },
+  { path: '/provider/escrows', router: providerEscrowRoutes, middleware: [financeGate] },
+  { path: '/provider', router: providerRoutes },
+  { path: '/finance', router: financeRoutes, middleware: [financeGate] },
+  { path: '/fixnado/ads', router: fixnadoAdsRoutes },
+  { path: '/serviceman', router: servicemanSurfaceRouter, middleware: [authenticate, servicemanGate] },
+  { path: '/servicemen', router: servicemenRoutes, middleware: [authenticate, servicemanGate] },
+  { path: '/servicemen/finance', router: servicemanFinanceRoutes, middleware: [authenticate, servicemanGate] },
+  { path: '/servicemen/tax', router: servicemanTaxRoutes, middleware: [authenticate, servicemanGate] },
+  { path: '/servicemen/settings', router: servicemanSettingsRoutes, middleware: [authenticate, servicemanGate] }
+];
+
+const mountedRouters = new Map();
+
+for (const definition of routeDefinitions) {
+  const { path, router: targetRouter, middleware = [] } = definition;
+  if (!targetRouter || typeof targetRouter.use !== 'function') {
+    throw new Error(`Attempted to register an invalid router for path ${path}`);
+  }
+
+  if (mountedRouters.has(targetRouter)) {
+    const previous = mountedRouters.get(targetRouter);
+    throw new Error(`Router already mounted at ${previous}; refusing to mount again at ${path}`);
+  }
+
+  mountedRouters.set(targetRouter, path);
+  const middlewareStack = Array.isArray(middleware) ? middleware.filter(Boolean) : [middleware].filter(Boolean);
+  v1Router.use(path, ...middlewareStack, targetRouter);
+}
 
 router.use('/v1', v1Router);
-router.use('/', v1Router);
 
 export { v1Router };
 export default router;

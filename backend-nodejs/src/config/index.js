@@ -212,6 +212,65 @@ const DEFAULT_CONSENT_POLICIES = {
   }
 };
 
+const FEATURE_TOGGLE_DEFAULTS = {
+  'finance.platform': {
+    state: env === 'production' ? 'pilot' : 'enabled',
+    rollout: env === 'production' ? 0 : 1,
+    description: 'Controls finance, wallet, and escrow APIs until payout readiness is certified.',
+    owner: 'finance-platform@fixnado.com',
+    ticket: 'OPS-482'
+  },
+  'serviceman.core': {
+    state: env === 'production' ? 'pilot' : 'enabled',
+    rollout: env === 'production' ? 0 : 1,
+    description: 'Gates serviceman control centre, BYOK, and field tooling until staged launches complete.',
+    owner: 'field-ops@fixnado.com',
+    ticket: 'OPS-483'
+  }
+};
+
+function clampRollout(value, fallback = 0) {
+  const numeric = Number.parseFloat(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.min(Math.max(numeric, 0), 1);
+}
+
+function mergeFeatureToggleOverrides(overrides) {
+  let source = overrides;
+  if (!source || typeof source !== 'object') {
+    source = {};
+  }
+
+  if (Array.isArray(source)) {
+    source = source.reduce((acc, entry) => {
+      if (entry && typeof entry === 'object' && typeof entry.key === 'string' && entry.key.trim() !== '') {
+        acc[entry.key] = entry;
+      }
+      return acc;
+    }, {});
+  }
+
+  return Object.entries({ ...FEATURE_TOGGLE_DEFAULTS, ...source }).reduce((acc, [key, value]) => {
+    const base = FEATURE_TOGGLE_DEFAULTS[key] ?? {};
+    if (!value || typeof value !== 'object') {
+      acc[key] = { ...base };
+      return acc;
+    }
+
+    acc[key] = {
+      ...base,
+      ...value,
+      state:
+        typeof value.state === 'string' && value.state.trim() ? value.state.trim() : base.state ?? 'disabled',
+      rollout: clampRollout(value.rollout, clampRollout(base.rollout, 0))
+    };
+
+    return acc;
+  }, {});
+}
+
 const TLS_REQUIRED_ENVIRONMENTS = new Set(['production', 'staging']);
 const tlsRequired = TLS_REQUIRED_ENVIRONMENTS.has(env);
 const databaseSslEnabled = boolFromEnv('DB_SSL', tlsRequired);
@@ -489,7 +548,7 @@ const config = {
   featureToggles: {
     secretArn: process.env.FEATURE_TOGGLE_SECRET_ARN || '',
     cacheTtlSeconds: Math.max(intFromEnv('FEATURE_TOGGLE_CACHE_SECONDS', 60), 10),
-    overrides: jsonFromEnv('FEATURE_TOGGLE_OVERRIDES', {}),
+    overrides: mergeFeatureToggleOverrides(jsonFromEnv('FEATURE_TOGGLE_OVERRIDES', {})),
     auditTrail: process.env.FEATURE_TOGGLE_AUDIT_TABLE || 'feature_toggle_audits'
   },
   communications: {
