@@ -166,3 +166,14 @@ export async function fetchMarketplaceFeed({ limit } = {}) {
 
   return Array.isArray(payload?.data) ? payload.data : [];
 }
+
+export async function fetchFeedSuggestions({ limit } = {}, { signal } = {}) {
+  const query = buildQuery(sanitisePayload({ limit }));
+  const payload = await request(`${FEED_API_ROOT}/suggestions${query}`, { signal });
+
+  return {
+    services: Array.isArray(payload?.services) ? payload.services : [],
+    providers: Array.isArray(payload?.providers) ? payload.providers : [],
+    stores: Array.isArray(payload?.stores) ? payload.stores : []
+  };
+}
