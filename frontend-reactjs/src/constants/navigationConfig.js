@@ -1,34 +1,13 @@
 import { DASHBOARD_ROLES } from './dashboardConfig.js';
 
 const explorerSection = (t) => ({
-  id: 'explorer',
-  label: t('nav.explorer'),
-  description: t('nav.explorerSearchServicesDescription'),
+  id: 'explore',
+  label: t('nav.explore'),
   items: [
-    {
-      id: 'explorer-search',
-      title: t('nav.explorerSearchServices'),
-      description: t('nav.explorerSearchServicesDescription'),
-      href: '/search'
-    },
-    {
-      id: 'explorer-providers',
-      title: t('nav.explorerProviders'),
-      description: t('nav.explorerProvidersDescription'),
-      href: '/providers'
-    },
-    {
-      id: 'explorer-services',
-      title: t('nav.explorerServicemen'),
-      description: t('nav.explorerServicemenDescription'),
-      href: '/services#field-teams'
-    },
-    {
-      id: 'explorer-materials',
-      title: t('nav.explorerMaterials'),
-      description: t('nav.explorerMaterialsDescription'),
-      href: '/materials'
-    }
+    { id: 'explore-search', title: t('nav.search'), href: '/search' },
+    { id: 'explore-providers', title: t('nav.providers'), href: '/providers' },
+    { id: 'explore-teams', title: t('nav.teams'), href: '/services#field-teams' },
+    { id: 'explore-gear', title: t('nav.gear'), href: '/materials' }
   ]
 });
 
@@ -40,78 +19,66 @@ const buildDashboardItems = (t, dashboards = []) => {
 
   return visibleDashboards.map((role) => ({
     id: `dashboard-${role.id}`,
-    title: role.name,
-    description: role.headline,
+    title: role.shortLabel ?? role.name,
     href: `/dashboards/${role.id}`
   }));
 };
 
 const workspaceSection = (t, dashboards) => ({
-  id: 'workspaces',
-  label: t('nav.dashboards'),
-  description: t('nav.enterpriseAnalyticsDescription'),
+  id: 'work',
+  label: t('nav.work'),
   items: buildDashboardItems(t, dashboards)
 });
 
 const solutionsSection = (t) => ({
-  id: 'solutions',
-  label: t('nav.solutions'),
-  description: t('nav.providerConsoleDescription'),
+  id: 'ops',
+  label: t('nav.ops'),
   items: [
     {
       id: 'solutions-business-fronts',
-      title: t('nav.businessFronts'),
-      description: t('nav.businessFrontsDescription'),
+      title: t('nav.fronts'),
       href: '/providers'
     },
     {
       id: 'solutions-storefront',
-      title: t('nav.providerStorefront'),
-      description: t('nav.providerStorefrontDescription'),
+      title: t('nav.store'),
       href: '/provider/storefront'
     },
     {
       id: 'solutions-geo',
-      title: t('nav.geoMatching'),
-      description: t('nav.geoMatchingDescription'),
+      title: t('nav.geo'),
       href: '/operations/geo-matching'
     },
     {
       id: 'solutions-communications',
-      title: t('nav.communications'),
-      description: t('nav.messagesViewMore'),
+      title: t('nav.comms'),
       href: '/communications'
     }
   ]
 });
 
 const resourcesSection = (t) => ({
-  id: 'resources',
-  label: t('nav.resources'),
-  description: t('nav.blog'),
+  id: 'info',
+  label: t('nav.info'),
   items: [
     {
       id: 'resources-blog',
       title: t('nav.blog'),
-      description: t('blog.hero.tagline'),
       href: '/blog'
     },
     {
       id: 'resources-about',
       title: t('nav.about'),
-      description: t('nav.aboutDescription'),
       href: '/about'
     },
     {
       id: 'resources-trust',
-      title: t('nav.trustCentre'),
-      description: t('nav.trustCentreDescription'),
+      title: t('nav.trust'),
       href: '/privacy#trust'
     },
     {
       id: 'resources-terms',
-      title: t('footer.terms'),
-      description: t('legal.termsSummary'),
+      title: t('nav.terms'),
       href: '/legal/terms'
     }
   ]
@@ -134,19 +101,16 @@ export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
       {
         id: 'mobile-login',
         title: t('nav.login'),
-        description: t('auth.login.cta'),
         href: '/login'
       },
       {
         id: 'mobile-register',
         title: t('nav.register'),
-        description: 'Create your Fixnado account',
         href: '/register'
       },
       {
         id: 'mobile-provider-register',
-        title: 'Provider onboarding',
-        description: 'Activate team dashboards and marketplace tools',
+        title: t('nav.providerOnboarding'),
         href: '/register/company'
       }
     ];
@@ -156,13 +120,11 @@ export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
     {
       id: 'mobile-dashboard-hub',
       title: t('nav.dashboards'),
-      description: t('nav.enterpriseAnalyticsDescription'),
       href: '/dashboards'
     },
     {
       id: 'mobile-profile',
-      title: 'Profile & settings',
-      description: 'Manage contact details and preferences',
+      title: t('nav.profileShort'),
       href: '/account/profile'
     }
   ];

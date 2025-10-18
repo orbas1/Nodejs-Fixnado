@@ -3,6 +3,7 @@ import { enGB } from './en-GB.js';
 const messages = {
   ...enGB.messages,
   'nav.home': 'Strona główna',
+  'nav.menu.search': 'Szukaj',
   'nav.solutions': 'Rozwiązania',
   'nav.tools': 'Narzędzia',
   'nav.industries': 'Branże',
@@ -18,6 +19,7 @@ const messages = {
   'nav.communications': 'Komunikacja',
   'nav.login': 'Zaloguj się',
   'nav.register': 'Zarejestruj się',
+  'nav.providerRegister': 'Dostawca',
   'nav.getStarted': 'Zacznij',
   'nav.languageSelector': 'Język',
 
@@ -57,7 +59,7 @@ export const plPL = {
   metadata: {
     ...enGB.metadata,
     id: 'pl-PL',
-    name: 'Polski (Polska)',
+    name: 'Polski',
     htmlLang: 'pl-PL',
     direction: 'ltr',
     currency: 'PLN',

@@ -48,56 +48,42 @@ const inboxPreview = [
   }
 ];
 
-const MobileLink = ({ title, description, href, onNavigate }) => (
+const MobileLink = ({ title, href, onNavigate }) => (
   <Link
     to={href}
     onClick={onNavigate}
-    className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition hover:border-accent/40 hover:shadow-lg"
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:border-accent/40 hover:shadow-lg"
   >
-    <p className="text-sm font-semibold text-slate-900">{title}</p>
-    {description ? <p className="mt-1 text-xs text-slate-500">{description}</p> : null}
+    {title}
   </Link>
 );
 
 MobileLink.propTypes = {
   title: PropTypes.string.isRequired,
-  description: PropTypes.string,
   href: PropTypes.string.isRequired,
   onNavigate: PropTypes.func.isRequired
-};
-
-MobileLink.defaultProps = {
-  description: null
 };
 
 function MegaMenuSection({ section }) {
   return (
     <div className="grid gap-4">
-      <div>
-        <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{section.label}</p>
-        <p className="mt-1 text-sm text-slate-500">{section.description}</p>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">{section.label}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
         {section.items.map((item) => (
           <NavLink
             key={item.id}
             to={item.href}
             className={({ isActive }) =>
               clsx(
-                'group flex h-full flex-col justify-between rounded-2xl border p-4 transition',
+                'group flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition',
                 isActive
                   ? 'border-accent/60 bg-accent/10 text-accent'
-                  : 'border-slate-200 bg-white hover:border-accent/30 hover:shadow-glow'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-accent/30 hover:text-accent'
               )
             }
           >
-            <div>
-              <p className="text-sm font-semibold text-slate-900 group-hover:text-accent">{item.title}</p>
-              <p className="mt-2 text-xs text-slate-500 group-hover:text-slate-600">{item.description}</p>
-            </div>
-            <span className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent/70 group-hover:text-accent">
-              Explore
-            </span>
+            <span>{item.title}</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-slate-300 group-hover:text-accent">→</span>
           </NavLink>
         ))}
       </div>
@@ -108,12 +94,10 @@ function MegaMenuSection({ section }) {
 MegaMenuSection.propTypes = {
   section: PropTypes.shape({
     label: PropTypes.string.isRequired,
-    description: PropTypes.string,
     items: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
-        description: PropTypes.string,
         href: PropTypes.string.isRequired
       })
     ).isRequired
@@ -188,7 +172,6 @@ export default function Header() {
   const loginLink = '/login';
   const mobilePrimaryLink = isAuthenticated ? dashboardLink : loginLink;
   const mobilePrimaryLabel = isAuthenticated ? t('nav.viewDashboard') : t('nav.login');
-  const mobilePrimaryDescription = isAuthenticated ? t('nav.workspacesDescription') : t('auth.login.cta');
 
   const accountDisplayName = useMemo(() => {
     if (!isAuthenticated) {
@@ -254,7 +237,7 @@ export default function Header() {
         </div>
 
         {hasPrimaryNavigation ? (
-          <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+          <nav className="hidden flex-1 items-center justify-center gap-4 lg:flex">
             {primaryNavigation.map((section) => (
               <Popover className="relative" key={section.id}>
                 {({ open }) => (
@@ -279,8 +262,8 @@ export default function Header() {
                       leaveFrom="opacity-100 translate-y-0"
                       leaveTo="opacity-0 translate-y-1"
                     >
-                      <Popover.Panel className="absolute left-1/2 mt-6 w-screen max-w-3xl -translate-x-1/2 px-4">
-                        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
+                      <Popover.Panel className="absolute left-1/2 mt-5 w-screen max-w-2xl -translate-x-1/2 px-4">
+                        <div className="rounded-[2rem] border border-slate-200 bg-white/95 p-5 shadow-2xl">
                           <MegaMenuSection section={section} />
                         </div>
                       </Popover.Panel>
@@ -503,7 +486,6 @@ export default function Header() {
                           <MobileLink
                             key={item.id}
                             title={item.title}
-                            description={item.description}
                             href={item.href}
                             onNavigate={() => setMobileOpen(false)}
                           />
@@ -516,7 +498,6 @@ export default function Header() {
                 <div className="mt-auto space-y-3 border-t border-slate-200 pt-4">
                   <MobileLink
                     title={mobilePrimaryLabel}
-                    description={mobilePrimaryDescription}
                     href={mobilePrimaryLink}
                     onNavigate={() => setMobileOpen(false)}
                   />
@@ -526,7 +507,6 @@ export default function Header() {
                       <MobileLink
                         key={item.id}
                         title={item.title}
-                        description={item.description}
                         href={item.href}
                         onNavigate={() => setMobileOpen(false)}
                       />

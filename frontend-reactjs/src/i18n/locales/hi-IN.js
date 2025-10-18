@@ -3,6 +3,7 @@ import { enGB } from './en-GB.js';
 const messages = {
   ...enGB.messages,
   'nav.home': 'मुखपृष्ठ',
+  'nav.menu.search': 'खोज',
   'nav.solutions': 'समाधान',
   'nav.tools': 'उपकरण',
   'nav.industries': 'उद्योग',
@@ -18,6 +19,7 @@ const messages = {
   'nav.communications': 'संचार',
   'nav.login': 'लॉगिन',
   'nav.register': 'पंजीकरण',
+  'nav.providerRegister': 'प्रदाता',
   'nav.getStarted': 'शुरू करें',
   'nav.languageSelector': 'भाषा',
   'nav.creationStudio': 'क्रिएशन स्टूडियो',
@@ -67,7 +69,7 @@ export const hiIN = {
   metadata: {
     ...enGB.metadata,
     id: 'hi-IN',
-    name: 'हिन्दी (भारत)',
+    name: 'हिन्दी',
     htmlLang: 'hi-IN',
     direction: 'ltr',
     currency: 'INR',

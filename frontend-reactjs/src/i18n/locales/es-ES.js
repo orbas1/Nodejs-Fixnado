@@ -1,7 +1,7 @@
 export const esES = {
   metadata: {
     id: 'es-ES',
-    name: 'Español (España)',
+    name: 'Español',
     htmlLang: 'es-ES',
     direction: 'ltr',
     currency: 'EUR',
@@ -57,6 +57,7 @@ export const esES = {
 
     'nav.skip': 'Saltar al contenido principal',
     'nav.home': 'Inicio',
+    'nav.menu.search': 'Buscar',
     'nav.solutions': 'Soluciones',
     'nav.tools': 'Herramientas',
     'nav.industries': 'Sectores',
@@ -87,6 +88,7 @@ export const esES = {
     'nav.communications': 'Comunicaciones',
     'nav.login': 'Iniciar sesión',
     'nav.register': 'Registrar',
+    'nav.providerRegister': 'Proveedor',
     'nav.profile': 'Perfil',
     'nav.getStarted': 'Comenzar',
     'nav.languageSelector': 'Idioma',

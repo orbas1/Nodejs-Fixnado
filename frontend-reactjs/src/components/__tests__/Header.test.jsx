@@ -20,12 +20,25 @@ const translations = {
   'nav.profile': 'Profile',
   'nav.getStarted': 'Get started',
   'nav.feed': 'Feed',
-  'nav.explorer': 'Explorer',
-  'nav.explorerSearchServices': 'Search services',
-  'nav.explorerSearchServicesDescription': 'Find work',
+  'nav.explore': 'Explore',
+  'nav.search': 'Search',
+  'nav.providers': 'Providers',
+  'nav.teams': 'Teams',
+  'nav.gear': 'Gear',
   'nav.dashboards': 'Dashboards',
   'nav.solutions': 'Solutions',
   'nav.resources': 'Resources',
+  'nav.work': 'Work',
+  'nav.ops': 'Ops',
+  'nav.info': 'Info',
+  'nav.fronts': 'Fronts',
+  'nav.store': 'Store',
+  'nav.geo': 'Geo',
+  'nav.comms': 'Comms',
+  'nav.trust': 'Trust',
+  'nav.terms': 'Terms',
+  'nav.providerOnboarding': 'Provider signup',
+  'nav.profileShort': 'Profile',
   'nav.enterpriseAnalyticsDescription': 'Enterprise analytics',
   'nav.workspacesDescription': 'Manage workspaces',
   'nav.marketplace': 'Marketplace',
@@ -92,7 +105,7 @@ describe('Header navigation layout', () => {
     expect(screen.getByRole('link', { name: /Log in/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Register/i })).toBeInTheDocument();
     expect(screen.getAllByTestId('language-selector')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: /Explorer/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explore/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Toggle navigation menu/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Notifications/i)).not.toBeInTheDocument();
   });
@@ -109,12 +122,12 @@ describe('Header navigation layout', () => {
     const selectors = screen.getAllByTestId('language-selector');
     expect(selectors).toHaveLength(1);
     expect(selectors[0]).toHaveAttribute('data-variant', 'menu');
-    const explorerButton = screen.getByRole('button', { name: /Explorer/i });
+    const explorerButton = screen.getByRole('button', { name: /Explore/i });
     fireEvent.click(explorerButton);
-    expect(screen.getByRole('link', { name: /Search services/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Search/i })).toBeInTheDocument();
     const dashboardsButton = screen.getByRole('button', { name: /Dashboards/i });
     fireEvent.click(dashboardsButton);
-    expect(screen.getByRole('link', { name: /Provider Operations Studio/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Provider$/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Admin Control Tower/i })).not.toBeInTheDocument();
   });
 

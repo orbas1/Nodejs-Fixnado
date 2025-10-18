@@ -3,6 +3,7 @@ import { enGB } from './en-GB.js';
 const messages = {
   ...enGB.messages,
   'nav.home': 'الرئيسية',
+  'nav.menu.search': 'بحث',
   'nav.solutions': 'الحلول',
   'nav.tools': 'الأدوات',
   'nav.industries': 'القطاعات',
@@ -18,6 +19,7 @@ const messages = {
   'nav.communications': 'الاتصالات',
   'nav.login': 'تسجيل الدخول',
   'nav.register': 'التسجيل',
+  'nav.providerRegister': 'مزود',
   'nav.getStarted': 'ابدأ الآن',
   'nav.languageSelector': 'اللغة',
   'nav.creationStudio': 'استوديو الإنشاء',
@@ -65,7 +67,7 @@ export const arSA = {
   metadata: {
     ...enGB.metadata,
     id: 'ar-SA',
-    name: 'العربية (السعودية)',
+    name: 'العربية',
     htmlLang: 'ar',
     direction: 'rtl',
     currency: 'SAR',

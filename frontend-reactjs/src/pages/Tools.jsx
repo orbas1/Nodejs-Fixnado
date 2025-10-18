@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PageHeader from '../components/blueprints/PageHeader.jsx';
-import BlueprintSection from '../components/blueprints/BlueprintSection.jsx';
 import ToolsShowcase from '../components/tools/ToolsShowcase.jsx';
 import usePersona from '../hooks/usePersona.js';
 import { useFeatureToggle } from '../providers/FeatureToggleProvider.jsx';
@@ -8,6 +8,15 @@ import { getBusinessFront, getProviderDashboard } from '../api/panelClient.js';
 
 const ALLOWED_PERSONAS = ['provider', 'serviceman'];
 const DEFAULT_SLUG = 'metro-power-services';
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1523419409543-0c1df022bdd1?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1529429617124-aee7a16be1e7?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=1600&q=80'
+];
+const FALLBACK_VIDEO = 'https://cdn.coverr.co/videos/coverr-construction-site-2650/1080p.mp4';
 
 function normaliseCondition(condition) {
   if (!condition) return null;
@@ -20,101 +29,98 @@ function normaliseCondition(condition) {
 }
 
 function formatCurrency(amount, currency = 'GBP') {
+  const safeAmount = Number(amount);
+  if (!Number.isFinite(safeAmount)) {
+    return null;
+  }
+
   try {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency,
       maximumFractionDigits: 0
-    }).format(amount);
+    }).format(safeAmount);
   } catch (error) {
     console.warn('Failed to format currency', error);
-    return `${currency} ${amount}`;
+    return `${currency} ${safeAmount}`;
   }
 }
 
-const logisticsPlaybook = [
-  {
-    id: 'telemetry',
-    title: 'Telemetry heartbeat',
-    detail:
-      'Asset trackers publish battery, vibration, and geolocation every 90 seconds. Offline fallbacks buffer to encrypted SD and alert the NOC when packets miss the SLA.',
-    owner: 'Network operations'
-  },
-  {
-    id: 'compliance',
-    title: 'Compliance pack automation',
-    detail:
-      'COSHH sheets, calibration certificates, and insurance riders attach automatically to bookings. Expired artefacts trigger legal escalations and block dispatch.',
-    owner: 'Risk & compliance'
-  },
-  {
-    id: 'last-mile',
-    title: 'Last-mile dispatch orchestration',
-    detail:
-      'Dynamic routing coordinates depot, courier, and onsite crews with live ETAs. Heatmaps flag congestion so bookings can pre-emptively re-time windows.',
-    owner: 'Logistics control'
-  }
-];
+function collectMedia(tool, index) {
+  const gallerySources = [
+    tool?.media?.primary?.url,
+    tool?.media?.cover?.url,
+    tool?.photo?.url,
+    tool?.imageUrl,
+    tool?.heroImage,
+    ...(Array.isArray(tool?.media?.gallery) ? tool.media.gallery.map((item) => item?.url) : []),
+    ...(Array.isArray(tool?.gallery) ? tool.gallery.map((item) => (typeof item === 'string' ? item : item?.url)) : []),
+    ...(Array.isArray(tool?.images) ? tool.images.map((item) => (typeof item === 'string' ? item : item?.url)) : [])
+  ].filter((url) => typeof url === 'string' && url.length > 8);
 
-const governanceControls = [
-  {
-    id: 'access',
-    title: 'Role-scoped access',
-    caption: 'Provider + Serviceman',
-    detail: 'Tools hub enforces persona-scoped access tokens. Audit logs append booking IDs, hardware IDs, and user signatures.'
-  },
-  {
-    id: 'escrow',
-    title: 'Escrow alignment',
-    caption: 'Automation ready',
-    detail: 'Reservations require escrow milestones before release. Exceptions raise a finance approval task in the control tower.'
-  },
-  {
-    id: 'resilience',
-    title: 'Resilience posture',
-    caption: 'Four-zone active-active',
-    detail: 'Telemetry brokers are deployed in four regions with automatic failover. Heartbeat gaps above 45 seconds escalate to SRE duty.'
-  }
-];
+  const uniqueGallery = Array.from(new Set(gallerySources));
+  const heroImage = uniqueGallery[0] ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+  const gallery = [heroImage, ...uniqueGallery.slice(1)];
 
-const integrationPipelines = [
-  {
-    id: 'sap',
-    title: 'SAP Fieldglass',
-    detail: 'Syncs purchase orders, contract terms, and approval routing so enterprise clients can reconcile tool spend instantly.'
-  },
-  {
-    id: 'azure',
-    title: 'Azure IoT Hub',
-    detail: 'Ingests torque sensor feeds and location telemetry for predictive maintenance dashboards and anomaly detection.'
-  },
-  {
-    id: 'servicenow',
-    title: 'ServiceNow CSM',
-    detail: 'Opens remediation cases with evidence packs when telemetry flags misuse or safety interlocks trip.'
-  }
-];
+  const videoSources = [
+    tool?.media?.video?.url,
+    tool?.media?.primaryVideo?.url,
+    tool?.videoUrl,
+    tool?.video?.url,
+    tool?.demoVideo
+  ].filter((url) => typeof url === 'string' && url.length > 8);
 
-const readinessChecklist = [
-  {
-    id: 'calibration',
-    label: 'Calibration certificates',
-    status: 'Up to date',
-    notes: '96% completed within SLA; stragglers auto-paged to depot managers.'
-  },
-  {
-    id: 'insurance',
-    label: 'Insurance riders',
-    status: 'Verified',
-    notes: 'Coverage synced nightly with insurer webhooks and mirrored in escrow contract terms.'
-  },
-  {
-    id: 'training',
-    label: 'Crew training & toolbox talks',
-    status: 'Scheduled',
-    notes: 'Servicemen receive monthly toolbox briefs; completions tracked in LMS with audit exports.'
+  const heroVideo = videoSources[0] ?? FALLBACK_VIDEO;
+
+  return { heroImage, gallery, heroVideo };
+}
+
+function derivePricing(tool) {
+  const tiers = Array.isArray(tool?.pricing?.tiers)
+    ? tool.pricing.tiers
+    : Array.isArray(tool?.hirePackages)
+      ? tool.hirePackages
+      : Array.isArray(tool?.packages)
+        ? tool.packages
+        : [];
+
+  const parsedTiers = tiers
+    .map((tier, index) => {
+      const amount = tier?.amount ?? tier?.price ?? tier?.cost ?? tier?.value;
+      const currency = tier?.currency ?? tool?.rentalRateCurrency ?? 'GBP';
+      const label = tier?.label ?? tier?.name ?? tier?.duration ?? tier?.id ?? `Tier ${index + 1}`;
+      const priceLabel = formatCurrency(amount, currency);
+      if (!priceLabel) {
+        return null;
+      }
+      return {
+        id: tier?.id ?? `tier-${index}`,
+        label,
+        value: priceLabel
+      };
+    })
+    .filter(Boolean);
+
+  if (parsedTiers.length > 0) {
+    return parsedTiers;
   }
-];
+
+  const baseRate = tool?.rentalRate;
+  if (baseRate == null) {
+    return [];
+  }
+
+  const currency = tool?.rentalRateCurrency ?? 'GBP';
+  const daily = formatCurrency(baseRate, currency);
+  const weekly = formatCurrency(tool?.weeklyRate ?? baseRate * 4.5, currency);
+  const monthly = formatCurrency(tool?.monthlyRate ?? baseRate * 4.5 * 4, currency);
+
+  return [
+    daily ? { id: 'day', label: 'Day', value: daily } : null,
+    weekly ? { id: 'week', label: 'Week', value: weekly } : null,
+    monthly ? { id: 'month', label: 'Month', value: monthly } : null
+  ].filter(Boolean);
+}
 
 export default function Tools() {
   const { persona, status, setPersona } = usePersona({ allowedPersonas: ALLOWED_PERSONAS });
@@ -125,11 +131,12 @@ export default function Tools() {
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState({ utilisation: 0, uptime: 0.0, ready: 0, total: 0 });
   const [interaction, setInteraction] = useState(null);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [highlightId, setHighlightId] = useState(null);
 
   const {
     enabled: toolsEnabled,
     loading: toggleLoading,
-    reason: toggleReason,
     refresh: refreshToggle
   } = useFeatureToggle('tools-workbench', {
     scope: persona ?? 'provider',
@@ -145,31 +152,35 @@ export default function Tools() {
     const utilisation = dashboard?.metrics?.utilisation ?? 0.78;
 
     const mapped = tools.map((tool, index) => {
-      const condition = normaliseCondition(tool.condition) ?? 'service';
-      const compliance = tool.compliance?.length
+      const condition = normaliseCondition(tool?.condition) ?? 'service';
+      const compliance = tool?.compliance?.length
         ? tool.compliance
-        : ['PAT', 'LOLER', index % 2 === 0 ? 'RAMS' : 'Risk brief'];
-      const location = tool.location || depotLocations[index % depotLocations.length] || 'UK-wide depot';
-      const availabilityScore = tool.availabilityScore ?? Math.min(0.95, 0.55 + (index % 5) * 0.09);
+        : ['PAT', 'LOLER', index % 2 === 0 ? 'RAMS' : 'Risk'];
+      const location =
+        tool?.location || depotLocations[index % Math.max(depotLocations.length, 1)] || 'UK depot';
+      const availabilityScore = tool?.availabilityScore ?? Math.min(0.95, 0.6 + (index % 5) * 0.08);
       const rentalRateLabel =
-        tool.rentalRate != null
-          ? `${formatCurrency(tool.rentalRate, tool.rentalRateCurrency)} / day`
-          : 'Included in contract';
+        tool?.rentalRate != null
+          ? `${formatCurrency(tool.rentalRate, tool?.rentalRateCurrency)} / day`
+          : tool?.includedLabel ?? 'Included';
+      const { heroImage, gallery, heroVideo } = collectMedia(tool, index);
+      const pricing = derivePricing(tool);
 
       return {
-        id: tool.id ?? `tool-${index}`,
-        name: tool.name,
-        category: tool.category || 'Specialist tools',
-        description:
-          tool.description ||
-          'Certified and calibrated equipment with documented inspection history and digital access logs.',
+        id: tool?.id ?? `tool-${index}`,
+        name: tool?.name ?? 'Tool',
+        category: tool?.category || 'Equipment',
         rentalRateLabel,
-        utilisation: tool.utilisation ?? utilisation,
-        nextService: tool.nextService || 'Within 14 days',
+        utilisation: tool?.utilisation ?? utilisation,
+        nextService: tool?.nextService || 'Within 14 days',
         availabilityScore,
         condition,
         compliance,
-        location
+        location,
+        pricing,
+        heroImage,
+        gallery,
+        heroVideo
       };
     });
 
@@ -219,7 +230,7 @@ export default function Tools() {
           return;
         }
         console.error('Failed to load tools hub data', caught);
-        setError(caught instanceof Error ? caught.message : 'Unable to load tools hub');
+        setError('Load failed');
       } finally {
         if (!abort.signal.aborted) {
           setLoading(false);
@@ -235,54 +246,108 @@ export default function Tools() {
     return inventory.filter((item) => item.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === activeCategory);
   }, [inventory, activeCategory]);
 
+  const firstReadyTool = useMemo(() => {
+    if (!filteredInventory.length) {
+      return null;
+    }
+
+    return (
+      filteredInventory.find((item) => item.condition !== 'maintenance_due' && item.condition !== 'retired') ??
+      filteredInventory[0]
+    );
+  }, [filteredInventory]);
+
+  useEffect(() => {
+    if (!highlightId && firstReadyTool) {
+      setHighlightId(firstReadyTool.id);
+    }
+  }, [firstReadyTool, highlightId]);
+
+  const highlightTool = useMemo(() => {
+    if (!inventory.length) {
+      return null;
+    }
+    return inventory.find((item) => item.id === highlightId) ?? firstReadyTool ?? inventory[0];
+  }, [firstReadyTool, highlightId, inventory]);
+
   const headerMeta = useMemo(
     () => [
       {
-        label: 'Tools ready',
-        value: metrics.total > 0 ? `${metrics.ready}/${metrics.total}` : '0',
-        caption: 'Dispatchable this hour',
+        label: 'Ready',
+        value: metrics.ready.toString(),
         emphasis: true
       },
       {
-        label: 'Fleet uptime',
-        value: `${metrics.uptime.toFixed(1)}%`,
-        caption: 'Telemetry heartbeat'
+        label: 'Fleet',
+        value: metrics.total.toString()
       },
       {
-        label: 'Avg. utilisation',
-        value: `${Math.round((metrics.utilisation ?? 0) * 100)}%`,
-        caption: 'Trailing 30 days'
+        label: 'Uptime',
+        value: `${metrics.uptime.toFixed(1)}%`
       }
     ],
-    [metrics]
+    [metrics.ready, metrics.total, metrics.uptime]
   );
 
-  const handleReserve = useCallback((tool) => {
-    setInteraction({ type: 'reserve', tool });
+  const handleHire = useCallback((tool) => {
+    setInteraction({ type: 'hire', tool });
   }, []);
 
-  const handleInspect = useCallback((tool) => {
-    setInteraction({ type: 'inspect', tool });
+  const handleMonitor = useCallback((tool) => {
+    setInteraction({ type: 'monitor', tool });
+  }, []);
+
+  const handleGallery = useCallback((tool) => {
+    setInteraction({ type: 'gallery', tool });
   }, []);
 
   const closeInteraction = useCallback(() => {
     setInteraction(null);
   }, []);
 
+  useEffect(() => {
+    if (interaction && interaction.type !== 'gallery') {
+      setWizardStep(0);
+    }
+  }, [interaction]);
+
+  const quickControls = useMemo(() => {
+    if (!highlightTool) {
+      return [];
+    }
+
+    const base = [
+      { id: 'rent', label: 'Rent', onClick: () => handleHire(highlightTool) },
+      { id: 'track', label: 'Track', onClick: () => handleMonitor(highlightTool) },
+      { id: 'media', label: 'Media', onClick: () => handleGallery(highlightTool) }
+    ];
+
+    if (persona === 'serviceman') {
+      return [
+        ...base,
+        { id: 'tasks', label: 'Tasks', to: '/dashboards/serviceman/byok' },
+        { id: 'tax', label: 'Tax', to: '/dashboards/serviceman/tax' }
+      ];
+    }
+
+    return [
+      ...base,
+      { id: 'stock', label: 'Stock', to: '/provider/inventory' },
+      { id: 'crew', label: 'Crew', to: '/dashboards/provider/crew-control' },
+      { id: 'shop', label: 'Shop', to: '/provider/storefront' }
+    ];
+  }, [handleGallery, handleHire, handleMonitor, highlightTool, persona]);
+
   const accessGate = !status.allowed
     ? {
-        title: 'Switch persona to continue',
-        description:
-          'Tooling orchestration is reserved for provider and serviceman personas. Switch persona to review live inventory, compliance, and telemetry.',
-        actionLabel: 'Switch to provider',
+        title: 'Select role',
+        actionLabel: 'Provider',
         onAction: () => setPersona('provider')
       }
     : toolsEnabled === false && !toggleLoading
       ? {
-          title: 'Tools hub disabled',
-          description:
-            'The tools workbench is currently disabled for your cohort. Refresh toggles or contact operations to request access.',
-          actionLabel: 'Retry access check',
+          title: 'Paused',
+          actionLabel: 'Retry',
           onAction: () =>
             refreshToggle({ force: true }).catch((caught) => {
               console.error('Failed to refresh tools toggle', caught);
@@ -290,167 +355,492 @@ export default function Tools() {
         }
       : null;
 
+  const wizardSteps = useMemo(() => {
+    if (!interaction) {
+      return [];
+    }
+    if (interaction.type === 'hire') {
+      return ['Schedule', 'Confirm'];
+    }
+    if (interaction.type === 'monitor') {
+      return ['Live', 'Alerts'];
+    }
+    return [];
+  }, [interaction]);
+
+  const wizardContent = useMemo(() => {
+    if (!interaction) {
+      return null;
+    }
+
+    const { tool, type } = interaction;
+    if (!tool) {
+      return null;
+    }
+
+    const availabilityPercent = Math.round((tool.availabilityScore ?? 0) * 100);
+    const utilisationPercent = Math.round(((tool.utilisation ?? metrics.utilisation ?? 0) || 0) * 100);
+
+    if (type === 'gallery') {
+      return (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {tool.gallery.map((src) => (
+            <button
+              key={src}
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.open(src, '_blank', 'noopener');
+                }
+              }}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <img src={src} alt={`${tool.name} view`} className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (type === 'hire') {
+      if (wizardStep === 0) {
+        return (
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Location</dt>
+              <dd className="mt-1 text-sm font-semibold text-primary">{tool.location}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Rate</dt>
+              <dd className="mt-1 text-sm font-semibold text-primary">{tool.rentalRateLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Availability</dt>
+              <dd className="mt-1 text-sm font-semibold text-primary">{availabilityPercent}%</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Next service</dt>
+              <dd className="mt-1 text-sm font-semibold text-primary">{tool.nextService}</dd>
+            </div>
+          </dl>
+        );
+      }
+
+      return (
+        <div className="space-y-4">
+          {tool.pricing.length ? (
+            <div className="flex flex-wrap gap-2">
+              {tool.pricing.map((tier) => (
+                <span
+                  key={tier.id}
+                  className="rounded-full border border-primary/40 bg-primary/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary"
+                >
+                  {tier.label} {tier.value}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {tool.compliance?.length ? (
+            <ul className="flex flex-wrap gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">
+              {tool.compliance.map((item) => (
+                <li key={item} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-primary">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (wizardStep === 0) {
+      return (
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Utilisation</dt>
+            <dd className="mt-1 text-sm font-semibold text-primary">{utilisationPercent}%</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Uptime</dt>
+            <dd className="mt-1 text-sm font-semibold text-primary">{metrics.uptime.toFixed(1)}%</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Availability</dt>
+            <dd className="mt-1 text-sm font-semibold text-primary">{availabilityPercent}%</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Location</dt>
+            <dd className="mt-1 text-sm font-semibold text-primary">{tool.location}</dd>
+          </div>
+        </dl>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {tool.compliance?.length ? (
+          <ul className="flex flex-wrap gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">
+            {tool.compliance.map((item) => (
+              <li key={item} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-primary">
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="text-sm font-semibold text-primary">Alerts clear</p>
+      </div>
+    );
+  }, [interaction, metrics.uptime, metrics.utilisation, wizardStep]);
+
+  const handleNextStep = useCallback(() => {
+    setWizardStep((current) => {
+      if (wizardSteps.length === 0) {
+        return current;
+      }
+      return Math.min(current + 1, wizardSteps.length - 1);
+    });
+  }, [wizardSteps]);
+
+  const handlePrevStep = useCallback(() => {
+    setWizardStep((current) => {
+      if (wizardSteps.length === 0) {
+        return current;
+      }
+      return Math.max(current - 1, 0);
+    });
+  }, [wizardSteps]);
+
+  const isLastWizardStep = wizardSteps.length > 0 && wizardStep >= wizardSteps.length - 1;
+
+  const handlePrimaryAction = useCallback(() => {
+    if (isLastWizardStep) {
+      closeInteraction();
+      return;
+    }
+    handleNextStep();
+  }, [closeInteraction, handleNextStep, isLastWizardStep]);
+
+  const primaryActionLabel = interaction
+    ? interaction.type === 'hire'
+      ? isLastWizardStep
+        ? 'Confirm'
+        : 'Next'
+      : interaction.type === 'monitor'
+        ? isLastWizardStep
+          ? 'Finish'
+          : 'Next'
+        : ''
+    : '';
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 pb-20">
       <PageHeader
-        eyebrow="Operations & logistics"
-        title="Tools workbench"
-        description="Synchronise depot availability, compliance guardrails, and telemetry-backed tooling in one command surface."
+        eyebrow="Rent"
+        title="Tools"
         breadcrumbs={[
-          { label: 'Experience', to: '/' },
-          { label: 'Tools & rentals' }
+          { label: 'Home', to: '/' },
+          { label: 'Tools' }
         ]}
         actions={[
-          { label: 'Download SOP pack', to: '/docs/tools-sop-pack.pdf', variant: 'secondary' },
-          { label: 'Request depot onboarding', to: '/register', variant: 'primary' }
+          { label: 'Quote', to: '/contact', variant: 'secondary' },
+          { label: 'Book', to: '/register', variant: 'primary' }
         ]}
         meta={headerMeta}
       />
 
-      <div className="mx-auto max-w-7xl px-6 pt-16 space-y-16">
+      <div className="mx-auto w-full max-w-7xl px-6 py-12">
         {accessGate ? (
-          <div className="rounded-3xl border border-primary/20 bg-primary/5 p-8 shadow-sm">
+          <div className="rounded-3xl border border-primary/30 bg-white p-8 text-center shadow-sm">
             <h2 className="text-xl font-semibold text-primary">{accessGate.title}</h2>
-            <p className="mt-3 text-sm text-slate-600">{accessGate.description}</p>
             <button
               type="button"
               onClick={accessGate.onAction}
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
             >
               {accessGate.actionLabel}
             </button>
-            {toggleReason ? (
-              <p className="mt-4 text-xs uppercase tracking-[0.35em] text-slate-400">Reason: {toggleReason}</p>
-            ) : null}
           </div>
+        ) : error ? (
+          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">{error}</div>
         ) : (
-          <>
-            <ToolsShowcase
-              items={filteredInventory}
-              loading={loading}
-              categories={categories}
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              onHire={handleReserve}
-              onInspect={handleInspect}
-              persona={persona}
-            />
-
-            {error ? (
-              <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700 shadow-sm">
-                {error}
-              </div>
+          <div className="space-y-12">
+            {highlightTool ? (
+              <section className="grid gap-8 xl:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
+                <div className="rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-6">
+                    <div className="relative overflow-hidden rounded-[2rem] bg-slate-100">
+                      <video
+                        key={highlightTool.heroVideo}
+                        controls
+                        poster={highlightTool.heroImage}
+                        className="aspect-video w-full rounded-[2rem] object-cover"
+                      >
+                        <source src={highlightTool.heroVideo} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                      <button
+                        type="button"
+                        onClick={() => handleGallery(highlightTool)}
+                        className="absolute right-4 top-4 inline-flex items-center justify-center rounded-full bg-black/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white backdrop-blur transition hover:bg-black/80"
+                      >
+                        Media
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{highlightTool.category}</p>
+                        <h2 className="mt-2 text-3xl font-semibold text-primary md:text-4xl">{highlightTool.name}</h2>
+                      </div>
+                      {highlightTool.pricing.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {highlightTool.pricing.slice(0, 3).map((tier) => (
+                            <span
+                              key={tier.id}
+                              className="rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary"
+                            >
+                              {tier.label} {tier.value}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Ready</p>
+                        <p className="mt-2 text-3xl font-semibold text-primary">{Math.round((highlightTool.availabilityScore ?? 0) * 100)}%</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Service</p>
+                        <p className="mt-2 text-lg font-semibold text-primary">{highlightTool.nextService}</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Location</p>
+                        <p className="mt-2 text-lg font-semibold text-primary">{highlightTool.location}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleHire(highlightTool)}
+                        className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90"
+                      >
+                        Rent
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMonitor(highlightTool)}
+                        className="inline-flex items-center justify-center rounded-full border border-primary/40 px-6 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:text-primary"
+                      >
+                        Track
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleGallery(highlightTool)}
+                        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary"
+                      >
+                        Media
+                      </button>
+                      <Link
+                        to="/provider/inventory"
+                        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary"
+                      >
+                        Stock
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+                <aside className="flex flex-col gap-6 rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Routes</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {quickControls.map((item) =>
+                        item.to ? (
+                          <Link
+                            key={item.id}
+                            to={item.to}
+                            onClick={item.onClick}
+                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-primary transition hover:border-primary hover:text-primary"
+                          >
+                            {item.label}
+                          </Link>
+                        ) : (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={item.onClick}
+                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-primary transition hover:border-primary hover:text-primary"
+                          >
+                            {item.label}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                  {highlightTool.compliance?.length ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Compliance</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {highlightTool.compliance.slice(0, 6).map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </aside>
+              </section>
             ) : null}
 
-            <BlueprintSection
-              id="logistics"
-              eyebrow="Logistics playbook"
-              title="Operational guardrails for depot-to-site deployments"
-              description="Every booking inherits orchestration templates so the right tool is unlocked, inspected, and delivered ahead of the crew."
-            >
-              <div className="grid gap-6 md:grid-cols-3">
-                {logisticsPlaybook.map((entry) => (
-                  <article key={entry.id} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                    <h3 className="text-lg font-semibold text-primary">{entry.title}</h3>
-                    <p className="mt-3 text-sm text-slate-600">{entry.detail}</p>
-                    <p className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-400">{entry.owner}</p>
-                  </article>
-                ))}
-              </div>
-            </BlueprintSection>
+            <section className="space-y-6">
+              {categories.length ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategory(null)}
+                    className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition ${
+                      activeCategory === null
+                        ? 'border-primary bg-primary text-white shadow-sm shadow-primary/20'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map((category) => {
+                    const selected = activeCategory === category.id;
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveCategory(selected ? null : category.id);
+                          const nextHighlight = inventory.find(
+                            (item) => item.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category.id
+                          );
+                          if (nextHighlight) {
+                            setHighlightId(nextHighlight.id);
+                          }
+                        }}
+                        className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition ${
+                          selected
+                            ? 'border-primary bg-primary text-white shadow-sm shadow-primary/20'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {category.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
 
-            <BlueprintSection
-              id="governance"
-              eyebrow="Governance"
-              title="Access, escrow, and resilience baked into the workflow"
-              description="Security controls ensure only authorised personas reserve or release tooling. Escrow, insurance, and audit logs mirror every action."
-            >
-              <div className="grid gap-6 md:grid-cols-3">
-                {governanceControls.map((control) => (
-                  <article key={control.id} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{control.caption}</p>
-                    <h3 className="mt-2 text-lg font-semibold text-primary">{control.title}</h3>
-                    <p className="mt-3 text-sm text-slate-600">{control.detail}</p>
-                  </article>
-                ))}
-              </div>
-            </BlueprintSection>
-
-            <BlueprintSection
-              id="integrations"
-              eyebrow="Integrations"
-              title="Connect the toolchain to enterprise systems"
-              description="Pre-built connectors keep finance, risk, and operations aligned. Pipelines stream telemetry, contract data, and incident reports in real time."
-            >
-              <div className="grid gap-6 md:grid-cols-3">
-                {integrationPipelines.map((pipeline) => (
-                  <article key={pipeline.id} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-                    <h3 className="text-lg font-semibold text-primary">{pipeline.title}</h3>
-                    <p className="mt-3 text-sm text-slate-600">{pipeline.detail}</p>
-                  </article>
-                ))}
-              </div>
-            </BlueprintSection>
-
-            <BlueprintSection
-              id="readiness"
-              eyebrow="Launch readiness"
-              title="Every depot signed off for go-live"
-              description="Operational readiness dashboards track calibration, insurance, and crew readiness so go-lives stay on schedule."
-            >
-              <div className="grid gap-4 md:grid-cols-3">
-                {readinessChecklist.map((item) => (
-                  <article key={item.id} className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-                    <h3 className="text-base font-semibold text-primary">{item.label}</h3>
-                    <p className="mt-2 text-sm text-slate-600">{item.notes}</p>
-                    <p className="mt-4 text-xs uppercase tracking-[0.3em] text-emerald-500">{item.status}</p>
-                  </article>
-                ))}
-              </div>
-            </BlueprintSection>
-          </>
+              <ToolsShowcase
+                items={filteredInventory}
+                loading={loading}
+                onHire={(tool) => {
+                  setHighlightId(tool.id);
+                  handleHire(tool);
+                }}
+                onInspect={(tool) => {
+                  setHighlightId(tool.id);
+                  handleMonitor(tool);
+                }}
+                onShowGallery={(tool) => {
+                  setHighlightId(tool.id);
+                  handleGallery(tool);
+                }}
+                onFocus={(tool) => setHighlightId(tool.id)}
+              />
+            </section>
+          </div>
         )}
       </div>
 
       {interaction ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-3xl px-6 pb-8">
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-2xl shadow-primary/10">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  {interaction.type === 'reserve' ? 'Reservation workflow' : 'Telemetry stream'}
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-primary">{interaction.tool.name}</h3>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4 py-8">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-primary/10">
+            <button
+              type="button"
+              onClick={closeInteraction}
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:border-primary hover:text-primary"
+              aria-label="Close panel"
+            >
+              ×
+            </button>
+            <div className="space-y-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    {interaction.type === 'hire'
+                      ? 'Rent'
+                      : interaction.type === 'monitor'
+                        ? 'Track'
+                        : 'Media'}
+                  </p>
+                  <h3 className="mt-1 text-lg font-semibold text-primary">{interaction.tool?.name}</h3>
+                </div>
+                {wizardSteps.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {wizardSteps.map((label, index) => (
+                      <span
+                        key={label}
+                        className={`rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] ${
+                          index === wizardStep ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={closeInteraction}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:border-primary hover:text-primary"
-                aria-label="Close interaction panel"
-              >
-                ×
-              </button>
-            </div>
-            <p className="mt-3 text-sm text-slate-600">
-              {interaction.type === 'reserve'
-                ? 'Escrow milestones and insurance riders have been pre-loaded. Confirm drop-off and pick-up windows to trigger courier dispatch.'
-                : 'Live telemetry feed includes vibration, torque, geofence compliance, and battery telemetry. Alerts will raise to NOC when thresholds breach.'}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={closeInteraction}
-                className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
-              >
-                {interaction.type === 'reserve' ? 'Confirm reservation' : 'Subscribe to alerts'}
-              </button>
-              <button
-                type="button"
-                onClick={closeInteraction}
-                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-primary hover:text-primary"
-              >
-                Close
-              </button>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">{wizardContent}</div>
+
+              {interaction.type !== 'gallery' ? (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={closeInteraction}
+                      className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-primary hover:text-primary"
+                    >
+                      Close
+                    </button>
+                    {wizardStep > 0 ? (
+                      <button
+                        type="button"
+                        onClick={handlePrevStep}
+                        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-primary hover:text-primary"
+                      >
+                        Back
+                      </button>
+                    ) : null}
+                  </div>
+                  {primaryActionLabel ? (
+                    <button
+                      type="button"
+                      onClick={handlePrimaryAction}
+                      className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
+                    >
+                      {primaryActionLabel}
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeInteraction}
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 hover:border-primary hover:text-primary"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -458,4 +848,3 @@ export default function Tools() {
     </div>
   );
 }
-

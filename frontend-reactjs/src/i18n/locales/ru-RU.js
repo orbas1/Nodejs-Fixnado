@@ -3,6 +3,7 @@ import { enGB } from './en-GB.js';
 const messages = {
   ...enGB.messages,
   'nav.home': 'Главная',
+  'nav.menu.search': 'Поиск',
   'nav.solutions': 'Решения',
   'nav.tools': 'Инструменты',
   'nav.industries': 'Отрасли',
@@ -18,6 +19,7 @@ const messages = {
   'nav.communications': 'Коммуникации',
   'nav.login': 'Войти',
   'nav.register': 'Регистрация',
+  'nav.providerRegister': 'Поставщик',
   'nav.getStarted': 'Начать',
   'nav.languageSelector': 'Язык',
 
@@ -57,7 +59,7 @@ export const ruRU = {
   metadata: {
     ...enGB.metadata,
     id: 'ru-RU',
-    name: 'Русский (Россия)',
+    name: 'Русский',
     htmlLang: 'ru-RU',
     direction: 'ltr',
     currency: 'RUB',
