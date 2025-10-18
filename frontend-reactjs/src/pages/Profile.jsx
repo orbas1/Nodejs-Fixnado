@@ -1,802 +1,620 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
+import {
+  ArrowTopRightOnSquareIcon,
+  BuildingOffice2Icon,
+  CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  PhoneIcon,
+  ShieldCheckIcon,
+  UsersIcon
+} from '@heroicons/react/24/outline';
+import clsx from 'clsx';
+import SegmentedControl from '../components/ui/SegmentedControl.jsx';
+import Spinner from '../components/ui/Spinner.jsx';
 import { useSession } from '../hooks/useSession.js';
 import { useProfile } from '../hooks/useProfile.js';
 
-const FALLBACK_TIMEZONES = ['UTC', 'Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Singapore'];
+const ROLE_LABELS = Object.freeze({
+  user: 'Member',
+  serviceman: 'Crew',
+  provider: 'Provider',
+  enterprise: 'Enterprise',
+  finance: 'Finance',
+  admin: 'Admin',
+  operations: 'Operations'
+});
 
-const LOCALE_OPTIONS = [
-  { value: 'en-GB', label: 'English (United Kingdom)' },
-  { value: 'en-US', label: 'English (United States)' },
-  { value: 'fr-FR', label: 'Français (France)' },
-  { value: 'es-ES', label: 'Español (España)' }
-];
-
-const DIGEST_OPTIONS = [
-  { value: 'never', label: 'Never' },
-  { value: 'daily', label: 'Daily summary' },
-  { value: 'weekly', label: 'Weekly digest' }
-];
-
-const ROLE_OPTIONS = [
-  { value: 'user', label: 'Customer workspace' },
-  { value: 'serviceman', label: 'Field crew workspace' },
-  { value: 'provider', label: 'Provider operations' },
-  { value: 'enterprise', label: 'Enterprise programme' },
-  { value: 'finance', label: 'Finance controls' },
-  { value: 'admin', label: 'Platform admin' },
-  { value: 'operations', label: 'Operations control' }
-];
-
-const CHANNEL_OPTIONS = [
-  { value: 'email', label: 'Email' },
-  { value: 'sms', label: 'SMS' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'webhook', label: 'Webhook' }
-];
-
-const generateClientId = () => {
-  try {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      const buffer = crypto.getRandomValues(new Uint32Array(4));
-      return Array.from(buffer)
-        .map((value) => value.toString(16).padStart(8, '0'))
-        .join('-');
-    }
-  } catch (error) {
-    console.warn('[Profile] unable to generate secure id', error);
-  }
-  return `profile-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-};
-
-const resolveTimezones = () => {
-  if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
-    try {
-      return Intl.supportedValuesOf('timeZone');
-    } catch (error) {
-      console.warn('[Profile] unable to read supported timezones', error);
-    }
-  }
-  return FALLBACK_TIMEZONES;
-};
-
-const TIMEZONE_OPTIONS = resolveTimezones();
+const BUSINESS_LINK_FALLBACK = '/providers';
+const SHOP_LINK_FALLBACK = '/provider/storefront';
+const CREW_LINK_FALLBACK = '/dashboards/serviceman';
 
 function ensureArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function extractLocation(address) {
+  if (!address || typeof address !== 'string') {
+    return null;
+  }
+
+  const lines = address
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  if (lines.length === 1) {
+    return lines[0];
+  }
+
+  const [city, country] = lines.slice(-2);
+  return [city, country].filter(Boolean).join(', ');
+}
+
+function formatName(firstName, lastName, email) {
+  const safeFirst = typeof firstName === 'string' ? firstName.trim() : '';
+  const safeLast = typeof lastName === 'string' ? lastName.trim() : '';
+
+  if (safeFirst || safeLast) {
+    return [safeFirst, safeLast].filter(Boolean).join(' ');
+  }
+
+  if (typeof email === 'string' && email.trim()) {
+    return email.trim();
+  }
+
+  return 'Profile';
+}
+
 export default function Profile() {
   const session = useSession();
-  const { profile, updateProfile, defaults, isLoading, isSaving, error, refresh } = useProfile();
-  const [form, setForm] = useState(() => profile ?? defaults);
-  const [status, setStatus] = useState(null);
-  const [workspaceDraft, setWorkspaceDraft] = useState('');
+  const { profile, isLoading } = useProfile();
+  const [activeView, setActiveView] = useState('profile');
+  const [shared, setShared] = useState(false);
+  const [bioOpen, setBioOpen] = useState(false);
 
-  useEffect(() => {
-    setForm(profile ?? defaults);
-  }, [profile, defaults]);
-
-  const dashboardLibrary = useMemo(() => {
-    const base = new Set([...(session.dashboards ?? []), 'admin', 'provider', 'finance', 'enterprise', 'serviceman', 'user']);
-    return Array.from(base);
-  }, [session.dashboards]);
-
-  const personaSummary = useMemo(() => {
-    const workspaces = form.workspaceShortcuts?.length ? form.workspaceShortcuts.join(', ') : 'No workspace shortcuts configured.';
-    const dashboards = session.dashboards?.length ? session.dashboards.join(', ') : 'No dashboards provisioned yet.';
-    return `${workspaces} | Provisioned dashboards: ${dashboards}`;
-  }, [form.workspaceShortcuts, session.dashboards]);
-
-  const handleChange = useCallback((patch) => {
-    setForm((current) => ({ ...current, ...patch }));
-  }, []);
-
-  const handlePreferenceChange = useCallback((key, value) => {
-    setForm((current) => ({
-      ...current,
-      communicationPreferences: {
-        ...current.communicationPreferences,
-        [key]: value
-      }
-    }));
-  }, []);
-
-  const handleSecurityChange = useCallback((key, value) => {
-    setForm((current) => ({
-      ...current,
-      security: {
-        ...current.security,
-        [key]: value
-      }
-    }));
-  }, []);
-
-  const handleWorkspaceAdd = useCallback(() => {
-    const trimmed = workspaceDraft.trim();
-    if (!trimmed) {
-      return;
-    }
-    setForm((current) => {
-      const next = new Set([...(current.workspaceShortcuts ?? []), trimmed]);
-      return { ...current, workspaceShortcuts: Array.from(next) };
-    });
-    setWorkspaceDraft('');
-  }, [workspaceDraft]);
-
-  const handleWorkspaceRemove = useCallback((value) => {
-    setForm((current) => ({
-      ...current,
-      workspaceShortcuts: (current.workspaceShortcuts ?? []).filter((entry) => entry !== value)
-    }));
-  }, []);
-
-  const handleRoleChange = useCallback((id, patch) => {
-    setForm((current) => ({
-      ...current,
-      roleAssignments: ensureArray(current.roleAssignments).map((assignment) =>
-        assignment.id === id ? { ...assignment, ...patch } : assignment
-      )
-    }));
-  }, []);
-
-  const handleRoleDashboardToggle = useCallback((id, dashboard) => {
-    setForm((current) => ({
-      ...current,
-      roleAssignments: ensureArray(current.roleAssignments).map((assignment) => {
-        if (assignment.id !== id) {
-          return assignment;
-        }
-        const dashboards = new Set(ensureArray(assignment.dashboards));
-        if (dashboards.has(dashboard)) {
-          dashboards.delete(dashboard);
-        } else {
-          dashboards.add(dashboard);
-        }
-        return { ...assignment, dashboards: Array.from(dashboards) };
-      })
-    }));
-  }, []);
-
-  const addRoleAssignment = useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      roleAssignments: [
-        ...ensureArray(current.roleAssignments),
-        {
-          id: generateClientId(),
-          role: 'user',
-          allowCreate: false,
-          dashboards: [],
-          notes: ''
-        }
-      ]
-    }));
-  }, []);
-
-  const removeRoleAssignment = useCallback((id) => {
-    setForm((current) => ({
-      ...current,
-      roleAssignments: ensureArray(current.roleAssignments).filter((assignment) => assignment.id !== id)
-    }));
-  }, []);
-
-  const addNotificationChannel = useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      notificationChannels: [
-        ...ensureArray(current.notificationChannels),
-        {
-          id: generateClientId(),
-          type: 'email',
-          label: '',
-          value: ''
-        }
-      ]
-    }));
-  }, []);
-
-  const handleChannelChange = useCallback((id, patch) => {
-    setForm((current) => ({
-      ...current,
-      notificationChannels: ensureArray(current.notificationChannels).map((channel) =>
-        channel.id === id ? { ...channel, ...patch } : channel
-      )
-    }));
-  }, []);
-
-  const removeNotificationChannel = useCallback((id) => {
-    setForm((current) => ({
-      ...current,
-      notificationChannels: ensureArray(current.notificationChannels).filter((channel) => channel.id !== id)
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
-      try {
-        await updateProfile({
-          firstName: form.firstName?.trim?.() ?? '',
-          lastName: form.lastName?.trim?.() ?? '',
-          email: form.email ?? profile.email ?? '',
-          phone: form.phone ?? '',
-          organisation: form.organisation ?? '',
-          jobTitle: form.jobTitle ?? '',
-          teamName: form.teamName ?? '',
-          address: form.address ?? '',
-          timezone: form.timezone ?? defaults.timezone,
-          locale: form.locale ?? defaults.locale,
-          avatarUrl: form.avatarUrl ?? '',
-          signature: form.signature ?? '',
-          communicationPreferences: form.communicationPreferences ?? defaults.communicationPreferences,
-          workspaceShortcuts: ensureArray(form.workspaceShortcuts),
-          roleAssignments: ensureArray(form.roleAssignments),
-          notificationChannels: ensureArray(form.notificationChannels),
-          security: form.security ?? defaults.security
-        });
-        setStatus({ message: 'Profile updated successfully.', tone: 'success' });
-        setTimeout(() => setStatus(null), 2400);
-      } catch (submitError) {
-        const message = submitError?.message || 'Unable to update profile. Please try again.';
-        setStatus({ message, tone: 'error' });
-      }
-    },
-    [form, updateProfile, defaults, profile.email]
+  const fullName = useMemo(
+    () => formatName(profile?.firstName, profile?.lastName, profile?.email ?? session?.userId),
+    [profile?.email, profile?.firstName, profile?.lastName, session?.userId]
   );
 
-  const handleReset = useCallback(() => {
-    refresh({ skipNetwork: true });
-    setStatus({ message: 'Local changes cleared.', tone: 'info' });
-    setTimeout(() => setStatus(null), 1800);
-  }, [refresh]);
+  const personaHeadline = useMemo(() => {
+    const title = typeof profile?.jobTitle === 'string' ? profile.jobTitle.trim() : '';
+    const team = typeof profile?.teamName === 'string' ? profile.teamName.trim() : '';
+
+    return [title, team].filter(Boolean).join(' • ');
+  }, [profile?.jobTitle, profile?.teamName]);
+
+  const locationLabel = useMemo(() => extractLocation(profile?.address), [profile?.address]);
+
+  const primaryRole = useMemo(() => {
+    const assigned = ensureArray(profile?.roleAssignments);
+    if (assigned.length > 0) {
+      const label = ROLE_LABELS[assigned[0].role] ?? assigned[0].role;
+      return label;
+    }
+
+    const dashboards = ensureArray(session?.dashboards);
+    if (dashboards.length > 0) {
+      return ROLE_LABELS[dashboards[0]] ?? dashboards[0];
+    }
+
+    return null;
+  }, [profile?.roleAssignments, session?.dashboards]);
+
+  const badges = useMemo(() => {
+    const items = [];
+    if (profile?.organisation) {
+      items.push(profile.organisation);
+    }
+    if (primaryRole) {
+      items.push(primaryRole);
+    }
+    if (profile?.timezone) {
+      items.push(profile.timezone);
+    }
+    return items;
+  }, [primaryRole, profile?.organisation, profile?.timezone]);
+
+  const workspaceShortcuts = useMemo(() => ensureArray(profile?.workspaceShortcuts), [profile?.workspaceShortcuts]);
+  const dashboards = useMemo(() => ensureArray(session?.dashboards), [session?.dashboards]);
+
+  const businessLinks = useMemo(() => {
+    const businessHref = profile?.businessFrontUrl || BUSINESS_LINK_FALLBACK;
+    const shopHref = profile?.shopFrontUrl || SHOP_LINK_FALLBACK;
+    return { businessHref, shopHref };
+  }, [profile?.businessFrontUrl, profile?.shopFrontUrl]);
+
+  const crewAssignments = useMemo(
+    () => ensureArray(profile?.roleAssignments).filter((assignment) => assignment.role === 'serviceman'),
+    [profile?.roleAssignments]
+  );
+
+  const hasBusiness = Boolean(profile?.organisation);
+  const hasCrew = crewAssignments.length > 0 || dashboards.includes('serviceman');
+  const hasServiceView = hasCrew || Boolean(profile?.serviceBookingUrl || profile?.crewPortalUrl);
+
+  const personaTabs = useMemo(() => {
+    const base = [{ value: 'profile', label: 'Info' }];
+    if (hasBusiness) {
+      base.push({ value: 'business', label: 'Business' });
+    }
+    if (hasServiceView) {
+      base.push({ value: 'crew', label: 'Service' });
+    }
+    return base;
+  }, [hasBusiness, hasServiceView]);
+
+  const serviceLinks = useMemo(() => {
+    const primary = profile?.crewPortalUrl || CREW_LINK_FALLBACK;
+    const booking = profile?.serviceBookingUrl || '/checkout';
+    return { primary, booking };
+  }, [profile?.crewPortalUrl, profile?.serviceBookingUrl]);
+
+  const bio = useMemo(() => {
+    if (typeof profile?.bio === 'string' && profile.bio.trim()) {
+      return profile.bio.trim();
+    }
+    if (typeof profile?.signature === 'string' && profile.signature.trim()) {
+      return profile.signature.trim();
+    }
+    return null;
+  }, [profile?.bio, profile?.signature]);
+
+  const uniqueWorkspaces = useMemo(
+    () => [...new Set([...workspaceShortcuts, ...dashboards])],
+    [dashboards, workspaceShortcuts]
+  );
+
+  const bioPreview = useMemo(() => {
+    if (!bio) {
+      return null;
+    }
+    if (bio.length <= 160) {
+      return bio;
+    }
+    return `${bio.slice(0, 160)}…`;
+  }, [bio]);
+
+  const handleShare = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const url = window.location.href;
+      if (navigator.share) {
+        await navigator.share({ title: fullName, url });
+        setShared(true);
+        setTimeout(() => setShared(false), 2400);
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+        setTimeout(() => setShared(false), 2400);
+      }
+    } catch (error) {
+      console.warn('[Profile] share failed', error);
+    }
+  }, [fullName]);
+
+  if (isLoading && !profile) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-live="polite">
+        <Spinner className="h-8 w-8 text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 shadow-2xl shadow-accent/10">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-accent">Account</p>
-            <h1 className="text-3xl font-semibold text-primary">Profile &amp; workspace controls</h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Manage your contact details, workspace permissions, and notification preferences for every Fixnado dashboard.
-            </p>
+    <main className="min-h-screen bg-white text-slate-900">
+      <header className="relative isolate overflow-hidden border-b border-slate-200 bg-gradient-to-br from-white via-slate-100 to-slate-200">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.7),_transparent_70%)]" aria-hidden="true" />
+        <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-12 px-8 pb-16 pt-20">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+              <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-xl">
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={`${fullName} avatar`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/10 text-5xl font-semibold uppercase text-primary">
+                    {fullName.slice(0, 1)}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {badges.map((badge) => (
+                    <span
+                      key={badge}
+                      className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary/80"
+                    >
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">{fullName}</h1>
+                  {personaHeadline ? <p className="text-base font-medium text-slate-600">{personaHeadline}</p> : null}
+                  {locationLabel ? (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm text-primary">
+                      <MapPinIcon className="h-5 w-5" aria-hidden="true" />
+                      {locationLabel}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/communications?compose=profile"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-primary/90"
+              >
+                <ChatBubbleLeftRightIcon className="h-5 w-5" aria-hidden="true" /> Chat
+              </Link>
+              <Link
+                to={serviceLinks.booking}
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-accent/90"
+              >
+                <CalendarDaysIcon className="h-5 w-5" aria-hidden="true" /> Book
+              </Link>
+              {hasBusiness ? (
+                <Link
+                  to={businessLinks.businessHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-primary shadow-lg transition hover:bg-slate-100"
+                >
+                  <BuildingOffice2Icon className="h-5 w-5" aria-hidden="true" /> Company
+                </Link>
+              ) : null}
+              {hasBusiness ? (
+                <Link
+                  to={businessLinks.shopHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+                >
+                  <ShieldCheckIcon className="h-5 w-5" aria-hidden="true" /> Shop
+                </Link>
+              ) : null}
+              {hasServiceView ? (
+                <Link
+                  to={serviceLinks.primary}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-primary shadow-lg transition hover:bg-slate-100"
+                >
+                  <UsersIcon className="h-5 w-5" aria-hidden="true" /> Team
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleShare}
+                className={clsx(
+                  'inline-flex items-center gap-2 rounded-full border border-primary/30 px-5 py-3 text-sm font-semibold transition',
+                  shared ? 'bg-primary/10 text-primary' : 'text-primary hover:bg-primary/10'
+                )}
+              >
+                <ArrowTopRightOnSquareIcon className="h-5 w-5" aria-hidden="true" />
+                {shared ? 'Copied' : 'Share'}
+              </button>
+            </div>
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row">
-            <Link
-              to="/dashboards"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-            >
-              Open workspace hub
-            </Link>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-            >
-              Reset local changes
-            </button>
-          </div>
-        </div>
 
-        {error ? (
-          <p className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error.message || 'Unable to load the latest profile from the server. Working with cached details.'}
-          </p>
+          {personaTabs.length > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/90 px-4 py-3 shadow-md">
+              <SegmentedControl
+                name="Profile views"
+                value={activeView}
+                options={personaTabs}
+                onChange={(value) => {
+                  setActiveView(value);
+                  setBioOpen(false);
+                }}
+                className="w-full max-w-md"
+              />
+              <div className="flex flex-wrap gap-3 text-xs font-semibold text-primary/80">
+                {hasBusiness ? <span className="rounded-full bg-primary/10 px-3 py-1">Business</span> : null}
+                {hasServiceView ? <span className="rounded-full bg-primary/10 px-3 py-1">Service</span> : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </header>
+
+      <section className="mx-auto w-full max-w-7xl px-8 py-16">
+        {activeView === 'profile' ? (
+          <div className="grid gap-10 lg:grid-cols-[1.35fr_0.9fr]">
+            <div className="grid gap-10">
+              {bio ? (
+                <article className="rounded-[32px] border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
+                  <header className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-primary">Bio</h2>
+                    <button
+                      type="button"
+                      onClick={() => setBioOpen(true)}
+                      className="inline-flex items-center rounded-full bg-primary px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-primary/90"
+                    >
+                      Open
+                    </button>
+                  </header>
+                  <p className="mt-5 text-base leading-relaxed text-slate-600">{bioPreview}</p>
+                </article>
+              ) : null}
+
+              {uniqueWorkspaces.length > 0 ? (
+                <article className="rounded-[32px] border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
+                  <header className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-primary">Work</h2>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Access</span>
+                  </header>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {uniqueWorkspaces.map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-primary"
+                      >
+                        <ShieldCheckIcon className="h-5 w-5" aria-hidden="true" />
+                        {ROLE_LABELS[item] ?? item}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ) : null}
+            </div>
+
+            <div className="grid gap-10">
+              {(profile?.email || profile?.phone || profile?.timezone) && (
+                <article className="rounded-[32px] border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
+                  <h2 className="text-lg font-semibold text-primary">Contact</h2>
+                  <div className="mt-6 grid gap-4">
+                    {profile?.email ? (
+                      <a
+                        href={`mailto:${profile.email}`}
+                        className="flex items-center justify-between rounded-2xl bg-slate-100 px-5 py-4 text-sm font-semibold text-primary transition hover:bg-primary/10 hover:text-primary"
+                      >
+                        <span className="inline-flex items-center gap-3">
+                          <EnvelopeIcon className="h-5 w-5" aria-hidden="true" />
+                          Mail
+                        </span>
+                        <span>{profile.email}</span>
+                      </a>
+                    ) : null}
+                    {profile?.phone ? (
+                      <a
+                        href={`tel:${profile.phone}`}
+                        className="flex items-center justify-between rounded-2xl bg-slate-100 px-5 py-4 text-sm font-semibold text-primary transition hover:bg-primary/10 hover:text-primary"
+                      >
+                        <span className="inline-flex items-center gap-3">
+                          <PhoneIcon className="h-5 w-5" aria-hidden="true" />
+                          Call
+                        </span>
+                        <span>{profile.phone}</span>
+                      </a>
+                    ) : null}
+                    {profile?.timezone ? (
+                      <div className="flex items-center justify-between rounded-2xl bg-slate-100 px-5 py-4 text-sm font-semibold text-primary">
+                        <span className="inline-flex items-center gap-3">
+                          <CalendarDaysIcon className="h-5 w-5" aria-hidden="true" />
+                          Zone
+                        </span>
+                        <span>{profile.timezone}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              )}
+
+              {ensureArray(profile?.roleAssignments).length > 0 ? (
+                <article className="rounded-[32px] border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
+                  <h2 className="text-lg font-semibold text-primary">Teams</h2>
+                  <div className="mt-6 space-y-4">
+                    {ensureArray(profile.roleAssignments).map((assignment) => (
+                      <div key={assignment.id || assignment.role} className="rounded-2xl bg-slate-100 px-5 py-4">
+                        <div className="flex items-center justify-between gap-3 text-sm font-semibold text-primary">
+                          <span className="inline-flex items-center gap-2">
+                            <UsersIcon className="h-5 w-5" aria-hidden="true" />
+                            {ROLE_LABELS[assignment.role] ?? assignment.role}
+                          </span>
+                          {assignment.allowCreate ? (
+                            <span className="rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+                              Create
+                            </span>
+                          ) : null}
+                        </div>
+                        {ensureArray(assignment.dashboards).length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                            {ensureArray(assignment.dashboards).map((dashboard) => (
+                              <span
+                                key={`${assignment.id || assignment.role}-${dashboard}`}
+                                className="rounded-full bg-white px-3 py-1"
+                              >
+                                {ROLE_LABELS[dashboard] ?? dashboard}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ) : null}
+            </div>
+          </div>
         ) : null}
 
-        <form className="mt-10 grid gap-6" onSubmit={handleSubmit}>
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Contact information</h2>
-              <p className="text-xs text-slate-500">Update the name and title that appears across dashboards and collaboration tools.</p>
-            </div>
-            <div className="grid gap-4">
-              <label className="text-sm font-medium text-slate-600">
-                First name
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.firstName ?? ''}
-                  onChange={(event) => handleChange({ firstName: event.target.value })}
-                  placeholder={defaults.firstName}
-                  autoComplete="given-name"
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Last name
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.lastName ?? ''}
-                  onChange={(event) => handleChange({ lastName: event.target.value })}
-                  placeholder={defaults.lastName}
-                  autoComplete="family-name"
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Job title
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.jobTitle ?? ''}
-                  onChange={(event) => handleChange({ jobTitle: event.target.value })}
-                  placeholder="Operations lead"
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Team
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.teamName ?? ''}
-                  onChange={(event) => handleChange({ teamName: event.target.value })}
-                  placeholder="Dispatch & scheduling"
-                />
-              </label>
-            </div>
-            <div className="grid gap-4">
-              <label className="text-sm font-medium text-slate-600">
-                Email
-                <input
-                  type="email"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500"
-                  value={form.email || profile.email || session.userId || ''}
-                  readOnly
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Phone number
-                <input
-                  type="tel"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.phone ?? ''}
-                  onChange={(event) => handleChange({ phone: event.target.value })}
-                  placeholder="+44 20 0000 0000"
-                  autoComplete="tel"
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Organisation
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.organisation ?? ''}
-                  onChange={(event) => handleChange({ organisation: event.target.value })}
-                  placeholder="Fixnado"
-                  autoComplete="organization"
-                />
-              </label>
-            </div>
-          </section>
-
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Location &amp; locale</h2>
-              <p className="text-xs text-slate-500">Set your preferred timezone, locale, and mailing address so scheduling windows are personalised.</p>
-            </div>
-            <div className="grid gap-4">
-              <label className="text-sm font-medium text-slate-600">
-                Timezone
-                <select
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.timezone ?? defaults.timezone}
-                  onChange={(event) => handleChange({ timezone: event.target.value })}
-                >
-                  {TIMEZONE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-sm font-medium text-slate-600">
-                Locale
-                <select
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.locale ?? defaults.locale}
-                  onChange={(event) => handleChange({ locale: event.target.value })}
-                >
-                  {LOCALE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label className="md:col-span-2 text-sm font-medium text-slate-600">
-              Mailing address
-              <textarea
-                className="mt-1 min-h-[92px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                value={form.address ?? ''}
-                onChange={(event) => handleChange({ address: event.target.value })}
-                placeholder="Add billing or dispatch instructions"
-              />
-            </label>
-          </section>
-
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Communication preferences</h2>
-              <p className="text-xs text-slate-500">Control how Fixnado keeps you informed across scheduling, compliance, and finance workflows.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.communicationPreferences?.emailAlerts)}
-                  onChange={(event) => handlePreferenceChange('emailAlerts', event.target.checked)}
-                />
-                Email alerts
-              </label>
-              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.communicationPreferences?.smsAlerts)}
-                  onChange={(event) => handlePreferenceChange('smsAlerts', event.target.checked)}
-                />
-                SMS updates
-              </label>
-              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.communicationPreferences?.pushAlerts)}
-                  onChange={(event) => handlePreferenceChange('pushAlerts', event.target.checked)}
-                />
-                Push notifications
-              </label>
-              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.communicationPreferences?.marketingOptIn)}
-                  onChange={(event) => handlePreferenceChange('marketingOptIn', event.target.checked)}
-                />
-                Product news
-              </label>
-            </div>
-            <div className="grid gap-4 md:max-w-md">
-              <label className="text-sm font-medium text-slate-600">
-                Digest frequency
-                <select
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.communicationPreferences?.digestFrequency ?? defaults.communicationPreferences.digestFrequency}
-                  onChange={(event) => handlePreferenceChange('digestFrequency', event.target.value)}
-                >
-                  {DIGEST_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-primary">Notification channels</h3>
-                <button
-                  type="button"
-                  onClick={addNotificationChannel}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-                >
-                  <PlusIcon className="h-4 w-4" /> Add channel
-                </button>
-              </div>
-              <div className="grid gap-4">
-                {ensureArray(form.notificationChannels).length === 0 ? (
-                  <p className="text-xs text-slate-500">Add escalation contacts, backup numbers, or webhooks for operational alerts.</p>
-                ) : null}
-                {ensureArray(form.notificationChannels).map((channel) => (
-                  <div key={channel.id} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                    <label className="text-xs font-medium text-slate-600">
-                      Type
-                      <select
-                        className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                        value={channel.type ?? 'email'}
-                        onChange={(event) => handleChannelChange(channel.id, { type: event.target.value })}
-                      >
-                        {CHANNEL_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-xs font-medium text-slate-600">
-                      Label
-                      <input
-                        type="text"
-                        className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                        value={channel.label ?? ''}
-                        onChange={(event) => handleChannelChange(channel.id, { label: event.target.value })}
-                        placeholder="Operations inbox"
-                      />
-                    </label>
-                    <label className="text-xs font-medium text-slate-600 md:col-span-2">
-                      Destination
-                      <input
-                        type="text"
-                        className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                        value={channel.value ?? ''}
-                        onChange={(event) => handleChannelChange(channel.id, { value: event.target.value })}
-                        placeholder="ops@fixnado.com or +1 415 555 1212"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => removeNotificationChannel(channel.id)}
-                      className="mt-6 inline-flex items-center justify-center self-start rounded-full border border-rose-100 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:border-rose-200 hover:bg-rose-50"
-                    >
-                      <TrashIcon className="mr-1 h-4 w-4" /> Remove
-                    </button>
+        {activeView === 'business' && hasBusiness ? (
+          <div className="grid gap-10 xl:grid-cols-[1.3fr_0.7fr]">
+            <article className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur">
+              <h2 className="text-lg font-semibold text-primary">Company</h2>
+              <div className="mt-6 grid gap-4 text-sm text-slate-700 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-100 px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Name</p>
+                  <p className="mt-2 text-lg font-semibold text-primary">{profile.organisation}</p>
+                </div>
+                {profile?.teamName ? (
+                  <div className="rounded-2xl bg-slate-100 px-4 py-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Team</p>
+                    <p className="mt-2 text-lg font-semibold text-primary">{profile.teamName}</p>
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Workspace &amp; role access</h2>
-              <p className="text-xs text-slate-500">
-                Pin dashboards for quick switching and define which personas you can act as when creating bookings, invoices, or compliance records.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace shortcuts</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {ensureArray(form.workspaceShortcuts).map((shortcut) => (
-                    <button
-                      type="button"
-                      key={shortcut}
-                      onClick={() => handleWorkspaceRemove(shortcut)}
-                      className="group inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      {shortcut}
-                      <span className="text-[10px] font-normal uppercase tracking-wider text-slate-400 group-hover:text-rose-500">Remove</span>
-                    </button>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={workspaceDraft}
-                      onChange={(event) => setWorkspaceDraft(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          handleWorkspaceAdd();
-                        }
-                      }}
-                      placeholder="Add workspace"
-                      className="w-48 rounded-full border border-slate-200 px-3 py-1.5 text-xs focus:border-accent focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleWorkspaceAdd}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Role allowances</p>
-                  <button
-                    type="button"
-                    onClick={addRoleAssignment}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-                  >
-                    <PlusIcon className="h-4 w-4" /> Add role
-                  </button>
-                </div>
-                {ensureArray(form.roleAssignments).length === 0 ? (
-                  <p className="text-xs text-slate-500">Assign additional personas to collaborate across provider, finance, or enterprise dashboards.</p>
                 ) : null}
-                <div className="grid gap-4">
-                  {ensureArray(form.roleAssignments).map((assignment) => (
-                    <div key={assignment.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
-                      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                        <label className="text-xs font-medium text-slate-600">
-                          Role
-                          <select
-                            className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                            value={assignment.role ?? 'user'}
-                            onChange={(event) => handleRoleChange(assignment.id, { role: event.target.value })}
-                          >
-                            {ROLE_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                            checked={Boolean(assignment.allowCreate)}
-                            onChange={(event) => handleRoleChange(assignment.id, { allowCreate: event.target.checked })}
-                          />
-                          Can create new records
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => removeRoleAssignment(assignment.id)}
-                          className="inline-flex items-center justify-center gap-1 rounded-full border border-rose-100 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:border-rose-200 hover:bg-rose-50"
-                        >
-                          <TrashIcon className="h-4 w-4" /> Remove
-                        </button>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Dashboard access</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {dashboardLibrary.map((dashboard) => {
-                            const assigned = ensureArray(assignment.dashboards).includes(dashboard);
-                            return (
-                              <button
-                                key={`${assignment.id}-${dashboard}`}
-                                type="button"
-                                onClick={() => handleRoleDashboardToggle(assignment.id, dashboard)}
-                                className={
-                                  'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ' +
-                                  (assigned
-                                    ? 'border border-accent/60 bg-accent/10 text-accent'
-                                    : 'border border-slate-200 bg-white text-slate-700 hover:border-accent/40 hover:text-accent')
-                                }
-                              >
-                                {dashboard}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <label className="text-xs font-medium text-slate-600">
-                        Notes
-                        <textarea
-                          className="mt-1 min-h-[72px] w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                          value={assignment.notes ?? ''}
-                          onChange={(event) => handleRoleChange(assignment.id, { notes: event.target.value })}
-                          placeholder="Explain how this role should be used"
-                        />
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                {profile?.jobTitle ? (
+                  <div className="rounded-2xl bg-slate-100 px-4 py-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Role</p>
+                    <p className="mt-2 text-lg font-semibold text-primary">{profile.jobTitle}</p>
+                  </div>
+                ) : null}
+                {locationLabel ? (
+                  <div className="rounded-2xl bg-slate-100 px-4 py-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Location</p>
+                    <p className="mt-2 text-lg font-semibold text-primary">{locationLabel}</p>
+                  </div>
+                ) : null}
               </div>
-            </div>
-          </section>
+            </article>
 
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Security &amp; sign-in</h2>
-              <p className="text-xs text-slate-500">Strengthen account protection by enabling multi-factor prompts for high-risk actions.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <span>Email two-factor</span>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.security?.twoFactorEmail)}
-                  onChange={(event) => handleSecurityChange('twoFactorEmail', event.target.checked)}
-                />
-              </label>
-              <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
-                <span>Authenticator app</span>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"
-                  checked={Boolean(form.security?.twoFactorApp)}
-                  onChange={(event) => handleSecurityChange('twoFactorApp', event.target.checked)}
-                />
-              </label>
-              <div className="md:col-span-2">
+            <article className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur">
+              <h2 className="text-lg font-semibold text-primary">Links</h2>
+              <div className="mt-6 flex flex-col gap-4">
                 <Link
-                  to="/settings/security"
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-accent hover:text-accent/80"
+                  to={businessLinks.businessHref}
+                  className="inline-flex items-center justify-between gap-4 rounded-2xl bg-slate-100 px-5 py-4 text-sm font-semibold text-primary transition hover:bg-primary/10 hover:text-primary"
                 >
-                  Manage trusted devices
+                  <span className="inline-flex items-center gap-3">
+                    <BuildingOffice2Icon className="h-6 w-6" aria-hidden="true" />
+                    Company
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  to={businessLinks.shopHref}
+                  className="inline-flex items-center justify-between gap-4 rounded-2xl bg-primary px-5 py-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  <span className="inline-flex items-center gap-3">
+                    <ShieldCheckIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                    Shop
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </div>
-            </div>
-          </section>
-
-          <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-primary">Profile presentation</h2>
-              <p className="text-xs text-slate-500">Add an avatar and signature used on purchase orders, invoices, and collaboration threads.</p>
-            </div>
-            <div className="grid gap-4">
-              <label className="text-sm font-medium text-slate-600">
-                Avatar URL
-                <input
-                  type="url"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.avatarUrl ?? ''}
-                  onChange={(event) => handleChange({ avatarUrl: event.target.value })}
-                  placeholder="https://cdn.fixnado.com/profiles/me.png"
-                />
-              </label>
-              {form.avatarUrl ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Preview</p>
-                  <img
-                    src={form.avatarUrl}
-                    alt="Profile avatar preview"
-                    className="mt-2 h-24 w-24 rounded-full object-cover"
-                    onError={() =>
-                      setStatus({
-                        message: 'Unable to load avatar preview. Check the URL and try again.',
-                        tone: 'error'
-                      })
-                    }
-                  />
-                </div>
-              ) : null}
-              <label className="text-sm font-medium text-slate-600">
-                Signature block
-                <textarea
-                  className="mt-1 min-h-[92px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-accent focus:outline-none"
-                  value={form.signature ?? ''}
-                  onChange={(event) => handleChange({ signature: event.target.value })}
-                  placeholder={'Avery Stone\nOperations Lead\n+44 20 0000 0000'}
-                />
-              </label>
-            </div>
-          </section>
-
-          <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-sm text-slate-600">
-            <p className="text-sm font-semibold text-primary">Workspace summary</p>
-            <p>{personaSummary}</p>
-            <p className="text-xs text-slate-500">
-              Need access to more dashboards? Visit the workspace hub to request provider, finance, or enterprise roles. Changes require approval from your organisation admin.
-            </p>
-          </section>
-
-          {status ? (
-            <p
-              className={`text-sm font-semibold ${
-                status.tone === 'error'
-                  ? 'text-rose-600'
-                  : status.tone === 'info'
-                    ? 'text-slate-600'
-                    : 'text-emerald-600'
-              }`}
-            >
-              {status.message}
-            </p>
-          ) : null}
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={isSaving || isLoading}
-              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              {isSaving ? 'Saving…' : 'Save profile'}
-            </button>
-            <Link
-              to="/settings/security"
-              className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-accent/40 hover:text-accent"
-            >
-              Advanced security settings
-            </Link>
+            </article>
           </div>
-        </form>
-      </div>
-    </div>
+        ) : null}
+
+        {activeView === 'crew' && hasServiceView ? (
+          <div className="grid gap-10 xl:grid-cols-[1.3fr_0.7fr]">
+            <article className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur">
+              <h2 className="text-lg font-semibold text-primary">Service</h2>
+              <div className="mt-6 space-y-4">
+                {crewAssignments.length > 0 ? (
+                  crewAssignments.map((assignment) => (
+                    <div key={assignment.id || assignment.role} className="rounded-2xl bg-slate-100 px-4 py-4">
+                      <div className="flex items-center gap-3 text-sm font-semibold text-primary">
+                        <UsersIcon className="h-5 w-5" aria-hidden="true" />
+                        {ROLE_LABELS[assignment.role] ?? assignment.role}
+                      </div>
+                      {ensureArray(assignment.dashboards).length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                          {ensureArray(assignment.dashboards).map((dashboard) => (
+                            <span key={`${assignment.id || assignment.role}-crew-${dashboard}`} className="rounded-full bg-white px-3 py-1">
+                              {ROLE_LABELS[dashboard] ?? dashboard}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl bg-slate-100 px-4 py-6 text-sm font-semibold text-primary">Enabled</div>
+                )}
+              </div>
+            </article>
+
+            <article className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur">
+              <h2 className="text-lg font-semibold text-primary">Tools</h2>
+              <div className="mt-6 flex flex-col gap-3">
+                <Link
+                  to={serviceLinks.primary}
+                  className="inline-flex items-center justify-between gap-4 rounded-2xl bg-slate-100 px-5 py-4 text-sm font-semibold text-primary transition hover:bg-primary/10 hover:text-primary"
+                >
+                  <span className="inline-flex items-center gap-3">
+                    <ShieldCheckIcon className="h-6 w-6" aria-hidden="true" />
+                    Console
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  to={serviceLinks.booking}
+                  className="inline-flex items-center justify-between gap-4 rounded-2xl bg-primary px-5 py-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  <span className="inline-flex items-center gap-3">
+                    <CalendarDaysIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                    Bookings
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </div>
+            </article>
+          </div>
+        ) : null}
+      </section>
+
+      {bio && (
+        <Transition show={bioOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-40" onClose={() => setBioOpen(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-150"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-slate-900/40" aria-hidden="true" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center px-4 py-12">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-150"
+                  enterFrom="opacity-0 translate-y-4"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="ease-in duration-100"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-4"
+                >
+                  <Dialog.Panel className="w-full max-w-3xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl">
+                    <Dialog.Title className="text-xl font-semibold text-primary">Bio</Dialog.Title>
+                    <div className="mt-6 space-y-6">
+                      <p className="whitespace-pre-line text-base leading-relaxed text-slate-700">{bio}</p>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setBioOpen(false)}
+                          className="inline-flex items-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
+      )}
+    </main>
   );
 }
