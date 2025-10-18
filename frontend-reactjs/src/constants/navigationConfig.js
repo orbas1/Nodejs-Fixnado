@@ -161,8 +161,8 @@ export const buildMobileNavigation = ({ t, dashboards, isAuthenticated }) => {
     },
     {
       id: 'mobile-profile',
-      title: 'Profile & settings',
-      description: 'Manage contact details and preferences',
+      title: 'Profile',
+      description: 'Account hub',
       href: '/account/profile'
     }
   ];
