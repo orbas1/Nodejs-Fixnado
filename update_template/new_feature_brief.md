@@ -28,12 +28,12 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 
 4. **Operational Excellence & Compliance**
    - Supply setup/deployment scripts or a dedicated UI, automated database migrations/seeders, and environment templates for every stack component.
-   - Conduct comprehensive release readiness testing (unit, load, usage, financial, functionality, error handling, access control, CRUD, timeline, community, AI, integration, login/registration, dashboard, mobile, security, database, live feed, chat, media, GDPR, etc.).
+   - Conduct comprehensive release readiness testing (unit, load, usage, financial, functionality, error handling, access control, CRUD, timeline, community, AI/internal intelligence, integration, login/registration, dashboard, mobile, security, database, live feed, chat, media, GDPR, etc.).
    - Provide full legal, policy, and documentation suite (Terms, Privacy, Refund, Community Guidelines, FAQ, README, full guide) and ensure GDPR compliance and audit trails.
 
 5. **Intelligent Matching & Personalization**
-   - Enhance recommendation engines for tags, skills, qualifications, categories, pricing, SEO, and hashtag relevancy across search, feeds, and detail pages.
-   - Implement AI-driven assistance within communities, timeline, and dashboards to surface insights, detect anomalies, and aid moderation.
+   - Enhance recommendation engines for tags, skills, qualifications, categories, pricing, SEO, and hashtag relevancy across search, feeds, and detail pages using lightweight in-house algorithms and rule-based scoring.
+   - Implement internal assistance services (heuristics, smaller models, deterministic workflows) within communities, timeline, and dashboards to surface insights, detect anomalies, and aid moderation without relying on heavy external AI infrastructure.
 
 ## Comprehensive Logic Flows
 ### Platform Entry & Identity
@@ -56,7 +56,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 
 ### Community Ecosystem Flow
 1. **Community Discovery → Join**
-   - Explorer search surfaces communities using category/skill/qualification/price matching → detail view showcases profile, map, leaderboard, membership stats → join action respects subscription/free tier logic and handles payment tiers.
+   - Explorer search surfaces communities using category/skill/qualification/price/zone matching → detail view showcases profile, map, leaderboard, membership stats → join action respects subscription/free tier logic and handles payment tiers.
 2. **Engagement & Collaboration**
    - Community feed, chat, classrooms, events, podcasts, live streams, scoreboards, and maps operate on real-time updates with CRUD operations, moderation, and media handling.
 3. **Management**
@@ -64,7 +64,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 
 ### Learning & Commerce Flow
 1. **Course/E-book/Tutor Discovery**
-   - Explorer search merges tags, SEO, skill, qualification, pricing, and trending signals to rank results across web and mobile.
+   - Explorer search merges tags, SEO, skill, qualification, pricing, zone availability, and trending signals to rank results across web and mobile.
 2. **Evaluation & Purchase**
    - Product detail pages deliver high-quality media, structured sections, breadcrumbs with concise labeling, and CTA flows → payment services orchestrate checkout, handle taxes, and trigger receipts/refund eligibility.
 3. **Fulfillment & Progress**
@@ -74,9 +74,9 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 1. **Support Requests**
    - Users invoke Chatwoot bubble → choose help center articles, peer chats, or staff support → attachments, emojis, GIFs supported → escalations mirrored in dashboard inbox.
 2. **Deployment & Maintenance**
-   - DevOps scripts/UI provision infrastructure, apply database migrations/seeders, configure integrations (Hubspot, Google, Salesforce, OpenAI, SMTP, Firebase, Cloudflare R2/Wasabi/local storage) → monitoring ensures uptime, load balancing, and failover.
+   - DevOps scripts/UI provision infrastructure, apply database migrations/seeders, configure integrations (Hubspot, Google, Salesforce, optional lightweight OpenAI API usage, SMTP, Firebase, Cloudflare R2/Wasabi/local storage) → monitoring ensures uptime, load balancing, and failover.
 3. **Testing & Compliance**
-   - Execute exhaustive test suites (unit to mobile parity) before release → document outcomes in release checklist → update README, guides, starter data snapshots, and GitHub upgrade notes.
+   - Execute exhaustive test suites (unit to mobile parity) before release → document outcomes in release checklist (including zone, service purchase, rentals, and material purchase validations) → update README, guides, starter data snapshots, and GitHub upgrade notes.
 
 ## Release Readiness Commitments
 1. Production deployment with rollback plans.
@@ -94,7 +94,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 13. CRUD operation validation on every entity.
 14. Timeline (live feed) end-to-end validation.
 15. Community module interaction, moderation, and leaderboard tests.
-16. AI feature validation (recommendations, assistants, moderation insights).
+16. Intelligence feature validation (internal recommendation algorithms, assistants, moderation insights).
 17. Integration smoke and resilience tests for all third parties.
 18. Login and registration path testing including social logins and 2FA.
 19. Dashboard functionality tests per role and per tab.
@@ -122,6 +122,10 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 41. Removal of stubs/placeholders with real data and interactions.
 42. Capacity planning for high usage and scaling (autoscaling thresholds, queue sizing).
 43. RAM and server stress reduction via profiling and optimization stories.
+44. Zone coverage validation ensuring full country/region/area zoning with dedicated zone test suites.
+45. Service purchase test scenarios covering end-to-end checkout, escrow, and fulfillment monitoring.
+46. Rentals workflow validation including availability calendars, contracts, and payment settlements.
+47. Material purchase verification with inventory adjustments, logistics handoffs, and refund coverage.
 
 ## Detailed Feature Scope
 ### Front-End Experience
@@ -135,6 +139,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Embed uptime helper widgets, load balancing indicators, and high-availability awareness within admin views.
 - Integrate advertisement and recommendation slots on all prescribed surfaces with frequency capping and analytics.
 - Implement tagging, SEO, skill, qualification, category, and pricing matching widgets across search and detail screens.
+- Surface zone selectors and geographic filters across explorer, dashboards, and storefronts with full international coverage and localization.
 - Add bad word/spam scanning feedback loops, report buttons, and moderation workflows.
 - Complete styling/CSS overhaul for cohesive design language and intuitive UX.
 - Ensure long-form text is limited to purposeful contexts (breadcrumbs, descriptions) while labels remain concise (1–2 words).
@@ -169,14 +174,14 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Ensure each community submodule (switcher, profile, feed, classroom, calendar, livestream, podcasts, scoreboards, events, chats, members, map, about, subscription tiers) is interactive and supports moderation.
 
 ### Dashboard Upgrades
-- Learner dashboard: profile overview, communities, inbox, chats, study management (courses, assessments, live, calendar), support (bookings, field support, e-books, finance), growth (affiliate, ads, instructor applications), financial (overview, payment methods), settings (system, finance, general).
-- Instructor dashboard: profile overview, community chat, creation suites (studio, course, library, e-books, writer), teaching management (manage, assess, schedule, live), client management (inbox, bookings, roster), community operations (launch, ops, plan, revenue, broadcast, safety, subscriptions, member management, webinars, podcasts, chat), growth (ads, affiliate, subscriptions & pricing, calendar).
-- Admin dashboard: profile overview, control center (command, integration, governance, GDPR, user/community/course/tutor/e-book/live stream/podcast management, ID verification, reports), network (communities, inbox/support, timeline management, requests), catalogue (courses, e-books, calendar, bookings), growth (revenue, ads), settings (appearance, preferences, system, integration, third-party APIs, profiles, payments, email, 2FA, finance/commissions, subscriptions).
+- Learner dashboard: profile overview, communities, inbox, chats, study management (courses, assessments, live, calendar), support (bookings, field support, e-books, finance), growth (affiliate, ads, instructor applications), financial (overview, payment methods), settings (system, finance, general) with embedded finance control widgets so no standalone finance dashboard is required.
+- Instructor dashboard: profile overview, community chat, creation suites (studio, course, library, e-books, writer), teaching management (manage, assess, schedule, live), client management (inbox, bookings, roster), community operations (launch, ops, plan, revenue, broadcast, safety, subscriptions, member management, webinars, podcasts, chat), growth (ads, affiliate, subscriptions & pricing, calendar) including finance/escrow/tax panes integrated directly into the dashboard shell.
+- Admin dashboard: profile overview, control center (command, integration, governance, GDPR, user/community/course/tutor/e-book/live stream/podcast management, ID verification, reports), network (communities, inbox/support, timeline management, requests), catalogue (courses, e-books, calendar, bookings), growth (revenue, ads), settings (appearance, preferences, system, integration, third-party APIs, profiles, payments, email, 2FA, finance/commissions, subscriptions) with consolidated finance, escrow, and dispute tooling replacing the legacy finance-only dashboard.
 
 ### Backend Platform
 - Cover all controllers, routes, services, middleware, utilities, configs, and matching/recommendation algorithms with modular architecture.
 - Implement full security hardening (input validation, rate limiting, encryption, audit logging, GDPR data governance).
-- Provide third-party integration modules (Hubspot, Google, Salesforce, OpenAI, Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, OAuth providers).
+- Provide third-party integration modules (Hubspot, Google, Salesforce, optional lightweight OpenAI API usage, Chatwoot, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, OAuth providers).
 - Deliver WebSocket/socket.io infrastructure enabling live classrooms, messaging, voice/video calls, timeline updates, and real-time moderation.
 - Establish failure handling strategies, retries, circuit breakers, and observability instrumentation.
 - Supply `.env` templates, environment bootstrap scripts, and configuration documentation.
@@ -190,7 +195,7 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Implement navigation (role changer, bottom tabs, contextual menus) and every listed screen (timeline, explorer, communities with submodules, course/e-book/tutor viewers, live sessions, inbox, support, about, policy, management screens, splash, purchases, ads, registration/login, settings).
 
 ### Data, Taxonomy, and Knowledge Base
-- Seed all categories, tags, and taxonomies with representative production-ready data.
+- Seed all categories, tags, and taxonomies with representative production-ready data, including full global zone libraries (countries, regions, metro areas) for geo-targeted discovery and compliance.
 - Provide migration scripts, seeder verification, and rollback automation.
 - Build a searchable knowledge base with onboarding checklists, guided tours, and upgrade playbooks.
 
@@ -200,11 +205,18 @@ Version 1.00 is a production-ready expansion of Edulure that transforms the plat
 - Embed uptime helper dashboards, incident response playbooks, and SLA monitoring.
 - Run security scanners, penetration tests, bad-word/spam detection, file scanning, and GDPR data management processes.
 
+### Lightweight Intelligence Architecture
+- Deliver internal scoring engines for recommendations, spam detection, and matching that rely on deterministic rules, heuristic weights, and optionally compact internal models deployable on existing infrastructure.
+- Design data pipelines that collect feedback loops (clicks, conversions, moderation decisions) to recalibrate weights without requiring GPU-heavy training runs; schedule recalibration as cron/batch jobs that fit current capacity.
+- Provide transparency dashboards that explain why a recommendation, moderation flag, or insight surfaced, emphasizing maintainability and auditability over opaque black-box AI.
+- Establish fallbacks so that if an internal model is offline the rule-based system continues to serve acceptable results, ensuring resilience without scaling external AI dependencies.
+
 ## Dependencies & Integrations
-- Third-party services: Hubspot, Salesforce, Google APIs, OpenAI, Chatwoot, Firebase, SMTP, Cloudflare R2/Wasabi, OAuth providers (Google, Apple, LinkedIn, Facebook).
+- Third-party services: Hubspot, Salesforce, Google APIs, optional lightweight OpenAI API usage (no self-hosted large models), Chatwoot, Firebase, SMTP, Cloudflare R2/Wasabi, OAuth providers (Google, Apple, LinkedIn, Facebook).
 - Infrastructure: automated scripts/UI for provisioning, scaling, and rollback, including container orchestration and CDN setup.
 - Mobile parity: Flutter phone app maintains feature parity, styling, and Apple/Google compliance with in-app purchases handled per platform policy.
 - Analytics: telemetry pipelines, financial dashboards, recommendation feedback loops.
+- Internal intelligence services: maintainable heuristic engines and compact models hosted within existing infrastructure, complete with monitoring and versioning.
 
 ## Success Criteria
 - All user journeys (web/mobile) function end-to-end with real data, seeded catalogs, and no placeholder content.
@@ -235,7 +247,7 @@ To guarantee that every enumerated requirement in the Edulure Version 1.00 manda
 | 13 | CRUD tests | QA | API/UI CRUD matrix |
 | 14 | Live feed (Timeline) tests | Social squad | Timeline E2E report |
 | 15 | Communities tests | Community squad | Community module certification |
-| 16 | AI function tests | AI squad | Recommendation validation logs |
+| 16 | AI/internal intelligence function tests | Intelligence squad | Recommendation validation logs |
 | 17 | Integrations tests | Integration squad | Contract test dashboard |
 | 18 | Login/registration tests | Auth squad | Identity QA runbook |
 | 19 | Dashboard functionality tests | Product QA | Role-based dashboard checklist |
@@ -263,6 +275,10 @@ To guarantee that every enumerated requirement in the Edulure Version 1.00 manda
 | 41 | No stubs or placeholders | QA | Content verification checklist |
 | 42 | High-usage management | DevOps | Capacity plan |
 | 43 | RAM/server stress reduction | Performance | Stress test summary |
+| 44 | Zone coverage validation | Data Engineering | Zone QA report |
+| 45 | Service purchase tests | Commerce QA | Service checkout E2E logs |
+| 46 | Rentals workflow tests | Rentals Squad | Rental booking regression pack |
+| 47 | Material purchase tests | Marketplace QA | Material purchase validation report |
 
 #### Release Readiness Execution Playbook
 Each readiness mandate carries explicit action steps, tooling, and quantitative success metrics. The following playbook expands the checklist so squads can translate the mandate into sprint-ready stories and reporting dashboards.
@@ -284,7 +300,7 @@ Each readiness mandate carries explicit action steps, tooling, and quantitative 
 | 13 | Automate CRUD API tests for every entity plus UI-driven validations. | CRUD suite passes in CI; data integrity checks clean. | API test logs, database diff reports. |
 | 14 | Build Cypress/Appium timeline E2E tests verifying rename, ads, moderation, and socket updates. | Real-time updates <250ms; rename reflected globally. | Timeline E2E report. |
 | 15 | Deliver community E2E coverage spanning chat, events, leaderboards, subscriptions, and moderation. | Community flows pass; voice/video jitter <150ms. | Community module certification. |
-| 16 | Evaluate AI recommendations, moderation, and assistants with accuracy/false-positive metrics. | Precision/recall thresholds met; manual QA sign-off. | AI validation logs. |
+| 16 | Evaluate internal recommendation algorithms, moderation heuristics, and assistants with accuracy/false-positive metrics. | Precision/recall thresholds met; manual QA sign-off. | Intelligence validation logs. |
 | 17 | Execute contract tests with all third-party integrations, including sandbox failover scenarios. | Contract suites pass; failover fallback recorded. | Integration dashboard. |
 | 18 | Test login/register flows across email and social providers plus 2FA, password reset, and locked account states. | Authentication success >99%; 2FA enforcement verified. | Identity QA runbook. |
 | 19 | Run dashboard functionality sweeps per role verifying metrics, CRUD, filters, and cross-navigation. | No broken widgets; load times <1.5s. | Dashboard checklist. |
@@ -312,6 +328,10 @@ Each readiness mandate carries explicit action steps, tooling, and quantitative 
 | 41 | Verify no stubs/placeholders via content audit and automated detectors. | Content audit sign-off; placeholder scanner returns none. | Content verification checklist. |
 | 42 | Build capacity plan covering scaling triggers, queue sizing, and autoscaling policies. | Capacity document published; autoscaling tested. | Capacity plan repository. |
 | 43 | Run RAM/server stress tests with instrumentation to capture peak usage behavior. | RAM usage within budget; tuning backlog closed. | Stress test summary. |
+| 44 | Execute global zone data validation cycles across explorer, dashboards, and inventory. | 100% zones load with accurate localization; zone tests pass in CI. | Zone QA report. |
+| 45 | Simulate service purchase lifecycles including escrow, fulfillment, and refunds. | Service order success rate >99%; reconciliation variances <0.01%. | Service checkout E2E logs. |
+| 46 | Run rentals workflows (availability, contracts, payments) under load and failure scenarios. | Rental bookings confirmed without over-allocation; contract storage verified. | Rental booking regression pack. |
+| 47 | Validate material purchases (inventory deduction, logistics triggers, refunds). | Inventory deltas balanced; logistics integrations fire webhooks. | Material purchase validation report. |
 
 ### Front-End Requirements (Items 1–38)
 Each requirement is expanded below with explicit design/engineering expectations to maintain enterprise polish and usability.
@@ -457,7 +477,7 @@ Every page listed in the mandate receives a purpose statement, feature checklist
 - **Home Page** – Dynamic hero fed by recommendation service, three-tier CTA stack (Explore, Timeline, Join Community), testimonial carousel populated from seeded starter data, uptime helper badge for trust.
 - **Profile Page** – Sectioned layout (Overview, Timeline, Courses, Communities, Badges), GDPR export/delete actions surfaced via settings modal, privacy toggles for each field.
 - **Timeline** – Modular widget architecture enabling reorderable sections (Posts, Ads, Recommendations), infinite scroll with windowing, pinned announcement area for admins.
-- **Creation Studio Wizard** – Stepper with autosave drafts, AI-assisted content suggestions via OpenAI integration, validation summary before publish, branching logic for course vs. e-book vs. live session creation.
+- **Creation Studio Wizard** – Stepper with autosave drafts, internal content suggestion library driven by heuristics and compact in-house models, validation summary before publish, branching logic for course vs. e-book vs. live session creation.
 - **Community Switcher** – Quick actions (Join, View, Manage), recently visited row, badge for communities with active live sessions.
 - **Community Classroom** – Attendance roster with export, breakout room manager, recording controls, shared whiteboard integration, assessment linkage.
 - **Community Live Stream** – Adaptive bitrate streaming, countdown timers, host/participant controls, monetization toggles (sponsored placements, premium-only access).
@@ -492,7 +512,7 @@ Every page listed in the mandate receives a purpose statement, feature checklist
 
 ### Backend Requirements (Items 1–17) – Expanded Actions
 - Establish coding standards for controllers/routes/services with shared validation middleware.
-- Implement recommendation engines leveraging AI/ML scoring for skills, qualifications, SEO, pricing.
+- Implement recommendation engines leveraging deterministic scoring matrices, heuristics, and compact in-house models for skills, qualifications, SEO, pricing.
 - Harden security algorithms with threat modeling, encryption, API gateways, and anomaly detection.
 - Modularize monolith components into feature packages with independent test suites.
 - Configure `.env.example` templates covering all integrations and fallback storage options.
@@ -573,7 +593,7 @@ Every page listed in the mandate receives a purpose statement, feature checklist
 ##### Testing Execution Detail
 - Automation pyramid: 60% unit, 25% integration, 10% UI, 5% exploratory/chaos with coverage metrics published weekly.
 - Load/stress suites executed with synthetic data anonymization, capturing CPU, memory, bandwidth, and DB throughput benchmarks.
-- AI moderation/recommendation evaluation includes fairness/bias checks, false positive/negative thresholds, and override workflows.
+- Intelligence moderation/recommendation evaluation includes fairness/bias checks, false positive/negative thresholds, and override workflows.
 - Security assessments incorporate OWASP ASVS mapping, dependency scanning, secret scanning, and WebSocket-specific penetration tests.
 - Mobile parity tests include screen recording evidence, accessibility (VoiceOver/TalkBack) verification, and store compliance checklists.
 
@@ -592,3 +612,74 @@ Every page listed in the mandate receives a purpose statement, feature checklist
 - Complete documentation set (README, guides, legal, starter data catalogs, onboarding aids).
 - Analytics and monitoring dashboards verifying live service health post-launch with incident response playbooks.
 - Confirmation of removal of “Projects” and “Services” from navigation, APIs, and data models.
+
+## Role-Specific Dashboard Blueprints
+Each dashboard inherits the global styling, CRUD completeness, finance integration, and timeline/community access expectations described earlier. The following blueprints outline the minimum viable widget set, insights, and automations required so every persona can operate independently from day one.
+
+### Learner/User Dashboard
+- **Home Hub:** Profile snapshot, current timeline highlights, recommended communities/courses, and quick links to support or onboarding tasks.
+- **Orders & Rentals:** Tabular and calendar views for purchases, rentals, escrow status, refund eligibility, and shipping or pickup logistics.
+- **Support & Inbox:** Embedded Chatwoot ticketing, peer chat directory, SLA indicators, and canned responses library.
+- **Wallet & Finance:** Integrated balance, top-up, withdrawal, invoice history, and analytics for spending trends; hooks into financial reconciliation tests.
+- **Hub & Metrics:** Personalized learning metrics (course completion, assessment performance), community engagement stats, and follow/unfollow analytics.
+- **Settings:** Finance, privacy/GDPR, notification, accessibility, and security controls with audit logging.
+
+### Serviceman Dashboard
+- **Pipeline & Calendar:** Unified view of service bookings, rentals commitments, live sessions, and travel/zone obligations with drag-and-drop scheduling.
+- **Services Management:** CRUD for service packages, pricing tiers, qualification/skill tagging, and availability windows; includes upload checker status boards.
+- **Custom Jobs & Bids:** Lead inbox with quoting workflows, document attachments, and integration into financial projections.
+- **Ads & Growth:** Campaign management with ad spend, conversion metrics, and recommendation placement performance.
+- **Finance, Escrow & Tax:** Inline finance widgets for payouts, escrow release, tax estimation, and compliance reminders; no standalone finance dashboard needed.
+- **Training & Support:** Access to knowledge base, community chat channels, and performance coaching insights.
+
+### Crew Performance Dashboard
+- **Shift & Job Planner:** Calendar, roster assignment, crew readiness analytics, and tool checkout tracking.
+- **Metrics Console:** Productivity KPIs, safety compliance, RAM/stress monitoring for key devices, and internally generated optimization insights derived from heuristic/intelligence services.
+- **Wallet/Escrow/Tax:** Collective finance overview with per-member drill downs, escrow release governance, and tax documentation export.
+- **Training & Certification:** Required training modules, certification expiration alerts, and badge issuance flows.
+- **Communication Hub:** Crew chat channels, incident logging, and real-time alerts for schedule changes or equipment issues.
+
+### Provider/Business Dashboard
+- **Storefront & Business Front:** Branding controls, media management, zone targeting, and SEO tag management across storefront components.
+- **Inventory & Rentals:** Tool/material catalog CRUD with availability scheduling, logistics integrations, and recommendation scoring review.
+- **Crew & Roster:** Hiring pipeline, onboarding workflows, RBAC role assignment, and zone-aware scheduling.
+- **Finance Stack:** Integrated finance, escrow, tax, invoices, commission tracking, and revenue analytics aligning with readiness items 9 and 18.
+- **Marketing & Ads:** Campaign planner, ad placement analytics for timeline/search/community slots, and A/B testing dashboards.
+- **Compliance Center:** Policy acknowledgements, GDPR requests, audit logs, and security alerts.
+
+### Enterprise Dashboard
+- **Portfolio Overview:** Multi-program summary with status, risk, and financial health cards aggregated from subordinate dashboards.
+- **Plan & Status:** Calendar integration for initiatives, portfolio Kanban, and cross-zone deployment tracking.
+- **Campaign & Vendor Management:** Campaign ad planning, vendor onboarding, contract monitoring, and SLA compliance metrics.
+- **Finance & Risk:** Consolidated finance/tax reporting, risk heatmaps, incident queues, and policy compliance attestation.
+- **Hub & Settings:** Access to knowledge base, GitHub upgrade controls, enterprise-grade configuration including SSO and SCIM provisioning hooks.
+
+### Admin Dashboard
+- **System Management:** Microservice health, deployment controls, feature flag toggles, and live timeline/community moderation consoles.
+- **Governance & Compliance:** GDPR management, document repository, audit trail exports, maintenance mode triggers, and rule configuration for spam/bad word detectors.
+- **Finance & Dispute Operations:** Escrow management, dispute resolution workflows, commission adjustments, and refund approvals.
+- **Content & Page Management:** CMS for policies, knowledge base, mega menu configuration, and zone catalog maintenance.
+- **Security Center:** Access control dashboards, penetration test remediation tracker, and webhook/API key oversight.
+
+## Expanded Quality Gates & Evidence Requirements
+- **Traceability Enforcement:** Every epic/story must link to the corresponding requirement number(s) and include acceptance criteria referencing the readiness matrices.
+- **Evidence Submission Cadence:** Artifacts (test reports, screenshots, logs) uploaded within 24 hours of completion to the compliance workspace with automated reminders for missing evidence.
+- **Defect Budget Policy:** No more than 2 low-severity defects may remain open at go-live; all medium/high severity items must be resolved or deferred with executive sign-off and mitigation plan.
+- **Performance Regression SLOs:** Timeline and community socket updates must maintain <250ms latency at P95 under peak load; dashboards should load within 1.5s at P75 with metrics recorded in monitoring dashboards.
+- **Content Integrity Checks:** Automated scripts scan for placeholder text, lorem ipsum, or empty states; failures block release builds until resolved.
+- **Accessibility Proof Pack:** WCAG 2.1 AA audit results stored with remediation evidence, including screenshots, code references, and assistive technology recordings.
+- **Security Control Verification:** Penetration and vulnerability scan summaries accompanied by remediation pull requests and sign-offs from security engineering.
+
+## Deployment & Operations Architecture Highlights
+- **Setup Interfaces:** Provide both CLI scripts and optional web UI for provisioning infrastructure, rotating secrets, scheduling migrations, and initiating blue/green deployments.
+- **Monitoring Fabric:** Standardize metrics collection (Prometheus/OpenTelemetry), logging (ELK/Grafana Loki), and tracing (Jaeger) with dashboards tailored to timeline, community, commerce, and mobile synchronization services.
+- **Incident Response Playbooks:** Define severity levels, communication templates, on-call rotations, and escalation timelines; integrate Chatwoot for customer-facing updates during incidents.
+- **Cost Governance:** Implement budget alerts, cost allocation tagging, and efficiency dashboards to support RAM/server stress reduction requirements and high-usage management goals.
+- **Upgrade Path Automation:** Scripts to fork repos, apply schema migrations, run regression smoke tests, and update documentation when transitioning to new models or infrastructure patterns.
+
+## Analytics & Intelligence Enhancements
+- **Real-Time Analytics Streams:** Pipeline timeline/community events, commerce conversions, support tickets, and moderation actions to the warehouse for immediate executive reporting.
+- **Intelligence Governance:** Establish evaluation cycles for internally powered recommendations and moderation that track precision/recall, fairness audits, and override reasons; surface insights in admin dashboards.
+- **Engagement Scoring:** Combine tag/skill/qualification matches with behavioral data to surface personalized recommendations across web/mobile timelines, explorer results, and email/push campaigns.
+- **Financial Intelligence:** Forecast revenue, churn, and refund risk based on historical transactions; integrate anomaly detection for unusual payout or escrow patterns.
+- **Zone Insights:** Provide maps and tables showing adoption, conversions, and support load by zone hierarchy to ensure coverage requirements remain satisfied and highlight opportunities for localization.
