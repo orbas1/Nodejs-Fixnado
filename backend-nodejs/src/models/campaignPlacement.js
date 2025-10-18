@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../database/index.js';
+import { DataTypes, Model } from 'sequelize';
+import sequelize from '../config/database.js';
 
 class CampaignPlacement extends Model {}
 

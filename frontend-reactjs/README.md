@@ -12,6 +12,22 @@ npm run dev
 
 The dev server runs on http://localhost:5173
 
+### Live dashboard data
+
+Dashboards now default to using the live analytics APIs so that any integration or data issues are surfaced immediately. When 
+working without the backend you can re-enable the mock fixtures by setting `VITE_DASHBOARD_FALLBACK_MODE` in your environment:
+
+```bash
+# .env.development.local
+VITE_DASHBOARD_FALLBACK_MODE=dev-only
+```
+
+Accepted values are:
+
+- `never` (default) – always use live APIs.
+- `dev-only` – use mock dashboards only while running the Vite dev server.
+- `always` – force the mocks regardless of environment.
+
 ## Available routes
 
 - `/` – Landing page showcasing services, marketplace, service zones, escrow and live feed

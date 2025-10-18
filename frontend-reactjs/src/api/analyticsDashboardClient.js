@@ -23,9 +23,43 @@ const createHeaders = (accept, persona) => {
   return headers;
 };
 
+const FALLBACK_MODES = Object.freeze({
+  NEVER: 'never',
+  DEV_ONLY: 'dev-only',
+  ALWAYS: 'always'
+});
+
+const normaliseFallbackMode = (value) => {
+  if (!value) {
+    return FALLBACK_MODES.NEVER;
+  }
+
+  const normalised = String(value).trim().toLowerCase();
+
+  if (normalised === 'always') {
+    return FALLBACK_MODES.ALWAYS;
+  }
+
+  if (normalised === 'dev' || normalised === 'dev-only' || normalised === 'development') {
+    return FALLBACK_MODES.DEV_ONLY;
+  }
+
+  return FALLBACK_MODES.NEVER;
+};
+
 const shouldUseFallback = () => {
-  const { DEV = false, MODE } = import.meta.env ?? {};
-  return Boolean(DEV) && MODE !== 'test';
+  const mode = normaliseFallbackMode(import.meta.env?.VITE_DASHBOARD_FALLBACK_MODE);
+
+  if (mode === FALLBACK_MODES.ALWAYS) {
+    return true;
+  }
+
+  if (mode === FALLBACK_MODES.DEV_ONLY) {
+    const { DEV = false, MODE } = import.meta.env ?? {};
+    return Boolean(DEV) && MODE !== 'test';
+  }
+
+  return false;
 };
 
 export const buildExportUrl = (persona, params = {}) => `${API_BASE}/${persona}/export${toQueryString(params)}`;

@@ -83,7 +83,6 @@ import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
-import CampaignCreative from './campaignCreative.js';
 import CampaignAudienceSegment from './campaignAudienceSegment.js';
 import CampaignPlacement from './campaignPlacement.js';
 import AnalyticsEvent from './analyticsEvent.js';

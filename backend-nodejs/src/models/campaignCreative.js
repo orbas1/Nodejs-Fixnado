@@ -1,5 +1,3 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../database/index.js';
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -13,24 +11,21 @@ CampaignCreative.init(
       primaryKey: true
     },
     campaignId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      field: 'campaign_id'
-    },
-    flightId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      field: 'flight_id'
       field: 'campaign_id',
       type: DataTypes.UUID,
       allowNull: false
+    },
+    flightId: {
+      field: 'flight_id',
+      type: DataTypes.UUID,
+      allowNull: true
     },
     name: {
       type: DataTypes.STRING(160),
       allowNull: false
     },
     format: {
-      type: DataTypes.ENUM('image', 'video', 'html', 'text', 'carousel'),
+      type: DataTypes.ENUM('image', 'video', 'html', 'text', 'carousel', 'native'),
       allowNull: false,
       defaultValue: 'image'
     },
@@ -42,55 +37,14 @@ CampaignCreative.init(
     headline: {
       type: DataTypes.STRING(180),
       allowNull: true
-    status: {
-      type: DataTypes.ENUM('draft', 'in_review', 'active', 'paused', 'retired'),
-      allowNull: false,
-      defaultValue: 'draft'
-    },
-    format: {
-      type: DataTypes.ENUM('image', 'video', 'carousel', 'html', 'native'),
-      allowNull: false,
-      defaultValue: 'image'
-    },
-    headline: {
-      type: DataTypes.STRING(160),
-      allowNull: false
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
     callToAction: {
-      type: DataTypes.STRING(64),
-      allowNull: true,
-      field: 'call_to_action'
-    },
-    assetUrl: {
-      type: DataTypes.STRING(2048),
-      allowNull: false,
-      field: 'asset_url'
-    },
-    thumbnailUrl: {
-      type: DataTypes.STRING(2048),
-      allowNull: true,
-      field: 'thumbnail_url'
-    },
-    metadata: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: {}
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'created_at'
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'updated_at'
       field: 'call_to_action',
-      type: DataTypes.STRING(60),
+      type: DataTypes.STRING(64),
       allowNull: true
     },
     assetUrl: {
@@ -123,7 +77,9 @@ CampaignCreative.init(
   {
     sequelize,
     modelName: 'CampaignCreative',
-    tableName: 'CampaignCreative'
+    tableName: 'campaign_creatives',
+    underscored: true,
+    timestamps: true
   }
 );
 
