@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import serviceRoutes from './serviceRoutes.js';
 import feedRoutes from './feedRoutes.js';
+import timelineHubRoutes from './timelineHubRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import adminLiveFeedAuditRoutes from './adminLiveFeedAuditRoutes.js';
 import adminRoutes from './adminRoutes.js';
@@ -86,6 +87,7 @@ const routeDefinitions = [
   { path: '/auth', router: authRoutes },
   { path: '/services', router: serviceRoutes },
   { path: '/feed', router: feedRoutes },
+  { path: '/timeline-hub', router: timelineHubRoutes },
   { path: '/search', router: searchRoutes },
   { path: '/admin/bookings', router: adminBookingRoutes },
   { path: '/admin/rentals', router: adminRentalRoutes },

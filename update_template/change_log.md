@@ -16,3 +16,9 @@
 - Seeded production-grade taxonomy datasets and default facet values with deterministic UUIDv5 identifiers and SHA-256 checksums.
 - Shipped `backend-nodejs/scripts/taxonomy-integrity.mjs` to verify deployed data and emit rollback SQL for rehearsals.
 - Updated trackers and risk logs to monitor nightly taxonomy checksum verification ahead of timeline hub delivery.
+
+## Version 1.00 Timeline Hub & Support Updates (2024-05-23)
+- Delivered `timelineHubService` aggregating moderation audits, custom job feed, marketplace inventory, ad placements, and Chatwoot readiness into a single API snapshot.
+- Added moderation queue API with SLA breach detection, status transitions, and note capture surfaced under new timeline hub routes.
+- Integrated Chatwoot session bootstrap service with audit logging and hardened timeout handling to unblock support workflows.
+- Registered new route policies for timeline hub access, moderation, and support sessions; progress tracker updated to reflect UT-004 completion.

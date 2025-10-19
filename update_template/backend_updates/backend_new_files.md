@@ -11,3 +11,8 @@
 - `backend-nodejs/src/models/materialTaxonomyAssignment.js`
 - `backend-nodejs/tests/marketplaceTaxonomySeed.test.js`
 - `backend-nodejs/scripts/taxonomy-integrity.mjs`
+- `backend-nodejs/src/services/chatwootService.js`
+- `backend-nodejs/src/services/timelineHubService.js`
+- `backend-nodejs/src/controllers/timelineHubController.js`
+- `backend-nodejs/src/routes/timelineHubRoutes.js`
+- `backend-nodejs/src/services/__tests__/timelineHubService.test.js`
