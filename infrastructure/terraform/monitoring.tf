@@ -49,3 +49,25 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu" {
   ok_actions    = [aws_sns_topic.alarms.arn]
   tags          = local.common_tags
 }
+
+resource "aws_cloudwatch_metric_alarm" "codedeploy_failure" {
+  alarm_name          = "${local.name_prefix}-codedeploy-failures"
+  alarm_description   = "CodeDeploy deployment failures detected"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Failed"
+  namespace           = "AWS/CodeDeploy"
+  period              = 60
+  statistic           = "Maximum"
+  threshold           = 1
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    DeploymentGroupName = aws_codedeploy_deployment_group.ecs.deployment_group_name
+    ApplicationName     = aws_codedeploy_app.ecs.name
+  }
+
+  alarm_actions = [aws_sns_topic.alarms.arn]
+  ok_actions    = [aws_sns_topic.alarms.arn]
+  tags          = local.common_tags
+}

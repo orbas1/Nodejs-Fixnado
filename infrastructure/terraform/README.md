@@ -31,6 +31,23 @@ node scripts/environment-parity.mjs
 
 The script validates that staging and production tfvars expose the same keys, compares feature toggle manifests, and alerts when rollout differences exceed 50 percentage points.
 
+### CI/CD automation
+- The **Terraform Deployments** GitHub Actions workflow (`.github/workflows/infrastructure-deploy.yml`) runs plans automatically for staging and production on pull requests and on pushes to `main`.
+- The workflow assumes AWS roles provided via repository secrets (`AWS_ROLE_TO_ASSUME_STAGING` / `AWS_ROLE_TO_ASSUME_PRODUCTION`) and reads backend configuration from per-environment secrets (`TF_STATE_BUCKET_*`, `TF_LOCK_TABLE_*`).
+- Plan artefacts and JSON change summaries are published for auditing; manual `workflow_dispatch` runs can apply changes with or without auto-approval after the change advisory board signs off.
+- Plans will fail if tfvars are out of sync or if the state lock table/bucket is unavailable, preventing drift from entering production unnoticed.
+
+### Blue/green topology
+- The Application Load Balancer exposes a primary HTTPS listener on port 443 and a validation listener on port 9443 that is restricted to the Fixnado operations NAT ranges defined in `blue_green_validation_cidrs`.
+- ECS services deploy through AWS CodeDeploy with paired blue/green target groups, automated rollback on ALB 5xx/CPU alarms, and a 20-minute bake window for validation traffic.
+- The validation listener feeds the `test` route in CodeDeploy so smoke and integration tests can hit the new tasks without disturbing live traffic; the CodeDeploy failure alarm fans out to the central SNS topic.
+- Detailed execution guidance (including traffic shifting, synthetic checks, and rollback commands) is documented in `../runbooks/blue-green-deployment.md`.
+
+### Secret rotation
+- Runtime secrets (`fixnado/<env>/app-config`) are seeded by Terraform and rotated using `node scripts/rotate-secrets.mjs --environment <env> --targets app-config,database`.
+- The script generates cryptographically secure values, preserves metadata such as owners and rotation timestamps, and writes new versions back to AWS Secrets Manager via the CLI.
+- Feature toggle payloads are stored in dedicated Secrets Manager secrets and referenced by ARN so the application can fetch them at boot without bundling configuration files.
+
 ## Security & Compliance
 - Every resource inherits baseline GDPR tags and environment metadata for CMDB integration.
 - Secrets are rotated through AWS Secrets Manager and consumed by ECS tasks using the execution IAM role policy.

@@ -5,6 +5,13 @@ import ServicemanProfileSetting from './servicemanProfileSetting.js';
 import Company from './company.js';
 import UserPreference from './userPreference.js';
 import Service from './service.js';
+import MarketplaceTaxonomyDomain from './marketplaceTaxonomyDomain.js';
+import MarketplaceTaxonomyNode from './marketplaceTaxonomyNode.js';
+import MarketplaceTaxonomyFacet from './marketplaceTaxonomyFacet.js';
+import MarketplaceTaxonomyNodeFacet from './marketplaceTaxonomyNodeFacet.js';
+import ServiceTaxonomyAssignment from './serviceTaxonomyAssignment.js';
+import RentalTaxonomyAssignment from './rentalTaxonomyAssignment.js';
+import MaterialTaxonomyAssignment from './materialTaxonomyAssignment.js';
 import ServiceCategory from './serviceCategory.js';
 import ServiceAvailabilityWindow from './serviceAvailabilityWindow.js';
 import ServiceMediaAsset from './serviceMediaAsset.js';
@@ -67,6 +74,7 @@ import InventoryItemTag from './inventoryItemTag.js';
 import InventoryItemMedia from './inventoryItemMedia.js';
 import InventoryItemSupplier from './inventoryItemSupplier.js';
 import InventoryLocationZone from './inventoryLocationZone.js';
+import ToolRentalAsset from './toolRentalAsset.js';
 import RentalAgreement from './rentalAgreement.js';
 import RentalCheckpoint from './rentalCheckpoint.js';
 import ComplianceDocument from './complianceDocument.js';
@@ -1074,6 +1082,114 @@ Service.hasMany(ServiceMediaAsset, {
 });
 ServiceMediaAsset.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
 
+MarketplaceTaxonomyDomain.hasMany(MarketplaceTaxonomyNode, {
+  foreignKey: 'domainId',
+  as: 'nodes'
+});
+MarketplaceTaxonomyNode.belongsTo(MarketplaceTaxonomyDomain, {
+  foreignKey: 'domainId',
+  as: 'domain'
+});
+
+MarketplaceTaxonomyDomain.hasMany(MarketplaceTaxonomyFacet, {
+  foreignKey: 'domainId',
+  as: 'facets'
+});
+MarketplaceTaxonomyFacet.belongsTo(MarketplaceTaxonomyDomain, {
+  foreignKey: 'domainId',
+  as: 'domain'
+});
+
+MarketplaceTaxonomyNode.hasMany(MarketplaceTaxonomyNode, {
+  foreignKey: 'parentId',
+  as: 'children'
+});
+MarketplaceTaxonomyNode.belongsTo(MarketplaceTaxonomyNode, {
+  foreignKey: 'parentId',
+  as: 'parent'
+});
+
+MarketplaceTaxonomyNode.belongsToMany(MarketplaceTaxonomyFacet, {
+  through: MarketplaceTaxonomyNodeFacet,
+  foreignKey: 'nodeId',
+  otherKey: 'facetId',
+  as: 'facets'
+});
+MarketplaceTaxonomyFacet.belongsToMany(MarketplaceTaxonomyNode, {
+  through: MarketplaceTaxonomyNodeFacet,
+  foreignKey: 'facetId',
+  otherKey: 'nodeId',
+  as: 'nodes'
+});
+
+MarketplaceTaxonomyNode.hasMany(MarketplaceTaxonomyNodeFacet, {
+  foreignKey: 'nodeId',
+  as: 'facetAssignments'
+});
+MarketplaceTaxonomyNodeFacet.belongsTo(MarketplaceTaxonomyNode, {
+  foreignKey: 'nodeId',
+  as: 'node'
+});
+MarketplaceTaxonomyFacet.hasMany(MarketplaceTaxonomyNodeFacet, {
+  foreignKey: 'facetId',
+  as: 'nodeAssignments'
+});
+MarketplaceTaxonomyNodeFacet.belongsTo(MarketplaceTaxonomyFacet, {
+  foreignKey: 'facetId',
+  as: 'facet'
+});
+
+Service.hasMany(ServiceTaxonomyAssignment, {
+  foreignKey: 'serviceId',
+  as: 'taxonomyAssignments'
+});
+ServiceTaxonomyAssignment.belongsTo(Service, {
+  foreignKey: 'serviceId',
+  as: 'service'
+});
+MarketplaceTaxonomyNode.hasMany(ServiceTaxonomyAssignment, {
+  foreignKey: 'nodeId',
+  as: 'serviceAssignments'
+});
+ServiceTaxonomyAssignment.belongsTo(MarketplaceTaxonomyNode, {
+  foreignKey: 'nodeId',
+  as: 'node'
+});
+
+ToolRentalAsset.hasMany(RentalTaxonomyAssignment, {
+  foreignKey: 'rentalAssetId',
+  as: 'taxonomyAssignments'
+});
+RentalTaxonomyAssignment.belongsTo(ToolRentalAsset, {
+  foreignKey: 'rentalAssetId',
+  as: 'rentalAsset'
+});
+MarketplaceTaxonomyNode.hasMany(RentalTaxonomyAssignment, {
+  foreignKey: 'nodeId',
+  as: 'rentalAssignments'
+});
+RentalTaxonomyAssignment.belongsTo(MarketplaceTaxonomyNode, {
+  foreignKey: 'nodeId',
+  as: 'node'
+});
+
+ToolSaleProfile.hasMany(MaterialTaxonomyAssignment, {
+  foreignKey: 'materialProfileId',
+  as: 'taxonomyAssignments'
+});
+MaterialTaxonomyAssignment.belongsTo(ToolSaleProfile, {
+  foreignKey: 'materialProfileId',
+  as: 'materialProfile'
+});
+MarketplaceTaxonomyNode.hasMany(MaterialTaxonomyAssignment, {
+  foreignKey: 'nodeId',
+  as: 'materialAssignments'
+});
+MaterialTaxonomyAssignment.belongsTo(MarketplaceTaxonomyNode, {
+  foreignKey: 'nodeId',
+  as: 'node'
+});
+
 User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
 AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -1325,6 +1441,7 @@ export {
   InventoryItemMedia,
   InventoryItemSupplier,
   InventoryLocationZone,
+  ToolRentalAsset,
   ToolSaleProfile,
   ToolSaleCoupon,
   RentalAgreement,
@@ -1333,6 +1450,13 @@ export {
   ComplianceControl,
   InsuredSellerApplication,
   MarketplaceModerationAction,
+  MarketplaceTaxonomyDomain,
+  MarketplaceTaxonomyNode,
+  MarketplaceTaxonomyFacet,
+  MarketplaceTaxonomyNodeFacet,
+  ServiceTaxonomyAssignment,
+  RentalTaxonomyAssignment,
+  MaterialTaxonomyAssignment,
   AdCampaign,
   CampaignCreative,
   CampaignFlight,

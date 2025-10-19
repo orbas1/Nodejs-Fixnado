@@ -33,7 +33,7 @@ resource "aws_lb" "app" {
   tags = local.common_tags
 }
 
-resource "aws_lb_target_group" "app" {
+resource "aws_lb_target_group" "app_blue" {
   name        = substr("${local.name_prefix}-tg", 0, 32)
   port        = var.container_port
   protocol    = "HTTP"
@@ -61,7 +61,39 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = aws_lb_target_group.app_blue.arn
+  }
+}
+
+resource "aws_lb_target_group" "app_green" {
+  name        = substr("${local.name_prefix}-tg-green", 0, 32)
+  port        = var.container_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = module.vpc.vpc_id
+
+  health_check {
+    matcher             = "200-399"
+    interval            = 30
+    path                = "/health/ready"
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 5
+  }
+
+  tags = merge(local.common_tags, { "Deployment" = "green" })
+}
+
+resource "aws_lb_listener" "validation" {
+  load_balancer_arn = aws_lb.app.arn
+  port              = var.test_listener_port
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app_green.arn
   }
 }
 
@@ -169,6 +201,12 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = var.desired_count
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
+
+  health_check_grace_period_seconds = 60
+
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
 
@@ -181,7 +219,7 @@ resource "aws_ecs_service" "app" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = aws_lb_target_group.app_blue.arn
     container_name   = "backend"
     container_port   = var.container_port
   }
@@ -190,7 +228,7 @@ resource "aws_ecs_service" "app" {
     ignore_changes = [task_definition]
   }
 
-  depends_on = [aws_lb_listener.https]
+  depends_on = [aws_lb_listener.https, aws_lb_listener.validation]
 
   tags = local.common_tags
 }
@@ -218,4 +256,97 @@ resource "aws_appautoscaling_policy" "cpu" {
     scale_in_cooldown  = 60
     scale_out_cooldown = 60
   }
+}
+
+resource "aws_iam_role" "codedeploy" {
+  name               = "${local.name_prefix}-codedeploy"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "codedeploy.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy" {
+  role       = aws_iam_role.codedeploy.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS"
+}
+
+resource "aws_codedeploy_app" "ecs" {
+  name             = "${local.name_prefix}-ecs"
+  compute_platform = "ECS"
+}
+
+resource "aws_codedeploy_deployment_group" "ecs" {
+  app_name              = aws_codedeploy_app.ecs.name
+  deployment_group_name = "${local.name_prefix}-ecs"
+  service_role_arn      = aws_iam_role.codedeploy.arn
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+
+  ecs_service {
+    cluster_name = aws_ecs_cluster.this.name
+    service_name = aws_ecs_service.app.name
+  }
+
+  blue_green_deployment_config {
+    deployment_ready_option {
+      action_on_timeout    = "STOP_DEPLOYMENT"
+      wait_time_in_minutes = 20
+    }
+
+    terminate_blue_instances_on_deployment_success {
+      action = "TERMINATE"
+      termination_wait_time_in_minutes = 10
+    }
+
+    green_fleet_provisioning_option {
+      action = "DISCOVER_EXISTING"
+    }
+  }
+
+  load_balancer_info {
+    target_group_pair_info {
+      prod_target_group {
+        target_group_arn = aws_lb_target_group.app_blue.arn
+      }
+
+      test_target_group {
+        target_group_arn = aws_lb_target_group.app_green.arn
+      }
+
+      prod_traffic_route {
+        listener_arns = [aws_lb_listener.https.arn]
+      }
+
+      test_traffic_route {
+        listener_arns = [aws_lb_listener.validation.arn]
+      }
+    }
+  }
+
+  alarm_configuration {
+    enabled = true
+    alarms  = [
+      aws_cloudwatch_metric_alarm.high_5xx.alarm_name,
+      aws_cloudwatch_metric_alarm.ecs_cpu.alarm_name
+    ]
+  }
+
+  auto_rollback_configuration {
+    enabled = true
+    events  = [
+      "DEPLOYMENT_FAILURE",
+      "DEPLOYMENT_STOP_ON_ALARM"
+    ]
+  }
+
+  depends_on = [aws_lb_listener.validation]
 }

@@ -11,6 +11,7 @@ domain_name             = "app.fixnado.com"
 certificate_arn         = "arn:aws:acm:eu-west-2:123456789012:certificate/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 container_image         = "123456789012.dkr.ecr.eu-west-2.amazonaws.com/fixnado/backend:production"
 container_port          = 3000
+test_listener_port      = 9443
 desired_count           = 3
 min_capacity            = 3
 max_capacity            = 9
@@ -18,3 +19,7 @@ db_username             = "fixnado_app"
 db_password_secret_name = "fixnado/production/database"
 log_retention_in_days   = 30
 alarm_email             = "noc@fixnado.com"
+blue_green_validation_cidrs = [
+  "51.140.120.0/24",
+  "51.140.121.0/24"
+]

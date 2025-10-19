@@ -11,6 +11,7 @@ domain_name             = "staging.fixnado.com"
 certificate_arn         = "arn:aws:acm:eu-west-2:123456789012:certificate/11111111-2222-3333-4444-555555555555"
 container_image         = "123456789012.dkr.ecr.eu-west-2.amazonaws.com/fixnado/backend:staging"
 container_port          = 3000
+test_listener_port      = 9443
 desired_count           = 2
 min_capacity            = 2
 max_capacity            = 4
@@ -18,3 +19,7 @@ db_username             = "fixnado_app"
 db_password_secret_name = "fixnado/staging/database"
 log_retention_in_days   = 14
 alarm_email             = "staging-ops@fixnado.com"
+blue_green_validation_cidrs = [
+  "81.2.69.0/24",
+  "81.2.70.0/24"
+]
