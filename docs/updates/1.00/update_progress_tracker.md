@@ -22,8 +22,8 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 3.3 Geospatial/bundle rationalisation | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.4 Flutter lockfiles & mobile CI smoke | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.5 License/load-test automation & governance docs | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 4.1 Session management & persona analytics rebuild | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
+| 4.1 Session management & persona analytics rebuild | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 4.2 Persona-scoped routing & telemetry instrumentation | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.3 Timeline/community screens with moderation, chat, ads, and analytics | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.4 Learner dashboards & supporting profile/settings pages | 0 | 0 | 0 | 0 | 0 | 0 | 0 |

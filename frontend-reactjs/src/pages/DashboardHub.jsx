@@ -15,8 +15,14 @@ const DashboardHub = () => {
 
   const handleUnlock = (role) => {
     if (!role) return;
-    grantAccess(role.id);
-    setStatusMessage(`${role.name} unlocked for this session.`);
+    const outcome = grantAccess(role.id, { source: 'dashboard-hub' });
+    if (outcome.granted) {
+      setStatusMessage(`${role.name} unlocked for this session.`);
+    } else if (outcome.blocked) {
+      setStatusMessage(`Access to ${role.name} requires approval.`);
+    } else {
+      setStatusMessage(`${role.name} is already unlocked.`);
+    }
     setPreviewRole((current) => (current?.id === role.id ? null : current));
     window.setTimeout(() => setStatusMessage(''), 2400);
   };

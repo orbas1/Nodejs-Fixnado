@@ -1,6 +1,6 @@
 import { PanelApiError } from './panelClient.js';
 import { normaliseRole } from '../constants/accessControl.js';
-import { ROLE_DASHBOARD_MAP, SESSION_STORAGE_KEY } from '../hooks/useSession.js';
+import { ROLE_DASHBOARD_MAP, SESSION_STORAGE_KEY } from '../constants/session.js';
 
 const STORAGE_KEY = 'fixnado:offline-users';
 const SESSION_DURATION_MINUTES = 4 * 60; // 4 hours

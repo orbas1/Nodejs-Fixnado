@@ -1,9 +1,12 @@
-const SESSION_STORAGE_KEY = 'fx.session';
+import { SESSION_STORAGE_KEY, DEFAULT_TENANT_ID, DEFAULT_LOCALE } from '../constants/session.js';
+
 const FALLBACK_CONTEXT = {
-  tenantId: 'fixnado-demo',
-  role: 'admin',
+  tenantId: DEFAULT_TENANT_ID,
+  role: 'guest',
   userId: null,
-  locale: 'en-GB'
+  locale: DEFAULT_LOCALE,
+  persona: 'guest',
+  allowedPersonas: []
 };
 
 function sanitiseString(value, { maxLength = 128, fallback = undefined } = {}) {
@@ -22,11 +25,17 @@ export function resolveSessionTelemetryContext() {
   const context = { ...FALLBACK_CONTEXT };
 
   if (typeof window.__FIXNADO_SESSION__ === 'object' && window.__FIXNADO_SESSION__ !== null) {
-    const { tenantId, role, userId, locale } = window.__FIXNADO_SESSION__;
+    const { tenantId, role, userId, locale, activePersona, allowedPersonas } = window.__FIXNADO_SESSION__;
     context.tenantId = sanitiseString(tenantId, { fallback: context.tenantId });
     context.role = sanitiseString(role, { fallback: context.role });
     context.userId = typeof userId === 'string' ? userId : context.userId;
     context.locale = sanitiseString(locale, { fallback: context.locale });
+    context.persona = sanitiseString(activePersona, { fallback: context.persona });
+    if (Array.isArray(allowedPersonas)) {
+      context.allowedPersonas = allowedPersonas
+        .map((persona) => sanitiseString(persona, { fallback: null }))
+        .filter(Boolean);
+    }
   }
 
   try {
@@ -37,6 +46,12 @@ export function resolveSessionTelemetryContext() {
       context.role = sanitiseString(parsed.role, { fallback: context.role });
       context.userId = typeof parsed.userId === 'string' ? parsed.userId : context.userId;
       context.locale = sanitiseString(parsed.locale, { fallback: context.locale });
+      context.persona = sanitiseString(parsed.activePersona, { fallback: context.persona });
+      if (Array.isArray(parsed.allowedPersonas)) {
+        context.allowedPersonas = parsed.allowedPersonas
+          .map((persona) => sanitiseString(persona, { fallback: null }))
+          .filter(Boolean);
+      }
     }
   } catch (error) {
     console.warn('Failed to parse session context from storage', error);
