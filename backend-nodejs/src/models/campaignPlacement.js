@@ -1,5 +1,21 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../database/index.js';
+import { DataTypes, Model } from 'sequelize';
+import sequelize from '../config/database.js';
+
+export const CAMPAIGN_PLACEMENT_CHANNELS = Object.freeze([
+  'marketplace',
+  'email',
+  'push',
+  'sms',
+  'display',
+  'social'
+]);
+
+export const CAMPAIGN_PLACEMENT_STATUSES = Object.freeze([
+  'planned',
+  'active',
+  'paused',
+  'completed'
+]);
 
 class CampaignPlacement extends Model {}
 
@@ -11,19 +27,19 @@ CampaignPlacement.init(
       primaryKey: true
     },
     campaignId: {
+      field: 'campaign_id',
       type: DataTypes.UUID,
-      allowNull: false,
-      field: 'campaign_id'
+      allowNull: false
     },
     flightId: {
+      field: 'flight_id',
       type: DataTypes.UUID,
-      allowNull: true,
-      field: 'flight_id'
+      allowNull: true
     },
     channel: {
-      type: DataTypes.ENUM('marketplace', 'email', 'push', 'sms', 'display', 'social'),
+      type: DataTypes.ENUM(...CAMPAIGN_PLACEMENT_CHANNELS),
       allowNull: false,
-      defaultValue: 'marketplace'
+      defaultValue: CAMPAIGN_PLACEMENT_CHANNELS[0]
     },
     format: {
       type: DataTypes.STRING(64),
@@ -31,50 +47,69 @@ CampaignPlacement.init(
       defaultValue: 'native'
     },
     status: {
-      type: DataTypes.ENUM('planned', 'active', 'paused', 'completed'),
+      type: DataTypes.ENUM(...CAMPAIGN_PLACEMENT_STATUSES),
       allowNull: false,
-      defaultValue: 'planned'
+      defaultValue: CAMPAIGN_PLACEMENT_STATUSES[0]
     },
     bidAmount: {
+      field: 'bid_amount',
       type: DataTypes.DECIMAL(18, 4),
-      allowNull: true,
-      field: 'bid_amount'
+      allowNull: true
     },
     bidCurrency: {
+      field: 'bid_currency',
       type: DataTypes.STRING(3),
       allowNull: false,
       defaultValue: 'GBP',
-      field: 'bid_currency'
+      validate: {
+        len: [3, 3]
+      }
     },
     cpm: {
       type: DataTypes.DECIMAL(18, 4),
       allowNull: true
     },
     inventorySource: {
+      field: 'inventory_source',
       type: DataTypes.STRING(160),
-      allowNull: true,
-      field: 'inventory_source'
+      allowNull: true
     },
     metadata: {
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: {}
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'created_at'
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'updated_at'
     }
   },
   {
     sequelize,
     modelName: 'CampaignPlacement',
-    tableName: 'CampaignPlacement'
+    tableName: 'CampaignPlacement',
+    indexes: [
+      {
+        fields: ['campaign_id', 'status']
+      },
+      {
+        fields: ['flight_id']
+      },
+      {
+        fields: ['channel']
+      }
+    ],
+    hooks: {
+      beforeValidate: (instance) => {
+        if (instance.metadata == null || typeof instance.metadata !== 'object' || Array.isArray(instance.metadata)) {
+          instance.metadata = {};
+        } else {
+          instance.metadata = { ...instance.metadata };
+        }
+        if (instance.bidCurrency) {
+          instance.bidCurrency = instance.bidCurrency.toUpperCase();
+        }
+      }
+    },
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   }
 );
 

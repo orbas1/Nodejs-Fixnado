@@ -1,0 +1,78 @@
+{
+  "documentTitle": "About Fixnado",
+  "owner": "Blackwellen Ltd Executive Office",
+  "effectiveDate": "2024-05-30",
+  "lastUpdated": "2024-05-30",
+  "version": "1.0.0",
+  "jurisdiction": "Global",
+  "contact": {
+    "email": "press@fixnado.com",
+    "telephone": "+44 (0)20 7043 9000",
+    "postal": "Blackwellen Ltd, 14 Glasshouse Yard, London, EC1A 4JN, United Kingdom"
+  },
+  "sections": [
+    {
+      "id": "mission",
+      "title": "Mission and services",
+      "summary": "Fixnado connects enterprise buyers and specialist crews through a single marketplace.",
+      "clauses": [
+        {
+          "heading": "Why Fixnado exists",
+          "content": [
+            "Fixnado orchestrates field service delivery across repairs, maintenance, installations, rentals, and materials. We combine intelligent scheduling, escrow-backed payments, compliance workflows, and analytics so enterprises can operate resilient service programmes without managing fragmented suppliers.",
+            "Our platform supports procurement teams, facilities managers, housing associations, construction firms, utilities, and local government bodies who require dependable, auditable service delivery at scale." 
+          ]
+        },
+        {
+          "heading": "Core capabilities",
+          "content": [
+            "Fixnado offers automated sourcing, crew management, timeline hub communications, e-signature contracts, real-time job telemetry, dispute resolution, and financial reconciliation. Customers access the platform via web, mobile apps, and APIs.",
+            "Providers use Fixnado to manage crews, accept work, publish storefronts, track cash flow, and maintain compliance artefacts. Our intelligence layer recommends crews based on skills, location, availability, and performance." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "governance",
+      "title": "Governance and compliance",
+      "summary": "Blackwellen Ltd oversees Fixnado operations with rigorous governance.",
+      "clauses": [
+        {
+          "heading": "Company information",
+          "content": [
+            "Fixnado is operated by Blackwellen Ltd, a company registered in England and Wales under company number 13847592. We maintain offices in London, Manchester, Glasgow, and Dublin with on-call teams providing 24/7 support.",
+            "We hold ISO/IEC 27001 aligned security controls, conduct annual penetration testing, and maintain GDPR-compliant data governance frameworks. Independent auditors review our financial and operational controls annually." 
+          ]
+        },
+        {
+          "heading": "Ethics and sustainability",
+          "content": [
+            "Fixnado’s supplier code of conduct covers health and safety, labour practices, anti-corruption, and sustainability metrics. Providers attest to compliance during onboarding and through periodic audits.",
+            "Our sustainability programme targets carbon-neutral operations by 2026. We prioritise local sourcing, invest in electric vehicle logistics, and run circular economy initiatives to refurbish materials removed during works." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "leadership",
+      "title": "Leadership and partners",
+      "summary": "Overview of the teams responsible for delivering the Fixnado roadmap.",
+      "clauses": [
+        {
+          "heading": "Executive team",
+          "content": [
+            "The executive team spans operations, technology, trust & safety, customer success, finance, and compliance. Each executive sponsors a cross-functional guild that monitors KPIs and risk indicators.",
+            "Advisory councils comprising enterprise clients, providers, and technicians review roadmap priorities quarterly to ensure Fixnado delivers measurable value." 
+          ]
+        },
+        {
+          "heading": "Strategic partners",
+          "content": [
+            "Fixnado integrates with logistics firms, manufacturers, insurers, and financing providers to deliver turnkey solutions. Partnerships include solar and EV installers, property management firms, and smart building platforms.",
+            "We operate marketplace enablement programmes for regional specialists, apprenticeships, and social enterprises to ensure equitable access to work opportunities." 
+          ]
+        }
+      ]
+    }
+  ]
+}

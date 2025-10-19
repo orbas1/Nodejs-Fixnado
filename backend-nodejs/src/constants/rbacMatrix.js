@@ -1,4 +1,6 @@
-import { CanonicalRoles, Permissions } from './permissions.js';
+import * as permissionConstants from './permissions.js';
+
+const { CanonicalRoles, Permissions } = permissionConstants;
 
 export const RBAC_MATRIX = {
   [CanonicalRoles.GUEST]: {
@@ -39,7 +41,7 @@ export const RBAC_MATRIX = {
       Permissions.WALLET_TRANSACT,
       Permissions.WALLET_METHOD_MANAGE,
       Permissions.CUSTOMER_CONTROL_MANAGE,
-      Permissions.ACCOUNT_SETTINGS_MANAGE
+      Permissions.ACCOUNT_SETTINGS_MANAGE,
     ],
     navigation: {
       landing: '/app/dashboard',
@@ -66,20 +68,19 @@ export const RBAC_MATRIX = {
       Permissions.MESSAGING_ESCALATE,
       Permissions.SERVICEMAN_CUSTOM_JOBS_READ,
       Permissions.SERVICEMAN_CUSTOM_JOBS_WRITE,
-      Permissions.SERVICEMAN_CUSTOM_JOBS_REPORTS
-      Permissions.SERVICEMAN_IDENTITY_MANAGE
+      Permissions.SERVICEMAN_CUSTOM_JOBS_REPORTS,
+      Permissions.SERVICEMAN_IDENTITY_MANAGE,
       Permissions.SERVICEMAN_METRICS_READ,
-      Permissions.SERVICEMAN_METRICS_WRITE
+      Permissions.SERVICEMAN_METRICS_WRITE,
       Permissions.SERVICEMAN_WEBSITE_READ,
-      Permissions.SERVICEMAN_WEBSITE_WRITE
-      Permissions.SERVICEMAN_PROFILE_MANAGE
+      Permissions.SERVICEMAN_WEBSITE_WRITE,
+      Permissions.SERVICEMAN_PROFILE_MANAGE,
       Permissions.SERVICEMAN_BOOKINGS_VIEW,
       Permissions.SERVICEMAN_BOOKINGS_MANAGE,
-      Permissions.MESSAGING_ESCALATE
       Permissions.MESSAGING_ESCALATE,
       Permissions.SERVICEMAN_ESCROW_VIEW,
-      Permissions.SERVICEMAN_ESCROW_MANAGE
-      Permissions.SERVICEMAN_CONTROL_MANAGE
+      Permissions.SERVICEMAN_ESCROW_MANAGE,
+      Permissions.SERVICEMAN_CONTROL_MANAGE,
     ],
     navigation: {
       landing: '/app/workqueue',
@@ -114,11 +115,9 @@ export const RBAC_MATRIX = {
       Permissions.FINANCE_WALLET_VIEW,
       Permissions.REPORTING_DOWNLOAD,
       Permissions.PROVIDER_CREW_VIEW,
-      Permissions.PROVIDER_CREW_MANAGE,
-      Permissions.PROVIDER_CREW_SCHEDULE
+      Permissions.PROVIDER_CREW_SCHEDULE,
       Permissions.PROVIDER_CALENDAR_VIEW,
       Permissions.PROVIDER_CALENDAR_MANAGE,
-      Permissions.REPORTING_DOWNLOAD
     ],
     navigation: {
       landing: '/app/provider/dashboard',
@@ -151,7 +150,7 @@ export const RBAC_MATRIX = {
       Permissions.COMPLIANCE_WAREHOUSE_VIEW,
       Permissions.DISPUTE_VIEW,
       Permissions.FINANCE_OVERVIEW,
-      Permissions.USER_DIRECTORY
+      Permissions.USER_DIRECTORY,
     ],
     navigation: {
       landing: '/app/enterprise/overview',
@@ -187,7 +186,7 @@ export const RBAC_MATRIX = {
       Permissions.PROVIDER_ONBOARD,
       Permissions.MESSAGING_ESCALATE,
       Permissions.PROVIDER_CREW_MANAGE,
-      Permissions.PROVIDER_CREW_SCHEDULE
+      Permissions.PROVIDER_CREW_SCHEDULE,
     ],
     navigation: {
       landing: '/app/provider/admin',
@@ -235,14 +234,14 @@ export const RBAC_MATRIX = {
       Permissions.ADMIN_SERVICES_READ,
       Permissions.INTEGRATION_CONSOLE,
       Permissions.SUPPORT_TICKETS,
-      Permissions.ADMIN_RBAC_READ
-      Permissions.ADMIN_COMMAND_METRICS_READ
-      Permissions.ADMIN_AUTOMATION_READ
+      Permissions.ADMIN_RBAC_READ,
+      Permissions.ADMIN_COMMAND_METRICS_READ,
+      Permissions.ADMIN_AUTOMATION_READ,
       Permissions.ADMIN_PURCHASE_READ,
-      Permissions.ADMIN_PURCHASE_WRITE
-      Permissions.ADMIN_WEBSITE_READ
-      Permissions.ADMIN_AUDIT_READ
-      Permissions.ADMIN_SECURITY_POSTURE_READ
+      Permissions.ADMIN_PURCHASE_WRITE,
+      Permissions.ADMIN_WEBSITE_READ,
+      Permissions.ADMIN_AUDIT_READ,
+      Permissions.ADMIN_SECURITY_POSTURE_READ,
     ],
     navigation: {
       landing: '/app/operations/overview',
@@ -329,7 +328,7 @@ export const RBAC_MATRIX = {
       Permissions.SUPPORT_TICKETS,
       Permissions.ADMIN_PURCHASE_READ,
       Permissions.ADMIN_PURCHASE_WRITE,
-      Permissions.ADMIN_PURCHASE_BUDGET
+      Permissions.ADMIN_PURCHASE_BUDGET,
     ],
     navigation: {
       landing: '/app/admin/dashboard',

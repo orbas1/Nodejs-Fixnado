@@ -84,14 +84,13 @@ import MarketplaceModerationAction from './marketplaceModerationAction.js';
 import ProviderCalendarSetting from './providerCalendarSetting.js';
 import ProviderCalendarEvent from './providerCalendarEvent.js';
 import AdCampaign from './adCampaign.js';
-import CampaignCreative from './campaignCreative.js';
+import CampaignCreative, { ensureCampaignCreativeAssociations } from './campaignCreative.js';
 import CampaignFlight from './campaignFlight.js';
 import CampaignTargetingRule from './campaignTargetingRule.js';
 import CampaignInvoice from './campaignInvoice.js';
 import CampaignDailyMetric from './campaignDailyMetric.js';
 import CampaignFraudSignal from './campaignFraudSignal.js';
 import CampaignAnalyticsExport from './campaignAnalyticsExport.js';
-import CampaignCreative from './campaignCreative.js';
 import CampaignAudienceSegment from './campaignAudienceSegment.js';
 import CampaignPlacement from './campaignPlacement.js';
 import AnalyticsEvent from './analyticsEvent.js';
@@ -154,7 +153,6 @@ import RbacRole from './rbacRole.js';
 import RbacRolePermission from './rbacRolePermission.js';
 import RbacRoleInheritance from './rbacRoleInheritance.js';
 import RbacRoleAssignment from './rbacRoleAssignment.js';
-import AdminProfile from './adminProfile.js';
 import AdminDelegate from './adminDelegate.js';
 import DisputeHealthBucket from './disputeHealthBucket.js';
 import DisputeHealthEntry from './disputeHealthEntry.js';
@@ -205,8 +203,6 @@ import LiveFeedAuditNote from './liveFeedAuditNote.js';
 import SystemSettingAudit from './systemSettingAudit.js';
 import ServiceTaxonomyType from './serviceTaxonomyType.js';
 import ServiceTaxonomyCategory from './serviceTaxonomyCategory.js';
-import WalletAccount from './walletAccount.js';
-import WalletTransaction from './walletTransaction.js';
 import WalletPaymentMethod from './walletPaymentMethod.js';
 import CustomerProfile from './customerProfile.js';
 import CustomerContact from './customerContact.js';
@@ -238,7 +234,10 @@ User.hasOne(UserPreference, { foreignKey: 'userId', as: 'preferences' });
 UserPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
 UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasOne(ServicemanProfileSetting, { foreignKey: 'userId', as: 'servicemanProfile' });
+User.hasOne(ServicemanProfileSetting, {
+  foreignKey: 'userId',
+  as: 'servicemanProfileSetting'
+});
 ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -283,7 +282,7 @@ CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
-User.hasOne(AdminUserProfile, { foreignKey: 'userId', as: 'adminProfile' });
+User.hasOne(AdminUserProfile, { foreignKey: 'userId', as: 'adminUserProfile' });
 AdminUserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(Company, { foreignKey: 'regionId', as: 'companies' });
@@ -577,7 +576,7 @@ ProviderEscrowPolicy.belongsTo(Company, { foreignKey: 'companyId', as: 'company'
 User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
 AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-AdminProfile.hasMany(AdminDelegate, { foreignKey: 'adminProfileId', as: 'delegates' });
+AdminProfile.hasMany(AdminDelegate, { foreignKey: 'adminProfileId', as: 'delegateRecords' });
 AdminDelegate.belongsTo(AdminProfile, { foreignKey: 'adminProfileId', as: 'adminProfile' });
 
 Service.hasMany(Order, { foreignKey: 'serviceId' });
@@ -718,7 +717,7 @@ PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
 
   ServicemanTaxFiling.hasMany(ServicemanTaxTask, { foreignKey: 'filingId', as: 'tasks' });
   ServicemanTaxTask.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
-  ServicemanTaxFiling.hasMany(ServicemanTaxDocument, { foreignKey: 'filingId', as: 'documents' });
+  ServicemanTaxFiling.hasMany(ServicemanTaxDocument, { foreignKey: 'filingId', as: 'documentRecords' });
   ServicemanTaxDocument.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
 
   User.hasMany(ServicemanTaxTask, {
@@ -884,8 +883,6 @@ AdCampaign.hasMany(CampaignFraudSignal, { foreignKey: 'campaignId', as: 'fraudSi
 CampaignFraudSignal.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignFraudSignal.belongsTo(CampaignFlight, { foreignKey: 'flightId' });
 
-AdCampaign.hasMany(CampaignCreative, { foreignKey: 'campaignId', as: 'creatives' });
-CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
 CampaignCreative.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
 
 AdCampaign.hasMany(CampaignAudienceSegment, { foreignKey: 'campaignId', as: 'audienceSegments' });
@@ -1193,9 +1190,6 @@ MaterialTaxonomyAssignment.belongsTo(MarketplaceTaxonomyNode, {
 User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
 AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
-AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
 AffiliateProfile.hasMany(AffiliateReferral, { foreignKey: 'affiliateProfileId', as: 'referrals' });
 AffiliateReferral.belongsTo(AffiliateProfile, { foreignKey: 'affiliateProfileId', as: 'affiliate' });
 AffiliateReferral.belongsTo(User, { foreignKey: 'referredUserId', as: 'referredUser' });
@@ -1376,7 +1370,6 @@ ServicemanByokProfile.hasMany(ServicemanByokAuditEvent, { foreignKey: 'profileId
 ServicemanByokAuditEvent.belongsTo(ServicemanByokProfile, { foreignKey: 'profileId', as: 'profile' });
 ServicemanByokConnector.hasMany(ServicemanByokAuditEvent, { foreignKey: 'connectorId', as: 'auditTrail' });
 ServicemanByokAuditEvent.belongsTo(ServicemanByokConnector, { foreignKey: 'connectorId', as: 'connector' });
-export default sequelize;
 WebsitePage.hasMany(WebsiteContentBlock, { foreignKey: 'pageId', as: 'blocks' });
 WebsiteContentBlock.belongsTo(WebsitePage, { foreignKey: 'pageId', as: 'page' });
 
@@ -1385,6 +1378,8 @@ WebsiteNavigationItem.belongsTo(WebsiteNavigationMenu, { foreignKey: 'menuId', a
 WebsiteNavigationItem.belongsTo(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'parent' });
 WebsiteNavigationItem.hasMany(WebsiteNavigationItem, { foreignKey: 'parentId', as: 'children' });
 
+
+ensureCampaignCreativeAssociations({ AdCampaign, CampaignFlight });
 export {
   sequelize,
   User,
@@ -1404,8 +1399,8 @@ export {
   OrderNote,
   Escrow,
   EscrowMilestone,
-    EscrowNote,
-    EscrowWorkLog,
+  EscrowNote,
+  EscrowWorkLog,
   Dispute,
   ServicemanProfile,
   ServicemanShiftRule,
@@ -1465,7 +1460,6 @@ export {
   CampaignDailyMetric,
   CampaignFraudSignal,
   CampaignAnalyticsExport,
-  CampaignCreative,
   CampaignAudienceSegment,
   CampaignPlacement,
   AnalyticsEvent,
@@ -1477,8 +1471,6 @@ export {
   AccountSupportTask,
   AccountSupportTaskUpdate,
   AdminUserProfile,
-  CustomJobBid,
-  CustomJobBidMessage,
   PlatformSetting,
   CommunicationsInboxConfiguration,
   CommunicationsEntryPoint,
@@ -1522,36 +1514,23 @@ export {
   WalletConfiguration,
   WalletAccount,
   WalletTransaction,
-  ProviderProfile,
   ProviderWebsitePreference,
-  ProviderContact,
-  ProviderCoverage,
   ProviderServiceman,
   ProviderServicemanAvailability,
   ProviderServicemanZone,
   ProviderServicemanMedia,
   WalletPaymentMethod,
-  ProviderProfile,
-  ProviderContact,
-  ProviderCoverage,
   ProviderTaxProfile,
   ProviderTaxFiling,
-  ProviderProfile,
-  ProviderContact,
-  ProviderCoverage,
   ProviderCrewMember,
   ProviderCrewAvailability,
   ProviderCrewDeployment,
   ProviderCrewDelegation,
   ProviderEscrowPolicy,
-  ProviderProfile,
-  ProviderContact,
-  ProviderCoverage,
   RbacRole,
   RbacRolePermission,
   RbacRoleInheritance,
   RbacRoleAssignment,
-  AdminProfile,
   AdminDelegate,
   DisputeHealthBucket,
   DisputeHealthEntry,
@@ -1562,10 +1541,6 @@ export {
   AutomationInitiative,
   ServicemanMetricSetting,
   ServicemanMetricCard,
-  OperationsQueueBoard,
-  OperationsQueueUpdate,
-  AutomationInitiative,
-  AdminUserProfile,
   EnterpriseAccount,
   EnterpriseSite,
   EnterpriseStakeholder,
@@ -1606,9 +1581,6 @@ export {
   SystemSettingAudit,
   ServiceTaxonomyType,
   ServiceTaxonomyCategory,
-  WalletAccount,
-  WalletTransaction,
-  WalletPaymentMethod,
   CustomerProfile,
   CustomerContact,
   CustomerLocation,
@@ -1619,7 +1591,6 @@ export {
   CustomerDisputeTask,
   CustomerDisputeNote,
   CustomerDisputeEvidence,
-  CustomerCoupon,
   InboxQueue,
   InboxConfiguration,
   InboxTemplate,
@@ -1628,8 +1599,11 @@ export {
   ServicemanByokAuditEvent
 };
 
-export default sequelize;
-
 export { default as ServicemanPayment, SERVICEMAN_PAYMENT_STATUSES } from './servicemanPayment.js';
 export { default as ServicemanCommissionRule, SERVICEMAN_COMMISSION_RATE_TYPES, SERVICEMAN_COMMISSION_APPROVAL_STATUSES } from './servicemanCommissionRule.js';
 export { ProviderStorefront, ProviderStorefrontInventory, ProviderStorefrontCoupon };
+export { CAMPAIGN_CREATIVE_STATUSES, CAMPAIGN_CREATIVE_FORMATS, CAMPAIGN_CREATIVE_REVIEW_STATUSES } from './campaignCreative.js';
+export { CAMPAIGN_PLACEMENT_CHANNELS, CAMPAIGN_PLACEMENT_STATUSES } from './campaignPlacement.js';
+export { CAMPAIGN_AUDIENCE_SEGMENT_STATUSES } from './campaignAudienceSegment.js';
+
+export default sequelize;

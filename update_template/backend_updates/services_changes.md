@@ -8,3 +8,13 @@
 
 - Delivered `backend-nodejs/src/services/commerceEngineService.js` to aggregate marketplace payments, order pipelines, escrow balances, invoices, and wallet health into persona-aware commerce snapshots with currency normalisation, chargeback detection, and settlement insights.
 - Added Vitest coverage in `backend-nodejs/src/services/__tests__/commerceEngineService.test.js` to validate currency conversion, alert generation, persona dashboards, and missing-context enforcement for commerce analytics.
+
+# Service Layer Changes – Version 1.00 UT-006
+
+- Enhanced `backend-nodejs/src/services/legalDocumentService.js` to normalise acknowledgement requirements, governance metadata, and audience definitions, compute document health/status labels, and surface the enriched metadata through public and admin APIs.
+- Seeded refund policy, community guidelines, about Fixnado, and FAQ content via migration `20250605000000-add-launch-readiness-legal-documents.js`, ensuring attachments, governance audit trails, and acknowledgement flags are initialised for compliance sampling.
+
+# Service Layer Changes – Version 1.00 UT-008
+
+- Updated `backend-nodejs/src/services/accessControlService.js` to rely on namespace permission imports, expose proxy exports, and guard role lookups against malformed matrices so Vitest/Vite can resolve the RBAC layer without parse failures.
+- Renamed admin user profile associations in `backend-nodejs/src/services/adminUserService.js` (`adminUserProfile`) and refreshed all include aliases/column references to eliminate duplicate alias collisions during Sequelize initialisation.

@@ -1,12 +1,6 @@
 import crypto from 'crypto';
 import config from '../config/index.js';
-import {
-  CanonicalRoles,
-  Permissions,
-  ROLE_ALIASES,
-  normaliseRole,
-  toCanonicalRole
-} from '../constants/permissions.js';
+import * as permissionConstants from '../constants/permissions.js';
 import { PUBLIC_PERMISSIONS } from '../constants/rbacMatrix.js';
 import {
   getCachedRoleDefinition,
@@ -15,7 +9,18 @@ import {
   subscribeToRoleCache
 } from './rbacService.js';
 
-export { CanonicalRoles, Permissions } from '../constants/permissions.js';
+const {
+  CanonicalRoles,
+  Permissions,
+  ROLE_ALIASES,
+  normaliseRole,
+  toCanonicalRole
+} = permissionConstants;
+
+const EXPORTED_ROLES = CanonicalRoles;
+const EXPORTED_PERMISSIONS = Permissions;
+
+export { EXPORTED_ROLES as CanonicalRoles, EXPORTED_PERMISSIONS as Permissions };
 
 const ROLE_PERMISSIONS = new Map();
 

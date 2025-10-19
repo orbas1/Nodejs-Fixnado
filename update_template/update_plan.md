@@ -42,6 +42,10 @@ Version 1.00 transforms Fixnado into a fully production-ready marketplace platfo
 - **Chatwoot Integration**: OAuth/token setup, webhook ingestion, floating widget on web, inbox parity on mobile, and SLA analytics dashboards.
 - **User Experience**: Responsive cards, saved filters, follow/unfollow, urgency badges, spam detection feedback, and accessibility compliance.
 
+#### Progress update – 2 June 2024
+- Campaign manager creative, placement, and audience segment models refactored with shared enums, metadata hygiene, and association guards so advertising services can load in vitest without syntax failures.
+- `src/models/index.js` cleaned to remove duplicate imports/exports and expose advertising constants for downstream services/tests.
+
 ### 2.3 Marketplace Commerce & Persona Dashboards
 - **Commerce Engine**: Secure checkout with escrow, wallet funding, tax calculation, refunds, and contract generation for services, rentals, and materials.
 - **Inventory Management**: CRUD tooling for listings, availability calendars, logistics integrations, and shortage alerts.
@@ -53,6 +57,11 @@ Version 1.00 transforms Fixnado into a fully production-ready marketplace platfo
 - **Governance**: RBAC audits, GDPR tooling (DSAR portal, consent management, retention scheduler), incident response plans.
 - **Enablement Kits**: Onboarding guides, operational playbooks, partner decks, and release readiness evidence templates.
 - **Training**: Moderator/support curriculum, sandbox scenarios, and analytics walkthroughs.
+
+#### Progress update – 30 May 2024
+- Published refund policy, community guidelines, about Fixnado, and FAQ legal documents with acknowledgement metadata, governance audit trails, and release vault evidence.
+- Executed DSAR rehearsal (export, purge, SLA metrics), refund triage dry-run, and go-live deployment rehearsal; captured runbooks in `docs/compliance` and `docs/operations`.
+- Exposed legal document health, acknowledgement, and audience metadata via API to power compliance dashboards and acknowledgement sampling.
 
 ## 3. Execution Timeline
 | Week | Milestone | Key Outputs |

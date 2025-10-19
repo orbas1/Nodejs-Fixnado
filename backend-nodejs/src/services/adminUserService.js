@@ -113,12 +113,12 @@ async function ensureAdminProfiles() {
     include: [
       {
         model: AdminUserProfile,
-        as: 'adminProfile',
+        as: 'adminUserProfile',
         attributes: ['id'],
         required: false
       }
     ],
-    where: { '$adminProfile.id$': null },
+    where: { '$adminUserProfile.id$': null },
     limit: 250
   });
 
@@ -175,7 +175,7 @@ async function loadSessionMetrics(userIds = []) {
 }
 
 function presentUser(user, sessionMetrics) {
-  const profile = user.adminProfile;
+  const profile = user.adminUserProfile;
   const sessions = sessionMetrics.get(user.id) ?? { lastUsedAt: null, activeSessions: 0 };
   const safeUser = user.toSafeJSON();
 
@@ -226,7 +226,7 @@ export async function listAdminUsers({ search, status, role, page, pageSize } = 
 
   const includeProfile = {
     model: AdminUserProfile,
-    as: 'adminProfile',
+    as: 'adminUserProfile',
     required: Boolean(status),
     where: Object.keys(profileWhere).length ? profileWhere : undefined
   };
@@ -238,14 +238,14 @@ export async function listAdminUsers({ search, status, role, page, pageSize } = 
       sequelize.where(fn('LOWER', col('User.email')), { [Op.like]: wildcard }),
       sequelize.where(fn('LOWER', col('User.first_name')), { [Op.like]: wildcard }),
       sequelize.where(fn('LOWER', col('User.last_name')), { [Op.like]: wildcard }),
-      sequelize.where(fn('LOWER', col('adminProfile.display_name')), { [Op.like]: wildcard }),
-      sequelize.where(fn('LOWER', col('adminProfile.search_terms')), { [Op.like]: wildcard }),
-      sequelize.where(fn('LOWER', col('adminProfile.job_title')), { [Op.like]: wildcard }),
-      sequelize.where(fn('LOWER', col('adminProfile.department')), { [Op.like]: wildcard }),
+      sequelize.where(fn('LOWER', col('adminUserProfile.display_name')), { [Op.like]: wildcard }),
+      sequelize.where(fn('LOWER', col('adminUserProfile.search_terms')), { [Op.like]: wildcard }),
+      sequelize.where(fn('LOWER', col('adminUserProfile.job_title')), { [Op.like]: wildcard }),
+      sequelize.where(fn('LOWER', col('adminUserProfile.department')), { [Op.like]: wildcard }),
       sequelize.where(
         fn(
           'LOWER',
-          fn('COALESCE', fn('array_to_string', col('adminProfile.labels'), ' '), '')
+          fn('COALESCE', fn('array_to_string', col('adminUserProfile.labels'), ' '), '')
         ),
         { [Op.like]: wildcard }
       )
@@ -273,7 +273,7 @@ export async function listAdminUsers({ search, status, role, page, pageSize } = 
   }
 
   if (!status && !searchValue) {
-    const missingProfiles = rows.filter((user) => !user.adminProfile);
+    const missingProfiles = rows.filter((user) => !user.adminUserProfile);
     if (missingProfiles.length) {
       await AdminUserProfile.bulkCreate(
         missingProfiles.map((user) => ({
@@ -291,7 +291,7 @@ export async function listAdminUsers({ search, status, role, page, pageSize } = 
       );
 
       await Promise.all(
-        missingProfiles.map((user) => user.reload({ include: [{ model: AdminUserProfile, as: 'adminProfile' }] }))
+        missingProfiles.map((user) => user.reload({ include: [{ model: AdminUserProfile, as: 'adminUserProfile' }] }))
       );
     }
   }
@@ -415,7 +415,7 @@ export async function createAdminUser({
 
     const reloaded = await User.findByPk(user.id, {
       include: [
-        { model: AdminUserProfile, as: 'adminProfile' },
+        { model: AdminUserProfile, as: 'adminUserProfile' },
         { model: Region, as: 'region', attributes: ['id', 'name'] }
       ]
     });
@@ -430,7 +430,7 @@ export async function createAdminUser({
 
 export async function updateAdminUser(userId, updates = {}) {
   const user = await User.findByPk(userId, {
-    include: [{ model: AdminUserProfile, as: 'adminProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
+    include: [{ model: AdminUserProfile, as: 'adminUserProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
   });
 
   if (!user) {
@@ -461,7 +461,7 @@ export async function updateAdminUser(userId, updates = {}) {
     await transaction.commit();
 
     await user.reload({
-      include: [{ model: AdminUserProfile, as: 'adminProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
+      include: [{ model: AdminUserProfile, as: 'adminUserProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
     });
 
     return presentUser(user, await loadSessionMetrics([user.id]));
@@ -510,7 +510,7 @@ export async function updateAdminUserProfile(userId, updates = {}) {
     await transaction.commit();
 
     const refreshed = await User.findByPk(userId, {
-      include: [{ model: AdminUserProfile, as: 'adminProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
+      include: [{ model: AdminUserProfile, as: 'adminUserProfile' }, { model: Region, as: 'region', attributes: ['id', 'name'] }]
     });
 
     return presentUser(refreshed, await loadSessionMetrics([userId]));

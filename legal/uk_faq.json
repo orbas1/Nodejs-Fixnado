@@ -1,0 +1,75 @@
+{
+  "documentTitle": "Fixnado Frequently Asked Questions (United Kingdom)",
+  "owner": "Blackwellen Ltd Customer Experience",
+  "effectiveDate": "2024-05-30",
+  "lastUpdated": "2024-05-30",
+  "version": "1.0.0",
+  "jurisdiction": "United Kingdom",
+  "contact": {
+    "email": "support@fixnado.com",
+    "telephone": "+44 (0)20 4525 8900",
+    "postal": "Customer Experience, Blackwellen Ltd, 14 Glasshouse Yard, London, EC1A 4JN, United Kingdom"
+  },
+  "sections": [
+    {
+      "id": "providers",
+      "title": "Providers and crew",
+      "summary": "Common questions raised by providers and field crews.",
+      "qa": [
+        {
+          "question": "How long does onboarding take?",
+          "answer": "Most providers complete onboarding within five Business Days. You must submit company documents, proof of insurance, references, and consent to background checks. Crew members upload ID, skills matrices, and certifications. Progress can be tracked in the Provider Portal."
+        },
+        {
+          "question": "How are payouts scheduled?",
+          "answer": "Completed milestones move into escrow verification for up to two Business Days. Once approved, payouts are released on the next settlement run. Providers can configure payout calendars and view statements from the Finance dashboard or via API."
+        }
+      ]
+    },
+    {
+      "id": "clients",
+      "title": "Clients and enterprises",
+      "summary": "FAQs for organisations booking Fixnado services.",
+      "qa": [
+        {
+          "question": "Can we integrate Fixnado with our procurement system?",
+          "answer": "Yes. Fixnado offers REST APIs, webhook callbacks, and CSV exports for procurement, finance, and analytics workflows. Enterprise customers can provision SSO, SCIM, and automated invoice delivery via the Enterprise Hub."
+        },
+        {
+          "question": "How do we monitor service quality?",
+          "answer": "Dashboards expose SLA compliance, first-time fix rates, customer satisfaction, and cost trends. You can drill into jobs, crew performance, and region-level telemetry. Alerts notify stakeholders of SLA breaches or safety incidents."
+        }
+      ]
+    },
+    {
+      "id": "support",
+      "title": "Support and incident response",
+      "summary": "Answers about support coverage, incident escalation, and refunds.",
+      "qa": [
+        {
+          "question": "How do we raise urgent support cases?",
+          "answer": "Use the Chatwoot bubble inside the dashboard for 24/7 assistance. Enterprise accounts receive phone escalation lines and success manager contacts. Provide job references and impact details so we can prioritise appropriately."
+        },
+        {
+          "question": "What if a job goes wrong on-site?",
+          "answer": "Log an incident via the Support Centre or mobile app. Fixnado coordinates remediation, insurance, and customer communications. Serious events trigger our incident response playbook with executive oversight."
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "title": "Compliance and privacy",
+      "summary": "Information about legal policies, DSAR requests, and acknowledgements.",
+      "qa": [
+        {
+          "question": "Where can we find current policies?",
+          "answer": "Visit fixnado.com/legal to access terms, privacy, refund, guidelines, and FAQ documents. The admin legal console lists version history, acknowledgements, and scheduled reviews."
+        },
+        {
+          "question": "How do individuals exercise privacy rights?",
+          "answer": "Data subjects can submit requests under Settings → Legal & Privacy or email privacy@fixnado.com. We verify identity, assign a case owner, and complete requests within 30 days, providing exports via secure download when required."
+        }
+      ]
+    }
+  ]
+}

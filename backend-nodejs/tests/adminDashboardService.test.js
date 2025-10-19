@@ -18,10 +18,10 @@ const {
   InventoryAlert,
   AnalyticsPipelineRun,
   Post,
-  CustomJobBid
+  CustomJobBid,
   OperationsQueueBoard,
-  OperationsQueueUpdate
-  AdminAuditEvent
+  OperationsQueueUpdate,
+  AdminAuditEvent,
   SecuritySignalConfig,
   SecurityAutomationTask,
   TelemetryConnector

@@ -20,3 +20,4 @@
 - `backend-nodejs/src/controllers/commerceController.js`
 - `backend-nodejs/src/routes/commerceRoutes.js`
 - `backend-nodejs/src/services/__tests__/commerceEngineService.test.js`
+- `backend-nodejs/src/database/migrations/20250605000000-add-launch-readiness-legal-documents.js`

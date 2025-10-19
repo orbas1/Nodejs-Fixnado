@@ -85,4 +85,77 @@ describe('legalDocumentService', () => {
 
     await expect(deleteLegalDocument({ slug: created.slug })).rejects.toThrow('Cannot delete published document');
   });
+
+  it('exposes acknowledgement, audience, and health metadata on published documents', async () => {
+    const created = await createLegalDocument({
+      payload: {
+        title: 'Community Guidelines',
+        slug: 'community-guidelines',
+        summary: 'Rules for respectful participation.',
+        acknowledgement: {
+          required: true,
+          frequency: 'Annual attestation',
+          channel: 'Compliance LMS',
+          dueWithinHours: 72,
+          reminderCadence: 'Weekly until completed',
+          evidencePath: 's3://compliance-artifacts/guidelines/attestations/'
+        },
+        audience: [
+          { id: 'providers', label: 'Providers', description: 'Business accounts publishing listings', mandatory: true },
+          'Servicemen'
+        ],
+        governance: {
+          policyStore: 'https://governance.fixnado.com/policies/community-guidelines.pdf',
+          nextReviewDue: '2024-12-01',
+          reviewOwners: ['Legal Operations', { label: 'Trust & Safety Board', mandatory: true }],
+          escalationContacts: [
+            {
+              id: 'incident-response',
+              label: 'Incident response duty officer',
+              description: 'Escalate critical moderation issues'
+            }
+          ],
+          auditTrail: [
+            {
+              id: 'moderation-fire-drill',
+              label: 'Moderation fire drill playback',
+              url: 'https://governance.fixnado.com/audits/moderation-fire-drill',
+              capturedAt: '2024-04-12T09:00:00Z'
+            }
+          ]
+        },
+        tags: ['community', 'moderation', 'trust-safety'],
+        sections: [
+          {
+            id: 'conduct',
+            title: 'Professional conduct',
+            body: [
+              'Treat all clients, crew members, and partners with courtesy. Abusive behaviour results in suspension.',
+              'Publish accurate availability, qualifications, and pricing. Misrepresentation is grounds for removal.'
+            ]
+          }
+        ]
+      },
+      actor: 'compliance.manager@fixnado.test'
+    });
+
+    const draft = created.draftVersion;
+    expect(draft.content.metadata.audience).toHaveLength(2);
+    expect(draft.content.metadata.acknowledgement.required).toBe(true);
+    expect(draft.content.metadata.tags).toEqual(['community', 'moderation', 'trust-safety']);
+
+    await publishLegalDocumentVersion({
+      slug: created.slug,
+      versionId: draft.id,
+      effectiveAt: '2024-05-30T10:00:00Z',
+      actor: 'compliance.director@fixnado.test'
+    });
+
+    const detail = await getLegalDocumentDetail(created.slug);
+    expect(detail.statusLabel).toBe('Published v1');
+    expect(detail.health.lastPublished).toBe('2024-05-30T10:00:00.000Z');
+    expect(detail.acknowledgement).toMatchObject({ required: true, channel: 'Compliance LMS' });
+    expect(detail.audience.map((entry) => entry.id)).toEqual(['providers', 'servicemen']);
+    expect(detail.metadata.tags).toEqual(['community', 'moderation', 'trust-safety']);
+  });
 });

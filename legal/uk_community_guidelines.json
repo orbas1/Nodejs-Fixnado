@@ -1,0 +1,107 @@
+{
+  "documentTitle": "Fixnado Community Guidelines (United Kingdom)",
+  "owner": "Blackwellen Ltd Trust & Safety",
+  "effectiveDate": "2024-05-30",
+  "lastUpdated": "2024-05-30",
+  "version": "1.0.0",
+  "jurisdiction": "United Kingdom",
+  "contact": {
+    "email": "trust@fixnado.com",
+    "telephone": "+44 (0)20 8133 9090",
+    "postal": "Trust & Safety Office, Blackwellen Ltd, 14 Glasshouse Yard, London, EC1A 4JN, United Kingdom"
+  },
+  "sections": [
+    {
+      "id": "conduct",
+      "title": "Professional conduct",
+      "summary": "Expectations for respectful collaboration across the Fixnado marketplace.",
+      "clauses": [
+        {
+          "heading": "Respect and inclusion",
+          "content": [
+            "Treat every client, crew member, supplier, and support agent with courtesy. Discrimination, harassment, intimidation, or hate speech is prohibited on all Fixnado surfaces including chat, timeline hub, proposals, and support tickets.",
+            "Crew must carry photo identification, wear appropriate PPE, and follow local safeguarding rules. Allegations of harassment or unsafe conduct trigger immediate investigation and may involve law enforcement." 
+          ]
+        },
+        {
+          "heading": "Integrity of listings and proposals",
+          "content": [
+            "Publish accurate information about qualifications, availability, pricing, and service coverage. Misrepresentation, falsified credentials, or re-selling of accounts is treated as fraud.",
+            "Marketing claims must comply with CAP Codes and relevant advertising regulations. Sponsored posts and ads must follow the Fixnado ads policy and identify promotional content clearly." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safety",
+      "title": "Safety and escalation",
+      "summary": "Protecting people, property, and data during service delivery.",
+      "clauses": [
+        {
+          "heading": "Site safety",
+          "content": [
+            "Log all incidents, near misses, or hazards via the Safety Register within four hours. Emergency incidents must be escalated to the incident hotline immediately.",
+            "Complete dynamic risk assessments before work begins, especially where vulnerable individuals are present. Follow industry best practice, building regulations, and manufacturer instructions." 
+          ]
+        },
+        {
+          "heading": "Data protection",
+          "content": [
+            "Use Fixnado systems for legitimate business purposes only. Never share login credentials or attempt to bypass security controls.",
+            "Only collect personal data necessary for delivering the contracted service. Store information in Fixnado systems where audit logs and retention controls apply." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moderation",
+      "title": "Content moderation",
+      "summary": "How Fixnado monitors and enforces policy compliance across the platform.",
+      "clauses": [
+        {
+          "heading": "Moderation workflows",
+          "content": [
+            "Timeline hub posts, storefront content, and chat attachments are scanned for malware, explicit imagery, and prohibited content. Moderators review flagged items within SLA targets defined by severity.",
+            "Repeat violations or coordinated abuse may lead to temporary suspension while investigations take place. Fixnado documents every moderation action in the compliance ledger for audit readiness." 
+          ]
+        },
+        {
+          "heading": "Appeals",
+          "content": [
+            "If you believe content was removed in error, submit an appeal within 14 days via trust@fixnado.com. Appeals must include context, corrective actions, and evidence supporting reinstatement.",
+            "The Trust & Safety appeals panel reviews submissions weekly. Decisions are communicated with the rationale and any remediation steps required before reinstatement." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enforcement",
+      "title": "Enforcement measures",
+      "summary": "Range of actions Fixnado may take when policies are breached.",
+      "clauses": [
+        {
+          "heading": "Graduated responses",
+          "content": [
+            "Policy breaches may result in warnings, temporary feature limits, suspension of payouts, or permanent removal from the marketplace depending on severity and history.",
+            "Fixnado notifies relevant stakeholders when enforcement impacts active bookings to ensure continuity for clients." 
+          ]
+        },
+        {
+          "heading": "Reporting obligations",
+          "content": [
+            "Fixnado cooperates with regulators and law enforcement where required by law or contractual commitments. Criminal activity, safeguarding concerns, or threats to life are reported immediately.",
+            "Providers must maintain insurance and compliance evidence. Failure to provide documents on request may trigger suspension until remedied." 
+          ]
+        }
+      ]
+    }
+  ],
+  "acknowledgement": {
+    "statement": "All marketplace participants must acknowledge these guidelines before publishing listings or accepting work.",
+    "requiredActions": [
+      "Complete the annual Trust & Safety training module.",
+      "Maintain up-to-date safeguarding and insurance documentation.",
+      "Report policy breaches or unsafe behaviour via the incident hotline or Chatwoot support." 
+    ]
+  }
+}

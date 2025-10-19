@@ -20,6 +20,12 @@ export async function getPublishedLegalDocument(req, res, next) {
       contactPhone: document.contactPhone,
       contactUrl: document.contactUrl,
       reviewCadence: document.reviewCadence,
+      statusLabel: document.statusLabel,
+      health: document.health,
+      acknowledgement: document.acknowledgement,
+      audience: document.audience,
+      governance: document.governance,
+      metadata: document.metadata,
       version: {
         id: currentVersion.id,
         version: currentVersion.version,

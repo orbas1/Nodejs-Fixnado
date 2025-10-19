@@ -85,6 +85,12 @@ Version 1.00 repositions Fixnado as an enterprise marketplace. The plan below se
 | **QA** | Verify policy publication, acknowledgement logging, DSAR lifecycle, evidence attachments, README/full guide accuracy, and documentation links. |
 | **Operations** | Coordinate legal review, GDPR audits, training sessions, partner enablement, and release communications; maintain evidence vault and scorecards. |
 
+> **Status 2024-05-30:** Refund policy, community guidelines, about Fixnado, and FAQ documents published with acknowledgement tracking; DSAR export workflow, purge jobs, and go-live rehearsal executed with evidence stored in the release vault.
+
+> **Status 2024-06-02:** Advertising creative, placement, and audience segment models cleaned for production—duplicate imports removed, enums/indexes enforced, metadata sanitised, and associations guarded to support campaign insights and vitest coverage.
+
+> **Status 2024-06-03:** RBAC import crashes mitigated by namespace-loading permissions, cleaning the RBAC matrix syntax, and renaming admin/tax filing associations to avoid Sequelize alias conflicts; legacy BYOK fixtures remain under investigation.
+
 ## 3. Sequencing & Dependencies
 1. **Preparation (Week 0–1)**
    - Audit repository for learner/instructor remnants; remove or rename assets.

@@ -1,0 +1,114 @@
+{
+  "documentTitle": "Fixnado Refund Policy (United Kingdom)",
+  "owner": "Blackwellen Ltd Finance & Compliance",
+  "effectiveDate": "2024-05-30",
+  "lastUpdated": "2024-05-30",
+  "version": "1.0.0",
+  "jurisdiction": "United Kingdom",
+  "contact": {
+    "email": "refunds@fixnado.com",
+    "telephone": "+44 (0)20 8004 3120",
+    "postal": "Refund Operations, Blackwellen Ltd, 14 Glasshouse Yard, London, EC1A 4JN, United Kingdom"
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Purpose and scope",
+      "summary": "Explains when customers may request a refund or partial credit for Fixnado marketplace transactions.",
+      "clauses": [
+        {
+          "heading": "Policy overview",
+          "content": [
+            "This Refund Policy applies to all bookings, rentals, and material purchases completed through the Fixnado platform by customers based in the United Kingdom. It complements statutory consumer rights and any bespoke commercial agreements negotiated with Blackwellen Ltd.",
+            "Fixnado operates an escrow and milestone payment model. Refund eligibility depends on work completed, remediation attempts, and evidence supplied by the parties. The Finance Operations team manages refund adjudication and settlement." 
+          ]
+        },
+        {
+          "heading": "Evidence-based decisions",
+          "content": [
+            "Refund outcomes are determined using inspection reports, photographs, conversation transcripts, telemetry data, and provider responses. Customers must submit requests within 14 calendar days of the affected milestone unless a longer statutory period applies.",
+            "Where remediation is possible, providers are given a reasonable opportunity to correct the issue before a refund is authorised. Fixnado may appoint an independent assessor for disputes above £5,000 or where safety concerns exist." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "process",
+      "title": "Request process",
+      "summary": "Step-by-step instructions for raising and tracking refund requests.",
+      "clauses": [
+        {
+          "heading": "Submitting a request",
+          "content": [
+            "Customers should initiate refund requests from the Finance dashboard or by emailing refunds@fixnado.com. Requests must include the order reference, affected milestones, supporting evidence, and preferred outcome (remediation, partial refund, or full refund).",
+            "Fixnado acknowledges requests within 24 hours and assigns a refund specialist who remains the customer’s point of contact. Status updates are provided at least every two Business Days until the case is resolved." 
+          ],
+          "bullets": {
+            "style": "decimal",
+            "items": [
+              "Upload high-resolution evidence (photos, inspection results, diagnostic logs).",
+              "Confirm whether on-site access is still available for remedial work.",
+              "State any deadlines linked to regulatory obligations or customer commitments." 
+            ]
+          }
+        },
+        {
+          "heading": "Assessment timeline",
+          "content": [
+            "Simple claims involving missed appointments or administrative errors are typically resolved within two Business Days. Complex matters that require third-party input, insurance liaison, or technical investigation may take up to 10 Business Days.",
+            "Where the delay is caused by a provider’s lack of response, Fixnado may temporarily suspend payouts or reassign the job. Customers are notified of escalations and given options to continue with alternative providers." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "outcomes",
+      "title": "Possible outcomes",
+      "summary": "The forms of redress that Fixnado may offer once an investigation concludes.",
+      "clauses": [
+        {
+          "heading": "Refund types",
+          "content": [
+            "Approved claims may result in full refunds, partial refunds, account credits, or additional works funded by Fixnado. Cash refunds are processed to the original payment method whenever possible and otherwise via bank transfer.",
+            "Where the customer has already received materials or benefitted from partial services, Fixnado may deduct the value of successful milestones before issuing a refund." 
+          ]
+        },
+        {
+          "heading": "Non-refundable situations",
+          "content": [
+            "Custom-fabricated materials, specialist plant hire, or statutory inspection fees are non-refundable unless the item is defective or the supplier fails to deliver. Late cancellations inside 24 hours of the scheduled start time may incur restocking or mobilisation charges.",
+            "Accounts that repeatedly submit fraudulent or unsubstantiated claims risk suspension, withheld payouts, and reporting to payment partners or regulators." 
+          ]
+        }
+      ]
+    },
+    {
+      "id": "escalation",
+      "title": "Escalation and complaints",
+      "summary": "How to escalate refund decisions or lodge complaints.",
+      "clauses": [
+        {
+          "heading": "Appeal process",
+          "content": [
+            "Customers may appeal refund decisions within 14 days by replying to the original case thread or emailing compliance@fixnado.com with new evidence. Appeals are reviewed by the Finance Director and Trust & Safety Lead within five Business Days.",
+            "If an appeal remains unresolved, customers can request independent mediation through the Centre for Effective Dispute Resolution (CEDR) or pursue statutory remedies under UK consumer law." 
+          ]
+        },
+        {
+          "heading": "Complaints to regulators",
+          "content": [
+            "Consumer customers can escalate unresolved complaints to the UK Financial Ombudsman Service when the dispute concerns regulated payment services. Enterprise customers should reference their master services agreement for escalation contacts." 
+          ]
+        }
+      ]
+    }
+  ],
+  "acknowledgement": {
+    "statement": "Finance and support staff must acknowledge this policy during onboarding and annually thereafter.",
+    "requiredActions": [
+      "Complete the refund triage certification in the Compliance LMS.",
+      "Store audit evidence for every refund decision in the finance knowledge base.",
+      "Escalate disputed claims exceeding £10,000 to the Risk & Compliance Committee." 
+    ]
+  }
+}
