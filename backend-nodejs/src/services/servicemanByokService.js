@@ -464,10 +464,11 @@ export async function deleteServicemanByokConnector({ servicemanId, connectorId,
 
     await recordAuditEvent({
       profileId: profile.id,
-      connectorId,
+      connectorId: null,
       actorId,
       action: 'connector.deleted',
       metadata: {
+        deletedConnectorId: connectorId,
         provider: connectorSummary?.provider ?? null,
         environment: connectorSummary?.environment ?? null
       },

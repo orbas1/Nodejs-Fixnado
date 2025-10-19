@@ -1,18 +1,40 @@
+import { Model } from 'sequelize';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockServiceZone = { findAll: vi.fn(), findOne: vi.fn() };
-const mockPost = {
-  findAll: vi.fn(),
-  findAndCountAll: vi.fn(),
-  findByPk: vi.fn(),
-  findOne: vi.fn(),
-  create: vi.fn()
-};
-const mockCustomJobBid = { findAll: vi.fn(), findOne: vi.fn(), findByPk: vi.fn() };
-const mockCustomJobReport = { findAll: vi.fn(), create: vi.fn(), findOne: vi.fn() };
-const mockCustomJobInvitation = { findAll: vi.fn(), create: vi.fn(), findOne: vi.fn() };
-const mockProviderContact = { findAll: vi.fn() };
-const mockUserModel = { findByPk: vi.fn() };
+const {
+  mockServiceZone,
+  mockPost,
+  mockCustomJobBid,
+  mockCustomJobReport,
+  mockProviderContact,
+  mockUserModel
+} = vi.hoisted(() => ({
+  mockServiceZone: { findAll: vi.fn(), findOne: vi.fn() },
+  mockPost: {
+    findAll: vi.fn(),
+    findAndCountAll: vi.fn(),
+    findByPk: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn()
+  },
+  mockCustomJobBid: { findAll: vi.fn(), findOne: vi.fn(), findByPk: vi.fn() },
+  mockCustomJobReport: { findAll: vi.fn(), create: vi.fn(), findOne: vi.fn() },
+  mockProviderContact: { findAll: vi.fn() },
+  mockUserModel: { findByPk: vi.fn() }
+}));
+
+const { mockCustomJobInvitation, MockCustomJobInvitationModel } = vi.hoisted(() => {
+  const handlers = { findAll: vi.fn(), create: vi.fn(), findOne: vi.fn() };
+
+  class MockCustomJobInvitationModel extends Model {}
+
+  Object.assign(MockCustomJobInvitationModel, handlers);
+
+  return {
+    mockCustomJobInvitation: handlers,
+    MockCustomJobInvitationModel
+  };
+});
 
 vi.mock('../models/index.js', () => ({
   __esModule: true,
@@ -27,12 +49,14 @@ vi.mock('../models/index.js', () => ({
 
 vi.mock('../../models/customJobInvitation.js', () => ({
   __esModule: true,
-  default: mockCustomJobInvitation,
+  default: MockCustomJobInvitationModel,
   INVITATION_STATUSES: ['pending', 'accepted', 'declined', 'cancelled'],
   INVITATION_TARGETS: ['provider', 'serviceman', 'user']
 }));
 
-const resolveCompanyForActorMock = vi.fn();
+const { resolveCompanyForActorMock } = vi.hoisted(() => ({
+  resolveCompanyForActorMock: vi.fn()
+}));
 vi.mock('../panelService.js', () => ({
   __esModule: true,
   resolveCompanyForActor: resolveCompanyForActorMock
