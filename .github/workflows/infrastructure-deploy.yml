@@ -1,0 +1,277 @@
+name: Terraform Deployments
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/infrastructure-deploy.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/terraform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        type: choice
+        options:
+          - staging
+          - production
+        required: true
+      refresh_state:
+        description: 'Refresh remote state before planning/applying'
+        type: boolean
+        default: true
+        required: false
+      auto_approve:
+        description: 'Apply without interactive approval (set to false for dry-run plan only)'
+        type: boolean
+        default: false
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_PLUGIN_CACHE_DIR: .terraform.d/plugin-cache
+
+jobs:
+  terraform-plan:
+    name: Plan ${{ matrix.environment }}
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - staging
+          - production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+          terraform_wrapper: false
+
+      - name: Create plugin cache
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Derive AWS region
+        id: tfvars
+        run: |
+          env_file="infrastructure/terraform/environments/${{ matrix.environment }}.tfvars"
+          region=$(awk -F'=' '/^\s*aws_region/ { gsub(/"|\s/ , "", $2); print $2; exit }' "$env_file")
+          if [ -z "$region" ]; then
+            echo "Unable to determine aws_region from $env_file" >&2
+            exit 1
+          fi
+          echo "region=$region" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ matrix.environment == 'production' && secrets.AWS_ROLE_TO_ASSUME_PRODUCTION || secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          aws-region: ${{ steps.tfvars.outputs.region }}
+          role-session-name: TerraformPlan${{ matrix.environment == 'production' && 'Prod' || 'Staging' }}
+
+      - name: Prepare backend configuration
+        run: |
+          bucket=${{ matrix.environment == 'production' && secrets.TF_STATE_BUCKET_PRODUCTION || secrets.TF_STATE_BUCKET_STAGING }}
+          lock_table=${{ matrix.environment == 'production' && secrets.TF_LOCK_TABLE_PRODUCTION || secrets.TF_LOCK_TABLE_STAGING }}
+          if [ -z "$bucket" ] || [ -z "$lock_table" ]; then
+            echo "Missing backend bucket or lock table secret for ${{ matrix.environment }}" >&2
+            exit 1
+          fi
+          cat <<BACKEND > backend.hcl
+          bucket         = "${bucket}"
+          key            = "env/${{ matrix.environment }}/terraform.tfstate"
+          region         = "${{ steps.tfvars.outputs.region }}"
+          dynamodb_table = "${lock_table}"
+          encrypt        = true
+          BACKEND
+
+      - name: Initialise Terraform
+        working-directory: infrastructure/terraform
+        run: terraform init -backend-config=../backend.hcl
+
+      - name: Terraform fmt
+        working-directory: infrastructure/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Validate Terraform configuration
+        working-directory: infrastructure/terraform
+        run: terraform validate
+
+      - name: Terraform plan (${{ matrix.environment }})
+        id: plan
+        working-directory: infrastructure/terraform
+        run: |
+          refresh_flag=${{ github.event_name == 'push' && 'true' || 'false' }}
+          if [ "$refresh_flag" = "true" ]; then
+            REFRESH_ARG="-refresh=true"
+          else
+            REFRESH_ARG=""
+          fi
+          terraform plan ${REFRESH_ARG} \
+            -var-file="environments/${{ matrix.environment }}.tfvars" \
+            -out="plan-${{ matrix.environment }}.tfplan"
+
+      - name: Capture plan summary
+        id: plan_summary
+        if: always()
+        working-directory: infrastructure/terraform
+        run: |
+          if [ ! -f "plan-${{ matrix.environment }}.tfplan" ]; then
+            echo "Plan artefact missing, skipping summary." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          terraform show -json "plan-${{ matrix.environment }}.tfplan" > "plan-${{ matrix.environment }}.json"
+          added=$(jq '[.resource_changes[]? | select(.change.actions[] == "create")] | length' "plan-${{ matrix.environment }}.json")
+          changed=$(jq '[.resource_changes[]? | select((.change.actions | index("update")) or ((.change.actions | index("create")) and (.change.actions | index("delete"))))] | length' "plan-${{ matrix.environment }}.json")
+          destroyed=$(jq '[.resource_changes[]? | select(.change.actions[] == "delete" and (.change.actions | length) == 1)] | length' "plan-${{ matrix.environment }}.json")
+          echo "added=$added" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "destroyed=$destroyed" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Terraform plan (${{ matrix.environment }})";
+            printf '* Added resources: **%s**\n' "$added";
+            printf '* Changed resources: **%s**\n' "$changed";
+            printf '* Destroyed resources: **%s**\n' "$destroyed";
+            echo '';
+            echo '\`\`\`';
+            terraform show -no-color "plan-${{ matrix.environment }}.tfplan" | sed 's/^/    /';
+            echo '\`\`\`';
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload plan artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.environment }}
+          path: |
+            infrastructure/terraform/plan-${{ matrix.environment }}.tfplan
+            infrastructure/terraform/plan-${{ matrix.environment }}.json
+
+      - name: Comment on pull request
+        if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            Terraform plan for **${{ matrix.environment }}** completed.
+            * Added: `${{ steps.plan_summary.outputs.added }}`
+            * Changed: `${{ steps.plan_summary.outputs.changed }}`
+            * Destroyed: `${{ steps.plan_summary.outputs.destroyed }}`
+          allow-repeats: false
+
+  terraform-apply:
+    name: Apply ${{ github.event.inputs.environment }}
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment == 'production' && 'production' || 'staging' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+          terraform_wrapper: false
+
+      - name: Create plugin cache
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Derive AWS region
+        id: tfvars
+        run: |
+          env_file="infrastructure/terraform/environments/${{ github.event.inputs.environment }}.tfvars"
+          region=$(awk -F'=' '/^\s*aws_region/ { gsub(/"|\s/ , "", $2); print $2; exit }' "$env_file")
+          if [ -z "$region" ]; then
+            echo "Unable to determine aws_region from $env_file" >&2
+            exit 1
+          fi
+          echo "region=$region" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ github.event.inputs.environment == 'production' && secrets.AWS_ROLE_TO_ASSUME_PRODUCTION || secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          aws-region: ${{ steps.tfvars.outputs.region }}
+          role-session-name: TerraformApply${{ github.event.inputs.environment == 'production' && 'Prod' || 'Staging' }}
+
+      - name: Prepare backend configuration
+        run: |
+          bucket=${{ github.event.inputs.environment == 'production' && secrets.TF_STATE_BUCKET_PRODUCTION || secrets.TF_STATE_BUCKET_STAGING }}
+          lock_table=${{ github.event.inputs.environment == 'production' && secrets.TF_LOCK_TABLE_PRODUCTION || secrets.TF_LOCK_TABLE_STAGING }}
+          cat <<BACKEND > backend.hcl
+          bucket         = "${bucket}"
+          key            = "env/${{ github.event.inputs.environment }}/terraform.tfstate"
+          region         = "${{ steps.tfvars.outputs.region }}"
+          dynamodb_table = "${lock_table}"
+          encrypt        = true
+          BACKEND
+
+      - name: Initialise Terraform
+        working-directory: infrastructure/terraform
+        run: terraform init -backend-config=../backend.hcl
+
+      - name: Terraform fmt
+        working-directory: infrastructure/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Refresh state
+        if: github.event.inputs.refresh_state == 'true'
+        working-directory: infrastructure/terraform
+        run: terraform refresh -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
+
+      - name: Terraform plan
+        id: plan
+        working-directory: infrastructure/terraform
+        run: |
+          terraform plan -var-file="environments/${{ github.event.inputs.environment }}.tfvars" -out="apply.tfplan"
+
+      - name: Terraform apply
+        if: github.event.inputs.auto_approve == 'true'
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve "apply.tfplan"
+
+      - name: Terraform apply (manual approval required)
+        if: github.event.inputs.auto_approve != 'true'
+        working-directory: infrastructure/terraform
+        run: |
+          echo "Manual approval requested; skipping automatic apply." >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the plan artefact terraform-apply-${{ github.event.inputs.environment }}/apply.tfplan and execute 'terraform apply apply.tfplan' from a workstation with approved credentials." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show outputs
+        if: success() && github.event.inputs.auto_approve == 'true'
+        id: outputs
+        working-directory: infrastructure/terraform
+        run: terraform output -json > terraform-outputs.json
+
+      - name: Publish job summary
+        if: always()
+        run: |
+          {
+            echo "### Terraform apply – ${{ github.event.inputs.environment }}";
+            echo '';
+            if [ -f infrastructure/terraform/terraform-outputs.json ]; then
+              echo '\`\`\`json';
+              cat infrastructure/terraform/terraform-outputs.json;
+              echo '\`\`\`';
+            else
+              echo '_No outputs were produced_';
+            fi;
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload stateful artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-apply-${{ github.event.inputs.environment }}
+          path: |
+            infrastructure/terraform/apply.tfplan
+            infrastructure/terraform/terraform-outputs.json

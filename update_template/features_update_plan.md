@@ -25,6 +25,8 @@ Version 1.00 repositions Fixnado as an enterprise marketplace. The plan below se
 | **QA** | Build CI pipelines for unit, integration, load, stress, usage, security, CRUD, timeline hub, AI, login/registration, dashboard, mobile, zone, commerce tests with gating. |
 | **Operations** | Draft release runbooks, rollback drills, chaos playbooks, and escalation ladders; schedule rehearsal windows. |
 
+> **Status 2024-05-16:** CI/CD infrastructure delivered (GitHub Actions Terraform pipeline, CodeDeploy blue/green topology, secrets rotation CLI). Focus shifts to database migration automation and readiness dashboards in UT-003.
+
 ### Pillar B – Timeline Hub & Support
 | Track | Actions |
 | --- | --- |

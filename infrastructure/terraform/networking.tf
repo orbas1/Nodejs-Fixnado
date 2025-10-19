@@ -33,6 +33,17 @@ resource "aws_security_group" "alb" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
+  dynamic "ingress" {
+    for_each = var.blue_green_validation_cidrs
+    content {
+      description = "CodeDeploy validation"
+      from_port   = var.test_listener_port
+      to_port     = var.test_listener_port
+      protocol    = "tcp"
+      cidr_blocks = [ingress.value]
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

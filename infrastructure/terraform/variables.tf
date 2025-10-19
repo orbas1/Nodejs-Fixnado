@@ -66,6 +66,12 @@ variable "container_port" {
   default     = 3000
 }
 
+variable "test_listener_port" {
+  description = "Port used by the validation listener that receives traffic during CodeDeploy blue/green bake times"
+  type        = number
+  default     = 9443
+}
+
 variable "desired_count" {
   description = "Number of ECS tasks to run"
   type        = number
@@ -114,4 +120,10 @@ variable "log_retention_in_days" {
 variable "alarm_email" {
   description = "Email address subscribed to critical CloudWatch alarms"
   type        = string
+}
+
+variable "blue_green_validation_cidrs" {
+  description = "CIDR blocks permitted to access the validation listener during blue/green deployments"
+  type        = list(string)
+  default     = []
 }
