@@ -1,0 +1,5 @@
+# Build automation updates (Version 1.00)
+
+- Added a Flutter smoke pipeline that generates missing Android/iOS shells with `flutter create`, compiles debug artefacts for both platforms, and executes the `app_shell_test` suite so plugin regressions are caught before release branches are cut.【F:.github/workflows/build-test-and-scan.yml†L64-L117】【F:flutter-phoneapp/test/app/app_shell_test.dart†L1-L120】
+- Documented Android and iOS native prerequisites—biometric entitlements, keystore configuration, CocoaPods toolchain setup—so engineers can reproduce the smoke builds locally without brittle, one-off environment tweaks.【F:docs/updates/1.00/user_phone_app_updates/android_updates.md†L1-L19】【F:docs/updates/1.00/user_phone_app_updates/ios_updates.md†L1-L15】
+- Locked every Flutter dependency with regenerated `pubspec.lock` metadata, allowing CI to verify hash integrity and fail fast if a developer forgets to commit solver updates alongside plugin upgrades.【F:flutter-phoneapp/pubspec.lock†L1-L477】【F:scripts/verify-lockfiles.mjs†L1-L89】

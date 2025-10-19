@@ -1,0 +1,42 @@
+{
+  "allowed": [
+    "MIT",
+    "APACHE-2.0",
+    "BSD-2-CLAUSE",
+    "BSD-3-CLAUSE",
+    "ISC",
+    "ZLIB",
+    "CC0-1.0",
+    "MPL-2.0",
+    "UNLICENSED"
+  ],
+  "review": {
+    "LGPL-2.1": "Linking obligations require legal review before release.",
+    "LGPL-3.0": "Updated LGPL terms must be reviewed before distribution.",
+    "GPL-2.0": "Copyleft reciprocity demands explicit legal approval.",
+    "GPL-3.0": "Copyleft reciprocity demands explicit legal approval.",
+    "AGPL-3.0": "Server-side copyleft requires leadership sign-off.",
+    "SEE-LICENSE-IN": "Manual inspection required because the package defers to an external license file.",
+    "UNKNOWN": "No license declared. Engineering must resolve before shipping."
+  },
+  "forbidden": {
+    "BUSL-1.1": "Business Source License cannot be used in production builds.",
+    "SSPL-1.0": "Server Side Public License is incompatible with our commercial terms.",
+    "ODbL-1.0": "Open Database License restrictions conflict with our data policy.",
+    "PROPRIETARY": "Unvetted proprietary licenses are not permitted."
+  },
+  "packageOverrides": {
+    "backend:fixnado-backend@0.1.0": {
+      "decision": "allow",
+      "reason": "Internal service code distributed under company terms."
+    },
+    "frontend:fixnado-frontend@0.1.0": {
+      "decision": "allow",
+      "reason": "Internal web client distributed under company terms."
+    },
+    "flutter:fixnado_mobile@0.1.0+1": {
+      "decision": "allow",
+      "reason": "Mobile client is proprietary to Fixnado."
+    }
+  }
+}
