@@ -1,52 +1,47 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-let listLiveFeedMock;
-let listMarketplaceFeedMock;
-let buildSidebarSuggestionsMock;
-let listLiveFeedAuditsMock;
-let getChatwootWidgetConfigurationMock;
-let campaignPlacementFindAllMock;
+const {
+  listLiveFeedMock,
+  listMarketplaceFeedMock,
+  buildSidebarSuggestionsMock,
+  listLiveFeedAuditsMock,
+  getChatwootWidgetConfigurationMock,
+  campaignPlacementFindAllMock
+} = vi.hoisted(() => ({
+  listLiveFeedMock: vi.fn(),
+  listMarketplaceFeedMock: vi.fn(),
+  buildSidebarSuggestionsMock: vi.fn(),
+  listLiveFeedAuditsMock: vi.fn(),
+  getChatwootWidgetConfigurationMock: vi.fn(),
+  campaignPlacementFindAllMock: vi.fn()
+}));
 
 let samplePosts;
 let sampleItems;
 let sampleAuditEvent;
 
-vi.mock('../feedService.js', () => {
-  listLiveFeedMock = vi.fn();
-  listMarketplaceFeedMock = vi.fn();
-  buildSidebarSuggestionsMock = vi.fn();
-  return {
-    listLiveFeed: (...args) => listLiveFeedMock(...args),
-    listMarketplaceFeed: (...args) => listMarketplaceFeedMock(...args),
-    buildSidebarSuggestions: (...args) => buildSidebarSuggestionsMock(...args)
-  };
-});
+vi.mock('../feedService.js', () => ({
+  listLiveFeed: (...args) => listLiveFeedMock(...args),
+  listMarketplaceFeed: (...args) => listMarketplaceFeedMock(...args),
+  buildSidebarSuggestions: (...args) => buildSidebarSuggestionsMock(...args)
+}));
 
-vi.mock('../liveFeedAuditService.js', () => {
-  listLiveFeedAuditsMock = vi.fn();
-  return {
-    listLiveFeedAudits: (...args) => listLiveFeedAuditsMock(...args),
-    updateLiveFeedAudit: vi.fn(),
-    createLiveFeedAuditNote: vi.fn()
-  };
-});
+vi.mock('../liveFeedAuditService.js', () => ({
+  listLiveFeedAudits: (...args) => listLiveFeedAuditsMock(...args),
+  updateLiveFeedAudit: vi.fn(),
+  createLiveFeedAuditNote: vi.fn()
+}));
 
-vi.mock('../chatwootService.js', () => {
-  getChatwootWidgetConfigurationMock = vi.fn();
-  return {
-    getChatwootWidgetConfiguration: (...args) => getChatwootWidgetConfigurationMock(...args)
-  };
-});
+vi.mock('../chatwootService.js', () => ({
+  getChatwootWidgetConfiguration: (...args) => getChatwootWidgetConfigurationMock(...args)
+}));
 
-vi.mock('../../models/index.js', () => {
-  campaignPlacementFindAllMock = vi.fn();
-  return {
-    CampaignPlacement: { findAll: (...args) => campaignPlacementFindAllMock(...args) },
-    CampaignFlight: {},
-    AdCampaign: {},
-    Company: {}
-  };
-});
+vi.mock('../../models/index.js', () => ({
+  CampaignPlacement: { findAll: (...args) => campaignPlacementFindAllMock(...args) },
+  CampaignFlight: {},
+  AdCampaign: {},
+  Company: {}
+}));
 
 import {
   getTimelineHubSnapshot,

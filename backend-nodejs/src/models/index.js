@@ -1228,9 +1228,6 @@ WalletAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Company.hasMany(WalletAccount, { foreignKey: 'companyId', as: 'walletAccounts' });
 WalletAccount.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
-WalletAccount.hasMany(WalletTransaction, { foreignKey: 'walletAccountId', as: 'transactions' });
-WalletTransaction.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
-
 WalletAccount.hasMany(WalletPaymentMethod, { foreignKey: 'walletAccountId', as: 'paymentMethods' });
 WalletPaymentMethod.belongsTo(WalletAccount, { foreignKey: 'walletAccountId', as: 'walletAccount' });
 
@@ -1244,14 +1241,8 @@ Booking.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 
 Booking.hasMany(BookingAssignment, { foreignKey: 'bookingId' });
 BookingAssignment.belongsTo(Booking, { foreignKey: 'bookingId' });
-User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'providerAssignments' });
-BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
-
 Booking.hasMany(ProviderCalendarEvent, { foreignKey: 'bookingId', as: 'calendarEvents' });
 ProviderCalendarEvent.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
-User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
-BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
-
 User.hasMany(BookingAssignment, { foreignKey: 'providerId', as: 'bookingAssignments' });
 BookingAssignment.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 
