@@ -27,6 +27,8 @@ Version 1.00 repositions Fixnado as an enterprise marketplace. The plan below se
 
 > **Status 2024-05-16:** CI/CD infrastructure delivered (GitHub Actions Terraform pipeline, CodeDeploy blue/green topology, secrets rotation CLI). Focus shifts to database migration automation and readiness dashboards in UT-003.
 
+> **Status 2024-05-20:** Marketplace taxonomy migrations, deterministic seeding, and checksum verification CLI shipped; release focus now pivots to timeline hub orchestration and Chatwoot integration readiness for UT-004.
+
 ### Pillar B – Timeline Hub & Support
 | Track | Actions |
 | --- | --- |

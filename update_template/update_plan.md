@@ -30,6 +30,11 @@ Version 1.00 transforms Fixnado into a fully production-ready marketplace platfo
 - `scripts/rotate-secrets.mjs` introduced to rotate JWT/encryption/database credentials with SHA-256 audit trails; rotation is now a standard pre-deployment gate alongside the new blue/green runbook.
 - Release evidence (plan artefacts, smoke reports, Grafana annotations) must be uploaded to the release vault referenced in `infrastructure/runbooks/blue-green-deployment.md` after every cutover.
 
+#### Progress update – 20 May 2024
+- Marketplace taxonomy domain/node/facet schema delivered through migration `20250601000000`, including service/rental/material assignment tables with referential integrity.
+- Deterministic taxonomy seeder (`20250601010000`) populated production-grade datasets with UUIDv5 identifiers, SHA-256 checksums, and default facet values for SLAs, sustainability, and logistics filters.
+- `backend-nodejs/scripts/taxonomy-integrity.mjs` published to validate seed checksums against the blueprint and output rollback SQL for rehearsal evidence; tracker updated to monitor nightly checksum pass rates.
+
 ### 2.2 Timeline Hub & Support Experience
 - **Feed Orchestration Service**: Backend services consolidating Timeline, Custom Job Feed, and Marketplace Feed with ranking/urgency scoring.
 - **Ad & Recommendation Placement**: Configurable inventory (stream, sidebar, dashboards) with pacing, targeting, and moderation policies.
