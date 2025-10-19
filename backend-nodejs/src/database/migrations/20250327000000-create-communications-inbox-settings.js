@@ -1,6 +1,15 @@
 const ESCALATION_TRIGGER_ENUM = 'enum_CommunicationsEscalationRule_trigger_type';
 const ESCALATION_TARGET_ENUM = 'enum_CommunicationsEscalationRule_target_type';
-const ALLOWED_ROLES = ['learner', 'instructor', 'moderator', 'support', 'admin'];
+const ALLOWED_ROLES = [
+  'user',
+  'serviceman',
+  'provider',
+  'crew',
+  'enterprise',
+  'moderator',
+  'support',
+  'admin'
+];
 
 export async function up({ context: queryInterface, Sequelize }) {
   await queryInterface.sequelize.transaction(async (transaction) => {

@@ -1,53 +1,51 @@
 # Version 1.00 Milestones
 
-## Milestone 1 – Harden Access & Stabilise Platform Core (Covers Tasks 1–2) — 0%
-- **Objective:** Remove critical security holes, restore deterministic boot behaviour, and make the database safe for further feature work.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L4-L135】
+## Milestone 1 – Scope Reset & Deployment Foundations (Tasks 1–2) — 0%
+- **Objective:** Replace the abandoned learning scope with marketplace-ready governance while automating deployments, configuration, observability, and security/compliance baselines.【F:docs/updates/1.00/features_update_plan.md†L3-L47】【F:docs/updates/1.00/update_task_list.md†L3-L88】
 - **Included Tasks & Subtasks:**
-  - Task 1 Subtasks 1–5 (auth hardening, router cleanup, telemetry endpoints, governance doc).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L4-L74】
-  - Task 2 Subtasks 1–5 (boot sequencing, readiness metrics, transactional migrations, retention policies, deterministic seeds).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L22-L58】
-- **Entry Criteria:** Security review sign-off on remediation plan, sandbox environments provisioned, decision log seeded.【F:update_template/new_feature_brief.md†L1-L70】
+  - Task 1 Subtasks 1.1–1.4 covering provisioning automation, configuration governance, observability, and rollback rehearsals.【F:docs/updates/1.00/update_task_list.md†L6-L44】
+  - Task 2 Subtasks 2.1–2.4 delivering RBAC, content safety, GDPR tooling, and legal acknowledgements.【F:docs/updates/1.00/update_task_list.md†L46-L88】
+- **Entry Criteria:** Governance artefacts drafted (risk register, decision log), environments available for automation, legal counsel engaged for policy drafting.【F:docs/updates/1.00/features_update_plan.md†L3-L17】
 - **Exit Criteria:**
-  - JWT/CORS/Helmet/rate limiting issues closed with automated tests and documentation updates.
-  - Telemetry ingestion operational with sample events from web/mobile clients.
-  - Readiness/health endpoints export structured metrics consumable by monitoring stack.
-  - Finance/communications migrations refactored with passing dry runs and deterministic QA seeds published.
-  - Governance doc and retention guidelines reviewed by security/compliance leads.
-- **Dependencies:** Access to staging database snapshots, security reviewers, and infrastructure logging endpoints.
+  - Automated deployment scripts/UI validated in staging with rollback rehearsal evidence.【F:docs/updates/1.00/update_task_list.md†L6-L44】
+  - Observability dashboards live with alert thresholds documented.【F:docs/updates/1.00/update_task_list.md†L26-L34】
+  - RBAC, upload protection, GDPR workflows, and legal pages published with acknowledgement tracking.【F:docs/updates/1.00/update_task_list.md†L49-L88】
+- **Dependencies:** Infrastructure credentials, security reviewers, legal writers, and access to integration sandboxes.
 
-## Milestone 2 – Governance, Dependencies & Tooling Enablement (Covers Task 3) — 0%
-- **Objective:** Ensure every codebase builds reliably in CI/CD with documented prerequisites, audits, and license compliance so feature squads can iterate safely.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L47-L134】
-- **Included Tasks & Subtasks:** Task 3 Subtasks 1–5 (manifest repair, runtime enforcement, bundle rationalisation, Flutter locks, license/audit automation).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L60-L109】
-- **Entry Criteria:** Milestone 1 exit, CI runners available, draft ADR template accepted by architecture board.
+- **Objective:** Deliver the timeline hub, commerce/finance services, recommendation engines, and integration adapters that underpin Fixnado’s marketplace identity.【F:docs/updates/1.00/new_feature_brief.md†L14-L126】【F:docs/updates/1.00/update_task_list.md†L90-L140】
+- **Included Tasks & Subtasks:** Task 3 Subtasks 3.1–3.5 covering timeline rename, timeline hub orchestration, commerce/finance, intelligence, and integration enablement.【F:docs/updates/1.00/update_task_list.md†L92-L140】
+- **Entry Criteria:** Milestone 1 exit, taxonomy catalogues drafted, and integration credentials ready for sandbox usage.【F:docs/updates/1.00/features_update_plan.md†L34-L64】
 - **Exit Criteria:**
-  - All manifests/lockfiles validated; CI failing on drift, outdated runtimes, or audit issues.
-  - Bundle analysis reports stored with before/after baselines for MapLibre stack.
-  - Mobile CI smoke tests green with documented biometric/native prerequisites.
-  - License scanning and load-test scripts wired into pull-request workflows.
-  - Dependency governance README and change approval workflow published.
-- **Dependencies:** GitHub Actions/CI access, security audit tooling, mobile build agents.
+  - Timeline APIs renamed with ads/recommendations, follow/unfollow, reporting, and moderation operational.【F:docs/updates/1.00/update_task_list.md†L92-L101】
+  - Timeline hub orchestrations publish Timeline, Custom Job Feed, and Marketplace Feed data with analytics feeds and moderation controls.【F:docs/updates/1.00/update_task_list.md†L102-L110】
+  - Commerce services process service/rental/material transactions with finance, escrow, tax, and reconciliation endpoints.【F:docs/updates/1.00/update_task_list.md†L112-L120】
+  - Recommendation engines and integration adapters deployed with health monitoring and fallback strategies.【F:docs/updates/1.00/update_task_list.md†L122-L140】
+- **Dependencies:** Payment sandbox accounts, Chatwoot/Firebase credentials, data taxonomy availability, and architecture review sign-offs.
 
-## Milestone 3 – Experience Delivery Across Web & Mobile (Covers Tasks 4–5) — 0%
-- **Objective:** Implement the enterprise-grade UX, dashboards, timeline/community upgrades, and Flutter parity required for production launch.【F:update_template/new_feature_brief.md†L25-L210】【F:update_template/features_to_add.md†L32-L230】
-- **Included Tasks & Subtasks:**
-  - Task 4 Subtasks 1–6 (session overhaul, routing/suspense refactor, timeline/community screens, learner dashboard suite, instructor/merchant dashboards, admin/compliance dashboards with legal/policy/docs updates).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L96-L114】
-  - Task 5 Subtasks 1–5 (Flutter auth, bootstrap resilience, diagnostics, API client robustness, testing/device matrix/environment switching).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L116-L145】
-- **Entry Criteria:** Milestones 1–2 complete, shared design tokens approved, seeded data available, telemetry endpoints stable.
+- **Objective:** Build the enterprise-grade Fixnado web experience including design system, timeline hub UI, marketplace pages, persona dashboards, navigation, and policy presentation.【F:docs/updates/1.00/new_feature_brief.md†L19-L126】【F:docs/updates/1.00/update_task_list.md†L142-L194】
+- **Included Tasks & Subtasks:** Task 4 Subtasks 4.1–4.5 spanning design system, timeline hub interfaces, marketplace pages, dashboards, and policies/navigation.【F:docs/updates/1.00/update_task_list.md†L145-L194】
+- **Entry Criteria:** Milestones 1–2 complete, design tokens approved, seeded data available for UX testing.【F:docs/updates/1.00/features_update_plan.md†L66-L82】
 - **Exit Criteria:**
-  - Web app delivers timeline/community/chat/commerce screens plus discrete learner, instructor/merchant, and admin/compliance dashboards with ads, moderation, analytics instrumentation, finance controls, and support tooling.
-  - UX polish verified (accessibility pass, localisation fallbacks, simplified nomenclature) with legal/policy pages, knowledge base articles, and documentation refresh published.
-  - Flutter app supports credentialed auth, stable bootstrap, telemetry uploads, parity screens, and environment picker.
-  - Integration/golden tests for Flutter and end-to-end tests for learner/instructor/admin dashboard journeys, storefront flows, and critical web experiences green in CI.
-  - Starter data documentation and changelog entries updated to reflect dashboard/page rollouts and QA evidence packages.
-- **Dependencies:** Chatwoot credentials, analytics platform access, Firebase/App Store/Play Console configurations, design reviews.
+  - Responsive component library deployed with no text wrapping and simplified nomenclature.【F:docs/updates/1.00/update_task_list.md†L145-L153】
+  - Timeline hub screens deliver ads, recommendations, moderation, and analytics instrumentation across all feeds.【F:docs/updates/1.00/update_task_list.md†L155-L163】
+  - Marketplace pages, dashboards, and policies published with CRUD coverage and documentation links.【F:docs/updates/1.00/update_task_list.md†L165-L194】
+- **Dependencies:** Finalised design assets, accessibility review resources, analytics instrumentation, and content writers for policy pages.
 
-## Milestone 4 – Observability, QA & Launch Certification (Covers Task 6) — 0%
-- **Objective:** Validate the entire release through observability, testing, documentation, and rehearsed deployment operations culminating in the end-of-update report.【F:update_template/features_to_add.md†L210-L390】
-- **Included Tasks & Subtasks:** Task 6 Subtasks 1–5 (observability stack, automated suites, manual QA, documentation/runbooks, release rehearsals and reporting).【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L147-L188】
-- **Entry Criteria:** Milestones 1–3 complete, staging environments refreshed with final builds and seeded data.
+- **Objective:** Achieve mobile parity across the timeline hub, marketplace, dashboards, support, and compliance while optimising performance, diagnostics, and store readiness.【F:docs/updates/1.00/features_update_plan.md†L83-L97】【F:docs/updates/1.00/update_task_list.md†L196-L246】
+- **Included Tasks & Subtasks:** Task 5 Subtasks 5.1–5.5 covering navigation, timeline hub parity, commerce/dashboards, support integrations, and performance/store compliance.【F:docs/updates/1.00/update_task_list.md†L198-L246】
+- **Entry Criteria:** Milestones 1–3 complete, backend APIs stable, Firebase/Chatwoot integrations accessible, device matrix defined.
 - **Exit Criteria:**
-  - Observability dashboards live with alert routing, synthetic probes, and telemetry correlation IDs verified across clients.
-  - Automated + manual test evidence stored in update_tests with traceability to requirements.
-  - Legal docs, knowledge base, onboarding guides, runbooks, and rollback playbooks published with approvals.
-  - Blue/green and rollback rehearsals executed with war room logs and operator sign-offs.
-  - End-of-update report summarises readiness metrics, residual risks, and go-live recommendation.
-- **Dependencies:** Monitoring stack (Prometheus/OTel, dashboards), QA resources, legal/compliance reviewers, operations/on-call roster.
+  - Mobile navigation with role changer, bottom tabs, and deep linking implemented for user and provider experiences.【F:docs/updates/1.00/update_task_list.md†L198-L206】
+  - Timeline hub parity achieved with urgency signalling, notifications, offline strategies, and media handling.【F:docs/updates/1.00/update_task_list.md†L208-L216】
+  - Commerce/dashboards/support modules operational with diagnostics, Firebase services, and compliance workflows documented.【F:docs/updates/1.00/update_task_list.md†L218-L246】
+- **Dependencies:** Mobile design assets, device lab availability, Apple/Google developer accounts, and analytics instrumentation.
+
+## Milestone 5 – Testing, Documentation & Launch Readiness (Task 6) — 0%
+- **Objective:** Execute the full testing matrix, finalise observability and incident response, and publish documentation, changelog, and handover materials for production launch.【F:docs/updates/1.00/features_update_plan.md†L99-L111】【F:docs/updates/1.00/update_task_list.md†L248-L299】
+- **Included Tasks & Subtasks:** Task 6 Subtasks 6.1–6.5 covering automated tests, manual QA, incident response, documentation, and release rehearsal.【F:docs/updates/1.00/update_task_list.md†L251-L299】
+- **Entry Criteria:** Milestones 1–4 complete, feature freeze declared, staging environment stable with seeded data.
+- **Exit Criteria:**
+  - Automated and manual test suites executed with evidence across backend, web, mobile, database, and integrations.【F:docs/updates/1.00/update_task_list.md†L251-L269】
+  - Observability and incident response drills completed with documented runbooks and dashboards.【F:docs/updates/1.00/update_task_list.md†L271-L279】
+  - Documentation package (README, full guide, policies, changelog, update brief, starter data, upgrade instructions) published and handover completed with go-live checklist.【F:docs/updates/1.00/update_task_list.md†L281-L299】
+- **Dependencies:** QA resources, legal reviewers, support/training teams, and production infrastructure for rehearsals.

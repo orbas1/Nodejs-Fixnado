@@ -1,121 +1,31 @@
-# Pre-Update Issue List (v1.00)
+# Fixnado Version 1.00 – Issue List
 
-1. **Backend · Critical · JWT verification accepts any shared-secret token after a verification failure, enabling cross-environment impersonation and bypassing issuer/audience enforcement.** (`backend-nodejs/src/services/sessionService.js`)
-2. **Backend · High · Core routers mount duplicated modules and remap `v1` to `/`, producing unpredictable middleware order and bypassing versioned API contracts.** (`backend-nodejs/src/routes/index.js`)
-3. **Backend · Critical · Default CORS policy reflects every origin while allowing credentials, creating a cross-origin session fixation vector.** (`backend-nodejs/src/app.js`)
-4. **Backend · High · Secrets loading, PII assertions, and job schedulers execute during import, so missing env vars or transient AWS outages crash the process before logging and block cold starts on synchronous network calls.** (`backend-nodejs/src/config/index.js`, `backend-nodejs/src/app.js`, `backend-nodejs/src/jobs/index.js`, `backend-nodejs/src/server.js`)
-5. **Backend · High · Browser and mobile crash telemetry 404 because `/telemetry/client-errors` and `/telemetry/mobile-crashes` handlers are absent, leaving operators blind.** (`backend-nodejs/src/routes/telemetryRoutes.js`)
-6. **Backend · Medium · Rate limiting omits `Retry-After` headers and its custom `keyGenerator` throws when the configured IP header is missing, amplifying denial-of-service scenarios.** (`backend-nodejs/src/app.js`)
-7. **Backend · Medium · Server bootstraps listeners at module load and always calls `process.exit` on shutdown, preventing tests and orchestrators from managing lifecycle.** (`backend-nodejs/src/server.js`)
-8. **Backend · Medium · Helmet ships with CSP/COEP disabled and secrets bootstrap logs stack traces, expanding exposure to script injection and credential leakage.** (`backend-nodejs/src/app.js`, `backend-nodejs/src/config/index.js`)
-9. **Backend · Medium · Readiness probes attempt to create PostGIS extensions on each boot, crashing on managed tiers without superuser rights.** (`backend-nodejs/src/app.js`)
-10. **Backend · Medium · Background jobs for telemetry, finance, and credential rotation auto-start with no feature flags, risking duplicate processing during deployments.** (`backend-nodejs/src/jobs/index.js`)
-11. **Backend · Medium · Health checks truncate stack traces and emit only console logs, hiding root causes during incidents.** (`backend-nodejs/src/app.js`)
-12. **Backend · Medium · Authentication middleware double-returns on missing tokens and hides actionable remediation guidance.** (`backend-nodejs/src/middleware/auth.js`)
-13. **Backend · Medium · Storefront override header checks only `NODE_ENV`, so misconfigured staging environments allow header-based impersonation.** (`backend-nodejs/src/middleware/auth.js`)
-14. **Backend · Medium · Config builders duplicate finance commission assignments, masking drift and signalling unresolved merge conflicts.** (`backend-nodejs/src/config/index.js`)
-15. **Backend · Medium · Readiness state lives only in in-memory flags, leaving external monitors blind to historical boot failures.** (`backend-nodejs/src/app.js`)
-16. **Backend · Medium · Database readiness checks hide latency data and return only trimmed messages, blocking root-cause analysis of query slowness.** (`backend-nodejs/src/app.js`)
-17. **Backend · Medium · Duplicate `recordSecurityEvent` calls risk throwing audit payload errors whenever metadata diverges.** (`backend-nodejs/src/middleware/auth.js`)
-18. **Backend · Medium · `initDatabase` assumes PostGIS support even though the service advertises pluggable dialects, leading to silent contract drift for MySQL/SQLite deployments.** (`backend-nodejs/src/app.js`)
-19. **Backend · Low · `requireEnv` throws without fallback messaging, degrading developer ergonomics for local setups.** (`backend-nodejs/src/config/index.js`)
-20. **Backend · Low · Router exposes dozens of finance/serviceman domains without feature flags, misaligning public surface area with release readiness.** (`backend-nodejs/src/routes/index.js`)
-21. **Backend · Low · Configuration enforces production-grade PII encryption even in development, slowing prototyping and evaluation workflows.** (`backend-nodejs/src/app.js`)
+## 1. Release Readiness & Automation Gaps
+- No automated provisioning or deployment tooling; environments require manual setup without rollback or blue/green safety nets.
+- Database migrations and seeders are unscripted, lacking validation, rollback plans, and starter data coverage for services, rentals, materials, zones, and tags.
+- Observability stack is incomplete—no uptime helper dashboards, load balancing visibility, RAM profiling, or stress testing baselines.
 
-22. **Database · Critical · Finance orchestration migration runs destructive cascades without transactions, risking partial schemas and lost ledger history.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-23. **Database · High · Communications inbox assumes one configuration per tenant, blocking multi-region rollout.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-24. **Database · High · Customer notification recipients lack uniqueness constraints, duplicating alerts across channels.** (`backend-nodejs/src/database/migrations/20250330001000-create-customer-notification-recipients.js`)
-25. **Database · High · Finance tables cascade deletes to users/orders/services, erasing immutable ledgers required for audit.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-26. **Database · High · Enum types are unversioned and down migrations drop them without `IF EXISTS`, breaking rollbacks.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-27. **Database · High · Bootstrap seeds rely on `randomUUID()`, preventing deterministic replays and reconciliation.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-28. **Database · High · Payments metadata JSONB persists sensitive gateway payloads indefinitely without encryption or retention controls.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-29. **Database · Medium · Finance webhook events miss idempotency/uniqueness keys, forcing manual dedupe downstream.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-30. **Database · Medium · Communications escalation stores `allowed_roles` as unvalidated JSON with no audit metadata, enabling privilege drift.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-31. **Database · Medium · Amount columns lack CHECK constraints on positivity and precision, permitting nonsense financial data.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-32. **Database · Medium · Payout requests and webhook tables omit provider/status indexes, slowing dashboards and retry workers.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-33. **Database · Medium · Communications entry points miss partial indexes for `enabled = true`, degrading storefront lookups.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-34. **Database · Medium · Finance history bootstrap lacks actor metadata, eroding audit provenance.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-35. **Database · Medium · Communications quick replies and escalation rules lack deterministic seed data, forcing manual JSON entry before go-live.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-36. **Database · Medium · Payment metadata defaults to `{}` without schema documentation, leaving operators to reverse-engineer downstream expectations.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-37. **Database · Medium · Communications down migration omits explicit index cleanup, increasing drift risk on non-Postgres dialects.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-38. **Database · Medium · Payments `fingerprint` uniqueness lacks conflict handling, so legitimate gateway retries fail during recovery jobs.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-39. **Database · Medium · `finance_webhook_events` never enforces provider/event uniqueness, creating duplicate ledgers on replayed callbacks.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-40. **Database · Medium · Bootstrap inserts into `finance_transaction_histories` skew analytics by adding synthetic `migration.bootstrap` events.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-41. **Database · Medium · Communications entry points rely on configurations that may not exist yet, causing referential failures under load.** (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-42. **Database · Medium · Payments allow nullable `gateway_reference` with no uniqueness, duplicating ledger entries across PSP retries.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-43. **Database · Medium · Notification targets accept 320-character free text without normalisation, encouraging multi-contact storage and privacy violations.** (`backend-nodejs/src/database/migrations/20250330001000-create-customer-notification-recipients.js`)
-44. **Database · Medium · Webhook payload and error columns retain full PSP responses forever with no retention policy.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-45. **Database · Medium · Webhook retry flow lacks structured logging/history tables, hindering forensic analysis after failures.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-46. **Database · Medium · Finance tables omit `created_by`/`updated_by` columns even for synthetic records, erasing provenance.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
+## 2. Security & Compliance Weaknesses
+- RBAC is inconsistently enforced across web, API, chat, and mobile surfaces; learner/instructor remnants create unintended access paths.
+- File submission protection, spam/bad word scanning, report workflows, and GDPR tooling are absent or stubbed.
+- UK-compliant legal documents, policy acknowledgement flows, and documentation trails are missing.
 
-47. **Dependencies · Critical · `backend-nodejs/package.json` is malformed with duplicate keys, preventing npm installs and hiding true dependency drift.** (`backend-nodejs/package.json`)
-48. **Dependencies · High · Backend relies on ESM-only `dotenv@17` without migrating CommonJS loaders, breaking legacy scripts.** (`backend-nodejs/package.json`)
-49. **Dependencies · High · Backend pulls beta `bcrypt@6`, native `sqlite3`, and AWS SDK v3 without documenting Node 18+ baselines, causing CI instability.** (`backend-nodejs/package.json`)
-50. **Dependencies · High · Front-end bundles incompatible MapLibre 5, Mapbox Draw 1.5, and redundant Turf packages, inflating builds and risking runtime crashes.** (`frontend-reactjs/package.json`)
-51. **Dependencies · Medium · Vite 6 + React 18.3 upgrade collides with libraries that only advertise support for stable React 18, raising maintenance risk.** (`frontend-reactjs/package.json`)
-52. **Dependencies · Medium · Flutter lockfiles were edited manually and add biometric plugins needing elevated Android SDKs, making builds non-deterministic.** (`flutter-phoneapp/pubspec.yaml`, `flutter-phoneapp/pubspec.lock`)
-53. **Dependencies · Medium · No project declares `engines`/SDK ranges or enforces lockfile validation, so unsupported runtimes slip into production.** (`backend-nodejs/package.json`, `frontend-reactjs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-54. **Dependencies · Medium · Security audit and load-test scripts assume global binaries (`k6`) and are not wired into CI, allowing risky packages to merge unchecked.** (`scripts/security-audit.mjs`, `scripts/run-load-tests.mjs`, `backend-nodejs/package.json`)
-55. **Dependencies · Medium · React bundle ships both `framer-motion` and bespoke animation utilities, blocking tree-shaking and bloating first paint.** (`frontend-reactjs/package.json`, `frontend-reactjs/src/App.jsx`)
-56. **Dependencies · Medium · Backend pins `sequelize@6.37.7` and `pg@8.13.1`, complicating roadmap plans for modern migration tooling.** (`backend-nodejs/package.json`)
-57. **Dependencies · Medium · `@aws-sdk/client-secrets-manager@3.x` enforces Node 18+, breaking older deployment environments still on Node 16.** (`backend-nodejs/package.json`)
-58. **Dependencies · Medium · Flutter secure storage and biometric plugins require native configuration that is undocumented, slowing onboarding.** (`flutter-phoneapp/pubspec.yaml`)
-59. **Dependencies · Medium · Repository lacks automated lockfile verification in CI, so dependency drift goes unnoticed.** (`frontend-reactjs/package.json`, `backend-nodejs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-60. **Dependencies · Medium · Shipping both `@turf/bbox` and `@turf/turf` pulls redundant bundles that inflate install and build times.** (`frontend-reactjs/package.json`)
-61. **Dependencies · Medium · Express 5 and Vite 6 upgrades together force heavier Node builds, lengthening CI cold starts.** (`backend-nodejs/package.json`, `frontend-reactjs/package.json`)
-62. **Dependencies · Medium · Flutter dependency graph lacks platform overrides, so Gradle/Cocoapods resolve latest transitive versions on every build.** (`flutter-phoneapp/pubspec.yaml`)
-63. **Dependencies · Medium · Project documentation omits native prerequisite READMEs for SQLite, MapLibre, and biometrics, creating onboarding debt.** (`backend-nodejs/package.json`, `frontend-reactjs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-64. **Dependencies · Medium · `jsonwebtoken@9` is used without enforcing `clockTolerance`, increasing token replay risk.** (`backend-nodejs/package.json`)
-65. **Dependencies · Medium · `@heroicons/react` licensing lacks an auditing step, leaving compliance gaps.** (`frontend-reactjs/package.json`, `scripts/security-audit.mjs`)
-66. **Dependencies · Medium · Experimental dependency upgrades ship without ADRs or changelog entries documenting rationale.** (`frontend-reactjs/package.json`, `backend-nodejs/package.json`)
-67. **Dependencies · Medium · Dependency choices assume a serverless secrets pipeline while infrastructure still provisions self-hosted Postgres, signalling roadmap drift.** (`backend-nodejs/package.json`, `infrastructure`)
+## 3. Marketplace & Commerce Deficiencies
+- Service, rental, and material flows are fragmented; finance, escrow, tax, and wallet controls live in separate dashboards or not at all.
+- Explorer/search lacks comprehensive filters for zones, categories, pricing, qualifications, and recommendations.
+- Storefronts, business fronts, and timeline monetisation are underdeveloped, preventing ad/recommendation placements and CRUD completeness.
 
-68. **Front-end · Critical · Session bootstrap trusts `localStorage` stubs, never revalidates `/api/auth/me`, and lets persona unlocks self-provision admin dashboards.** (`frontend-reactjs/src/hooks/useSession.js`, `frontend-reactjs/src/pages/DashboardHub.jsx`)
-69. **Front-end · High · A single `Suspense` boundary wraps more than seventy lazy routes, so any import failure blanks the entire app.** (`frontend-reactjs/src/App.jsx`)
-70. **Front-end · High · Provider dashboards remain publicly reachable; guard components render static denial copy instead of redirecting or logging incidents.** (`frontend-reactjs/src/App.jsx`, `frontend-reactjs/src/components/auth/ProviderProtectedRoute.jsx`)
-71. **Front-end · High · Error boundaries leak stack traces while telemetry posts to dead endpoints, exposing internals yet capturing no diagnostics.** (`frontend-reactjs/src/components/error/AppErrorBoundary.jsx`, `frontend-reactjs/src/components/error/RouteErrorBoundary.jsx`, `frontend-reactjs/src/utils/errorReporting.js`, `backend-nodejs/src/routes/telemetryRoutes.js`)
-72. **Front-end · Medium · Suspense fallback is a context-free spinner, leaving long-running routes looking frozen.** (`frontend-reactjs/src/App.jsx`)
-73. **Front-end · Medium · Localisation failures render blank denial screens because translation keys lack safe defaults.** (`frontend-reactjs/src/components/auth/ProviderProtectedRoute.jsx`)
-74. **Front-end · Medium · Session persistence merges dashboards with original casing, creating duplicate navigation entries.** (`frontend-reactjs/src/hooks/useSession.js`)
-75. **Front-end · Medium · `useSession` keeps corrupted `localStorage` values and loops until users manually clear storage.** (`frontend-reactjs/src/hooks/useSession.js`)
-76. **Front-end · Medium · Persona access utilities spam synchronous `localStorage` writes and never validate payloads, causing thrash and crash risk.** (`frontend-reactjs/src/hooks/usePersonaAccess.js`, `frontend-reactjs/src/hooks/useSession.js`)
-77. **Front-end · Medium · Authenticated layouts drop legal/help footers and always mount heavy chat widgets, hurting compliance and performance.** (`frontend-reactjs/src/App.jsx`)
-78. **Front-end · Medium · Offline session fallbacks bypass backend validation for registration flows, risking client/server divergence.** (`frontend-reactjs/src/api/sessionClient.js`)
-79. **Front-end · Medium · Provider guard lacks throttling or telemetry, allowing enumeration of persona access.** (`frontend-reactjs/src/components/auth/ProviderProtectedRoute.jsx`)
-80. **Front-end · Medium · No telemetry captures route transitions or persona grants, hiding abuse and UX regressions.** (`frontend-reactjs/src/App.jsx`, `frontend-reactjs/src/pages/DashboardHub.jsx`)
-81. **Front-end · Medium · Error boundaries log only to the console without integrating a monitoring SDK, obscuring lazy-load failures.** (`frontend-reactjs/src/components/error/RouteErrorBoundary.jsx`)
-82. **Front-end · Medium · Build tooling lacks bundle analysis, so large MapLibre/Turf additions go unreviewed.** (`frontend-reactjs/package.json`)
-83. **Front-end · Medium · Route-level data fetching is absent, forcing oversized bundles and repeated hydration.** (`frontend-reactjs/src/App.jsx`)
-84. **Front-end · Medium · Session hook re-reads large dashboard arrays on every focus event, triggering unnecessary re-renders.** (`frontend-reactjs/src/hooks/useSession.js`)
-85. **Front-end · Medium · Offline login helpers reuse cached credentials without MFA enforcement, weakening security posture.** (`frontend-reactjs/src/api/sessionClient.js`)
-86. **Front-end · Medium · Persona unlock flows emit no analytics events, preventing detection of abuse or adoption.** (`frontend-reactjs/src/pages/DashboardHub.jsx`)
+## 4. Timeline Hub & Support Shortcomings
+- Live feed is still named “Live Feed” with learner-centric copy; timeline hub features (Timeline, Custom Job Feed, Marketplace Feed tabs, ads, recommendations, follow/unfollow, reporting) are incomplete.
+- No orchestration exists to prioritise custom job requests or marketplace inventory updates, leaving feeds without urgency signalling and analytics.
+- Support channels do not integrate Chatwoot; no floating chat bubble, dashboard inbox, attachments, emoji/GIF support, or help center links.
 
-87. **User App · Critical · Flutter build lacks a credentialed login path and still depends on demo tokens stored like production credentials.** (`flutter-phoneapp/lib/features/auth/presentation/auth_gate.dart`, `flutter-phoneapp/lib/features/auth/data/auth_token_store.dart`, `flutter-phoneapp/lib/app/bootstrap.dart`)
-88. **User App · High · Bootstrap blocks on sequential secure storage/biometric setup and crashes when plugins fail, producing long blank screens at launch.** (`flutter-phoneapp/lib/app/bootstrap.dart`)
-89. **User App · High · Crash diagnostics hardcode version metadata, reuse a single HTTP client, send plaintext reports to a missing endpoint, and rely on `unawaited` uploads.** (`flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`, `flutter-phoneapp/lib/main.dart`, `backend-nodejs/src/routes/telemetryRoutes.js`)
-90. **User App · High · Token refresh logic swallows errors and fails to signal re-authentication, so expired sessions persist silently.** (`flutter-phoneapp/lib/features/auth/application/auth_token_controller.dart`)
-91. **User App · High · API client lacks retry/backoff and pagination helpers, so transient backend failures become fatal user-facing errors.** (`flutter-phoneapp/lib/core/network/api_client.dart`)
-92. **User App · Medium · Environment selection is compile-time only; switching between staging and production requires rebuilding the app.** (`flutter-phoneapp/lib/core/config/app_config.dart`, `flutter-phoneapp/lib/app/bootstrap.dart`)
-93. **User App · Medium · Fatal error boundary offers minimal guidance and hides support contact unless tapped, stranding users.** (`flutter-phoneapp/lib/app/app_failure_boundary.dart`)
-94. **User App · Medium · Indexed navigation keeps all tabs alive, inflating memory/network usage for multi-role personas.** (`flutter-phoneapp/lib/app/app.dart`)
-95. **User App · Medium · Role switching does not persist the last selected destination, forcing manual recovery every launch.** (`flutter-phoneapp/lib/app/app.dart`)
-96. **User App · Medium · Bootstrap does not catch secure storage or biometric initialisation failures, causing pre-error crashes.** (`flutter-phoneapp/lib/app/bootstrap.dart`)
-97. **User App · Medium · Diagnostics send plaintext stack traces, omit build/device metadata, and log to stdout even in release builds, risking privacy leaks.** (`flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-98. **User App · Medium · Demo fallback tokens share storage lifetime with production credentials and give no signal when biometrics are unavailable.** (`flutter-phoneapp/lib/features/auth/data/auth_token_store.dart`, `flutter-phoneapp/lib/features/auth/application/auth_token_controller.dart`)
-99. **User App · Medium · API client eagerly decodes entire payloads into memory, limiting scalability for large booking datasets.** (`flutter-phoneapp/lib/core/network/api_client.dart`)
-100. **User App · Medium · Logging configuration prints noisy stdout without log levels or batching when network logging is enabled.** (`flutter-phoneapp/lib/app/bootstrap.dart`)
-101. **User App · Medium · Diagnostics uploads reuse a single `http.Client` for the app lifetime with no circuit breaking, risking socket exhaustion.** (`flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-102. **User App · Medium · Crash reporting targets `/telemetry/mobile-crashes` despite the backend lacking support, delaying incident visibility.** (`flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`, `backend-nodejs/src/routes/telemetryRoutes.js`)
-103. **User App · Medium · No integration or golden tests are configured, leaving critical flows without regression coverage.** (`flutter-phoneapp/pubspec.yaml`)
-104. **User App · Medium · Product roadmap focuses on booking flows, yet the app emphasises internal dashboards, signalling prioritisation drift.** (`flutter-phoneapp/lib/app/app.dart`)
+## 5. Mobile Parity & Performance Issues
+- Flutter app retains learning terminology, lacks role changer onboarding, and does not expose marketplace dashboards or checkout flows.
+- Timeline hub tabs, storefront, and support features are missing or static; no parity with web experiences.
+- Mobile diagnostics, Firebase integrations, offline caching, media handling, and in-app purchase compliance are unimplemented.
 
-105. **Cross-Cutting · High · Background jobs, destructive migrations, and offline fallbacks run by default without feature flags, complicating blue/green deployments and demo builds.** (`backend-nodejs/src/jobs/index.js`, `backend-nodejs/src/database/migrations`, `frontend-reactjs/src/hooks/useSession.js`)
-106. **Cross-Cutting · High · Telemetry endpoints and correlation IDs are missing across services, blocking effective incident reconstruction.** (`backend-nodejs/src/app.js`, `frontend-reactjs/src/utils/errorReporting.js`, `flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-107. **Cross-Cutting · Medium · Runtime prerequisites (Node 18+, Android SDK 23+) and native toolchain steps are undocumented, slowing onboarding and increasing build failures.** (`backend-nodejs/package.json`, `frontend-reactjs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-108. **Cross-Cutting · Medium · Demo tokens, offline session stubs, and persona unlock shortcuts remain enabled in production builds, misaligning with authentication hardening goals.** (`frontend-reactjs/src/api/sessionClient.js`, `frontend-reactjs/src/pages/DashboardHub.jsx`, `flutter-phoneapp/lib/app/bootstrap.dart`)
-109. **Cross-Cutting · Medium · Operator runbooks, dependency governance, and rollback playbooks are missing, so risky upgrades lack recovery guidance.** (`scripts/security-audit.mjs`, `docs/updates/1.00/pre-update_evaluations`, `backend-nodejs/src/database/migrations`)
-110. **Cross-Cutting · Medium · License and dependency audit automation is absent, leaving compliance gaps for third-party packages.** (`scripts/security-audit.mjs`, `frontend-reactjs/package.json`, `backend-nodejs/package.json`)
-111. **Cross-Cutting · Medium · Platform roadmap emphasises scoped persona rollouts, yet routers and mobile dashboards expose monolithic surfaces, increasing delivery risk.** (`frontend-reactjs/src/App.jsx`, `backend-nodejs/src/routes/index.js`, `flutter-phoneapp/lib/app/app.dart`)
-112. **Cross-Cutting · Medium · Database retention and encryption policies are undocumented, threatening PCI and privacy compliance.** (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`, `docs/updates/1.00/pre-update_evaluations`)
-113. **Cross-Cutting · Medium · No CI guardrails verify telemetry endpoints before client releases reference them.** (`backend-nodejs/src/routes/telemetryRoutes.js`, `scripts/security-audit.mjs`)
-114. **Cross-Cutting · Medium · Provider-specific mobile apps are absent, so the Flutter user app is the only mobile surface yet still depends on demo flows and missing telemetry.** (`flutter-phoneapp`, `docs/updates/1.00/pre-update_evaluations/user_app_evaluation.md`)
+## 6. Documentation & Knowledge Base Gaps
+- README, full guide, starter data references, and GitHub upgrade instructions are outdated or absent.
+- No changelog, update brief, or end-of-update reporting framework tied to release readiness.
+- Training materials, support playbooks, and maintenance mode procedures are missing for operations handover.
