@@ -47,12 +47,13 @@ InlineErrorFallback.defaultProps = {
   reference: 'unknown'
 };
 
-export default function RouteErrorBoundary({ children }) {
+export default function RouteErrorBoundary({ children, boundaryId, metadata }) {
   const location = useLocation();
 
   return (
     <AppErrorBoundary
-      boundaryId="route-boundary"
+      boundaryId={boundaryId}
+      metadata={metadata}
       resetKeys={[location.key, location.pathname]}
       renderFallback={({ error, reference, resetErrorBoundary }) => (
         <InlineErrorFallback
@@ -68,5 +69,12 @@ export default function RouteErrorBoundary({ children }) {
 }
 
 RouteErrorBoundary.propTypes = {
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
+  boundaryId: PropTypes.string,
+  metadata: PropTypes.object
+};
+
+RouteErrorBoundary.defaultProps = {
+  boundaryId: 'route-boundary',
+  metadata: undefined
 };

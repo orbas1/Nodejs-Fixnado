@@ -1,17 +1,17 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import Header from './components/Header.jsx';
-import Footer from './components/Footer.jsx';
+import { lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
-import Spinner from './components/ui/Spinner.jsx';
 import FloatingChatLauncher from './components/communications/FloatingChatLauncher.jsx';
-import RouteErrorBoundary from './components/error/RouteErrorBoundary.jsx';
-import { useLocale } from './hooks/useLocale.js';
+import ConsentBanner from './components/legal/ConsentBanner.jsx';
 import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
 import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
-import ConsentBanner from './components/legal/ConsentBanner.jsx';
+import UserProtectedRoute from './components/auth/UserProtectedRoute.jsx';
+import InstructorProtectedRoute from './components/auth/InstructorProtectedRoute.jsx';
+import PublicLayout from './routes/layouts/PublicLayout.jsx';
+import PersonaShell from './routes/layouts/PersonaShell.jsx';
+import RouteTelemetryProvider from './routes/RouteTelemetryProvider.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -68,10 +68,39 @@ const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
 const AdminLegal = lazy(() => import('./pages/AdminLegal.jsx'));
+const CommunityHub = lazy(() => import('./pages/CommunityHub.jsx'));
+const CommunityPost = lazy(() => import('./pages/CommunityPost.jsx'));
+const CommunityEvents = lazy(() => import('./pages/CommunityEvents.jsx'));
+const CommunityMessages = lazy(() => import('./pages/CommunityMessages.jsx'));
+const CommunityModeration = lazy(() => import('./pages/CommunityModeration.jsx'));
+const LearnerDashboard = lazy(() => import('./pages/learner/LearnerDashboard.jsx'));
+const LearnerCalendar = lazy(() => import('./pages/learner/LearnerCalendar.jsx'));
+const LearnerAchievements = lazy(() => import('./pages/learner/LearnerAchievements.jsx'));
+const LearnerRecommendations = lazy(() => import('./pages/learner/LearnerRecommendations.jsx'));
+const LearnerProfile = lazy(() => import('./pages/learner/LearnerProfile.jsx'));
+const LearnerSettings = lazy(() => import('./pages/learner/LearnerSettings.jsx'));
+const InstructorDashboard = lazy(() => import('./pages/instructor/InstructorDashboard.jsx'));
+const InstructorCourses = lazy(() => import('./pages/instructor/InstructorCourses.jsx'));
+const InstructorCatalog = lazy(() => import('./pages/instructor/InstructorCatalog.jsx'));
+const InstructorOrders = lazy(() => import('./pages/instructor/InstructorOrders.jsx'));
+const InstructorPayouts = lazy(() => import('./pages/instructor/InstructorPayouts.jsx'));
+const InstructorStorefront = lazy(() => import('./pages/instructor/InstructorStorefront.jsx'));
+const InstructorCheckout = lazy(() => import('./pages/instructor/InstructorCheckout.jsx'));
+const InstructorSupport = lazy(() => import('./pages/instructor/InstructorSupport.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
-const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
+const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
+const ServicemanByokWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
+);
+const ServicemanTaxWorkspace = lazy(() =>
+  import('./modules/servicemanControlCentre/tax/ServicemanTaxWorkspace.jsx')
+);
+
 const CustomerSettingsDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/CustomerSettingsDevPreview.jsx'))
   : null;
@@ -84,220 +113,274 @@ const ProviderAdsDevPreview = import.meta.env.DEV
 const BusinessFrontDevPreview = import.meta.env.DEV
   ? lazy(() => import('./dev/BusinessFrontDevPreview.jsx'))
   : null;
-const CompliancePortal = lazy(() => import('./pages/CompliancePortal.jsx'));
-const Profile = lazy(() => import('./pages/Profile.jsx'));
-const NotFound = lazy(() => import('./pages/NotFound.jsx'));
-const AdminSeo = lazy(() => import('./pages/AdminSeo.jsx'));
-const ServicemanByokWorkspace = lazy(() =>
-  import('./modules/servicemanControlCentre/ServicemanByokWorkspace.jsx')
-);
-const ServicemanTaxWorkspace = lazy(() =>
-  import('./modules/servicemanControlCentre/tax/ServicemanTaxWorkspace.jsx')
-);
 
-const ADMIN_ROUTES = [
-  { path: '/admin/dashboard', Component: AdminDashboard },
-  { path: '/admin/profile', Component: AdminProfile },
-  { path: '/admin/disputes/health/:bucketId/history', Component: AdminDisputeHealthHistory },
-  { path: '/admin/home-builder', Component: AdminHomeBuilder },
-  { path: '/admin/blog', Component: AdminBlog },
-  { path: '/admin/rentals', Component: AdminRentals },
-  { path: '/admin/monetisation', Component: AdminMonetization },
-  { path: '/admin/escrows', Component: AdminEscrow },
-  { path: '/admin/bookings', Component: AdminBookings },
-  { path: '/admin/wallets', Component: AdminWallets },
-  { path: '/admin/custom-jobs', Component: AdminCustomJobs },
-  { path: '/admin/roles', Component: AdminRoles },
-  { path: '/admin/preferences', Component: AdminPreferences },
-  { path: '/admin/enterprise', Component: AdminEnterprise },
-  { path: '/admin/marketplace', Component: AdminMarketplace },
-  { path: '/admin/appearance', Component: AppearanceManagement },
-  { path: '/admin/inbox', Component: AdminInbox },
-  { path: '/admin/purchases', Component: AdminPurchaseManagement },
-  { path: '/admin/website-management', Component: AdminWebsiteManagement },
-  { path: '/admin/live-feed/auditing', Component: AdminLiveFeedAuditing },
-  { path: '/admin/system-settings', Component: AdminSystemSettings },
-  { path: '/admin/taxonomy', Component: AdminTaxonomy },
-  { path: '/admin/seo', Component: AdminSeo },
-  { path: '/admin/theme-studio', Component: ThemeStudio },
-  { path: '/admin/telemetry', Component: TelemetryDashboard },
-  { path: '/admin/zones', Component: AdminZones },
-  { path: '/admin/legal/:slug?', Component: AdminLegal }
+const ADMIN_ROUTE_CONFIG = [
+  { path: 'dashboard', Component: AdminDashboard },
+  { path: 'profile', Component: AdminProfile },
+  { path: 'disputes/health/:bucketId/history', Component: AdminDisputeHealthHistory },
+  { path: 'home-builder', Component: AdminHomeBuilder },
+  { path: 'blog', Component: AdminBlog },
+  { path: 'rentals', Component: AdminRentals },
+  { path: 'monetisation', Component: AdminMonetization },
+  { path: 'escrows', Component: AdminEscrow },
+  { path: 'bookings', Component: AdminBookings },
+  { path: 'wallets', Component: AdminWallets },
+  { path: 'custom-jobs', Component: AdminCustomJobs },
+  { path: 'roles', Component: AdminRoles },
+  { path: 'preferences', Component: AdminPreferences },
+  { path: 'enterprise', Component: AdminEnterprise },
+  { path: 'marketplace', Component: AdminMarketplace },
+  { path: 'appearance', Component: AppearanceManagement },
+  { path: 'inbox', Component: AdminInbox },
+  { path: 'purchases', Component: AdminPurchaseManagement },
+  { path: 'website-management', Component: AdminWebsiteManagement },
+  { path: 'live-feed/auditing', Component: AdminLiveFeedAuditing },
+  { path: 'system-settings', Component: AdminSystemSettings },
+  { path: 'taxonomy', Component: AdminTaxonomy },
+  { path: 'seo', Component: AdminSeo },
+  { path: 'theme-studio', Component: ThemeStudio },
+  { path: 'telemetry', Component: TelemetryDashboard },
+  { path: 'zones', Component: AdminZones },
+  { path: 'legal/:slug?', Component: AdminLegal }
 ];
 
+const PROVIDER_APP_ROUTES = [
+  { index: true, element: <Navigate to="dashboard" replace /> },
+  { path: 'dashboard', Component: ProviderDashboard },
+  { path: 'custom-jobs', Component: ProviderCustomJobs },
+  { path: 'storefront', Component: ProviderStorefront },
+  { path: 'inventory', Component: ProviderInventory },
+  { path: 'services', Component: ProviderServices }
+];
+
+const PROVIDER_CONTROL_ROUTES = [
+  { index: true, element: <Navigate to="/dashboards/provider?section=profile-settings" replace /> },
+  { path: 'crew-control', Component: ProviderDeploymentManagement },
+  { path: 'onboarding', Component: ProviderOnboardingManagement },
+  { path: 'storefront', Component: ProviderStorefrontControl },
+  { path: 'services', Component: ProviderServices },
+  {
+    path: 'profile',
+    element: <Navigate to="/dashboards/provider?section=profile-settings" replace />
+  }
+];
+
+const SERVICEMAN_ROUTES = [
+  { index: true, element: <Navigate to="byok" replace /> },
+  { path: 'byok', Component: ServicemanByokWorkspace },
+  { path: 'tax', Component: ServicemanTaxWorkspace }
+];
+
+const LEARNER_ROUTES = [
+  { index: true, Component: LearnerDashboard },
+  { path: 'calendar', Component: LearnerCalendar },
+  { path: 'achievements', Component: LearnerAchievements },
+  { path: 'recommendations', Component: LearnerRecommendations },
+  { path: 'profile', Component: LearnerProfile },
+  { path: 'settings', Component: LearnerSettings }
+];
+
+const INSTRUCTOR_ROUTES = [
+  { index: true, Component: InstructorDashboard },
+  { path: 'courses', Component: InstructorCourses },
+  { path: 'catalogue', Component: InstructorCatalog },
+  { path: 'orders', Component: InstructorOrders },
+  { path: 'payouts', Component: InstructorPayouts },
+  { path: 'storefront', Component: InstructorStorefront },
+  { path: 'checkout', Component: InstructorCheckout },
+  { path: 'support', Component: InstructorSupport }
+];
+
+function renderRoutes(config) {
+  return config.map((route) => {
+    if (route.index) {
+      return <Route key={`index-${route.path ?? 'default'}`} index element={route.element} />;
+    }
+
+    const { path, Component, element } = route;
+    if (element) {
+      return <Route key={path} path={path} element={element} />;
+    }
+
+    const Element = Component;
+    return <Route key={path} path={path} element={<Element />} />;
+  });
+}
+
 function App() {
-  const { t } = useLocale();
-  const location = useLocation();
   const { isAuthenticated } = useSession();
-  const isDashboardExperience = location.pathname.startsWith('/dashboards');
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDashboardExperience ? 'bg-slate-50' : 'gradient-bg'}`}>
+    <>
       <SkipToContent />
-      {!isDashboardExperience && <Header />}
-      <main className="flex-1" id="main-content">
-        <Suspense
-          fallback={
-            <div
-              className="flex min-h-[50vh] items-center justify-center"
-              role="status"
-              aria-live="polite"
-              data-qa="route-loader"
-            >
-              <Spinner className="h-8 w-8 text-primary" />
-              <span className="sr-only">{t('common.loading')}</span>
-            </div>
-          }
-        >
-          <RouteErrorBoundary>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/register/company" element={<CompanyRegister />} />
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/provider/dashboard" element={<ProviderDashboard />} />
-              <Route
-                path="/provider/custom-jobs"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderCustomJobs />
-                  </ProviderProtectedRoute>
-                }
+      <RouteTelemetryProvider>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/register/company" element={<CompanyRegister />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/enterprise/panel" element={<Navigate to="/dashboards/enterprise/panel" replace />} />
+            <Route path="/providers" element={<BusinessFront />} />
+            <Route path="/providers/:slug" element={<BusinessFront />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/tools" element={<Tools />} />
+            <Route path="/materials" element={<Materials />} />
+            <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/settings/security" element={<SecuritySettings />} />
+            <Route path="/account/profile" element={<Profile />} />
+            <Route path="/compliance/data-requests" element={<CompliancePortal />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/community" element={<CommunityHub />} />
+            <Route path="/community/posts/:postId" element={<CommunityPost />} />
+            <Route path="/community/events" element={<CommunityEvents />} />
+            <Route path="/community/messages" element={<CommunityMessages />} />
+            <Route path="/community/moderation" element={<CommunityModeration />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/communications" element={<Communications />} />
+            <Route path="/creation-studio" element={<CreationStudio />} />
+            <Route path="/operations/geo-matching" element={<GeoMatching />} />
+            <Route path="/legal/terms" element={<Terms />} />
+            <Route path="/legal/:slug" element={<Terms />} />
+            {import.meta.env.DEV && CustomerSettingsDevPreview ? (
+              <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
+            ) : null}
+            {import.meta.env.DEV && ServicemanTaxDevPreview ? (
+              <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
+            ) : null}
+            {import.meta.env.DEV && ProviderAdsDevPreview ? (
+              <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
+            ) : null}
+            {import.meta.env.DEV && BusinessFrontDevPreview ? (
+              <Route path="/dev/storefront-business-front" element={<BusinessFrontDevPreview />} />
+            ) : null}
+          </Route>
+
+          <Route
+            path="/provider/*"
+            element={
+              <PersonaShell
+                persona="provider"
+                guard={ProviderProtectedRoute}
+                loaderQa="route-loader.provider"
+                loaderTitle="Preparing provider workspace"
+                loaderDescription="Syncing storefront controls, crew governance, and compliance tasks."
+                metadata={{ scope: 'provider-app' }}
               />
-              <Route
-                path="/provider/storefront"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderStorefront />
-                  </ProviderProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(PROVIDER_APP_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/provider/*"
+            element={
+              <PersonaShell
+                persona="provider"
+                guard={ProviderProtectedRoute}
+                loaderQa="route-loader.provider-control"
+                loaderTitle="Loading provider control centre"
+                loaderDescription="Verifying feature flags, onboarding states, and storefront telemetry."
+                metadata={{ scope: 'provider-dashboard' }}
               />
-              <Route
-                path="/provider/inventory"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderInventory />
-                  </ProviderProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(PROVIDER_CONTROL_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/serviceman/*"
+            element={
+              <PersonaShell
+                persona="serviceman"
+                guard={ServicemanProtectedRoute}
+                loaderQa="route-loader.serviceman"
+                loaderTitle="Loading serviceman workspace"
+                loaderDescription="Checking BYOK compliance, tax tooling, and asset readiness."
+                metadata={{ scope: 'serviceman-dashboard' }}
               />
-              <Route
-                path="/provider/services"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderServices />
-                  </ProviderProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(SERVICEMAN_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/instructor/*"
+            element={
+              <PersonaShell
+                persona="instructor"
+                guard={InstructorProtectedRoute}
+                loaderQa="route-loader.instructor"
+                loaderTitle="Loading instructor commerce studio"
+                loaderDescription="Syncing catalogue controls, checkout policies, and payout telemetry."
+                metadata={{ scope: 'instructor-dashboard' }}
               />
-              <Route path="/enterprise/panel" element={<Navigate to="/dashboards/enterprise/panel" replace />} />
-              <Route path="/providers" element={<BusinessFront />} />
-              <Route path="/providers/:slug" element={<BusinessFront />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/tools" element={<Tools />} />
-              <Route path="/materials" element={<Materials />} />
-              <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/settings/security" element={<SecuritySettings />} />
-              <Route path="/account/profile" element={<Profile />} />
-              <Route path="/compliance/data-requests" element={<CompliancePortal />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route path="/admin" element={<AdminLogin />} />
-              {ADMIN_ROUTES.map(({ path, Component }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={
-                    <AdminProtectedRoute>
-                      <Component />
-                    </AdminProtectedRoute>
-                  }
-                />
-              ))}
-              <Route path="/communications" element={<Communications />} />
-              <Route path="/creation-studio" element={<CreationStudio />} />
-              <Route path="/operations/geo-matching" element={<GeoMatching />} />
-              <Route
-                path="/dashboards/provider/crew-control"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderDeploymentManagement />
-                  </ProviderProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(INSTRUCTOR_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/learner/*"
+            element={
+              <PersonaShell
+                persona="learner"
+                guard={UserProtectedRoute}
+                loaderQa="route-loader.learner"
+                loaderTitle="Preparing learner performance workspace"
+                loaderDescription="Restoring progress analytics, cohort insights, and personalised guidance."
+                metadata={{ scope: 'learner-dashboard' }}
               />
-              <Route path="/dashboards" element={<DashboardHub />} />
-              <Route
-                path="/dashboards/provider/onboarding"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderOnboardingManagement />
-                  </ProviderProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(LEARNER_ROUTES)}
+          </Route>
+
+          <Route
+            path="/admin/*"
+            element={
+              <PersonaShell
+                persona="admin"
+                guard={AdminProtectedRoute}
+                loaderQa="route-loader.admin"
+                loaderTitle="Preparing admin control centre"
+                loaderDescription="Applying RBAC policies, restoring audit trails, and securing telemetry."
+                metadata={{ scope: 'admin-dashboard' }}
               />
-              <Route path="/dashboards/finance" element={<FinanceOverview />} />
-              <Route path="/dashboards/enterprise/panel" element={<EnterprisePanel />} />
-              <Route path="/dashboards/orders/:orderId" element={<OrderWorkspace />} />
-              <Route
-                path="/dashboards/serviceman/byok"
-                element={
-                  <ServicemanProtectedRoute>
-                    <ServicemanByokWorkspace />
-                  </ServicemanProtectedRoute>
-                }
+            }
+          >
+            {renderRoutes(ADMIN_ROUTE_CONFIG)}
+          </Route>
+
+          <Route
+            path="/dashboards/*"
+            element={
+              <PersonaShell
+                persona="workspace"
+                loaderQa="route-loader.workspace"
+                loaderTitle="Loading dashboards"
+                loaderDescription="Restoring personalised analytics, finance snapshots, and enterprise controls."
+                metadata={{ scope: 'dashboards' }}
               />
-              <Route
-                path="/dashboards/serviceman/tax"
-                element={
-                  <ServicemanProtectedRoute>
-                    <ServicemanTaxWorkspace />
-                  </ServicemanProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboards/provider/storefront"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderStorefrontControl />
-                  </ProviderProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboards/provider/services"
-                element={
-                  <ProviderProtectedRoute>
-                    <ProviderServices />
-                  </ProviderProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboards/provider/profile"
-                element={<Navigate to="/dashboards/provider?section=profile-settings" replace />}
-              />
-              <Route path="/dashboards/:roleId" element={<RoleDashboard />} />
-              <Route path="/legal/terms" element={<Terms />} />
-              <Route path="/legal/:slug" element={<Terms />} />
-              {import.meta.env.DEV && CustomerSettingsDevPreview ? (
-                <Route path="/dev/customer-settings" element={<CustomerSettingsDevPreview />} />
-              ) : null}
-              {import.meta.env.DEV && ServicemanTaxDevPreview ? (
-                <Route path="/dev/serviceman-tax" element={<ServicemanTaxDevPreview />} />
-              ) : null}
-              {import.meta.env.DEV && ProviderAdsDevPreview ? (
-                <Route path="/dev/provider-ads" element={<ProviderAdsDevPreview />} />
-              ) : null}
-              {import.meta.env.DEV && BusinessFrontDevPreview ? (
-                <Route path="/dev/storefront-business-front" element={<BusinessFrontDevPreview />} />
-              ) : null}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </RouteErrorBoundary>
-        </Suspense>
-      </main>
-      {!isDashboardExperience && !isAuthenticated && <Footer />}
+            }
+          >
+            <Route index element={<DashboardHub />} />
+            <Route path="finance" element={<FinanceOverview />} />
+            <Route path="enterprise/panel" element={<EnterprisePanel />} />
+            <Route path="orders/:orderId" element={<OrderWorkspace />} />
+            <Route path=":roleId" element={<RoleDashboard />} />
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </RouteTelemetryProvider>
       <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       <ConsentBanner />
-    </div>
+    </>
   );
 }
 
