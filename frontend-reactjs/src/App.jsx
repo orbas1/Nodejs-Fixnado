@@ -7,6 +7,8 @@ import { useSession } from './hooks/useSession.js';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
 import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
+import UserProtectedRoute from './components/auth/UserProtectedRoute.jsx';
+import InstructorProtectedRoute from './components/auth/InstructorProtectedRoute.jsx';
 import PublicLayout from './routes/layouts/PublicLayout.jsx';
 import PersonaShell from './routes/layouts/PersonaShell.jsx';
 import RouteTelemetryProvider from './routes/RouteTelemetryProvider.jsx';
@@ -71,6 +73,20 @@ const CommunityPost = lazy(() => import('./pages/CommunityPost.jsx'));
 const CommunityEvents = lazy(() => import('./pages/CommunityEvents.jsx'));
 const CommunityMessages = lazy(() => import('./pages/CommunityMessages.jsx'));
 const CommunityModeration = lazy(() => import('./pages/CommunityModeration.jsx'));
+const LearnerDashboard = lazy(() => import('./pages/learner/LearnerDashboard.jsx'));
+const LearnerCalendar = lazy(() => import('./pages/learner/LearnerCalendar.jsx'));
+const LearnerAchievements = lazy(() => import('./pages/learner/LearnerAchievements.jsx'));
+const LearnerRecommendations = lazy(() => import('./pages/learner/LearnerRecommendations.jsx'));
+const LearnerProfile = lazy(() => import('./pages/learner/LearnerProfile.jsx'));
+const LearnerSettings = lazy(() => import('./pages/learner/LearnerSettings.jsx'));
+const InstructorDashboard = lazy(() => import('./pages/instructor/InstructorDashboard.jsx'));
+const InstructorCourses = lazy(() => import('./pages/instructor/InstructorCourses.jsx'));
+const InstructorCatalog = lazy(() => import('./pages/instructor/InstructorCatalog.jsx'));
+const InstructorOrders = lazy(() => import('./pages/instructor/InstructorOrders.jsx'));
+const InstructorPayouts = lazy(() => import('./pages/instructor/InstructorPayouts.jsx'));
+const InstructorStorefront = lazy(() => import('./pages/instructor/InstructorStorefront.jsx'));
+const InstructorCheckout = lazy(() => import('./pages/instructor/InstructorCheckout.jsx'));
+const InstructorSupport = lazy(() => import('./pages/instructor/InstructorSupport.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
@@ -153,6 +169,26 @@ const SERVICEMAN_ROUTES = [
   { index: true, element: <Navigate to="byok" replace /> },
   { path: 'byok', Component: ServicemanByokWorkspace },
   { path: 'tax', Component: ServicemanTaxWorkspace }
+];
+
+const LEARNER_ROUTES = [
+  { index: true, Component: LearnerDashboard },
+  { path: 'calendar', Component: LearnerCalendar },
+  { path: 'achievements', Component: LearnerAchievements },
+  { path: 'recommendations', Component: LearnerRecommendations },
+  { path: 'profile', Component: LearnerProfile },
+  { path: 'settings', Component: LearnerSettings }
+];
+
+const INSTRUCTOR_ROUTES = [
+  { index: true, Component: InstructorDashboard },
+  { path: 'courses', Component: InstructorCourses },
+  { path: 'catalogue', Component: InstructorCatalog },
+  { path: 'orders', Component: InstructorOrders },
+  { path: 'payouts', Component: InstructorPayouts },
+  { path: 'storefront', Component: InstructorStorefront },
+  { path: 'checkout', Component: InstructorCheckout },
+  { path: 'support', Component: InstructorSupport }
 ];
 
 function renderRoutes(config) {
@@ -270,6 +306,38 @@ function App() {
             }
           >
             {renderRoutes(SERVICEMAN_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/instructor/*"
+            element={
+              <PersonaShell
+                persona="instructor"
+                guard={InstructorProtectedRoute}
+                loaderQa="route-loader.instructor"
+                loaderTitle="Loading instructor commerce studio"
+                loaderDescription="Syncing catalogue controls, checkout policies, and payout telemetry."
+                metadata={{ scope: 'instructor-dashboard' }}
+              />
+            }
+          >
+            {renderRoutes(INSTRUCTOR_ROUTES)}
+          </Route>
+
+          <Route
+            path="/dashboards/learner/*"
+            element={
+              <PersonaShell
+                persona="learner"
+                guard={UserProtectedRoute}
+                loaderQa="route-loader.learner"
+                loaderTitle="Preparing learner performance workspace"
+                loaderDescription="Restoring progress analytics, cohort insights, and personalised guidance."
+                metadata={{ scope: 'learner-dashboard' }}
+              />
+            }
+          >
+            {renderRoutes(LEARNER_ROUTES)}
           </Route>
 
           <Route

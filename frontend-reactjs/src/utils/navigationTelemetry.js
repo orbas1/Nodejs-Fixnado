@@ -38,6 +38,9 @@ function deriveSurface(pathname) {
   if (pathname.startsWith('/dashboards/finance')) {
     return 'finance';
   }
+  if (pathname.startsWith('/dashboards/learner')) {
+    return 'learner';
+  }
   if (pathname.startsWith('/dashboards/enterprise')) {
     return 'enterprise';
   }
