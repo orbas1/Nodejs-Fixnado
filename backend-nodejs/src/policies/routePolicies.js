@@ -192,6 +192,48 @@ const ROUTE_POLICIES = {
       hasAttachments: Array.isArray(req.body?.attachments) ? req.body.attachments.length : 0
     })
   },
+  'timeline.hub.read': {
+    id: 'timeline.hub.read',
+    version: '1.0.0',
+    resource: 'timeline.hub',
+    action: 'timeline.hub:read',
+    description: 'Allow authenticated personas to access the aggregated Timeline Hub snapshot.',
+    requirements: [Permissions.FEED_VIEW],
+    tags: ['timeline', 'feed', 'analytics'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.auth?.actor?.persona ?? req.user?.type ?? null,
+      zoneFilters: Array.isArray(req.query?.zoneIds) ? req.query.zoneIds.length : 0
+    })
+  },
+  'timeline.hub.moderate': {
+    id: 'timeline.hub.moderate',
+    version: '1.0.0',
+    resource: 'timeline.hub',
+    action: 'timeline.hub:moderate',
+    description: 'Allow moderators to triage timeline hub events, assign owners, and update SLAs.',
+    requirements: [Permissions.ADMIN_LIVE_FEED_AUDIT_WRITE],
+    tags: ['timeline', 'moderation', 'operations'],
+    severity: 'high',
+    metadata: (req) => ({
+      auditId: req.params?.auditId ?? null,
+      action: req.body?.action ?? null
+    })
+  },
+  'timeline.support.session': {
+    id: 'timeline.support.session',
+    version: '1.0.0',
+    resource: 'timeline.support',
+    action: 'timeline.support:session:create',
+    description: 'Allow authenticated users to initialise a Chatwoot support session from the timeline hub.',
+    requirements: [Permissions.MESSAGING_READ],
+    tags: ['support', 'chatwoot', 'timeline'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.body?.persona ?? req.auth?.actor?.persona ?? null,
+      hasMetadata: Boolean(req.body?.metadata)
+    })
+  },
   'fixnado.ads.read': {
     id: 'fixnado.ads.read',
     version: '1.0.0',
@@ -1380,6 +1422,37 @@ const ROUTE_POLICIES = {
     metadata: (req) => ({
       regionId: req.query?.regionId || null,
       providerId: req.query?.providerId || null
+    })
+  },
+  'commerce.snapshot.read': {
+    id: 'commerce.snapshot.read',
+    version: '1.0.0',
+    resource: 'commerce.snapshot',
+    action: 'commerce.snapshot:read',
+    description:
+      'Allow authorised personas to view aggregated commerce metrics covering checkout, escrow, wallet, and invoice health.',
+    requirements: [Permissions.ANALYTICS_OVERVIEW],
+    tags: ['commerce', 'finance', 'analytics'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.query?.persona || req.headers['x-fixnado-persona'] || null,
+      timeframe: req.query?.timeframe || null,
+      currency: req.query?.currency || null
+    })
+  },
+  'commerce.persona.dashboard': {
+    id: 'commerce.persona.dashboard',
+    version: '1.0.0',
+    resource: 'commerce.dashboard',
+    action: 'commerce.dashboard:read',
+    description: 'Allow eligible personas to access commerce dashboard layouts with persona-specific analytics.',
+    requirements: [Permissions.ANALYTICS_OVERVIEW],
+    tags: ['commerce', 'analytics', 'dashboards'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.params?.persona || req.query?.persona || req.headers['x-fixnado-persona'] || null,
+      timeframe: req.query?.timeframe || null,
+      regionId: req.query?.regionId || null
     })
   },
   'finance.timeline.read': {
