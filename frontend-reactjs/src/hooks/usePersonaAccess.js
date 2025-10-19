@@ -1,78 +1,130 @@
 import { useCallback, useEffect, useState } from 'react';
+import { normaliseRole } from '../constants/accessControl.js';
 import {
-  readPersonaAccess,
-  writePersonaAccess,
-  addPersonaAccess,
-  readActivePersona,
-  writeActivePersona,
+  readPersonaState,
+  setActivePersona as persistActivePersona,
+  resetPersonaAccess,
   getDefaultAllowedPersonas
 } from '../utils/personaStorage.js';
 
 export function usePersonaAccess() {
-  const [allowed, setAllowed] = useState(() => readPersonaAccess());
-  const [activePersona, setActivePersonaState] = useState(() => readActivePersona());
+  const [personaState, setPersonaState] = useState(() => {
+    const initial = readPersonaState();
+    return {
+      allowed: initial.allowed,
+      activePersona: initial.active,
+      version: initial.version,
+      source: initial.source,
+      syncedAt: initial.syncedAt
+    };
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') {
-      return undefined;
+      return () => {};
     }
 
-    const handleStorage = (event) => {
-      if (!event.key || event.key === 'fixnado:personaAccess' || event.key === 'fixnado:activePersona') {
-        setAllowed(readPersonaAccess());
+    const handleChange = (event) => {
+      if (event?.detail) {
+        setPersonaState((current) => ({
+          allowed: event.detail.allowed ?? current.allowed,
+          activePersona: event.detail.active ?? current.activePersona,
+          version: event.detail.version ?? current.version,
+          source: event.detail.source ?? current.source,
+          syncedAt: event.detail.syncedAt ?? current.syncedAt
+        }));
+        return;
       }
+      const snapshot = readPersonaState();
+      setPersonaState({
+        allowed: snapshot.allowed,
+        activePersona: snapshot.active,
+        version: snapshot.version,
+        source: snapshot.source,
+        syncedAt: snapshot.syncedAt
+      });
     };
 
-    const handlePersonaChange = (event) => {
-      if (event?.detail?.allowed) {
-        setAllowed(event.detail.allowed);
-      } else {
-        setAllowed(readPersonaAccess());
-      }
-      setActivePersonaState(readActivePersona());
-    };
-
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('fixnado:persona:change', handlePersonaChange);
-    window.addEventListener('fixnado:session:update', handlePersonaChange);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('fixnado:persona:change', handlePersonaChange);
-      window.removeEventListener('fixnado:session:update', handlePersonaChange);
-    };
+    window.addEventListener('fixnado:persona:change', handleChange);
+    return () => window.removeEventListener('fixnado:persona:change', handleChange);
   }, []);
 
   const refresh = useCallback(() => {
-    setAllowed(readPersonaAccess());
+    const snapshot = readPersonaState();
+    setPersonaState({
+      allowed: snapshot.allowed,
+      activePersona: snapshot.active,
+      version: snapshot.version,
+      source: snapshot.source,
+      syncedAt: snapshot.syncedAt
+    });
+    return snapshot.allowed;
   }, []);
 
-  const hasAccess = useCallback((persona) => {
-    if (!persona) {
-      return false;
-    }
-    return allowed.includes(persona);
-  }, [allowed]);
+  const hasAccess = useCallback(
+    (persona) => {
+      const candidate = normaliseRole(persona);
+      if (!candidate) {
+        return false;
+      }
+      return personaState.allowed.includes(candidate);
+    },
+    [personaState.allowed]
+  );
 
-  const grantAccess = useCallback((persona) => {
-    const next = addPersonaAccess(persona);
-    setAllowed(next);
-    return next;
-  }, []);
+  const setActivePersona = useCallback(
+    (persona, { source = 'manual' } = {}) => {
+      const result = persistActivePersona(persona, { source });
+      setPersonaState((current) => ({
+        allowed: result.allowed ?? current.allowed,
+        activePersona: result.active ?? current.activePersona,
+        version: result.version ?? current.version,
+        source: result.source ?? current.source,
+        syncedAt: result.syncedAt ?? current.syncedAt
+      }));
+      return result;
+    },
+    []
+  );
 
-  const setActivePersona = useCallback((persona) => {
-    writeActivePersona(persona);
-    setAllowed(readPersonaAccess());
-    setActivePersonaState(readActivePersona());
-  }, []);
+  const grantAccess = useCallback(
+    (persona, options = {}) => {
+      const outcome = setActivePersona(persona, options);
+      return {
+        granted: Boolean(outcome.updated),
+        blocked: Boolean(outcome.blocked),
+        allowed: outcome.allowed ?? personaState.allowed
+      };
+    },
+    [personaState.allowed, setActivePersona]
+  );
 
   const reset = useCallback(() => {
-    const next = writePersonaAccess(getDefaultAllowedPersonas());
-    setAllowed(next);
-    setActivePersonaState(readActivePersona());
-    return next;
+    const allowed = resetPersonaAccess({ reason: 'manual-reset' });
+    const snapshot = readPersonaState();
+    setPersonaState({
+      allowed: snapshot.allowed,
+      activePersona: snapshot.active,
+      version: snapshot.version,
+      source: snapshot.source,
+      syncedAt: snapshot.syncedAt
+    });
+    return allowed;
   }, []);
 
-  return { allowed, hasAccess, refresh, grantAccess, setActivePersona, reset, activePersona };
+  return {
+    allowed: personaState.allowed,
+    activePersona: personaState.activePersona,
+    version: personaState.version,
+    source: personaState.source,
+    syncedAt: personaState.syncedAt,
+    hasAccess,
+    refresh,
+    grantAccess,
+    setActivePersona,
+    reset,
+    getDefaultAllowedPersonas
+  };
 }
 
 export default usePersonaAccess;

@@ -101,10 +101,50 @@ jobs:
         working-directory: flutter-phoneapp
         run: flutter test
 
+  flutter-smoke:
+    name: Flutter smoke builds
+    needs: flutter
+    strategy:
+      matrix:
+        include:
+          - target: android
+            os: ubuntu-latest
+            create-platforms: android
+            build-command: flutter build apk --debug --no-tree-shake-icons
+          - target: ios
+            os: macos-latest
+            create-platforms: ios
+            build-command: flutter build ios --no-codesign
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Scaffold missing ${{ matrix.target }} platform
+        working-directory: flutter-phoneapp
+        run: flutter create . --platforms=${{ matrix.create-platforms }}
+
+      - name: Resolve Flutter packages
+        working-directory: flutter-phoneapp
+        run: flutter pub get
+
+      - name: Build ${{ matrix.target }} artifact
+        working-directory: flutter-phoneapp
+        run: ${{ matrix.build-command }}
+
+      - name: Run Flutter smoke tests
+        working-directory: flutter-phoneapp
+        run: flutter test --no-pub test/app/app_shell_test.dart
+
   security:
     name: Security scanning
     runs-on: ubuntu-latest
-    needs: [ backend, frontend, flutter ]
+    needs: [ backend, frontend, flutter, flutter-smoke ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -117,10 +157,22 @@ jobs:
       - name: Activate npm 11 toolchain
         run: corepack prepare npm@11.4.2 --activate
 
+      - name: Install backend dependencies
+        working-directory: backend-nodejs
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend-reactjs
+        run: npm ci
+
       - name: Install Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
+      - name: Resolve Flutter packages
+        working-directory: flutter-phoneapp
+        run: flutter pub get
 
       - name: Verify toolchain baselines
         run: node scripts/verify-toolchains.mjs --ci
@@ -136,3 +188,14 @@ jobs:
 
       - name: Dependency security audit
         run: node scripts/security-audit.mjs --ci --fail-on=moderate
+
+      - name: Enforce license policy
+        run: node scripts/license-scan.mjs --ci
+
+      - name: Install k6 CLI
+        uses: grafana/setup-k6-action@v0.3.1
+        with:
+          version: v0.49.0
+
+      - name: Validate load test harness
+        run: node scripts/run-load-tests.mjs --profile performance/profiles/baseline.json --validate-only

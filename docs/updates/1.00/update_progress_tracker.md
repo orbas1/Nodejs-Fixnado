@@ -16,14 +16,14 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 2.3 Transactional migrations & audit metadata | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.4 Retention/encryption guidelines & retry history | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 2.5 Deterministic QA seed scripts | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 60 | 60 | 60 | 60 | 60 | 60 | 60 |
+| **3. Govern Dependencies & Environment Baselines**【F:docs/updates/1.00/update_task_list.md†L88-L138】 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.1 Manifest/lockfile repair & ORM roadmap | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.2 Runtime/SDK enforcement & CI audits | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.3 Geospatial/bundle rationalisation | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| 3.4 Flutter lockfiles & mobile CI smoke | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 3.5 License/load-test automation & governance docs | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 4.1 Session management & persona analytics rebuild | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 3.4 Flutter lockfiles & mobile CI smoke | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| 3.5 License/load-test automation & governance docs | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
+| 4.1 Session management & persona analytics rebuild | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 4.2 Persona-scoped routing & telemetry instrumentation | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.3 Timeline/community screens with moderation, chat, ads, and analytics | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.4 Learner dashboards & supporting profile/settings pages | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -47,3 +47,5 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 - Attach links to telemetry dashboards, CI runs, QA evidence, and documentation approvals as they materialise.
 - Use the tracker to feed the end-of-update report and Version 1.50 planning brief.
 - Add Terra Draw/map loader unit tests to cover offline failures and repeated focus updates before closing QA sign-off for the geospatial work.【F:frontend-reactjs/src/components/zones/ZoneDrawingMap.jsx†L1-L200】【F:frontend-reactjs/src/components/explorer/ExplorerMap.jsx†L1-L200】
+- Mirror the new Flutter smoke matrix locally by running `flutter create . --platforms=android,ios` before `flutter build` so the generated platform shells stay in sync with CI expectations and biometric plugins remain linked.【F:.github/workflows/build-test-and-scan.yml†L64-L117】
+- Export `node scripts/license-scan.mjs --report reports/license/v1.00.json` alongside `dart run tooling/license_snapshot.dart` outputs when preparing release evidence so compliance can diff approvals per milestone without re-running CI.【F:scripts/license-scan.mjs†L194-L217】【F:flutter-phoneapp/tooling/license_snapshot.dart†L79-L114】

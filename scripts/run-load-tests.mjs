@@ -11,9 +11,21 @@ const performanceDir = path.join(repoRoot, 'performance');
 const defaultProfile = path.join(performanceDir, 'profiles', 'baseline.json');
 const scriptPath = path.join(performanceDir, 'k6', 'main.js');
 const reportsDir = path.join(performanceDir, 'reports');
+const supportedScenarios = new Set([
+  'booking_flow',
+  'chat_flow',
+  'payments_flow',
+  'analytics_flow',
+  'ads_flow'
+]);
 
 function parseArgs(argv) {
-  const result = { profile: process.env.K6_PROFILE_PATH || defaultProfile, summary: null, extra: [] };
+  const result = {
+    profile: process.env.K6_PROFILE_PATH || defaultProfile,
+    summary: null,
+    extra: [],
+    validateOnly: false
+  };
   const args = [...argv];
   while (args.length) {
     const current = args.shift();
@@ -21,6 +33,8 @@ function parseArgs(argv) {
       result.profile = args.shift();
     } else if (current === '--summary' && args.length) {
       result.summary = args.shift();
+    } else if (current === '--validate-only') {
+      result.validateOnly = true;
     } else if (current === '--') {
       result.extra = args.slice();
       break;
@@ -47,6 +61,38 @@ function loadProfile(profilePath) {
     console.error(`\n❌ Unable to read k6 profile at ${profilePath}: ${error.message}`);
     process.exit(1);
   }
+}
+
+function validateProfileStructure(profilePath, profileData) {
+  const errors = [];
+  if (!profileData || typeof profileData !== 'object') {
+    return [`Profile ${profilePath} does not contain a valid JSON object.`];
+  }
+
+  const scenarios = profileData.scenarios;
+  if (!scenarios || typeof scenarios !== 'object' || Object.keys(scenarios).length === 0) {
+    errors.push('No scenarios defined. Ensure the profile contains a "scenarios" object.');
+  } else {
+    Object.keys(scenarios).forEach((key) => {
+      if (!supportedScenarios.has(key)) {
+        errors.push(`Scenario "${key}" is not supported by performance/k6/main.js.`);
+      }
+    });
+  }
+
+  if (profileData.requiredEnv && !Array.isArray(profileData.requiredEnv)) {
+    errors.push('"requiredEnv" must be an array of environment variable names.');
+  }
+
+  if (profileData.thresholds && typeof profileData.thresholds !== 'object') {
+    errors.push('"thresholds" must be an object when provided.');
+  }
+
+  if (profileData.settings && typeof profileData.settings !== 'object') {
+    errors.push('"settings" must be an object when provided.');
+  }
+
+  return errors;
 }
 
 function validateEnv(requiredKeys) {
@@ -105,10 +151,35 @@ function runK6(profilePath, summaryPath, extraArgs) {
 }
 
 (function main() {
-  const { profile, summary, extra } = parseArgs(process.argv.slice(2));
+  const { profile, summary, extra, validateOnly } = parseArgs(process.argv.slice(2));
   ensureK6Binary();
   const profileData = loadProfile(profile);
-  validateEnv(Array.isArray(profileData.requiredEnv) ? profileData.requiredEnv : []);
+  const structureErrors = validateProfileStructure(profile, profileData);
+  if (structureErrors.length) {
+    console.error('\n❌ k6 profile validation failed:');
+    structureErrors.forEach((message) => console.error(`   • ${message}`));
+    process.exit(1);
+  }
+
+  const requiredEnv = Array.isArray(profileData.requiredEnv) ? profileData.requiredEnv : [];
+
+  if (validateOnly) {
+    console.log(`▶️  Inspecting k6 script at ${scriptPath}`);
+    const inspect = spawnSync('k6', ['inspect', scriptPath], { stdio: 'inherit', cwd: repoRoot });
+    if (inspect.status !== 0) {
+      console.error(`\n❌ k6 inspect exited with status ${inspect.status}.`);
+      process.exit(inspect.status ?? 1);
+    }
+    if (requiredEnv.length) {
+      console.log(`ℹ️  Required environment variables: ${requiredEnv.join(', ')}`);
+    } else {
+      console.log('ℹ️  Profile does not declare required environment variables.');
+    }
+    console.log('\n✅ Load harness validation completed without executing scenarios.');
+    return;
+  }
+
+  validateEnv(requiredEnv);
   const summaryPath = ensureReportPath(summary);
   runK6(profile, summaryPath, extra);
 })();

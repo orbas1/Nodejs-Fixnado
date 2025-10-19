@@ -1,74 +1,64 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-
-const STORAGE_KEY = 'fixnado:active-persona';
-const DEFAULT_PERSONA = 'customer';
-const ALLOWED_PERSONAS = ['customer', 'provider', 'serviceman', 'enterprise', 'admin'];
-
-function readStoredPersona(initialPersona) {
-  if (typeof window === 'undefined') {
-    return initialPersona ?? DEFAULT_PERSONA;
-  }
-
-  try {
-    const persisted = window.localStorage?.getItem(STORAGE_KEY);
-    if (persisted && ALLOWED_PERSONAS.includes(persisted)) {
-      return persisted;
-    }
-  } catch (error) {
-    console.warn('[PersonaProvider] Unable to read stored persona', error);
-  }
-
-  return initialPersona && ALLOWED_PERSONAS.includes(initialPersona)
-    ? initialPersona
-    : DEFAULT_PERSONA;
-}
+import { normaliseRole } from '../constants/accessControl.js';
+import { readPersonaState, setActivePersona as persistActivePersona } from '../utils/personaStorage.js';
 
 export const PersonaContext = createContext(null);
 
 export function PersonaProvider({ children, initialPersona }) {
-  const [persona, setPersona] = useState(() => readStoredPersona(initialPersona));
-  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const initialState = useMemo(() => readPersonaState(), []);
+  const [persona, setPersonaState] = useState(() => {
+    const candidate = initialPersona ? persistActivePersona(initialPersona, { source: 'provider-init' }) : null;
+    if (candidate && candidate.active) {
+      return candidate.active;
+    }
+    return initialState.active ?? initialState.allowed[0] ?? 'customer';
+  });
+  const [allowedPersonas, setAllowedPersonas] = useState(initialState.allowed);
+  const [lastSyncedAt, setLastSyncedAt] = useState(initialState.syncedAt);
   const listenersRef = useRef(new Set());
 
   useEffect(() => {
     if (typeof window === 'undefined') {
-      return;
+      return () => {};
     }
 
-    const handleStorage = (event) => {
-      if (event.key !== STORAGE_KEY || !event.newValue) {
+    const handlePersonaChange = (event) => {
+      if (event?.detail) {
+        if (Array.isArray(event.detail.allowed)) {
+          setAllowedPersonas(event.detail.allowed);
+        }
+        if (event.detail.active) {
+          setPersonaState(event.detail.active);
+        }
+        if (event.detail.syncedAt) {
+          setLastSyncedAt(event.detail.syncedAt);
+        }
         return;
       }
-      if (!ALLOWED_PERSONAS.includes(event.newValue)) {
-        return;
-      }
-      setPersona(event.newValue);
+
+      const snapshot = readPersonaState();
+      setAllowedPersonas(snapshot.allowed);
+      setPersonaState(snapshot.active ?? snapshot.allowed[0] ?? persona);
+      setLastSyncedAt(snapshot.syncedAt);
     };
 
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      window.localStorage?.setItem(STORAGE_KEY, persona);
-      setLastSyncedAt(new Date().toISOString());
-      listenersRef.current.forEach((listener) => {
-        try {
-          listener(persona);
-        } catch (error) {
-          console.warn('[PersonaProvider] Persona listener failed', error);
-        }
-      });
-    } catch (error) {
-      console.warn('[PersonaProvider] Unable to persist persona', error);
-    }
+    window.addEventListener('fixnado:persona:change', handlePersonaChange);
+    return () => window.removeEventListener('fixnado:persona:change', handlePersonaChange);
   }, [persona]);
+
+  const setPersona = useCallback((nextPersona) => {
+    const result = persistActivePersona(nextPersona, { source: 'provider' });
+    if (result.allowed) {
+      setAllowedPersonas(result.allowed);
+    }
+    if (result.active) {
+      setPersonaState(result.active);
+    }
+    if (result.syncedAt) {
+      setLastSyncedAt(result.syncedAt);
+    }
+  }, []);
 
   const subscribe = useCallback((listener) => {
     if (typeof listener !== 'function') {
@@ -78,24 +68,39 @@ export function PersonaProvider({ children, initialPersona }) {
     return () => listenersRef.current.delete(listener);
   }, []);
 
+  useEffect(() => {
+    listenersRef.current.forEach((listener) => {
+      try {
+        listener(persona);
+      } catch (error) {
+        console.warn('[PersonaProvider] Persona listener failed', error);
+      }
+    });
+  }, [persona]);
+
+  const isAllowed = useCallback(
+    (allowed) => {
+      if (!allowed || allowed.length === 0) {
+        return true;
+      }
+      if (typeof allowed === 'string') {
+        return allowedPersonas.includes(normaliseRole(allowed));
+      }
+      return allowed.some((candidate) => allowedPersonas.includes(normaliseRole(candidate)));
+    },
+    [allowedPersonas]
+  );
+
   const value = useMemo(
     () => ({
       persona,
       setPersona,
-      availablePersonas: ALLOWED_PERSONAS,
+      availablePersonas: allowedPersonas,
       lastSyncedAt,
       subscribe,
-      isAllowed: (allowed) => {
-        if (!allowed || allowed.length === 0) {
-          return true;
-        }
-        if (typeof allowed === 'string') {
-          return persona === allowed;
-        }
-        return allowed.includes(persona);
-      }
+      isAllowed
     }),
-    [persona, lastSyncedAt, subscribe]
+    [persona, setPersona, allowedPersonas, lastSyncedAt, subscribe, isAllowed]
   );
 
   return <PersonaContext.Provider value={value}>{children}</PersonaContext.Provider>;
@@ -103,7 +108,7 @@ export function PersonaProvider({ children, initialPersona }) {
 
 PersonaProvider.propTypes = {
   children: PropTypes.node.isRequired,
-  initialPersona: PropTypes.oneOf(ALLOWED_PERSONAS)
+  initialPersona: PropTypes.string
 };
 
 export function usePersonaContext() {
@@ -113,4 +118,3 @@ export function usePersonaContext() {
   }
   return context;
 }
-

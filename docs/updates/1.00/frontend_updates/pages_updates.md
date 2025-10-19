@@ -8,3 +8,7 @@
 
 ## Terms & Policies (Version 1.00)
 - Added a resilient loading state and reinforced CMS fallbacks around section navigation so legal content and modal views initialise even when remote fetches fail.【F:frontend-reactjs/src/pages/Terms.jsx†L209-L360】
+
+## Dashboard Hub & session bootstrap (Version 1.00)
+- Updated the dashboard hub unlock flow to respect server-approved personas, surface approval messaging when blocked, and synchronise persona analytics so manual grants can no longer bypass admin controls.【F:frontend-reactjs/src/pages/DashboardHub.jsx†L12-L72】
+- Replaced the client-only session bootstrap with an authenticated `/api/auth/me` fetch, persona-aware storage throttling, and telemetry instrumentation to keep persona unlocks and offline fallbacks in sync across tabs.【F:frontend-reactjs/src/hooks/useSession.js†L1-L331】【F:frontend-reactjs/src/utils/sessionStorage.js†L1-L289】

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { resolveSessionTelemetryContext } from '../utils/telemetry.js';
-
-const SESSION_STORAGE_KEY = 'fx.session';
+import { SESSION_STORAGE_KEY } from '../constants/session.js';
 const ACTIVE_ROLE_STORAGE_KEY = 'fixnado:activeRole';
 
 const normaliseSessionRole = (value) => {
