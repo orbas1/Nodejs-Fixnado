@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: fixnado-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fixnado
+      POSTGRES_USER: fixnado_service
+      POSTGRES_PASSWORD: fixnado_dev_password_please_change
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
