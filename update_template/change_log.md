@@ -22,3 +22,8 @@
 - Added moderation queue API with SLA breach detection, status transitions, and note capture surfaced under new timeline hub routes.
 - Integrated Chatwoot session bootstrap service with audit logging and hardened timeout handling to unblock support workflows.
 - Registered new route policies for timeline hub access, moderation, and support sessions; progress tracker updated to reflect UT-004 completion.
+
+## Version 1.00 Commerce Engine & Persona Dashboards (2024-05-27)
+- Implemented `commerceEngineService` plus `/v1/commerce` endpoints to surface consolidated payments, escrow, invoice, wallet, and order analytics tailored to persona dashboards.
+- Added commerce dashboard controller, route policies, and Vitest suite validating alerts, settlement insights, and currency conversion logic.
+- Updated backend documentation, changelog, and trackers to record UT-005 completion and unlock downstream compliance milestone.

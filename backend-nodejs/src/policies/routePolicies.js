@@ -1424,6 +1424,37 @@ const ROUTE_POLICIES = {
       providerId: req.query?.providerId || null
     })
   },
+  'commerce.snapshot.read': {
+    id: 'commerce.snapshot.read',
+    version: '1.0.0',
+    resource: 'commerce.snapshot',
+    action: 'commerce.snapshot:read',
+    description:
+      'Allow authorised personas to view aggregated commerce metrics covering checkout, escrow, wallet, and invoice health.',
+    requirements: [Permissions.ANALYTICS_OVERVIEW],
+    tags: ['commerce', 'finance', 'analytics'],
+    severity: 'high',
+    metadata: (req) => ({
+      persona: req.query?.persona || req.headers['x-fixnado-persona'] || null,
+      timeframe: req.query?.timeframe || null,
+      currency: req.query?.currency || null
+    })
+  },
+  'commerce.persona.dashboard': {
+    id: 'commerce.persona.dashboard',
+    version: '1.0.0',
+    resource: 'commerce.dashboard',
+    action: 'commerce.dashboard:read',
+    description: 'Allow eligible personas to access commerce dashboard layouts with persona-specific analytics.',
+    requirements: [Permissions.ANALYTICS_OVERVIEW],
+    tags: ['commerce', 'analytics', 'dashboards'],
+    severity: 'medium',
+    metadata: (req) => ({
+      persona: req.params?.persona || req.query?.persona || req.headers['x-fixnado-persona'] || null,
+      timeframe: req.query?.timeframe || null,
+      regionId: req.query?.regionId || null
+    })
+  },
   'finance.timeline.read': {
     id: 'finance.timeline.read',
     version: '1.0.0',

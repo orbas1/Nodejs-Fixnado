@@ -3,6 +3,7 @@ import authRoutes from './authRoutes.js';
 import serviceRoutes from './serviceRoutes.js';
 import feedRoutes from './feedRoutes.js';
 import timelineHubRoutes from './timelineHubRoutes.js';
+import commerceRoutes from './commerceRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import adminLiveFeedAuditRoutes from './adminLiveFeedAuditRoutes.js';
 import adminRoutes from './adminRoutes.js';
@@ -88,6 +89,7 @@ const routeDefinitions = [
   { path: '/services', router: serviceRoutes },
   { path: '/feed', router: feedRoutes },
   { path: '/timeline-hub', router: timelineHubRoutes },
+  { path: '/commerce', router: commerceRoutes },
   { path: '/search', router: searchRoutes },
   { path: '/admin/bookings', router: adminBookingRoutes },
   { path: '/admin/rentals', router: adminRentalRoutes },

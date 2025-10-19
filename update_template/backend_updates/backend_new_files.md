@@ -16,3 +16,7 @@
 - `backend-nodejs/src/controllers/timelineHubController.js`
 - `backend-nodejs/src/routes/timelineHubRoutes.js`
 - `backend-nodejs/src/services/__tests__/timelineHubService.test.js`
+- `backend-nodejs/src/services/commerceEngineService.js`
+- `backend-nodejs/src/controllers/commerceController.js`
+- `backend-nodejs/src/routes/commerceRoutes.js`
+- `backend-nodejs/src/services/__tests__/commerceEngineService.test.js`
