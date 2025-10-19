@@ -15,3 +15,10 @@
 ## Dashboard Hub & session bootstrap (Version 1.00)
 - Updated the dashboard hub unlock flow to respect server-approved personas, surface approval messaging when blocked, and synchronise persona analytics so manual grants can no longer bypass admin controls.【F:frontend-reactjs/src/pages/DashboardHub.jsx†L12-L72】
 - Replaced the client-only session bootstrap with an authenticated `/api/auth/me` fetch, persona-aware storage throttling, and telemetry instrumentation to keep persona unlocks and offline fallbacks in sync across tabs.【F:frontend-reactjs/src/hooks/useSession.js†L1-L331】【F:frontend-reactjs/src/utils/sessionStorage.js†L1-L289】
+
+## Feed & Community Hub (Version 1.00)
+- Extended the feed sidebar with persona-aware community telemetry, curated highlights, and event previews backed by the community API so operators can monitor engagement without leaving the timeline.【F:frontend-reactjs/src/pages/Feed.jsx†L1-L250】【F:frontend-reactjs/src/api/communityClient.js†L1-L192】
+- Delivered the community hub experience with LiveFeed aggregation, follow recommendations, and analytics dispatch that keeps timeline health visible across roles.【F:frontend-reactjs/src/pages/CommunityHub.jsx†L1-L206】【F:frontend-reactjs/src/components/community/CommunityInsights.jsx†L1-L158】
+
+## Community Detail Surfaces (Version 1.00)
+- Built production-ready post, messaging, events, and moderation pages with telemetry instrumentation, AI-assisted messaging workflows, event exports, and restricted operator queues mapped to the new community client.【F:frontend-reactjs/src/pages/CommunityPost.jsx†L1-L260】【F:frontend-reactjs/src/pages/CommunityMessages.jsx†L1-L196】【F:frontend-reactjs/src/pages/CommunityEvents.jsx†L1-L144】【F:frontend-reactjs/src/pages/CommunityModeration.jsx†L1-L167】

@@ -66,6 +66,11 @@ const BlogPost = lazy(() => import('./pages/BlogPost.jsx'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
 const AdminLegal = lazy(() => import('./pages/AdminLegal.jsx'));
+const CommunityHub = lazy(() => import('./pages/CommunityHub.jsx'));
+const CommunityPost = lazy(() => import('./pages/CommunityPost.jsx'));
+const CommunityEvents = lazy(() => import('./pages/CommunityEvents.jsx'));
+const CommunityMessages = lazy(() => import('./pages/CommunityMessages.jsx'));
+const CommunityModeration = lazy(() => import('./pages/CommunityModeration.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
@@ -194,6 +199,11 @@ function App() {
             <Route path="/compliance/data-requests" element={<CompliancePortal />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/community" element={<CommunityHub />} />
+            <Route path="/community/posts/:postId" element={<CommunityPost />} />
+            <Route path="/community/events" element={<CommunityEvents />} />
+            <Route path="/community/messages" element={<CommunityMessages />} />
+            <Route path="/community/moderation" element={<CommunityModeration />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/communications" element={<Communications />} />
             <Route path="/creation-studio" element={<CreationStudio />} />

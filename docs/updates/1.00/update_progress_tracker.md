@@ -22,10 +22,10 @@ _Percentages reflect the latest merged work. Overall level is the mean of securi
 | 3.3 Geospatial/bundle rationalisation | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.4 Flutter lockfiles & mobile CI smoke | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 3.5 License/load-test automation & governance docs | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 33 | 33 | 33 | 33 | 33 | 33 | 33 |
+| **4. Deliver Enterprise Web Experience & Commerce Flows**【F:docs/updates/1.00/update_task_list.md†L140-L206】 | 50 | 50 | 50 | 50 | 50 | 50 | 50 |
 | 4.1 Session management & persona analytics rebuild | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 4.2 Persona-scoped routing & telemetry instrumentation | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
-| 4.3 Timeline/community screens with moderation, chat, ads, and analytics | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 4.3 Timeline/community screens with moderation, chat, ads, and analytics【F:frontend-reactjs/src/pages/CommunityHub.jsx†L1-L206】【F:frontend-reactjs/src/pages/CommunityMessages.jsx†L1-L196】【F:frontend-reactjs/src/pages/CommunityModeration.jsx†L1-L167】 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 | 4.4 Learner dashboards & supporting profile/settings pages | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.5 Instructor/merchant dashboards, storefront, checkout, and support pages | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4.6 Admin/compliance dashboards, legal/knowledge base, and documentation refresh | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
