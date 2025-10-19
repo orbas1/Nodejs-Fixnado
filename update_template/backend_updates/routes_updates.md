@@ -7,3 +7,7 @@
 
 - Added `backend-nodejs/src/routes/commerceRoutes.js` with `/v1/commerce/snapshot` and `/v1/commerce/personas/:persona` endpoints protected by policy middleware and shared timeframe filters.
 - Updated `backend-nodejs/src/routes/index.js` to mount the commerce routes within the v1 router definition list.
+
+# Route Updates – Version 1.00 UT-006
+
+- Extended `/v1/legal/:slug` payloads to include health, acknowledgement, governance, and audience metadata enabling compliance dashboards and acknowledgement reporting without introducing new endpoints.

@@ -2,15 +2,19 @@
 
 | Document | Purpose | Latest Update |
 | --- | --- | --- |
-| update_plan.md | Programme charter outlining objectives, workstreams, risks, and governance for Version 1.00. | 2024-05-20 |
+| update_plan.md | Programme charter outlining objectives, workstreams, risks, and governance for Version 1.00. | 2024-06-02 |
 | update_milestone_list.md | Ordered milestones with entry/exit criteria anchoring the schedule. | 2024-05-09 |
-| update_task_list.md | Authoritative backlog of milestone-aligned tasks with ownership and progress. | 2024-05-20 |
-| update_progress_tracker.md | Live status tracker with activity log, risks, decisions, and cadence summary. | 2024-05-20 |
-| change_log.md | Summary of documentation changes applied during Version 1.00 planning. | 2024-05-20 |
-| test_plan.md | Gating strategy for automation, functional, security, performance, and regression testing. | 2024-05-20 |
+| update_task_list.md | Authoritative backlog of milestone-aligned tasks with ownership and progress. | 2024-06-02 |
+| update_progress_tracker.md | Live status tracker with activity log, risks, decisions, and cadence summary. | 2024-06-02 |
+| change_log.md | Summary of documentation changes applied during Version 1.00 planning. | 2024-06-02 |
+| test_plan.md | Gating strategy for automation, functional, security, performance, and regression testing. | 2024-05-30 |
+| features_update_plan.md | Pillar-by-pillar execution matrix for release automation, timeline hub, commerce, dashboards, and compliance. | 2024-06-02 |
 | infrastructure/runbooks/blue-green-deployment.md | Operational playbook for AWS CodeDeploy blue/green releases including validation and rollback drills. | 2024-05-16 |
 | scripts/rotate-secrets.mjs | Secrets Manager automation script for rotating JWT, encryption, and database credentials per environment. | 2024-05-16 |
 | backend-nodejs/scripts/taxonomy-integrity.mjs | CLI to verify seeded taxonomy checksums and emit rollback SQL for rehearsals. | 2024-05-20 |
+| docs/operations/go-live-rehearsal.md | Launch rehearsal script covering deployment, compliance drills, and evidence capture ahead of Version 1.00 go-live. | 2024-05-30 |
+| docs/compliance/dsar_operational_playbook.md | DSAR intake, verification, export, purge, and incident handling playbook aligned to GDPR requirements. | 2024-05-30 |
+| docs/compliance/legal_publication_workflow.md | Workflow outlining legal publication, acknowledgements, and monitoring for new policies. | 2024-05-30 |
 
 ## Navigation Notes
 - For backend-specific updates, refer to `/update_template/backend_updates/` (to be populated as features land).

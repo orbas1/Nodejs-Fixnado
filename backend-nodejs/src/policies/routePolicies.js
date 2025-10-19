@@ -1662,6 +1662,20 @@ const ROUTE_POLICIES = {
     severity: 'medium',
     metadata: (req) => ({ status: req.query?.status || null })
   },
+  'compliance.data-requests.metrics': {
+    id: 'compliance.data-requests.metrics',
+    version: '1.0.0',
+    resource: 'compliance.data-requests',
+    action: 'compliance.data-requests:metrics',
+    description: 'Allow compliance leads to review DSAR backlog analytics and SLA coverage.',
+    requirements: [Permissions.COMPLIANCE_PORTAL],
+    tags: ['compliance', 'privacy', 'analytics'],
+    severity: 'medium',
+    metadata: (req) => ({
+      status: req.query?.status || null,
+      region: req.query?.regionCode || null
+    })
+  },
   'compliance.data-requests.export': {
     id: 'compliance.data-requests.export',
     version: '1.0.0',

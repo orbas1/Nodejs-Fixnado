@@ -9,3 +9,7 @@
 
 - Added `/v1/commerce/snapshot` GET endpoint returning persona-aware commerce snapshots across payments, orders, escrow, invoices, and wallets with timeframe filters.
 - Added `/v1/commerce/personas/:persona` GET endpoint returning structured commerce dashboards to power persona navigation, readiness scores, and alerting overlays.
+
+# API Surface Changes – Version 1.00 UT-006
+
+- Enriched `/v1/legal/:slug` responses with document status labels, health metadata, acknowledgement requirements, audience segments, and governance context to support compliance dashboards and acknowledgement reporting.

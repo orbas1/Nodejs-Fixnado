@@ -61,6 +61,172 @@ function normaliseAttachments(entries = []) {
     .filter(Boolean);
 }
 
+function normaliseTags(entries = []) {
+  return ensureArray(entries)
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((value) => value.length > 0);
+}
+
+function normaliseAudience(entries = []) {
+  return ensureArray(entries)
+    .map((entry, index) => {
+      if (!entry) {
+        return null;
+      }
+
+      if (typeof entry === 'string') {
+        const label = entry.trim();
+        if (!label) {
+          return null;
+        }
+        return {
+          id: slugify(label, `audience-${index + 1}`),
+          label,
+          description: null,
+          mandatory: false
+        };
+      }
+
+      const label = typeof entry.label === 'string' && entry.label.trim().length > 0
+        ? entry.label.trim()
+        : typeof entry.name === 'string' && entry.name.trim().length > 0
+          ? entry.name.trim()
+          : '';
+
+      if (!label) {
+        return null;
+      }
+
+      const description = typeof entry.description === 'string' && entry.description.trim().length > 0
+        ? entry.description.trim()
+        : null;
+
+      const id = typeof entry.id === 'string' && entry.id.trim().length > 0
+        ? entry.id.trim()
+        : slugify(label, `audience-${index + 1}`);
+
+      return {
+        id,
+        label,
+        description,
+        mandatory: Boolean(entry.mandatory)
+      };
+    })
+    .filter(Boolean);
+}
+
+function normaliseAcknowledgement(entry = null) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const required = Boolean(entry.required);
+  const frequency = typeof entry.frequency === 'string' && entry.frequency.trim().length > 0
+    ? entry.frequency.trim()
+    : null;
+  const channel = typeof entry.channel === 'string' && entry.channel.trim().length > 0
+    ? entry.channel.trim()
+    : null;
+  const dueWithinHours = Number.isFinite(Number(entry.dueWithinHours))
+    ? Number(entry.dueWithinHours)
+    : null;
+  const reminderCadence = typeof entry.reminderCadence === 'string' && entry.reminderCadence.trim().length > 0
+    ? entry.reminderCadence.trim()
+    : null;
+  const evidencePath = typeof entry.evidencePath === 'string' && entry.evidencePath.trim().length > 0
+    ? entry.evidencePath.trim()
+    : null;
+
+  if (!required && !frequency && !channel && dueWithinHours == null && !reminderCadence && !evidencePath) {
+    return null;
+  }
+
+  return {
+    required,
+    frequency,
+    channel,
+    dueWithinHours,
+    reminderCadence,
+    evidencePath
+  };
+}
+
+function normaliseAuditTrail(entries = []) {
+  return ensureArray(entries)
+    .map((entry, index) => {
+      if (!entry) {
+        return null;
+      }
+
+      if (typeof entry === 'string') {
+        const label = entry.trim();
+        if (!label) {
+          return null;
+        }
+        return {
+          id: slugify(label, `audit-${index + 1}`),
+          label,
+          url: null
+        };
+      }
+
+      const label = typeof entry.label === 'string' && entry.label.trim().length > 0
+        ? entry.label.trim()
+        : '';
+
+      if (!label) {
+        return null;
+      }
+
+      const url = typeof entry.url === 'string' && entry.url.trim().length > 0 ? entry.url.trim() : null;
+      const capturedAt = typeof entry.capturedAt === 'string' && entry.capturedAt.trim().length > 0
+        ? entry.capturedAt.trim()
+        : null;
+
+      return {
+        id: typeof entry.id === 'string' && entry.id.trim().length > 0 ? entry.id.trim() : slugify(label, `audit-${index + 1}`),
+        label,
+        url,
+        capturedAt
+      };
+    })
+    .filter(Boolean);
+}
+
+function normaliseGovernance(entry = null) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const reviewOwners = normaliseAudience(entry.reviewOwners || entry.reviewers || []);
+  const escalationContacts = normaliseAudience(entry.escalationContacts || entry.escalations || []);
+  const policyStore = typeof entry.policyStore === 'string' && entry.policyStore.trim().length > 0
+    ? entry.policyStore.trim()
+    : null;
+  const nextReviewDue = typeof entry.nextReviewDue === 'string' && entry.nextReviewDue.trim().length > 0
+    ? entry.nextReviewDue.trim()
+    : null;
+  const auditTrail = normaliseAuditTrail(entry.auditTrail || []);
+
+  if (
+    reviewOwners.length === 0 &&
+    escalationContacts.length === 0 &&
+    !policyStore &&
+    !nextReviewDue &&
+    auditTrail.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    reviewOwners,
+    escalationContacts,
+    policyStore,
+    nextReviewDue,
+    auditTrail
+  };
+}
+
 function slugify(value, fallback) {
   if (typeof value !== 'string' || !value.trim()) {
     return fallback;
@@ -126,6 +292,26 @@ function buildContentPayload(document, payload = {}) {
     reviewCadence: payload?.reviewCadence?.trim() || document.reviewCadence || null,
     owner: document.owner
   };
+
+  const acknowledgement = normaliseAcknowledgement(payload?.acknowledgement || payload?.metadata?.acknowledgement);
+  if (acknowledgement) {
+    metadata.acknowledgement = acknowledgement;
+  }
+
+  const audience = normaliseAudience(payload?.audience || payload?.metadata?.audience || []);
+  if (audience.length > 0) {
+    metadata.audience = audience;
+  }
+
+  const governance = normaliseGovernance(payload?.governance || payload?.metadata?.governance || null);
+  if (governance) {
+    metadata.governance = governance;
+  }
+
+  const tags = normaliseTags(payload?.tags || payload?.metadata?.tags || []);
+  if (tags.length > 0) {
+    metadata.tags = tags;
+  }
 
   const sections = normaliseSections(payload?.sections || []);
 
@@ -324,6 +510,9 @@ export async function getLegalDocumentDetail(slug) {
   const plainVersions = versions.map((version) => toPlain(version));
   const draftVersion = plainVersions.find((version) => version.status === 'draft') || null;
   const currentVersion = plainVersions.find((version) => version.id === document.currentVersionId) || null;
+  const statusLabel = computeDocumentStatus(currentVersion, draftVersion);
+  const health = computeDocumentHealth(document, currentVersion, draftVersion);
+  const metadata = currentVersion?.content?.metadata || draftVersion?.content?.metadata || {};
 
   return {
     id: document.id,
@@ -336,6 +525,21 @@ export async function getLegalDocumentDetail(slug) {
     contactPhone: document.contactPhone,
     contactUrl: document.contactUrl,
     reviewCadence: document.reviewCadence,
+    statusLabel,
+    health: {
+      ...health,
+      lastPublished: currentVersion?.publishedAt || health.lastPublished || null,
+      nextEffective: draftVersion?.effectiveAt || health.nextEffective || null
+    },
+    acknowledgement: metadata.acknowledgement || null,
+    audience: metadata.audience || [],
+    governance: metadata.governance || null,
+    metadata: {
+      ...metadata,
+      audience: metadata.audience || [],
+      acknowledgement: metadata.acknowledgement || null,
+      governance: metadata.governance || null
+    },
     currentVersion,
     draftVersion,
     versions: plainVersions

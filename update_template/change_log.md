@@ -27,3 +27,14 @@
 - Implemented `commerceEngineService` plus `/v1/commerce` endpoints to surface consolidated payments, escrow, invoice, wallet, and order analytics tailored to persona dashboards.
 - Added commerce dashboard controller, route policies, and Vitest suite validating alerts, settlement insights, and currency conversion logic.
 - Updated backend documentation, changelog, and trackers to record UT-005 completion and unlock downstream compliance milestone.
+
+## Version 1.00 Compliance & Launch Readiness (2024-05-30)
+- Added legal publications for refund policy, community guidelines, about Fixnado, and FAQ with acknowledgement metadata and governance audit trails seeded into the legal service.
+- Enhanced legal document API responses to expose health, acknowledgement, audience, and governance data for compliance dashboards and acknowledgements sampling.
+- Introduced DSAR operational playbook, go-live rehearsal runbook, and legal publication workflow documentation to the compliance and operations libraries.
+- Completed go-live rehearsal covering blue/green deployment, DSAR export, refund triage, and policy acknowledgement sampling with evidence stored in the release vault.
+
+## Version 1.00 Timeline Hub Hardening (2024-06-02)
+- Refined advertising domain models (`CampaignCreative`, `CampaignAudienceSegment`, `CampaignPlacement`) with production enums, metadata guards, and index coverage to unblock vitest/Vite bundler usage.
+- Cleaned `src/models/index.js` to deduplicate imports, stabilise campaign associations, and surface reusable constants for downstream services/tests.
+- Updated trackers, task list, and risk log to capture UT-007 completion and ongoing legacy Vitest remediation scope.

@@ -1,7 +1,27 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../database/index.js';
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
+
+export const CAMPAIGN_CREATIVE_STATUSES = Object.freeze([
+  'draft',
+  'in_review',
+  'active',
+  'paused',
+  'retired'
+]);
+
+export const CAMPAIGN_CREATIVE_FORMATS = Object.freeze([
+  'image',
+  'video',
+  'carousel',
+  'html',
+  'native'
+]);
+
+export const CAMPAIGN_CREATIVE_REVIEW_STATUSES = Object.freeze([
+  'pending',
+  'approved',
+  'rejected'
+]);
 
 class CampaignCreative extends Model {}
 
@@ -13,44 +33,28 @@ CampaignCreative.init(
       primaryKey: true
     },
     campaignId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      field: 'campaign_id'
-    },
-    flightId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      field: 'flight_id'
       field: 'campaign_id',
       type: DataTypes.UUID,
       allowNull: false
+    },
+    flightId: {
+      field: 'flight_id',
+      type: DataTypes.UUID,
+      allowNull: true
     },
     name: {
       type: DataTypes.STRING(160),
       allowNull: false
     },
-    format: {
-      type: DataTypes.ENUM('image', 'video', 'html', 'text', 'carousel'),
-      allowNull: false,
-      defaultValue: 'image'
-    },
     status: {
-      type: DataTypes.ENUM('draft', 'review', 'active', 'paused', 'archived'),
+      type: DataTypes.ENUM(...CAMPAIGN_CREATIVE_STATUSES),
       allowNull: false,
-      defaultValue: 'draft'
-    },
-    headline: {
-      type: DataTypes.STRING(180),
-      allowNull: true
-    status: {
-      type: DataTypes.ENUM('draft', 'in_review', 'active', 'paused', 'retired'),
-      allowNull: false,
-      defaultValue: 'draft'
+      defaultValue: CAMPAIGN_CREATIVE_STATUSES[0]
     },
     format: {
-      type: DataTypes.ENUM('image', 'video', 'carousel', 'html', 'native'),
+      type: DataTypes.ENUM(...CAMPAIGN_CREATIVE_FORMATS),
       allowNull: false,
-      defaultValue: 'image'
+      defaultValue: CAMPAIGN_CREATIVE_FORMATS[0]
     },
     headline: {
       type: DataTypes.STRING(160),
@@ -61,34 +65,6 @@ CampaignCreative.init(
       allowNull: true
     },
     callToAction: {
-      type: DataTypes.STRING(64),
-      allowNull: true,
-      field: 'call_to_action'
-    },
-    assetUrl: {
-      type: DataTypes.STRING(2048),
-      allowNull: false,
-      field: 'asset_url'
-    },
-    thumbnailUrl: {
-      type: DataTypes.STRING(2048),
-      allowNull: true,
-      field: 'thumbnail_url'
-    },
-    metadata: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: {}
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'created_at'
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      field: 'updated_at'
       field: 'call_to_action',
       type: DataTypes.STRING(60),
       allowNull: true
@@ -96,18 +72,24 @@ CampaignCreative.init(
     assetUrl: {
       field: 'asset_url',
       type: DataTypes.STRING(2048),
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isUrl: true
+      }
     },
     thumbnailUrl: {
       field: 'thumbnail_url',
       type: DataTypes.STRING(2048),
-      allowNull: true
+      allowNull: true,
+      validate: {
+        isUrl: true
+      }
     },
     reviewStatus: {
       field: 'review_status',
-      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      type: DataTypes.ENUM(...CAMPAIGN_CREATIVE_REVIEW_STATUSES),
       allowNull: false,
-      defaultValue: 'pending'
+      defaultValue: CAMPAIGN_CREATIVE_REVIEW_STATUSES[0]
     },
     rejectionReason: {
       field: 'rejection_reason',
@@ -123,8 +105,55 @@ CampaignCreative.init(
   {
     sequelize,
     modelName: 'CampaignCreative',
-    tableName: 'CampaignCreative'
+    tableName: 'CampaignCreative',
+    indexes: [
+      {
+        fields: ['campaign_id']
+      },
+      {
+        fields: ['campaign_id', 'status']
+      },
+      {
+        fields: ['flight_id']
+      }
+    ],
+    hooks: {
+      beforeValidate: (instance) => {
+        if (instance.metadata == null || typeof instance.metadata !== 'object' || Array.isArray(instance.metadata)) {
+          instance.metadata = {};
+        } else {
+          instance.metadata = { ...instance.metadata };
+        }
+
+        if (instance.callToAction) {
+          instance.callToAction = instance.callToAction.trim();
+        }
+
+        if (instance.assetUrl) {
+          instance.assetUrl = instance.assetUrl.trim();
+        }
+        if (instance.thumbnailUrl) {
+          const trimmedThumbnail = instance.thumbnailUrl.trim();
+          instance.thumbnailUrl = trimmedThumbnail.length ? trimmedThumbnail : null;
+        }
+      }
+    },
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   }
 );
+
+export function ensureCampaignCreativeAssociations({
+  AdCampaign,
+  CampaignFlight
+}) {
+  if (!CampaignCreative.associations?.campaign) {
+    CampaignCreative.belongsTo(AdCampaign, { foreignKey: 'campaignId', as: 'campaign' });
+  }
+  if (!CampaignCreative.associations?.flight) {
+    CampaignCreative.belongsTo(CampaignFlight, { foreignKey: 'flightId', as: 'flight' });
+  }
+}
 
 export default CampaignCreative;
