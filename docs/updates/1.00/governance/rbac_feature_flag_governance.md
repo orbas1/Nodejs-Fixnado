@@ -6,10 +6,13 @@ This document defines how Fixnado governs personas, feature flag lifecycles, and
 
 | Persona | Primary Surfaces | Core Capabilities | Unlock Prerequisites |
 | --- | --- | --- | --- |
-| Learner | Web app, user mobile app | Timeline, course catalogue, storefront checkout, support inbox | Automatic upon email verification. Must pass fraud screening; suspended accounts lose access immediately. |
-| Instructor | Web dashboards, finance tooling | Course authoring, order fulfillment, payouts, dispute management | Requires signed instructor contract and finance KYC approval. Provisioned via `instructor.enable` flag scoped to tenant. |
-| Serviceman | Operational consoles, logistics APIs | Job dispatch, materials allocation, incident response | Enabled by `serviceman.core` flag and field-ops approval; requires background check recorded in compliance CRM. |
-| Admin | Compliance dashboard, governance tooling | Persona management, audits, global toggles, data exports | Granted via security team request tickets; requires hardware security key registration and successful war room exercise participation. |
+| User | Web app, user mobile app | Timeline, explorer/search, storefront checkout, support inbox, wallet | Automatic after email verification and fraud screening. Suspended accounts lose access immediately. |
+| Serviceman | Operational consoles, logistics APIs, serviceman mobile dashboards | Job dispatch, calendar, pipeline, services, payments, escrow, tax widgets | Enabled by `serviceman.core` flag after background check + compliance approval logged in governance portal. |
+| Provider/Business | Web dashboards, provider mobile app | Storefront/business front management, crew roster, rentals/inventory, campaigns, finance, tax, hub | Requires executed provider contract and finance KYC; provisioned via `provider.enable` scoped to tenant. |
+| Crew | Crew performance dashboards, crew mobile app | Shifts, jobs, bids, training, tools/keys tracking, wallet, tax | Granted by operations via `crew.assign` after roster verification; auto-expires if inactive for 30 days. |
+| Enterprise | Enterprise dashboards, analytics exports | Portfolio oversight, campaign ads, finance/tax, vendor management, risk hub | Issued to enterprise clients through customer success approval; requires NDA + security onboarding. |
+| Admin | Compliance dashboard, governance tooling | Persona management, feature flags, audits, system/page management, disputes, maintenance mode | Security team approval with hardware key registration and successful war room exercise participation. |
+| Support | Chatwoot integration, moderation consoles | Support inbox, moderation queue, escalation workflows, evidence vault | Provisioned via support lead request; requires Chatwoot + incident tooling training completion. |
 | Demo | Sandbox storefront, limited analytics | Read-only demo experiences for partners and sales | Issued via signed demo agreement. Access expires automatically after 30 days unless renewed by product leadership. |
 
 ### Persona Escalation Workflow
@@ -30,7 +33,7 @@ This document defines how Fixnado governs personas, feature flag lifecycles, and
 | Sunsetting | Codebase is cleaned up once the flag is permanently on or off. | Pull request removing dead paths, updated documentation, audit trail closure. |
 
 ### Mandatory Controls
-- **Namespace convention** — `<domain>.<feature>`, e.g. `telemetry.mobileCrashAlerts`. Avoid per-developer namespaces.
+- **Namespace convention** — `<domain>.<feature>`, e.g. `timeline.adsPlacements`. Avoid per-developer namespaces.
 - **Cohort hashing** — All percentage rollouts must rely on the deterministic hashing helper shipped in `featureToggleMiddleware.js` to avoid divergent experiences across services.
 - **Audit logging** — Every change is recorded through the LaunchDarkly webhook bridge, piping events into the compliance warehouse with correlation IDs.
 - **Expiry dates** — Feature flags must include a documented retirement date. Flags older than 90 days trigger a weekly reminder in `#governance-alerts` until resolved.
@@ -53,7 +56,7 @@ The telemetry pipeline introduced in Version 1.00 collects sensitive diagnostic 
 
 ## 5. Incident Response & Rollback
 
-1. **Detection** — Telemetry alerts route to `#war-room` with runbooks linking to Grafana crash dashboards. Severity `fatal` alerts page the on-call engineer.
+1. **Detection** — Telemetry alerts route to `#war-room` with runbooks linking to Grafana dashboards for crashes, socket health, and checkout errors. Severity `fatal` alerts page the on-call engineer.
 2. **Mitigation** — On-call may disable the offending feature flag or revoke personas via the governance portal. Actions must include an incident ticket reference.
 3. **Communication** — Product marketing informs stakeholders if demos or partner sandboxes are impacted. Compliance prepares regulatory notifications when personal data exposure is suspected.
 4. **Postmortem** — Incidents require a postmortem within 5 business days documenting root cause, corrective actions, and updates to this governance policy.
@@ -61,7 +64,7 @@ The telemetry pipeline introduced in Version 1.00 collects sensitive diagnostic 
 ## 6. Audit & Reporting
 
 - Quarterly audits export persona assignments, flag histories, and telemetry retention metrics to the governance data warehouse.
-- The security team maintains a looker dashboard that highlights aged flags, expired approvals, and missing webhook secrets.
+- The security team maintains a Looker dashboard that highlights aged flags, expired approvals, and missing webhook secrets.
 - Any deviations discovered during audits must be resolved within 10 business days; unresolved items block the next release milestone.
 
 Maintain this document alongside the change log—update it whenever persona policies or flag tooling evolves.

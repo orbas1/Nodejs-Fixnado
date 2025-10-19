@@ -1,122 +1,299 @@
 # Version 1.00 Task List
 
-## 1. Secure Identity, Routing, and Telemetry Foundations — 20%
-**Goal:** Close authentication/routing exploits, enforce least-privilege access, and restore telemetry ingestion so other workstreams can validate safely.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L4-L85】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L4-L52】
+## Task 1 – Secure Deployment Foundations — 0%
+Establish automated deployments, configuration baselines, observability, and rollback rehearsals before feature development.
 
-### Subtasks (0% each)
-1. ✅ Replaced the permissive JWT fallback with strict issuer/audience validation, enforced bounded clock tolerance, and delivered structured remediation messaging in the auth middleware.【F:backend-nodejs/src/services/sessionService.js†L8-L168】【F:backend-nodejs/src/middleware/auth.js†L1-L305】【F:docs/updates/1.00/update_progress_tracker.md†L8-L9】
-2. ✅ Rebuilt router composition to remove duplicate mounts, keep `/v1` isolated, and wrap finance/serviceman surfaces behind feature flags with launch toggles.【F:backend-nodejs/src/routes/index.js†L1-L174】【F:backend-nodejs/src/middleware/featureToggleMiddleware.js†L1-L147】【F:backend-nodejs/src/config/index.js†L120-L166】
-3. ✅ Hardened CORS, Helmet (CSP/COEP), rate limiter headers, and storefront override controls while eliminating secrets stack-trace logging.【F:backend-nodejs/src/app.js†L128-L407】【F:backend-nodejs/src/config/index.js†L58-L399】【F:backend-nodejs/src/middleware/auth.js†L94-L214】【F:backend-nodejs/src/config/secretManager.js†L1-L170】
-4. ✅ Implemented `/telemetry/client-errors` and `/telemetry/mobile-crashes` ingestion with retention trimming, Slack alerting, and correlation IDs, then updated the React and Flutter reporters to emit the new contract.【F:backend-nodejs/src/services/telemetryService.js†L530-L1045】【F:backend-nodejs/src/controllers/telemetryController.js†L1-L173】【F:backend-nodejs/src/routes/telemetryRoutes.js†L1-L142】【F:frontend-reactjs/src/utils/errorReporting.js†L1-L278】【F:flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart†L1-L254】
-5. ✅ Published RBAC/feature flag governance covering persona unlock policies, demo flag lifecycle rules, and telemetry CI enforcement so operators can approve rollout safely.【F:docs/updates/1.00/governance/rbac_feature_flag_governance.md†L1-L67】
+### Subtask 1.1 – Provisioning & Deployment Automation — 0%
+- **Backend:** Build bash scripts/UI to provision Node services, apply schema migrations, seed starter data, and configure sockets.
+- **Front-end:** Automate React build/deploy with environment toggles for timeline rename, ads, and Chatwoot widgets.
+- **User phone app:** Generate Flutter build pipelines with environment switching for QA/live and integrate config fetch.
+- **Provider phone app:** Extend pipelines to provider-specific flavours, enabling service/rental/material modules during deploy.
+- **Database:** Script transactional migrations, seeding of services/rentals/materials/zones/tags with validation checkpoints.
+- **API:** Expose deployment health endpoints and smoke tests verifying version compatibility.
+- **Logic:** Document provisioning flow, environment prerequisites, and rollback scenarios.
+- **Design:** Provide deployment UI wireframes/status dashboards for operations visibility.
 
-### Integration Coverage
-- **Backend:** Subtasks 1–4 refactor auth services, routers, middleware, telemetry ingestion, and logging pipelines.
-- **Front-end:** Subtasks 3–5 coordinate session client changes, persona gating, and telemetry SDK updates for the web app.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L68-L90】
-- **User phone app:** Subtask 4 aligns Flutter diagnostics endpoints and correlation IDs.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L87-L134】
-- **Provider phone app:** Covered via governance doc and API contracts to future-proof provider builds even if not present in repo (Subtask 5).【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L104-L114】
-- **Database:** Subtask 2’s feature flags guard migrations/table exposure; Subtask 4 stores telemetry payloads with retention policies.
-- **API:** Subtasks 1–4 redefine REST contracts, headers, and telemetry endpoints consumed across clients.
-- **Logic:** RBAC/feature flag decision matrix (Subtask 5) governs persona routing, timeline rename, and chat enablement.【F:update_template/new_feature_brief.md†L25-L120】
-- **Design:** Updated governance doc and telemetry UX messaging supply copy for session remediation and error surfaces (Subtasks 3 & 5).
+### Subtask 1.2 – Configuration & Secrets Governance — 0%
+- **Backend:** Centralise `.env` templates, secrets storage, and config modules for integrations (payments, storage, Chatwoot).
+- **Front-end:** Inject config guards for ad/recommendation toggles and language dropdown updates.
+- **User phone app:** Support remote config for API hosts, feature flags, and environment credentials.
+- **Provider phone app:** Mirror remote config with provider-only toggles (inventory, crew hubs).
+- **Database:** Store encrypted credentials, rotate seeds, and audit connection usage.
+- **API:** Implement configuration validation endpoints and error reporting when secrets missing.
+- **Logic:** Maintain configuration matrix and onboarding checklist.
+- **Design:** Create configuration documentation diagrams illustrating stack dependencies.
 
-## 2. Stabilise Platform Lifecycle & Database Safety — 0%
-**Goal:** Ensure services boot predictably, migrations are reversible, and financial/communications data meets compliance obligations.【F:docs/updates/1.00/pre-update_evaluations/issue_report.md†L5-L71】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L22-L58】
+### Subtask 1.3 – Observability & Load Preparedness — 0%
+- **Backend:** Implement uptime helper agents, load balancer metrics, RAM/CPU profiling, and log aggregation.
+- **Front-end:** Emit performance telemetry, resource loading metrics, and timeline/ad impressions.
+- **User phone app:** Add diagnostics module reporting crashes, network latency, and timeline/support performance.
+- **Provider phone app:** Capture provider-specific telemetry (inventory sync, crew scheduling) with thresholds.
+- **Database:** Monitor replication lag, query performance, and migration health.
+- **API:** Publish metrics endpoints (Prometheus/OpenTelemetry) for deployment dashboards.
+- **Logic:** Define alert thresholds, escalation paths, and stress/load test schedules.
+- **Design:** Produce observability dashboard mockups for operations teams.
 
-### Subtasks (0% each)
-1. ✅ Refactored the boot sequence into a `createServer()` factory with deferred secrets loading, controllable start/stop hooks, and readiness snapshots backed by structured logging utilities.【F:backend-nodejs/src/server.js†L1-L204】【F:backend-nodejs/src/utils/logger.js†L1-L69】
-2. ✅ Reworked readiness and rate limiting to generate correlation IDs, emit Prometheus metrics, expose `/metrics`, and verify PostGIS availability without destructive `CREATE EXTENSION` calls.【F:backend-nodejs/src/app.js†L1-L536】【F:backend-nodejs/src/observability/metrics.js†L1-L81】
-3. ✅ Rebuilt finance and communications migrations as transactional units with soft deletes, retention metadata, uniqueness guards, and webhook attempt history to prevent data loss during rollouts.【F:backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js†L1-L330】【F:backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js†L1-L176】
-4. ✅ Documented and enforced retention/encryption guidance across finance payloads, notification targets, and communications schemas so auditors can trace Version 1.00 evidence.【F:docs/updates/1.00/backend_updates/data_lifecycle_hardening.md†L1-L18】【F:backend-nodejs/src/database/migrations/20250330001000-create-customer-notification-recipients.js†L1-L84】
-5. ✅ Delivered deterministic QA seeds for communications quick replies, finance webhook fixtures, and zone-aware starter data powering downstream dashboards and regression tests.【F:backend-nodejs/src/database/seeders/20250530000000-qa-reference-data.js†L1-L167】
+### Subtask 1.4 – Rollback & Release Rehearsals — 0%
+- **Backend:** Script blue/green cutovers and rollback automation with data snapshotting.
+- **Front-end:** Enable feature flag rollback for timeline rename, ads, and each timeline hub feed (Timeline, Custom Job Feed, Marketplace Feed).
+- **User phone app:** Prepare staged rollout plans with version gating and hotfix process.
+- **Provider phone app:** Coordinate provider-specific release notes and staged deploy toggles.
+- **Database:** Validate snapshot/restore, point-in-time recovery, and seeder replays.
+- **API:** Automate smoke/regression checks post-rollback.
+- **Logic:** Document rehearsal checklist, war room schedule, and go/no-go criteria.
+- **Design:** Provide communication templates for release status dashboards and stakeholder updates.
 
-### Integration Coverage
-- **Backend:** Subtasks 1–2 reshape lifecycle, logging, rate limiter, and readiness flows relied on by orchestrators.【F:docs/updates/1.00/pre-update_evaluations/issue_report.md†L9-L52】
-- **Front-end:** Subtask 5 ensures seeded data populates dashboards/timeline views for UX acceptance testing.【F:update_template/new_feature_brief.md†L45-L150】
-- **User phone app:** Seeds/retention policies (Subtasks 3–5) provide deterministic data for mobile parity and offline testing.
-- **Provider phone app:** Governance artifacts (Subtask 4) describe webhook retention/notifications needed for provider tooling.
-- **Database:** Subtasks 3–5 overhaul migrations, seeds, constraints, and retention enforcement directly.
-- **API:** Lifecycle changes (Subtasks 1–2) alter health endpoints; migrations ensure API schemas reliable across deployments.
-- **Logic:** Audit metadata and soft-delete strategies (Subtask 3) update business rules for finance/communications flows.
-- **Design:** Seeded content and retention messaging (Subtask 5) inform UI copy for dashboards and compliance disclosures.
+## Task 2 – Enforce Security & Compliance — 0%
+Deliver consistent RBAC, content safety, GDPR tooling, and legal artefacts.
 
-## 3. Govern Dependencies & Environment Baselines — 0%
-**Goal:** Restore deterministic builds, document prerequisites, and embed security/license automation across repos.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L47-L134】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L60-L94】
+### Subtask 2.1 – RBAC & Access Hardening — 0%
+- **Backend:** Refactor auth middleware, remove learner/instructor remnants, and align permissions to marketplace personas.
+- **Front-end:** Guard routes/components for timeline, dashboards, and support modules.
+- **User phone app:** Enforce role changer gating and secure navigation states.
+- **Provider phone app:** Restrict crew, inventory, and finance screens by role/permission.
+- **Database:** Audit role tables, ensure least privilege, and log privileged operations.
+- **API:** Implement scope checks on REST/WebSocket endpoints.
+- **Logic:** Update RBAC matrix and penetration test plan.
+- **Design:** Produce permission diagrams and UI states for forbidden access.
 
-### Subtasks (0% each)
-1. ✅ Corrected backend manifests by pinning ORM/runtime dependencies, reinstating a CommonJS-safe `dotenv` loader, and recording the baseline in an ADR so migrations and automation scripts execute against a deterministic toolchain.【F:backend-nodejs/package.json†L1-L58】【F:backend-nodejs/scripts/register-env.cjs†L1-L63】【F:docs/updates/1.00/backend_updates/orm_runtime_adr.md†L1-L32】【F:backend-nodejs/package-lock.json†L1-L54】
-2. ✅ Defined Node/npm/Flutter/Android/iOS baselines with a shared toolchain verifier, platform manifest, lockfile guard, and CI enforcement so drift fails builds automatically.【F:backend-nodejs/package.json†L1-L61】【F:frontend-reactjs/package.json†L1-L66】【F:flutter-phoneapp/tooling/platform-versions.json†L1-L11】【F:scripts/verify-toolchains.mjs†L1-L253】【F:.github/workflows/build-test-and-scan.yml†L1-L118】
-3. ✅ Rationalised the geospatial/web stack by introducing a dynamic MapLibre loader, Terra Draw adapters, shared GeoJSON helpers, and a CI-enforced bundle analyzer to remove Mapbox Draw/Turf dependencies while keeping map bundles isolated.【F:frontend-reactjs/src/lib/mapLibreLoader.js†L1-L32】【F:frontend-reactjs/src/lib/geojson.js†L1-L160】【F:frontend-reactjs/src/components/zones/ZoneDrawingMap.jsx†L1-L200】【F:frontend-reactjs/src/components/explorer/ExplorerMap.jsx†L1-L200】【F:scripts/analyze-frontend-bundle.mjs†L1-L78】
-4. ✅ Regenerated Flutter lockfiles, documented biometric/native prerequisites, and added CI smoke jobs for mobile builds/tests.【F:flutter-phoneapp/pubspec.lock†L1-L477】【F:docs/updates/1.00/user_phone_app_updates/android_updates.md†L1-L19】【F:docs/updates/1.00/user_phone_app_updates/ios_updates.md†L1-L15】【F:.github/workflows/build-test-and-scan.yml†L64-L117】【F:docs/updates/1.00/update_progress_tracker.md†L23-L28】
-5. ✅ Enforced license governance with a shared policy, CI scanner, load-harness validation, and accompanying runbook so release gates and changelogs capture every dependency decision for Version 1.00.【F:governance/license-policy.json†L1-L36】【F:scripts/license-scan.mjs†L1-L243】【F:scripts/run-load-tests.mjs†L1-L181】【F:docs/updates/1.00/governance/dependency_license_policy.md†L1-L36】【F:.github/workflows/build-test-and-scan.yml†L73-L132】
+### Subtask 2.2 – Content Safety & Upload Protection — 0%
+- **Backend:** Integrate upload checker, antivirus scanning, and spam/bad-word detection pipelines.
+- **Front-end:** Add client-side validation, progress states, and error handling for uploads.
+- **User phone app:** Implement mobile upload guardrails, size limits, and retry flows.
+- **Provider phone app:** Support bulk asset uploads with moderation queues.
+- **Database:** Store scan results, quarantine references, and audit metadata.
+- **API:** Expose moderation/report endpoints with status transitions.
+- **Logic:** Define escalation workflows and SLA policies.
+- **Design:** Provide moderation UI mockups (report buttons, review queues).
 
-### Integration Coverage
-- **Backend:** Subtasks 1–2 stabilise Node dependencies, runtime baselines, and CI checks for API services.
-- **Front-end:** Subtask 3 shrinks bundle risk and ensures compatibility for React 18 upgrades.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L68-L90】
-- **User phone app:** Subtask 4 ensures Flutter builds/test gating and documented prerequisites.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L87-L133】
-- **Provider phone app:** Governance docs and license scans (Subtask 5) define expectations for future provider builds.
-- **Database:** Dependency ADRs (Subtask 1) cover Sequelize/Postgres alignment and migration toolchain compatibility.
-- **API:** CI automation (Subtasks 1–2 & 5) verifies telemetry endpoints and contract compatibility before publishing.
-- **Logic:** Bundle rationalisation and license policy (Subtasks 3 & 5) ensure feature logic remains maintainable and compliant.
-- **Design:** Documented prerequisites inform design/dev workflows and highlight tooling for accessibility audits (Subtask 5).
+### Subtask 2.3 – GDPR & Audit Tooling — 0%
+- **Backend:** Implement consent tracking, data retention policies, and subject access export/delete endpoints.
+- **Front-end:** Surface privacy prompts, consent updates, and data request forms.
+- **User phone app:** Mirror consent and request experiences with native notifications.
+- **Provider phone app:** Provide GDPR controls for business accounts and crew data.
+- **Database:** Configure retention jobs, anonymisation routines, and audit logging tables.
+- **API:** Secure GDPR endpoints with multi-factor workflows and logging.
+- **Logic:** Draft compliance playbooks and incident response procedures.
+- **Design:** Create privacy dashboard mockups and confirmation flows.
 
-## 4. Deliver Enterprise Web Experience & Commerce Flows — 0%
-**Goal:** Implement the production-grade web UI/UX, timeline/community enhancements, commerce journeys, and legal/documentation deliverables outlined in the feature brief.【F:update_template/new_feature_brief.md†L25-L210】【F:update_template/features_to_add.md†L32-L265】
+### Subtask 2.4 – Legal Documentation & Acknowledgements — 0%
+- **Backend:** Store versioned legal docs, acceptance records, and link to onboarding/checkout flows.
+- **Front-end:** Publish Terms, Privacy, Refund, Community Guidelines, About, FAQ pages with analytics and breadcrumbs.
+- **User phone app:** Display legal pages and acceptance prompts within mobile onboarding/settings.
+- **Provider phone app:** Provide legal acknowledgement history and policy updates within business dashboards.
+- **Database:** Version legal content, track acknowledgements per user, and maintain retention.
+- **API:** Serve legal content endpoints and webhook notifications for updates.
+- **Logic:** Coordinate legal reviews and word count targets.
+- **Design:** Deliver page layouts ensuring enterprise styling and readability.
 
-### Subtasks (0% each)
-1. ✅ Rebuilt session management (`useSession`, persona access, offline fallbacks) to fetch `/api/auth/me`, throttle storage writes, and enforce server-driven persona unlocks with analytics.【F:frontend-reactjs/src/hooks/useSession.js†L1-L331】【F:frontend-reactjs/src/utils/sessionStorage.js†L1-L289】【F:frontend-reactjs/src/utils/personaStorage.js†L1-L223】【F:frontend-reactjs/src/hooks/usePersonaAccess.js†L1-L86】【F:frontend-reactjs/src/pages/DashboardHub.jsx†L12-L72】
-2. Restructure routing/layout into persona-scoped shells with granular Suspense/error boundaries, contextual loading states, and telemetry instrumentation for route transitions.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L69-L90】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L98-L110】
-3. Implement timeline/community modules across feed, post detail, events, messaging, moderation, and ads screens with recommendations, chat integrations, and analytics instrumentation.【F:update_template/new_feature_brief.md†L31-L153】【F:update_template/features_to_add.md†L86-L190】
-4. Build the learner performance dashboard suite (progress overview, timeline calendar, achievements, recommendations) plus supporting profile/settings pages with zone-aware widgets and telemetry.【F:update_template/new_feature_brief.md†L137-L170】【F:update_template/features_to_add.md†L128-L182】
-5. Build the instructor/merchant dashboards (course management, service/rental/material catalogues, order lifecycle, payout reporting) including storefront, checkout, and support inbox pages.【F:update_template/new_feature_brief.md†L165-L200】【F:update_template/features_to_add.md†L150-L230】
-6. Build the admin/compliance dashboards (user governance, finance controls, dispute center, audit logs) alongside policy/legal/knowledge base pages, language selector polish, and changelog/guide refreshes feeding QA documentation.【F:update_template/new_feature_brief.md†L170-L209】【F:update_template/features_to_add.md†L200-L390】
+## Task 3 – Complete Marketplace & Intelligence Services — 0%
+Build backend services for timeline, communications, commerce, and lightweight intelligence.
 
-### Integration Coverage
-- **Backend:** Subtasks 1–6 require coordinated API contracts (session validation, chat, commerce, analytics, finance, audit logs) and telemetry endpoints that back every dashboard and page rebuild.
-- **Front-end:** Subtasks 1–6 rebuild the full React surface, covering timeline/community screens, learner/instructor/admin dashboards, storefront and checkout pages, legal/knowledge base content, and documentation touchpoints.
-- **User phone app:** UX/content decisions (Subtasks 3–6) inform parity stories executed in Task 5 to ensure consistent copy, analytics hooks, and commerce flows.【F:update_template/features_to_add.md†L150-L265】
-- **Provider phone app:** Instructor/admin dashboard specifications (Subtasks 5–6) define requirements for provider-focused experiences and support future mobile builds.
-- **Database:** Commerce/timeline/dashboard features (Subtasks 3–6) rely on deterministic seeds, finance tables, and audit constraints from Task 2; policies require storage/backups.
-- **API:** Ads, chat, moderation, dashboard metrics, storefront orders, and support inbox services (Subtasks 3–6) demand new endpoints, sockets, and analytics contracts.
-- **Logic:** Persona gating, moderation workflows, recommendation heuristics, zone logic, finance controls, and dispute handling (Subtasks 1–6) encode business rules described in the brief.
-- **Design:** All subtasks deliver production polish, component library updates, accessibility, localisation, and documentation assets covering every dashboard, page, and screen.
+### Subtask 3.1 – Timeline Rename & Service Layer — 0%
+- **Backend:** Rename models/events to timeline, add ads/recommendation slots, follow/unfollow, reporting, moderation APIs.
+- **Front-end:** Update terminology, analytics events, and timeline UI hooks.
+- **User phone app:** Synchronise timeline screens with rename, interactions, and socket updates.
+- **Provider phone app:** Provide provider timeline analytics and ad placement management.
+- **Database:** Update schema references, indexes, and analytics tables.
+- **API:** Version endpoints, maintain backwards compatibility, and document changes.
+- **Logic:** Refresh copy, acceptance criteria, and telemetry mapping.
+- **Design:** Provide responsive timeline layouts with ad/recommendation placements.
 
-## 5. Achieve Mobile Parity & Reliability — 0%
-**Goal:** Transform the Flutter app into a production-ready companion with secure auth, resilient bootstrap, telemetry, and full feature coverage matching the web experience.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L87-L134】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L116-L145】
+### Subtask 3.2 – Timeline Hub Orchestration — 0%
+- **Backend:** Provide orchestration services that segment content into Timeline, Custom Job Feed, and Marketplace Feed streams with prioritisation rules, moderation hooks, and analytics counters.
+- **Front-end:** Build tabbed timeline hub navigation, saved filters, urgency badges, ad/recommendation slots, and moderation tooling aligned to each feed.
+- **User phone app:** Deliver mobile timeline hub parity with offline caching, push notifications for urgent custom jobs, and media handling tuned per feed.
+- **Provider phone app:** Surface feed analytics, sponsorship placements, and quick actions to respond to high-value custom jobs or marketplace alerts.
+- **Database:** Model feed routing tables, scoring metadata, moderation queues, and analytics aggregates for timeline hub usage.
+- **API:** Expose feed-specific endpoints, WebSocket channels, and notification triggers with versioned documentation.
+- **Logic:** Capture acceptance criteria for prioritisation, analytics, and escalation workflows spanning all feeds.
+- **Design:** Produce enterprise-grade wireframes for tabbed timeline hubs, urgency indicators, and feed configuration panels.
 
-### Subtasks (0% each)
-1. Implement credentialed login/refresh flows separating demo tokens, surfacing biometric opt-outs, and signalling re-authentication needs.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L87-L100】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L118-L126】
-2. Parallelise bootstrap tasks, add guarded plugin initialisation, display responsive splash/loading states, and persist navigation context across crashes.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L88-L104】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L126-L134】
-3. Overhaul diagnostics reporter with HTTPS endpoints, accurate build metadata, retry/backoff, redaction, and circuit-breaking HTTP clients.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L89-L113】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L128-L140】
-4. Enhance API client resilience (retry/backoff, pagination, streaming decoders) plus offline/zone awareness for commerce and community data flows.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L90-L120】【F:update_template/features_to_add.md†L150-L230】
-5. Add integration/golden tests, device matrix automation, and environment switching (runtime picker/remote config) documented for QA workflows.【F:docs/updates/1.00/pre-update_evaluations/issue_list.md†L92-L134】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L132-L145】
+### Subtask 3.3 – Commerce, Finance & Inventory Services — 0%
+- **Backend:** Implement services/rentals/materials CRUD, checkout, escrow, wallet, payments, refunds, tax, and finance analytics.
+- **Front-end:** Integrate explorer, storefront, business front, checkout flows, and metrics widgets.
+- **User phone app:** Provide purchases, rentals, inventory browsing, wallet, and order tracking experiences.
+- **Provider phone app:** Support catalog management, roster scheduling, finance dashboards, and crew tools.
+- **Database:** Model orders, invoices, escrow accounts, tax tables, and inventory states.
+- **API:** Secure payment integrations, reconciliation endpoints, and webhook handling.
+- **Logic:** Define financial workflows, reconciliation scripts, and audit requirements.
+- **Design:** Deliver checkout, storefront, and dashboard component designs.
 
-### Integration Coverage
-- **Backend:** Subtasks 1–4 depend on secure auth, telemetry, and API stability delivered in Tasks 1–2.
-- **Front-end:** Shared design tokens/copy (Subtask 4) align with web for consistent experiences.【F:update_template/features_to_add.md†L150-L265】
-- **User phone app:** Primary implementation surface for all subtasks.
-- **Provider phone app:** Environment switching, telemetry, and auth separation (Subtasks 1, 3, 5) set precedents for provider builds.
-- **Database:** Deterministic seeds and retention (Task 2) support mobile data sync and offline caches.
-- **API:** Retry/backoff and pagination (Subtask 4) require explicit backend contract updates and telemetry metrics.
-- **Logic:** Role switching, biometric flows, recommendation consumption, and zone logic (Subtasks 1–5) mirror business rules from the feature brief.
-- **Design:** Splash/loading states, failure UX, and parity of components (Subtasks 2 & 5) must satisfy enterprise polish expectations.【F:update_template/new_feature_brief.md†L95-L210】
+### Subtask 3.4 – Matching & Recommendation Intelligence — 0%
+- **Backend:** Implement deterministic/tag-based recommenders, pricing matchers, spam classifiers, and explainability metadata.
+- **Front-end:** Display recommendation cards, explanation badges, and matching filters.
+- **User phone app:** Surface personalised suggestions and explainability on mobile modules.
+- **Provider phone app:** Provide recommendation insights for campaign tuning.
+- **Database:** Store taxonomy weights, scoring results, and evaluation metrics.
+- **API:** Offer intelligence endpoints with health checks and circuit breakers.
+- **Logic:** Document tuning parameters, evaluation plans, and fallback logic.
+- **Design:** Visualise recommendation placements and explanation components.
 
-## 6. Observability, QA, Documentation & Launch Readiness — 0%
-**Goal:** Provide end-to-end visibility, exhaustive testing, documentation, and release governance to certify Version 1.00 for production.【F:update_template/features_to_add.md†L210-L390】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L147-L188】
+### Subtask 3.5 – Integration Enablement — 0%
+- **Backend:** Configure adapters for Hubspot, Salesforce, Google, SMTP, Firebase, Cloudflare R2/Wasabi/local storage, OAuth providers, Chatwoot, payments.
+- **Front-end:** Wire integrations for analytics, support widgets, and storage endpoints.
+- **User phone app:** Connect Firebase messaging/analytics and storage uploads.
+- **Provider phone app:** Enable CRM sync, analytics exports, and storage usage for providers.
+- **Database:** Store integration credentials securely with rotation policies.
+- **API:** Implement retry strategies, circuit breakers, and fallback modes when integrations degrade.
+- **Logic:** Maintain integration runbooks and failure handling procedures.
+- **Design:** Document integration status indicators and admin settings UI.
 
-### Subtasks (0% each)
-1. Deploy unified logging/metrics/tracing stack with dashboards for timeline, chat, commerce, finance, mobile, and infrastructure SLOs plus alert routing.【F:update_template/features_to_add.md†L266-L360】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L147-L166】
-2. Execute automated test suites (unit, integration, regression, load, stress, security, accessibility) across backend, frontend, API, database, and Flutter apps; document evidence in the update_tests folder.【F:update_template/features_to_add.md†L270-L360】
-3. Run manual QA scripts for dashboards, timeline rename, community chat, service purchase, rentals, material purchase, and zone navigation; capture screenshots/logs for the evidence vault.【F:update_template/features_to_add.md†L300-L368】
-4. Publish complete legal documents, knowledge base articles, onboarding guides, deployment scripts, and changelog updates with operator runbooks and rollback plans.【F:update_template/new_feature_brief.md†L153-L209】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L160-L188】
-5. Conduct release rehearsals (blue/green, rollback drills, telemetry validation, war room exercises) and compile end-of-update report summarising readiness and residual risks.【F:update_template/features_to_add.md†L330-L390】【F:docs/updates/1.00/pre-update_evaluations/fix_suggestions.md†L166-L188】
+## Task 4 – Deliver Web Experience Overhaul — 0%
+Create enterprise-grade web UX covering the timeline hub, commerce, dashboards, and policies.
 
-### Integration Coverage
-- **Backend:** Observability stack, automated tests, and release rehearsals (Subtasks 1–5) validate API health, migrations, and background jobs.
-- **Front-end:** Testing scripts and knowledge base assets (Subtasks 2–4) confirm UX polish, accessibility, and telemetry coverage.
-- **User phone app:** Device matrix tests, telemetry dashboards, and release rehearsals (Subtasks 1–3 & 5) ensure mobile readiness.
-- **Provider phone app:** Documentation/runbooks (Subtask 4) and observability frameworks (Subtask 1) support future provider deployments.
-- **Database:** Load/stress tests and rollback drills (Subtasks 2 & 5) validate migrations, retention, and seeding strategies.
-- **API:** Synthetic monitoring and regression suites (Subtasks 1–3) enforce contract stability before launch.
-- **Logic:** Manual QA and release checklists (Subtask 3) verify business rules across commerce, timeline, and community flows.
-- **Design:** Accessibility audits, knowledge base assets, and documentation (Subtasks 2–4) evidence design quality and localisation readiness.
+### Subtask 4.1 – Design System & Layout Cleanup — 0%
+- **Backend:** Support design token distribution and asset versioning.
+- **Front-end:** Build responsive component library, eliminate text wrapping, streamline copy to 1–2 word labels.
+- **User phone app:** Align design tokens for cross-platform consistency.
+- **Provider phone app:** Ensure shared tokens cover provider dashboards.
+- **Database:** Host CMS-like references for styling metadata if required.
+- **API:** Provide configuration endpoints for design experiments.
+- **Logic:** Document design standards, accessibility rules, and experimentation guardrails.
+- **Design:** Produce style guides, grid systems, and component specs.
+
+### Subtask 4.2 – Timeline Hub Interfaces — 0%
+- **Backend:** Ensure APIs deliver moderation flags, ad slots, urgency scoring, and feed analytics for UI.
+- **Front-end:** Implement the tabbed timeline hub with ads/recommendations, reporting, follow/unfollow, moderation tools, responsive media, and saved filters.
+- **User phone app:** Mirror UI patterns for mobile timeline hub, including tab navigation, urgency badges, and notifications.
+- **Provider phone app:** Provide feed analytics overlays and quick responses to marketplace/custom job signals.
+- **Database:** Optimise queries for feed pagination, prioritisation, and analytics across all three feeds.
+- **API:** Support GraphQL/OpenAPI docs for timeline hub operations and WebSocket channels.
+- **Logic:** Validate acceptance criteria, analytics tracking plans, and moderation SLAs for each feed.
+- **Design:** Finalise wireframes and prototypes for tabbed timeline hub screens and configuration panels.
+
+### Subtask 4.3 – Marketplace Pages & Checkout — 0%
+- **Backend:** Serve explorer, storefront, business front, tool/material/service viewers, and checkout data.
+- **Front-end:** Build pages with CRUD interactivity, ads/recommendations, zone filters, and responsive layouts.
+- **User phone app:** Align mobile marketplace navigation for parity.
+- **Provider phone app:** Deliver management panels for inventory, deals, and availability.
+- **Database:** Ensure indexing for search filters and availability queries.
+- **API:** Provide analytics events for conversions, drop-offs, and pricing experiments.
+- **Logic:** Define funnel tracking, SLA metrics, and error handling flows.
+- **Design:** Craft enterprise storefront, checkout, and wizard designs.
+
+### Subtask 4.4 – Dashboard Implementation — 0%
+- **Backend:** Aggregate metrics for user, serviceman, crew, provider, enterprise, admin dashboards (finance, escrow, tax, pipeline, roster, hub, settings).
+- **Front-end:** Develop modular dashboard widgets with CRUD operations and analytics overlays.
+- **User phone app:** Align dashboards for user personas on mobile.
+- **Provider phone app:** Provide provider, crew, enterprise, admin mobile dashboards with finance controls.
+- **Database:** Optimise reporting tables and caching strategies.
+- **API:** Deliver dashboard data endpoints, export services, and notification hooks.
+- **Logic:** Map user stories/acceptance criteria to dashboards, ensuring coverage.
+- **Design:** Produce layout specs and interaction models per persona.
+
+### Subtask 4.5 – Policies, Navigation & Knowledge Base — 0%
+- **Backend:** Host policy CMS, navigation metadata, and documentation links.
+- **Front-end:** Implement mega menus, footer behaviours, navigation updates, policy pages, README/full guide embeds.
+- **User phone app:** Provide policy access, support centre links, and navigation parity.
+- **Provider phone app:** Offer quick access to policies, help center, and upgrade notes.
+- **Database:** Store navigation configuration and policy versions.
+- **API:** Serve navigation configs to clients and track usage analytics.
+- **Logic:** Finalise navigation taxonomy and documentation workflows.
+- **Design:** Create mega menu layouts, footer variants, and knowledge base templates.
+
+## Task 5 – Achieve Flutter Parity & Optimisation — 0%
+Bring mobile experiences to parity with web and optimise performance/compliance.
+
+### Subtask 5.1 – Navigation & Role Flows — 0%
+- **Backend:** Provide role metadata endpoints and mobile-friendly auth flows.
+- **Front-end:** Share assets/tokens for consistent navigation branding.
+- **User phone app:** Implement splash, role changer, bottom tabs, contextual menus, and deep linking.
+- **Provider phone app:** Extend role changer to business roles and dashboards.
+- **Database:** Support mobile session tokens and role mapping tables.
+- **API:** Deliver mobile-auth endpoints, refresh flows, and feature flag APIs.
+- **Logic:** Document navigation logic and session persistence rules.
+- **Design:** Produce mobile navigation wireframes and animation guidelines.
+
+### Subtask 5.2 – Timeline Hub Parity — 0%
+- **Backend:** Optimise socket payloads and CDN endpoints for timeline hub updates, urgency alerts, and media delivery on mobile.
+- **Front-end:** Provide shared component specs for timeline hub tabs to ensure parity.
+- **User phone app:** Build timeline hub tabs (Timeline, Custom Job Feed, Marketplace Feed), push notifications, and offline caching tuned per feed.
+- **Provider phone app:** Enable provider-specific analytics, sponsorship placements, and rapid responses to feed alerts on mobile.
+- **Database:** Index mobile-specific queries for offline sync, prioritisation, and caching.
+- **API:** Support pagination, offline sync endpoints, and push notification triggers per feed.
+- **Logic:** Define acceptance tests for parity, urgency handling, and offline behaviour.
+- **Design:** Adapt timeline hub designs for handheld breakpoints and gestures.
+
+### Subtask 5.3 – Commerce & Dashboard Parity — 0%
+- **Backend:** Ensure APIs return lightweight payloads and secure payment flows for mobile.
+- **Front-end:** Share design tokens and analytics events for conversions.
+- **User phone app:** Implement explorer, storefront, checkout, wallet, rentals, materials, and metrics dashboards.
+- **Provider phone app:** Provide catalog management, crew scheduling, finance/tax, escrow, and ads dashboards.
+- **Database:** Enable delta sync for orders/inventory.
+- **API:** Supply mobile-optimised endpoints and offline-safe mutations.
+- **Logic:** Map parity checklist for commerce and dashboards.
+- **Design:** Produce mobile checkout and dashboard patterns.
+
+### Subtask 5.4 – Support, Integrations & Compliance — 0%
+- **Backend:** Expose Chatwoot session APIs, Firebase messaging, analytics logging, and legal content endpoints.
+- **Front-end:** Coordinate iconography/assets for support widgets.
+- **User phone app:** Integrate Chatwoot bubble post-login, support inbox, attachments, emojis, GIFs, help center links, and policy acknowledgement.
+- **Provider phone app:** Offer provider support hub, training content, and compliance reminders.
+- **Database:** Store support transcripts, attachments metadata, and acknowledgement logs.
+- **API:** Manage push notifications, attachments upload, and help center search.
+- **Logic:** Define support escalation paths and compliance prompts.
+- **Design:** Craft mobile support/chat UI and policy modals.
+
+### Subtask 5.5 – Performance, Diagnostics & Store Compliance — 0%
+- **Backend:** Provide analytics ingestion, feature flag toggles, and diagnostic endpoints.
+- **Front-end:** Coordinate release notes, privacy labels, and asset pipelines.
+- **User phone app:** Implement Firebase analytics/crashlytics, offline caching, media optimisation, RAM/battery profiling, App Store compliance, and in-app purchase/deep link handling.
+- **Provider phone app:** Mirror diagnostics, offline caching, and compliance features.
+- **Database:** Capture device telemetry and compliance audit data.
+- **API:** Offer telemetry ingestion endpoints and configuration updates.
+- **Logic:** Draft store submission checklist and monitoring plan.
+- **Design:** Provide store asset guidelines and diagnostic dashboard mockups.
+
+## Task 6 – Testing, Documentation & Launch Readiness — 0%
+Execute comprehensive testing, documentation, and go-live rehearsals.
+
+### Subtask 6.1 – Automated Testing Matrix — 0%
+- **Backend:** Implement unit, integration, load, stress, usage, security, and financial tests with CI gating.
+- **Front-end:** Add component, accessibility, and visual regression suites.
+- **User phone app:** Create integration/golden tests, device farm automation, and performance benchmarks.
+- **Provider phone app:** Cover provider flows with automated UI and API tests.
+- **Database:** Validate migrations/seeders, rollback scripts, and data integrity tests.
+- **API:** Run contract tests for web/mobile clients and integrations.
+- **Logic:** Maintain test traceability matrix linked to requirements.
+- **Design:** Support visual regression baselines and review workflows.
+
+### Subtask 6.2 – Manual QA & Evidence Capture — 0%
+- **Backend:** Provide tooling for log capture and feature flag toggles during manual runs.
+- **Front-end:** Execute exploratory tests for timeline hub feeds, navigation, policies, and ads.
+- **User phone app:** Validate timeline hub, commerce, support, and dashboard flows on device matrix.
+- **Provider phone app:** Conduct manual verification of provider, crew, enterprise, admin dashboards and finance flows.
+- **Database:** Snapshot data states before/after QA cycles for auditing.
+- **API:** Supply API consoles and monitors for manual verification.
+- **Logic:** Compile QA scripts, acceptance criteria sign-offs, and defect tracking.
+- **Design:** Review UI against design system and capture annotated evidence.
+
+### Subtask 6.3 – Observability & Incident Response — 0%
+- **Backend:** Finalise alerting, incident runbooks, and chaos/rollback drills.
+- **Front-end:** Monitor client-side errors, SLA dashboards, and uptime helper UI.
+- **User phone app:** Configure crash reporting alerts, release monitors, and on-call rotations.
+- **Provider phone app:** Track provider-specific incident dashboards and escalation paths.
+- **Database:** Ensure backup/restore drills and audit log reviews.
+- **API:** Implement synthetic monitoring and failover testing.
+- **Logic:** Document incident command structure and communication protocols.
+- **Design:** Produce incident dashboards and status page visuals.
+
+### Subtask 6.4 – Documentation & Knowledge Base — 0%
+- **Backend:** Contribute architecture diagrams, deployment runbooks, and API references.
+- **Front-end:** Update README, full guide sections, and upgrade instructions.
+- **User phone app:** Document mobile setup, feature tours, and troubleshooting.
+- **Provider phone app:** Create provider training materials, policy summaries, and onboarding walkthroughs.
+- **Database:** Publish data dictionary, migration catalog, and retention schedules.
+- **API:** Generate OpenAPI/GraphQL specs and integration guides.
+- **Logic:** Compile changelog, update brief, end-of-update report, and starter data catalogue.
+- **Design:** Deliver UI inventories, style guides, and accessibility reports.
+
+### Subtask 6.5 – Release Rehearsal & Handover — 0%
+- **Backend:** Run final blue/green rehearsal, rollback validation, and performance burn-in.
+- **Front-end:** Coordinate launch communications, feature flag flips, and monitoring dashboards.
+- **User phone app:** Execute staged rollout, collect telemetry, and prepare support scripts.
+- **Provider phone app:** Align provider communications, training sessions, and escalation contacts.
+- **Database:** Lock migrations, confirm backups, and enable monitoring for launch window.
+- **API:** Validate rate limits, failover readiness, and integration health.
+- **Logic:** Finalise go-live checklist, roles/responsibilities, and post-launch review cadence.
+- **Design:** Prepare stakeholder dashboards and launch-day content assets.

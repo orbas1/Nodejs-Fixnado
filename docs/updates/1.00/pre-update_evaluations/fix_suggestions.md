@@ -1,64 +1,32 @@
-# Pre-Update Fix Suggestions (v1.00)
+# Fixnado Version 1.00 – Fix Suggestions
 
-1. **Harden backend authentication and routing**
-   - Remove the permissive JWT decode fallback, enforce issuer/audience validation, and gate the `x-fixnado-role` override behind explicit environment allowlists. (`backend-nodejs/src/services/sessionService.js`, `backend-nodejs/src/middleware/auth.js`)
-   - Deduplicate router mounts, keep `v1` routed only under `/v1`, and introduce feature flags around finance/serviceman domains before exposing them publicly. (`backend-nodejs/src/routes/index.js`, `backend-nodejs/src/config/index.js`)
-   - Replace wildcard CORS with explicit origin allowlists, re-enable Helmet CSP/COEP, and stop logging secrets or stack traces during config bootstrap. (`backend-nodejs/src/app.js`, `backend-nodejs/src/config/index.js`)
-   - Fix the double return in `authenticate`, add structured audit logs, and surface remediation guidance to storefront callers when tokens are missing or expired. (`backend-nodejs/src/middleware/auth.js`)
-   - Defer destructive migrations and admin-only routes behind launch-darkly-style toggles so lower environments can disable volatile domains. (`backend-nodejs/src/routes/index.js`, `backend-nodejs/src/database/migrations`)
-   - Normalise security event publishing so `recordSecurityEvent` deduplicates payloads, and ensure audit failures cannot bubble into request handlers. (`backend-nodejs/src/middleware/auth.js`)
+## Release Engineering Remedies
+- Build deployment scripts/UI for provisioning, configuration, blue/green, and rollback with health verification and automated environment smoke tests.
+- Introduce transactional migrations, reversible schema changes, and deterministic seeders covering services, rentals, materials, zones, skills, qualifications, SEO tags, and hashtags.
+- Stand up observability stack: uptime helper dashboards, load balancers, RAM/CPU profiling, log aggregation, stress/load/usage test harnesses integrated into CI.
 
-2. **Stabilise backend lifecycle and readiness**
-   - Defer secrets loading, PII assertions, and job scheduler startup until after logging initialises, and expose a `createServer().start()` entry point that callers control. (`backend-nodejs/src/config/index.js`, `backend-nodejs/src/jobs/index.js`, `backend-nodejs/src/server.js`)
-   - Detect PostGIS capability without `CREATE EXTENSION`, surface dialect mismatches early, and emit structured health metrics plus `Retry-After` headers from the rate limiter. (`backend-nodejs/src/app.js`)
-   - Externalise readiness state and latency diagnostics (Prometheus/OTel gauges) so historical failures persist beyond process memory. (`backend-nodejs/src/app.js`, `backend-nodejs/src/server.js`)
-   - Add correlation IDs and log levels to readiness, rate limiting, and shutdown flows, shipping JSON logs instead of bare console output. (`backend-nodejs/src/app.js`, `backend-nodejs/src/server.js`)
-   - Gate background jobs behind environment-aware toggles and expose `/admin/jobs` endpoints to inspect and drain queues before deploys. (`backend-nodejs/src/jobs/index.js`)
-   - Provide local developer fallbacks (mock secrets, sample env files) so `requireEnv` failures guide onboarding instead of hard-crashing. (`backend-nodejs/src/config/index.js`, `docs/updates/1.00/pre-update_evaluations`)
+## Security & Compliance Hardening
+- Implement RBAC across API, web, mobile, WebSocket, and storage layers; retire course/learner artefacts and refactor navigation/permissions for marketplace personas.
+- Deploy upload checker, antivirus scanning, spam/bad-word detection, report buttons, audit trails, and GDPR tooling (consent, subject access, retention policies).
+- Draft and publish UK-compliant Terms, Privacy, Refund, Community Guidelines, About, FAQ, and integrate acknowledgement flows and documentation change logs.
 
-3. **Repair database safety, compliance, and performance**
-   - Break finance and communications migrations into smaller units wrapped in `sequelize.transaction()`; replace cascade deletes with soft deletes or archival tables to preserve immutable ledgers. (`backend-nodejs/src/database/migrations`)
-   - Add uniqueness/idempotency constraints for webhook events, notification recipients, and payment fingerprints; seed deterministic reference data instead of random UUIDs. (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`, `backend-nodejs/src/database/migrations/20250330001000-create-customer-notification-recipients.js`)
-   - Enforce CHECK constraints for currency/amount precision, index provider/status fields, and attach audit columns (`created_by`, `updated_by`) to sensitive tables. (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-   - Rework communications schema to support multiple configurations per tenant, validate `allowed_roles` against canonical roles, and ship QA seed scripts. (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`)
-   - Document and enforce retention/encryption for JSONB metadata, introducing column-level encryption or secure vault references where required. (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`, `docs/updates/1.00`)
-   - Require communications entry points to verify configuration existence, add nullable guards for `gateway_reference`, and supply deterministic quick-reply seeds so referential integrity holds on bootstrap. (`backend-nodejs/src/database/migrations/20250327000000-create-communications-inbox-settings.js`, `backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`)
-   - Normalise notification target formats (emails, phone numbers), add retention policies for webhook payload/error logs, and emit structured retry history to support forensic analysis. (`backend-nodejs/src/database/migrations/20250325000000-payments-orchestration.js`, `backend-nodejs/src/database/migrations/20250330001000-create-customer-notification-recipients.js`)
+## Marketplace & Commerce Completion
+- Consolidate services, rentals, and materials into full CRUD flows with storefronts, business fronts, explorer filters, checkout, wallet, escrow, finance, tax, and analytics embedded within each dashboard.
+- Implement recommendation and pricing engines driven by deterministic rules/lightweight models utilising taxonomy data.
+- Rename live feed to timeline across copy, routes, analytics; add ad/recommendation slots, follow/unfollow, reporting, moderation dashboards, and monetisation tracking.
 
-4. **Govern dependencies and build chain**
-   - Correct the malformed backend `package.json`, downgrade unstable packages (`bcrypt@6`), and migrate CommonJS loaders off `require('dotenv')` before adopting ESM-only releases. (`backend-nodejs/package.json`)
-   - Align runtime baselines (Node 18+, Android SDK 23+) with documented `engines`/SDK constraints, enforce lockfile verification in CI, and regenerate Flutter locks via `flutter pub get`. (`backend-nodejs/package.json`, `frontend-reactjs/package.json`, `flutter-phoneapp/pubspec.yaml`, `flutter-phoneapp/pubspec.lock`)
-   - Rationalise the geospatial/web dependency stack by selecting MapLibre-compatible drawing libraries, trimming redundant Turf bundles, and running bundle analysis in CI. (`frontend-reactjs/package.json`)
-   - Wire `scripts/security-audit.mjs`, load-test prerequisites, and license scanning into pull-request workflows so risky upgrades are blocked automatically. (`scripts/security-audit.mjs`, `scripts/run-load-tests.mjs`)
-   - Publish dependency READMEs documenting native prerequisites (SQLite toolchain, Android local_auth setup) to unblock onboarding. (`backend-nodejs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-   - Plan the ORM/runtime roadmap (Sequelize upgrade or alternative), configure `jsonwebtoken` with explicit clock tolerance, and document ADRs for each experimental dependency bump. (`backend-nodejs/package.json`, `frontend-reactjs/package.json`)
-   - Capture infrastructure alignment by documenting when AWS SDK v3/serverless assumptions apply versus self-hosted Postgres stacks, and add CI guards that fail when lockfiles drift. (`backend-nodejs/package.json`, `infrastructure`, `scripts/security-audit.mjs`)
+## Timeline Hub & Support Enablement
+- Build the timeline hub with Timeline, Custom Job Feed, and Marketplace Feed tabs, including prioritisation logic, saved filters, ad/recommendation slots, moderation tooling, and analytics dashboards.
+- Integrate Chatwoot for support bubble (post-login), dashboard inbox, attachments, emojis, GIFs, peer discovery, and help center linking.
+- Create analytics for feed health, support performance, and timeline engagement feeding dashboards and release readiness reporting.
 
-5. **Secure and streamline the web client**
-   - Rebuild `useSession` to fetch `/api/auth/me`, invalidate corrupted storage, and move persona unlock checks to signed server responses with audit trails. (`frontend-reactjs/src/hooks/useSession.js`, `frontend-reactjs/src/pages/DashboardHub.jsx`)
-   - Break `App.jsx` into persona-scoped routers with per-route `Suspense`/error boundaries, guard provider dashboards behind onboarding redirects, and restore persistent legal/help footers post-login. (`frontend-reactjs/src/App.jsx`, `frontend-reactjs/src/components/auth/ProviderProtectedRoute.jsx`)
-   - Sanitize error boundaries so stack traces stay server-side, instrument telemetry for route transitions/persona grants, and align client reporters with the new backend telemetry endpoints. (`frontend-reactjs/src/components/error/AppErrorBoundary.jsx`, `frontend-reactjs/src/components/error/RouteErrorBoundary.jsx`, `frontend-reactjs/src/utils/errorReporting.js`, `backend-nodejs/src/routes/telemetryRoutes.js`)
-   - Throttle persona unlock writes, debounce storage updates, and introduce analytics to detect abuse or performance regressions across personas. (`frontend-reactjs/src/hooks/usePersonaAccess.js`, `frontend-reactjs/src/hooks/useSession.js`)
-   - Gate offline session fallbacks behind explicit demo flags and add UX copy for localisation failures to prevent blank denial states. (`frontend-reactjs/src/api/sessionClient.js`, `frontend-reactjs/src/components/auth/ProviderProtectedRoute.jsx`)
-   - Replace the global spinner with contextual loading states, revalidate session context on focus, and limit always-on widgets (chat, analytics) behind feature toggles. (`frontend-reactjs/src/App.jsx`, `frontend-reactjs/src/hooks/useSession.js`)
+-## Mobile Parity & Optimisation
+-## Mobile Parity & Optimisation
+- Implement splash, role changer, bottom tabs, timeline hub tabs, explorer, storefront, dashboards, checkout, support bubble, and settings in Flutter.
+- Add Firebase messaging/analytics/crashlytics, offline caching strategies, media optimisation, diagnostics, and App Store/Play Store compliance (in-app purchases or deep links).
+- Run device matrix tests, stress tests for media delivery/notifications, and integrate CI automation for regression coverage.
 
-6. **Deliver a production-ready mobile experience**
-   - Implement a credentialed login and refresh flow that differentiates demo tokens from production identities, surfaces biometric opt-out, and removes `demoAccessToken` from bootstrap defaults. (`flutter-phoneapp/lib/features/auth/presentation/auth_gate.dart`, `flutter-phoneapp/lib/features/auth/application/auth_token_controller.dart`, `flutter-phoneapp/lib/app/bootstrap.dart`)
-   - Parallelise bootstrap tasks, show a responsive splash screen, and harden plugin initialisation with guarded fallbacks so cold starts no longer freeze or crash. (`flutter-phoneapp/lib/app/bootstrap.dart`, `flutter-phoneapp/lib/app/app.dart`)
-   - Overhaul diagnostics to capture accurate version/build metadata, enforce HTTPS telemetry endpoints, await uploads with retry/backoff, and redact stack traces in release builds. (`flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`, `flutter-phoneapp/lib/main.dart`)
-   - Add API client resilience (retry/backoff, pagination helpers), persist last-selected destinations, and incorporate integration/golden tests to lock in regression coverage. (`flutter-phoneapp/lib/core/network/api_client.dart`, `flutter-phoneapp/lib/app/app.dart`, `flutter-phoneapp/pubspec.yaml`)
-   - Provide runtime environment pickers or remote config so QA can switch endpoints without rebuilds, and document native prerequisites for biometric plugins. (`flutter-phoneapp/lib/core/config/app_config.dart`, `flutter-phoneapp/lib/app/bootstrap.dart`, `flutter-phoneapp/pubspec.yaml`)
-   - Harden failure UX by expanding the fatal boundary with support actions, persisting the last active tab, and ensuring bootstrap catches secure store/biometric exceptions before rendering. (`flutter-phoneapp/lib/app/app_failure_boundary.dart`, `flutter-phoneapp/lib/app/app.dart`, `flutter-phoneapp/lib/app/bootstrap.dart`)
-   - Separate demo credentials from production stores, surface biometric status to users, and rotate telemetry HTTP clients or add circuit breakers to avoid socket exhaustion. (`flutter-phoneapp/lib/features/auth/data/auth_token_store.dart`, `flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-
-7. **Restore telemetry and cross-tier observability**
-   - Implement `/telemetry/client-errors` and `/telemetry/mobile-crashes` ingestion backed by structured logging, retention policies, and alerts, then align web/mobile reporters to the new contracts. (`backend-nodejs/src/routes/telemetryRoutes.js`, `frontend-reactjs/src/utils/errorReporting.js`, `flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-   - Emit structured, redacted logs with correlation IDs across backend, web, and mobile tiers, and expose health metrics that capture rate-limit events, boot timing, and crash counts. (`backend-nodejs/src/app.js`, `backend-nodejs/src/server.js`, `frontend-reactjs/src/utils/errorReporting.js`, `flutter-phoneapp/lib/core/diagnostics/app_diagnostics_reporter.dart`)
-   - Provide operator dashboards and runbooks documenting failure modes, extension prerequisites, and remediation steps surfaced during readiness or telemetry incidents. (`docs/updates/1.00/pre-update_evaluations`, `backend-nodejs/src/app.js`)
-   - Add automated alerts and CI checks ensuring telemetry endpoints exist before clients ship references to them. (`backend-nodejs/src/routes/telemetryRoutes.js`, `scripts/security-audit.mjs`)
-
-8. **Strengthen release readiness and onboarding**
-   - Gate background jobs, offline session fallbacks, and destructive migrations behind environment-aware feature flags, and require explicit enablement during deployments. (`backend-nodejs/src/jobs/index.js`, `backend-nodejs/src/database/migrations`, `frontend-reactjs/src/hooks/useSession.js`)
-   - Publish environment bootstrap guides covering secrets provisioning, PostGIS capabilities, native toolchain requirements, and CI smoke tests that fail fast when prerequisites are unmet. (`docs/updates/1.00/pre-update_evaluations`, `backend-nodejs/package.json`, `frontend-reactjs/package.json`, `flutter-phoneapp/pubspec.yaml`)
-   - Integrate dependency/license checks, release note expectations, and rollback playbooks into the delivery pipeline so every schema or authentication change ships with recovery guidance. (`scripts/security-audit.mjs`, `docs/updates/1.00`, `backend-nodejs/src/database/migrations`)
-   - Establish periodic evaluation cadences (dependency audits, database dry-runs, mobile beta programs) to keep the platform aligned with roadmap priorities post-release. (`docs/updates/1.00/pre-update_evaluations`, `scripts/security-audit.mjs`, `flutter-phoneapp/pubspec.yaml`)
+## Documentation & Operational Readiness
+- Refresh README, full guide, starter data catalogue, GitHub upgrade instructions, changelog, update brief, testing plan, and end-of-update report templates.
+- Produce training materials, support/maintenance playbooks, escalation ladders, and war room procedures.
+- Maintain progress tracker and milestone dashboards tied to release readiness metrics for transparent governance.
