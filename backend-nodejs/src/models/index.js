@@ -234,7 +234,10 @@ User.hasOne(UserPreference, { foreignKey: 'userId', as: 'preferences' });
 UserPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(UserProfileSetting, { foreignKey: 'userId', as: 'profileSettings' });
 UserProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasOne(ServicemanProfileSetting, { foreignKey: 'userId', as: 'servicemanProfile' });
+User.hasOne(ServicemanProfileSetting, {
+  foreignKey: 'userId',
+  as: 'servicemanProfileSetting'
+});
 ServicemanProfileSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(CustomerAccountSetting, { foreignKey: 'userId', as: 'accountSetting' });
 CustomerAccountSetting.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -279,7 +282,7 @@ CustomerNotificationRecipient.belongsTo(CustomerAccountSetting, {
 Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
 User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
-User.hasOne(AdminUserProfile, { foreignKey: 'userId', as: 'adminProfile' });
+User.hasOne(AdminUserProfile, { foreignKey: 'userId', as: 'adminUserProfile' });
 AdminUserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Region.hasMany(Company, { foreignKey: 'regionId', as: 'companies' });
@@ -573,7 +576,7 @@ ProviderEscrowPolicy.belongsTo(Company, { foreignKey: 'companyId', as: 'company'
 User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
 AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-AdminProfile.hasMany(AdminDelegate, { foreignKey: 'adminProfileId', as: 'delegates' });
+AdminProfile.hasMany(AdminDelegate, { foreignKey: 'adminProfileId', as: 'delegateRecords' });
 AdminDelegate.belongsTo(AdminProfile, { foreignKey: 'adminProfileId', as: 'adminProfile' });
 
 Service.hasMany(Order, { foreignKey: 'serviceId' });
@@ -714,7 +717,7 @@ PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
 
   ServicemanTaxFiling.hasMany(ServicemanTaxTask, { foreignKey: 'filingId', as: 'tasks' });
   ServicemanTaxTask.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
-  ServicemanTaxFiling.hasMany(ServicemanTaxDocument, { foreignKey: 'filingId', as: 'documents' });
+  ServicemanTaxFiling.hasMany(ServicemanTaxDocument, { foreignKey: 'filingId', as: 'documentRecords' });
   ServicemanTaxDocument.belongsTo(ServicemanTaxFiling, { foreignKey: 'filingId', as: 'filing' });
 
   User.hasMany(ServicemanTaxTask, {
@@ -1186,9 +1189,6 @@ MaterialTaxonomyAssignment.belongsTo(MarketplaceTaxonomyNode, {
 
 User.hasOne(AffiliateProfile, { foreignKey: 'userId', as: 'affiliateProfile' });
 AffiliateProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-User.hasOne(AdminProfile, { foreignKey: 'userId', as: 'adminProfile' });
-AdminProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 AffiliateProfile.hasMany(AffiliateReferral, { foreignKey: 'affiliateProfileId', as: 'referrals' });
 AffiliateReferral.belongsTo(AffiliateProfile, { foreignKey: 'affiliateProfileId', as: 'affiliate' });

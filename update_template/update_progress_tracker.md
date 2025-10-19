@@ -10,9 +10,11 @@
 | UT-005 | Marketplace commerce engine & persona dashboards | M4 | Commerce Squad Lead | Complete | 100% | 2024-05-27 | Commerce engine snapshot APIs, persona dashboards, and commerce policies landed with Vitest coverage. |
 | UT-006 | Compliance, legal publication, and launch rehearsals | M5 | Compliance Lead | Complete | 100% | 2024-05-30 | Refund & community policies published, DSAR tooling rehearsed, go-live runbook executed with executive sign-off. |
 | UT-007 | Campaign manager model remediation | M3 | Product Engineering Lead | Complete | 100% | 2024-06-02 | Advertising domain models deduplicated, enums/indexes normalised, and bundler import errors cleared for creatives, placements, and audience segments. Legacy Vitest alias collisions tracked separately. |
+| UT-008 | RBAC & tax filing alias hardening | M3 | Product Engineering Lead | In Progress | 60% | 2024-06-03 | Renamed admin profile and tax filing associations, cleaned permissions matrix commas, and began stabilising vitest import resolution. Outstanding BYOK lifecycle fixture still failing under SQLite. |
 
 ## Activity Log
 - **2024-06-02** – UT-007 created to stabilise campaign manager models. Creative/audience/placement definitions refactored with enums, indexes, metadata hygiene, and association guards so vitest bundler can import advertising domain files without syntax errors.
+- **2024-06-03** – UT-008 kicked off to resolve RBAC import crashes: namespace-imported permissions constants, repaired RBAC matrix syntax, and renamed colliding Sequelize aliases for admin profiles and serviceman tax filings. Remaining BYOK audit event FK failures to address next.
 - **2024-05-30** – UT-006 completed. Legal library expanded (refund, community guidelines, about, FAQ), DSAR metrics and exports verified, go-live rehearsal executed with compliance, finance, and support evidence captured.
 - **2024-05-27** – UT-005 completed. Commerce engine service, persona dashboards, wallet/escrow analytics, and policy gating delivered with Vitest coverage.
 - **2024-05-23** – UT-004 completed. Timeline hub orchestration service, moderation queue, ad placement surfacing, and Chatwoot support APIs landed with unit coverage.
@@ -34,7 +36,7 @@
 | R-03 | Validation listener restricted to fixed NAT ranges may block deployments if corporate egress IPs rotate. | Medium | Automate weekly CIDR audit via Terraform pipeline and keep emergency VPN profile documented in runbook. | DevOps Lead | Open |
 | R-04 | Marketplace taxonomy drift between environments could break feed and catalogue parity. | Medium | Run nightly taxonomy-integrity CLI checks with checksum alerts and gate deployments on mismatches. | Data Engineering Lead | Open |
 
-| R-05 | Legacy Vitest suites still fail due to historical duplicate declarations and association alias conflicts outside refreshed campaign models. | High | Create incremental hardening plan covering constants library and ServicemanProfile associations before gating release readiness. | Product Engineering Lead | Open |
+| R-05 | Legacy Vitest suites still fail due to historical duplicate declarations and association alias conflicts outside refreshed campaign models. | High | Namespace permissions and association renames rolling out; remaining Serviceman BYOK fixtures scheduled for next hardening pass before gating release readiness. | Product Engineering Lead | Open |
 
 ## Decision Log
 | Date | Decision | Rationale | Owner |

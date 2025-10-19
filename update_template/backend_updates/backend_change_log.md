@@ -23,3 +23,8 @@
 ## 2024-06-02 – Campaign Manager Model Remediation
 - Refactored `CampaignCreative`, `CampaignAudienceSegment`, and `CampaignPlacement` models to use shared database bootstrap, enumerated statuses, metadata sanitation, and production-grade indexes.
 - Cleaned `src/models/index.js` to remove duplicate imports/exports, guard campaign associations, and re-export advertising constants for downstream services/tests.
+
+## 2024-06-03 – RBAC & Alias Collision Hardening
+- Replaced direct named imports in `accessControlService` with namespace bindings and export proxies so permissions constants load under Vitest/Vite without Rollup parse faults.
+- Normalised `permissions.js` consumer matrix by restoring missing commas/deduplicating provider entries, preventing syntax errors when analysing RBAC metadata.
+- Renamed Sequelize associations for admin user profiles (`adminUserProfile`), admin delegates (`delegateRecords`), and serviceman tax filings (`documentRecords`) to avoid naming collisions with JSON attributes.

@@ -89,6 +89,8 @@ Version 1.00 repositions Fixnado as an enterprise marketplace. The plan below se
 
 > **Status 2024-06-02:** Advertising creative, placement, and audience segment models cleaned for production—duplicate imports removed, enums/indexes enforced, metadata sanitised, and associations guarded to support campaign insights and vitest coverage.
 
+> **Status 2024-06-03:** RBAC import crashes mitigated by namespace-loading permissions, cleaning the RBAC matrix syntax, and renaming admin/tax filing associations to avoid Sequelize alias conflicts; legacy BYOK fixtures remain under investigation.
+
 ## 3. Sequencing & Dependencies
 1. **Preparation (Week 0–1)**
    - Audit repository for learner/instructor remnants; remove or rename assets.

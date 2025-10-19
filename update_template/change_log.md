@@ -38,3 +38,8 @@
 - Refined advertising domain models (`CampaignCreative`, `CampaignAudienceSegment`, `CampaignPlacement`) with production enums, metadata guards, and index coverage to unblock vitest/Vite bundler usage.
 - Cleaned `src/models/index.js` to deduplicate imports, stabilise campaign associations, and surface reusable constants for downstream services/tests.
 - Updated trackers, task list, and risk log to capture UT-007 completion and ongoing legacy Vitest remediation scope.
+
+## Version 1.00 RBAC & Alias Hardening (2024-06-03)
+- Reworked access control service imports to use namespace exports, enabling Vitest/Node to load permissions constants without Rollup parse errors.
+- Repaired `rbacMatrix` syntax by deduplicating provider entries and restoring trailing commas so campaign/admin suites can import RBAC metadata.
+- Renamed Sequelize associations (`adminUserProfile`, `delegateRecords`, `documentRecords`) to remove collisions with JSON columns and unblock model initialisation during Vitest runs.

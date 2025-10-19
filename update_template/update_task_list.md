@@ -9,6 +9,7 @@
 | UT-005 | Marketplace commerce engine & persona dashboards | M4 | Deliver checkout, escrow, wallet, finance/tax widgets, analytics dashboards, and RBAC navigation parity across personas. | Commerce Squad Lead | UT-002, UT-003 | Complete | 100% |
 | UT-006 | Compliance, legal publication, and launch rehearsals | M5 | Finalise legal policies, GDPR tooling, incident/runbook library, enablement kits, and go-live rehearsal sign-off. | Compliance Lead | UT-004, UT-005 | Complete | 100% |
 | UT-007 | Campaign manager model remediation | M3 | Refactor ad campaign creative, audience segment, and placement models to remove duplicate imports, enforce metadata hygiene, and unblock bundler/test execution. | Product Engineering Lead | UT-004 | Complete | 100% |
+| UT-008 | RBAC & tax filing alias hardening | M3 | Eliminate Sequelize alias collisions across admin profiles and serviceman tax filings while cleaning RBAC matrices so vitest bundler can import access control modules. | Product Engineering Lead | UT-004, UT-007 | In Progress | 60% |
 
 
 ## Task Notes & Acceptance Criteria
