@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: fixnado-postgres
+    environment:
+      POSTGRES_DB: fixnado
+      POSTGRES_USER: fixnado_service
+      POSTGRES_PASSWORD: fixnado_dev_password_1234567890
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend-nodejs/sql/install.sql:/docker-entrypoint-initdb.d/install.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fixnado_service -d fixnado"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fixnado-network
+
+  backend:
+    build:
+      context: ./backend-nodejs
+      dockerfile: Dockerfile
+    container_name: fixnado-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fixnado
+      DB_USER: fixnado_service
+      DB_PASSWORD: fixnado_dev_password_1234567890
+      DB_DIALECT: postgres
+      DB_SSL: "false"
+      JWT_SECRET: dev_jwt_secret_change_in_production_min_32_chars_required
+      SECRETS_MANAGER_ENABLED: "false"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend-nodejs:/app
+      - /app/node_modules
+    networks:
+      - fixnado-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend-reactjs
+      dockerfile: Dockerfile
+    container_name: fixnado-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend-reactjs:/app
+      - /app/node_modules
+    networks:
+      - fixnado-network
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+
+networks:
+  fixnado-network:
+    driver: bridge
