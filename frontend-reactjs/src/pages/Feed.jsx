@@ -9,8 +9,6 @@ import LiveFeed from '../components/LiveFeed.jsx';
 import { setCurrentRole, useCurrentRole } from '../hooks/useCurrentRole.js';
 import { useSession } from '../hooks/useSession.js';
 import { fetchFeedSuggestions } from '../api/feedClient.js';
-import { fetchCommunityEvents, fetchCommunitySummary } from '../api/communityClient.js';
-import { recordPersonaAnalytics } from '../utils/personaAnalytics.js';
 import Spinner from '../components/ui/Spinner.jsx';
 
 const ROLE_STATUS_LABELS = {
@@ -162,20 +160,12 @@ function UserPersonaCard() {
 
 export default function Feed() {
   const { isAuthenticated } = useSession();
-  const persona = useCurrentRole();
   const [suggestions, setSuggestions] = useState({
     loading: true,
     error: null,
     services: [],
     providers: [],
     stores: []
-  });
-  const [communityOverview, setCommunityOverview] = useState({
-    loading: true,
-    error: null,
-    metrics: {},
-    highlights: [],
-    events: []
   });
 
   useEffect(() => {
@@ -212,56 +202,6 @@ export default function Feed() {
     return () => controller.abort();
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setCommunityOverview((current) => ({ ...current, loading: true, error: null }));
-
-    Promise.all([
-      fetchCommunitySummary({ persona, limit: 3 }, { signal: controller.signal }),
-      fetchCommunityEvents({ limit: 3 }, { signal: controller.signal })
-    ])
-      .then(([summary, events]) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setCommunityOverview({
-          loading: false,
-          error: null,
-          metrics: summary.metrics,
-          highlights: summary.highlights,
-          events
-        });
-        recordPersonaAnalytics('community.feed.view', {
-          persona,
-          outcome: 'success',
-          metadata: {
-            highlightCount: summary.highlights.length,
-            eventCount: events.length
-          }
-        });
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        const message = error instanceof Error ? error.message : 'Unable to load community overview';
-        setCommunityOverview({
-          loading: false,
-          error: message,
-          metrics: {},
-          highlights: [],
-          events: []
-        });
-        recordPersonaAnalytics('community.feed.view', {
-          persona,
-          outcome: 'error',
-          reason: message
-        });
-      });
-
-    return () => controller.abort();
-  }, [persona]);
-
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-10 lg:flex-row">
@@ -276,77 +216,6 @@ export default function Feed() {
         </section>
         <aside className="w-full max-w-xs space-y-6 lg:sticky lg:top-10 lg:self-start">
           <UserPersonaCard />
-          <section className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-            <header className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400">Community pulse</p>
-                <h2 className="text-lg font-semibold text-primary">Timeline health</h2>
-              </div>
-              <a
-                href="/community"
-                className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary hover:underline"
-              >
-                Hub
-              </a>
-            </header>
-            {communityOverview.loading ? (
-              <div className="flex justify-center py-6">
-                <Spinner className="h-5 w-5 text-primary" />
-              </div>
-            ) : communityOverview.error ? (
-              <p className="mt-4 text-xs font-semibold text-rose-500">{communityOverview.error}</p>
-            ) : (
-              <div className="mt-4 space-y-4 text-xs text-slate-600">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                  <p className="font-semibold text-primary">Daily active members</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {communityOverview.metrics.dailyActiveMembers ?? '—'}
-                    <span className="ml-2 text-[11px] text-emerald-600">
-                      {communityOverview.metrics.dailyActiveChange ?? 'Stable'}
-                    </span>
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                  <p className="font-semibold text-primary">Median response time</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {communityOverview.metrics.medianResponseTime ?? '—'}
-                  </p>
-                </div>
-                {communityOverview.highlights[0] ? (
-                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary">
-                      {communityOverview.highlights[0].category}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-primary">
-                      {communityOverview.highlights[0].title}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      {communityOverview.highlights[0].summary}
-                    </p>
-                  </div>
-                ) : null}
-                {communityOverview.events[0] ? (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400">Next event</p>
-                    <p className="mt-1 text-sm font-semibold text-primary">
-                      {communityOverview.events[0].title}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {communityOverview.events[0].startAt
-                        ? new Date(communityOverview.events[0].startAt).toLocaleString()
-                        : 'Schedule TBC'}
-                    </p>
-                    <a
-                      href="/community/events"
-                      className="mt-2 inline-flex items-center text-[11px] font-semibold uppercase tracking-[0.3em] text-primary hover:underline"
-                    >
-                      View all events
-                    </a>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </section>
           <SuggestionSection
             title="Services"
             actionHref="/services"

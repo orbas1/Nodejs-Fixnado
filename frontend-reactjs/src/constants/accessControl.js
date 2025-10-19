@@ -12,8 +12,6 @@ export const PROVIDER_EXPERIENCE_ALLOWED_ROLES = ['provider', 'admin'];
 export const PROVIDER_STOREFRONT_ALLOWED_ROLES = PROVIDER_EXPERIENCE_ALLOWED_ROLES;
 export const CREATION_STUDIO_ALLOWED_ROLES = ['provider', 'enterprise', 'admin'];
 export const SERVICEMAN_ALLOWED_ROLES = ['serviceman', 'servicemen', 'admin', 'operations', 'operations_admin'];
-export const LEARNER_ALLOWED_ROLES = ['user', 'learner', 'enterprise', 'admin', 'support'];
-export const INSTRUCTOR_ALLOWED_ROLES = ['instructor', 'merchant', 'admin', 'finance', 'support'];
 
 export const ROLE_DISPLAY_NAMES = {
   guest: 'Guest access',
@@ -22,9 +20,6 @@ export const ROLE_DISPLAY_NAMES = {
   provider: 'Provider Operations Studio',
   serviceman: 'Crew Performance Cockpit',
   enterprise: 'Enterprise Performance Suite',
-  learner: 'Learner Performance Studio',
-  instructor: 'Instructor Commerce Studio',
-  merchant: 'Marketplace Merchant Console',
   support: 'Support Response Hub',
   operations: 'Operations Coordination Hub'
 };

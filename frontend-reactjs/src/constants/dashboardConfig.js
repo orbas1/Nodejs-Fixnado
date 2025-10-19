@@ -4,8 +4,6 @@ import { servicemanNavigation } from './dashboard/navigation/servicemanNavigatio
 import { adminNavigation } from './dashboard/navigation/adminNavigation.js';
 import { financeNavigation } from './dashboard/navigation/financeNavigation.js';
 import { enterpriseNavigation } from './dashboard/navigation/enterpriseNavigation.js';
-import { learnerNavigation } from './dashboard/navigation/learnerNavigation.js';
-import { instructorNavigation } from './dashboard/navigation/instructorNavigation.js';
 
 export const DASHBOARD_ROLES = [
   {
@@ -55,21 +53,5 @@ export const DASHBOARD_ROLES = [
     headline: 'Track spend, campaign pacing, and risk signals across every facility.',
     registered: true,
     navigation: enterpriseNavigation
-  },
-  {
-    id: 'learner',
-    name: 'Learner Performance Studio',
-    persona: 'Learning & enablement teams',
-    headline: 'Monitor mastery, coaching cadence, and personalised recommendations in one workspace.',
-    registered: true,
-    navigation: learnerNavigation
-  },
-  {
-    id: 'instructor',
-    name: 'Instructor Commerce Studio',
-    persona: 'Instructors & merchant partners',
-    headline: 'Operate catalogues, fulfil orders, and monitor payouts with governance-ready tooling.',
-    registered: true,
-    navigation: instructorNavigation
   }
 ];
