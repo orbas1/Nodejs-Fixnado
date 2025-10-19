@@ -6,7 +6,8 @@ const FALLBACK_CONTEXT = {
   userId: null,
   locale: DEFAULT_LOCALE,
   persona: 'guest',
-  allowedPersonas: []
+  allowedPersonas: [],
+  sessionId: null
 };
 
 function sanitiseString(value, { maxLength = 128, fallback = undefined } = {}) {
@@ -25,12 +26,14 @@ export function resolveSessionTelemetryContext() {
   const context = { ...FALLBACK_CONTEXT };
 
   if (typeof window.__FIXNADO_SESSION__ === 'object' && window.__FIXNADO_SESSION__ !== null) {
-    const { tenantId, role, userId, locale, activePersona, allowedPersonas } = window.__FIXNADO_SESSION__;
+    const { tenantId, role, userId, locale, activePersona, allowedPersonas, sessionId } =
+      window.__FIXNADO_SESSION__;
     context.tenantId = sanitiseString(tenantId, { fallback: context.tenantId });
     context.role = sanitiseString(role, { fallback: context.role });
     context.userId = typeof userId === 'string' ? userId : context.userId;
     context.locale = sanitiseString(locale, { fallback: context.locale });
     context.persona = sanitiseString(activePersona, { fallback: context.persona });
+    context.sessionId = sanitiseString(sessionId, { fallback: context.sessionId });
     if (Array.isArray(allowedPersonas)) {
       context.allowedPersonas = allowedPersonas
         .map((persona) => sanitiseString(persona, { fallback: null }))
@@ -47,6 +50,7 @@ export function resolveSessionTelemetryContext() {
       context.userId = typeof parsed.userId === 'string' ? parsed.userId : context.userId;
       context.locale = sanitiseString(parsed.locale, { fallback: context.locale });
       context.persona = sanitiseString(parsed.activePersona, { fallback: context.persona });
+      context.sessionId = sanitiseString(parsed.sessionId, { fallback: context.sessionId });
       if (Array.isArray(parsed.allowedPersonas)) {
         context.allowedPersonas = parsed.allowedPersonas
           .map((persona) => sanitiseString(persona, { fallback: null }))
