@@ -2,6 +2,9 @@ export const esES = {
   metadata: {
     id: 'es-ES',
     name: 'Español (España)',
+    language: 'Spanish',
+    nativeName: 'Español',
+    flag: '🇪🇸',
     htmlLang: 'es-ES',
     direction: 'ltr',
     currency: 'EUR',

@@ -2,6 +2,9 @@ export const enGB = {
   metadata: {
     id: 'en-GB',
     name: 'English (United Kingdom)',
+    language: 'English',
+    nativeName: 'English',
+    flag: '🇬🇧',
     htmlLang: 'en-GB',
     direction: 'ltr',
     currency: 'GBP',
