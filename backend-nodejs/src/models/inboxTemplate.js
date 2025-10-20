@@ -1,6 +1,9 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
+const isSqlite = sequelize.getDialect() === 'sqlite';
+const tagsDataType = isSqlite ? DataTypes.JSON : DataTypes.ARRAY(DataTypes.STRING);
+
 class InboxTemplate extends Model {}
 
 InboxTemplate.init(
@@ -43,9 +46,9 @@ InboxTemplate.init(
       defaultValue: true
     },
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: tagsDataType,
       allowNull: false,
-      defaultValue: []
+      defaultValue: () => []
     },
     previewImageUrl: {
       field: 'preview_image_url',

@@ -82,7 +82,7 @@ AdminProfile.init(
     workingHours: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {},
+      defaultValue: () => ({}),
       field: 'working_hours'
     },
     addressLine1: {
@@ -115,47 +115,47 @@ AdminProfile.init(
     notificationPreferences: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {},
+      defaultValue: () => ({}),
       field: 'notification_preferences'
     },
     securityPreferences: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {},
+      defaultValue: () => ({}),
       field: 'security_preferences'
     },
     delegates: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: []
+      defaultValue: () => []
     },
     escalationContacts: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: [],
+      defaultValue: () => [],
       field: 'escalation_contacts'
     },
     outOfOffice: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {},
+      defaultValue: () => ({}),
       field: 'out_of_office'
     },
     resourceLinks: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: [],
+      defaultValue: () => [],
       field: 'resource_links'
     },
     metadata: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: {}
+      defaultValue: () => ({})
     },
     notificationEmails: {
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: [],
+      defaultValue: () => [],
       field: 'notification_emails'
     }
   },

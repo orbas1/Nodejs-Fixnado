@@ -18,7 +18,7 @@ import {
   deleteBookingNoteHandler,
   listBookingAssignmentsHandler,
   updateBookingAssignmentHandler,
-  deleteBookingAssignmentHandler
+  deleteBookingAssignmentHandler,
   listBookingHistoryHandler,
   createBookingHistoryEntryHandler,
   updateBookingHistoryEntryHandler,
@@ -109,6 +109,31 @@ const calendarValidators = [
   query('zoneId').optional().isUUID(4)
 ];
 
+const bookingHistoryListValidators = [
+  param('bookingId').isUUID(4),
+  query('limit').optional().toInt().isInt({ min: 1, max: 100 }),
+  query('offset').optional().toInt().isInt({ min: 0 }),
+  query('sort').optional().isString(),
+  query('status').optional().isString()
+];
+
+const bookingHistoryEntryValidators = [
+  param('bookingId').isUUID(4),
+  body('type').optional().isString(),
+  body('actorRole').optional().isString(),
+  body('status').optional().isString(),
+  body('attachments').optional().isArray({ max: 10 })
+];
+
+const bookingHistoryEntryUpdateValidators = [
+  param('bookingId').isUUID(4),
+  param('entryId').isUUID(4),
+  body('type').optional().isString(),
+  body('actorRole').optional().isString(),
+  body('status').optional().isString(),
+  body('attachments').optional().isArray({ max: 10 })
+];
+
 router.post('/', createBookingHandler);
 router.get('/', listBookingsHandler);
 router.get('/calendar', calendarValidators, getBookingCalendarHandler);
@@ -136,9 +161,13 @@ router.post('/:bookingId/bids', submitBidHandler);
 router.patch('/:bookingId/bids/:bidId/status', updateBidStatusHandler);
 router.post('/:bookingId/bids/:bidId/comments', addBidCommentHandler);
 router.post('/:bookingId/disputes', triggerDisputeHandler);
-router.get('/:bookingId/history', listBookingHistoryHandler);
-router.post('/:bookingId/history', createBookingHistoryEntryHandler);
-router.patch('/:bookingId/history/:entryId', updateBookingHistoryEntryHandler);
+router.get('/:bookingId/history', bookingHistoryListValidators, listBookingHistoryHandler);
+router.post('/:bookingId/history', bookingHistoryEntryValidators, createBookingHistoryEntryHandler);
+router.patch(
+  '/:bookingId/history/:entryId',
+  bookingHistoryEntryUpdateValidators,
+  updateBookingHistoryEntryHandler
+);
 router.delete('/:bookingId/history/:entryId', deleteBookingHistoryEntryHandler);
 
 export default router;
