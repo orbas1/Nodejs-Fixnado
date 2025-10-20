@@ -10,6 +10,7 @@ import '../features/rentals/presentation/rental_screen.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/tools/presentation/tools_screen.dart';
+import '../features/learning/presentation/learning_hub_screen.dart';
 import '../features/home/presentation/workspaces_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -50,6 +51,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ExplorerScreen(),
           WorkspacesScreen(),
           ToolsScreen(),
+          LearningHubScreen(),
           BookingScreen(),
           RentalScreen(),
           AnalyticsDashboardScreen(),
@@ -77,6 +79,7 @@ enum _NavigationDestination {
   explorer('Explorer', Icons.map_outlined),
   workspaces('Workspaces', Icons.dashboard_customize_outlined),
   tools('Tools', Icons.handyman_outlined),
+  learning('Learning', Icons.school_outlined),
   bookings('Bookings', Icons.event_available_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
   operations('Ops Pulse', Icons.analytics_outlined);
