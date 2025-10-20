@@ -11,6 +11,7 @@ const VARIANT_STYLES = {
       'relative inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur',
     trigger:
       'text-xs font-semibold text-slate-600',
+    button: '',
     language: 'text-xs font-semibold',
     native: 'text-[0.65rem]',
     dropdown: 'min-w-[12rem]'
@@ -20,6 +21,7 @@ const VARIANT_STYLES = {
       'relative inline-flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg shadow-primary/5 sm:w-auto',
     trigger:
       'text-sm font-semibold text-slate-700',
+    button: 'w-full sm:w-auto',
     language: 'text-sm font-semibold',
     native: 'text-xs',
     dropdown: 'sm:min-w-[16rem]'
@@ -29,6 +31,7 @@ const VARIANT_STYLES = {
       'relative inline-flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm',
     trigger:
       'text-sm font-semibold text-slate-600',
+    button: 'w-full',
     language: 'text-sm font-semibold',
     native: 'text-xs',
     dropdown: 'w-full'
@@ -38,6 +41,7 @@ const VARIANT_STYLES = {
       'relative flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur',
     trigger:
       'text-xs font-semibold text-slate-600',
+    button: 'w-full',
     language: 'text-xs font-semibold',
     native: 'text-[0.65rem]',
     dropdown: 'w-full'
@@ -68,7 +72,8 @@ export default function LanguageSelector({ variant, className }) {
             <Listbox.Button
               type="button"
               className={clsx(
-                'flex w-full items-center gap-3 bg-transparent pe-6 outline-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                'flex items-center gap-3 bg-transparent pe-6 outline-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                styles.button,
                 styles.trigger
               )}
               dir={selectedDirection}
