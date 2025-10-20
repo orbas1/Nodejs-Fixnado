@@ -8,7 +8,7 @@ export async function up({ context: queryInterface, Sequelize }) {
     company_id: {
       type: Sequelize.UUID,
       allowNull: false,
-      references: { model: 'companies', key: 'id' },
+      references: { model: 'Company', key: 'id' },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
