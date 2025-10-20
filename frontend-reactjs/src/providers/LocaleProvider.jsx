@@ -174,13 +174,22 @@ export function LocaleProvider({ children, initialLocale = undefined }) {
   }, [dictionary.metadata, dictionary.messages]);
 
   const availableLocales = useMemo(() => {
-    const locales = Object.values(dictionaries).map((entry) => ({
-      id: entry.metadata.id,
-      name: entry.metadata.name,
-      direction: entry.metadata.direction
-    }));
+    const locales = Object.values(dictionaries).map((entry) => {
+      const { id, name, language, nativeName, direction, flag } = entry.metadata;
+      const fallbackLanguage = language ?? (typeof name === 'string' ? name.replace(/\s*\(.*?\)\s*/g, '').trim() : name);
+      const fallbackNative = nativeName ?? fallbackLanguage;
 
-    return locales.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+      return {
+        id,
+        name,
+        language: fallbackLanguage,
+        nativeName: fallbackNative,
+        direction,
+        flag: flag ?? ''
+      };
+    });
+
+    return locales.sort((a, b) => a.language.localeCompare(b.language, undefined, { sensitivity: 'base' }));
   }, []);
 
   const value = useMemo(
