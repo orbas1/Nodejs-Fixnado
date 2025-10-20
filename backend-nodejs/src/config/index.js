@@ -167,9 +167,16 @@ const DEFAULT_CORS_ALLOWLIST = {
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:4173',
-    'http://127.0.0.1:4173'
+    'http://127.0.0.1:4173',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'regex:^https?://(localhost|127(?:\\.\\d{1,3}){3}|0\\.0\\.0\\.0|\\[::1\\])(:\\d+)?$'
   ],
-  test: ['http://localhost', 'http://127.0.0.1']
+  test: [
+    'http://localhost',
+    'http://127.0.0.1',
+    'regex:^https?://(localhost|127(?:\\.\\d{1,3}){3}|0\\.0\\.0\\.0|\\[::1\\])(:\\d+)?$'
+  ]
 };
 
 const DEFAULT_CSP_DIRECTIVES = {
