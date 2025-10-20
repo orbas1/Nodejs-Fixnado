@@ -149,22 +149,34 @@ function parseKeyedListFromEnv(key, { separator = '=', fallback = [] } = {}) {
 
 const DEFAULT_CORS_ALLOWLIST = {
   production: [
+    'https://fixnado.com',
+    'https://www.fixnado.com',
     'https://app.fixnado.com',
     'https://admin.fixnado.com',
-    'https://provider.fixnado.com'
+    'https://provider.fixnado.com',
+    'https://*.fixnado.com'
   ],
   staging: [
     'https://staging.fixnado.com',
+    'https://app.staging.fixnado.com',
     'https://admin.staging.fixnado.com',
-    'https://provider.staging.fixnado.com'
+    'https://provider.staging.fixnado.com',
+    'https://*.staging.fixnado.com'
   ],
   development: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:4173',
-    'http://127.0.0.1:4173'
+    'http://127.0.0.1:4173',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'regex:^https?://(localhost|127(?:\\.\\d{1,3}){3}|0\\.0\\.0\\.0|\\[::1\\])(:\\d+)?$'
   ],
-  test: ['http://localhost', 'http://127.0.0.1']
+  test: [
+    'http://localhost',
+    'http://127.0.0.1',
+    'regex:^https?://(localhost|127(?:\\.\\d{1,3}){3}|0\\.0\\.0\\.0|\\[::1\\])(:\\d+)?$'
+  ]
 };
 
 const DEFAULT_CSP_DIRECTIVES = {
