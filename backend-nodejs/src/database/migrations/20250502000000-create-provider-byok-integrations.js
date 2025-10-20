@@ -8,7 +8,7 @@ export async function up({ context: queryInterface, Sequelize }) {
     id: {
       type: Sequelize.UUID,
       allowNull: false,
-      defaultValue: Sequelize.literal('uuid_generate_v4()'),
+      defaultValue: Sequelize.UUIDV4,
       primaryKey: true
     },
     company_id: {
@@ -80,12 +80,12 @@ export async function up({ context: queryInterface, Sequelize }) {
     created_at: {
       type: Sequelize.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.fn('NOW')
     },
     updated_at: {
       type: Sequelize.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.fn('NOW')
     }
   });
 
@@ -104,7 +104,7 @@ export async function up({ context: queryInterface, Sequelize }) {
     id: {
       type: Sequelize.UUID,
       allowNull: false,
-      defaultValue: Sequelize.literal('uuid_generate_v4()'),
+      defaultValue: Sequelize.UUIDV4,
       primaryKey: true
     },
     integration_id: {
@@ -141,7 +141,7 @@ export async function up({ context: queryInterface, Sequelize }) {
     created_at: {
       type: Sequelize.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.fn('NOW')
     }
   });
 

@@ -6,7 +6,7 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       primaryKey: true,
       type: Sequelize.UUID,
-      defaultValue: Sequelize.literal('uuid_generate_v4()')
+      defaultValue: Sequelize.UUIDV4
     },
     user_id: {
       allowNull: false,
@@ -117,12 +117,12 @@ export async function up(queryInterface, Sequelize) {
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.fn('NOW')
     },
     updated_at: {
       allowNull: false,
       type: Sequelize.DATE,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.fn('NOW')
     }
   });
 
@@ -137,8 +137,8 @@ export async function up(queryInterface, Sequelize) {
     fields: ['user_id'],
     name: 'serviceman_profile_settings_user_id_fkey',
     references: {
-      table: 'users',
-      field: 'id'
+      model: 'User',
+      key: 'id'
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'

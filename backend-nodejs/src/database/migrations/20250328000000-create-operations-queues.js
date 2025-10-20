@@ -42,14 +42,14 @@ export async function up({ context: queryInterface, Sequelize }) {
     created_by: {
       type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'Users', key: 'id' },
+      references: { model: 'User', key: 'id' },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
     },
     updated_by: {
       type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'Users', key: 'id' },
+      references: { model: 'User', key: 'id' },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
     },
@@ -113,14 +113,14 @@ export async function up({ context: queryInterface, Sequelize }) {
     created_by: {
       type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'Users', key: 'id' },
+      references: { model: 'User', key: 'id' },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
     },
     updated_by: {
       type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'Users', key: 'id' },
+      references: { model: 'User', key: 'id' },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
     },

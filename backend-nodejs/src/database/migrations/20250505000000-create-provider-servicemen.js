@@ -6,14 +6,14 @@ module.exports = {
     await queryInterface.createTable('ProviderServicemen', {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true
       },
       company_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'Companies',
+          model: 'Company',
           key: 'id'
         },
         onDelete: 'CASCADE',
@@ -87,19 +87,19 @@ module.exports = {
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       }
     });
 
     await queryInterface.createTable('ProviderServicemanAvailabilities', {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true
       },
       serviceman_id: {
@@ -138,19 +138,19 @@ module.exports = {
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       }
     });
 
     await queryInterface.createTable('ProviderServicemanZones', {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true
       },
       serviceman_id: {
@@ -167,7 +167,7 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'ServiceZones',
+          model: 'ServiceZone',
           key: 'id'
         },
         onDelete: 'CASCADE',
@@ -181,19 +181,19 @@ module.exports = {
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       }
     });
 
     await queryInterface.createTable('ProviderServicemanMedia', {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true
       },
       serviceman_id: {
@@ -236,12 +236,12 @@ module.exports = {
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()')
+        defaultValue: Sequelize.fn('NOW')
       }
     });
 

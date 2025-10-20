@@ -22,14 +22,14 @@ module.exports = {
     await queryInterface.createTable('booking_notes', {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true
       },
       booking_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'bookings',
+          model: 'Booking',
           key: 'id'
         },
         onDelete: 'CASCADE',
@@ -60,12 +60,12 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.fn('NOW')
       }
     });
 

@@ -22,28 +22,28 @@ export async function up({ context: queryInterface, Sequelize }) {
       order_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Orders', key: 'id' },
+        references: { model: 'Order', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
       buyer_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Users', key: 'id' },
+        references: { model: 'User', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
       provider_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Users', key: 'id' },
+        references: { model: 'User', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
       service_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Services', key: 'id' },
+        references: { model: 'Service', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
@@ -138,7 +138,7 @@ export async function up({ context: queryInterface, Sequelize }) {
       provider_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Users', key: 'id' },
+        references: { model: 'User', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
@@ -224,7 +224,7 @@ export async function up({ context: queryInterface, Sequelize }) {
       order_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: 'Orders', key: 'id' },
+        references: { model: 'Order', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
@@ -355,7 +355,7 @@ export async function up({ context: queryInterface, Sequelize }) {
       order_id: {
         type: Sequelize.UUID,
         allowNull: true,
-        references: { model: 'Orders', key: 'id' },
+        references: { model: 'Order', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },
@@ -369,7 +369,7 @@ export async function up({ context: queryInterface, Sequelize }) {
       escrow_id: {
         type: Sequelize.UUID,
         allowNull: true,
-        references: { model: 'Escrows', key: 'id' },
+        references: { model: 'Escrow', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },
