@@ -7,7 +7,7 @@ import {
   ServicemanTaxTask,
   ServicemanTaxDocument,
   User
-} from '../models/index.js';
+} from './models/index.js';
 import { normaliseCurrency } from '../utils/currency.js';
 
 const PROFILE_FILING_STATUSES = ['sole_trader', 'limited_company', 'partnership', 'umbrella', 'other'];

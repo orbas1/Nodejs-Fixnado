@@ -17,7 +17,7 @@ import {
   deleteBookingNote,
   listBookingAssignments,
   updateBookingAssignment,
-  removeBookingAssignment
+  removeBookingAssignment,
   listBookingHistory,
   createBookingHistoryEntry,
   updateBookingHistoryEntry,
@@ -177,6 +177,11 @@ export async function listBookingNotesHandler(req, res, next) {
 
     const notes = await listBookingNotes(req.params.bookingId);
     res.json(notes);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
 export async function listBookingHistoryHandler(req, res, next) {
   try {
     const history = await listBookingHistory(req.params.bookingId, {
@@ -200,6 +205,11 @@ export async function createBookingNoteHandler(req, res, next) {
 
     const note = await createBookingNote(req.params.bookingId, req.body);
     res.status(201).json(note);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
 export async function createBookingHistoryEntryHandler(req, res, next) {
   try {
     const entry = await createBookingHistoryEntry(req.params.bookingId, req.body || {});
@@ -218,9 +228,18 @@ export async function updateBookingNoteHandler(req, res, next) {
 
     const note = await updateBookingNote(req.params.bookingId, req.params.noteId, req.body);
     res.json(note);
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
 export async function updateBookingHistoryEntryHandler(req, res, next) {
   try {
-    const entry = await updateBookingHistoryEntry(req.params.bookingId, req.params.entryId, req.body || {});
+    const entry = await updateBookingHistoryEntry(
+      req.params.bookingId,
+      req.params.entryId,
+      req.body || {}
+    );
     res.json(entry);
   } catch (error) {
     handleServiceError(res, next, error);
@@ -236,6 +255,15 @@ export async function deleteBookingNoteHandler(req, res, next) {
 
     await deleteBookingNote(req.params.bookingId, req.params.noteId);
     res.status(204).send();
+  } catch (error) {
+    handleServiceError(res, next, error);
+  }
+}
+
+export async function deleteBookingHistoryEntryHandler(req, res, next) {
+  try {
+    await deleteBookingHistoryEntry(req.params.bookingId, req.params.entryId);
+    res.status(204).end();
   } catch (error) {
     handleServiceError(res, next, error);
   }
@@ -283,10 +311,6 @@ export async function deleteBookingAssignmentHandler(req, res, next) {
 
     await removeBookingAssignment(req.params.bookingId, req.params.assignmentId, req.query.actorId);
     res.status(204).send();
-export async function deleteBookingHistoryEntryHandler(req, res, next) {
-  try {
-    await deleteBookingHistoryEntry(req.params.bookingId, req.params.entryId);
-    res.status(204).end();
   } catch (error) {
     handleServiceError(res, next, error);
   }

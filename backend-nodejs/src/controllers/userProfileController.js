@@ -1,4 +1,4 @@
-import { getUserProfileSettings, updateUserProfileSettings } from '../services/userProfileService.js';
+import { getUserProfileSettings, updateUserProfileSettings } from '../services/userProfileService.mjs';
 
 export async function fetchUserProfileSettings(req, res, next) {
   try {

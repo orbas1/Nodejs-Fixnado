@@ -5,7 +5,7 @@ import { annotateAdsSection, buildAdsFeatureMetadata } from '../utils/adsAccessP
 import { getFixnadoWorkspaceSnapshot } from './fixnadoAdsService.js';
 import { getBookingCalendar } from './bookingCalendarService.js';
 import { buildMarketplaceDashboardSlice } from './adminMarketplaceService.js';
-import { getUserProfileSettings } from './userProfileService.js';
+import { getUserProfileSettings } from './userProfileService.mjs';
 import { getProviderCalendar } from './providerCalendarService.js';
 import {
   AdCampaign,

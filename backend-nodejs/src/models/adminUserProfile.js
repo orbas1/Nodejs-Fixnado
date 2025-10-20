@@ -1,6 +1,9 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
+const isSqlite = sequelize.getDialect() === 'sqlite';
+const labelsDataType = isSqlite ? DataTypes.JSON : DataTypes.ARRAY(DataTypes.STRING);
+
 export const ADMIN_USER_STATUSES = ['active', 'invited', 'suspended', 'deactivated'];
 
 class AdminUserProfile extends Model {}
@@ -23,9 +26,9 @@ AdminUserProfile.init(
       defaultValue: 'active'
     },
     labels: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: labelsDataType,
       allowNull: false,
-      defaultValue: []
+      defaultValue: () => []
     },
     jobTitle: {
       type: DataTypes.STRING,

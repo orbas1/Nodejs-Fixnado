@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { validationResult } from 'express-validator';
 import { User, Company } from '../models/index.js';
-import { getUserProfile, updateUserProfile } from '../services/userProfileService.js';
+import { getUserProfile, updateUserProfile } from '../services/userProfileService.mjs';
 import config from '../config/index.js';
 import {
   issueSession,

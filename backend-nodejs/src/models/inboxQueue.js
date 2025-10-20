@@ -1,6 +1,9 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
+const isSqlite = sequelize.getDialect() === 'sqlite';
+const arrayDataType = isSqlite ? DataTypes.JSON : DataTypes.ARRAY(DataTypes.STRING);
+
 class InboxQueue extends Model {}
 
 InboxQueue.init(
@@ -37,9 +40,9 @@ InboxQueue.init(
     },
     allowedRoles: {
       field: 'allowed_roles',
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: arrayDataType,
       allowNull: false,
-      defaultValue: ['support']
+      defaultValue: () => ['support']
     },
     autoResponderEnabled: {
       field: 'auto_responder_enabled',
@@ -53,9 +56,9 @@ InboxQueue.init(
       allowNull: true
     },
     channels: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: arrayDataType,
       allowNull: false,
-      defaultValue: ['in-app']
+      defaultValue: () => ['in-app']
     },
     accentColor: {
       field: 'accent_color',
