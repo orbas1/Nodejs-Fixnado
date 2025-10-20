@@ -1,7 +1,15 @@
 import { randomUUID } from 'crypto';
 import { DateTime } from 'luxon';
-import { sequelize, User, Company, UserPreference, Region } from '../models/index.js';
+import {
+  sequelize,
+  User,
+  Company,
+  UserPreference,
+  Region,
+  UserProfileSetting
+} from '../models/index.js';
 import { CanonicalRoles, toCanonicalRole } from '../constants/permissions.js';
+import { recordSecurityEvent } from './auditTrailService.js';
 
 function validationError(message, details = []) {
   const error = new Error(message);
@@ -159,8 +167,9 @@ function validateTimezone(timezone) {
   const resolved = DateTime.now().setZone(candidate);
   if (!resolved.isValid) {
     throw validationError('timezone must be a valid IANA identifier.');
-import { sequelize, User, UserProfileSetting } from '../models/index.js';
-import { recordSecurityEvent } from './auditTrailService.js';
+  }
+  return candidate;
+}
 
 const DEFAULT_NOTIFICATION_PREFERENCES = Object.freeze({
   dispatch: { email: true, sms: false },
