@@ -1,46 +1,36 @@
-import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/bootstrap.dart';
-import '../../../core/exceptions/api_exception.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/storage/local_cache.dart';
 import '../domain/profile_models.dart';
 
 class ProfileRepository {
-  ProfileRepository(this._client, this._cache);
+  ProfileRepository(this._cache);
 
-  final FixnadoApiClient _client;
   final LocalCache _cache;
 
   static const _cacheKey = 'profile:v1';
+  static const _seedAssetPath = 'assets/data/profile_seed.json';
 
   Future<ProfileFetchResult> fetchProfile({bool bypassCache = false}) async {
-    ProfileSnapshot? cachedSnapshot;
-    final cached = _cache.readJson(_cacheKey);
-    if (cached != null) {
-      cachedSnapshot = ProfileSnapshot.fromJson(Map<String, dynamic>.from(cached['value'] as Map));
-      final cachedAt = cached['updatedAt'] != null ? DateTime.tryParse(cached['updatedAt'] as String) : null;
-      if (cachedAt != null) {
-        cachedSnapshot = cachedSnapshot.copyWith(generatedAt: cachedAt);
-      }
+    final cachedSnapshot = _readCachedSnapshot();
+    if (!bypassCache && cachedSnapshot != null) {
+      return ProfileFetchResult(profile: cachedSnapshot, offline: false);
     }
 
     try {
-      final snapshot = await _loadRemote();
+      final snapshot = await _loadSeedProfile();
       await _cache.writeJson(_cacheKey, snapshot.toJson());
       return ProfileFetchResult(profile: snapshot, offline: false);
-    } on TimeoutException catch (_) {
-      if (cachedSnapshot != null) {
-        return ProfileFetchResult(profile: cachedSnapshot, offline: true);
+    } catch (_) {
+      final fallback = cachedSnapshot ?? _fallbackSnapshot();
+      if (cachedSnapshot == null) {
+        await _cache.writeJson(_cacheKey, fallback.toJson());
       }
-      rethrow;
-    } on ApiException catch (_) {
-      if (cachedSnapshot != null) {
-        return ProfileFetchResult(profile: cachedSnapshot, offline: true);
-      }
-      rethrow;
+      return ProfileFetchResult(profile: fallback, offline: true);
     }
   }
 
@@ -68,213 +58,185 @@ class ProfileRepository {
     return updated;
   }
 
-  Future<ProfileSnapshot> _loadRemote() async {
-    final dashboardPayload = await _client.getJson('/panel/provider/dashboard');
-    final dashboardData = Map<String, dynamic>.from(dashboardPayload['data'] as Map? ?? dashboardPayload as Map? ?? {});
-    final provider = Map<String, dynamic>.from(dashboardData['provider'] as Map? ?? {});
-
-    final slug = provider['slug'] as String? ?? 'featured';
-    final frontPayload = await _client.getJson('/business-fronts/$slug');
-    final frontData = Map<String, dynamic>.from(frontPayload['data'] as Map? ?? frontPayload as Map? ?? {});
-
-    final hero = Map<String, dynamic>.from(frontData['hero'] as Map? ?? {});
-    final serviceCatalogue = (frontData['serviceCatalogue'] as List<dynamic>? ?? const [])
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-    final tools = (frontData['tools'] as List<dynamic>? ?? const [])
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-    final materials = (frontData['materials'] as List<dynamic>? ?? const [])
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-    final certifications = (frontData['certifications'] as List<dynamic>? ?? const [])
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-
-    final serviceTags = <String>{
-      ...((hero['tags'] as List<dynamic>? ?? const []).map((item) => item.toString())),
-      ...serviceCatalogue.expand((item) => (item['tags'] as List<dynamic>? ?? const []).map((tag) => tag.toString())),
-      ...serviceCatalogue.map((item) => item['category']?.toString() ?? '').where((value) => value.isNotEmpty),
-    }..removeWhere((element) => element.isEmpty);
-    if (serviceTags.isEmpty) {
-      serviceTags.addAll(_defaultBadges);
+  ProfileSnapshot? _readCachedSnapshot() {
+    final cached = _cache.readJson(_cacheKey);
+    if (cached == null) {
+      return null;
     }
-
-    final serviceRegions = _resolveRegions(hero, provider);
-    final badgeLibrary = _defaultBadges;
-
-    final languageLibrary = _defaultLanguages;
-    final complianceLibrary = _mergeCompliance(certifications, _defaultCompliance);
-    final availabilityLibrary = _defaultAvailability;
-    final selectedLanguages = languageLibrary.take(2).toList();
-    final selectedCompliance = complianceLibrary.take(3).toList();
-    final selectedAvailability = availabilityLibrary.take(2).toList();
-
-    final services = serviceCatalogue.take(6).map(_mapServiceOffering).toList();
-    final tooling = _mapTooling(tools, materials);
-
-    AffiliateProgrammeSnapshot? affiliate;
     try {
-      final affiliatePayload = await _client.getJson('/affiliate/dashboard');
-      final affiliateData = Map<String, dynamic>.from(affiliatePayload['data'] as Map? ?? affiliatePayload as Map? ?? {});
-      affiliate = AffiliateProgrammeSnapshot.fromJson(affiliateData);
-    } catch (error) {
-      // Silent fallback — affiliate programme may not be configured for all tenants yet.
+      final payload = Map<String, dynamic>.from(cached['value'] as Map? ?? cached);
+      final snapshot = ProfileSnapshot.fromJson(payload);
+      final updatedAt = cached['updatedAt'] as String?;
+      if (updatedAt == null) {
+        return snapshot;
+      }
+      final generatedAt = DateTime.tryParse(updatedAt);
+      return generatedAt != null ? snapshot.copyWith(generatedAt: generatedAt) : snapshot;
+    } catch (_) {
+      return null;
     }
+  }
 
+  Future<ProfileSnapshot> _loadSeedProfile() async {
+    final raw = await rootBundle.loadString(_seedAssetPath);
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Invalid profile seed payload');
+    }
+    final snapshot = ProfileSnapshot.fromJson(decoded);
+    return snapshot.copyWith(generatedAt: DateTime.now());
+  }
+
+  ProfileSnapshot _fallbackSnapshot() {
     final identity = ProviderIdentity(
-      displayName: provider['tradingName'] as String? ?? provider['name'] as String? ?? hero['name'] as String? ?? 'Provider',
-      headline: _resolveHeadline(hero, serviceTags.toList()),
-      tagline: hero['strapline'] as String? ?? hero['tagline'] as String? ??
-          'Escrow-backed delivery coverage for enterprise facilities.',
-      bio: hero['bio'] as String? ??
-          'Fixnado-certified SME with telemetry-backed service governance, marketplace concierge and escrow compliance.',
-      serviceRegions: serviceRegions,
-      badges: badgeLibrary.take(3).toList(),
-      serviceTags: serviceTags.take(6).toList(),
-      supportEmail: provider['supportEmail'] as String? ?? provider['contactEmail'] as String? ?? 'support@fixnado.com',
-      supportPhone: provider['supportPhone'] as String?,
+      displayName: 'Atlas Facilities',
+      headline: 'Critical environment specialists',
+      tagline: 'Rapid response coverage across London & the South East.',
+      bio:
+          'We keep mission critical campuses online with 24/7 electrical, HVAC and fabric support backed by escrow-compliant workflows.',
+      serviceRegions: const ['London', 'South East', 'Midlands'],
+      badges: const ['Escrow trusted', 'Rapid responder', 'Compliance verified'],
+      serviceTags: const ['Electrical', 'HVAC', 'Emergency callouts', 'Preventative maintenance'],
+      supportEmail: 'support@atlasfix.co',
+      supportPhone: '+44 20 1234 5678',
     );
 
-    final workflow = _defaultWorkflow;
+    final services = [
+      ServiceOffering(
+        id: 'svc-electrical',
+        name: '24/7 Electrical callout',
+        description: 'Certified electricians to stabilise critical infrastructure within two hours.',
+        price: 195,
+        currency: 'GBP',
+        availabilityLabel: '2-hour SLA',
+        availabilityDetail: 'Crew dispatched within 120 minutes across priority zones.',
+        coverage: const ['Data centres', 'Corporate HQs'],
+        tags: const ['Electrical', 'Emergency'],
+      ),
+      ServiceOffering(
+        id: 'svc-hvac',
+        name: 'HVAC optimisation visit',
+        description: 'Thermal performance audit with tune-up and telemetry report.',
+        price: 320,
+        currency: 'GBP',
+        availabilityLabel: 'Next-day',
+        availabilityDetail: 'Scheduled within 24 hours with remote insights beforehand.',
+        coverage: const ['Hospitals', 'Logistics hubs'],
+        tags: const ['HVAC', 'Energy'],
+      ),
+      ServiceOffering(
+        id: 'svc-maintenance',
+        name: 'Preventative maintenance programme',
+        description: 'Quarterly compliance visit aligned to SFG20 tasks and Fixnado telemetry.',
+        price: 860,
+        currency: 'GBP',
+        availabilityLabel: 'Quarterly cadence',
+        availabilityDetail: 'Rolling plan with digital sign-off and document vault.',
+        coverage: const ['Retail estates', 'Industrial campuses'],
+        tags: const ['Maintenance', 'Compliance'],
+      ),
+    ];
+
+    final affiliate = AffiliateProgrammeSnapshot(
+      referralCode: 'ATLAS-PRO',
+      status: 'active',
+      tierLabel: 'Gold Partner',
+      totalCommission: 2480,
+      totalRevenue: 31200,
+      pendingCommission: 320,
+      transactionCount: 42,
+      settings: AffiliateSettingsSummary(
+        autoApprove: true,
+        payoutCadenceDays: 30,
+        minimumPayout: 100,
+        attributionWindowDays: 45,
+        disclosureUrl: 'https://atlasfix.co/legal/affiliate',
+      ),
+      tiers: [
+        AffiliateCommissionTier(
+          id: 'starter',
+          name: 'Starter',
+          tierLabel: 'Starter',
+          commissionRate: 8,
+          minValue: 0,
+          maxValue: 5000,
+          recurrence: 'one_time',
+          recurrenceLimit: null,
+        ),
+        AffiliateCommissionTier(
+          id: 'growth',
+          name: 'Growth',
+          tierLabel: 'Growth',
+          commissionRate: 12,
+          minValue: 5000,
+          maxValue: 15000,
+          recurrence: 'one_time',
+          recurrenceLimit: null,
+        ),
+        AffiliateCommissionTier(
+          id: 'enterprise',
+          name: 'Enterprise',
+          tierLabel: 'Enterprise',
+          commissionRate: 15,
+          minValue: 15000,
+          maxValue: null,
+          recurrence: 'one_time',
+          recurrenceLimit: null,
+        ),
+      ],
+      referrals: [
+        AffiliateReferralSummary(
+          code: 'DALSTON-HQ',
+          status: 'converted',
+          conversions: 3,
+          revenue: 8700,
+          commission: 696,
+        ),
+        AffiliateReferralSummary(
+          code: 'CANARY-WHARF',
+          status: 'converted',
+          conversions: 5,
+          revenue: 12600,
+          commission: 1008,
+        ),
+        AffiliateReferralSummary(
+          code: 'WEST-END',
+          status: 'pending',
+          conversions: 1,
+          revenue: 1800,
+          commission: 144,
+        ),
+      ],
+    );
 
     return ProfileSnapshot(
       identity: identity,
       services: services,
-      languages: selectedLanguages,
-      compliance: selectedCompliance,
-      availability: selectedAvailability,
-      workflow: workflow,
-      tooling: tooling,
-      badgeLibrary: badgeLibrary,
-      languageLibrary: languageLibrary,
-      complianceLibrary: complianceLibrary,
-      availabilityLibrary: availabilityLibrary,
-      serviceTagLibrary: serviceTags.take(12).toList(),
+      languages: _defaultLanguages.take(3).toList(),
+      compliance: _defaultCompliance.take(3).toList(),
+      availability: _defaultAvailability.take(2).toList(),
+      workflow: _defaultWorkflow,
+      tooling: _defaultTooling,
+      badgeLibrary: _defaultBadges,
+      languageLibrary: _defaultLanguages,
+      complianceLibrary: _defaultCompliance,
+      availabilityLibrary: _defaultAvailability,
+      serviceTagLibrary: {
+        ...identity.serviceTags,
+        'SFG20',
+        'Escrow compliant',
+      }.toList(),
       shareProfile: true,
       requestQuote: true,
       generatedAt: DateTime.now(),
       affiliate: affiliate,
     );
   }
-
-  List<String> _resolveRegions(Map<String, dynamic> hero, Map<String, dynamic> provider) {
-    final heroLocations = (hero['locations'] as List<dynamic>? ?? const [])
-        .map((location) => location.toString())
-        .where((element) => element.isNotEmpty)
-        .toList();
-    if (heroLocations.isNotEmpty) {
-      return heroLocations;
-    }
-    final region = provider['region'] as String? ?? provider['serviceRegions'] as String?;
-    if (region != null && region.isNotEmpty) {
-      return region.split(',').map((part) => part.trim()).where((part) => part.isNotEmpty).toList();
-    }
-    return const ['United Kingdom'];
-  }
-
-  String _resolveHeadline(Map<String, dynamic> hero, List<String> tags) {
-    final categories = (hero['categories'] as List<dynamic>? ?? const [])
-        .map((item) => item.toString())
-        .where((value) => value.isNotEmpty)
-        .toList();
-    if (categories.isNotEmpty) {
-      return categories.first;
-    }
-    if (tags.isNotEmpty) {
-      return tags.first;
-    }
-    return 'Field services specialist';
-  }
-
-  ServiceOffering _mapServiceOffering(Map<String, dynamic> item) {
-    final availability = Map<String, dynamic>.from(item['availability'] as Map? ?? {});
-    final coverage = (item['coverage'] as List<dynamic>? ?? const [])
-        .map((entry) => entry.toString())
-        .where((entry) => entry.isNotEmpty)
-        .toList();
-    final tags = (item['tags'] as List<dynamic>? ?? const [])
-        .map((entry) => entry.toString())
-        .where((entry) => entry.isNotEmpty)
-        .toList();
-
-    return ServiceOffering(
-      id: item['id']?.toString() ?? 'service-${item.hashCode}',
-      name: item['name']?.toString() ?? 'Service',
-      description: item['description']?.toString() ?? '',
-      price: (item['price'] as num?)?.toDouble(),
-      currency: item['currency']?.toString(),
-      availabilityLabel: availability['label']?.toString() ?? 'Availability',
-      availabilityDetail: availability['detail']?.toString() ?? '',
-      coverage: coverage,
-      tags: tags,
-    );
-  }
-
-  List<ToolingItem> _mapTooling(List<Map<String, dynamic>> tools, List<Map<String, dynamic>> materials) {
-    final combined = [...tools, ...materials].take(6).toList();
-    if (combined.isEmpty) {
-      return _defaultTooling;
-    }
-    return combined
-        .map(
-          (item) => ToolingItem(
-            name: item['name']?.toString() ?? 'Tooling capability',
-            description: item['description']?.toString() ??
-                item['category']?.toString() ??
-                'Operational tooling surfaced from Fixnado inventory.',
-            category: item['category']?.toString(),
-            sku: item['sku']?.toString(),
-            status: item['status']?.toString(),
-            available: (item['availability'] as num?)?.toInt(),
-            reserved: (item['quantityReserved'] as num?)?.toInt(),
-            onHand: (item['quantityOnHand'] as num?)?.toInt(),
-            safetyStock: (item['safetyStock'] as num?)?.toInt(),
-            unitType: item['unitType']?.toString(),
-            location: item['location']?.toString(),
-            nextMaintenanceDue: item['nextMaintenanceDue'] != null
-                ? DateTime.tryParse(item['nextMaintenanceDue'].toString())
-                : null,
-            activeAlerts: (item['activeAlerts'] as num?)?.toInt(),
-            activeRentals: (item['activeRentals'] as num?)?.toInt(),
-            rentalRate: (item['rentalRate'] as num?)?.toDouble(),
-            rentalRateCurrency: item['rentalRateCurrency']?.toString(),
-            depositAmount: (item['depositAmount'] as num?)?.toDouble(),
-            depositCurrency: item['depositCurrency']?.toString(),
-            notes: item['notes']?.toString(),
-          ),
-        )
-        .toList();
-  }
-
-  List<ComplianceDocument> _mergeCompliance(
-    List<Map<String, dynamic>> fromApi,
-    List<ComplianceDocument> defaults,
-  ) {
-    final parsed = fromApi
-        .map(
-          (doc) => ComplianceDocument(
-            name: doc['name']?.toString() ?? doc['id']?.toString() ?? 'Compliance artefact',
-            status: 'Valid',
-            expiry: doc['expiresOn'] != null ? DateTime.tryParse(doc['expiresOn'].toString()) : null,
-          ),
-        )
-        .toList();
-    if (parsed.isEmpty) {
-      return defaults;
-    }
-    final merged = <String, ComplianceDocument>{
-      for (final doc in defaults) doc.name: doc,
-      for (final doc in parsed) doc.name: doc,
-    };
-    return merged.values.toList();
-  }
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  final client = ref.watch(apiClientProvider);
   final cache = ref.watch(localCacheProvider);
-  return ProfileRepository(client, cache);
+  return ProfileRepository(cache);
 });
 
 final List<String> _defaultBadges = const [
@@ -287,24 +249,24 @@ final List<String> _defaultBadges = const [
 
 final List<LanguageCapability> _defaultLanguages = const [
   LanguageCapability(
-    locale: 'English (US)',
+    locale: 'English (UK)',
     proficiency: 'Native',
-    coverage: 'All copy and job notes',
+    coverage: 'All documentation and coordination',
   ),
   LanguageCapability(
-    locale: 'Spanish (MX)',
+    locale: 'Spanish (ES)',
     proficiency: 'Professional working',
-    coverage: 'Safety briefings and SMS updates',
+    coverage: 'On-site safety briefings and reports',
+  ),
+  LanguageCapability(
+    locale: 'Polish (PL)',
+    proficiency: 'Conversational',
+    coverage: 'Crew coordination and job notes',
   ),
   LanguageCapability(
     locale: 'French (FR)',
     proficiency: 'Conversational',
     coverage: 'Client success follow-up',
-  ),
-  LanguageCapability(
-    locale: 'German (DE)',
-    proficiency: 'Professional working',
-    coverage: 'Compliance artefacts and technical diagrams',
   ),
 ];
 
@@ -316,6 +278,11 @@ final List<ComplianceDocument> _defaultCompliance = const [
   ),
   ComplianceDocument(
     name: 'NIC EIC Certification',
+    status: 'Valid',
+    expiry: null,
+  ),
+  ComplianceDocument(
+    name: 'CHAS Premium Plus',
     status: 'Valid',
     expiry: null,
   ),

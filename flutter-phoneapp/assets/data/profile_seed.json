@@ -1,0 +1,185 @@
+{
+  "identity": {
+    "displayName": "Atlas Facilities",
+    "headline": "Critical environment specialists",
+    "tagline": "Rapid response coverage across London & the South East.",
+    "bio": "We keep mission critical campuses online with 24/7 electrical, HVAC and fabric support backed by escrow-compliant workflows.",
+    "serviceRegions": ["London", "South East", "Midlands"],
+    "badges": ["Escrow trusted", "Rapid responder", "Compliance verified"],
+    "serviceTags": ["Electrical", "HVAC", "Emergency callouts", "Preventative maintenance"],
+    "supportEmail": "support@atlasfix.co",
+    "supportPhone": "+44 20 1234 5678"
+  },
+  "services": [
+    {
+      "id": "svc-electrical",
+      "name": "24/7 Electrical callout",
+      "description": "Certified electricians to stabilise critical infrastructure within two hours.",
+      "price": 195,
+      "currency": "GBP",
+      "availabilityLabel": "2-hour SLA",
+      "availabilityDetail": "Crew dispatched within 120 minutes across priority zones.",
+      "coverage": ["Data centres", "Corporate HQs"],
+      "tags": ["Electrical", "Emergency"]
+    },
+    {
+      "id": "svc-hvac",
+      "name": "HVAC optimisation visit",
+      "description": "Thermal performance audit with tune-up and telemetry report.",
+      "price": 320,
+      "currency": "GBP",
+      "availabilityLabel": "Next-day",
+      "availabilityDetail": "Scheduled within 24 hours with remote insights beforehand.",
+      "coverage": ["Hospitals", "Logistics hubs"],
+      "tags": ["HVAC", "Energy"]
+    },
+    {
+      "id": "svc-maintenance",
+      "name": "Preventative maintenance programme",
+      "description": "Quarterly compliance visit aligned to SFG20 tasks and Fixnado telemetry.",
+      "price": 860,
+      "currency": "GBP",
+      "availabilityLabel": "Quarterly cadence",
+      "availabilityDetail": "Rolling plan with digital sign-off and document vault.",
+      "coverage": ["Retail estates", "Industrial campuses"],
+      "tags": ["Maintenance", "Compliance"]
+    }
+  ],
+  "languages": [
+    {"locale": "English (UK)", "proficiency": "Native", "coverage": "All documentation and coordination"},
+    {"locale": "Spanish (ES)", "proficiency": "Professional working", "coverage": "On-site safety briefings and reports"},
+    {"locale": "Polish (PL)", "proficiency": "Conversational", "coverage": "Crew coordination and job notes"}
+  ],
+  "compliance": [
+    {"name": "DBS Enhanced", "status": "Cleared"},
+    {"name": "NIC EIC Certification", "status": "Valid"},
+    {"name": "CHAS Premium Plus", "status": "Valid"}
+  ],
+  "availability": [
+    {"window": "Mon – Fri", "time": "07:00 – 19:00", "notes": "Emergency response across core zones."},
+    {"window": "Sat", "time": "08:00 – 14:00", "notes": "Premium callout applies; remote diagnostics offered."}
+  ],
+  "workflow": [
+    {"stage": "Discovery", "detail": "Survey the site within 24 hours and capture permits or access notes."},
+    {"stage": "Execution", "detail": "Track milestones with geo-tagged proof before escrow releases."},
+    {"stage": "Post-job", "detail": "Send documentation and schedule follow-up reviews automatically."}
+  ],
+  "tooling": [
+    {
+      "name": "Marketplace storefront",
+      "description": "Thermal cameras, torque tools, and surge analyzers with insured delivery.",
+      "status": "healthy",
+      "available": 12,
+      "onHand": 18,
+      "reserved": 6,
+      "safetyStock": 4,
+      "unitType": "kits",
+      "rentalRate": 180,
+      "rentalRateCurrency": "GBP",
+      "notes": "Calibrated weekly; RFID tracked logistics."
+    },
+    {
+      "name": "Service zone coverage",
+      "description": "Downtown core, campuses, and logistics hubs with live ETAs.",
+      "status": "low_stock",
+      "available": 5,
+      "onHand": 12,
+      "reserved": 7,
+      "safetyStock": 5,
+      "unitType": "zones",
+      "location": "Metro & suburban depots",
+      "notes": "Geo-fenced pods maintained with IoT sensors."
+    },
+    {
+      "name": "Knowledge base references",
+      "description": "Permit checklist, lockout/tagout, and escalation scripts ready.",
+      "status": "healthy",
+      "notes": "Digital SOP repository linked to crew tablets."
+    }
+  ],
+  "badgeLibrary": [
+    "Top rated",
+    "Escrow trusted",
+    "Rapid responder",
+    "Compliance verified",
+    "AI augmented operations"
+  ],
+  "languageLibrary": [
+    {"locale": "English (UK)", "proficiency": "Native", "coverage": "All documentation and coordination"},
+    {"locale": "Spanish (ES)", "proficiency": "Professional working", "coverage": "On-site safety briefings and reports"},
+    {"locale": "Polish (PL)", "proficiency": "Conversational", "coverage": "Crew coordination and job notes"},
+    {"locale": "French (FR)", "proficiency": "Conversational", "coverage": "Client success follow-up"}
+  ],
+  "complianceLibrary": [
+    {"name": "DBS Enhanced", "status": "Cleared"},
+    {"name": "NIC EIC Certification", "status": "Valid"},
+    {"name": "CHAS Premium Plus", "status": "Valid"},
+    {"name": "Public liability insurance (£5m)", "status": "Active"},
+    {"name": "Safety management system", "status": "Valid"}
+  ],
+  "availabilityLibrary": [
+    {"window": "Mon – Fri", "time": "07:00 – 19:00", "notes": "Emergency response across core zones."},
+    {"window": "Sat", "time": "08:00 – 14:00", "notes": "Premium callout applies; remote diagnostics offered."},
+    {"window": "Sun", "time": "On-call", "notes": "Escalation only; concierge triages inbound requests."}
+  ],
+  "serviceTagLibrary": [
+    "Electrical",
+    "HVAC",
+    "Emergency callouts",
+    "Preventative maintenance",
+    "SFG20",
+    "Escrow compliant"
+  ],
+  "shareProfile": true,
+  "requestQuote": true,
+  "generatedAt": "2024-01-01T09:00:00Z",
+  "affiliate": {
+    "referralCode": "ATLAS-PRO",
+    "status": "active",
+    "tierLabel": "Gold Partner",
+    "totalCommission": 2480,
+    "totalRevenue": 31200,
+    "pendingCommission": 320,
+    "transactionCount": 42,
+    "settings": {
+      "autoApproveReferrals": true,
+      "payoutCadenceDays": 30,
+      "minimumPayoutAmount": 100,
+      "referralAttributionWindowDays": 45,
+      "disclosureUrl": "https://atlasfix.co/legal/affiliate"
+    },
+    "tiers": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "tierLabel": "Starter",
+        "commissionRate": 8,
+        "minValue": 0,
+        "maxValue": 5000,
+        "recurrence": "one_time"
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "tierLabel": "Growth",
+        "commissionRate": 12,
+        "minValue": 5000,
+        "maxValue": 15000,
+        "recurrence": "one_time"
+      },
+      {
+        "id": "enterprise",
+        "name": "Enterprise",
+        "tierLabel": "Enterprise",
+        "commissionRate": 15,
+        "minValue": 15000,
+        "recurrence": "one_time"
+      }
+    ],
+    "referrals": [
+      {"code": "DALSTON-HQ", "status": "converted", "conversions": 3, "revenue": 8700, "commission": 696},
+      {"code": "CANARY-WHARF", "status": "converted", "conversions": 5, "revenue": 12600, "commission": 1008},
+      {"code": "WEST-END", "status": "pending", "conversions": 1, "revenue": 1800, "commission": 144}
+    ]
+  }
+}
