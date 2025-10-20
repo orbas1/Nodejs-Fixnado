@@ -92,7 +92,7 @@ function sanitiseString(value) {
 
 function normaliseAttachments(attachments) {
   if (!Array.isArray(attachments)) {
-    return [];
+    return undefined;
   }
 
   const normalised = attachments
