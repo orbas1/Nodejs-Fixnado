@@ -5,16 +5,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:meta/meta.dart';
 
 import '../features/auth/presentation/auth_gate.dart';
+import '../features/auth/presentation/splash_screen.dart';
 import 'app_shell.dart';
 import '../features/analytics/presentation/analytics_dashboard_screen.dart';
 import '../features/auth/presentation/role_selector.dart';
 import '../features/auth/domain/role_scope.dart';
 import '../features/auth/domain/user_role.dart';
 import '../features/bookings/presentation/booking_screen.dart';
+import '../features/calendar/presentation/calendar_screen.dart';
 import '../features/communications/presentation/communications_screen.dart';
 import '../features/feed/presentation/live_feed_screen.dart';
 import '../features/explorer/presentation/explorer_screen.dart';
-import '../features/profile/presentation/profile_management_screen.dart';
+import '../features/profile/presentation/profile_hub_screen.dart';
 import '../features/rentals/presentation/rental_screen.dart';
 import '../features/services/presentation/service_management_screen.dart';
 import '../features/creation/presentation/creation_studio_screen.dart';
@@ -83,7 +85,7 @@ class FixnadoApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const AuthGate(),
+      home: const SplashScreen(),
     );
   }
 }
@@ -186,6 +188,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       _NavigationDestination.explorer,
       _NavigationDestination.feed,
       _NavigationDestination.bookings,
+      _NavigationDestination.calendar,
       _NavigationDestination.rentals,
       _NavigationDestination.materials,
       _NavigationDestination.workspaces,
@@ -212,6 +215,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         return const ExplorerScreen();
       case _NavigationDestination.feed:
         return const LiveFeedScreen();
+      case _NavigationDestination.calendar:
+        return const CalendarScreen();
       case _NavigationDestination.bookings:
         return const BookingScreen();
       case _NavigationDestination.rentals:
@@ -223,7 +228,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       case _NavigationDestination.inbox:
         return const CommunicationsScreen();
       case _NavigationDestination.profile:
-        return const ProfileManagementScreen();
+        return const ProfileHubScreen();
       case _NavigationDestination.finance:
         return const FinanceDashboardScreen();
       case _NavigationDestination.operations:
@@ -256,6 +261,7 @@ enum _NavigationDestination {
   explorer('Explorer', Icons.map_outlined),
   feed('Feed', Icons.dynamic_feed_outlined),
   bookings('Bookings', Icons.event_available_outlined),
+  calendar('Calendar', Icons.event_note_outlined),
   rentals('Rentals', Icons.inventory_2_outlined),
   materials('Materials', Icons.precision_manufacturing_outlined),
   workspaces('Workspaces', Icons.dashboard_customize_outlined),
