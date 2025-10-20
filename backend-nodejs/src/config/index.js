@@ -149,14 +149,19 @@ function parseKeyedListFromEnv(key, { separator = '=', fallback = [] } = {}) {
 
 const DEFAULT_CORS_ALLOWLIST = {
   production: [
+    'https://fixnado.com',
+    'https://www.fixnado.com',
     'https://app.fixnado.com',
     'https://admin.fixnado.com',
-    'https://provider.fixnado.com'
+    'https://provider.fixnado.com',
+    'https://*.fixnado.com'
   ],
   staging: [
     'https://staging.fixnado.com',
+    'https://app.staging.fixnado.com',
     'https://admin.staging.fixnado.com',
-    'https://provider.staging.fixnado.com'
+    'https://provider.staging.fixnado.com',
+    'https://*.staging.fixnado.com'
   ],
   development: [
     'http://localhost:3000',
