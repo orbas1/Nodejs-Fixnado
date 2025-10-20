@@ -3,53 +3,26 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/bootstrap.dart';
-import '../../../core/exceptions/api_exception.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/storage/local_cache.dart';
 import '../domain/calendar_models.dart';
 
 class CalendarRepository {
-  CalendarRepository(this._client, this._cache);
+  CalendarRepository(this._cache);
 
-  final FixnadoApiClient _client;
   final LocalCache _cache;
 
   static const _cacheKey = 'calendar:snapshot:v1';
 
   Future<CalendarLoadResult> loadEvents({bool bypassCache = false}) async {
-    final cachedSnapshot = bypassCache ? null : _readCachedSnapshot();
-
-    try {
-      final payload = await _client.getJson('/calendar/events');
-      final data = payload['data'] is List
-          ? List<Map<String, dynamic>>.from(
-              (payload['data'] as List<dynamic>)
-                  .map((item) => Map<String, dynamic>.from(item as Map)),
-            )
-          : payload['events'] is List
-              ? List<Map<String, dynamic>>.from(
-                  (payload['events'] as List<dynamic>)
-                      .map((item) => Map<String, dynamic>.from(item as Map)),
-                )
-              : <Map<String, dynamic>>[];
-
-      final events = data.isEmpty ? _seedDefaults() : data.map(CalendarEvent.fromJson).toList();
-      final snapshot = CalendarSnapshot(events: events, generatedAt: DateTime.now());
-      await _cache.writeJson(_cacheKey, snapshot.toJson());
-      return CalendarLoadResult(snapshot: snapshot, offline: false);
-    } on ApiException catch (_) {
-      if (cachedSnapshot != null) {
-        return CalendarLoadResult(snapshot: cachedSnapshot, offline: true);
-      }
-      rethrow;
-    } on Exception catch (_) {
-      final fallback = cachedSnapshot ??
-          CalendarSnapshot(events: _seedDefaults(), generatedAt: DateTime.now());
-      if (cachedSnapshot == null) {
-        await _cache.writeJson(_cacheKey, fallback.toJson());
-      }
-      return CalendarLoadResult(snapshot: fallback, offline: true);
+    final cachedSnapshot = _readCachedSnapshot();
+    if (!bypassCache && cachedSnapshot != null) {
+      return CalendarLoadResult(snapshot: cachedSnapshot, offline: false);
     }
+
+    final snapshot = cachedSnapshot?.copyWith(generatedAt: DateTime.now()) ??
+        CalendarSnapshot(events: _seedDefaults(), generatedAt: DateTime.now());
+    await _cache.writeJson(_cacheKey, snapshot.toJson());
+    return CalendarLoadResult(snapshot: snapshot, offline: false);
   }
 
   Future<CalendarEvent> upsertEvent(CalendarEvent event) async {
@@ -57,25 +30,7 @@ class CalendarRepository {
         CalendarSnapshot(events: _seedDefaults(), generatedAt: DateTime.now());
     final events = List<CalendarEvent>.from(currentSnapshot.events);
     final index = events.indexWhere((item) => item.id == event.id);
-    var resolved = index >= 0 ? _updateExisting(events, index, event) : _createNew(events, event);
-
-    try {
-      final body = resolved.toJson();
-      if (index >= 0) {
-        await _client.patchJson('/calendar/events/${event.id}', body: body);
-      } else {
-        final response = await _client.postJson('/calendar/events', body: body);
-        final data = response['data'];
-        if (data is Map<String, dynamic>) {
-          final id = data['id'] as String?;
-          if (id != null && id.isNotEmpty) {
-            resolved = resolved.copyWith(id: id);
-          }
-        }
-      }
-    } catch (_) {
-      // Silent offline fallback - the snapshot will stay in cache until sync succeeds.
-    }
+    final resolved = index >= 0 ? _updateExisting(events, index, event) : _createNew(events, event);
 
     final nextSnapshot = currentSnapshot
         .copyWith(events: [...events.where((item) => item.id != resolved.id), resolved]..sort(_sortByStart));
@@ -89,13 +44,6 @@ class CalendarRepository {
       return;
     }
     final events = List<CalendarEvent>.from(currentSnapshot.events)..removeWhere((event) => event.id == id);
-
-    try {
-      await _client.patchJson('/calendar/events/$id', body: {'status': 'cancelled'});
-    } catch (_) {
-      // Ignore failure - rely on cache until sync occurs.
-    }
-
     final nextSnapshot = currentSnapshot.copyWith(events: events);
     await _cache.writeJson(_cacheKey, nextSnapshot.toJson());
   }
@@ -198,7 +146,6 @@ class CalendarRepository {
 }
 
 final calendarRepositoryProvider = Provider<CalendarRepository>((ref) {
-  final client = ref.watch(apiClientProvider);
   final cache = ref.watch(localCacheProvider);
-  return CalendarRepository(client, cache);
+  return CalendarRepository(cache);
 });
