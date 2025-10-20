@@ -1,10 +1,6 @@
-import { getAdminProfile, upsertAdminProfile } from '../services/adminProfileService.js';
-
-export async function fetchAdminProfile(req, res, next) {
-  try {
-    const profile = await getAdminProfile(req.user?.id);
-    res.json({ profile });
 import {
+  getAdminProfile,
+  upsertAdminProfile,
   getAdminProfileSettings,
   updateAdminProfileSettings,
   createAdminDelegate,
@@ -12,10 +8,10 @@ import {
   deleteAdminDelegate
 } from '../services/adminProfileService.js';
 
-export async function fetchAdminProfileSettings(req, res, next) {
+export async function fetchAdminProfile(req, res, next) {
   try {
-    const payload = await getAdminProfileSettings({ userId: req.user.id });
-    res.json({ data: payload });
+    const profile = await getAdminProfile(req.user?.id);
+    res.json({ profile });
   } catch (error) {
     next(error);
   }
@@ -28,6 +24,23 @@ export async function saveAdminProfile(req, res, next) {
   } catch (error) {
     if (error.name === 'ValidationError') {
       return res.status(error.statusCode ?? 422).json({
+        message: error.message,
+        details: error.details ?? []
+      });
+    }
+    next(error);
+  }
+}
+
+export async function fetchAdminProfileSettings(req, res, next) {
+  try {
+    const payload = await getAdminProfileSettings({ userId: req.user.id });
+    res.json({ data: payload });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function saveAdminProfileSettings(req, res, next) {
   try {
     const payload = await updateAdminProfileSettings({ userId: req.user.id, payload: req.body });

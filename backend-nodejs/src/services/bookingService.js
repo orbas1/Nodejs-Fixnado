@@ -1,7 +1,15 @@
-import { Booking, BookingAssignment, BookingBid, BookingBidComment, BookingNote, User, sequelize } from '../models/index.js';
+import {
+  Booking,
+  BookingAssignment,
+  BookingBid,
+  BookingBidComment,
+  BookingNote,
+  BookingHistoryEntry,
+  User,
+  sequelize
+} from '../models/index.js';
 import { randomUUID } from 'node:crypto';
 import { Op } from 'sequelize';
-import { Booking, BookingAssignment, BookingBid, BookingBidComment, BookingHistoryEntry, sequelize } from '../models/index.js';
 import { recordAnalyticsEvent, recordAnalyticsEvents } from './analyticsEventService.js';
 import { calculateBookingTotals, resolveSlaExpiry } from './financeService.js';
 import { applyScamDetection } from './scamDetectionService.js';
@@ -76,9 +84,10 @@ function normaliseIdentifier(value) {
 
 function sanitiseString(value) {
   if (typeof value !== 'string') {
-    return '';
+    return null;
   }
-  return value.trim();
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
 }
 
 function normaliseAttachments(attachments) {
@@ -157,37 +166,6 @@ function normaliseChecklist(items = []) {
     .filter(Boolean);
 
   return entries;
-}
-
-function normaliseAttachments(items = []) {
-  if (!Array.isArray(items)) {
-    return undefined;
-  }
-
-  const entries = items
-    .map((item) => {
-      if (!item) return null;
-      const label = typeof item.label === 'string' ? item.label.trim() : '';
-      const url = typeof item.url === 'string' ? item.url.trim() : '';
-      if (!label || !url) {
-        return null;
-      }
-      return {
-        label,
-        url,
-        type:
-          typeof item.type === 'string' && item.type.trim() ? item.type.trim().toLowerCase() : 'document'
-      };
-    })
-    .filter(Boolean);
-
-  return entries;
-function sanitiseString(value) {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : null;
 }
 
 function coerceHistoryValue(value, allowed, fallback) {
@@ -1460,6 +1438,8 @@ export async function updateBookingMetadata(bookingId, updates = {}, context = {
 
   await booking.update({ meta: nextMeta });
   return booking.reload();
+}
+
 export async function listBookingHistory(bookingId, options = {}) {
   if (!bookingId) {
     throw invalidBooking('bookingId is required');

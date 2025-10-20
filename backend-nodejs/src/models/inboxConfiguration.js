@@ -1,6 +1,9 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
+const isSqlite = sequelize.getDialect() === 'sqlite';
+const allowedFileTypesDataType = isSqlite ? DataTypes.JSON : DataTypes.ARRAY(DataTypes.STRING);
+
 class InboxConfiguration extends Model {}
 
 InboxConfiguration.init(
@@ -45,9 +48,9 @@ InboxConfiguration.init(
     },
     allowedFileTypes: {
       field: 'allowed_file_types',
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: allowedFileTypesDataType,
       allowNull: false,
-      defaultValue: ['jpg', 'png', 'pdf']
+      defaultValue: () => ['jpg', 'png', 'pdf']
     },
     aiAssistEnabled: {
       field: 'ai_assist_enabled',
@@ -76,7 +79,7 @@ InboxConfiguration.init(
       field: 'escalation_policy',
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: { levelOneMinutes: 15, levelTwoMinutes: 45 }
+      defaultValue: () => ({ levelOneMinutes: 15, levelTwoMinutes: 45 })
     },
     brandColor: {
       field: 'brand_color',
@@ -91,7 +94,7 @@ InboxConfiguration.init(
       field: 'role_restrictions',
       type: DataTypes.JSONB,
       allowNull: false,
-      defaultValue: []
+      defaultValue: () => []
     },
     updatedBy: {
       field: 'updated_by',

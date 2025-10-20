@@ -1,6 +1,5 @@
-import { z } from 'zod';
-import sequelize from '../config/database.js';
-import { AdminProfile, User } from '../models/index.js';
+import isEmail from 'validator/lib/isEmail.js';
+import { sequelize, User, AdminProfile, AdminDelegate } from '../models/index.js';
 
 const DEFAULT_WORKING_HOURS = { start: '09:00', end: '17:30' };
 const DEFAULT_NOTIFICATIONS = {
@@ -16,7 +15,6 @@ const DEFAULT_SECURITY = {
   allowSessionShare: false,
   sessionTimeoutMinutes: 60
 };
-const DEFAULT_ESCALATION_CONTACTS = [];
 const DEFAULT_OUT_OF_OFFICE = {
   enabled: false,
   message: '',
@@ -24,14 +22,7 @@ const DEFAULT_OUT_OF_OFFICE = {
   handoverEnd: null,
   delegateEmail: ''
 };
-const DEFAULT_RESOURCE_LINKS = [];
-const ESCALATION_METHODS = ['email', 'sms', 'phone', 'slack', 'pagerduty'];
-const ESCALATION_PRIORITIES = ['p0', 'p1', 'p2', 'p3'];
-import { Op } from 'sequelize';
-import { sequelize, User, AdminProfile, AdminDelegate } from '../models/index.js';
-import { normaliseEmail } from '../utils/security/fieldEncryption.js';
-
-const DEFAULT_NOTIFICATION_PREFERENCES = {
+const DEFAULT_NOTIFICATION_SETTINGS = {
   email: true,
   sms: false,
   push: false,
@@ -39,8 +30,10 @@ const DEFAULT_NOTIFICATION_PREFERENCES = {
   pagerDuty: false,
   weeklyDigest: true
 };
+const ESCALATION_METHODS = ['email', 'sms', 'phone', 'slack', 'pagerduty'];
+const ESCALATION_PRIORITIES = ['p0', 'p1', 'p2', 'p3'];
 
-function validationError(message, details = []) {
+function createValidationError(message, details = []) {
   const error = new Error(message);
   error.name = 'ValidationError';
   error.statusCode = 422;
@@ -48,33 +41,63 @@ function validationError(message, details = []) {
   return error;
 }
 
-function ensureBooleanFlags(defaults, overrides = {}) {
+function trimToNull(value, maxLength) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (maxLength && trimmed.length > maxLength) {
+    return trimmed.slice(0, maxLength);
+  }
+  return trimmed;
+}
+
+function trimToEmpty(value, maxLength) {
+  return trimToNull(value, maxLength) ?? '';
+}
+
+function normaliseBooleanFlags(defaults, overrides = {}) {
   const result = { ...defaults };
   if (!overrides || typeof overrides !== 'object') {
     return result;
   }
   for (const [key, value] of Object.entries(overrides)) {
     if (Object.hasOwn(result, key)) {
-      if (typeof result[key] === 'boolean') {
-        result[key] = Boolean(value);
-      } else {
-        result[key] = value;
-      }
+      result[key] = Boolean(value);
     }
   }
   return result;
 }
 
-function nullableString(value) {
-function trimToNull(value, maxLength = null) {
-  if (typeof value !== 'string') {
-    return null;
+function parseSessionTimeout(value) {
+  if (value === undefined || value === null || value === '') {
+    return DEFAULT_SECURITY.sessionTimeoutMinutes;
   }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+  const numeric = Number.parseInt(value, 10);
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_SECURITY.sessionTimeoutMinutes;
+  }
+  return Math.max(5, Math.min(720, numeric));
 }
 
-function toIsoDateTime(value) {
+function parseWorkingHours(config) {
+  if (!config || typeof config !== 'object') {
+    return { ...DEFAULT_WORKING_HOURS };
+  }
+  const pattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const start = typeof config.start === 'string' && pattern.test(config.start.trim())
+    ? config.start.trim()
+    : DEFAULT_WORKING_HOURS.start;
+  const end = typeof config.end === 'string' && pattern.test(config.end.trim())
+    ? config.end.trim()
+    : DEFAULT_WORKING_HOURS.end;
+  return { start, end };
+}
+
+function toIsoDate(value) {
   if (!value) {
     return null;
   }
@@ -85,336 +108,37 @@ function toIsoDateTime(value) {
   return date.toISOString();
 }
 
-function isHttpUrl(value) {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  return /^https?:\/\//i.test(value.trim());
-}
-
-const optionalString = (max) =>
-  z
-    .union([z.string().trim().max(max), z.literal('')])
-    .optional()
-    .transform((value) => {
-      if (typeof value === 'string') {
-        return value.trim();
-      }
-      return '';
-    });
-
-const dateTimeSchema = z
-  .union([z.string(), z.null(), z.undefined()])
-  .transform((value, ctx) => {
-    if (value === null || value === undefined) {
-      return null;
-    }
-    const str = typeof value === 'string' ? value.trim() : String(value);
-    if (!str) {
-      return null;
-    }
-    const iso = toIsoDateTime(str);
-    if (!iso) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Enter a valid date and time',
-        path: ctx.path
-      });
-      return z.NEVER;
-    }
-    return iso;
-  });
-
-const delegateSchema = z
-  .object({
-    name: optionalString(120),
-    email: z.union([z.string().trim().email().max(254), z.literal('')]),
-    role: optionalString(120)
-  })
-  .transform((value) => ({
-    name: value.name || '',
-    email: value.email ? value.email.trim() : '',
-    role: value.role || ''
-  }));
-
-const escalationContactSchema = z
-  .object({
-    method: z
-      .string()
-      .trim()
-      .transform((value) => value.toLowerCase())
-      .refine((value) => ESCALATION_METHODS.includes(value), {
-        message: `Method must be one of: ${ESCALATION_METHODS.join(', ')}`
-      }),
-    label: optionalString(120),
-    destination: z.string().trim().min(3).max(256),
-    priority: z
-      .union([z.string().trim().min(1), z.literal('')])
-      .optional()
-      .transform((value, ctx) => {
-        if (!value) {
-          return 'p1';
-        }
-        const normalised = value.toLowerCase();
-        if (!ESCALATION_PRIORITIES.includes(normalised)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Priority must be one of: ${ESCALATION_PRIORITIES.join(', ')}`
-          });
-          return z.NEVER;
-        }
-        return normalised;
-      })
-  })
-  .transform((value) => ({
-    method: value.method,
-    label: value.label || '',
-    destination: value.destination.trim(),
-    priority: value.priority ?? 'p1'
-  }));
-
-const resourceLinkSchema = z
-  .object({
-    label: z.string().trim().min(1).max(120),
-    url: z
-      .string()
-      .trim()
-      .max(2000)
-      .refine((value) => isHttpUrl(value), {
-        message: 'Resource link must start with http:// or https://'
-      })
-  })
-  .transform((value) => ({
-    label: value.label.trim(),
-    url: value.url.trim()
-  }));
-
-const outOfOfficeSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    message: optionalString(1000),
-    handoverStart: dateTimeSchema.optional(),
-    handoverEnd: dateTimeSchema.optional(),
-    delegateEmail: z
-      .union([z.string().trim().email().max(254), z.literal('')])
-      .optional()
-      .transform((value) => (typeof value === 'string' ? value.trim() : ''))
-  })
-  .superRefine((value, ctx) => {
-    if (value.handoverStart && value.handoverEnd) {
-      const start = Date.parse(value.handoverStart);
-      const end = Date.parse(value.handoverEnd);
-      if (!Number.isNaN(start) && !Number.isNaN(end) && start > end) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Handover end must be after the start date',
-          path: ['handoverEnd']
-        });
-      }
-    }
-
-    if (value.enabled && !value.delegateEmail) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Assign a delegate email when enabling out of office mode',
-        path: ['delegateEmail']
-      });
-    }
-  })
-  .transform((value) => ({
-    enabled: Boolean(value.enabled),
-    message: value.message || '',
-    handoverStart: value.handoverStart ?? null,
-    handoverEnd: value.handoverEnd ?? null,
-    delegateEmail: value.delegateEmail || ''
-  }));
-
-const notificationsSchema = z
-  .object({
-    securityAlerts: z.boolean().optional(),
-    incidentEscalations: z.boolean().optional(),
-    weeklyDigest: z.boolean().optional(),
-    productUpdates: z.boolean().optional(),
-    smsAlerts: z.boolean().optional()
-  })
-  .optional()
-  .transform((value) => ensureBooleanFlags(DEFAULT_NOTIFICATIONS, value));
-
-const securitySchema = z
-  .object({
-    requireMfa: z.boolean().optional(),
-    loginAlerts: z.boolean().optional(),
-    allowSessionShare: z.boolean().optional(),
-    sessionTimeoutMinutes: z
-      .union([z.number(), z.string().trim()])
-      .optional()
-      .transform((value) => {
-        if (value === undefined || value === null || value === '') {
-          return DEFAULT_SECURITY.sessionTimeoutMinutes;
-        }
-        const numeric = Number.parseInt(value, 10);
-        if (!Number.isFinite(numeric)) {
-          return DEFAULT_SECURITY.sessionTimeoutMinutes;
-        }
-        return Math.max(5, Math.min(720, numeric));
-      })
-  })
-  .optional()
-  .transform((value) => {
-    const merged = ensureBooleanFlags(DEFAULT_SECURITY, value);
-    if (value && Object.hasOwn(value, 'sessionTimeoutMinutes')) {
-      merged.sessionTimeoutMinutes = value.sessionTimeoutMinutes;
-    }
+function sanitiseOutOfOffice(config = {}, details = []) {
+  const merged = { ...DEFAULT_OUT_OF_OFFICE };
+  if (!config || typeof config !== 'object') {
     return merged;
-  });
+  }
 
-const workingHoursSchema = z
-  .object({
-    start: z
-      .string()
-      .trim()
-      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'Start time must be in HH:MM format' }),
-    end: z
-      .string()
-      .trim()
-      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'End time must be in HH:MM format' })
-  })
-  .optional()
-  .transform((value) => ({
-    ...(DEFAULT_WORKING_HOURS || {}),
-    ...(value ?? {})
-  }));
+  merged.enabled = Boolean(config.enabled);
+  merged.message = trimToEmpty(config.message, 1000);
+  merged.delegateEmail = trimToEmpty(config.delegateEmail, 254);
+  merged.handoverStart = toIsoDate(config.handoverStart);
+  merged.handoverEnd = toIsoDate(config.handoverEnd);
 
-const profileSchema = z.object({
-  firstName: z.string().trim().min(1).max(120),
-  lastName: z.string().trim().min(1).max(120),
-  displayName: z.string().trim().min(1).max(160),
-  jobTitle: optionalString(160),
-  department: optionalString(120),
-  pronouns: optionalString(80),
-  avatarUrl: z
-    .string()
-    .trim()
-    .max(2000)
-    .optional()
-    .refine((value) => !value || /^https?:\/\//.test(value), {
-      message: 'Avatar must be an http or https URL'
-    })
-    .transform((value) => (value ? value.trim() : '')),
-  bio: z
-    .string()
-    .trim()
-    .max(2000)
-    .optional()
-    .transform((value) => (value ? value : '')),
-  contactEmail: z.string().trim().email().max(254),
-  backupEmail: z
-    .union([z.string().trim().email().max(254), z.literal('')])
-    .optional()
-    .transform((value) => (typeof value === 'string' ? value.trim() : '')),
-  contactPhone: optionalString(64),
-  location: optionalString(160),
-  timezone: z.string().trim().min(2).max(64),
-  language: z.string().trim().min(2).max(32),
-  theme: z.enum(['system', 'light', 'dark']),
-  workingHours: workingHoursSchema,
-  notifications: notificationsSchema,
-  security: securitySchema,
-  delegates: z
-    .array(delegateSchema)
-    .max(8)
-    .optional()
-    .transform((value) => (Array.isArray(value) ? value : [])),
-  escalationContacts: z
-    .array(escalationContactSchema)
-    .max(10)
-    .optional()
-    .transform((value) => (Array.isArray(value) ? value : [])),
-  outOfOffice: outOfOfficeSchema.optional().transform((value) => value ?? { ...DEFAULT_OUT_OF_OFFICE }),
-  resourceLinks: z
-    .array(resourceLinkSchema)
-    .max(12)
-    .optional()
-    .transform((value) => (Array.isArray(value) ? value : []))
-});
+  if (!merged.enabled) {
+    return { ...DEFAULT_OUT_OF_OFFICE };
+  }
 
-function buildDefaultProfile(user, profileRecord = null) {
-  const profile = profileRecord ? profileRecord.toJSON() : {};
-  const workingHours = {
-    ...DEFAULT_WORKING_HOURS,
-    ...(profile.workingHours ?? {})
-  };
-  const notifications = ensureBooleanFlags(DEFAULT_NOTIFICATIONS, profile.notificationPreferences);
-  const security = ensureBooleanFlags(DEFAULT_SECURITY, profile.securityPreferences);
-  const outOfOffice = {
-    ...DEFAULT_OUT_OF_OFFICE,
-    ...(profile.outOfOffice ?? {})
-  };
-  if (profile.securityPreferences && Object.hasOwn(profile.securityPreferences, 'sessionTimeoutMinutes')) {
-    const timeout = Number.parseInt(profile.securityPreferences.sessionTimeoutMinutes, 10);
-    if (Number.isFinite(timeout)) {
-      security.sessionTimeoutMinutes = Math.max(5, Math.min(720, timeout));
+  if (!merged.delegateEmail) {
+    details.push({ field: 'outOfOffice.delegateEmail', message: 'Delegate email is required when out of office is enabled.' });
+  } else if (!isEmail(merged.delegateEmail)) {
+    details.push({ field: 'outOfOffice.delegateEmail', message: 'Delegate email must be a valid email address.' });
+  }
+
+  if (merged.handoverStart && merged.handoverEnd) {
+    const start = Date.parse(merged.handoverStart);
+    const end = Date.parse(merged.handoverEnd);
+    if (!Number.isNaN(start) && !Number.isNaN(end) && start > end) {
+      details.push({ field: 'outOfOffice.handoverEnd', message: 'Handover end must be after the handover start.' });
     }
   }
 
-  if (outOfOffice.handoverStart) {
-    outOfOffice.handoverStart = toIsoDateTime(outOfOffice.handoverStart) ?? null;
-  }
-  if (outOfOffice.handoverEnd) {
-    outOfOffice.handoverEnd = toIsoDateTime(outOfOffice.handoverEnd) ?? null;
-  }
-  outOfOffice.enabled = Boolean(outOfOffice.enabled);
-  outOfOffice.message = typeof outOfOffice.message === 'string' ? outOfOffice.message : '';
-  outOfOffice.delegateEmail = typeof outOfOffice.delegateEmail === 'string' ? outOfOffice.delegateEmail : '';
-
-  return {
-    firstName: user.firstName ?? '',
-    lastName: user.lastName ?? '',
-    displayName: profile.displayName || `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
-    jobTitle: profile.jobTitle || '',
-    department: profile.department || '',
-    pronouns: profile.pronouns || '',
-    avatarUrl: profile.avatarUrl || '',
-    bio: profile.bio || '',
-    contactEmail: profile.contactEmail || user.email || '',
-    backupEmail: profile.backupEmail || '',
-    contactPhone: profile.contactPhone || '',
-    location: profile.location || user.address || '',
-    timezone: profile.timezone || 'Europe/London',
-    language: profile.language || 'en-GB',
-    theme: profile.theme || 'system',
-    workingHours,
-    notifications,
-    security,
-    delegates: Array.isArray(profile.delegates)
-      ? profile.delegates.map((delegate) => ({
-          name: typeof delegate?.name === 'string' ? delegate.name : '',
-          email: typeof delegate?.email === 'string' ? delegate.email : '',
-          role: typeof delegate?.role === 'string' ? delegate.role : ''
-        }))
-      : [],
-    escalationContacts: Array.isArray(profile.escalationContacts)
-      ? profile.escalationContacts.map((contact) => ({
-          method: ESCALATION_METHODS.includes(contact?.method) ? contact.method : 'email',
-          label: typeof contact?.label === 'string' ? contact.label : '',
-          destination: typeof contact?.destination === 'string' ? contact.destination : '',
-          priority: ESCALATION_PRIORITIES.includes(contact?.priority)
-            ? contact.priority
-            : 'p1'
-        }))
-      : [],
-    outOfOffice,
-    resourceLinks: Array.isArray(profile.resourceLinks)
-      ? profile.resourceLinks
-          .filter((link) => typeof link?.url === 'string')
-          .map((link) => ({
-            label: typeof link?.label === 'string' ? link.label : '',
-            url: link.url
-          }))
-      : [],
-    updatedAt: profileRecord?.updatedAt ?? null,
-    createdAt: profileRecord?.createdAt ?? null
-  };
+  return merged;
 }
 
 function sanitiseDelegates(entries = []) {
@@ -422,23 +146,23 @@ function sanitiseDelegates(entries = []) {
     return [];
   }
   const seen = new Set();
-  return entries
-    .map((entry) => ({
-      name: entry.name?.trim?.() || '',
-      email: entry.email?.trim?.() || '',
-      role: entry.role?.trim?.() || ''
-    }))
-    .filter((entry) => {
-      if (!entry.email) {
-        return false;
-      }
-      const key = entry.email.toLowerCase();
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
+  const delegates = [];
+  for (const entry of entries) {
+    const email = trimToEmpty(entry?.email, 254).toLowerCase();
+    if (!email || !isEmail(email)) {
+      continue;
+    }
+    if (seen.has(email)) {
+      continue;
+    }
+    seen.add(email);
+    delegates.push({
+      name: trimToEmpty(entry?.name, 160),
+      email,
+      role: trimToEmpty(entry?.role, 160)
     });
+  }
+  return delegates;
 }
 
 function sanitiseEscalationContacts(entries = []) {
@@ -446,22 +170,31 @@ function sanitiseEscalationContacts(entries = []) {
     return [];
   }
   const seen = new Set();
-  return entries
-    .filter((entry) => entry?.destination && entry?.method)
-    .map((entry) => ({
-      method: entry.method,
-      label: entry.label ?? '',
-      destination: entry.destination.trim(),
-      priority: entry.priority ?? 'p1'
-    }))
-    .filter((entry) => {
-      const key = `${entry.method}:${entry.destination.toLowerCase()}`;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
+  const contacts = [];
+  for (const entry of entries) {
+    const method = trimToEmpty(entry?.method, 32).toLowerCase();
+    const destination = trimToEmpty(entry?.destination, 256);
+    if (!method || !destination) {
+      continue;
+    }
+    if (!ESCALATION_METHODS.includes(method)) {
+      continue;
+    }
+    const priorityRaw = trimToEmpty(entry?.priority, 8).toLowerCase();
+    const priority = ESCALATION_PRIORITIES.includes(priorityRaw) ? priorityRaw : 'p1';
+    const key = `${method}:${destination.toLowerCase()}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    contacts.push({
+      method,
+      label: trimToEmpty(entry?.label, 160),
+      destination,
+      priority
     });
+  }
+  return contacts;
 }
 
 function sanitiseResourceLinks(entries = []) {
@@ -469,238 +202,299 @@ function sanitiseResourceLinks(entries = []) {
     return [];
   }
   const seen = new Set();
-  return entries
-    .filter((entry) => entry?.label && entry?.url && isHttpUrl(entry.url))
-    .map((entry) => ({
-      label: entry.label.trim(),
-      url: entry.url.trim()
-    }))
-    .filter((entry) => {
-      const key = entry.url.toLowerCase();
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
+  const links = [];
+  for (const entry of entries) {
+    const label = trimToEmpty(entry?.label, 160);
+    const url = trimToEmpty(entry?.url, 2000);
+    if (!label || !url) {
+      continue;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      continue;
+    }
+    const key = url.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    links.push({ label, url });
+  }
+  return links;
 }
 
-function sanitiseOutOfOffice(config = DEFAULT_OUT_OF_OFFICE) {
-  const merged = {
-    ...DEFAULT_OUT_OF_OFFICE,
-    ...(config ?? {})
-  };
-
-  merged.enabled = Boolean(merged.enabled);
-  merged.message = typeof merged.message === 'string' ? merged.message.trim() : '';
-  merged.delegateEmail = typeof merged.delegateEmail === 'string' ? merged.delegateEmail.trim() : '';
-  merged.handoverStart = merged.enabled ? toIsoDateTime(merged.handoverStart) : null;
-  merged.handoverEnd = merged.enabled ? toIsoDateTime(merged.handoverEnd) : null;
-
-  if (!merged.enabled) {
-    merged.message = '';
-    merged.delegateEmail = '';
+function sanitiseNotificationEmails(entries = []) {
+  if (!Array.isArray(entries)) {
+    return [];
   }
-
-  if (merged.handoverStart && merged.handoverEnd) {
-    const start = Date.parse(merged.handoverStart);
-    const end = Date.parse(merged.handoverEnd);
-    if (!Number.isNaN(start) && !Number.isNaN(end) && start > end) {
-      merged.handoverEnd = merged.handoverStart;
+  const seen = new Set();
+  const emails = [];
+  for (const entry of entries) {
+    const email = trimToEmpty(entry, 254).toLowerCase();
+    if (!email || !isEmail(email)) {
+      continue;
     }
+    if (seen.has(email)) {
+      continue;
+    }
+    seen.add(email);
+    emails.push(email);
+  }
+  return emails;
+}
+
+function sanitisePermissions(entries = []) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+  const seen = new Set();
+  const permissions = [];
+  for (const entry of entries) {
+    if (typeof entry !== 'string') {
+      continue;
+    }
+    const key = entry.trim();
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    permissions.push(key);
+  }
+  return permissions;
+}
+
+function ensureUserExists(user) {
+  if (!user) {
+    const error = new Error('Admin user not found');
+    error.statusCode = 404;
+    throw error;
+  }
+}
+
+async function fetchUserWithProfile(userId, options = {}) {
+  const user = await User.findByPk(userId, {
+    include: [{ model: AdminProfile, as: 'adminProfile' }],
+    ...options
+  });
+  ensureUserExists(user);
+  return user;
+}
+
+function buildProfileResponse(user, profileRecord) {
+  const profile = profileRecord ? profileRecord.toJSON() : {};
+  const workingHours = parseWorkingHours(profile.workingHours);
+  const notifications = normaliseBooleanFlags(DEFAULT_NOTIFICATIONS, profile.notificationPreferences);
+  const security = normaliseBooleanFlags(DEFAULT_SECURITY, profile.securityPreferences);
+  security.sessionTimeoutMinutes = parseSessionTimeout(profile.securityPreferences?.sessionTimeoutMinutes);
+
+  const outOfOffice = sanitiseOutOfOffice(profile.outOfOffice || {});
+  const delegates = sanitiseDelegates(profile.delegates);
+  const escalationContacts = sanitiseEscalationContacts(profile.escalationContacts);
+  const resourceLinks = sanitiseResourceLinks(profile.resourceLinks);
+
+  return {
+    firstName: user.firstName ?? '',
+    lastName: user.lastName ?? '',
+    displayName: trimToEmpty(profile.displayName, 160) || `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
+    jobTitle: trimToEmpty(profile.jobTitle, 160),
+    department: trimToEmpty(profile.department, 160),
+    pronouns: trimToEmpty(profile.pronouns, 80),
+    avatarUrl: trimToEmpty(profile.avatarUrl, 2000),
+    bio: trimToEmpty(profile.bio, 2000),
+    contactEmail: trimToEmpty(profile.contactEmail, 254) || (user.email ?? ''),
+    backupEmail: trimToEmpty(profile.backupEmail, 254),
+    contactPhone: trimToEmpty(profile.contactPhone, 64),
+    location: trimToEmpty(profile.location, 160),
+    timezone: trimToEmpty(profile.timezone, 64) || 'Europe/London',
+    language: trimToEmpty(profile.language, 32) || 'en-GB',
+    theme: trimToEmpty(profile.theme, 16) || 'system',
+    workingHours,
+    notifications,
+    security,
+    delegates,
+    escalationContacts,
+    outOfOffice,
+    resourceLinks
+  };
+}
+
+function validateProfilePayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw createValidationError('Invalid admin profile payload.');
   }
 
-  return merged;
+  const details = [];
+  const firstName = trimToEmpty(payload.firstName, 120);
+  const lastName = trimToEmpty(payload.lastName, 120);
+  const displayName = trimToEmpty(payload.displayName, 160);
+  const contactEmail = trimToEmpty(payload.contactEmail, 254).toLowerCase();
+
+  if (!firstName) {
+    details.push({ field: 'firstName', message: 'First name is required.' });
+  }
+  if (!lastName) {
+    details.push({ field: 'lastName', message: 'Last name is required.' });
+  }
+  if (!displayName) {
+    details.push({ field: 'displayName', message: 'Display name is required.' });
+  }
+  if (!contactEmail) {
+    details.push({ field: 'contactEmail', message: 'Contact email is required.' });
+  } else if (!isEmail(contactEmail)) {
+    details.push({ field: 'contactEmail', message: 'Contact email must be a valid email address.' });
+  }
+
+  const backupEmail = trimToEmpty(payload.backupEmail, 254).toLowerCase();
+  if (backupEmail && !isEmail(backupEmail)) {
+    details.push({ field: 'backupEmail', message: 'Backup email must be a valid email address.' });
+  }
+
+  const timezone = trimToEmpty(payload.timezone, 64);
+  if (!timezone) {
+    details.push({ field: 'timezone', message: 'Timezone is required.' });
+  }
+
+  const language = trimToEmpty(payload.language, 32);
+  if (!language) {
+    details.push({ field: 'language', message: 'Language is required.' });
+  }
+
+  const theme = trimToEmpty(payload.theme, 16);
+  if (!['system', 'light', 'dark'].includes(theme)) {
+    details.push({ field: 'theme', message: 'Theme must be one of system, light, or dark.' });
+  }
+
+  const outOfOffice = sanitiseOutOfOffice(payload.outOfOffice, details);
+  const workingHours = parseWorkingHours(payload.workingHours);
+  const notifications = normaliseBooleanFlags(DEFAULT_NOTIFICATIONS, payload.notifications);
+  const security = normaliseBooleanFlags(DEFAULT_SECURITY, payload.security);
+  security.sessionTimeoutMinutes = parseSessionTimeout(payload.security?.sessionTimeoutMinutes);
+  const delegates = sanitiseDelegates(payload.delegates);
+  const escalationContacts = sanitiseEscalationContacts(payload.escalationContacts);
+  const resourceLinks = sanitiseResourceLinks(payload.resourceLinks);
+
+  if (details.length > 0) {
+    throw createValidationError('Invalid admin profile payload.', details);
+  }
+
+  return {
+    firstName,
+    lastName,
+    displayName,
+    jobTitle: trimToEmpty(payload.jobTitle, 160),
+    department: trimToEmpty(payload.department, 160),
+    pronouns: trimToEmpty(payload.pronouns, 80),
+    avatarUrl: trimToEmpty(payload.avatarUrl, 2000),
+    bio: trimToEmpty(payload.bio, 2000),
+    contactEmail,
+    backupEmail,
+    contactPhone: trimToEmpty(payload.contactPhone, 64),
+    location: trimToEmpty(payload.location, 160),
+    timezone,
+    language,
+    theme,
+    workingHours,
+    notifications,
+    security,
+    delegates,
+    escalationContacts,
+    outOfOffice,
+    resourceLinks
+  };
+}
+
+async function ensureAdminProfile({ userId, transaction }) {
+  const [profile] = await AdminProfile.findOrCreate({
+    where: { userId },
+    defaults: {
+      displayName: '',
+      jobTitle: '',
+      department: '',
+      pronouns: '',
+      avatarUrl: '',
+      bio: '',
+      contactEmail: '',
+      backupEmail: '',
+      contactPhone: '',
+      location: '',
+      timezone: 'UTC',
+      language: 'en-GB',
+      theme: 'system',
+      workingHours: { ...DEFAULT_WORKING_HOURS },
+      notificationPreferences: { ...DEFAULT_NOTIFICATION_SETTINGS },
+      securityPreferences: { ...DEFAULT_SECURITY },
+      delegates: [],
+      escalationContacts: [],
+      outOfOffice: { ...DEFAULT_OUT_OF_OFFICE },
+      resourceLinks: [],
+      metadata: {},
+      notificationEmails: []
+    },
+    transaction
+  });
+  return profile;
 }
 
 export async function getAdminProfile(userId) {
   if (!userId) {
     throw new Error('User context required to load admin profile');
   }
-
-  const user = await User.findByPk(userId, {
-    include: [{ model: AdminProfile, as: 'adminProfile' }]
-  });
-
-  if (!user) {
-    const error = new Error('Admin user not found');
-    error.statusCode = 404;
-    throw error;
-  }
-
-  if (user.type !== 'admin') {
-    const error = new Error('Only platform administrators can access this profile');
-    error.statusCode = 403;
-    throw error;
-  }
-
-  return buildDefaultProfile(user, user.adminProfile ?? null);
+  const user = await fetchUserWithProfile(userId);
+  return buildProfileResponse(user, user.adminProfile);
 }
 
-export async function upsertAdminProfile(userId, payload = {}, actorId = null) {
+export async function upsertAdminProfile(userId, payload, actorId = null) {
   if (!userId) {
-    throw new Error('User context required to update admin profile');
+    throw new Error('User context required to save admin profile');
   }
 
-  const parseResult = profileSchema.safeParse(payload);
-  if (!parseResult.success) {
-    const details = parseResult.error.issues.map((issue) => ({
-      path: issue.path.join('.') || 'profile',
-      message: issue.message
-    }));
-    throw validationError('Invalid admin profile update.', details);
-  }
-
-  const data = parseResult.data;
-  const delegates = sanitiseDelegates(data.delegates);
-  const escalationContacts = sanitiseEscalationContacts(data.escalationContacts);
-  const resourceLinks = sanitiseResourceLinks(data.resourceLinks);
-  const outOfOffice = sanitiseOutOfOffice(data.outOfOffice);
+  const data = validateProfilePayload(payload);
 
   return sequelize.transaction(async (transaction) => {
-    const user = await User.findByPk(userId, { transaction });
-    if (!user) {
-      const error = new Error('Admin user not found');
-      error.statusCode = 404;
-      throw error;
+    const user = await fetchUserWithProfile(userId, { transaction });
+    const profile = user.adminProfile ?? (await ensureAdminProfile({ userId, transaction }));
+
+    await user.update(
+      {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.contactEmail
+      },
+      { transaction }
+    );
+
+    await profile.update(
+      {
+        displayName: data.displayName,
+        jobTitle: data.jobTitle,
+        department: data.department,
+        pronouns: data.pronouns,
+        avatarUrl: data.avatarUrl,
+        bio: data.bio,
+        contactEmail: data.contactEmail,
+        backupEmail: data.backupEmail,
+        contactPhone: data.contactPhone,
+        location: data.location,
+        timezone: data.timezone,
+        language: data.language,
+        theme: data.theme,
+        workingHours: data.workingHours,
+        notificationPreferences: data.notifications,
+        securityPreferences: data.security,
+        delegates: data.delegates,
+        escalationContacts: data.escalationContacts,
+        outOfOffice: data.outOfOffice,
+        resourceLinks: data.resourceLinks
+      },
+      { transaction }
+    );
+
+    if (actorId) {
+      // Placeholder for future audit logging. Keeping the branch avoids eslint complaints about unused args.
+      void actorId;
     }
 
-    if (user.type !== 'admin') {
-      const error = new Error('Only platform administrators can update this profile');
-      error.statusCode = 403;
-      throw error;
-    }
-
-    user.firstName = data.firstName;
-    user.lastName = data.lastName;
-    if (data.contactEmail) {
-      user.email = data.contactEmail;
-    }
-    user.address = data.location || null;
-    user.twoFactorEmail = data.security.requireMfa;
-
-    await user.save({ transaction, validate: false });
-
-    const [profile] = await AdminProfile.findOrCreate({
-      where: { userId },
-      defaults: { userId },
-      transaction
-    });
-
-    profile.displayName = data.displayName;
-    profile.jobTitle = nullableString(data.jobTitle);
-    profile.department = nullableString(data.department);
-    profile.pronouns = nullableString(data.pronouns);
-    profile.avatarUrl = nullableString(data.avatarUrl);
-    profile.bio = nullableString(data.bio);
-    profile.contactEmail = data.contactEmail;
-    profile.backupEmail = nullableString(data.backupEmail);
-    profile.contactPhone = nullableString(data.contactPhone);
-    profile.location = nullableString(data.location);
-    profile.timezone = data.timezone;
-    profile.language = data.language;
-    profile.theme = data.theme;
-    profile.workingHours = data.workingHours ?? DEFAULT_WORKING_HOURS;
-    profile.notificationPreferences = ensureBooleanFlags(DEFAULT_NOTIFICATIONS, data.notifications);
-    profile.securityPreferences = {
-      ...ensureBooleanFlags(DEFAULT_SECURITY, data.security),
-      sessionTimeoutMinutes: data.security.sessionTimeoutMinutes
-    };
-    profile.delegates = delegates;
-    profile.escalationContacts = escalationContacts;
-    profile.outOfOffice = outOfOffice;
-    profile.resourceLinks = resourceLinks;
-    profile.metadata = {
-      ...(profile.metadata ?? {}),
-      lastUpdatedBy: actorId || userId,
-      lastUpdatedAt: new Date().toISOString(),
-      outOfOfficeEnabled: outOfOffice.enabled
-    };
-
-    await profile.save({ transaction });
-
-    return buildDefaultProfile(user, profile);
+    return buildProfileResponse(user, profile);
   });
-}
-
-export default {
-  getAdminProfile,
-  upsertAdminProfile
-};
-  if (!trimmed) {
-    return null;
-  }
-  if (maxLength && trimmed.length > maxLength) {
-    return trimmed.slice(0, maxLength);
-  }
-  return trimmed;
-}
-
-function sanitiseNotifications(update = {}, current = DEFAULT_NOTIFICATION_PREFERENCES) {
-  const next = { ...DEFAULT_NOTIFICATION_PREFERENCES, ...current };
-  for (const key of Object.keys(DEFAULT_NOTIFICATION_PREFERENCES)) {
-    if (Object.hasOwn(update, key)) {
-      next[key] = Boolean(update[key]);
-    }
-  }
-  return next;
-}
-
-function uniqueStrings(values = [], maxEntries = 20) {
-  const seen = new Set();
-  const output = [];
-  for (const value of values) {
-    if (typeof value !== 'string') continue;
-    const trimmed = value.trim();
-    if (!trimmed) continue;
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    output.push(trimmed);
-    if (output.length >= maxEntries) {
-      break;
-    }
-  }
-  return output;
-}
-
-function isValidEmail(value) {
-  if (typeof value !== 'string') return false;
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-}
-
-function sanitiseNotificationEmails(values = []) {
-  const emails = uniqueStrings(values);
-  for (const email of emails) {
-    if (!isValidEmail(email)) {
-      throw validationError('One or more notification emails are invalid.', [
-        { field: 'notificationEmails', message: `${email} is not a valid email address.` }
-      ]);
-    }
-  }
-  return emails;
-}
-
-function sanitisePermissions(permissions) {
-  if (!Array.isArray(permissions)) {
-    return [];
-  }
-  return uniqueStrings(permissions);
-}
-
-async function ensureAdminProfile({ userId, transaction } = {}) {
-  const [profile] = await AdminProfile.findOrCreate({
-    where: { userId },
-    defaults: {
-      notificationPreferences: { ...DEFAULT_NOTIFICATION_PREFERENCES },
-      notificationEmails: [],
-      timezone: 'UTC'
-    },
-    transaction
-  });
-  return profile;
 }
 
 function serializeDelegate(delegate) {
@@ -711,42 +505,47 @@ function serializeDelegate(delegate) {
     role: delegate.role,
     permissions: Array.isArray(delegate.permissions) ? delegate.permissions : [],
     status: delegate.status,
-    avatarUrl: delegate.avatarUrl || '',
+    avatarUrl: delegate.avatarUrl ?? '',
     createdAt: delegate.createdAt?.toISOString?.() ?? null,
     updatedAt: delegate.updatedAt?.toISOString?.() ?? null
   };
 }
 
-function normalizeNotificationPreferences(preferences) {
-  return sanitiseNotifications(preferences);
-}
+export async function getAdminProfileSettings({ userId }) {
+  if (!userId) {
+    throw new Error('User context required to load admin profile settings');
+  }
 
-function serializeProfile(profile, user, delegates = []) {
-  const preferences = normalizeNotificationPreferences(profile.notificationPreferences);
-  const notificationEmails = Array.isArray(profile.notificationEmails)
-    ? profile.notificationEmails.map((email) => email.trim()).filter(Boolean)
-    : [];
+  const user = await fetchUserWithProfile(userId);
+  const profile = user.adminProfile ?? (await ensureAdminProfile({ userId }));
+  const delegates = await AdminDelegate.findAll({
+    where: { adminProfileId: profile.id },
+    order: [['createdAt', 'ASC']]
+  });
+
+  const notifications = normaliseBooleanFlags(DEFAULT_NOTIFICATION_SETTINGS, profile.notificationPreferences);
+  const notificationEmails = sanitiseNotificationEmails(profile.notificationEmails);
 
   return {
     profile: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
-      jobTitle: profile.jobTitle || '',
-      department: profile.department || '',
-      phoneNumber: profile.phoneNumber || '',
-      avatarUrl: profile.avatarUrl || '',
-      timezone: profile.timezone || 'UTC'
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
+      email: profile.contactEmail || user.email || '',
+      jobTitle: trimToEmpty(profile.jobTitle, 160),
+      department: trimToEmpty(profile.department, 160),
+      phoneNumber: trimToEmpty(profile.contactPhone, 64),
+      avatarUrl: trimToEmpty(profile.avatarUrl, 2000),
+      timezone: trimToEmpty(profile.timezone, 64) || 'UTC'
     },
     address: {
-      line1: profile.addressLine1 || '',
-      line2: profile.addressLine2 || '',
-      city: profile.city || '',
-      state: profile.state || '',
-      postalCode: profile.postalCode || '',
-      country: profile.country || ''
+      line1: trimToEmpty(profile.addressLine1, 255),
+      line2: trimToEmpty(profile.addressLine2, 255),
+      city: trimToEmpty(profile.city, 120),
+      state: trimToEmpty(profile.state, 120),
+      postalCode: trimToEmpty(profile.postalCode, 40),
+      country: trimToEmpty(profile.country, 120)
     },
-    notifications: preferences,
+    notifications,
     notificationEmails,
     delegates: delegates.map(serializeDelegate),
     audit: {
@@ -755,266 +554,140 @@ function serializeProfile(profile, user, delegates = []) {
   };
 }
 
-export async function getAdminProfileSettings({ userId }) {
-  const [user, profile] = await Promise.all([
-    User.findByPk(userId),
-    ensureAdminProfile({ userId })
-  ]);
-
-  if (!user) {
-    throw Object.assign(new Error('Admin user not found'), { statusCode: 404 });
-  }
-
-  const delegates = await AdminDelegate.findAll({
-    where: { adminProfileId: profile.id },
-    order: [['createdAt', 'ASC']]
-  });
-
-  return serializeProfile(profile, user, delegates);
-}
-
 export async function updateAdminProfileSettings({ userId, payload }) {
   if (!payload || typeof payload !== 'object') {
-    throw validationError('Invalid request payload.');
+    throw createValidationError('Invalid request payload.');
   }
+  const user = await fetchUserWithProfile(userId);
+  const profile = user.adminProfile ?? (await ensureAdminProfile({ userId }));
 
+  const details = [];
   const profilePayload = payload.profile ?? {};
-  const addressPayload = payload.address ?? {};
-  const notificationsPayload = payload.notifications ?? {};
-  const notificationEmailsPayload = payload.notificationEmails ?? [];
-
-  const firstName = trimToNull(profilePayload.firstName, 120);
-  const lastName = trimToNull(profilePayload.lastName, 120);
-
-  if (!firstName || !lastName) {
-    throw validationError('First name and last name are required.', [
-      { field: 'profile.firstName', message: 'First name is required.' },
-      { field: 'profile.lastName', message: 'Last name is required.' }
-    ]);
+  const firstName = trimToEmpty(profilePayload.firstName, 120);
+  const lastName = trimToEmpty(profilePayload.lastName, 120);
+  if (!firstName) {
+    details.push({ field: 'profile.firstName', message: 'First name is required.' });
+  }
+  if (!lastName) {
+    details.push({ field: 'profile.lastName', message: 'Last name is required.' });
   }
 
-  const phoneNumber = trimToNull(profilePayload.phoneNumber, 80);
-  const jobTitle = trimToNull(profilePayload.jobTitle, 120);
-  const department = trimToNull(profilePayload.department, 120);
-  const timezone = trimToNull(profilePayload.timezone, 80) || 'UTC';
-  const avatarUrl = trimToNull(profilePayload.avatarUrl, 2048);
+  const email = trimToEmpty(profilePayload.email, 254).toLowerCase();
+  if (!email || !isEmail(email)) {
+    details.push({ field: 'profile.email', message: 'Email must be a valid email address.' });
+  }
 
-  const notificationEmails = sanitiseNotificationEmails(notificationEmailsPayload);
-  const notificationPreferences = sanitiseNotifications(notificationsPayload);
+  const notifications = normaliseBooleanFlags(
+    DEFAULT_NOTIFICATION_SETTINGS,
+    payload.notifications
+  );
+  const notificationEmails = sanitiseNotificationEmails(payload.notificationEmails);
 
-  const address = {
-    addressLine1: trimToNull(addressPayload.line1, 255),
-    addressLine2: trimToNull(addressPayload.line2, 255),
-    city: trimToNull(addressPayload.city, 120),
-    state: trimToNull(addressPayload.state, 120),
-    postalCode: trimToNull(addressPayload.postalCode, 40),
-    country: trimToNull(addressPayload.country, 120)
-  };
+  if (details.length > 0) {
+    throw createValidationError('Invalid admin profile settings payload.', details);
+  }
 
-  return sequelize.transaction(async (transaction) => {
-    const user = await User.findByPk(userId, { transaction });
-    if (!user) {
-      throw Object.assign(new Error('Admin user not found'), { statusCode: 404 });
-    }
-
-    const profile = await ensureAdminProfile({ userId, transaction });
-
-    user.set({ firstName, lastName });
-    await user.save({ transaction });
-
-    await profile.update(
+  await sequelize.transaction(async (transaction) => {
+    await user.update(
       {
-        jobTitle,
-        department,
-        phoneNumber,
-        avatarUrl,
-        timezone,
-        notificationPreferences,
-        notificationEmails,
-        ...address
+        firstName,
+        lastName,
+        email
       },
       { transaction }
     );
 
-    const [updatedProfile, delegates] = await Promise.all([
-      profile.reload({ transaction }),
-      AdminDelegate.findAll({
-        where: { adminProfileId: profile.id },
-        order: [['createdAt', 'ASC']],
-        transaction
-      })
-    ]);
-
-    await user.reload({ transaction });
-
-    return serializeProfile(updatedProfile, user, delegates);
+    await profile.update(
+      {
+        jobTitle: trimToEmpty(profilePayload.jobTitle, 160),
+        department: trimToEmpty(profilePayload.department, 160),
+        contactPhone: trimToEmpty(profilePayload.phoneNumber, 64),
+        avatarUrl: trimToEmpty(profilePayload.avatarUrl, 2000),
+        timezone: trimToEmpty(profilePayload.timezone, 64) || 'UTC',
+        addressLine1: trimToEmpty(payload.address?.line1, 255),
+        addressLine2: trimToEmpty(payload.address?.line2, 255),
+        city: trimToEmpty(payload.address?.city, 120),
+        state: trimToEmpty(payload.address?.state, 120),
+        postalCode: trimToEmpty(payload.address?.postalCode, 40),
+        country: trimToEmpty(payload.address?.country, 120),
+        notificationPreferences: notifications,
+        notificationEmails
+      },
+      { transaction }
+    );
   });
+
+  return getAdminProfileSettings({ userId });
+}
+
+function validateDelegatePayload(payload, details) {
+  const name = trimToEmpty(payload.name, 160);
+  const email = trimToEmpty(payload.email, 255).toLowerCase();
+  const role = trimToEmpty(payload.role, 160);
+  if (!name) {
+    details.push({ field: 'name', message: 'Name is required.' });
+  }
+  if (!email || !isEmail(email)) {
+    details.push({ field: 'email', message: 'Email must be a valid email address.' });
+  }
+  if (!role) {
+    details.push({ field: 'role', message: 'Role is required.' });
+  }
+  return {
+    name,
+    email,
+    role,
+    permissions: sanitisePermissions(payload.permissions),
+    avatarUrl: trimToEmpty(payload.avatarUrl, 2000),
+    status: payload.status === 'suspended' ? 'suspended' : 'active'
+  };
 }
 
 export async function createAdminDelegate({ userId, payload }) {
   if (!payload || typeof payload !== 'object') {
-    throw validationError('Invalid request payload.');
+    throw createValidationError('Invalid delegate payload.');
+  }
+  const profile = await ensureAdminProfile({ userId });
+
+  const details = [];
+  const data = validateDelegatePayload(payload, details);
+  if (details.length > 0) {
+    throw createValidationError('Invalid delegate payload.', details);
   }
 
-  const name = trimToNull(payload.name, 160);
-  const email = trimToNull(payload.email, 255);
-  const role = trimToNull(payload.role, 120);
-  const permissions = sanitisePermissions(payload.permissions);
-  const avatarUrl = trimToNull(payload.avatarUrl, 2048);
-  const status = payload.status && ['active', 'suspended'].includes(payload.status)
-    ? payload.status
-    : 'active';
-
-  if (!name || !email || !role) {
-    throw validationError('Delegate name, email, and role are required.', [
-      { field: 'name', message: 'Name is required.' },
-      { field: 'email', message: 'Email is required.' },
-      { field: 'role', message: 'Role is required.' }
-    ]);
-  }
-
-  if (!isValidEmail(email)) {
-    throw validationError('Delegate email must be valid.', [
-      { field: 'email', message: 'Enter a valid email address.' }
-    ]);
-  }
-
-  const normalisedEmail = normaliseEmail(email);
-
-  return sequelize.transaction(async (transaction) => {
-    const profile = await ensureAdminProfile({ userId, transaction });
-
-    const existing = await AdminDelegate.findOne({
-      where: {
-        adminProfileId: profile.id,
-        email: { [Op.eq]: normalisedEmail }
-      },
-      transaction
-    });
-
-    if (existing) {
-      throw validationError('A delegate with this email already exists for your workspace.', [
-        { field: 'email', message: 'Delegate already added.' }
-      ]);
-    }
-
-    const delegate = await AdminDelegate.create(
-      {
-        adminProfileId: profile.id,
-        name,
-        email: normalisedEmail,
-        role,
-        permissions,
-        avatarUrl,
-        status
-      },
-      { transaction }
-    );
-
-    return serializeDelegate(await delegate.reload({ transaction }));
+  const delegate = await AdminDelegate.create({
+    adminProfileId: profile.id,
+    ...data
   });
+  return serializeDelegate(delegate);
 }
 
 export async function updateAdminDelegate({ userId, delegateId, payload }) {
   if (!payload || typeof payload !== 'object') {
-    throw validationError('Invalid request payload.');
+    throw createValidationError('Invalid delegate payload.');
+  }
+  const profile = await ensureAdminProfile({ userId });
+  const delegate = await AdminDelegate.findOne({
+    where: { id: delegateId, adminProfileId: profile.id }
+  });
+  if (!delegate) {
+    const error = new Error('Delegate not found');
+    error.statusCode = 404;
+    throw error;
   }
 
-  return sequelize.transaction(async (transaction) => {
-    const profile = await ensureAdminProfile({ userId, transaction });
+  const details = [];
+  const data = validateDelegatePayload(payload, details);
+  if (details.length > 0) {
+    throw createValidationError('Invalid delegate payload.', details);
+  }
 
-    const delegate = await AdminDelegate.findOne({
-      where: { id: delegateId, adminProfileId: profile.id },
-      transaction
-    });
-
-    if (!delegate) {
-      throw Object.assign(new Error('Delegate not found'), { statusCode: 404 });
-    }
-
-    const updates = {};
-
-    if (Object.hasOwn(payload, 'name')) {
-      const name = trimToNull(payload.name, 160);
-      if (!name) {
-        throw validationError('Delegate name cannot be empty.', [
-          { field: 'name', message: 'Name is required.' }
-        ]);
-      }
-      updates.name = name;
-    }
-
-    if (Object.hasOwn(payload, 'email')) {
-      const email = trimToNull(payload.email, 255);
-      if (!email || !isValidEmail(email)) {
-        throw validationError('Delegate email must be valid.', [
-          { field: 'email', message: 'Enter a valid email address.' }
-        ]);
-      }
-      const normalisedEmail = normaliseEmail(email);
-      const clash = await AdminDelegate.findOne({
-        where: {
-          adminProfileId: profile.id,
-          id: { [Op.ne]: delegate.id },
-          email: { [Op.eq]: normalisedEmail }
-        },
-        transaction
-      });
-      if (clash) {
-        throw validationError('Another delegate already uses this email.', [
-          { field: 'email', message: 'Email already in use.' }
-        ]);
-      }
-      updates.email = normalisedEmail;
-    }
-
-    if (Object.hasOwn(payload, 'role')) {
-      const role = trimToNull(payload.role, 120);
-      if (!role) {
-        throw validationError('Delegate role cannot be empty.', [
-          { field: 'role', message: 'Role is required.' }
-        ]);
-      }
-      updates.role = role;
-    }
-
-    if (Object.hasOwn(payload, 'permissions')) {
-      updates.permissions = sanitisePermissions(payload.permissions);
-    }
-
-    if (Object.hasOwn(payload, 'avatarUrl')) {
-      updates.avatarUrl = trimToNull(payload.avatarUrl, 2048);
-    }
-
-    if (Object.hasOwn(payload, 'status')) {
-      const status = payload.status;
-      if (!['active', 'suspended'].includes(status)) {
-        throw validationError('Invalid delegate status.', [
-          { field: 'status', message: 'Status must be active or suspended.' }
-        ]);
-      }
-      updates.status = status;
-    }
-
-    await delegate.update(updates, { transaction });
-
-    return serializeDelegate(await delegate.reload({ transaction }));
-  });
+  await delegate.update(data);
+  return serializeDelegate(delegate);
 }
 
 export async function deleteAdminDelegate({ userId, delegateId }) {
-  return sequelize.transaction(async (transaction) => {
-    const profile = await ensureAdminProfile({ userId, transaction });
-
-    const delegate = await AdminDelegate.findOne({
-      where: { id: delegateId, adminProfileId: profile.id },
-      transaction
-    });
-
-    if (!delegate) {
-      throw Object.assign(new Error('Delegate not found'), { statusCode: 404 });
-    }
-
-    await delegate.destroy({ transaction });
-  });
+  const profile = await ensureAdminProfile({ userId });
+  await AdminDelegate.destroy({ where: { id: delegateId, adminProfileId: profile.id } });
 }
+
