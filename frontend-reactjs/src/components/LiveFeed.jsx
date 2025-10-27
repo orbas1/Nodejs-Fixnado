@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
@@ -43,8 +43,8 @@ const currencyFormatters = new Map();
 const FEED_TABS = [
   {
     id: 'timeline',
-    label: 'Live',
-    description: 'Updates now'
+    label: 'Timeline',
+    description: 'Latest activity'
   },
   {
     id: 'custom',
@@ -56,6 +56,29 @@ const FEED_TABS = [
     label: 'Market',
     description: 'Verified gear'
   }
+];
+
+const FEED_FILTERS = [
+  { id: 'all', label: 'All updates' },
+  { id: 'wins', label: 'Wins' },
+  { id: 'playbooks', label: 'Playbooks' },
+  { id: 'alerts', label: 'Alerts' },
+  { id: 'events', label: 'Events' }
+];
+
+const TOPIC_KEYWORDS = [
+  { match: 'win', id: 'wins' },
+  { match: 'celebrate', id: 'wins' },
+  { match: 'milestone', id: 'wins' },
+  { match: 'playbook', id: 'playbooks' },
+  { match: 'guide', id: 'playbooks' },
+  { match: 'workflow', id: 'playbooks' },
+  { match: 'alert', id: 'alerts' },
+  { match: 'escalation', id: 'alerts' },
+  { match: 'incident', id: 'alerts' },
+  { match: 'event', id: 'events' },
+  { match: 'webinar', id: 'events' },
+  { match: 'summit', id: 'events' }
 ];
 
 const TIMELINE_REACTIONS = [
@@ -103,6 +126,7 @@ const INITIAL_TIMELINE_POSTS = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     reactions: { like: 18, celebrate: 12, support: 4 },
     userReaction: null,
+    topics: ['wins', 'playbooks'],
     comments: [
       {
         id: 'timeline-1-comment-1',
@@ -144,6 +168,7 @@ const INITIAL_TIMELINE_POSTS = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
     reactions: { like: 32, celebrate: 9, support: 7 },
     userReaction: null,
+    topics: ['playbooks'],
     comments: [
       {
         id: 'timeline-2-comment-1',
@@ -172,7 +197,28 @@ const INITIAL_TIMELINE_POSTS = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     reactions: { like: 21, celebrate: 16, support: 5 },
     userReaction: null,
+    topics: ['wins', 'events'],
     comments: []
+  }
+];
+
+const PINNED_ANNOUNCEMENTS = [
+  {
+    id: 'announcement-1',
+    title: 'Pinned • Operations stand-up briefing',
+    summary:
+      'Catch the 8:30 AM stream for region-by-region readiness, escalation rotas, and contingency contacts.',
+    actionLabel: 'View briefing',
+    actionHref: '/operations/briefing',
+    tone: 'info'
+  },
+  {
+    id: 'announcement-2',
+    title: 'Pinned • Provider verification week',
+    summary: 'We are refreshing credentials across EU partners. Upload new insurance docs by Friday.',
+    actionLabel: 'Open checklist',
+    actionHref: '/compliance/provider-verification',
+    tone: 'warning'
   }
 ];
 
@@ -241,6 +287,180 @@ function budgetDisplay(post) {
   return formatted ?? 'Budget TBD';
 }
 
+function normaliseTopics(post) {
+  if (!post) {
+    return [];
+  }
+
+  const tokens = new Set();
+  const push = (value) => {
+    if (!value) {
+      return;
+    }
+    const lower = String(value).toLowerCase();
+    const directMatch = FEED_FILTERS.find((filter) => filter.id !== 'all' && filter.id === lower);
+    if (directMatch) {
+      tokens.add(directMatch.id);
+    }
+    TOPIC_KEYWORDS.forEach(({ match, id }) => {
+      if (lower.includes(match)) {
+        tokens.add(id);
+      }
+    });
+  };
+
+  if (Array.isArray(post.topics)) {
+    post.topics.forEach(push);
+  }
+  if (Array.isArray(post.tags)) {
+    post.tags.forEach(push);
+  }
+  if (Array.isArray(post.labels)) {
+    post.labels.forEach(push);
+  }
+  if (Array.isArray(post.categories)) {
+    post.categories.forEach(push);
+  }
+  if (Array.isArray(post.keywords)) {
+    post.keywords.forEach(push);
+  }
+  if (typeof post.category === 'string') {
+    push(post.category);
+  }
+  if (typeof post.type === 'string') {
+    push(post.type);
+  }
+  if (typeof post.headline === 'string') {
+    push(post.headline);
+  }
+  if (typeof post.title === 'string') {
+    push(post.title);
+  }
+
+  return Array.from(tokens);
+}
+
+function isJobPostUrgent(post) {
+  if (!post) {
+    return false;
+  }
+
+  const now = Date.now();
+
+  if (post.bidDeadline) {
+    const deadline = new Date(post.bidDeadline);
+    if (!Number.isNaN(deadline.getTime())) {
+      const diffHours = (deadline.getTime() - now) / (60 * 60 * 1000);
+      if (diffHours >= 0 && diffHours <= 24) {
+        return true;
+      }
+    }
+  }
+
+  const metadata = post.metadata && typeof post.metadata === 'object' ? post.metadata : {};
+  if (typeof metadata.urgencyScore === 'number' && metadata.urgencyScore >= 80) {
+    return true;
+  }
+  if (typeof metadata.inventoryRisk === 'string' && metadata.inventoryRisk.toLowerCase() === 'high') {
+    return true;
+  }
+  if (Array.isArray(post.flags)) {
+    if (post.flags.some((flag) => String(flag).toLowerCase().includes('urgent'))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function computeJobInsights(posts = []) {
+  if (!Array.isArray(posts) || posts.length === 0) {
+    return {
+      total: 0,
+      open: 0,
+      urgent: 0,
+      respondedPercent: 0,
+      averageBidCount: 0,
+      averageResponseMinutes: null,
+      expiringSoon: []
+    };
+  }
+
+  const now = Date.now();
+  let open = 0;
+  let urgent = 0;
+  let responded = 0;
+  let totalBidCount = 0;
+  const responseSamples = [];
+  const expiringSoon = [];
+
+  posts.forEach((post) => {
+    const status = typeof post.status === 'string' ? post.status.toLowerCase() : null;
+    if (!status || status === 'open' || status === 'published') {
+      open += 1;
+    }
+    if (isJobPostUrgent(post)) {
+      urgent += 1;
+    }
+
+    const bids = Array.isArray(post.bids) ? post.bids : [];
+    const bidCount = Number.isFinite(post.bidCount) ? post.bidCount : bids.length;
+    totalBidCount += bidCount;
+    if (bidCount > 0) {
+      responded += 1;
+      const earliestBid = bids.reduce((earliest, bid) => {
+        const created = bid?.createdAt ? new Date(bid.createdAt) : bid?.submittedAt ? new Date(bid.submittedAt) : null;
+        if (!created || Number.isNaN(created.getTime())) {
+          return earliest;
+        }
+        if (!earliest) {
+          return created;
+        }
+        return created.getTime() < earliest.getTime() ? created : earliest;
+      }, null);
+      const postedAt = post.createdAt ? new Date(post.createdAt) : null;
+      if (earliestBid && postedAt && !Number.isNaN(postedAt.getTime())) {
+        const diffMinutes = Math.max((earliestBid.getTime() - postedAt.getTime()) / 60000, 0);
+        responseSamples.push(diffMinutes);
+      }
+    }
+
+    if (post.bidDeadline) {
+      const deadline = new Date(post.bidDeadline);
+      if (!Number.isNaN(deadline.getTime())) {
+        const diffHours = (deadline.getTime() - now) / (60 * 60 * 1000);
+        if (diffHours >= 0 && diffHours <= 48) {
+          expiringSoon.push({
+            id: post.id,
+            title: post.title || post.headline || 'Active job',
+            deadline: deadline.toISOString(),
+            zone: post.zone?.name || post.zoneName || null,
+            allowOutOfZone: Boolean(post.allowOutOfZone)
+          });
+        }
+      }
+    }
+  });
+
+  expiringSoon.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+
+  const respondedPercent = posts.length ? Math.round((responded / posts.length) * 100) : 0;
+  const averageBidCount = posts.length ? Number((totalBidCount / posts.length).toFixed(2)) : 0;
+  const averageResponseMinutes = responseSamples.length
+    ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(2))
+    : null;
+
+  return {
+    total: posts.length,
+    open,
+    urgent,
+    respondedPercent,
+    averageBidCount,
+    averageResponseMinutes,
+    expiringSoon: expiringSoon.slice(0, 5)
+  };
+}
+
 function personName(person) {
   if (!person) return 'Anonymous';
   const parts = [person.firstName, person.lastName].filter(Boolean);
@@ -258,14 +478,36 @@ function TimelineFeed({
   onCommentSubmit,
   condensed,
   canPost,
-  onMediaPreview
+  onMediaPreview,
+  pinned,
+  filters,
+  onFilterToggle
 }) {
-  const displayedPosts = useMemo(() => {
+  const activeFilters = useMemo(() => (Array.isArray(filters) && filters.length > 0 ? filters : ['all']), [filters]);
+
+  const filteredPosts = useMemo(() => {
     if (!Array.isArray(posts) || posts.length === 0) {
       return [];
     }
-    return condensed ? posts.slice(0, 2) : posts;
-  }, [posts, condensed]);
+    if (activeFilters.includes('all')) {
+      return posts;
+    }
+    const filterSet = new Set(activeFilters);
+    return posts.filter((post) => {
+      const topics = normaliseTopics(post);
+      if (topics.length === 0) {
+        return filterSet.has('playbooks');
+      }
+      return topics.some((topic) => filterSet.has(topic));
+    });
+  }, [posts, activeFilters]);
+
+  const displayedPosts = useMemo(() => {
+    if (filteredPosts.length === 0) {
+      return [];
+    }
+    return condensed ? filteredPosts.slice(0, 2) : filteredPosts;
+  }, [filteredPosts, condensed]);
 
   const feedItems = useMemo(() => {
     if (displayedPosts.length === 0) {
@@ -347,6 +589,33 @@ function TimelineFeed({
         </form>
       ) : null}
 
+      {!condensed && Array.isArray(pinned) && pinned.length > 0 ? (
+        <PinnedAnnouncements items={pinned} />
+      ) : null}
+
+      {!condensed ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {FEED_FILTERS.map((filter) => {
+            const isActive = activeFilters.includes(filter.id);
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => onFilterToggle?.(filter.id)}
+                className={clsx(
+                  'rounded-full border px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] transition',
+                  isActive
+                    ? 'border-primary bg-primary text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-primary/40 hover:text-primary'
+                )}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {feedItems.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
           Nothing yet. Drop the first update for the team.
@@ -391,14 +660,29 @@ TimelineFeed.propTypes = {
   onCommentSubmit: PropTypes.func.isRequired,
   condensed: PropTypes.bool,
   canPost: PropTypes.bool,
-  onMediaPreview: PropTypes.func
+  onMediaPreview: PropTypes.func,
+  pinned: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      summary: PropTypes.string.isRequired,
+      actionLabel: PropTypes.string,
+      actionHref: PropTypes.string,
+      tone: PropTypes.oneOf(['info', 'warning', 'success'])
+    })
+  ),
+  filters: PropTypes.arrayOf(PropTypes.string),
+  onFilterToggle: PropTypes.func
 };
 
 TimelineFeed.defaultProps = {
   posts: [],
   condensed: false,
   canPost: true,
-  onMediaPreview: undefined
+  onMediaPreview: undefined,
+  pinned: [],
+  filters: ['all'],
+  onFilterToggle: undefined
 };
 
 function TimelinePost({
@@ -644,6 +928,92 @@ TimelineAdCard.propTypes = {
     ctaHref: PropTypes.string.isRequired,
     image: PropTypes.string.isRequired
   }).isRequired
+};
+
+function toneStyles(tone) {
+  switch (tone) {
+    case 'warning':
+      return {
+        badge: 'bg-amber-100 text-amber-700 border border-amber-200',
+        card: 'border-amber-100 bg-amber-50/60 shadow-amber-100/40'
+      };
+    case 'success':
+      return {
+        badge: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+        card: 'border-emerald-100 bg-emerald-50/70 shadow-emerald-100/40'
+      };
+    default:
+      return {
+        badge: 'bg-blue-100 text-blue-700 border border-blue-200',
+        card: 'border-blue-100 bg-blue-50/70 shadow-blue-100/40'
+      };
+  }
+}
+
+function PinnedAnnouncements({ items }) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-4 rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+          <MegaphoneIcon className="h-4 w-4" aria-hidden="true" />
+          Pinned announcements
+        </div>
+        <span className="text-xs text-slate-400">Curated for your workspace</span>
+      </header>
+      <div className="grid gap-4 md:grid-cols-2">
+        {items.map((item) => {
+          const palette = toneStyles(item.tone);
+          return (
+            <article
+              key={item.id}
+              className={clsx(
+                'flex h-full flex-col justify-between rounded-2xl border px-5 py-4 shadow-sm transition hover:-translate-y-[1px] hover:shadow-lg',
+                palette.card
+              )}
+            >
+              <div className="space-y-2">
+                <span className={clsx('inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em]', palette.badge)}>
+                  <SparklesIcon className="h-4 w-4" aria-hidden="true" />
+                  {item.title}
+                </span>
+                <p className="text-sm text-slate-600">{item.summary}</p>
+              </div>
+              {item.actionHref ? (
+                <a
+                  href={item.actionHref}
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-accent"
+                >
+                  {item.actionLabel ?? 'Open details'}
+                  <PaperAirplaneIcon className="h-4 w-4" aria-hidden="true" />
+                </a>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+PinnedAnnouncements.propTypes = {
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      summary: PropTypes.string.isRequired,
+      actionLabel: PropTypes.string,
+      actionHref: PropTypes.string,
+      tone: PropTypes.oneOf(['info', 'warning', 'success'])
+    })
+  )
+};
+
+PinnedAnnouncements.defaultProps = {
+  items: []
 };
 
 function MarketplaceFeed({ condensed, loading, error, items, onRetry, onMediaPreview }) {
@@ -969,7 +1339,7 @@ function JobComposer({
             disabled={submitting}
             className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {submitting ? 'Publishing…' : 'Publish job to live feed'}
+            {submitting ? 'Publishing…' : 'Publish job to feed'}
           </button>
           <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
             Secure escrow and compliance workflows baked in
@@ -1407,23 +1777,176 @@ BidList.defaultProps = {
   messageStatus: undefined
 };
 
+function useWindowedList(items, { initialCount = 6, batchSize = 4 } = {}) {
+  const [visibleCount, setVisibleCount] = useState(initialCount);
+  const sentinelRef = useRef(null);
+  const observerSupported = typeof window !== 'undefined' && 'IntersectionObserver' in window;
+
+  useEffect(() => {
+    setVisibleCount(initialCount);
+  }, [initialCount, items]);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((current) => {
+      const next = current + batchSize;
+      return items.length ? Math.min(next, items.length) : next;
+    });
+  }, [batchSize, items.length]);
+
+  useEffect(() => {
+    if (!observerSupported) {
+      return undefined;
+    }
+
+    const node = sentinelRef.current;
+    if (!node) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadMore();
+          }
+        });
+      },
+      { rootMargin: '160px 0px' }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [loadMore, observerSupported, visibleCount]);
+
+  const visibleItems = useMemo(() => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+    return items.slice(0, visibleCount);
+  }, [items, visibleCount]);
+
+  const canLoadMore = Array.isArray(items) && visibleCount < items.length;
+
+  return { visibleItems, sentinelRef, canLoadMore, loadMore, observerSupported };
+}
+
+function JobInsightsPanel({ insights, lastUpdated }) {
+  if (!insights || insights.total === 0) {
+    return null;
+  }
+
+  const responseLabel = insights.averageResponseMinutes
+    ? `${Math.round(insights.averageResponseMinutes)} min`
+    : '—';
+
+  const metrics = [
+    { label: 'Active briefs', value: insights.total.toString() },
+    { label: 'Open', value: insights.open.toString() },
+    { label: 'Urgent', value: insights.urgent.toString() },
+    { label: 'Response rate', value: `${insights.respondedPercent}%` },
+    { label: 'Avg bids', value: insights.averageBidCount.toFixed(1) },
+    { label: 'First response', value: responseLabel }
+  ];
+
+  return (
+    <section className="space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-inner">
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Opportunity insights</h3>
+        {lastUpdated ? (
+          <span className="text-xs text-slate-400">Updated {formatRelativeTime(lastUpdated)}</span>
+        ) : null}
+      </header>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{metric.label}</p>
+            <p className="mt-2 text-xl font-semibold text-primary">{metric.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white px-4 py-4">
+        <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Expiring soon</h4>
+        {Array.isArray(insights.expiringSoon) && insights.expiringSoon.length > 0 ? (
+          <ul className="space-y-2 text-sm text-slate-600">
+            {insights.expiringSoon.map((entry) => (
+              <li key={entry.id} className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-primary">{entry.title}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    {entry.zone ? `${entry.zone} • ` : ''}
+                    {entry.allowOutOfZone ? 'Out-of-zone welcome' : 'In-zone only'}
+                  </p>
+                </div>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                  Closes {formatRelativeTime(entry.deadline)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-500">No briefs expiring in the next 48 hours.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+JobInsightsPanel.propTypes = {
+  insights: PropTypes.shape({
+    total: PropTypes.number.isRequired,
+    open: PropTypes.number.isRequired,
+    urgent: PropTypes.number.isRequired,
+    respondedPercent: PropTypes.number.isRequired,
+    averageBidCount: PropTypes.number.isRequired,
+    averageResponseMinutes: PropTypes.number,
+    expiringSoon: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+        deadline: PropTypes.string.isRequired,
+        zone: PropTypes.string,
+        allowOutOfZone: PropTypes.bool
+      })
+    )
+  }),
+  lastUpdated: PropTypes.instanceOf(Date)
+};
+
+JobInsightsPanel.defaultProps = {
+  insights: null,
+  lastUpdated: null
+};
+
 function PostCard({ post, canBid, canMessage, onBidSubmit, onMessageSubmit, bidStatus, messageStatus }) {
+  const urgent = useMemo(() => isJobPostUrgent(post), [post]);
   const chips = useMemo(() => {
-    const list = [];
+    const set = new Set();
     if (post.category) {
-      list.push(post.category);
+      set.add(post.category);
     }
     if (post.allowOutOfZone) {
-      list.push('Out-of-zone friendly');
+      set.add('Out-of-zone friendly');
     }
     if (post.metadata?.urgency) {
-      list.push(`Urgency: ${post.metadata.urgency}`);
+      set.add(`Urgency: ${post.metadata.urgency}`);
     }
     if (post.metadata?.timeWindow) {
-      list.push(post.metadata.timeWindow);
+      set.add(post.metadata.timeWindow);
     }
-    return list;
-  }, [post]);
+    if (urgent) {
+      set.add('Urgent response');
+    }
+    normaliseTopics(post).forEach((topic) => {
+      const label = FEED_FILTERS.find((entry) => entry.id === topic)?.label;
+      if (label) {
+        set.add(label);
+      }
+    });
+    return Array.from(set);
+  }, [post, urgent]);
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-lg">
@@ -1433,6 +1956,12 @@ function PostCard({ post, canBid, canMessage, onBidSubmit, onMessageSubmit, bidS
             {post.zone?.name ? (
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-semibold uppercase tracking-[0.3em] text-primary">
                 {post.zone.name}
+              </span>
+            ) : null}
+            {urgent ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 font-semibold uppercase tracking-[0.3em] text-rose-600">
+                <SparklesIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Urgent
               </span>
             ) : null}
             <span>{formatRelativeTime(post.createdAt)}</span>
@@ -1528,6 +2057,7 @@ export default function LiveFeed({ condensed = false }) {
   const [timelinePosts, setTimelinePosts] = useState(() => INITIAL_TIMELINE_POSTS);
   const [timelineComposer, setTimelineComposer] = useState({ headline: '', content: '', media: '' });
   const [timelineCommentDrafts, setTimelineCommentDrafts] = useState({});
+  const [timelineFilters, setTimelineFilters] = useState(['all']);
 
   const [filters, setFilters] = useState({ zoneId: '', includeOutOfZone: false, outOfZoneOnly: false });
   const [posts, setPosts] = useState([]);
@@ -1564,6 +2094,27 @@ export default function LiveFeed({ condensed = false }) {
   const shouldLoadZones = activeTab === 'custom' && (canCreate || (!condensed && canView));
   const { zones, loading: zoneLoading } = useZones(shouldLoadZones);
   const maxStreamPosts = useMemo(() => (condensed ? 6 : undefined), [condensed]);
+  const orderedPosts = useMemo(() => {
+    if (!Array.isArray(posts) || posts.length === 0) {
+      return [];
+    }
+    return [...posts].sort((a, b) => {
+      const urgentDiff = Number(isJobPostUrgent(b)) - Number(isJobPostUrgent(a));
+      if (urgentDiff !== 0) {
+        return urgentDiff;
+      }
+      const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [posts]);
+
+  const { visibleItems: windowedPosts, sentinelRef, canLoadMore, loadMore, observerSupported } = useWindowedList(
+    orderedPosts,
+    { initialCount: condensed ? 3 : 6, batchSize: condensed ? 3 : 4 }
+  );
+
+  const jobInsights = useMemo(() => computeJobInsights(orderedPosts), [orderedPosts]);
 
   const loadMarketplace = useCallback(() => {
     let cancelled = false;
@@ -1631,7 +2182,7 @@ export default function LiveFeed({ condensed = false }) {
           if (requestError.name === 'AbortError') {
             return;
           }
-          setFeedError(requestError.message || 'Unable to load live feed');
+          setFeedError(requestError.message || 'Unable to load feed');
         }
       })
       .finally(() => {
@@ -1674,7 +2225,7 @@ export default function LiveFeed({ condensed = false }) {
         reconnecting: false,
         error:
           current.error ||
-          'Live streaming is not supported in this browser. The feed will refresh periodically.'
+          'Real-time streaming is not supported in this browser. The feed will refresh periodically.'
       }));
       return undefined;
     }
@@ -1757,7 +2308,7 @@ export default function LiveFeed({ condensed = false }) {
       setStreamStatus((current) => ({
         connected: false,
         reconnecting: true,
-        error: current.error || 'Live updates interrupted. Attempting to reconnect…'
+        error: current.error || 'Streaming updates interrupted. Attempting to reconnect…'
       }));
     };
 
@@ -1813,6 +2364,25 @@ export default function LiveFeed({ condensed = false }) {
     setTimelinePosts((current) => [newPost, ...current]);
     setTimelineComposer({ headline: '', content: '', media: '' });
     setTimelineCommentDrafts((current) => ({ ...current, [postId]: '' }));
+  };
+
+  const handleTimelineFilterToggle = (filterId) => {
+    setTimelineFilters((current) => {
+      if (filterId === 'all') {
+        return ['all'];
+      }
+      const next = new Set(current);
+      if (next.has(filterId)) {
+        next.delete(filterId);
+      } else {
+        next.add(filterId);
+      }
+      if (next.size === 0) {
+        return ['all'];
+      }
+      next.delete('all');
+      return Array.from(next);
+    });
   };
 
   const handleTimelineReact = (postId, reactionId) => {
@@ -1956,64 +2526,69 @@ export default function LiveFeed({ condensed = false }) {
     }
   };
 
-  const visiblePosts = useMemo(() => (condensed ? posts.slice(0, 3) : posts), [condensed, posts]);
   const timelineLastUpdateLabel = timelinePosts.length > 0 ? formatRelativeTime(timelinePosts[0].createdAt) : null;
+  const customLastUpdatedLabel = lastUpdated ? formatRelativeTime(lastUpdated) : null;
 
   return (
     <Fragment>
       <section className="bg-white/80 backdrop-blur border border-slate-200 rounded-3xl shadow-glow">
         <div className="px-6 py-6 space-y-6">
-        <header className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold text-primary">
-                {activeTab === 'timeline' ? 'Live' : activeTab === 'custom' ? 'Jobs' : 'Market'}
-              </h2>
-              <p className="text-sm text-slate-500">{activeTabConfig.description}</p>
-              {activeTab === 'timeline' && timelineLastUpdateLabel ? (
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Latest update {timelineLastUpdateLabel}
-                </p>
+          <header className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-primary">
+                  {activeTab === 'timeline' ? 'Timeline' : activeTab === 'custom' ? 'Jobs' : 'Market'}
+                </h2>
+                <p className="text-sm text-slate-500">{activeTabConfig.description}</p>
+                {activeTab === 'timeline' && timelineLastUpdateLabel ? (
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Latest update {timelineLastUpdateLabel}
+                  </p>
+                ) : null}
+                {activeTab === 'custom' && customLastUpdatedLabel ? (
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Synced {customLastUpdatedLabel}
+                  </p>
+                ) : null}
+              </div>
+              {!condensed && activeTab === 'custom' ? (
+                <div className="flex flex-col items-end space-y-1 text-right text-xs text-slate-500">
+                  <div
+                    className={clsx(
+                      'inline-flex items-center gap-2 font-semibold',
+                      streamStatus.connected
+                        ? 'text-emerald-600'
+                        : streamStatus.reconnecting
+                          ? 'text-amber-600'
+                          : 'text-slate-500'
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'h-2 w-2 rounded-full',
+                        streamStatus.connected
+                          ? 'bg-emerald-500 animate-pulse'
+                          : streamStatus.reconnecting
+                            ? 'bg-amber-500 animate-pulse'
+                            : 'bg-slate-300'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {streamStatus.connected
+                      ? 'Streaming updates'
+                      : streamStatus.reconnecting
+                        ? 'Reconnecting…'
+                        : 'Updates paused'}
+                  </div>
+                  <div>
+                    {lastUpdated
+                      ? `Last update ${formatRelativeTime(lastUpdated)}`
+                      : 'Awaiting first refresh'}
+                  </div>
+                  {streamStatus.error ? <p className="text-rose-500">{streamStatus.error}</p> : null}
+                </div>
               ) : null}
             </div>
-            {!condensed && activeTab === 'custom' ? (
-              <div className="flex flex-col items-end space-y-1 text-right text-xs text-slate-500">
-                <div
-                  className={clsx(
-                    'inline-flex items-center gap-2 font-semibold',
-                    streamStatus.connected
-                      ? 'text-emerald-600'
-                      : streamStatus.reconnecting
-                        ? 'text-amber-600'
-                        : 'text-slate-500'
-                  )}
-                >
-                  <span
-                    className={clsx(
-                      'h-2 w-2 rounded-full',
-                      streamStatus.connected
-                        ? 'bg-emerald-500 animate-pulse'
-                        : streamStatus.reconnecting
-                          ? 'bg-amber-500 animate-pulse'
-                          : 'bg-slate-300'
-                    )}
-                    aria-hidden="true"
-                  />
-                  {streamStatus.connected
-                    ? 'Streaming live updates'
-                    : streamStatus.reconnecting
-                      ? 'Reconnecting…'
-                      : 'Live updates paused'}
-                </div>
-                <div>
-                  {lastUpdated
-                    ? `Last update ${formatRelativeTime(lastUpdated)}`
-                    : 'Awaiting first refresh'}
-                </div>
-                {streamStatus.error ? <p className="text-rose-500">{streamStatus.error}</p> : null}
-              </div>
-            ) : null}
-          </div>
           <nav className={clsx('flex flex-wrap gap-2', condensed ? 'pt-1' : 'pt-2')}>
             {FEED_TABS.map((tab) => (
               <button
@@ -2057,6 +2632,9 @@ export default function LiveFeed({ condensed = false }) {
               condensed={condensed || !canView}
               canPost={canView}
               onMediaPreview={setMediaPreview}
+              pinned={PINNED_ANNOUNCEMENTS}
+              filters={timelineFilters}
+              onFilterToggle={handleTimelineFilterToggle}
             />
           </Fragment>
         ) : null}
@@ -2154,13 +2732,14 @@ export default function LiveFeed({ condensed = false }) {
                   <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-600">
                     {feedError}
                   </div>
-                ) : visiblePosts.length === 0 ? (
+                ) : windowedPosts.length === 0 ? (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
-                    No live posts match your filters yet. Adjust your filters or publish a new job to get responses.
+                    No posts match your filters yet. Adjust your filters or publish a new job to get responses.
                   </div>
                 ) : (
                   <div className="space-y-5">
-                    {visiblePosts.map((post) => (
+                    {!condensed ? <JobInsightsPanel insights={jobInsights} lastUpdated={lastUpdated} /> : null}
+                    {windowedPosts.map((post) => (
                       <PostCard
                         key={post.id}
                         post={post}
@@ -2176,6 +2755,20 @@ export default function LiveFeed({ condensed = false }) {
                         )}
                       />
                     ))}
+                    {canLoadMore ? (
+                      <div className="flex flex-col items-center gap-3 pt-2">
+                        <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
+                        {!observerSupported ? (
+                          <button
+                            type="button"
+                            onClick={loadMore}
+                            className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:border-primary hover:text-primary"
+                          >
+                            Load more briefs
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </Fragment>

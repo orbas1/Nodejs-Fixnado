@@ -4,7 +4,7 @@ Contents
   1.B. Navigation & Global Shell ✅
   1.C. Authentication & Onboarding
 2. Member Engagement & Social Experience
-  2.A. Timeline & Feed
+  2.A. Timeline & Feed ✓
   2.B. Connections & Mentors
   2.C. Profile & Identity
 3. Provider & Enterprise Workflows
@@ -55,6 +55,109 @@ Contents
   15.A. Governance Policies & Licensing
   15.B. Legal Content & Regional Policies
   15.C. Knowledge Base, FAQs & Support Content
+Document: docs/user_experience.md
+
+Main Category: 2. Member Engagement & Social Experience
+Sub categories:
+2.A. Timeline & Feed
+Components (each individual component):
+2.A.1. frontend-reactjs/src/components/LiveFeed.jsx
+2.A.2. backend-nodejs/src/controllers/timelineHubController.js
+2.A.3. backend-nodejs/src/services/timelineHubService.js
+
+Component 2.A.1. frontend-reactjs/src/components/LiveFeed.jsx
+1. Appraisal. LiveFeed.jsx now orchestrates social updates, job briefs, and marketplace snapshots with pinned announcements, analytics, and windowed rendering that match enterprise social expectations.
+2. Functionality. Segmented tabs, filter chips, EventSource streaming, and load-more fallbacks must remain resilient offline with manual refresh and retry affordances.
+3. Logic Usefulness. Job insights, expiring-soon highlights, and persona-aware copy should continue to synthesise telemetry and urgency so crews can triage quickly.
+4. Redundancies. Consolidate repeated card scaffolding (timeline posts, jobs, marketplace) into shared feed primitives to avoid style drift and duplication.
+5. Placeholders Or non-working functions or stubs. Replace hard-coded pinned announcements with CMS-backed payloads and wire quick links to active workspace routes.
+6. Duplicate Functions. Promote useWindowedList and other feed utilities into shared hooks so other dashboards reuse the same virtualisation logic.
+7. Improvements need to make. Introduce saved filters, persona presets, and mute/follow controls to reach LinkedIn-level curation without sacrificing clarity.
+8. Styling improvements. Keep card spacing airy, align typography scale, and ensure urgent badges and CTA chips maintain contrast across breakpoints.
+9. Effeciency analysis and improvement. Batch SSE updates, memoise derived analytics, and schedule idle hydration so frame time stays below 16 ms.
+10. Strengths to Keep. Retain segmented navigation, inline composers, real-time streaming, and analytics summaries that anchor the engagement narrative.
+11. Weaknesses to remove. Eliminate static lorem copy, unused reaction affordances, and redundant share tooltips that create noise.
+12. Styling and Colour review changes. Verify status tones (rose for urgent, emerald for health, primary for neutral) meet WCAG AA in light and dark contexts.
+13. Css, orientation, placement and arrangement changes. Guarantee pinned announcements stack neatly on narrow viewports and chip rows wrap without overflow.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep headlines under 80 characters, surface zone/persona metadata, and trim helper copy to action-focused fragments.
+15. Text Spacing. Maintain a 24 px vertical rhythm between cards, 16 px interior padding, and 12 px spacing for chip clusters for readability.
+16. Shaping. Standardise 24 px card radii, pill-shaped chips, and 8 px button rounding in line with global tokens.
+17. Shadow, hover, glow and effects. Apply subtle hover lifts (~4 px shadow) and retire legacy glow effects for a modern, premium polish.
+18. Thumbnails. Support 16:9 and square media with blurred placeholders to prevent layout shift as images stream in.
+19. Images and media & Images and media previews. Keep the media lightbox accessible, keyboard navigable, and provide download/fallback options for compliance.
+20. Button styling. Use slim uppercase tertiary buttons for filters, bold primary pills for publishing actions, and always expose focus outlines.
+21. Interactiveness. Layer inline reactions, quick share, comment threading, and keyboard shortcuts so heavy users can triage without friction.
+22. Missing Components. Add feed preference drawer (mute, follow, digest cadence) and persona analytics sidebar to rival mainstream social experiences.
+23. Design Changes. Evolve layout toward sticky insight rails plus scrollable cards, mirroring Instagram/LinkedIn exploration patterns while retaining enterprise tone.
+24. Design Duplication. Deduplicate timeline card markup by extracting a reusable FeedCard base shared across live, jobs, and marketplace streams.
+25. Design framework. Document pinned announcements, job insight panels, and windowed lists inside the design system with responsive specs.
+26. Mobile App Functionality. Ensure virtualisation, SSE reconnects, and composer state sync operate offline with graceful degradation on handheld devices.
+27. Mobile App Styling. Adopt stacked cards, bottom-sheet filters, and 48 px tap targets to keep parity with mobile social paradigms.
+28. Change Checklist Tracker Extensive. Track CMS integration for pins, telemetry instrumentation, SSE retry monitoring, accessibility QA, and localisation reviews.
+29. Full Upgrade Plan & Release Steps  Extensive. Pilot changes with internal cohorts, gather telemetry, iterate ranking/personalisation, ship behind a flag, and roll out with enablement assets.
+
+Component 2.A.2. backend-nodejs/src/controllers/timelineHubController.js
+1. Appraisal. timelineHubController.js brokers persona-aware snapshots effectively yet still intermixes validation, parsing, and response shaping.
+2. Functionality. Extend validation to cover topic filters, experiment buckets, and pagination cursors that support windowed feeds.
+3. Logic Usefulness. Emit metadata for pinned announcements, analytics summaries, and preference state so clients avoid duplicating enrichment logic.
+4. Redundancies. Remove inline sanitisation helpers duplicated by middleware by leaning on shared express-validator schemas.
+5. Placeholders Or non-working functions or stubs. Replace remaining TODO hooks (socket orchestration, audit notes) with concrete integrations to the internal event bus.
+6. Duplicate Functions. Share boolean/list parsing utilities across controllers to eliminate drift and keep behaviour consistent.
+7. Improvements need to make. Support persona-aware experiment headers and AB testing toggles for ranking/personalisation trials.
+8. Styling improvements. Return structured theming hints (badgeTone, cardStyle, bannerTone) so clients render consistent visuals.
+9. Effeciency analysis and improvement. Introduce streaming or chunked responses for large feeds and enforce request budgets to protect downstream services.
+10. Strengths to Keep. Preserve centralised RBAC, persona detection, warning aggregation, and telemetry logging.
+11. Weaknesses to remove. Eliminate ad-hoc parameter coercion in favour of typed DTOs for maintainability.
+12. Styling and Colour review changes. Ensure response metadata uses canonical tone tokens consumed by front-end badge styling.
+13. Css, orientation, placement and arrangement changes. Provide ordering hints (pinnedFirst, chronological) so UI remains stable on re-render.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Attach snippet length guidance and localisation keys to keep text tight across locales.
+15. Text Spacing. Supply spacing tokens (cardPadding, chipGap) allowing clients to mirror design rhythm.
+16. Shaping. Emit cardShape and mediaRatio metadata so both web and mobile shells respect design tokens.
+17. Shadow, hover, glow and effects. Surface interactive state hints (hoverTone, pressedTone) to coordinate subtle effects across clients.
+18. Thumbnails. Return optimised thumbnail URLs, alt text, and aspect metadata for posts and announcements.
+19. Images and media & Images and media previews. Include media manifests (type, ratio, duration) and fallback placeholders to power carousels and lazy loading.
+20. Button styling. Expose CTA schema (label, href, tone, priority) aligned with slim/primary button guidelines.
+21. Interactiveness. Wire follow/mute endpoints, SSE ack tokens, and preference updates so real-time interactions remain consistent.
+22. Missing Components. Add audit logging for feed preference changes, snapshot SLA metrics, and warning codes for degraded states.
+23. Design Changes. Align response structure with design system contracts—distinct sections for pinned, timeline, insights, marketplace.
+24. Design Duplication. Deduplicate snapshot shaping currently mirrored across analytics controllers.
+25. Design framework. Publish an OpenAPI schema documenting new feed primitives and design token crosswalks.
+26. Mobile App Functionality. Provide lightweight payload variants for mobile clients (truncated cards, limited media) while keeping analytics intact.
+27. Mobile App Styling. Supply mobile layout hints (stackedCards, bottomSheetFilters) so Flutter and React clients stay in sync.
+28. Change Checklist Tracker Extensive. Track DTO adoption, metadata enrichment, telemetry, rate limiting, documentation, and rollout coordination.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype enhanced snapshot contract, test with web/Flutter clients, version the endpoint, stage rollout, and retire legacy routes.
+
+Component 2.A.3. backend-nodejs/src/services/timelineHubService.js
+1. Appraisal. timelineHubService.js aggregates audits, jobs, marketplace data with analytics but lacks topic tagging for new front-end filters.
+2. Functionality. Extend data fetchers to include persona/pinned payloads, respect includeOutOfZone/outOfZoneOnly flags, and expose cursors for windowed lists.
+3. Logic Usefulness. Continue computing job insights, urgency indicators, and expiring soon data so clients surface actionable highlights.
+4. Redundancies. Collapse duplicate list normalisation currently shared with feedService into a reusable transformer library.
+5. Placeholders Or non-working functions or stubs. Replace provisional placement fetchers with the production marketing placement service once ready.
+6. Duplicate Functions. Unify computeJobAnalytics and isPostUrgent with shared analytics modules to prevent divergence across services and clients.
+7. Improvements need to make. Add topic classification (wins, playbooks, alerts, events) and persona scoring so UI filter chips stay accurate.
+8. Styling improvements. Provide theming metadata (tone, badge) alongside posts for consistent card rendering.
+9. Effeciency analysis and improvement. Cache snapshot components per persona/zone, parallelise expensive queries, and add circuit breakers for external dependencies.
+10. Strengths to Keep. Preserve aggregated analytics, warning collection, and persona-aware filtering already in place.
+11. Weaknesses to remove. Avoid sequential polling when dependencies support batching; favour cached fallbacks when upstreams fail.
+12. Styling and Colour review changes. Map urgency/compliance signals to standard tone tokens consumed by front-end badges.
+13. Css, orientation, placement and arrangement changes. Emit layout guidance (section order, sticky modules) to keep clients aligned.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Trim description fields, attach snippet lengths, and return localisation keys for pinned summaries.
+15. Text Spacing. Supply spacing tokens (kSpacing24, kSpacing12) so consuming clients maintain rhythm.
+16. Shaping. Include cardType metadata referencing design system shapes (timeline, job, marketplace).
+17. Shadow, hover, glow and effects. Provide interactive hints (hoverElevation, focusOutline) enabling richer clients to apply consistent effects.
+18. Thumbnails. Return responsive image sets and fallback icons for absent avatars/media.
+19. Images and media & Images and media previews. Offer media manifests (type, ratio, duration) enabling carousels, lazy loading, and error handling.
+20. Button styling. Supply CTA descriptors with priority and icon hints to align with slim/primary button styling upstream.
+21. Interactiveness. Publish SSE event descriptors, acknowledgement tokens, and experiment flags to coordinate real-time behaviour.
+22. Missing Components. Add pinned announcement provider integration, feed preference state, and curated highlight modules.
+23. Design Changes. Structure snapshot payload into modular sections (pinned, timeline, insights, marketplace) with consistent keys.
+24. Design Duplication. Align analytics computation with operations dashboards to avoid duplicated metric logic.
+25. Design framework. Document service contract with schema crosswalk to design tokens for front-end designers.
+26. Mobile App Functionality. Offer compressed payload variants (limited media, truncated analytics) for bandwidth-constrained mobile clients.
+27. Mobile App Styling. Embed mobile-specific layout hints (cardDensity, chipPlacement) for Flutter parity.
+28. Change Checklist Tracker Extensive. Plan caching layer rollout, topic tagging, pinned data ingestion, telemetry, QA automation, and documentation updates.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype enhanced service response, run load tests, coordinate controller/client updates, roll out gradually with monitoring, and retire legacy transforms.
+
 16. Marketplace Discovery, Search & Feeds
   16.A. Marketplace Browsing & Merchandising Surfaces
   16.B. Search, Zone Intelligence & Matching

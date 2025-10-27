@@ -204,14 +204,8 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-10 lg:flex-row">
-        <section className="flex-1 space-y-8">
-          <header className="flex items-end justify-between border-b border-slate-200 pb-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Workspace</p>
-              <h1 className="text-2xl font-semibold text-primary">Feed</h1>
-            </div>
-          </header>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 lg:flex-row">
+        <section className="flex-1 space-y-6">
           <LiveFeed />
         </section>
         <aside className="w-full max-w-xs space-y-6 lg:sticky lg:top-10 lg:self-start">
