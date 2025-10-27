@@ -1,462 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Link, Navigate } from 'react-router-dom';
+import {
+  CalendarDaysIcon,
+  ClockIcon,
+  LifebuoyIcon
+} from '@heroicons/react/24/outline';
 import { getProviderDashboard, PanelApiError } from '../api/panelClient.js';
 import Spinner from '../components/ui/Spinner.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
-import StatusPill from '../components/ui/StatusPill.jsx';
 import DashboardShell from '../components/dashboard/DashboardShell.jsx';
-import { WebsitePreferencesSection } from '../features/providerWebsitePreferences/index.js';
-import ServicemanManagementSection from '../features/providerServicemen/ServicemanManagementSection.jsx';
-import WalletSection from '../components/dashboard/wallet/WalletSection.jsx';
-import {
-  CalendarDaysIcon,
-  ChartBarIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  LifebuoyIcon,
-  MapPinIcon,
-  TagIcon,
-  UsersIcon,
-  CheckBadgeIcon
-} from '@heroicons/react/24/outline';
-import { useLocale } from '../hooks/useLocale.js';
 import useRoleAccess from '../hooks/useRoleAccess.js';
 import useSession from '../hooks/useSession.js';
+import { useLocale } from '../hooks/useLocale.js';
 import DashboardRoleGuard from '../components/dashboard/DashboardRoleGuard.jsx';
 import { DASHBOARD_ROLES } from '../constants/dashboardConfig.js';
-import EnterpriseUpgradeSection from '../features/providerControlCentre/enterpriseUpgrade/EnterpriseUpgradeSection.jsx';
-import ServicemanPaymentsSection from '../features/providerPayments/ServicemanPaymentsSection.jsx';
-import { ProviderAdsWorkspace } from '../modules/providerAds/index.js';
-import ToolRentalProvider from '../modules/toolRental/ToolRentalProvider.jsx';
-import ToolRentalWorkspace from '../modules/toolRental/ToolRentalWorkspace.jsx';
-import ProviderCalendarProvider from '../modules/providerCalendar/ProviderCalendarProvider.jsx';
-import ProviderCalendarWorkspace from '../modules/providerCalendar/ProviderCalendarWorkspace.jsx';
-import ToolSalesManagement from '../modules/providerTools/ToolSalesManagement.jsx';
-import { ProviderBookingManagementWorkspace } from '../modules/providerBookingManagement/index.js';
-
-function MetricCard({ icon: Icon, label, value, caption, tone, toneLabel, 'data-qa': dataQa }) {
-  return (
-    <article
-      className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm"
-      data-qa={dataQa}
-    >
-      <header className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{label}</p>
-          <p className="mt-1 text-2xl font-semibold text-primary">{value}</p>
-        </div>
-      </header>
-      {caption ? (
-        <p className="mt-4 text-xs text-slate-500" data-qa={`${dataQa}-caption`}>
-          {caption}
-        </p>
-      ) : null}
-      {tone ? (
-        <div className="mt-4">
-          <StatusPill tone={tone}>{toneLabel}</StatusPill>
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-MetricCard.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.node]).isRequired,
-  caption: PropTypes.node,
-  tone: PropTypes.string,
-  toneLabel: PropTypes.string,
-  'data-qa': PropTypes.string
-};
-
-MetricCard.defaultProps = {
-  caption: null,
-  tone: undefined,
-  toneLabel: undefined,
-  'data-qa': undefined
-};
-
-function AlertBanner({ alert }) {
-  const { t } = useLocale();
-
-  return (
-    <div
-      className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5"
-      role="alert"
-      aria-live="assertive"
-      data-qa={`provider-dashboard-alert-${alert.id}`}
-    >
-      <div className="flex items-start gap-3">
-        <ExclamationTriangleIcon className="mt-1 h-5 w-5 text-amber-500" aria-hidden="true" />
-        <p className="text-sm text-slate-700">{alert.message}</p>
-      </div>
-      {alert.actionHref ? (
-        <Link
-          to={alert.actionHref}
-          className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700"
-        >
-          {alert.actionLabel || t('providerDashboard.alertAction')}
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
-AlertBanner.propTypes = {
-  alert: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    message: PropTypes.string.isRequired,
-    actionHref: PropTypes.string,
-    actionLabel: PropTypes.string
-  }).isRequired
-};
-
-function BookingRow({ booking }) {
-  const { t, format } = useLocale();
-  const etaLabel = booking.eta ? format.dateTime(booking.eta) : t('providerDashboard.bookingsEtaUnknown');
-
-  return (
-    <li
-      className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4"
-      data-qa={`provider-dashboard-booking-${booking.id}`}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold text-primary">{booking.client}</p>
-          <p className="text-xs text-slate-500">{booking.service}</p>
-        </div>
-        {booking.value != null ? (
-          <p className="text-sm font-semibold text-primary">{format.currency(booking.value)}</p>
-        ) : null}
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {etaLabel}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <ChartBarIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {booking.zone}
-        </span>
-      </div>
-    </li>
-  );
-}
-
-BookingRow.propTypes = {
-  booking: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    client: PropTypes.string.isRequired,
-    service: PropTypes.string,
-    value: PropTypes.number,
-    eta: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
-    zone: PropTypes.string
-  }).isRequired
-};
-
-function ServiceHealthCard({ metric }) {
-  const { format } = useLocale();
-
-  let valueLabel;
-  switch (metric.format) {
-    case 'percent':
-    case 'percentage':
-      valueLabel = format.percentage(metric.value ?? 0, { maximumFractionDigits: 0 });
-      break;
-    case 'currency':
-      valueLabel = format.currency(metric.value ?? 0);
-      break;
-    default:
-      valueLabel = format.number(metric.value ?? 0);
-  }
-
-  return (
-    <article className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa={`provider-dashboard-service-metric-${metric.id}`}>
-      <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{metric.label}</p>
-        <p className="mt-2 text-2xl font-semibold text-primary">{valueLabel}</p>
-      </div>
-      {metric.caption ? <p className="mt-4 text-xs text-slate-500">{metric.caption}</p> : null}
-      {metric.target != null ? (
-        <p className="mt-2 text-[0.7rem] uppercase tracking-[0.25em] text-slate-400">Target • {format.number(metric.target)}</p>
-      ) : null}
-    </article>
-  );
-}
-
-ServiceHealthCard.propTypes = {
-  metric: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    label: PropTypes.string.isRequired,
-    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    caption: PropTypes.string,
-    format: PropTypes.string,
-    target: PropTypes.number
-  }).isRequired
-};
-
-function resolveRiskTone(risk) {
-  const value = typeof risk === 'string' ? risk.toLowerCase() : '';
-  if (value.includes('critical') || value.includes('risk')) return 'danger';
-  if (value.includes('warning') || value.includes('watch')) return 'warning';
-  if (value.includes('hold') || value.includes('paused')) return 'info';
-  return 'success';
-}
-
-function ServiceDeliveryColumn({ column }) {
-  const { format, t } = useLocale();
-
-  return (
-    <div className="flex h-full min-h-[18rem] flex-col rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm" data-qa={`provider-dashboard-delivery-column-${column.id}`}>
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{t('providerDashboard.serviceDeliveryStage')}</p>
-          <h3 className="mt-1 text-lg font-semibold text-primary">{column.title}</h3>
-        </div>
-        <StatusPill tone="neutral">{column.items.length}</StatusPill>
-      </header>
-      {column.description ? <p className="mt-2 text-xs text-slate-500">{column.description}</p> : null}
-      <ul className="mt-4 flex-1 space-y-3 overflow-y-auto">
-        {column.items.length === 0 ? (
-          <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-4 text-sm text-slate-500">
-            {t('providerDashboard.serviceDeliveryEmpty')}
-          </li>
-        ) : (
-          column.items.map((item) => {
-            const eta = item.eta ? format.dateTime(item.eta) : t('providerDashboard.serviceDeliveryEtaPending');
-            const valueLabel = item.value != null ? format.currency(item.value, { currency: item.currency || 'GBP' }) : null;
-            const tone = resolveRiskTone(item.risk);
-
-            return (
-              <li
-                key={item.id}
-                className="space-y-2 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
-                data-qa={`provider-dashboard-delivery-item-${item.id}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{item.name}</p>
-                    <p className="text-xs text-slate-500">{item.client}</p>
-                  </div>
-                  <StatusPill tone={tone}>{item.risk || t('providerDashboard.serviceDeliveryOnTrack')}</StatusPill>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-                    {t('providerDashboard.serviceDeliveryEta', { date: eta })}
-                  </span>
-                  {item.zone ? (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPinIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-                      {item.zone}
-                    </span>
-                  ) : null}
-                  <span className="inline-flex items-center gap-1">
-                    <UsersIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-                    {item.owner}
-                  </span>
-                  {valueLabel ? <span className="inline-flex items-center gap-1 text-primary font-semibold">{valueLabel}</span> : null}
-                </div>
-                {item.services?.length ? (
-                  <div className="flex flex-wrap gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-primary/60">
-                    {item.services.map((service) => (
-                      <span key={service} className="rounded-full bg-primary/5 px-3 py-1">
-                        {service}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </li>
-            );
-          })
-        )}
-      </ul>
-    </div>
-  );
-}
-
-ServiceDeliveryColumn.propTypes = {
-  column: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    title: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    items: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        name: PropTypes.string.isRequired,
-        client: PropTypes.string,
-        risk: PropTypes.string,
-        eta: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
-        zone: PropTypes.string,
-        owner: PropTypes.string,
-        value: PropTypes.number,
-        currency: PropTypes.string,
-        services: PropTypes.arrayOf(PropTypes.string)
-      })
-    ).isRequired
-  }).isRequired
-};
-
-function ServicePackageCard({ pkg }) {
-  const { format, t } = useLocale();
-  const priceLabel = pkg.price != null ? format.currency(pkg.price, { currency: pkg.currency || 'GBP' }) : t('common.notAvailable');
-
-  return (
-    <article className="flex h-full flex-col justify-between rounded-3xl border border-primary/10 bg-primary/5 p-6 shadow-sm" data-qa={`provider-dashboard-package-${pkg.id}`}>
-      <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-primary/70">{t('providerDashboard.servicePackageLabel')}</p>
-        <h3 className="mt-2 text-lg font-semibold text-primary">{pkg.name}</h3>
-        <p className="mt-2 text-sm text-slate-600">{pkg.description}</p>
-      </div>
-      {pkg.highlights?.length ? (
-        <ul className="mt-4 space-y-2 text-sm text-primary">
-          {pkg.highlights.map((highlight) => (
-            <li key={highlight} className="flex items-start gap-2">
-              <CheckBadgeIcon className="mt-1 h-4 w-4" aria-hidden="true" />
-              <span>{highlight}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <div className="mt-6 text-sm font-semibold text-primary/90">{priceLabel}</div>
-      {pkg.serviceName ? (
-        <p className="mt-2 text-[0.7rem] uppercase tracking-[0.3em] text-slate-400">
-          {t('providerDashboard.servicePackageLinkedService', { name: pkg.serviceName })}
-        </p>
-      ) : null}
-    </article>
-  );
-}
-
-ServicePackageCard.propTypes = {
-  pkg: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    name: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    price: PropTypes.number,
-    currency: PropTypes.string,
-    highlights: PropTypes.arrayOf(PropTypes.string),
-    serviceName: PropTypes.string
-  }).isRequired
-};
-
-function ServiceCategoryCard({ category }) {
-  const { format, t } = useLocale();
-  const performanceLabel = category.performance != null ? format.percentage(category.performance, { maximumFractionDigits: 0 }) : null;
-
-  return (
-    <article className="space-y-3 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm" data-qa={`provider-dashboard-category-${category.id}`}>
-      <header>
-        <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{category.type}</p>
-        <h3 className="mt-1 text-lg font-semibold text-primary">{category.label}</h3>
-      </header>
-      {category.description ? <p className="text-sm text-slate-600">{category.description}</p> : null}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <TagIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {t('providerDashboard.serviceCategoryServices', { count: category.activeServices })}
-        </span>
-        {performanceLabel ? (
-          <span className="inline-flex items-center gap-1 text-primary font-semibold">
-            <ChartBarIcon className="h-4 w-4" aria-hidden="true" />
-            {performanceLabel}
-          </span>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
-ServiceCategoryCard.propTypes = {
-  category: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    type: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    performance: PropTypes.number,
-    activeServices: PropTypes.number
-  }).isRequired
-};
-
-function ServiceCatalogueCard({ service }) {
-  const { format, t } = useLocale();
-  const priceLabel = service.price != null ? format.currency(service.price, { currency: service.currency || 'GBP' }) : t('common.notAvailable');
-  const availabilityLabel = service.availability?.detail
-    ? t('providerDashboard.serviceAvailabilityScheduled', { date: format.dateTime(service.availability.detail) })
-    : service.availability?.label || t('providerDashboard.serviceAvailabilityDefault');
-
-  return (
-    <li className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm" data-qa={`provider-dashboard-catalogue-${service.id}`}>
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary/60">{service.type}</p>
-          <h3 className="mt-1 text-lg font-semibold text-primary">{service.name}</h3>
-        </div>
-        <span className="text-sm font-semibold text-primary">{priceLabel}</span>
-      </header>
-      <p className="text-sm text-slate-600">{service.description}</p>
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <TagIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {service.category}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <ClockIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-          {availabilityLabel}
-        </span>
-      </div>
-      {service.tags?.length ? (
-        <div className="flex flex-wrap gap-2">
-          {service.tags.slice(0, 4).map((tag) => (
-            <span key={tag} className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-primary/70">
-              {tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      {service.coverage?.length ? (
-        <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-          {service.coverage.slice(0, 4).map((zone) => (
-            <span key={zone} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1">
-              <MapPinIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-              {zone}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </li>
-  );
-}
-
-ServiceCatalogueCard.propTypes = {
-  service: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    type: PropTypes.string,
-    name: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    category: PropTypes.string,
-    price: PropTypes.number,
-    currency: PropTypes.string,
-    availability: PropTypes.shape({
-      detail: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
-      label: PropTypes.string
-    }),
-    tags: PropTypes.arrayOf(PropTypes.string),
-    coverage: PropTypes.arrayOf(PropTypes.string)
-  }).isRequired
-};
+import TabbedSection from './providerDashboard/components/TabbedSection.jsx';
+import ProviderDashboardTheme from './providerDashboard/components/ProviderDashboardTheme.jsx';
+import { createOverviewTabs } from './providerDashboard/sections/overview.jsx';
+import { createOperationsTabs } from './providerDashboard/sections/operations.jsx';
+import { createCommerceTabs } from './providerDashboard/sections/commerce.jsx';
+import { createWorkspaceTabs } from './providerDashboard/sections/workspace.jsx';
+import { resolveRiskTone } from './providerDashboard/utils.js';
 
 export default function ProviderDashboard() {
   const { t, format } = useLocale();
   const { role, hasAccess } = useRoleAccess(['provider'], { allowFallbackRoles: ['admin'] });
   const session = useSession();
   const providerRoleMeta = useMemo(
-    () => DASHBOARD_ROLES.find((role) => role.id === 'provider') || null,
+    () => DASHBOARD_ROLES.find((item) => item.id === 'provider') || null,
     []
   );
   const [state, setState] = useState({ loading: true, data: null, meta: null, error: null });
@@ -506,7 +77,6 @@ export default function ProviderDashboard() {
   useEffect(() => {
     if (!hasAccess) {
       setState((current) => ({ ...current, loading: false }));
-      return;
     }
   }, [hasAccess]);
 
@@ -567,153 +137,158 @@ export default function ProviderDashboard() {
 
   const hasCalendarAccess = Boolean(state.meta?.companyId);
 
-  const navigation = useMemo(() => {
-    const items = [
+  const spotlightItems = useMemo(() => {
+    const items = [];
+
+    if (bookings.length) {
+      const sortedBookings = [...bookings].sort((a, b) => {
+        const valueDifference = (b.value ?? 0) - (a.value ?? 0);
+        if (valueDifference !== 0) {
+          return valueDifference;
+        }
+        const aTime = a.eta ? new Date(a.eta).getTime() : Number.POSITIVE_INFINITY;
+        const bTime = b.eta ? new Date(b.eta).getTime() : Number.POSITIVE_INFINITY;
+        return aTime - bTime;
+      });
+      const topBooking = sortedBookings[0];
+      const bookingMeta = [
+        topBooking.value != null ? format.currency(topBooking.value) : null,
+        topBooking.eta ? format.dateTime(topBooking.eta) : null
+      ]
+        .filter(Boolean)
+        .join(' • ');
+
+      items.push({
+        id: 'spotlight-booking',
+        icon: CalendarDaysIcon,
+        eyebrow: t('providerDashboard.spotlight.bookingEyebrow'),
+        title: topBooking.client,
+        meta: bookingMeta,
+        description: t('providerDashboard.spotlight.bookingDescription', { service: topBooking.service }),
+        tone: 'success',
+        toneLabel: t('providerDashboard.spotlight.status.positive')
+      });
+    }
+
+    const flaggedDeliveries = deliveryBoard
+      .flatMap((column) =>
+        column.items.map((item) => ({
+          ...item,
+          columnTitle: column.title,
+          tone: resolveRiskTone(item.risk)
+        }))
+      )
+      .filter((item) => item.tone === 'danger' || item.tone === 'warning')
+      .sort((a, b) => {
+        if (a.tone === 'danger' && b.tone !== 'danger') return -1;
+        if (b.tone === 'danger' && a.tone !== 'danger') return 1;
+        const aTime = a.eta ? new Date(a.eta).getTime() : Number.POSITIVE_INFINITY;
+        const bTime = b.eta ? new Date(b.eta).getTime() : Number.POSITIVE_INFINITY;
+        return aTime - bTime;
+      });
+
+    if (flaggedDeliveries.length) {
+      const delivery = flaggedDeliveries[0];
+      const deliveryMeta = [delivery.columnTitle, delivery.eta ? format.dateTime(delivery.eta) : null]
+        .filter(Boolean)
+        .join(' • ');
+
+      items.push({
+        id: 'spotlight-delivery',
+        icon: ClockIcon,
+        eyebrow: t('providerDashboard.spotlight.deliveryEyebrow'),
+        title: delivery.name,
+        meta: deliveryMeta,
+        description: t('providerDashboard.spotlight.deliveryDescription', {
+          client: delivery.client,
+          owner: delivery.owner
+        }),
+        tone: delivery.tone,
+        toneLabel:
+          delivery.tone === 'danger'
+            ? t('providerDashboard.spotlight.status.action')
+            : t('providerDashboard.spotlight.status.warning')
+      });
+    }
+
+    const complianceTimeline = [...compliance]
+      .filter((item) => item.expiresOn)
+      .sort((a, b) => new Date(a.expiresOn).getTime() - new Date(b.expiresOn).getTime());
+
+    if (complianceTimeline.length) {
+      const nextCompliance = complianceTimeline[0];
+      items.push({
+        id: 'spotlight-compliance',
+        icon: LifebuoyIcon,
+        eyebrow: t('providerDashboard.spotlight.complianceEyebrow'),
+        title: nextCompliance.name,
+        meta: format.date(nextCompliance.expiresOn),
+        description: t('providerDashboard.spotlight.complianceDescription', { owner: nextCompliance.owner }),
+        tone: 'warning',
+        toneLabel: t('providerDashboard.spotlight.status.warning')
+      });
+    } else if (compliance.length) {
+      const fallbackCompliance = compliance[0];
+      items.push({
+        id: 'spotlight-compliance',
+        icon: LifebuoyIcon,
+        eyebrow: t('providerDashboard.spotlight.complianceEyebrow'),
+        title: fallbackCompliance.name,
+        meta: t('providerDashboard.spotlight.complianceNoDate'),
+        description: t('providerDashboard.spotlight.complianceDescription', { owner: fallbackCompliance.owner }),
+        tone: 'info',
+        toneLabel: t('providerDashboard.spotlight.status.positive')
+      });
+    }
+
+    return items.slice(0, 3);
+  }, [bookings, compliance, deliveryBoard, format, t]);
+
+  const storefrontSummary = useMemo(() => {
+    if (!toolSales) {
+      return { stats: [], topListing: null };
+    }
+
+    const summary = toolSales.summary || {};
+    const stats = [
       {
-        id: 'provider-dashboard-kpis',
-        label: t('providerDashboard.metricsHeadline'),
-        description: t('providerDashboard.nav.metrics')
+        id: 'storefront-published',
+        label: t('providerDashboard.storefront.stats.published'),
+        value: format.number(summary.published ?? 0),
+        caption: t('providerDashboard.storefront.stats.totalListings', {
+          value: format.number(summary.totalListings ?? 0)
+        })
       },
       {
-        id: 'provider-dashboard-revenue',
-        label: t('providerDashboard.revenueHeadline'),
-        description: t('providerDashboard.nav.revenue')
-      },
-      servicemanFinance
-        ? {
-            id: 'provider-dashboard-serviceman-payments',
-            label: t('providerPayments.headline'),
-            description: t('providerPayments.navDescription')
-          }
-        : null,
-      walletSection
-        ? {
-            id: walletSection.id || 'provider-dashboard-wallet',
-            label: t('providerDashboard.walletHeadline'),
-            description: t('providerDashboard.nav.wallet')
-          }
-        : null,
-      alerts.length > 0
-        ? {
-            id: 'provider-dashboard-alerts',
-            label: t('providerDashboard.alertsHeadline'),
-            description: t('providerDashboard.nav.alerts')
-          }
-        : null,
-      {
-        id: 'provider-dashboard-tool-rentals',
-        label: 'Tool hire & rentals',
-        description: 'Manage hire catalogue, pricing, and deposits'
+        id: 'storefront-draft',
+        label: t('providerDashboard.storefront.stats.drafts'),
+        value: format.number(summary.draft ?? 0),
+        caption: t('providerDashboard.storefront.stats.coupons', {
+          value: format.number(summary.activeCoupons ?? 0)
+        })
       },
       {
-        id: 'provider-dashboard-pipeline',
-        label: t('providerDashboard.pipelineHeadline'),
-        description: t('providerDashboard.nav.pipeline')
+        id: 'storefront-inventory',
+        label: t('providerDashboard.storefront.stats.inventory'),
+        value: format.number(summary.totalQuantity ?? 0),
+        caption: t('providerDashboard.storefront.stats.inventoryCaption')
       },
       {
-        id: 'provider-dashboard-booking-management',
-        label: 'Booking management',
-        description: 'Dispatch, scheduling, and SLA guardrails'
-      },
-      serviceHealth.length
-        ? {
-            id: 'provider-dashboard-service-health',
-            label: t('providerDashboard.serviceHealthHeadline'),
-            description: t('providerDashboard.nav.serviceHealth')
-          }
-        : null,
-      hasCalendarAccess
-        ? {
-            id: 'provider-dashboard-calendar',
-            label: t('providerDashboard.calendarHeadline'),
-            description: t('providerDashboard.nav.calendar')
-          }
-        : null,
-      deliveryBoard.length
-        ? {
-            id: 'provider-dashboard-service-delivery',
-            label: t('providerDashboard.serviceDeliveryHeadline'),
-            description: t('providerDashboard.nav.serviceDelivery')
-          }
-        : null,
-      servicePackages.length
-        ? {
-            id: 'provider-dashboard-service-packages',
-            label: t('providerDashboard.servicePackagesHeadline'),
-            description: t('providerDashboard.nav.servicePackages')
-          }
-        : null,
-      serviceCategories.length
-        ? {
-            id: 'provider-dashboard-service-categories',
-            label: t('providerDashboard.serviceCategoriesHeadline'),
-            description: t('providerDashboard.nav.serviceCategories')
-          }
-        : null,
-      {
-        id: 'provider-dashboard-tool-sales',
-        label: t('providerDashboard.toolSalesHeadline'),
-        description: t('providerDashboard.nav.toolSales')
-      },
-      serviceCatalogue.length
-        ? {
-            id: 'provider-dashboard-service-catalogue',
-            label: t('providerDashboard.serviceCatalogueHeadline'),
-            description: t('providerDashboard.nav.serviceCatalogue')
-          }
-        : null,
-      hasAdsWorkspace
-        ? {
-            id: 'provider-dashboard-ads',
-            label: 'Gigvora ads',
-            description: 'Campaigns, creatives, and targeting'
-          }
-        : null,
-      {
-        id: 'provider-dashboard-enterprise-upgrade',
-        label: t('providerDashboard.enterpriseUpgradeHeadline'),
-        description: t('providerDashboard.nav.enterpriseUpgrade')
-      },
-      {
-        id: 'provider-dashboard-website-preferences',
-        label: t('providerDashboard.websitePreferencesHeadline'),
-        description: t('providerDashboard.nav.websitePreferences')
-      },
-      {
-        id: 'provider-dashboard-servicemen',
-        label: t('providerDashboard.servicemenHeadline'),
-        description: t('providerDashboard.nav.servicemen')
+        id: 'storefront-suspended',
+        label: t('providerDashboard.storefront.stats.suspended'),
+        value: format.number(summary.suspended ?? 0),
+        caption: t('providerDashboard.storefront.stats.suspendedCaption')
       }
     ];
 
-    return items.filter(Boolean);
-  }, [
-    alerts.length,
-    deliveryBoard.length,
-    hasAdsWorkspace,
-    hasCalendarAccess,
-    serviceCatalogue.length,
-    serviceCategories.length,
-    serviceHealth.length,
-    servicePackages.length,
-    servicemanFinance,
-    t,
-    walletSection
-  ]);
+    const listings = Array.isArray(toolSales.listings) ? toolSales.listings : [];
+    const topListing = listings
+      .slice()
+      .sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
+      .shift();
 
-  const heroBadges = useMemo(
-    () => [
-      {
-        tone: heroStatusTone,
-        label: t('common.slaStatus', { value: format.percentage(metrics?.slaHitRate ?? 0) })
-      },
-      {
-        tone: 'info',
-        label: t('common.utilisationStatus', { value: format.percentage(metrics?.utilisation ?? 0) })
-      }
-    ],
-    [format, heroStatusTone, metrics?.slaHitRate, metrics?.utilisation, t]
-  );
+    return { stats, topListing: topListing || null };
+  }, [format, toolSales, t]);
 
   const snapshotTime = state.meta?.generatedAt ? format.dateTime(state.meta.generatedAt) : null;
 
@@ -736,21 +311,35 @@ export default function ProviderDashboard() {
     ? provider?.onboardingStatus ?? t('providerDashboard.onboardingStatus.active')
     : onboardingTranslation;
 
+  const heroBadges = useMemo(
+    () => [
+      {
+        tone: heroStatusTone,
+        label: t('common.slaStatus', { value: format.percentage(metrics?.slaHitRate ?? 0) })
+      },
+      {
+        tone: 'info',
+        label: t('common.utilisationStatus', { value: format.percentage(metrics?.utilisation ?? 0) })
+      }
+    ],
+    [format, heroStatusTone, metrics?.slaHitRate, metrics?.utilisation, t]
+  );
+
   const heroAside = (
-    <>
+    <div className="provider-dashboard__aside provider-dashboard__aside--end">
       <Link
         to="/provider/storefront"
-        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
+        className="provider-dashboard__button provider-dashboard__button--outline text-sm"
       >
         {t('providerDashboard.storefrontCta')}
       </Link>
       <Link
         to={`/providers/${provider?.slug ?? 'featured'}`}
-        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+        className="provider-dashboard__button provider-dashboard__button--primary text-sm"
       >
         {t('providerDashboard.businessFrontCta')}
       </Link>
-      <div className="flex flex-col items-start gap-1 text-xs text-slate-500 lg:items-end lg:text-right">
+      <div className="flex flex-col gap-1 text-xs text-[var(--provider-text-secondary)]">
         {provider?.supportEmail ? (
           <span>{t('providerDashboard.supportEmail', { email: provider.supportEmail })}</span>
         ) : null}
@@ -759,7 +348,7 @@ export default function ProviderDashboard() {
         ) : null}
         {snapshotTime ? <span>{t('providerDashboard.snapshotGenerated', { time: snapshotTime })}</span> : null}
       </div>
-    </>
+    </div>
   );
 
   const sidebarMeta = [
@@ -783,6 +372,137 @@ export default function ProviderDashboard() {
       value: snapshotTime
     });
   }
+
+  const tabGroups = useMemo(() => {
+    const groups = [];
+
+    const overviewTabs = createOverviewTabs({
+      t,
+      format,
+      metrics,
+      heroStatusTone,
+      spotlightItems,
+      revenue,
+      bookings,
+      compliance,
+      alerts,
+      snapshotTime
+    });
+
+    if (overviewTabs.length) {
+      groups.push({
+        id: 'provider-dashboard-overview',
+        heading: t('providerDashboard.groups.overview.title'),
+        description: t('providerDashboard.groups.overview.description'),
+        tabs: overviewTabs
+      });
+    }
+
+    const operationsTabs = createOperationsTabs({
+      t,
+      serviceHealth,
+      deliveryBoard,
+      servicePackages,
+      serviceCategories,
+      calendarInitialSnapshot,
+      hasCalendarAccess,
+      companyId,
+      renderToolRental: Boolean(companyId),
+      renderCalendarSection
+    });
+
+    if (operationsTabs.length) {
+      groups.push({
+        id: 'provider-dashboard-operations',
+        heading: t('providerDashboard.groups.operations.title'),
+        description: t('providerDashboard.groups.operations.description'),
+        tabs: operationsTabs
+      });
+    }
+
+    const commerceTabs = createCommerceTabs({
+      t,
+      format,
+      storefrontSummary,
+      serviceCatalogue,
+      toolSales,
+      hasAdsWorkspace,
+      adsCompanyId,
+      adsWorkspace
+    });
+
+    if (commerceTabs.length) {
+      groups.push({
+        id: 'provider-dashboard-commerce',
+        heading: t('providerDashboard.groups.commerce.title'),
+        description: t('providerDashboard.groups.commerce.description'),
+        tabs: commerceTabs
+      });
+    }
+
+    const servicemenCompanyId = state.meta?.companyId ?? provider?.id ?? null;
+    const workspaceTabs = createWorkspaceTabs({
+      t,
+      servicemanFinance,
+      walletSection,
+      provider,
+      servicemenCompanyId,
+      loadDashboard,
+      websitePreferences,
+      handleWebsitePreferencesUpdated,
+      enterpriseUpgrade
+    });
+
+    if (workspaceTabs.length) {
+      groups.push({
+        id: 'provider-dashboard-workspace',
+        heading: t('providerDashboard.groups.workspace.title'),
+        description: t('providerDashboard.groups.workspace.description'),
+        tabs: workspaceTabs
+      });
+    }
+
+    return groups;
+  }, [
+    adsCompanyId,
+    adsWorkspace,
+    alerts,
+    bookings,
+    calendarInitialSnapshot,
+    compliance,
+    companyId,
+    deliveryBoard,
+    enterpriseUpgrade,
+    format,
+    handleWebsitePreferencesUpdated,
+    hasAdsWorkspace,
+    hasCalendarAccess,
+    heroStatusTone,
+    loadDashboard,
+    metrics,
+    provider,
+    revenue,
+    serviceCatalogue,
+    serviceCategories,
+    serviceHealth,
+    servicePackages,
+    servicemanFinance,
+    spotlightItems,
+    storefrontSummary,
+    t,
+    walletSection,
+    websitePreferences
+  ]);
+
+  const navigation = useMemo(
+    () =>
+      tabGroups.map((group) => ({
+        id: group.id,
+        label: group.heading,
+        description: group.description
+      })),
+    [tabGroups]
+  );
 
   if (!session.isAuthenticated) {
     return <Navigate to="/login" replace state={{ redirectTo: '/provider/dashboard' }} />;
@@ -811,320 +531,51 @@ export default function ProviderDashboard() {
           description: t('providerDashboard.sidebarDescription'),
           meta: sidebarMeta
         }}
+        contentClassName="provider-dashboard-shell"
+        fullWidth
       >
-        {state.loading ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label={t('common.loading')}>
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-36 rounded-3xl" />
-            ))}
-          </div>
-        ) : null}
-
-        {!state.loading && state.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-5" role="alert">
-            <p className="text-sm font-semibold text-rose-600">{t('providerDashboard.errorSummary')}</p>
-            <p className="mt-1 text-xs text-rose-500">
-              {state.error.message}
-              {state.meta?.fallback ? ` — ${t('providerDashboard.errorFallbackHint')}` : ''}
-            </p>
-          </div>
-        ) : null}
-
-        <section id="provider-dashboard-kpis" aria-labelledby="provider-dashboard-kpis" className="space-y-6">
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.metricsHeadline')}</h2>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40"
-              onClick={() => loadDashboard({ forceRefresh: true })}
-            >
-              <ClockIcon className="h-4 w-4" aria-hidden="true" /> {t('providerDashboard.refresh')}
-            </button>
-          </header>
-
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4" data-qa="provider-dashboard-kpi-grid">
-            <MetricCard
-              icon={ClockIcon}
-              label={t('providerDashboard.metricFirstResponse')}
-              value={t('providerDashboard.metricResponseValue', {
-                value: format.number(metrics?.avgResponseMinutes ?? 0, { maximumFractionDigits: 0 })
-              })}
-              caption={t('providerDashboard.metricCaptionResponse')}
-              data-qa="provider-dashboard-metric-response"
-            />
-            <MetricCard
-              icon={ChartBarIcon}
-              label={t('providerDashboard.metricActiveBookings')}
-              value={format.number(metrics?.activeBookings ?? 0)}
-              caption={t('providerDashboard.metricCaptionBookings')}
-              data-qa="provider-dashboard-metric-bookings"
-            />
-            <MetricCard
-              icon={UsersIcon}
-              label={t('providerDashboard.metricUtilisation')}
-              value={format.percentage(metrics?.utilisation ?? 0)}
-              caption={t('providerDashboard.metricCaptionUtilisation')}
-              tone={heroStatusTone}
-              toneLabel={t(heroStatusTone === 'danger' || heroStatusTone === 'warning' ? 'common.actionRequired' : 'common.onTrack')}
-              data-qa="provider-dashboard-metric-utilisation"
-            />
-            <MetricCard
-              icon={LifebuoyIcon}
-              label={t('providerDashboard.metricAverageRating')}
-              value={t('providerDashboard.metricSatisfactionValue', {
-                value: format.number(Math.round((metrics?.satisfaction ?? 0) * 100))
-              })}
-              caption={t('providerDashboard.metricCaptionRating')}
-              data-qa="provider-dashboard-metric-satisfaction"
-            />
-          </div>
-        </section>
-
-        <section id="provider-dashboard-revenue" aria-labelledby="provider-dashboard-revenue" className="space-y-4">
-          <header className="flex items-center gap-3">
-            <ChartBarIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.revenueHeadline')}</h2>
-          </header>
-          <div className="grid gap-6 md:grid-cols-3">
-            <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-mtd">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueMonthToDate')}</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.monthToDate ?? 0)}</p>
-            </article>
-            <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-forecast">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueForecast')}</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.forecast ?? 0)}</p>
-            </article>
-            <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm" data-qa="provider-dashboard-revenue-outstanding">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('providerDashboard.revenueOutstanding')}</p>
-              <p className="mt-3 text-2xl font-semibold text-primary">{format.currency(revenue?.outstandingBalance ?? 0)}</p>
-              {revenue?.nextPayoutDate ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  {t('providerDashboard.nextPayout', { date: format.date(revenue.nextPayoutDate) })}
-                </p>
-              ) : null}
-            </article>
-          </div>
-        </section>
-
-        {servicemanFinance ? (
-          <ServicemanPaymentsSection
-            initialWorkspace={servicemanFinance}
-            companyId={servicemanFinance.companyId || provider?.companyId || provider?.id || null}
-            onRefresh={() => loadDashboard({ forceRefresh: true })}
-          />
-        ) : null}
-        {walletSection ? <WalletSection section={walletSection} /> : null}
-
-        {alerts.length > 0 ? (
-          <section id="provider-dashboard-alerts" aria-labelledby="provider-dashboard-alerts" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.alertsHeadline')}</h2>
-            </header>
-            <div className="space-y-3">
-              {alerts.map((alert) => (
-                <AlertBanner key={alert.id} alert={alert} />
+        <ProviderDashboardTheme as="div" className="provider-dashboard">
+          {state.loading ? (
+            <div className="provider-dashboard__grid" aria-label={t('common.loading')}>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  className="h-40 w-full rounded-[var(--provider-radius-md)] bg-white/10 backdrop-blur"
+                />
               ))}
             </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {companyId ? (
-          <ToolRentalProvider companyId={companyId}>
-            <ToolRentalWorkspace />
-          </ToolRentalProvider>
-        ) : null}
-
-        {companyId ? (
-          <section
-            id="provider-dashboard-booking-management"
-            aria-labelledby="provider-dashboard-booking-management"
-            className="space-y-4"
-          >
-            <header className="flex items-center gap-3">
-              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <div>
-                <h2 className="text-lg font-semibold text-primary">Booking management</h2>
-                <p className="text-xs text-slate-500">
-                  Dispatch crews, update schedules, and manage SLA guardrails from the provider command centre.
-                </p>
-              </div>
-            </header>
-            <ProviderBookingManagementWorkspace companyId={companyId} />
-          </section>
-        ) : null}
-
-        <section id="provider-dashboard-pipeline" aria-labelledby="provider-dashboard-pipeline" className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4">
-            <header className="flex items-center gap-3">
-              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.pipelineBookings')}</h2>
-            </header>
-            <ul className="space-y-3">
-              {bookings.length === 0 ? (
-                <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                  {t('providerDashboard.emptyBookings')}
-                </li>
-              ) : (
-                bookings.map((booking) => <BookingRow key={booking.id} booking={booking} />)
-              )}
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <header className="flex items-center gap-3">
-              <LifebuoyIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.pipelineCompliance')}</h2>
-            </header>
-            <ul className="space-y-3">
-              {compliance.length === 0 ? (
-                <li className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                  {t('providerDashboard.allComplianceHealthy')}
-                </li>
-              ) : (
-                compliance.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4"
-                    data-qa={`provider-dashboard-compliance-${item.id}`}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-primary">{item.name}</p>
-                      <p className="text-xs text-slate-500">{t('providerDashboard.complianceOwner', { name: item.owner })}</p>
-                    </div>
-                    <StatusPill tone="warning">
-                      {item.expiresOn
-                        ? t('providerDashboard.complianceExpires', { date: format.date(item.expiresOn) })
-                        : t('providerDashboard.complianceExpiresSoon')}
-                    </StatusPill>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </section>
-
-        {serviceHealth.length ? (
-          <section id="provider-dashboard-service-health" aria-labelledby="provider-dashboard-service-health" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <ChartBarIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceHealthHeadline')}</h2>
-            </header>
-            <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-4">
-              {serviceHealth.map((metric) => (
-                <ServiceHealthCard key={metric.id} metric={metric} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {renderCalendarSection ? (
-          <section id="provider-dashboard-calendar" aria-labelledby="provider-dashboard-calendar" className="space-y-4">
-            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <CalendarDaysIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+          {!state.loading && state.error ? (
+            <div className="provider-dashboard__section provider-dashboard__section--muted" role="alert">
+              <div className="provider-dashboard__section-header">
                 <div>
-                  <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.calendarHeadline')}</h2>
-                  <p className="text-xs text-slate-500">{t('providerDashboard.calendarDescription')}</p>
+                  <p className="provider-dashboard__card-label text-rose-200">
+                    {t('providerDashboard.errorSummary')}
+                  </p>
+                  <p className="provider-dashboard__card-meta text-rose-200/80">
+                    {state.error.message}
+                    {state.meta?.fallback ? ` — ${t('providerDashboard.errorFallbackHint')}` : ''}
+                  </p>
                 </div>
               </div>
-            </header>
-            <ProviderCalendarProvider initialSnapshot={calendarInitialSnapshot ?? {}}>
-              <ProviderCalendarWorkspace />
-            </ProviderCalendarProvider>
-          </section>
-        ) : null}
-
-        {deliveryBoard.length ? (
-          <section id="provider-dashboard-service-delivery" aria-labelledby="provider-dashboard-service-delivery" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <ClockIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceDeliveryHeadline')}</h2>
-            </header>
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-              {deliveryBoard.map((column) => (
-                <ServiceDeliveryColumn key={column.id} column={column} />
-              ))}
             </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {servicePackages.length ? (
-          <section id="provider-dashboard-service-packages" aria-labelledby="provider-dashboard-service-packages" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <LifebuoyIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.servicePackagesHeadline')}</h2>
-            </header>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {servicePackages.map((pkg) => (
-                <ServicePackageCard key={pkg.id} pkg={pkg} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {serviceCategories.length ? (
-          <section id="provider-dashboard-service-categories" aria-labelledby="provider-dashboard-service-categories" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <TagIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceCategoriesHeadline')}</h2>
-            </header>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {serviceCategories.map((category) => (
-                <ServiceCategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <div id="provider-dashboard-tool-sales" className="space-y-6">
-          <ToolSalesManagement initialData={toolSales} />
-        </div>
-
-        {serviceCatalogue.length ? (
-          <section id="provider-dashboard-service-catalogue" aria-labelledby="provider-dashboard-service-catalogue" className="space-y-4">
-            <header className="flex items-center gap-3">
-              <UsersIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-primary">{t('providerDashboard.serviceCatalogueHeadline')}</h2>
-            </header>
-            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {serviceCatalogue.map((service) => (
-                <ServiceCatalogueCard key={service.id} service={service} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        <WebsitePreferencesSection
-          provider={provider}
-          initialPreferences={websitePreferences}
-          onUpdated={handleWebsitePreferencesUpdated}
-        />
-        <EnterpriseUpgradeSection
-          upgrade={enterpriseUpgrade}
-          onRefresh={() => loadDashboard({ forceRefresh: true })}
-        />
-        {hasAdsWorkspace ? (
-          <section id="provider-dashboard-ads" aria-labelledby="provider-dashboard-ads-heading" className="space-y-6">
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 id="provider-dashboard-ads-heading" className="text-lg font-semibold text-primary">
-                  Gigvora ads & campaigns
-                </h2>
-                <p className="text-sm text-slate-600">
-                  Build campaigns, curate creatives, and manage placement strategy without leaving the provider workspace.
-                </p>
+          {tabGroups.map((group) => (
+            <section key={group.id} id={group.id} className="provider-dashboard__section">
+              <div className="provider-dashboard__section-header">
+                <div>
+                  <h2 className="provider-dashboard__section-heading">{group.heading}</h2>
+                  {group.description ? (
+                    <p className="provider-dashboard__section-description">{group.description}</p>
+                  ) : null}
+                </div>
               </div>
-            </header>
-            <ProviderAdsWorkspace companyId={adsCompanyId} initialData={adsWorkspace} />
-          </section>
-        ) : null}
-
-        <section id="provider-dashboard-servicemen" aria-labelledby="provider-dashboard-servicemen" className="space-y-4">
-          <ServicemanManagementSection
-            companyId={state.meta?.companyId ?? provider?.id ?? null}
-            onRefresh={() => loadDashboard({ forceRefresh: true })}
-          />
-        </section>
+              <TabbedSection heading={group.heading} description={group.description} tabs={group.tabs} />
+            </section>
+          ))}
+        </ProviderDashboardTheme>
       </DashboardShell>
 
       {state.loading && !state.data ? (
@@ -1136,4 +587,3 @@ export default function ProviderDashboard() {
     </div>
   );
 }
-

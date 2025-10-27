@@ -214,7 +214,10 @@ export default function DashboardShell({
   heroAside,
   navigation,
   sidebar,
-  children
+  children,
+  maxWidthClassName,
+  contentClassName,
+  fullWidth
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(navigation[0]?.id ?? null);
@@ -270,13 +273,20 @@ export default function DashboardShell({
     setMobileOpen(false);
   };
 
+  const widthClassName = clsx(
+    'w-full',
+    fullWidth ? '' : 'mx-auto',
+    fullWidth ? 'max-w-none' : maxWidthClassName
+  );
+  const contentWrapperClassName = clsx(widthClassName, contentClassName);
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar sidebar={sidebarConfig} navigation={navigation} activeSection={activeSection} onNavigate={handleNavigate} />
 
       <main className="relative flex-1">
         <div className="border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="mx-auto max-w-6xl px-6 py-6 lg:py-10">
+          <div className={clsx(widthClassName, 'px-6 py-6 lg:py-10')}>
             <div className="mb-6 flex items-center justify-between lg:hidden">
               <button
                 type="button"
@@ -315,7 +325,7 @@ export default function DashboardShell({
         </div>
 
         <div className="px-6 py-10">
-          <div className="mx-auto max-w-6xl space-y-12">{children}</div>
+          <div className={contentWrapperClassName}>{children}</div>
         </div>
       </main>
 
@@ -348,7 +358,10 @@ DashboardShell.propTypes = {
     meta: PropTypes.array,
     extra: PropTypes.node
   }),
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
+  maxWidthClassName: PropTypes.string,
+  contentClassName: PropTypes.string,
+  fullWidth: PropTypes.bool
 };
 
 DashboardShell.defaultProps = {
@@ -356,5 +369,8 @@ DashboardShell.defaultProps = {
   subtitle: null,
   heroBadges: null,
   heroAside: null,
-  sidebar: {}
+  sidebar: {},
+  maxWidthClassName: 'max-w-6xl',
+  contentClassName: 'space-y-12',
+  fullWidth: false
 };

@@ -1016,6 +1016,7 @@ function normaliseProviderDashboard(payload = {}) {
   const ads = normaliseProviderAds(root.ads || {});
 
   const providerDetails = {
+    id: provider.id || root.providerId || root.id || null,
     name: provider.legalName || provider.name || 'Provider',
     tradingName: provider.tradingName || provider.displayName || provider.legalName || provider.name,
     region: provider.region || provider.operatingRegion || 'United Kingdom',
@@ -3834,6 +3835,7 @@ const fallbackCalendarBookings = [
 
 const providerFallback = normaliseProviderDashboard({
   provider: {
+    id: 'metro-power-services',
     legalName: 'Metro Power Services',
     tradingName: 'Metro Power Services',
     region: 'London & South East',
@@ -3935,7 +3937,7 @@ const providerFallback = normaliseProviderDashboard({
       }
     ]
   },
-  serviceManagement: {
+  serviceDelivery: {
     health: [
       {
         id: 'service-health-sla',
@@ -3943,9 +3945,16 @@ const providerFallback = normaliseProviderDashboard({
         value: 0.97,
         format: 'percent',
         caption: 'Rolling 30 day'
+      },
+      {
+        id: 'service-health-utilisation',
+        label: 'Crew utilisation',
+        value: 0.82,
+        format: 'percent',
+        caption: 'Active assignments'
       }
     ],
-    deliveryBoard: [
+    board: [
       {
         id: 'pipeline-prep',
         title: 'Preparation',
@@ -3964,12 +3973,94 @@ const providerFallback = normaliseProviderDashboard({
             services: ['Critical power maintenance']
           }
         ]
+      },
+      {
+        id: 'pipeline-delivery',
+        title: 'In delivery',
+        description: 'Crews on-site executing scope.',
+        items: [
+          {
+            id: 'delivery-northbank',
+            name: 'Northbank HVAC retrofit',
+            client: 'Northbank Serviced Offices',
+            eta: new Date(Date.now() + 2 * 86400000).toISOString(),
+            owner: 'Field ops',
+            risk: 'warning',
+            stage: 'In delivery',
+            value: 4200,
+            currency: 'GBP',
+            services: ['HVAC emergency call-out']
+          }
+        ]
       }
-    ],
-    packages: [],
-    categories: [],
-    catalogue: []
+    ]
   },
+  servicePackages: [
+    {
+      id: 'package-critical-support',
+      name: 'Critical infrastructure support',
+      description: 'Dedicated crew rotation, telemetry reporting, and concierge logistics.',
+      price: 3600,
+      currency: 'GBP',
+      highlights: ['24/7 dispatch', 'Proactive maintenance', 'Telemetry insights'],
+      serviceId: 'catalogue-critical-power',
+      serviceName: 'Critical power maintenance'
+    },
+    {
+      id: 'package-hvac-surge',
+      name: 'HVAC surge response',
+      description: 'Emergency HVAC remediation with temporary climate control assets.',
+      price: 2200,
+      currency: 'GBP',
+      highlights: ['Rapid triage', 'Temporary cooling assets', 'Compliance reporting'],
+      serviceId: 'catalogue-hvac-emergency',
+      serviceName: 'Emergency HVAC response'
+    }
+  ],
+  serviceCategories: [
+    {
+      id: 'category-power-energy',
+      label: 'Power & energy',
+      type: 'specialist',
+      description: 'Generator maintenance, UPS management, and power quality services.',
+      activeServices: 6,
+      performance: 0.91
+    },
+    {
+      id: 'category-hvac',
+      label: 'HVAC & climate',
+      type: 'operations',
+      description: 'Commercial HVAC retrofits, emergency cooling, and air quality management.',
+      activeServices: 4,
+      performance: 0.88
+    }
+  ],
+  serviceCatalogue: [
+    {
+      id: 'catalogue-critical-power',
+      name: 'Critical power maintenance',
+      description: 'Preventative maintenance and 24/7 response for mission critical estates.',
+      category: 'Power & energy',
+      type: 'field-services',
+      price: 4200,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'Available', detail: 'Priority scheduling within 48h' },
+      tags: ['critical-power', 'maintenance'],
+      coverage: ['London', 'South East']
+    },
+    {
+      id: 'catalogue-hvac-emergency',
+      name: 'Emergency HVAC response',
+      description: 'Rapid HVAC diagnostics and temporary climate control deployment.',
+      category: 'HVAC',
+      type: 'field-services',
+      price: 1800,
+      currency: 'GBP',
+      availability: { status: 'open', label: 'On-call', detail: 'Crew dispatch within 2 hours' },
+      tags: ['hvac', 'emergency'],
+      coverage: ['London', 'Surrey']
+    }
+  ],
   websitePreferences: {
     hero: {
       headline: 'Telemetry-backed critical power specialists',

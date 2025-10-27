@@ -1,0 +1,93 @@
+export const providerDashboardThemes = {
+  aurora: {
+    background:
+      'radial-gradient(circle at 18% 20%, rgba(91, 124, 250, 0.24), transparent 55%), radial-gradient(circle at 82% 12%, rgba(34, 211, 238, 0.22), transparent 45%), radial-gradient(circle at 50% 82%, rgba(245, 182, 66, 0.18), transparent 52%), linear-gradient(135deg, #0b1224 0%, #111b2b 40%, #070b14 100%)',
+    surface: 'rgba(15, 23, 42, 0.82)',
+    surfaceMuted: 'rgba(17, 27, 43, 0.72)',
+    surfaceCard: 'rgba(15, 23, 42, 0.78)',
+    border: 'rgba(148, 163, 184, 0.28)',
+    borderStrong: 'rgba(148, 163, 184, 0.44)',
+    accent: '#5b7cfa',
+    accentStrong: '#4361ee',
+    accentSoft: 'rgba(91, 124, 250, 0.18)',
+    glow: '0 32px 80px -48px rgba(59, 130, 246, 0.6)',
+    shadow: '0 30px 80px -48px rgba(15, 23, 42, 0.85)',
+    blur: '28px',
+    radiusLg: '28px',
+    radiusMd: '20px',
+    radiusSm: '14px',
+    gridGap: 'clamp(1.5rem, 1.4vw + 1rem, 2.75rem)',
+    sectionGap: 'clamp(2.25rem, 2vw + 1.5rem, 3.5rem)',
+    cardPadding: 'clamp(1.5rem, 1.4vw + 1rem, 2.4rem)',
+    sectionPadding: 'clamp(1.75rem, 1.2vw + 1.25rem, 2.8rem)',
+    labelTracking: '0.3em',
+    labelSize: '0.7rem',
+    textPrimary: '#f8fafc',
+    textSecondary: 'rgba(226, 232, 240, 0.78)',
+    textMuted: 'rgba(148, 163, 184, 0.72)',
+    headingWeight: '700',
+    borderDashed: 'rgba(148, 163, 184, 0.2)'
+  },
+  daybreak: {
+    background:
+      'radial-gradient(circle at 8% 18%, rgba(91, 124, 250, 0.08), transparent 48%), radial-gradient(circle at 92% 12%, rgba(34, 211, 238, 0.12), transparent 52%), linear-gradient(135deg, rgba(241, 245, 255, 0.95) 0%, rgba(226, 248, 255, 0.92) 45%, rgba(244, 243, 255, 0.96) 100%)',
+    surface: 'rgba(255, 255, 255, 0.9)',
+    surfaceMuted: 'rgba(245, 247, 255, 0.88)',
+    surfaceCard: 'rgba(255, 255, 255, 0.92)',
+    border: 'rgba(148, 163, 184, 0.25)',
+    borderStrong: 'rgba(30, 64, 175, 0.32)',
+    accent: '#3b82f6',
+    accentStrong: '#1d4ed8',
+    accentSoft: 'rgba(59, 130, 246, 0.12)',
+    glow: '0 35px 90px -55px rgba(37, 99, 235, 0.38)',
+    shadow: '0 28px 72px -48px rgba(30, 64, 175, 0.25)',
+    blur: '24px',
+    radiusLg: '28px',
+    radiusMd: '20px',
+    radiusSm: '14px',
+    gridGap: 'clamp(1.5rem, 1.2vw + 1.25rem, 2.6rem)',
+    sectionGap: 'clamp(2.25rem, 1.6vw + 1.75rem, 3.25rem)',
+    cardPadding: 'clamp(1.5rem, 1vw + 1.1rem, 2.2rem)',
+    sectionPadding: 'clamp(1.75rem, 1.1vw + 1.2rem, 2.6rem)',
+    labelTracking: '0.28em',
+    labelSize: '0.72rem',
+    textPrimary: '#0f172a',
+    textSecondary: 'rgba(30, 41, 59, 0.82)',
+    textMuted: 'rgba(51, 65, 85, 0.66)',
+    headingWeight: '700',
+    borderDashed: 'rgba(191, 219, 254, 0.6)'
+  }
+};
+
+export function getProviderDashboardCssVariables(variant = 'aurora') {
+  const theme = providerDashboardThemes[variant] ?? providerDashboardThemes.aurora;
+
+  return {
+    '--provider-bg': theme.background,
+    '--provider-surface': theme.surface,
+    '--provider-surface-muted': theme.surfaceMuted,
+    '--provider-surface-card': theme.surfaceCard,
+    '--provider-border': theme.border,
+    '--provider-border-strong': theme.borderStrong,
+    '--provider-accent': theme.accent,
+    '--provider-accent-strong': theme.accentStrong,
+    '--provider-accent-soft': theme.accentSoft,
+    '--provider-glow': theme.glow,
+    '--provider-shadow': theme.shadow,
+    '--provider-blur': theme.blur,
+    '--provider-radius-lg': theme.radiusLg,
+    '--provider-radius-md': theme.radiusMd,
+    '--provider-radius-sm': theme.radiusSm,
+    '--provider-grid-gap': theme.gridGap,
+    '--provider-section-gap': theme.sectionGap,
+    '--provider-card-padding': theme.cardPadding,
+    '--provider-section-padding': theme.sectionPadding,
+    '--provider-label-tracking': theme.labelTracking,
+    '--provider-label-size': theme.labelSize,
+    '--provider-text-primary': theme.textPrimary,
+    '--provider-text-secondary': theme.textSecondary,
+    '--provider-text-muted': theme.textMuted,
+    '--provider-heading-weight': theme.headingWeight,
+    '--provider-border-dashed': theme.borderDashed
+  };
+}
