@@ -1,7 +1,7 @@
 Contents
 1. Public Experience & Marketing
   1.A. Landing & Hero Surfaces
-  1.B. Navigation & Global Shell
+  1.B. Navigation & Global Shell ✅
   1.C. Authentication & Onboarding
 2. Member Engagement & Social Experience
   2.A. Timeline & Feed
@@ -70,6 +70,142 @@ Contents
   18.C. Disputes, Reviews & Reputation Systems
   18.D. Rentals, Tool Sales & Supply Chain Finance
 
+
+Main Category: 1. Public Experience & Marketing
+Sub categories:
+1.A. Landing & Hero Surfaces
+1.B. Navigation & Global Shell ✅
+1.C. Authentication & Onboarding
+
+Components (each individual component):
+1.B.1. frontend-reactjs/src/components/Header.jsx
+1.B.2. frontend-reactjs/src/constants/globalShellConfig.js
+1.B.3. frontend-reactjs/src/components/navigation/GlobalMobileDock.jsx
+1.B.4. frontend-reactjs/src/App.jsx
+
+Component 1.B.1. frontend-reactjs/src/components/Header.jsx
+1. Appraisal. Header.jsx anchors the public experience by blending brand identity, primary navigation, quick links, and an intelligence-driven command bar; preserve that polished enterprise feel.
+2. Functionality. Ensure the command bar routes queries through the search view, gracefully handles empty submissions, closes the mobile drawer on submit, and keeps suggestion buttons wired.
+3. Logic Usefulness. Keep persona-aware navigation fed by session dashboards so authenticated users see workspace shortcuts while guests get conversion-focused CTAs.
+4. Redundancies. Do not redefine navigation arrays inline—consume builder utilities so the header stays a presentation layer.
+5. Placeholders Or non-working functions or stubs. Replace temporary notification or inbox previews with real data sources or hide them until contracts are available.
+6. Duplicate Functions. Reuse shared helpers for menu disclosure and mobile links; avoid forking desktop vs mobile logic that diverges over time.
+7. Improvements need to make. Instrument analytics for command searches, quick link taps, and account menu opens to power personalization experiments.
+8. Styling improvements. Maintain the dual-row glassmorphism aesthetic with balanced paddings, refined typography, and modern iconography reminiscent of leading social apps.
+9. Effeciency analysis and improvement. Memoise navigation arrays, keep suggestion objects stable, and guard against re-renders when locale, dashboards, or auth state stay unchanged.
+10. Strengths to Keep. Retain the mega-menu, contextual account menu, responsive language selector, and cohesive avatar presentation added here.
+11. Weaknesses to remove. Prevent the return of verbose helper copy, inconsistent icon sizing, or hidden controls that previously confused operators.
+12. Styling and Colour review changes. Align backgrounds, borders, and accent gradients with brand tokens while maintaining WCAG AA contrast in all states.
+13. Css, orientation, placement and arrangement changes. Ensure the grid scales elegantly—meganav columns, command bar, and quick links must stack on tablets and expand on widescreens.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep labels action-oriented, avoid duplicate descriptors, and position helper copy immediately below its control.
+15. Text Spacing. Preserve generous spacing between header tiers and maintain a 24px rhythm between quick link cards for readability.
+16. Shaping. Sustain rounded-full buttons, pill suggestions, and soft-corner cards that align with design tokens.
+17. Shadow, hover, glow and effects. Use subtle hover lifts and glow outlines to communicate focus without overwhelming the composition.
+18. Thumbnails. Keep icon capsules consistent at 40–48px with accessible aria labels and alt text equivalents.
+19. Images and media & Images and media previews. Serve high-resolution logo and avatar assets with fallbacks for slow networks.
+20. Button styling. Ensure primary CTAs like the command search button remain slim, high-contrast, and keyboard accessible while secondary pills stay outlined.
+21. Interactiveness. Preserve keyboard shortcut handling for '/', focus outlines, escape-to-close behaviours, and focus trapping within popovers.
+22. Missing Components. Plan optional global alerts, persona switchers, or notification counts without overcrowding the shell.
+23. Design Changes. Continue aligning header patterns with the global design system so future surfaces inherit the same rhythm and voice.
+24. Design Duplication. Share primitives like MobileLink, CommandBar, and QuickLinks with other shells instead of cloning implementations.
+25. Design framework. Document guest, authenticated, and loading states in the design kit with annotated specs.
+26. Mobile App Functionality. Guarantee mobile drawers, command bar focus, and swipe gestures work with touch and screen readers alike.
+27. Mobile App Styling. Maintain generous tap targets, lighter borders, and stacked quick links on narrow viewports.
+28. Change Checklist Tracker Extensive. Track analytics wiring, accessibility audits, localization updates, and regression tests whenever the header evolves.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype enhancements in Storybook, validate with usability labs, ship behind feature flags, monitor engagement metrics, and iterate quickly.
+
+Component 1.B.2. frontend-reactjs/src/constants/globalShellConfig.js
+1. Appraisal. globalShellConfig centralises command suggestions, quick links, and mobile dock data to keep navigation sources consistent.
+2. Functionality. Ensure builders accept translators and auth state so they output localized labels and accurate destinations every render.
+3. Logic Usefulness. Curate suggestion queries and quick link descriptions to reflect current marketplace priorities and high-signal destinations.
+4. Redundancies. Avoid hard-coding duplicate arrays in components—import these helpers instead of redefining structures.
+5. Placeholders Or non-working functions or stubs. Remove placeholder text or demo queries once analytics-backed insights are ready.
+6. Duplicate Functions. Extend these builders when new personas emerge rather than forking similar logic elsewhere.
+7. Improvements need to make. Add optional metadata for personalization weights, telemetry identifiers, and experiment flags without coupling consumers.
+8. Styling improvements. Map each link to deliberate iconography so visual cues remain meaningful and brand-aligned.
+9. Effeciency analysis and improvement. Return stable arrays by reusing icon references and simple object literals to keep memoised consumers efficient.
+10. Strengths to Keep. Preserve clear separation between command suggestions, quick links, and mobile dock groups.
+11. Weaknesses to remove. Eliminate magic strings for labels or queries—route everything through translation keys or configuration.
+12. Styling and Colour review changes. Document intended accent colours per link so downstream components style them consistently.
+13. Css, orientation, placement and arrangement changes. Provide activeMatch hints so UI layers can highlight the correct item without reimplementing heuristics.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep descriptions under 90 characters to prevent wrapping on compact cards.
+15. Text Spacing. Order arrays in the preferred layout sequence to guarantee consistent spacing expectations.
+16. Shaping. Note icon container sizing requirements (48px) for downstream components to honour.
+17. Shadow, hover, glow and effects. Supply optional urgency or emphasis markers should future experiments require differentiated hover states.
+18. Thumbnails. Provide fallback icon assignments for resilience if default Heroicons change.
+19. Images and media & Images and media previews. Flag routes that rely on imagery so preview cards can fetch thumbnails responsibly.
+20. Button styling. Mark which links should present as primary vs secondary CTAs on mobile versus desktop shells.
+21. Interactiveness. Expose optional badge counts or ARIA labels when notification numbers are available for a link.
+22. Missing Components. Reserve hooks for upcoming modules like knowledge base or live support without bloating current arrays.
+23. Design Changes. Coordinate updates with design system maintainers whenever icons, order, or grouping logic shift.
+24. Design Duplication. Reference these helpers in backend schema documentation to avoid conflicting navigation definitions.
+25. Design framework. Document the builder API—input parameters, output shape, and optional fields—in the design handbook.
+26. Mobile App Functionality. Ensure dock builders respect unauthenticated states, offline-friendly routes, and minimal data usage for mobile clients.
+27. Mobile App Styling. Supply shorter label alternatives if truncation is necessary on very small screens.
+28. Change Checklist Tracker Extensive. Log translation updates, analytics instrumentation, QA scenarios, and rollout notes whenever arrays change.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype new navigation sets, validate with user testing, align copywriting, stage behind feature toggles, and monitor adoption metrics before full release.
+
+Component 1.B.3. frontend-reactjs/src/components/navigation/GlobalMobileDock.jsx
+1. Appraisal. GlobalMobileDock.jsx delivers a native-like bottom navigation for mobile browsers, mirroring premium social experiences.
+2. Functionality. Keep active states responsive to both NavLink matching and activeMatch prefixes so highlights stay accurate.
+3. Logic Usefulness. Dynamically swap authenticated links (messages, hub) and guest CTAs without rewriting the component.
+4. Redundancies. Do not duplicate dock markup elsewhere—import this component wherever a bottom nav is required.
+5. Placeholders Or non-working functions or stubs. Exclude stubbed badges or icons; display only routes backed by real functionality.
+6. Duplicate Functions. Source nav item definitions from globalShellConfig to keep iconography and labels in sync.
+7. Improvements need to make. Add optional badge counts or status dots for notifications and alerts as telemetry matures.
+8. Styling improvements. Maintain the translucent backdrop, subtle shadow, and rounded navigation pills that deliver premium polish.
+9. Effeciency analysis and improvement. Accept pre-built link arrays and remain a pure component to keep memoisation effective.
+10. Strengths to Keep. Retain responsive grid sizing, icon-plus-label stacking, and accessible aria-labels.
+11. Weaknesses to remove. Avoid cramped spacing, low contrast text, or inconsistent icon sizing that hurt tap accuracy.
+12. Styling and Colour review changes. Align active and inactive colours with brand tokens while preserving strong contrast outdoors.
+13. Css, orientation, placement and arrangement changes. Ensure the dock respects safe areas, avoids overlapping system bars, and stays fixed.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep labels short and descriptive; use sr-only text when hiding copy for compact screens.
+15. Text Spacing. Maintain balanced spacing between icons and labels to prevent mis-taps.
+16. Shaping. Preserve rounded-2xl pills consistent with mobile design tokens.
+17. Shadow, hover, glow and effects. Use gentle elevation for active items and avoid heavy glows.
+18. Thumbnails. If avatars or custom icons are introduced, enforce consistent bounding boxes and fallbacks.
+19. Images and media & Images and media previews. Optimise icons for retina displays and ensure crisp rendering on high-density screens.
+20. Button styling. Guarantee minimum 44x44 touch areas and visible focus outlines for keyboard navigation.
+21. Interactiveness. Support future long-press menus or haptic cues without breaking existing behaviour.
+22. Missing Components. Leave room for optional floating action buttons or quick create controls without obscuring dock items.
+23. Design Changes. Coordinate with design when adding personas or altering link order so mobile patterns stay cohesive.
+24. Design Duplication. Share this component across marketing shells and microsites rather than recreating similar docks.
+25. Design framework. Document props, expected states, and responsive behaviour in the design system library.
+26. Mobile App Functionality. Validate dock behaviour within iOS/Android webviews, honouring safe-area insets and orientation changes.
+27. Mobile App Styling. Adjust typography scaling for dynamic text sizes and prepare dark-mode palettes.
+28. Change Checklist Tracker Extensive. Track QA across major devices, analytics wiring, accessibility audits, and release comms when dock links evolve.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype with user cohorts, run A/B tests on link order, roll out gradually, and monitor engagement metrics post-launch.
+
+Component 1.B.4. frontend-reactjs/src/App.jsx
+1. Appraisal. App.jsx orchestrates routing, shell selection, and layout composition for public versus dashboard experiences.
+2. Functionality. Ensure non-dashboard routes receive the full global shell—header, mobile dock, and contextual footer—while dashboards remain focused.
+3. Logic Usefulness. Keep dashboard path detection current, including nested roles, so experiences are classified correctly.
+4. Redundancies. Avoid duplicating layout wrappers inside page components; rely on App.jsx to provide shared chrome.
+5. Placeholders Or non-working functions or stubs. Remove temporary routes or dev previews before production or gate them behind environment checks.
+6. Duplicate Functions. Reuse shared ProtectedRoute helpers; never reimplement auth gating per page.
+7. Improvements need to make. Introduce segmented suspense boundaries, streaming data hydration, and skeleton states for high-traffic pages.
+8. Styling improvements. Maintain gradient backgrounds on marketing routes, neutral palettes on dashboards, and consistent padding accommodating the dock.
+9. Effeciency analysis and improvement. Memoise dock links, keep route arrays outside render scope, and lazy-load heavy admin surfaces.
+10. Strengths to Keep. Retain SkipToContent, error boundaries, floating chat launcher, and consent banner for accessibility and compliance.
+11. Weaknesses to remove. Prevent route sprawl and ensure developer-only previews stay confined to development builds.
+12. Styling and Colour review changes. Coordinate background tokens with design so shell transitions remain cohesive.
+13. Css, orientation, placement and arrangement changes. Apply bottom padding when the mobile dock is present to avoid overlapping content.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Centralise marketing copy so route metadata stays consistent across channels.
+15. Text Spacing. Ensure footers, banners, and the dock stack with adequate spacing on mobile screens.
+16. Shaping. Preserve the minimal outer container with soft edges that reflect brand guidelines.
+17. Shadow, hover, glow and effects. Control drop shadows for floating elements like chat launchers to avoid conflicts with the dock.
+18. Thumbnails. When hero or preview imagery is introduced, lazy-load assets to protect initial render performance.
+19. Images and media & Images and media previews. Coordinate hero imagery per route to prefetch critical assets without blocking interactivity.
+20. Button styling. Keep route-level CTAs aligned with header/footer design language across marketing funnels.
+21. Interactiveness. Maintain smooth navigation transitions, preserve scroll position where appropriate, and log analytics for route changes.
+22. Missing Components. Plan for future global modals or announcements that can be slotted in without coupling to individual pages.
+23. Design Changes. Align layout toggles and gradients with seasonal campaigns or brand refreshes.
+24. Design Duplication. Expose layout primitives to microfrontends so they embed seamlessly rather than recreating skeletons.
+25. Design framework. Document route taxonomy, shell variants, and wrapper expectations in design handoffs.
+26. Mobile App Functionality. Confirm header, dock, and chat launcher operate within mobile webviews and honour safe areas.
+27. Mobile App Styling. Provide responsive spacing tokens so marketing pages feel curated on phones and tablets.
+28. Change Checklist Tracker Extensive. Update sitemap, analytics goals, QA scripts, and release notes whenever routes shift.
+29. Full Upgrade Plan & Release Steps  Extensive. Pilot new shell experiences with beta cohorts, monitor KPIs, gather qualitative feedback, and roll out globally with support playbooks.
 
 Main Category: 16. Marketplace Discovery, Search & Feeds
 Sub categories:
