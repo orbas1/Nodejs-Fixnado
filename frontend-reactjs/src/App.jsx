@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import clsx from 'clsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import SkipToContent from './components/accessibility/SkipToContent.jsx';
@@ -12,6 +13,8 @@ import AdminProtectedRoute from './components/auth/AdminProtectedRoute.jsx';
 import ProviderProtectedRoute from './components/auth/ProviderProtectedRoute.jsx';
 import ServicemanProtectedRoute from './components/auth/ServicemanProtectedRoute.jsx';
 import ConsentBanner from './components/legal/ConsentBanner.jsx';
+import GlobalMobileDock from './components/navigation/GlobalMobileDock.jsx';
+import { buildMobileDockLinks } from './constants/globalShellConfig.js';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -69,7 +72,6 @@ const AdminBlog = lazy(() => import('./pages/AdminBlog.jsx'));
 const AdminZones = lazy(() => import('./pages/AdminZones.jsx'));
 const AdminLegal = lazy(() => import('./pages/AdminLegal.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
-const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings.jsx'));
 const CustomerSettingsDevPreview = import.meta.env.DEV
@@ -130,12 +132,16 @@ function App() {
   const location = useLocation();
   const { isAuthenticated } = useSession();
   const isDashboardExperience = location.pathname.startsWith('/dashboards');
+  const mobileDockLinks = useMemo(
+    () => buildMobileDockLinks({ t, isAuthenticated }),
+    [isAuthenticated, t]
+  );
 
   return (
     <div className={`min-h-screen flex flex-col ${isDashboardExperience ? 'bg-slate-50' : 'gradient-bg'}`}>
       <SkipToContent />
       {!isDashboardExperience && <Header />}
-      <main className="flex-1" id="main-content">
+      <main className={clsx('flex-1', !isDashboardExperience && 'pb-28 lg:pb-0')} id="main-content">
         <Suspense
           fallback={
             <div
@@ -294,6 +300,7 @@ function App() {
           </RouteErrorBoundary>
         </Suspense>
       </main>
+      {!isDashboardExperience && <GlobalMobileDock links={mobileDockLinks} />}
       {!isDashboardExperience && !isAuthenticated && <Footer />}
       <FloatingChatLauncher isAuthenticated={isAuthenticated} />
       <ConsentBanner />
