@@ -8,7 +8,7 @@ Contents
   2.B. Connections & Mentors
   2.C. Profile & Identity
 3. Provider & Enterprise Workflows
-  3.A. Provider Dashboard & Storefront
+  3.A. Provider Dashboard & Storefront ✓
   3.B. Enterprise Panel & Operations
 4. Administrative & Governance Consoles
   4.A. Admin Dashboards & Management
@@ -157,6 +157,104 @@ Component 2.A.3. backend-nodejs/src/services/timelineHubService.js
 27. Mobile App Styling. Embed mobile-specific layout hints (cardDensity, chipPlacement) for Flutter parity.
 28. Change Checklist Tracker Extensive. Plan caching layer rollout, topic tagging, pinned data ingestion, telemetry, QA automation, and documentation updates.
 29. Full Upgrade Plan & Release Steps  Extensive. Prototype enhanced service response, run load tests, coordinate controller/client updates, roll out gradually with monitoring, and retire legacy transforms.
+
+Components (each individual component):
+3.A.1. frontend-reactjs/src/pages/ProviderDashboard.jsx
+3.A.2. frontend-reactjs/src/pages/ProviderStorefront.jsx
+3.A.3. backend-nodejs/src/services/panelService.js
+
+Component 3.A.1. frontend-reactjs/src/pages/ProviderDashboard.jsx
+1. Appraisal. ProviderDashboard.jsx now anchors the provider workspace with hero badges, a new operator spotlight, and storefront pulse surfaces that match premium social dashboards.
+2. Functionality. Spotlight cards synthesise booking, delivery, and compliance data via memoised selectors so high-value work and risks appear instantly with resilient fallbacks.
+3. Logic Usefulness. Derived helpers sort bookings by value/urgency, flatten delivery lanes, and surface earliest compliance expiries so operators focus on signal over noise.
+4. Redundancies. Avoid reintroducing ad-hoc alert grids or duplicate KPI components; the spotlight and storefront stats replace prior ad hoc summaries.
+5. Placeholders Or non-working functions or stubs. Remove any TODO CTA placeholders before merging—every quick action should link to live workspaces or be temporarily hidden.
+6. Duplicate Functions. Reuse shared currency/percentage formatters; do not fork bespoke helpers when format.number and format.currency already wrap locale-aware logic.
+7. Improvements need to make. Layer saved views for spotlight priorities, allow operators to pin specific campaigns, and surface team-level insights alongside company metrics.
+8. Styling improvements. Maintain the airy card grid, consistent 24px radii, and the provider-dashboard glassmorphism theme tokens (surface, blur, accent) so the dashboard feels as curated as LinkedIn or Instagram analytics.
+9. Effeciency analysis and improvement. Memoise derived spotlight/storefront payloads, guard array sorts behind length checks, and keep re-render surfaces lightweight to sustain 60 fps interactions.
+10. Strengths to Keep. Retain hero badges, revenue trio, wallet integrations, and modular workspaces (calendar, rentals, ads) that make this hub comprehensive.
+11. Weaknesses to remove. Eliminate verbose lorem copy, dated block buttons, and the old stacked alert lists that crowded the fold.
+12. Styling and Colour review changes. Use the provider-dashboard CSS variables for tones and CTA outlines so the palette remains cohesive across light/dark themes.
+13. Css, orientation, placement and arrangement changes. Maintain the responsive 12-column provider-dashboard-shell grid, honour the new span utilities, and ensure spotlight/storefront sections collapse elegantly on tablets.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep copy concise with action verbs (“Prepare resources”, “Open storefront workspace”) and avoid duplicating label phrasing.
+15. Text Spacing. Preserve the 24px rhythm between sections and consistent internal padding to avoid the cramped legacy layout.
+16. Shaping. Continue using pill CTAs, rounded stat capsules, and slim status chips aligned with global tokens.
+17. Shadow, hover, glow and effects. Keep hover lifts subtle (~4px) and remove heavy glows that previously dated the interface.
+18. Thumbnails. When adding media (e.g., crew avatars, listing previews) ensure 1.5:1 or 1:1 ratios with blurred placeholders to prevent layout shift.
+19. Images and media & Images and media previews. Integrate gallery/lightbox modules for campaign or storefront media without blocking critical metrics.
+20. Button styling. Use slim outlined pills for secondary CTAs, primary filled pills for high-intent flows, and maintain visible focus outlines.
+21. Interactiveness. Wire analytics drilldowns, quick filters, and keyboard shortcuts so heavy operators can triage without leaving the hero surface.
+22. Missing Components. Add persona analytics, follow-ups queue, and integration health indicators to rival enterprise social suites.
+23. Design Changes. Evolve toward sticky insight rails plus scrollable modules, mirroring modern network dashboards while retaining enterprise voice.
+24. Design Duplication. Centralise card primitives (MetricCard, SpotlightCard, StorefrontStatCard) for reuse across provider consoles to avoid drift.
+25. Design framework. Document the new sections (spotlight, storefront pulse) with responsive specs and tone tokens inside the design system.
+26. Mobile App Functionality. Ensure spotlight and storefront stats collapse into stacked cards with tappable CTAs and offline-friendly caching.
+27. Mobile App Styling. Increase tap targets to 48 px, adopt stacked chips, and keep typography legible on smaller handsets.
+28. Change Checklist Tracker Extensive. Track analytics instrumentation, localisation sync, QA automation, documentation, and release messaging whenever the dashboard evolves.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype updates in Figma, validate with provider councils, stage behind feature flags, roll out progressively, and monitor engagement telemetry.
+
+Component 3.A.2. frontend-reactjs/src/pages/ProviderStorefront.jsx
+1. Appraisal. ProviderStorefront.jsx presents performance, listings intelligence, playbooks, and activity timelines; it must feel like a best-in-class marketplace console.
+2. Functionality. Ensure navigation tabs, refresh controls, and workspace components gracefully handle offline caches and retry flows without blank states.
+3. Logic Usefulness. Keep listing stats contextual with conversion, duration, revenue, and badge visibility surfaced above the fold for fast triage.
+4. Redundancies. Remove any duplicated metric cards that already exist in the dashboard pulse; storefront should reference shared primitives to stay aligned.
+5. Placeholders Or non-working functions or stubs. Replace “coming soon” actions with real workspace routes or hide until the API is shipped.
+6. Duplicate Functions. Route all tone, status, and badge rendering through shared utilities so storefront and dashboard share the same semantics.
+7. Improvements need to make. Introduce saved filters, cohort analysis, and zoning overlays to rival the discovery tools of social marketplaces.
+8. Styling improvements. Maintain balanced grid spacing, soft backgrounds, and typography hierarchy comparable to LinkedIn Sales Navigator, using the ProviderDashboardTheme daybreak variant for glass surfaces.
+9. Effeciency analysis and improvement. Virtualise long listing tables, debounce filter changes, and cache timeline events to keep the UI responsive.
+10. Strengths to Keep. Hero compliance/conversion badges, listing intelligence, and operational playbooks are critical differentiators—preserve them.
+11. Weaknesses to remove. Retire verbose helper paragraphs, redundant status chips, and inconsistent padding that dilute the premium feel.
+12. Styling and Colour review changes. Align badge, pill, and card tones with provider dashboard tokens for seamless transitions between workspaces.
+13. Css, orientation, placement and arrangement changes. Ensure tab navigation stays sticky, analytics cards align to the provider-dashboard-shell 12-column grid, and timeline items maintain consistent gutters.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Keep copy action-oriented, highlight metrics before prose, and avoid repeated label phrasing across sections.
+15. Text Spacing. Preserve generous spacing (24px vertical, 16px interior) to avoid the cramped legacy table layout.
+16. Shaping. Continue using 24px card radii, pill-shaped chips, and rounded CTA buttons aligned with design tokens.
+17. Shadow, hover, glow and effects. Apply modern hover lifts and subtle focus rings; remove heavy drop shadows around listing panels.
+18. Thumbnails. Ensure listing thumbnails, deal carousels, and hero imagery load with consistent ratios and retina assets.
+19. Images and media & Images and media previews. Provide lazy-loaded media viewers with fallback art to avoid blank panels during slow fetches.
+20. Button styling. Keep primary CTAs bold and compact, with tertiary pills for filters and inline actions.
+21. Interactiveness. Add quick actions (feature listing, pause listing, share link) and keyboard navigation to keep power users efficient.
+22. Missing Components. Integrate sentiment snapshots, moderation queue summaries, and partner feedback widgets to rival global storefront tooling.
+23. Design Changes. Introduce sticky insight rails and modular sections so operators can dock metrics while scrolling listings.
+24. Design Duplication. Extract shared listing analytics cards used across dashboards to prevent style drift.
+25. Design framework. Document storefront states—draft, pending, live, suspended—inside the design system with tone references.
+26. Mobile App Functionality. Offer condensed cards, filter sheets, and offline caches so providers can manage storefronts on the go.
+27. Mobile App Styling. Enlarge tap targets, adopt stacked metrics, and ensure typography scales gracefully on mobile devices.
+28. Change Checklist Tracker Extensive. Track RBAC enforcement, analytics instrumentation, localisation, QA automation, and release comms whenever storefront evolves.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype enhancements, run provider usability sessions, iterate, launch behind rollout toggles, and monitor adoption metrics.
+
+Component 3.A.3. backend-nodejs/src/services/panelService.js
+1. Appraisal. panelService.js orchestrates dashboard payloads; it must emit curated spotlight/storefront data to back the new premium UI.
+2. Functionality. Ensure booking, delivery, compliance, and tool sales queries expose value, ETA, and metadata required by spotlight and storefront modules.
+3. Logic Usefulness. Keep derived metrics (utilisation, SLA, revenue, coupon counts) accurate and precomputed so clients avoid duplicate work.
+4. Redundancies. Remove legacy alert builders or ad hoc summaries replaced by spotlight/storefront payloads to avoid contract drift.
+5. Placeholders Or non-working functions or stubs. Replace provisional fixture data with live queries or clearly gate behind feature flags.
+6. Duplicate Functions. Reuse shared normalisers (ensureArray, normaliseToolSaleListing) instead of reimplementing transformations within buildProviderDashboard.
+7. Improvements need to make. Emit curated spotlight nodes (top booking, watchlist delivery, next compliance) directly in the API to reduce client complexity.
+8. Styling improvements. Provide semantic tone metadata (danger, warning, success) so UI pills render consistent colours.
+9. Effeciency analysis and improvement. Batch DB queries, add caching for heavy aggregations, and avoid sequential IO that slows dashboard loads.
+10. Strengths to Keep. Centralised company resolution, wallet orchestration, and integrated ads/workspace fetches make this service invaluable—retain them.
+11. Weaknesses to remove. Strip redundant sequential queries, remove inline string building, and lean on localisation keys for copy.
+12. Styling and Colour review changes. Map tone tokens, badge states, and CTA hints so frontend theming remains aligned without guesswork.
+13. Css, orientation, placement and arrangement changes. Emit layout hints (grid columns, highlight order) to maintain UI structure across clients.
+14. Text analysis, text placement, text length, text redundancy and quality of text analysis. Supply short, action-focused strings with localisation keys to prevent bloated copy.
+15. Text Spacing. Provide spacing tokens (kSpacing24, kSpacing16) or guidance in metadata for consistent rhythm on consuming clients.
+16. Shaping. Include cardShape and chipStyle metadata referencing design tokens to guarantee cross-platform consistency.
+17. Shadow, hover, glow and effects. Surface elevation/focus hints in metadata for rich clients needing subtle transition cues.
+18. Thumbnails. Attach listing thumbnails, logos, and fallback assets so storefront highlight cards never render empty.
+19. Images and media & Images and media previews. Provide media manifests (ratio, duration, alt) enabling responsive galleries on the dashboard.
+20. Button styling. Emit CTA schemas (label, href, tone) for actions like “Open storefront workspace” or “Review compliance”.
+21. Interactiveness. Include acknowledgement tokens, last refreshed timestamps, and experiment flags for real-time dashboards.
+22. Missing Components. Add persona analytics, integration health, and feature flag metadata powering advanced dashboard sections.
+23. Design Changes. Structure responses into spotlight, revenue, storefront, pipeline, and workspace modules to match the UI hierarchy.
+24. Design Duplication. Deduplicate transformation logic shared with other panel services by centralising helpers.
+25. Design framework. Document contract changes in OpenAPI/Schema files so design and engineering remain aligned.
+26. Mobile App Functionality. Emit condensed payload variants for mobile clients with truncated arrays and lightweight metrics.
+27. Mobile App Styling. Provide hints for stacked layouts, chip placement, and hero badges tailored to handheld views.
+28. Change Checklist Tracker Extensive. Track schema updates, caching rollout, telemetry instrumentation, QA automation, docs, and release coordination for any panelService change.
+29. Full Upgrade Plan & Release Steps  Extensive. Prototype contract updates, stage behind versioned endpoints, coordinate frontend/Flutter adoption, monitor metrics, and deprecate legacy payloads once stable.
 
 16. Marketplace Discovery, Search & Feeds
   16.A. Marketplace Browsing & Merchandising Surfaces

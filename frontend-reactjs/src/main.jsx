@@ -11,32 +11,41 @@ import { ConsentProvider } from './providers/ConsentProvider.jsx';
 import AppErrorBoundary from './components/error/AppErrorBoundary.jsx';
 import './styles.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <LocaleProvider>
-        <FeatureToggleProvider>
-          <PersonaProvider>
-            <ThemeProvider>
-              <AdminSessionProvider>
-                <ConsentProvider>
-                  <AppErrorBoundary
-                    boundaryId="app-root"
-                    metadata={{ surface: 'web-app', release: '1.50' }}
-                    onReset={() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.reload();
-                      }
-                    }}
-                  >
-                    <App />
-                  </AppErrorBoundary>
-                </ConsentProvider>
-              </AdminSessionProvider>
-            </ThemeProvider>
-          </PersonaProvider>
-        </FeatureToggleProvider>
-      </LocaleProvider>
-    </BrowserRouter>
-  </React.StrictMode>
-);
+async function bootstrap() {
+  if (import.meta.env.DEV) {
+    const { ensureProviderDevSession } = await import('./dev/bootstrapProviderSession.js');
+    ensureProviderDevSession();
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <LocaleProvider>
+          <FeatureToggleProvider>
+            <PersonaProvider>
+              <ThemeProvider>
+                <AdminSessionProvider>
+                  <ConsentProvider>
+                    <AppErrorBoundary
+                      boundaryId="app-root"
+                      metadata={{ surface: 'web-app', release: '1.50' }}
+                      onReset={() => {
+                        if (typeof window !== 'undefined') {
+                          window.location.reload();
+                        }
+                      }}
+                    >
+                      <App />
+                    </AppErrorBoundary>
+                  </ConsentProvider>
+                </AdminSessionProvider>
+              </ThemeProvider>
+            </PersonaProvider>
+          </FeatureToggleProvider>
+        </LocaleProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+}
+
+bootstrap();
